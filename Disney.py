@@ -7,6 +7,8 @@ from driver import RGBMatrix
 from driver import graphics
 import debug
 
+from utils import args, led_matrix_options
+
 
 def fetch_disney_world_park_ids():
     """Fetch and return a list of Disney World parks with their respective IDs."""
@@ -66,45 +68,71 @@ def fetch_wait_times(disney_park_list):
     return wait_times_data
 
 
+def wrap_text(font, text, max_width):
+    """Wrap text to fit within the specified max_width."""
+    lines = []
+    current_line = ""
+    for word in text.split():
+        # Check if adding the next word would exceed the max_width
+        test_line = f"{current_line} {word}".strip() if current_line else word
+        line_width = sum([font.CharacterWidth(ord(char)) for char in test_line])
+
+        if line_width <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word  # Start new line with the current word
+
+    # Add the last line if there's any remaining text
+    if current_line:
+        lines.append(current_line)
+
+    return lines
+
+
 def render_ride_info(matrix, ride_info):
-    """Render Disney ride and wait time on the matrix."""
+    """Render Disney ride and wait time on the matrix with text wrapping."""
     # Set the text and position to render
     ride_name = ride_info["Ride"]
-    wait_time = f"Wait Time: {ride_info['Wait Time']} mins"
+    wait_time = f"{ride_info['Wait Time']} mins"
 
     # Create a font object
     font = graphics.Font()  # Adjust based on how the font should be initialized in the library
-    font.LoadFont("C:/Users/Xxjcl/Documents/GitHub/Disney-LED-QueueVision/assets/fonts/patched/4x6.bdf")  # Adjust this path
+    font.LoadFont("assets/fonts/patched/4x6-legacy.bdf")  # Adjust this path
 
-    # Calculate the width of the ride name by summing the widths of each character
-    ride_name_width = sum([font.CharacterWidth(ord(char)) for char in ride_name])
+    # Calculate the max width of the display
+    max_width = matrix.width
 
-    # Calculate vertical and horizontal position to center the text
-    x_position = (matrix.width - ride_name_width) // 2
-    y_position_ride = 8  # Adjust as needed
-    y_position_time = 18  # Adjust as needed
+    # Wrap the text for the ride name and wait time
+    wrapped_ride_name = wrap_text(font, ride_name, max_width)
+    wrapped_wait_time = wrap_text(font, wait_time, max_width)
 
-    # Draw the ride name at the top
-    graphics.DrawText(matrix, font=font, x=x_position, y=y_position_ride, color=(255, 255, 255), text=ride_name)
+    # Calculate vertical position for the first line of the ride name
+    y_position_ride = 8  # Starting position for ride name
+    y_position_time = y_position_ride + len(wrapped_ride_name) * 8  # Set the wait time's y position below the ride name
 
-    # Draw the wait time centered below the ride name
-    wait_time_width = sum([font.CharacterWidth(ord(char)) for char in wait_time])
-    x_position_time = (matrix.width - wait_time_width) // 2  # Center the wait time
-    graphics.DrawText(matrix, font=font, x=x_position_time, y=y_position_time, color=(255, 255, 255), text=wait_time)
+    # Draw the wrapped ride name lines
+    for i, line in enumerate(wrapped_ride_name):
+        ride_name_width = sum([font.CharacterWidth(ord(char)) for char in line])
+        x_position = (matrix.width - ride_name_width) // 2  # Center the text
+        graphics.DrawText(matrix, font=font, x=x_position, y=y_position_ride + i * 8, color=(255, 255, 255), text=line)
+
+    # Draw the wrapped wait time lines
+    for i, line in enumerate(wrapped_wait_time):
+        wait_time_width = sum([font.CharacterWidth(ord(char)) for char in line])
+        x_position_time = (matrix.width - wait_time_width) // 2  # Center the wait time
+        graphics.DrawText(matrix, font=font, x=x_position_time, y=y_position_time + i * 8, color=(255, 255, 255), text=line)
+
 
 def main():
     # Initialize the matrix options using the appropriate object type
     from driver import RGBMatrixOptions
+    # Check for led configuration arguments
+    command_line_args = args()
+    matrixOptions = led_matrix_options(command_line_args)
 
-    # Define the options in an object rather than a dictionary
-    options = RGBMatrixOptions()
-    options.cols = 64  # Set the matrix width
-    options.rows = 32  # Set the matrix height
-    options.chain_length = 1  # Adjust based on your setup
-    options.hardware_mapping = 'adafruit-hat'  # Adjust this based on your setup
-
-    # Initialize the matrix with the options object
-    matrix = RGBMatrix(options=options)
+    # Initialize the matrix
+    matrix = RGBMatrix(options=matrixOptions)
 
     try:
         # Fetch Disney World parks and their wait times
@@ -123,6 +151,7 @@ def main():
                 for ride_info in disney_wait_times:
                     matrix.Clear()  # Clear the matrix before displaying the next ride's info
                     render_ride_info(matrix, ride_info)  # Display the ride's info
+
                     time.sleep(15)  # Wait 15 seconds before displaying the next ride
 
         time.sleep(60)  # Optional: sleep 60 seconds to allow the display to show rides properly
