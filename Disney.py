@@ -70,23 +70,27 @@ def render_ride_info(matrix, ride_info):
     """Render Disney ride and wait time on the matrix."""
     # Set the text and position to render
     ride_name = ride_info["Ride"]
-    wait_time = f"{ride_info['Wait Time']} mins"
-
-    # Calculate vertical position based on the matrix size (center the text)
-    x_position = 5  # Set horizontal position (you can adjust as needed)
-    y_position_ride = 8  # Set vertical position for ride name (adjust as needed)
-    y_position_time = 18  # Set vertical position for wait time (adjust as needed)
+    wait_time = f"Wait Time: {ride_info['Wait Time']} mins"
 
     # Create a font object
     font = graphics.Font()  # Adjust based on how the font should be initialized in the library
     font.LoadFont("C:/Users/Xxjcl/Documents/GitHub/Disney-LED-QueueVision/assets/fonts/patched/4x6.bdf")  # Adjust this path
 
+    # Calculate the width of the ride name by summing the widths of each character
+    ride_name_width = sum([font.CharacterWidth(ord(char)) for char in ride_name])
+
+    # Calculate vertical and horizontal position to center the text
+    x_position = (matrix.width - ride_name_width) // 2
+    y_position_ride = 8  # Adjust as needed
+    y_position_time = 18  # Adjust as needed
+
     # Draw the ride name at the top
     graphics.DrawText(matrix, font=font, x=x_position, y=y_position_ride, color=(255, 255, 255), text=ride_name)
 
     # Draw the wait time centered below the ride name
-    graphics.DrawText(matrix, font=font, x=x_position, y=y_position_time, color=(255, 255, 255), text=wait_time)
-
+    wait_time_width = sum([font.CharacterWidth(ord(char)) for char in wait_time])
+    x_position_time = (matrix.width - wait_time_width) // 2  # Center the wait time
+    graphics.DrawText(matrix, font=font, x=x_position_time, y=y_position_time, color=(255, 255, 255), text=wait_time)
 
 def main():
     # Initialize the matrix options using the appropriate object type
