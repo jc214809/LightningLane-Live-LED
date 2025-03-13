@@ -2,89 +2,190 @@
 import sys
 import time
 import os
-import requests
 import logging
 import re
+import asyncio
+import aiohttp
 from driver import RGBMatrix
 from driver import graphics
-import debug
-
 from utils import args, led_matrix_options
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+API_URL_TEMPLATE = "https://api.themeparks.wiki/v1/entity/{}/live"
 
 def sanitize_text(text):
     """Remove special characters from a given text."""
     return re.sub(r'[^a-zA-Z0-9 ]', '', text)
 
+def fetch_disney_world_parks():
+    """Fetch and return a list of Walt Disney World parks with their respective IDs."""
+    api_url = "https://api.themeparks.wiki/v1/destinations"
+    logging.info("Fetching Disney World park data...")
 
-def fetch_disney_world_park_ids():
-    """Fetch and return a list of Disney World parks with their respective IDs."""
-    api_url = "https://queue-times.com/parks.json"
-    response = requests.get(api_url)
-    parks_data = response.json()
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        parks_data = response.json()
 
-    disney_attractions = next(
-        (company for company in parks_data if company["name"] == "Walt Disney Attractions"),
-        None
-    )
+        logging.debug(f"API Response (Parks): {parks_data}")
 
-    if not disney_attractions:
+        # Ensure parks_data is a dictionary
+        if not isinstance(parks_data, dict):
+            logging.error(f"Unexpected API response format: {parks_data}")
+            return []
+
+        # Ensure the 'destinations' key exists and is a list
+        destinations = parks_data.get("destinations", [])
+        if not isinstance(destinations, list):
+            logging.error(f"Unexpected format for 'destinations' key: {destinations}")
+            return []
+
+        # Find Walt Disney World in the destinations list
+        disney_world = next(
+            (destination for destination in destinations if isinstance(destination, dict) and "Walt Disney World" in destination.get("name", "")),
+            None
+        )
+
+        if not disney_world:
+            logging.warning("Walt Disney World data not found in API response.")
+            return []
+
+        # Ensure "parks" key exists and is a list
+        disney_parks = disney_world.get("parks", [])
+        if not isinstance(disney_parks, list):
+            logging.error(f"Unexpected format for 'parks' key: {disney_parks}")
+            return []
+
+        logging.info(f"Found {len(disney_parks)} parks under Walt Disney World.")
+
+        # Extract park names and IDs
+        filtered_parks = [(park.get("name", "Unknown"), park.get("id", "Unknown")) for park in disney_parks if isinstance(park, dict)]
+        logging.debug(f"Filtered Parks: {filtered_parks}")
+
+        return filtered_parks
+
+    except requests.RequestException as e:
+        logging.error(f"Failed to fetch park data: {e}")
         return []
 
-    disney_world_park_names = {
-        "Disney Magic Kingdom",
-        "Disney Hollywood Studios",
-        # "Animal Kingdom",
-        "Epcot"
-    }
 
-    return [
-        (park["name"], park["id"])
-        for park in disney_attractions["parks"]
-        if park["name"] in disney_world_park_names
-    ]
+import requests
+import logging
 
+def fetch_attractions(disney_park_list):
+    """Fetch and return a list of attractions with placeholders for live data."""
+    attractions = []
 
-def fetch_wait_times(disney_park_list, exclude_closed=False):
-    """Fetch and return an array containing park, land, ride, wait time, category, and open status."""
-    wait_times_data = []
-    #API to get only Attractions from Walt Disney World Magic Kingdom
-    #https://api.themeparks.wiki/preview/parks/WaltDisneyWorldMagicKingdom/waittime?type=ATTRACTION
-
-    #Attractions Details - example TRON
-    #https://api.themeparks.wiki/v1/entity/5a43d1a7-ad53-4d25-abfe-25625f0da304/live
     for park_name, park_id in disney_park_list:
-        api_url = f"https://queue-times.com/parks/{park_id}/queue_times.json"
-        response = requests.get(api_url)
-        park_wait_times = response.json()
+        api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
+        logging.info(f"Fetching attractions for park: {park_name} (ID: {park_id})")
 
-        logging.debug(f"Fetched wait times JSON: {park_wait_times}")
+        try:
+            response = requests.get(api_url)
+            response.raise_for_status()
+            park_data = response.json()
 
-        if "lands" not in park_wait_times:
+            logging.debug(f"API Response (Attractions for {park_name}): {park_data}")
+
+        except requests.RequestException as e:
+            logging.error(f"Failed to fetch attractions for park {park_name}: {e}")
             continue
 
-        for park_area in park_wait_times["lands"]:
-            for attraction in park_area["rides"]:
-                if exclude_closed and not attraction["is_open"]:
-                    continue
+        # Check if the park is an attraction (only attractions will have children)
+        if "entityType" in park_data and park_data["entityType"] == "ATTRACTION":
+            if "children" not in park_data:
+                logging.warning(f"No 'children' section found for attraction {park_name} (ID: {park_id}).")
+                continue
 
-                category = "Character Meet and Greet" if "Meet" in attraction["name"] else "Attraction"
-                sanitized_ride_name = sanitize_text(attraction["name"])
+        # Iterate over each item in the 'children' section
+        for item in park_data["children"]:
+            # Ensure the item is a dictionary and check if it's an attraction
+            if item["entityType"] == "ATTRACTION":
+                # logging.warning(f"Item {item} (ID: {item.get("id")}).")
+                attraction = {
+                    "id": item.get("id"),
+                    "name": item.get("name"),
+                    "entityType": item.get("entityType"),
+                    "parkId": park_id,
+                    "waitTime": '',  # Assuming API might return wait time
+                    "status": '',  # Assuming API might return status
+                    "lastUpdatedTs": '',  # Assuming API might return timestamp
+                }
+                logging.info(f"attraction {attraction}")
+                attractions.append(attraction)
 
-                wait_times_data.append({
-                    "Park": park_name,
-                    "Land": park_area["name"],
-                    "Ride": sanitized_ride_name,
-                    "Wait Time": attraction["wait_time"],
-                    "Category": category,
-                    "Open": attraction["is_open"]
-                })
+            # else:
+            #     # Log non-attraction data or unexpected structure in 'children'
+            #     logging.warning(f"Skipping non-attraction or invalid data in 'children': {item}")
 
-    return wait_times_data
+        # logging.debug(f"Found {len(attractions)} attractions for park {park_name}")
 
+    # logging.info(f"Total attractions fetched: {len(attractions)}")
+    return attractions
+
+
+
+async def fetch_live_data(attractions):
+    """Fetch and map live data for attractions, matching by ID and extracting waitTime."""
+    live_data = []
+
+    async with aiohttp.ClientSession() as session:
+        # Loop through the attractions to fetch live data
+        for attraction in attractions:
+            api_url = f"https://api.themeparks.wiki/v1/entity/{attraction['id']}/live"
+            logging.info(f"Fetching live data for attraction: {attraction['name']} (ID: {attraction['id']})")
+
+            try:
+                async with session.get(api_url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        logging.debug(f"Live Data for {attraction['name']}: {data}")
+
+                        # Check if there is any liveData
+                        live_data_info = data.get('liveData', [])
+                        if live_data_info:
+                            # Assuming waitTime is a part of liveData
+
+                            live_data_entry = live_data_info[0]  # Assuming we're interested in the first liveData entry
+                            logging.debug(f"Live Data for {live_data_entry}")
+                            if live_data_entry.get("status") != "CLOSED":
+                                attraction["waitTime"] = live_data_entry.get("queue", {}).get("STANDBY", {}).get("waitTime", "N/A")  # Defaulting to "N/A" if no waitTime
+                            attraction["status"] = live_data_entry.get("status", "Unknown")
+                            attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", "N/A")
+
+                        # Add the updated attraction to live_data list
+                        live_data.append(attraction)
+
+                    else:
+                        logging.error(f"Failed to fetch live data for {attraction['name']}, Status Code: {response.status}")
+
+            except Exception as e:
+                logging.error(f"Error occurred while fetching live data for {attraction['name']}: {e}")
+
+    logging.info(f"Total live data fetched: {len(live_data)}")
+    return live_data
+
+
+async def fetch_live_data_for_attractions(attractions, max_concurrent_requests=10):
+    """Fetch live wait times for all attractions asynchronously."""
+    semaphore = asyncio.Semaphore(max_concurrent_requests)
+    async with aiohttp.ClientSession() as session:
+        tasks = [asyncio.create_task(limited_fetch(semaphore, session, attraction)) for attraction in attractions]
+        await asyncio.gather(*tasks)
+
+
+async def limited_fetch(semaphore, session, attraction):
+    """Wrap fetch function with semaphore to limit concurrent requests."""
+    async with semaphore:
+        await fetch_live_data(session, attraction)
+
+
+def update_attractions_with_live_data(attractions):
+    """Run the async live data fetcher in a synchronous environment."""
+    logging.info("Updating attractions with live wait times...")
+    asyncio.run(fetch_live_data_for_attractions(attractions))
 
 def wrap_text(font, text, max_width):
     """Wrap text to fit within the specified max_width."""
@@ -105,13 +206,12 @@ def wrap_text(font, text, max_width):
 
     return lines
 
-
 def render_ride_info(matrix, ride_info):
     """Render Disney ride and wait time on the matrix with text wrapping and centering."""
     logging.debug(f"Rendering ride info: {ride_info}")
 
-    ride_name = ride_info["Ride"]
-    wait_time = f"{ride_info['Wait Time']} mins"
+    ride_name = ride_info["name"]
+    wait_time = f"{ride_info['waitTime']} mins"
 
     font = graphics.Font()
     font.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
@@ -152,34 +252,49 @@ def render_ride_info(matrix, ride_info):
                           text=line)
 
 
+def update_attractions_with_live_data(attractions):
+    logging.info("Updating attractions with live wait times...")
+    # This will update all attractions at once and return the updated list.
+    live_data = asyncio.run(fetch_live_data(attractions))
+    return live_data
+
 def main():
     from driver import RGBMatrixOptions
     command_line_args = args()
     matrixOptions = led_matrix_options(command_line_args)
     matrix = RGBMatrix(options=matrixOptions)
 
+    logging.info("Starting Disney Ride Wait Time Display...")
+
     try:
-        disney_park_list = fetch_disney_world_park_ids()
+        disney_park_list = fetch_disney_world_parks()
+        if not disney_park_list:
+            logging.error("No Disney parks found. Exiting.")
+            return
 
-        if disney_park_list:
-            exclude_closed = True  # Set this flag to True to exclude closed rides
-            disney_wait_times = fetch_wait_times(disney_park_list, exclude_closed)
+        attractions = fetch_attractions(disney_park_list)
+        if not attractions:
+            logging.error("No attractions found. Exiting.")
+            return
 
-            if not disney_wait_times:
-                logging.info("No rides available.")
-                return
+        while True:
+            logging.info("Refreshing live wait times...")
+            # Update attractions with live data and assign the updated list back.
+            attractions = update_attractions_with_live_data(attractions)
 
-            while True:
-                for ride_info in disney_wait_times:
-                    matrix.Clear()
-                    render_ride_info(matrix, ride_info)
-                    time.sleep(15)
-        time.sleep(60)
+            for ride_info in attractions:
+                matrix.Clear()
+                logging.info(f"Displaying ride: {ride_info['name']} | Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
+                render_ride_info(matrix, ride_info)
+                time.sleep(15)
+
+            time.sleep(60)  # Refresh data every minute
+
     except Exception as e:
         logging.error(f"An error occurred: {e}")
     finally:
         matrix.Clear()
 
-
 if __name__ == "__main__":
     main()
+
