@@ -150,10 +150,10 @@ async def fetch_live_data(attractions):
 
                             live_data_entry = live_data_info[0]  # Assuming we're interested in the first liveData entry
                             logging.debug(f"Live Data for {live_data_entry}")
-                            if live_data_entry.get("status") != "CLOSED":
-                                attraction["waitTime"] = live_data_entry.get("queue", {}).get("STANDBY", {}).get("waitTime", "N/A")  # Defaulting to "N/A" if no waitTime
-                            attraction["status"] = live_data_entry.get("status", "Unknown")
-                            attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", "N/A")
+                            if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT"]:
+                                attraction["waitTime"] = live_data_entry.get("queue", {}).get("STANDBY", {}).get("waitTime", None)  # Defaulting to "N/A" if no waitTime
+                            attraction["status"] = live_data_entry.get("status", None)
+                            attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", None)
 
                         # Add the updated attraction to live_data list
                         live_data.append(attraction)
@@ -285,10 +285,12 @@ def main():
             for ride_info in attractions:
                 matrix.Clear()
                 logging.info(f"Displaying ride: {ride_info['name']} | Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
-                render_ride_info(matrix, ride_info)
-                time.sleep(15)
+                # logging.info(f"Is a digit: {ride_info.get("waitTime").isdigit()}")
+                if ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"] and ride_info.get("waitTime") is not None:
+                    render_ride_info(matrix, ride_info)
+                    time.sleep(15)
 
-            time.sleep(60)  # Refresh data every minute
+            time.sleep(20)  # Refresh data every minute
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
