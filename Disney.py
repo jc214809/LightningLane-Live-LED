@@ -158,51 +158,49 @@ def wrap_text(font, text, max_width):
 
 
 def render_ride_info(matrix, ride_info):
-    """Render Disney ride and wait time on the matrix with text wrapping and centering."""
+    """Render Disney ride and wait time as one centered text block on the matrix."""
     logging.debug(f"Rendering ride info: {ride_info}")
 
     ride_name = ride_info["name"]
     wait_time = f"{ride_info['waitTime']} mins"
 
     font = graphics.Font()
-    font.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
-    max_width = matrix.width
+    font.LoadFont("assets/fonts/patched/6x9.bdf")
 
+    # The library typically sets 'font.height' to the line height in pixels
+    line_height = getattr(font, "height", 9)
+
+    # This offset helps adjust the baseline if text appears too high or too low.
+    # Increase if the text is too close to the top; decrease if it's too close to the bottom.
+    baseline_offset = 7
+
+    # Wrap the ride name and wait time to avoid going off the matrix edges
+    max_width = matrix.width
     wrapped_ride_name = wrap_text(font, ride_name, max_width)
     wrapped_wait_time = wrap_text(font, wait_time, max_width)
-    total_ride_name_height = len(wrapped_ride_name) * 8
-    total_wait_time_height = len(wrapped_wait_time) * 8
 
-    # Calculate widths for logging purposes
-    ride_name_width = sum(font.CharacterWidth(ord(char)) for char in ride_name)
-    wait_time_width = sum(font.CharacterWidth(ord(char)) for char in wait_time)
+    # Combine into a single text block with a blank line between them (optional)
+    text_block = wrapped_ride_name + ([""] if wrapped_wait_time else []) + wrapped_wait_time
 
-    logging.debug(f"Ride Name: '{ride_name}' | Width: {ride_name_width} pixels")
-    logging.debug(f"Total Ride Name Height: {total_ride_name_height} pixels")
-    logging.debug(f"Wait Time: '{wait_time}' | Width: {wait_time_width} pixels")
-    logging.debug(f"Total Wait Time Height: {total_wait_time_height} pixels")
+    # Calculate total text block height
+    total_height = len(text_block) * line_height
+    # Center the text block vertically
+    start_y = (matrix.height - total_height) // 2 + baseline_offset
 
-    total_height = total_ride_name_height + total_wait_time_height
-    y_position_start = (matrix.height - total_height) // 2
-    logging.debug(f"Total Text Block Height: {total_height} pixels")
-    logging.debug(f"Starting Vertical Position (y): {y_position_start} pixels")
+    logging.debug(f"Font height: {line_height}")
+    logging.debug(f"Total lines: {len(text_block)}")
+    logging.debug(f"Total text block height: {total_height}")
+    logging.debug(f"Starting Y position: {start_y}")
 
-    y_position_ride = y_position_start
-    y_position_time = y_position_ride + total_ride_name_height
+    color_white = graphics.Color(255, 255, 255)
 
-    # Use graphics.Color to create the color instance.
-    white_color = graphics.Color(255, 255, 255)
-
-    for i, line in enumerate(wrapped_ride_name):
-        ride_name_line_width = sum(font.CharacterWidth(ord(char)) for char in line)
-        x_position = (matrix.width - ride_name_line_width) // 2
-        graphics.DrawText(matrix, font, x_position, y_position_ride + i * 8, white_color, line)
-
-    for i, line in enumerate(wrapped_wait_time):
-        wait_time_line_width = sum(font.CharacterWidth(ord(char)) for char in line)
-        x_position_time = (matrix.width - wait_time_line_width) // 2
-        graphics.DrawText(matrix, font, x_position_time, y_position_time + i * 8, white_color, line)
-
+    # Draw each line centered horizontally
+    y = start_y
+    for line in text_block:
+        line_width = sum(font.CharacterWidth(ord(ch)) for ch in line)
+        x = (matrix.width - line_width) // 2
+        graphics.DrawText(matrix, font, x, y, color_white, line)
+        y += line_height
 
 def update_attractions_with_live_data(attractions):
     logging.info("Updating attractions with live wait times...")
