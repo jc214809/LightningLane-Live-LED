@@ -1,4 +1,5 @@
 #!/usr/bin/sudo
+import json
 import os
 import time
 import logging
@@ -97,7 +98,7 @@ def fetch_parks_and_attractions(disney_park_list):
             if item.get("entityType") == "ATTRACTION":
                 attraction = {
                     "id": item.get("id"),
-                    "name": item.get("name", "").replace("\u2122", ""),
+                    "name": item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " "),
                     "entityType": item.get("entityType"),
                     "parkId": park_id,
                     "waitTime": '',      # Placeholder for wait time
@@ -283,6 +284,8 @@ def update_parks_live_data(parks):
         if park.get("attractions"):
             updated_attractions = asyncio.run(fetch_live_data(park["attractions"]))
             park["attractions"] = updated_attractions
+
+    logging.debug(f"JSON: {logJSONPrettyPrint(parks)}")
     return parks
 
 
@@ -336,6 +339,7 @@ def main():
     try:
         # Main display loop: iterate over parks and their attractions.
         while True:
+            logging.debug(f"JSON: {logJSONPrettyPrint(parks_holder)}")
             if parks_holder:
                 for park in parks_holder:
                     # Display the park name centered on the board.
@@ -357,6 +361,10 @@ def main():
         logging.error(f"An error occurred: {e}")
     finally:
         matrix.Clear()
+
+
+def logJSONPrettyPrint(jsonObj):
+    return "\n%s" + json.dumps(jsonObj, indent=4, sort_keys=True)
 
 
 if __name__ == "__main__":
