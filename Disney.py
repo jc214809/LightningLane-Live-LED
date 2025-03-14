@@ -1,8 +1,10 @@
 #!/usr/bin/sudo
+import os
 import time
 import logging
 import asyncio
 import aiohttp
+from PIL import Image
 import requests
 import threading
 from driver import RGBMatrix
@@ -158,49 +160,67 @@ def wrap_text(font, text, max_width):
 
 
 def render_ride_info(matrix, ride_info):
-    """Render Disney ride and wait time as one centered text block on the matrix."""
+    """Render Disney ride name and wait time in separate blocks with vertical centering and offset."""
     logging.debug(f"Rendering ride info: {ride_info}")
 
     ride_name = ride_info["name"]
     wait_time = f"{ride_info['waitTime']} mins"
 
-    font = graphics.Font()
-    font.LoadFont("assets/fonts/patched/6x9.bdf")
+    # Load a larger rideFont (adjust as desired).
+    rideFont = graphics.Font()
+    rideFont.LoadFont("assets/fonts/patched/6x9.bdf")
+    waittimeFont = graphics.Font()
+    waittimeFont.LoadFont("assets/fonts/patched/5x8.bdf")
 
-    # The library typically sets 'font.height' to the line height in pixels
-    line_height = getattr(font, "height", 9)
+    # The line height is often in rideFont.height; fallback to 9 if not provided.
+    name_line_height = getattr(rideFont, "height", 9)
+    waittime_line_height = getattr(waittimeFont, "height", 8)
 
-    # This offset helps adjust the baseline if text appears too high or too low.
-    # Increase if the text is too close to the top; decrease if it's too close to the bottom.
-    baseline_offset = 7
+    # This offset shifts the entire block up/down to fix top/bottom imbalance.
+    baseline_offset = 4
 
-    # Wrap the ride name and wait time to avoid going off the matrix edges
+    # Optional gap (in pixels) between the ride name block and the wait time block.
+    gap = 2
+
     max_width = matrix.width
-    wrapped_ride_name = wrap_text(font, ride_name, max_width)
-    wrapped_wait_time = wrap_text(font, wait_time, max_width)
 
-    # Combine into a single text block with a blank line between them (optional)
-    text_block = wrapped_ride_name + ([""] if wrapped_wait_time else []) + wrapped_wait_time
+    # Wrap text so it doesn't overflow horizontally
+    wrapped_ride_name = wrap_text(rideFont, ride_name, max_width)
+    wrapped_wait_time = wrap_text(waittimeFont, wait_time, max_width)
 
-    # Calculate total text block height
-    total_height = len(text_block) * line_height
-    # Center the text block vertically
+    # Calculate the total height of each block
+    ride_name_height = len(wrapped_ride_name) * name_line_height
+    wait_time_height = len(wrapped_wait_time) * waittime_line_height
+
+    # Combine both blocks' heights + gap to get total height
+    total_height = ride_name_height + gap + wait_time_height
+
+    # Compute the top Y position to center vertically
     start_y = (matrix.height - total_height) // 2 + baseline_offset
 
-    logging.debug(f"Font height: {line_height}")
-    logging.debug(f"Total lines: {len(text_block)}")
+    logging.debug(f"Name Font height: {name_line_height}")
+    logging.debug(f"Wait Time Font height: {waittime_line_height}")
+    logging.debug(f"Ride Name Lines: {len(wrapped_ride_name)} => {ride_name_height} px")
+    logging.debug(f"Wait Time Lines: {len(wrapped_wait_time)} => {wait_time_height} px")
     logging.debug(f"Total text block height: {total_height}")
-    logging.debug(f"Starting Y position: {start_y}")
+    logging.debug(f"Starting Y position (with offset): {start_y}")
 
     color_white = graphics.Color(255, 255, 255)
+    color_blue = graphics.Color(0, 0, 255)
 
-    # Draw each line centered horizontally
-    y = start_y
-    for line in text_block:
-        line_width = sum(font.CharacterWidth(ord(ch)) for ch in line)
-        x = (matrix.width - line_width) // 2
-        graphics.DrawText(matrix, font, x, y, color_white, line)
-        y += line_height
+    # Draw Ride Name block
+    y_position_ride = start_y
+    for i, line in enumerate(wrapped_ride_name):
+        line_width = sum(rideFont.CharacterWidth(ord(ch)) for ch in line)
+        x_position = (matrix.width - line_width) // 2
+        graphics.DrawText(matrix, rideFont, x_position, y_position_ride + i * name_line_height, color_white, line)
+
+    # Draw Wait Time block
+    y_position_wait = start_y + ride_name_height + gap
+    for i, line in enumerate(wrapped_wait_time):
+        line_width = sum(waittimeFont.CharacterWidth(ord(ch)) for ch in line)
+        x_position = (matrix.width - line_width) // 2
+        graphics.DrawText(matrix, waittimeFont, x_position, y_position_wait + i * waittime_line_height, color_white, line)
 
 def update_attractions_with_live_data(attractions):
     logging.info("Updating attractions with live wait times...")
@@ -226,11 +246,23 @@ def live_data_updater(disney_park_list, update_interval, attractions_holder):
 
 
 def main():
+
+    logo_path = os.path.abspath("./assets/MK.png")
+
+
     from driver import RGBMatrixOptions
     command_line_args = args()
     matrixOptions = led_matrix_options(command_line_args)
     matrix = RGBMatrix(options=matrixOptions)
     logging.info("Starting Disney Ride Wait Time Display...")
+
+    # MLB image disabled when using renderer, for now.
+    # see: https://github.com/ty-porter/RGBMatrixEmulator/issues/9#issuecomment-922869679
+    if os.path.exists(logo_path) and False:
+        logging.info("Logo found. Displaying...")
+        logo = Image.open(logo_path)
+        matrix.SetImage(logo.convert("RGB"))
+        logo.close()
 
     disney_park_list = fetch_disney_world_parks()
     if not disney_park_list:
