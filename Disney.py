@@ -166,13 +166,16 @@ def render_ride_info(matrix, ride_info):
 
     font = graphics.Font()
     font.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
-
     max_width = matrix.width
 
     wrapped_ride_name = wrap_text(font, ride_name, max_width)
     wrapped_wait_time = wrap_text(font, wait_time, max_width)
     total_ride_name_height = len(wrapped_ride_name) * 8
     total_wait_time_height = len(wrapped_wait_time) * 8
+
+    # Calculate widths for logging purposes
+    ride_name_width = sum(font.CharacterWidth(ord(char)) for char in ride_name)
+    wait_time_width = sum(font.CharacterWidth(ord(char)) for char in wait_time)
 
     logging.debug(f"Ride Name: '{ride_name}' | Width: {ride_name_width} pixels")
     logging.debug(f"Total Ride Name Height: {total_ride_name_height} pixels")
@@ -187,17 +190,18 @@ def render_ride_info(matrix, ride_info):
     y_position_ride = y_position_start
     y_position_time = y_position_ride + total_ride_name_height
 
+    # Use graphics.Color to create the color instance.
+    white_color = graphics.Color(255, 255, 255)
+
     for i, line in enumerate(wrapped_ride_name):
         ride_name_line_width = sum(font.CharacterWidth(ord(char)) for char in line)
         x_position = (matrix.width - ride_name_line_width) // 2
-        graphics.DrawText(matrix, font=font, x=x_position, y=y_position_ride + i * 8,
-                          color=(255, 255, 255), text=line)
+        graphics.DrawText(matrix, font, x_position, y_position_ride + i * 8, white_color, line)
 
     for i, line in enumerate(wrapped_wait_time):
         wait_time_line_width = sum(font.CharacterWidth(ord(char)) for char in line)
         x_position_time = (matrix.width - wait_time_line_width) // 2
-        graphics.DrawText(matrix, font=font, x=x_position_time, y=y_position_time + i * 8,
-                          color=(255, 255, 255), text=line)
+        graphics.DrawText(matrix, font, x_position_time, y_position_time + i * 8, white_color, line)
 
 
 def update_attractions_with_live_data(attractions):
