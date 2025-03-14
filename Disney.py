@@ -83,6 +83,7 @@ def fetch_parks_and_attractions(disney_park_list):
             response = requests.get(api_url)
             response.raise_for_status()
             park_data = response.json()
+            logging.debug(f"{park_name} Park Data: {logJSONPrettyPrint(park_data)}")
             logging.debug(f"API Response (Attractions for {park_name}): {park_data}")
         except requests.RequestException as e:
             logging.error(f"Failed to fetch attractions for park {park_name}: {e}")
@@ -339,7 +340,7 @@ def main():
     try:
         # Main display loop: iterate over parks and their attractions.
         while True:
-            logging.debug(f"JSON: {logJSONPrettyPrint(parks_holder)}")
+            logging.debug(f"LLL Park Data: {logJSONPrettyPrint(parks_holder)}")
             if parks_holder:
                 for park in parks_holder:
                     # Display the park name centered on the board.
