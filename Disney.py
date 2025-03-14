@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 
 def fetch_disney_world_parks():
-    """Fetch and return a list of Walt Disney World parks with their respective IDs."""
+    """Fetch and return a list of Walt Disney World parks with their respective IDs, excluding water parks."""
     api_url = "https://api.themeparks.wiki/v1/destinations"
     logging.info("Fetching Disney World park data...")
 
@@ -52,8 +52,13 @@ def fetch_disney_world_parks():
 
         logging.info(f"Found {len(disney_parks)} parks under Walt Disney World.")
 
-        filtered_parks = [(park.get("name", "Unknown"), park.get("id", "Unknown"))
-                          for park in disney_parks if isinstance(park, dict)]
+        # For this example, let's say we want parks with "Animal" in their name.
+        filtered_parks = [
+            (park.get("name", "Unknown"), park.get("id", "Unknown"))
+            for park in disney_parks
+            if isinstance(park, dict) and "Water Park" not in park.get("name", "")
+        ]
+
         logging.debug(f"Filtered Parks: {filtered_parks}")
 
         return filtered_parks
@@ -63,14 +68,16 @@ def fetch_disney_world_parks():
         return []
 
 
-def fetch_attractions(disney_park_list):
-    """Fetch and return a list of attractions with placeholders for live data."""
-    attractions = []
-
+def fetch_parks_and_attractions(disney_park_list):
+    """
+    For each park in disney_park_list (a list of tuples of (park_name, park_id)),
+    fetch the attractions and return a list of park objects.
+    Each park object is a dict with keys: 'name', 'id', and 'attractions'.
+    """
+    parks = []
     for park_name, park_id in disney_park_list:
         api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
         logging.info(f"Fetching attractions for park: {park_name} (ID: {park_id})")
-
         try:
             response = requests.get(api_url)
             response.raise_for_status()
@@ -80,12 +87,13 @@ def fetch_attractions(disney_park_list):
             logging.error(f"Failed to fetch attractions for park {park_name}: {e}")
             continue
 
+        attractions = []
         if "entityType" in park_data and park_data["entityType"] == "ATTRACTION":
             if "children" not in park_data:
                 logging.warning(f"No 'children' section found for attraction {park_name} (ID: {park_id}).")
                 continue
 
-        for item in park_data["children"]:
+        for item in park_data.get("children", []):
             if item.get("entityType") == "ATTRACTION":
                 attraction = {
                     "id": item.get("id"),
@@ -98,8 +106,13 @@ def fetch_attractions(disney_park_list):
                 }
                 logging.info(f"attraction {attraction}")
                 attractions.append(attraction)
-
-    return attractions
+        park_obj = {
+            "id": park_id,
+            "name": park_name,
+            "attractions": attractions
+        }
+        parks.append(park_obj)
+    return parks
 
 
 async def fetch_live_data_for_attraction(session, attraction):
@@ -159,43 +172,47 @@ def wrap_text(font, text, max_width):
     return lines
 
 
-def render_ride_info(matrix, ride_info):
-    """Render Disney ride name and wait time in separate blocks with vertical centering and offset."""
-    logging.debug(f"Rendering ride info: {ride_info}")
+def draw_text_with_dynamic_spacing(matrix, font, y, color, text, max_width):
+    """
+    Draw a single line of text centered horizontally. If the total width of the text
+    exceeds max_width, reduce the spacing between letters dynamically so that the text fits.
+    """
+    original_width = sum(font.CharacterWidth(ord(ch)) for ch in text)
+    if original_width <= max_width:
+        x = (max_width - original_width) // 2
+        graphics.DrawText(matrix, font, x, y, color, text)
+    else:
+        scale = max_width / original_width
+        x = 0
+        for ch in text:
+            ch_width = font.CharacterWidth(ord(ch))
+            graphics.DrawText(matrix, font, int(x), y, color, ch)
+            x += ch_width * scale
 
+
+def render_ride_info(matrix, ride_info):
+    """Render Disney ride name and wait time in separate blocks with vertical centering and dynamic letter spacing."""
+    logging.debug(f"Rendering ride info: {ride_info}")
     ride_name = ride_info["name"]
     wait_time = f"{ride_info['waitTime']} mins"
 
-    # Load a larger rideFont (adjust as desired).
+    # Load separate fonts.
     rideFont = graphics.Font()
     rideFont.LoadFont("assets/fonts/patched/6x9.bdf")
     waittimeFont = graphics.Font()
     waittimeFont.LoadFont("assets/fonts/patched/5x8.bdf")
 
-    # The line height is often in rideFont.height; fallback to 9 if not provided.
     name_line_height = getattr(rideFont, "height", 9)
     waittime_line_height = getattr(waittimeFont, "height", 8)
-
-    # This offset shifts the entire block up/down to fix top/bottom imbalance.
-    baseline_offset = 4
-
-    # Optional gap (in pixels) between the ride name block and the wait time block.
+    baseline_offset = 5
     gap = 2
-
     max_width = matrix.width
 
-    # Wrap text so it doesn't overflow horizontally
     wrapped_ride_name = wrap_text(rideFont, ride_name, max_width)
     wrapped_wait_time = wrap_text(waittimeFont, wait_time, max_width)
-
-    # Calculate the total height of each block
     ride_name_height = len(wrapped_ride_name) * name_line_height
     wait_time_height = len(wrapped_wait_time) * waittime_line_height
-
-    # Combine both blocks' heights + gap to get total height
     total_height = ride_name_height + gap + wait_time_height
-
-    # Compute the top Y position to center vertically
     start_y = (matrix.height - total_height) // 2 + baseline_offset
 
     logging.debug(f"Name Font height: {name_line_height}")
@@ -206,60 +223,82 @@ def render_ride_info(matrix, ride_info):
     logging.debug(f"Starting Y position (with offset): {start_y}")
 
     color_white = graphics.Color(255, 255, 255)
-    color_blue = graphics.Color(0, 0, 255)
-
-    # Draw Ride Name block
     y_position_ride = start_y
     for i, line in enumerate(wrapped_ride_name):
-        line_width = sum(rideFont.CharacterWidth(ord(ch)) for ch in line)
-        x_position = (matrix.width - line_width) // 2
-        graphics.DrawText(matrix, rideFont, x_position, y_position_ride + i * name_line_height, color_white, line)
-
-    # Draw Wait Time block
+        draw_text_with_dynamic_spacing(matrix, rideFont, y_position_ride + i * name_line_height, color_white, line, max_width)
     y_position_wait = start_y + ride_name_height + gap
     for i, line in enumerate(wrapped_wait_time):
-        line_width = sum(waittimeFont.CharacterWidth(ord(ch)) for ch in line)
-        x_position = (matrix.width - line_width) // 2
-        graphics.DrawText(matrix, waittimeFont, x_position, y_position_wait + i * waittime_line_height, color_white, line)
-
-def update_attractions_with_live_data(attractions):
-    logging.info("Updating attractions with live wait times...")
-    live_data = asyncio.run(fetch_live_data(attractions))
-    return live_data
+        draw_text_with_dynamic_spacing(matrix, waittimeFont, y_position_wait + i * waittime_line_height, color_white, line, max_width)
 
 
-def live_data_updater(disney_park_list, update_interval, attractions_holder):
+def render_park_name(matrix, park_name):
+    """Render the park name centered on the board, wrapping onto multiple lines if needed."""
+    # Load the font.
+    font = graphics.Font()
+    font.LoadFont("assets/fonts/patched/6x9.bdf")
+    color_red = graphics.Color(255, 0, 0)
+
+    max_width = matrix.width
+    # Get the font's height (fallback to 9 if not available)
+    line_height = getattr(font, "height", 9)
+
+    # Wrap the park name into multiple lines if needed.
+    wrapped_lines = wrap_text(font, park_name, max_width)
+
+    # Compute the total height of the block.
+    total_height = len(wrapped_lines) * line_height
+    # Center the block vertically (adjust baseline_offset if needed).
+    baseline_offset = 6  # adjust this if text appears too high or too low
+    start_y = (matrix.height - total_height) // 2 + baseline_offset
+
+    # Draw each line centered horizontally.
+    for i, line in enumerate(wrapped_lines):
+        # Compute the width of this line.
+        line_width = sum(font.CharacterWidth(ord(ch)) for ch in line)
+        x = (max_width - line_width) // 2
+        y = start_y + i * line_height
+        graphics.DrawText(matrix, font, x, y, color_red, line)
+
+def update_parks_live_data(parks):
     """
-    Background thread function that re-fetches attractions and updates live data
-    every 'update_interval' seconds. The results are stored in the shared list 'attractions_holder'.
+    For each park in parks, update its attractions with live data.
+    Each park object in parks has a key 'attractions' that is a list of rides.
+    """
+    for park in parks:
+        if park.get("attractions"):
+            updated_attractions = asyncio.run(fetch_live_data(park["attractions"]))
+            park["attractions"] = updated_attractions
+    return parks
+
+
+def live_data_updater(disney_park_list, update_interval, parks_holder):
+    """
+    Background thread that re-fetches parks (with their attractions) and updates live data
+    every 'update_interval' seconds. The results are stored in the shared list 'parks_holder'.
     """
     while True:
-        attractions = fetch_attractions(disney_park_list)
-        if attractions:
-            updated_attractions = update_attractions_with_live_data(attractions)
-            # Update the shared list safely by replacing its content
-            attractions_holder[:] = updated_attractions
-            logging.info("Attractions live data updated in background.")
+        parks = fetch_parks_and_attractions(disney_park_list)
+        if parks:
+            updated_parks = update_parks_live_data(parks)
+            parks_holder[:] = updated_parks
+            logging.info("Parks live data updated in background.")
         else:
-            logging.warning("No attractions found during live data update.")
+            logging.warning("No parks found during live data update.")
         time.sleep(update_interval)
 
 
 def main():
-
     logo_path = os.path.abspath("./assets/MK.png")
-
-
     from driver import RGBMatrixOptions
     command_line_args = args()
     matrixOptions = led_matrix_options(command_line_args)
     matrix = RGBMatrix(options=matrixOptions)
     logging.info("Starting Disney Ride Wait Time Display...")
 
-    # MLB image disabled when using renderer, for now.
-    # see: https://github.com/ty-porter/RGBMatrixEmulator/issues/9#issuecomment-922869679
+    # If a logo exists, you might display it here.
     if os.path.exists(logo_path) and False:
         logging.info("Logo found. Displaying...")
+        from PIL import Image
         logo = Image.open(logo_path)
         matrix.SetImage(logo.convert("RGB"))
         logo.close()
@@ -269,33 +308,34 @@ def main():
         logging.error("No Disney parks found. Exiting.")
         return
 
-    # Shared list for attractions updated by the background thread.
-    attractions_holder = []
-
-    # Start a background thread to update live data every 5 minutes (300 seconds).
+    # parks_holder is now a list of park objects (each with its attractions list).
+    parks_holder = []
     update_interval = 300  # seconds
     update_thread = threading.Thread(
         target=live_data_updater,
-        args=(disney_park_list, update_interval, attractions_holder),
+        args=(disney_park_list, update_interval, parks_holder),
         daemon=True
     )
     update_thread.start()
 
     try:
-        # Main display loop: cycle through the attractions from the shared list.
+        # Main display loop: iterate over parks and their attractions.
         while True:
-            if attractions_holder:
-                for ride_info in attractions_holder:
-                    matrix.Clear()
-                    logging.info(f"Displaying ride: {ride_info['name']} | Wait Time: {ride_info['waitTime']} min | "
-                                 f"Status: {ride_info['status']}")
-                    if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
-                            and ride_info.get("waitTime") is not None):
-                        render_ride_info(matrix, ride_info)
-                        # Display each ride for 15 seconds
-                        time.sleep(15)
+            if parks_holder:
+                for park in parks_holder:
+                    # Display the park name centered on the board.
+                    render_park_name(matrix, park["name"])
+                    # Allow the park name to be displayed for a few seconds.
+                    time.sleep(5)
+                    for ride_info in park.get("attractions", []):
+                        matrix.Clear()
+                        logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
+                        if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
+                                and ride_info.get("waitTime") is not None):
+                            render_ride_info(matrix, ride_info)
+                            time.sleep(15)
             else:
-                logging.info("No attractions data yet, waiting...")
+                logging.info("No parks data yet, waiting...")
                 time.sleep(5)
     except Exception as e:
         logging.error(f"An error occurred: {e}")
