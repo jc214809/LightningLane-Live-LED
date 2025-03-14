@@ -197,10 +197,21 @@ def render_ride_info(matrix, ride_info):
     wait_time = f"{ride_info['waitTime']} mins"
 
     # Load separate fonts.
-    rideFont = graphics.Font()
-    rideFont.LoadFont("assets/fonts/patched/6x9.bdf")
-    waittimeFont = graphics.Font()
-    waittimeFont.LoadFont("assets/fonts/patched/5x8.bdf")
+    logging.info(f"Matrix height: {matrix.height}")
+    logging.info(f"Matrix width: {matrix.width}")
+    if matrix.height == 64:
+        rideFont = graphics.Font()
+        rideFont.LoadFont("assets/fonts/patched/6x9.bdf")
+        waittimeFont = graphics.Font()
+        waittimeFont.LoadFont("assets/fonts/patched/5x8.bdf")
+    elif matrix.height == 32:
+        rideFont = graphics.Font()
+        rideFont.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
+        waittimeFont = graphics.Font()
+        waittimeFont.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
+    else:
+        logging.error("Unsupported matrix height. Please use 32 or 64.")
+        return
 
     name_line_height = getattr(rideFont, "height", 9)
     waittime_line_height = getattr(waittimeFont, "height", 8)
@@ -324,6 +335,7 @@ def main():
             if parks_holder:
                 for park in parks_holder:
                     # Display the park name centered on the board.
+                    matrix.Clear()
                     render_park_name(matrix, park["name"])
                     # Allow the park name to be displayed for a few seconds.
                     time.sleep(5)
