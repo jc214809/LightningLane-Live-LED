@@ -97,7 +97,7 @@ def fetch_parks_and_attractions(disney_park_list):
             if item.get("entityType") == "ATTRACTION":
                 attraction = {
                     "id": item.get("id"),
-                    "name": item.get("name"),
+                    "name": item.get("name", "").replace("\u2122", ""),
                     "entityType": item.get("entityType"),
                     "parkId": park_id,
                     "waitTime": '',      # Placeholder for wait time
@@ -200,11 +200,15 @@ def render_ride_info(matrix, ride_info):
     logging.info(f"Matrix height: {matrix.height}")
     logging.info(f"Matrix width: {matrix.width}")
     if matrix.height == 64:
+        name_font_default = 9
+        waittime_font_default = 8
         rideFont = graphics.Font()
         rideFont.LoadFont("assets/fonts/patched/6x9.bdf")
         waittimeFont = graphics.Font()
         waittimeFont.LoadFont("assets/fonts/patched/5x8.bdf")
     elif matrix.height == 32:
+        name_font_default = 6
+        waittime_font_default = 6
         rideFont = graphics.Font()
         rideFont.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
         waittimeFont = graphics.Font()
@@ -213,8 +217,8 @@ def render_ride_info(matrix, ride_info):
         logging.error("Unsupported matrix height. Please use 32 or 64.")
         return
 
-    name_line_height = getattr(rideFont, "height", 9)
-    waittime_line_height = getattr(waittimeFont, "height", 8)
+    name_line_height = getattr(rideFont, "height", name_font_default)
+    waittime_line_height = getattr(waittimeFont, "height", waittime_font_default)
     baseline_offset = 5
     gap = 2
     max_width = matrix.width
