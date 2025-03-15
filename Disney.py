@@ -8,6 +8,10 @@ import aiohttp
 from PIL import Image
 import requests
 import threading
+
+# Important! Import the driver first to initialize it, then import submodules as needed.
+import driver
+
 from driver import RGBMatrix
 from driver import graphics
 from utils import args, led_matrix_options
