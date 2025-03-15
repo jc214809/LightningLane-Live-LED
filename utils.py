@@ -1,7 +1,7 @@
 import argparse
 from collections.abc import Mapping
 
-import logging as debug
+import debug
 
 
 def center_text_position(text, center_pos, font_width):

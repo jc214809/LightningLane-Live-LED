@@ -54,7 +54,7 @@ This installation process will take about 10-15 minutes. Raspberry Pis aren't th
    ```bash
    git clone https://github.com/jc24809/LED-LightningLane-Live.git
    cd LED-LightningLane-Live/
-   sudo ./install.sh
+   sudo ./LLL-install.sh
    ```
 
 This will create a Python Virtual Environment and install all of the required dependencies. The
