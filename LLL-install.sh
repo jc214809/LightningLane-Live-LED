@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Redirect output to a logfile
-exec > >(tee -a logs/mlbled.log) 2>&1
+exec > >(tee -a logs/LLL.log) 2>&1
 
 SKIP_PYTHON=false
 SKIP_CONFIG=false
@@ -201,12 +201,12 @@ if [ "$SKIP_MATRIX" = false ]; then
     fi
 fi
 
-#if [ "$SKIP_CONFIG" = true ]; then
-#    echo
-#    echo "------------------------------------"
-#    echo "  Skipping configuration updates"
-#    echo "------------------------------------"
-#    echo
+if [ "$SKIP_CONFIG" = true ]; then
+    echo
+    echo "------------------------------------"
+    echo "  Skipping configuration updates"
+    echo "------------------------------------"
+    echo
 #else
 #    if [ ! -f "./config.json" ]; then
 #        cp config.json.example config.json
@@ -236,7 +236,7 @@ fi
 #        python3 validate_config.py
 #    fi
 #    echo
-#fi
+fi
 
 
 echo "Installation finished!"

@@ -124,13 +124,13 @@ See the Flags section below for more flags you can optionally provide.
 
 ### Running on Other Platforms
 
-The scoreboard can run on other platforms by means of software emulation via `RGBMatrixEmulator`. When running via the emulator, you do not need to prepend your startup commands with `sudo`:
+To run on other platforms by means of software emulation via `RGBMatrixEmulator`. When running via the emulator, you do not need to prepend your startup commands with `sudo`:
 
 ```sh
 ./Disney.py
 ```
 
-You can also force the scoreboard into emulation mode by using the `--emulated` flag:
+You can also force into emulation mode by using the `--emulated` flag:
 
 ```sh
 ./Disney.py --emulated
@@ -167,16 +167,8 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: true)
 ```
 
-## Personalization
-If you're feeling adventurous (and we highly encourage it!), the sections below outline how you can truly personalize your scoreboard and make it your own!
-### Custom Board Layout
-You have the ability to customize the way things are placed on the board (maybe you would prefer to see scrolling text for a pregame a bit higher or lower). See the `coordinates/` directory for more information.
-
-### Custom Colors
-You have the ability to customize the colors of everything on the board. See the `colors/` directory for more information.
-
-### Weather
-This scoreboard will use a weather API to gather weather information at various times. This information is displayed on your teams' offdays for your area and also displayed during each game's pregame information. The weather API we use is from OpenWeatherMaps. OpenWeatherMaps API requires an API key to fetch this data so you will need to take a quick minute to sign up for an account and copy your own API key into your `config.json`.
+### Weather (Future Enhancement)
+ The weather API we use is from OpenWeatherMaps. OpenWeatherMaps API requires an API key to fetch this data so you will need to take a quick minute to sign up for an account and copy your own API key into your `config.json`.
 
 You can find the signup page for OpenWeatherMaps at [https://home.openweathermap.org/users/sign_up](https://home.openweathermap.org/users/sign_up). Once logged in, you'll find an `API keys` tab where you'll find a default key was already created for you. You can copy this key and paste it into the `config.json` under `"weather"`, `"apikey"`.
 
@@ -184,11 +176,10 @@ You can change the location used by entering your city, state, and country code 
 
 ## Sources
 This project relies on two libraries:
-[MLB-StatsAPI](https://pypi.org/project/MLB-StatsAPI/) is the Python library used for retrieving live game data.
 [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix) is the library used for making everything work with the LED board.
 
 ### Accuracy Disclaimer
-The scoreboard updates frequently, but it cannot retrieve information that MLB has not yet made available. If something is odd or it seems behind, the first suspect is the MLB web API.
+The API is using realtime data but could change at anypoint
 
 ## Help and Contributing
 If you run into any issues and have steps to reproduce, open an issue. If you have a feature request, open an issue. If you want to contribute a small to medium sized change, open a pull request. If you want to contribute a new feature, open an issue first before opening a PR.
@@ -205,17 +196,14 @@ pipreqs . --force
 ```
 
 ## Licensing
-This project as of v1.1.0 uses the GNU Public License. If you intend to sell these, the code must remain open source.
+This project as of v0.1.0 uses the GNU Public License. If you intend to sell these, the code must remain open source.
 
 ## Other Cool Projects
 The original version of this board
 
-Inspired by this board, check out the [NHL scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) 🏒
+Inspired by this board project MLB-LED-Scoreboard [here](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard),also check out the [NHL scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) 🏒
 
 
-
-
-cp -r  /LightningLane-Live-LED/assets /LED-LightningLane-Live
 
 Putty Command
 64x64
