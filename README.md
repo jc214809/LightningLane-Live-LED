@@ -52,8 +52,8 @@ sudo apt-get install git python3-pip
 This installation process will take about 10-15 minutes. Raspberry Pis aren't the fastest of computers, so be patient!
 
    ```bash
-   git clone https://github.com/jc24809/LED-LightningLane-Live.git
-   cd LED-LightningLane-Live/
+   git clone https://github.com/jc214809/LightningLane-Live-LED.git
+   cd LightningLane-Live-LED/
    sudo ./LLL-install.sh
    ```
 
@@ -105,7 +105,7 @@ That should be it! Your latest version should now be working with whatever new f
 
 You can check the version information for your installation of LightningLane-Live-LED by running `python3 version.py`.
 
-The latest version of the software is available [here](https://github.com/MLB-LED-Scoreboard/LightningLane-Live-LED/releases).
+The latest version of the software is available [here](https://github.com/jc214809/LightningLane-Live-LED/releases).
 
 #### Time Zones
 Make sure your Raspberry Pi's timezone is configured to your local time zone. They'll often have London time on them by default. You can change the timezone of your raspberry pi by running `sudo raspi-config`.
