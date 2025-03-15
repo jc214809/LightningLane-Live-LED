@@ -1,4 +1,11 @@
-#!/usr/bin/sudo
+import sys
+
+import debug
+
+if sys.version_info <= (3, 5):
+    debug.error("Please run with python3")
+    sys.exit(1)
+
 import json
 import os
 import time
