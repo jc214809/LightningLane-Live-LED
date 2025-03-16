@@ -1,7 +1,12 @@
 import argparse
 from collections.abc import Mapping
 
-import debug
+from utils import debug
+import json
+
+def logJSONPrettyPrint(jsonObj):
+    """Return a pretty-printed JSON string."""
+    return "\n%s" % json.dumps(jsonObj, indent=4, sort_keys=True)
 
 
 def center_text_position(text, center_pos, font_width):
