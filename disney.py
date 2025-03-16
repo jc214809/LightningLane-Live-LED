@@ -61,7 +61,11 @@ def main():
             logging.debug(f"Parks Data: {logJSONPrettyPrint(parks_holder)}")
             if parks_holder:
                 for park in parks_holder:
+                    if not park.get("operating"):
+                        logging.info(f"Skipping park {park['name']} because no attractions are operating.")
+                        continue
                     matrix.Clear()
+                    logging.info(f"Rendering {park['name']} Title Screen.")
                     render_park_name(matrix, park["name"])
                     time.sleep(5)
                     for ride_info in park.get("attractions", []):

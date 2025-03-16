@@ -48,7 +48,7 @@ def fetch_disney_world_parks():
         filtered_parks = [
             (park.get("name", "Unknown"), park.get("id", "Unknown"))
             for park in disney_parks
-            if isinstance(park, dict) and "Water Park" not in park.get("name", "")
+            if isinstance(park, dict) and "Water Park" not in park.get("name", "") and "Magic" not in park.get("name", "")
         ]
 
         logging.debug(f"Filtered Parks: {filtered_parks}")
@@ -142,3 +142,29 @@ async def fetch_live_data(attractions):
         results = await asyncio.gather(*tasks)
     logging.info(f"Total live data fetched: {len(results)}")
     return results
+
+def park_has_operating_attraction(park):
+    """
+    Check if any attraction in the park is operating and has a wait time.
+    Returns True if at least one attraction is operating (i.e. its 'status' is not "CLOSED" or "REFURBISHMENT")
+    and its 'waitTime' is not None or empty, otherwise returns False.
+    """
+    for attraction in park.get("attractions", []):
+        wait_time = attraction.get("waitTime")
+        status = attraction.get("status")
+        logging.info(
+            f"Attraction: {attraction['name']} (Park: {park['name']}) | " 
+            f"Wait Time: {attraction['waitTime']} min | Status: {attraction['status']}")
+        if wait_time not in [None, ''] and status not in ["CLOSED", "REFURBISHMENT"]:
+            return True
+    return False
+
+def update_parks_operating_status(parks):
+    """
+    Updates each park object in the list with a new key 'operating' that is True
+    if the park has at least one operating attraction with a valid wait time, otherwise False.
+    """
+    for park in parks:
+        park["operating"] = park_has_operating_attraction(park)
+    return parks
+
