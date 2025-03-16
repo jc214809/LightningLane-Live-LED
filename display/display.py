@@ -2,28 +2,31 @@ import logging
 from driver import graphics
 
 
-def wrap_text(font, text, max_width, max_height):
+def wrap_text(font, text, max_width, max_height, side_padding=1, top_padding=1):
     """
-    Wrap text to fit within the specified max_width and max_height, packing as many words
-    into a line as possible. If a single word exceeds max_width, it is placed on its own line.
-    After wrapping, if the total number of lines exceeds what can fit in max_height, the
-    output is truncated with an ellipsis on the last line.
+    Wrap text to fit within the specified max_width and max_height, leaving horizontal padding on the sides
+    and a top padding. This function packs as many words into a line as possible. If a single word exceeds the
+    available width, it is placed on its own line.
 
     :param font: The font object, which must have a CharacterWidth method and a 'height' attribute.
     :param text: The text to wrap.
-    :param max_width: The maximum width (in pixels) that a line can occupy.
-    :param max_height: The maximum height (in pixels) available for the text block.
+    :param max_width: The total width (in pixels) of the board.
+    :param max_height: The total height (in pixels) of the board.
+    :param side_padding: The horizontal padding (in pixels) to leave on each side.
+    :param top_padding: The vertical padding (in pixels) to leave at the top.
     :return: A list of strings, each representing a line of text.
     """
+    available_width = max_width -  side_padding
+    available_height = max_height - top_padding  # Only subtracting top padding.
     words = text.split()
     lines = []
     current_line = ""
 
     for word in words:
-        # Calculate the width of the current word.
+        # Calculate the width of the word.
         word_width = sum(font.CharacterWidth(ord(ch)) for ch in word)
-        # If the word is wider than max_width, place it on its own line.
-        if word_width > max_width:
+        # If the word is wider than the available width, place it on its own line.
+        if word_width > available_width:
             if current_line:
                 lines.append(current_line)
                 current_line = ""
@@ -33,7 +36,7 @@ def wrap_text(font, text, max_width, max_height):
         # Try adding the word to the current line.
         test_line = f"{current_line} {word}".strip() if current_line else word
         test_line_width = sum(font.CharacterWidth(ord(ch)) for ch in test_line)
-        if test_line_width <= max_width:
+        if test_line_width <= available_width:
             current_line = test_line
         else:
             lines.append(current_line)
@@ -42,7 +45,7 @@ def wrap_text(font, text, max_width, max_height):
     if current_line:
         lines.append(current_line)
 
-    # Determine how many lines can fit given max_height.
+    # Calculate how many lines can fit vertically in the available height.
     line_height = getattr(font, "height", 9)
     max_lines = max_height // line_height
     if len(lines) > max_lines:
