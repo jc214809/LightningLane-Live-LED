@@ -124,15 +124,15 @@ if [ "$SKIP_VENV" = false ]; then
     fi
     source ./venv/bin/activate
 
-    if ! grep -q "#\!/" Disney.py; then
+    if ! grep -q "#\!/" disney.py; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' '1i\'$'\n''#!'"$(which python3)"$'\n' Disney.py
+            sed -i '' '1i\'$'\n''#!'"$(which python3)"$'\n' disney.py
         elif [ "$NO_SUDO" = false ]; then
-            sed -i "1i #\!/usr/bin/sudo $(which python3)" Disney.py
+            sed -i "1i #\!/usr/bin/sudo $(which python3)" disney.py
         else
-            sed -i "1i #\!$(which python3)" Disney.py
+            sed -i "1i #\!$(which python3)" disney.py
         fi
-        chmod +x Disney.py
+        chmod +x disney.py
 
         # Add template to .git/config (if it doesn't already exist), and trigger the filter by adding the file.
         # After that, the shebang should be ignored.
@@ -140,7 +140,7 @@ if [ "$SKIP_VENV" = false ]; then
             cat .git-config-template >> .git/config
         fi
 
-        git add Disney.py
+        git add disney.py
     fi
 fi
 PYTHON=$(which python3)

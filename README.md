@@ -111,14 +111,14 @@ The latest version of the software is available [here](https://github.com/jc2148
 Make sure your Raspberry Pi's timezone is configured to your local time zone. They'll often have London time on them by default. You can change the timezone of your raspberry pi by running `sudo raspi-config`.
 
 ## Usage
-The installation script adds a line to the top of `Disney.py` to automatically pick up the virtual environment.
+The installation script adds a line to the top of `disney.py` to automatically pick up the virtual environment.
 This means re-activating the environment (`source ./venv/bin/activate`) is not a requirement.
 
-`sudo ./Disney.py` Running as root is 100% an absolute must, or the matrix won't render.
+`sudo ./disney.py` Running as root is 100% an absolute must, or the matrix won't render.
 
 **Adafruit HAT/Bonnet users: You must supply a command line flag:**
 
-`sudo ./Disney.py --led-gpio-mapping="adafruit-hat"`
+`sudo ./disney.py --led-gpio-mapping="adafruit-hat"`
 
 See the Flags section below for more flags you can optionally provide.
 
@@ -127,13 +127,13 @@ See the Flags section below for more flags you can optionally provide.
 To run on other platforms by means of software emulation via `RGBMatrixEmulator`. When running via the emulator, you do not need to prepend your startup commands with `sudo`:
 
 ```sh
-./Disney.py
+./disney.py
 ```
 
 You can also force into emulation mode by using the `--emulated` flag:
 
 ```sh
-./Disney.py --emulated
+./disney.py --emulated
 ```
 
 When running in emulation mode, you can continue to use your existing command line flags as normal.
@@ -207,7 +207,13 @@ Inspired by this board project MLB-LED-Scoreboard [here](https://github.com/MLB-
 
 Putty Command
 64x64
-sudo /home/admin/LED-LightningLane-Live/venv/bin/python Disney.py --led-cols=64 --led-rows=64 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
+sudo /home/admin/LED-LightningLane-Live/venv/bin/python disney.py --led-cols=64 --led-rows=64 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
+
+sudo ./disney.py --emulated --led-cols=64 --led-rows=32 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
+sudo ./disney.py --led-cols=64 --led-rows=32 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
 
 64x32
-sudo /home/admin/LED-LightningLane-Live/venv/bin/python Disney.py --led-cols=64 --led-rows=32 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
+sudo /home/admin/LED-LightningLane-Live/venv/bin/python disney.py --led-cols=64 --led-rows=32 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
+
+
+sudo ./disney.py  --emulated --led-cols=64 --led-rows=32
