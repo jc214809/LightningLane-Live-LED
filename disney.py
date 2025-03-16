@@ -15,7 +15,7 @@ import driver
 from driver import RGBMatrix, RGBMatrixOptions
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
 
 def main():
@@ -27,13 +27,8 @@ def main():
     logo_path = os.path.abspath("./assets/MK.png")
 
     # Use your helper functions to get proper options.
-    command_line_args = args()  # Ensure this returns your actual parsed args.
-    matrixOptions = led_matrix_options(command_line_args)  # This should return an instance of RGBMatrixOptions.
-
-    # Alternatively, if the above functions are not available, you could do:
-    # matrixOptions = RGBMatrixOptions()
-    # matrixOptions.cols = 64
-    # matrixOptions.chain_length = 1
+    command_line_args = args()
+    matrixOptions = led_matrix_options(command_line_args)
 
     matrix = RGBMatrix(options=matrixOptions)
     logging.info("Starting Disney Ride Wait Time Display...")
