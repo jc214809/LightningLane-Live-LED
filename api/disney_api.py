@@ -48,7 +48,7 @@ def fetch_disney_world_parks():
         filtered_parks = [
             (park.get("name", "Unknown"), park.get("id", "Unknown"))
             for park in disney_parks
-            if isinstance(park, dict) and "Water Park" not in park.get("name", "") and "Magic" not in park.get("name", "")
+            if isinstance(park, dict) and "Water Park" not in park.get("name", "")
         ]
 
         logging.debug(f"Filtered Parks: {filtered_parks}")
