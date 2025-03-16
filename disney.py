@@ -9,7 +9,7 @@ from api.disney_api import fetch_disney_world_parks
 from display.display import render_park_name, render_ride_info
 from updater.data_updater import live_data_updater
 
-from updater import debug
+from utils import debug
 
 import driver
 from driver import RGBMatrix, RGBMatrixOptions

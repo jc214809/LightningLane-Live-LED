@@ -1,7 +1,7 @@
 import argparse
 from collections.abc import Mapping
 
-from updater import debug
+from utils import debug
 import json
 
 def logJSONPrettyPrint(jsonObj):
