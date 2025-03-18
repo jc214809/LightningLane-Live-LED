@@ -4,6 +4,7 @@ import time
 import logging
 import threading
 
+from display.startup import render_mickey_classic
 from utils.utils import logJSONPrettyPrint, args, led_matrix_options
 from api.disney_api import fetch_disney_world_parks
 from display.display import render_park_name, render_ride_info
@@ -15,7 +16,7 @@ import driver
 from driver import RGBMatrix, RGBMatrixOptions
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
 
 def main():
@@ -39,7 +40,13 @@ def main():
         from PIL import Image
         logo = Image.open(logo_path)
         matrix.SetImage(logo.convert("RGB"))
+        # time.sleep(30)
         logo.close()
+    else:
+        # If no logo is available, render the Mickey silhouette as an intro.
+        logging.info("No logo found. Rendering Mickey silhouette as intro...")
+        render_mickey_classic(matrix)
+        # time.sleep(30)
 
     disney_park_list = fetch_disney_world_parks()
     if not disney_park_list:
