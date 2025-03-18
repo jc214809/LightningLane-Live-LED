@@ -143,7 +143,7 @@ def format_iso_time(iso_str):
         return iso_str  # Fallback if parsing fails.
 
 
-def render_park_name(matrix, park_obj):
+def render_park_Information_screen(matrix, park_obj):
     """
     Renders the park name at the top and the hours/price at the bottom.
     - For a 64x32 board, uses the existing approach (single-line is centered, multi-line from top).

@@ -7,7 +7,7 @@ import threading
 from display.startup import render_mickey_classic
 from utils.utils import logJSONPrettyPrint, args, led_matrix_options
 from api.disney_api import fetch_disney_world_parks
-from display.display import render_park_name, render_ride_info
+from display.display import render_park_Information_screen, render_ride_info
 from updater.data_updater import live_data_updater
 
 from utils import debug
@@ -73,7 +73,7 @@ def main():
                         continue
                     matrix.Clear()
                     logging.info(f"Rendering {park['name']} Title Screen.")
-                    render_park_name(matrix, park)
+                    render_park_Information_screen(matrix, park)
                     time.sleep(5)
                     for ride_info in park.get("attractions", []):
                         matrix.Clear()
