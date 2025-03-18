@@ -142,90 +142,127 @@ def format_iso_time(iso_str):
     except Exception:
         return iso_str  # Fallback if parsing fails.
 
+
 def render_park_name(matrix, park_obj):
     """
-    Renders the park name at the top, handling single-line vs. multi-line differently:
-      - Single-line: More centered in the top region.
-      - Multi-line: Using the original approach (top-based).
-    Then at the bottom (same baseline):
-      - Operating hours on the left
-      - LLMP price on the right (shifted slightly more to the right)
+    Renders the park name at the top and the hours/price at the bottom.
+    - For a 64x32 board, uses the existing approach (single-line is centered, multi-line from top).
+    - For a 64x64 board, centers the entire name block (single or multi-line) in the top region.
 
-    Fonts:
-      - 6x9 for the park name
-      - 4x6-legacy for hours and price
+    Bottom text (hours & price) always goes at the bottom-left and bottom-right.
 
-    Keys needed in park_obj:
-      - 'name': string
-      - 'openingTime': e.g. "2025-03-17T09:00:00-04:00"
-      - 'closingTime': e.g. "2025-03-17T22:00:00-04:00"
-      - 'llmpPrice': e.g. "$29.00" or "29.00"
+    park_obj is expected to have:
+      'name', 'openingTime', 'closingTime', 'llmpPrice'
     """
 
-    # ---------------------------
+    # -------------------------------------------------------------------
     # 1) LOAD FONTS & COLORS
-    # ---------------------------
+    # -------------------------------------------------------------------
     name_font = graphics.Font()
     name_font.LoadFont("assets/fonts/patched/6x9.bdf")
-    name_color = graphics.Color(255, 255, 255)
-
     info_font = graphics.Font()
     info_font.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
+
+    name_color = graphics.Color(255, 255, 255)
     info_color = graphics.Color(255, 255, 255)
 
-    # ---------------------------
-    # 2) DETERMINE AVAILABLE SPACE AT TOP
-    # ---------------------------
-    top_padding = 2
-    park_name = park_obj.get("name", "Unknown")
+    # -------------------------------------------------------------------
+    # 2) DETERMINE PADDING & AVAILABLE SPACE BASED ON BOARD SIZE
+    # -------------------------------------------------------------------
+    board_width = matrix.width
+    board_height = matrix.height
 
-    bottom_padding = 2
-    info_font_height = getattr(info_font, "height", 6)
-    # We only need one baseline for hours & price at the bottom.
-    # Add a couple of extra pixels for safety:
-    bottom_area_height = info_font_height + bottom_padding + 2
+    if board_height == 32:
+        # Settings for 64x32
+        top_padding = 2
+        bottom_padding = 2
+        info_font_height = getattr(info_font, "height", 6)
+        bottom_area_height = info_font_height + bottom_padding + 2
+    elif board_height == 64:
+        # Settings for 64x64
+        top_padding = 4
+        bottom_padding = 4
+        info_font_height = getattr(info_font, "height", 6)
+        bottom_area_height = info_font_height + bottom_padding + 2
+    else:
+        logging.warning("Unsupported board height; defaulting to 64x32 settings.")
+        top_padding = 2
+        bottom_padding = 2
+        info_font_height = getattr(info_font, "height", 6)
+        bottom_area_height = info_font_height + bottom_padding + 2
 
-    available_top_height = matrix.height - bottom_area_height - top_padding
+    available_top_height = board_height - bottom_area_height - top_padding
+    name_font_height = getattr(name_font, "height", 9)
 
-    # Wrap the name so it won't be cut off vertically.
+    # -------------------------------------------------------------------
+    # 3) WRAP THE PARK NAME TO FIT THE TOP REGION
+    # -------------------------------------------------------------------
+    park_name_text = park_obj.get("name", "Unknown")
     wrapped_name = wrap_text(
         name_font,
-        park_name,
-        max_width=matrix.width,
+        park_name_text,
+        max_width=board_width,
         max_height=available_top_height
     )
 
-    name_font_height = getattr(name_font, "height", 9)
+    # -------------------------------------------------------------------
+    # 4) RENDER THE PARK NAME (DIFFERENT LOGIC FOR 64x32 vs. 64x64)
+    # -------------------------------------------------------------------
+    if board_height == 32:
+        # 64x32 approach: single-line => center vertically, multi-line => from top
+        if len(wrapped_name) == 1:
+            # single-line
+            single_line_text = wrapped_name[0]
+            single_line_width = sum(name_font.CharacterWidth(ord(ch)) for ch in single_line_text)
+            top_region_height = available_top_height
+            single_line_baseline = top_padding + (top_region_height - name_font_height) // 2 + name_font_height
+            x = (board_width - single_line_width) // 2
+            graphics.DrawText(matrix, name_font, x, single_line_baseline, name_color, single_line_text)
+        else:
+            # multi-line
+            current_y = top_padding + name_font_height
+            for line in wrapped_name:
+                line_width = sum(name_font.CharacterWidth(ord(ch)) for ch in line)
+                x = (board_width - line_width) // 2
+                graphics.DrawText(matrix, name_font, x, current_y, name_color, line)
+                current_y += name_font_height
 
-    # ---------------------------
-    # 3) RENDER THE PARK NAME
-    # ---------------------------
-    if len(wrapped_name) == 1:
-        # Single-line name => center more vertically in the top region.
-        single_line_text = wrapped_name[0]
-        single_line_width = sum(name_font.CharacterWidth(ord(ch)) for ch in single_line_text)
-
-        # The top region is from top_padding to matrix.height - bottom_area_height.
-        top_region_height = matrix.height - bottom_area_height - top_padding
-        # The text block is name_font_height tall; center it:
-        single_line_baseline = top_padding + (top_region_height - name_font_height)//2 + name_font_height
-
-        x = (matrix.width - single_line_width) // 2
-        graphics.DrawText(matrix, name_font, x, single_line_baseline, name_color, single_line_text)
-    else:
-        # Multi-line => use the original approach (top-based).
-        current_y = top_padding + name_font_height
+    elif board_height == 64:
+        # 64x64 approach: always center the entire block (single or multi-line)
+        total_lines = len(wrapped_name)
+        block_height = total_lines * name_font_height
+        # top_of_block is the top of that text block
+        top_of_block = top_padding + (available_top_height - block_height) // 2
+        # We'll treat each line's baseline as top_of_block + line_index * name_font_height + name_font_height
+        # If your library uses baseline coords, the first line's baseline is top_of_block + name_font_height
+        current_y = top_of_block + name_font_height
         for line in wrapped_name:
             line_width = sum(name_font.CharacterWidth(ord(ch)) for ch in line)
-            x = (matrix.width - line_width) // 2
+            x = (board_width - line_width) // 2
             graphics.DrawText(matrix, name_font, x, current_y, name_color, line)
             current_y += name_font_height
 
-    # ---------------------------
-    # 4) RENDER HOURS & PRICE AT BOTTOM
-    # ---------------------------
-    baseline_y = matrix.height - 1  # Baseline near bottom.
+    else:
+        # Fallback logic if it's some other size
+        if len(wrapped_name) == 1:
+            single_line_text = wrapped_name[0]
+            single_line_width = sum(name_font.CharacterWidth(ord(ch)) for ch in single_line_text)
+            top_region_height = available_top_height
+            single_line_baseline = top_padding + (top_region_height - name_font_height) // 2 + name_font_height
+            x = (board_width - single_line_width) // 2
+            graphics.DrawText(matrix, name_font, x, single_line_baseline, name_color, single_line_text)
+        else:
+            current_y = top_padding + name_font_height
+            for line in wrapped_name:
+                line_width = sum(name_font.CharacterWidth(ord(ch)) for ch in line)
+                x = (board_width - line_width) // 2
+                graphics.DrawText(matrix, name_font, x, current_y, name_color, line)
+                current_y += name_font_height
 
+    # -------------------------------------------------------------------
+    # 5) RENDER OPERATING HOURS & PRICE AT THE BOTTOM
+    # -------------------------------------------------------------------
+    baseline_y = board_height - 1
     # Format hours
     opening_time = park_obj.get("openingTime", "")
     closing_time = park_obj.get("closingTime", "")
@@ -234,25 +271,19 @@ def render_park_name(matrix, park_obj):
     else:
         hours_text = "??-??"
 
-    # Bottom-left for hours
     left_padding = 2
     graphics.DrawText(matrix, info_font, left_padding, baseline_y, info_color, hours_text)
 
-    # Price at bottom-right, shift slightly more to the right
     llmp_price = park_obj.get("llmpPrice", "")
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
-
     price_width = sum(info_font.CharacterWidth(ord(ch)) for ch in llmp_price)
-    # Tweak right padding from 2 to 1 for a slightly more right-aligned look
     right_padding = 1
-    price_x = matrix.width - price_width - right_padding
+    price_x = board_width - price_width - right_padding
     graphics.DrawText(matrix, info_font, price_x, baseline_y, info_color, llmp_price)
 
-    # ---------------------------
-    # DEBUG LOGGING
-    # ---------------------------
-    logging.debug(f"Park name lines: {wrapped_name}")
-    logging.debug(f"Bottom baseline_y: {baseline_y}")
-    logging.debug(f"Hours text: '{hours_text}' => left X={left_padding}")
-    logging.debug(f"Price text: '{llmp_price}' => right X={price_x}")
+    # -------------------------------------------------------------------
+    # 6) DEBUG LOGGING (optional)
+    # -------------------------------------------------------------------
+    logging.debug(f"Wrapped park name: {wrapped_name}")
+    logging.debug(f"Baseline Y: {baseline_y}, Hours: '{hours_text}', Price: '{llmp_price}'")
