@@ -1,7 +1,8 @@
 import time
 import logging
 import asyncio
-from api.disney_api import fetch_parks_and_attractions, fetch_live_data
+from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
+
 
 def update_parks_live_data(parks):
     """
@@ -14,6 +15,7 @@ def update_parks_live_data(parks):
             park["attractions"] = updated_attractions
 
     logging.debug(f"Updated parks data: {parks}")
+
     return parks
 
 def live_data_updater(disney_park_list, update_interval, parks_holder):
@@ -25,6 +27,8 @@ def live_data_updater(disney_park_list, update_interval, parks_holder):
         parks = fetch_parks_and_attractions(disney_park_list)
         if parks:
             updated_parks = update_parks_live_data(parks)
+            # Update each park with operating status.
+            updated_parks = update_parks_operating_status(updated_parks)
             parks_holder[:] = updated_parks  # Update shared list in-place.
             logging.info("Parks live data updated in background.")
         else:
