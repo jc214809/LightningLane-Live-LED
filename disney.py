@@ -18,6 +18,7 @@ from driver import RGBMatrix, RGBMatrixOptions
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
+is_image_ready = False
 
 def main():
     # Check Python version.
@@ -35,18 +36,18 @@ def main():
     logging.info("Starting Disney Ride Wait Time Display...")
 
     # Optional: Display a logo if available.
-    if os.path.exists(logo_path) and False:
+    if os.path.exists(logo_path) and is_image_ready:
         logging.info("Logo found. Displaying...")
         from PIL import Image
         logo = Image.open(logo_path)
         matrix.SetImage(logo.convert("RGB"))
-        # time.sleep(30)
+        time.sleep(10)
         logo.close()
     else:
         # If no logo is available, render the Mickey silhouette as an intro.
         logging.info("No logo found. Rendering Mickey silhouette as intro...")
         render_mickey_classic(matrix)
-        # time.sleep(30)
+        #time.sleep(10)
 
     disney_park_list = fetch_disney_world_parks()
     if not disney_park_list:

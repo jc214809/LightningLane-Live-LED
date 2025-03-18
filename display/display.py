@@ -163,8 +163,8 @@ def render_park_information_screen(matrix, park_obj):
     info_font = graphics.Font()
     info_font.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
 
-    name_color = graphics.Color(255, 255, 255)
-    info_color = graphics.Color(255, 255, 255)
+    name_color = graphics.Color(242,5,5) #Mickey Mouse Red
+    info_color = graphics.Color(17, 60, 207) #Disney Blue
 
     # -------------------------------------------------------------------
     # 2) DETERMINE PADDING & AVAILABLE SPACE BASED ON BOARD SIZE
