@@ -117,7 +117,7 @@ def fetch_parks_and_attractions(disney_park_list):
 
         park_obj = {
             "id": park_id,
-            "name": park_name,
+            "name": park_name.replace("Theme", " ").replace("Park", " "),
             "attractions": attractions,
             "specialTicketedEvent": special_ticketed_event,
             "closingTime": closing_time,
