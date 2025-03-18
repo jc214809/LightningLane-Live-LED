@@ -73,7 +73,7 @@ def main():
                         continue
                     matrix.Clear()
                     logging.info(f"Rendering {park['name']} Title Screen.")
-                    render_park_name(matrix, park["name"])
+                    render_park_name(matrix, park)
                     time.sleep(5)
                     for ride_info in park.get("attractions", []):
                         matrix.Clear()
