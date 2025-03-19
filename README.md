@@ -217,3 +217,5 @@ sudo /home/admin/LED-LightningLane-Live/venv/bin/python disney.py --led-cols=64 
 
 
 sudo ./disney.py  --emulated --led-cols=64 --led-rows=32
+
+sudo ./LLL-install.sh -p -c -m

@@ -5,6 +5,10 @@ import aiohttp
 from datetime import datetime, timedelta
 from utils.utils import logJSONPrettyPrint
 
+troublesome_attraction_64x64_ids = ["06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
+troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
+
+
 def fetch_disney_world_parks():
     """
     Fetch and return a list of Walt Disney World parks with their respective IDs
@@ -102,7 +106,7 @@ def fetch_parks_and_attractions(disney_park_list):
 
         attractions = []
         for item in park_data.get("children", []):
-            if item.get("entityType") == "ATTRACTION":
+            if item.get("entityType") == "ATTRACTION": # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
                 attraction = {
                     "id": item.get("id"),
                     "name": item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " "),
