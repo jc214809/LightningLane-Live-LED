@@ -45,6 +45,7 @@ def render_ride_info(matrix, ride_info):
     Renders ride name at the top and wait time at the bottom in a single draw call.
     The combined text block is drawn from the center of the screen.
     Each line is vertically centered, with a dynamic gap between ride name and wait time.
+    Padding is added only if the text fits within the width and height of the board.
     """
     logging.debug(f"Rendering ride info: {ride_info}")
     ride_name = ride_info["name"]
@@ -102,10 +103,18 @@ def render_ride_info(matrix, ride_info):
         get_text_width(rideFont, line) if line in wrapped_ride_name else get_text_width(waittimeFont, line) for line in
         combined_lines)
 
-    # Horizontal centering
-    needed_y_offset = 5
-    x_position = (matrix.width - longest_line_width) // 2
-    logging.info(f"Longest line width: {longest_line_width}, x_position: {x_position}")
+    # Horizontal centering with conditional 1 unit padding on each side
+    padding = 1
+    total_width_with_padding = longest_line_width + 2 * padding  # 1 unit on left and right
+
+    if total_width_with_padding <= matrix.width:
+        # Apply padding if it fits
+        x_position = (matrix.width - total_width_with_padding) // 2
+        logging.info(f"Padding applied. x_position: {x_position}")
+    else:
+        # If it doesn't fit, center without padding
+        x_position = (matrix.width - longest_line_width) // 2
+        logging.info(f"No padding applied. x_position: {x_position}")
 
     # Vertical centering: Calculate the starting Y position for the entire block
     y_position = (matrix.height - total_lines_height) // 2
@@ -115,12 +124,12 @@ def render_ride_info(matrix, ride_info):
     gap_between_ride_and_wait_time = 2  # Default gap between the sections
 
     # Check if the total height with the gap exceeds the board height
-    if total_lines_height + gap_between_ride_and_wait_time > matrix.height:
+    if total_lines_height + gap_between_ride_and_wait_time > matrix.height+5:
         gap_between_ride_and_wait_time = 0  # Reduce gap to zero if it doesn't fit
         logging.info(f"Reduced gap to {gap_between_ride_and_wait_time} to fit the text on the board.")
 
     # Start drawing from the center, center each line vertically
-    current_y_position = y_position + needed_y_offset
+    current_y_position = y_position + 5  # Add any necessary offset to center properly
 
     # Add the gap between the ride name and wait time
     ride_name_height = len(wrapped_ride_name) * name_line_height  # Total height of ride name lines
@@ -128,17 +137,22 @@ def render_ride_info(matrix, ride_info):
     for idx, line in enumerate(combined_lines):
         line_width = get_text_width(rideFont, line) if line in wrapped_ride_name else get_text_width(waittimeFont, line)
 
-        # Calculate x_position to center each line horizontally
-        x_position = (matrix.width - line_width) // 2
+        # Calculate x_position to center each line horizontally with the padding if applicable
+        if total_width_with_padding <= matrix.width:
+            # Apply padding when rendering the line
+            line_x_position = (matrix.width - line_width - 2 * padding) // 2
+        else:
+            # Center without padding
+            line_x_position = (matrix.width - line_width) // 2
 
         # Log the line details
-        logging.info(f"Drawing line: '{line}' at position ({x_position}, {current_y_position})")
+        logging.info(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
 
         # Directly use graphics.DrawText instead of dynamic spacing
         if line in wrapped_ride_name:
-            graphics.DrawText(matrix, rideFont, x_position, current_y_position, color_white, line)
+            graphics.DrawText(matrix, rideFont, line_x_position, current_y_position, color_white, line)
         else:
-            graphics.DrawText(matrix, waittimeFont, x_position, current_y_position, color_white, line)
+            graphics.DrawText(matrix, waittimeFont, line_x_position, current_y_position, color_white, line)
 
         # Move the y_position down for the next line
         current_y_position += line_heights[idx]
@@ -156,7 +170,7 @@ def format_iso_time(iso_str):
     """
     try:
         dt = datetime.fromisoformat(iso_str)
-        return dt.strftime("%I%p").lstrip("0").lower()
+        return dt.strftime("%I%p").lstrip("0").upper()
     except Exception:
         return iso_str  # Fallback if parsing fails.
 
