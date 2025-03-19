@@ -157,7 +157,7 @@ async def fetch_live_data_for_attraction(session, attraction):
                     attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", None)
                     attraction["status"] = live_data_entry.get("status", None)
                     if live_data_entry.get("status") == "DOWN":
-                        attraction["waitTime"] = f"Down {get_down_time(live_data_entry.get("lastUpdated"))}" 
+                        attraction["waitTime"] = f"Down {get_down_time(live_data_entry.get('lastUpdated'))}"
                     if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT","DOWN"]:
                         attraction["waitTime"] = live_data_entry.get("queue", {}) \
                             .get("STANDBY", {}) \
