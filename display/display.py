@@ -46,7 +46,7 @@ def load_fonts(matrix_height):
     """Load fonts based on the board height."""
     if matrix_height == 64:
         rideFont = graphics.Font()
-        rideFont.LoadFont("assets/fonts/patched/6x9.bdf")
+        rideFont.LoadFont("assets/fonts/patched/5x8.bdf")
         waittimeFont = graphics.Font()
         waittimeFont.LoadFont("assets/fonts/patched/5x8.bdf")
         logging.info("Matrix height: 64.")
