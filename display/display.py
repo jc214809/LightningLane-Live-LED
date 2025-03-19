@@ -150,11 +150,15 @@ def render_lines(matrix, combined_lines, rideFont, waittimeFont, x_position, y_p
         logging.info(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
 
         # Draw the text on the matrix
+        text_color = graphics.Color(255, 255, 255)
+
         if line in wrapped_ride_name:
-            graphics.DrawText(matrix, rideFont, line_x_position, current_y_position, graphics.Color(255, 255, 255),
+            graphics.DrawText(matrix, rideFont, line_x_position, current_y_position, text_color,
                               line)
         else:
-            graphics.DrawText(matrix, waittimeFont, line_x_position, current_y_position, graphics.Color(255, 255, 255),
+            if "down" in line.lower():
+                text_color = graphics.Color(242, 5, 5)
+            graphics.DrawText(matrix, waittimeFont, line_x_position, current_y_position, text_color,
                               line)
 
         # Move the y_position down for the next line
