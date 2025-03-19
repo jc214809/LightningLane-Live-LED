@@ -44,6 +44,7 @@ def render_ride_info(matrix, ride_info):
     """
     Renders ride name at the top and wait time at the bottom in a single draw call.
     The combined text block is drawn from the center of the screen.
+    Each line is vertically centered, with a dynamic gap between ride name and wait time.
     """
     logging.debug(f"Rendering ride info: {ride_info}")
     ride_name = ride_info["name"]
@@ -67,8 +68,8 @@ def render_ride_info(matrix, ride_info):
         return
 
     # Wrap the text for both ride name and wait time.
-    name_line_height = getattr(rideFont, "height", 9)
-    waittime_line_height = getattr(waittimeFont, "height", 6)
+    name_line_height = getattr(rideFont, "height")
+    waittime_line_height = getattr(waittimeFont, "height")
 
     wrapped_ride_name = wrap_text(rideFont, ride_name, matrix.width, matrix.height)
     wrapped_wait_time = wrap_text(waittimeFont, wait_time, matrix.width, matrix.height)
@@ -85,33 +86,68 @@ def render_ride_info(matrix, ride_info):
     color_white = graphics.Color(255, 255, 255)
 
     # Calculate the total height of all lines
-    total_lines_height = len(combined_lines) * max(name_line_height, waittime_line_height)
+    total_lines_height = 0
+    line_heights = []  # Store individual line heights
+    for line in combined_lines:
+        line_height = name_line_height if line in wrapped_ride_name else waittime_line_height
+        line_heights.append(line_height)
+        total_lines_height += line_height
+        logging.info(f"Line: '{line}' has height: {line_height}")
 
-    # Vertical centering
+    # Log total height of all lines
+    logging.info(f"Total lines height: {total_lines_height}")
+
+    # Calculate the center position for x
+    longest_line_width = max(
+        get_text_width(rideFont, line) if line in wrapped_ride_name else get_text_width(waittimeFont, line) for line in
+        combined_lines)
+
+    # Horizontal centering
+    needed_y_offset = 5
+    x_position = (matrix.width - longest_line_width) // 2
+    logging.info(f"Longest line width: {longest_line_width}, x_position: {x_position}")
+
+    # Vertical centering: Calculate the starting Y position for the entire block
     y_position = (matrix.height - total_lines_height) // 2
     logging.info(f"y_position calculated: {y_position}")
 
-    # Start drawing from the center, center each line horizontally
-    for line in combined_lines:
-        # Get the width of the line based on the font
+    # Calculate initial gap between ride name and wait time
+    gap_between_ride_and_wait_time = 2  # Default gap between the sections
+
+    # Check if the total height with the gap exceeds the board height
+    if total_lines_height + gap_between_ride_and_wait_time > matrix.height:
+        gap_between_ride_and_wait_time = 0  # Reduce gap to zero if it doesn't fit
+        logging.info(f"Reduced gap to {gap_between_ride_and_wait_time} to fit the text on the board.")
+
+    # Start drawing from the center, center each line vertically
+    current_y_position = y_position + needed_y_offset
+
+    # Add the gap between the ride name and wait time
+    ride_name_height = len(wrapped_ride_name) * name_line_height  # Total height of ride name lines
+
+    for idx, line in enumerate(combined_lines):
         line_width = get_text_width(rideFont, line) if line in wrapped_ride_name else get_text_width(waittimeFont, line)
 
         # Calculate x_position to center each line horizontally
         x_position = (matrix.width - line_width) // 2
 
         # Log the line details
-        logging.info(f"Drawing line: '{line}' at position ({x_position}, {y_position})")
+        logging.info(f"Drawing line: '{line}' at position ({x_position}, {current_y_position})")
 
         # Directly use graphics.DrawText instead of dynamic spacing
         if line in wrapped_ride_name:
-            graphics.DrawText(matrix, rideFont, x_position, y_position, color_white, line)
+            graphics.DrawText(matrix, rideFont, x_position, current_y_position, color_white, line)
         else:
-            graphics.DrawText(matrix, waittimeFont, x_position, y_position, color_white, line)
+            graphics.DrawText(matrix, waittimeFont, x_position, current_y_position, color_white, line)
 
         # Move the y_position down for the next line
-        y_position += name_line_height if line in wrapped_ride_name else waittime_line_height
+        current_y_position += line_heights[idx]
 
-    logging.debug(f"Total text height: {total_lines_height}, Final Y position: {y_position}")
+        # Add a gap after the ride name section to the wait time section
+        if idx == len(wrapped_ride_name) - 1:  # After the last line of the ride name
+            current_y_position += gap_between_ride_and_wait_time
+
+    logging.debug(f"Total text height: {total_lines_height}, Final Y position: {current_y_position}")
 
 def format_iso_time(iso_str):
     """
