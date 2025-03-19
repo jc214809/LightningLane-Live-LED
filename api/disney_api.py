@@ -106,7 +106,7 @@ def fetch_parks_and_attractions(disney_park_list):
 
         attractions = []
         for item in park_data.get("children", []):
-            if item.get("entityType") == "ATTRACTION" and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
+            if item.get("entityType") == "ATTRACTION": # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
                 attraction = {
                     "id": item.get("id"),
                     "name": item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " "),
