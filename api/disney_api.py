@@ -5,6 +5,10 @@ import aiohttp
 from datetime import datetime, timedelta
 from utils.utils import logJSONPrettyPrint
 
+troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
+troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
+
+
 def fetch_disney_world_parks():
     """
     Fetch and return a list of Walt Disney World parks with their respective IDs
@@ -102,10 +106,10 @@ def fetch_parks_and_attractions(disney_park_list):
 
         attractions = []
         for item in park_data.get("children", []):
-            if item.get("entityType") == "ATTRACTION":
+            if item.get("entityType") == "ATTRACTION": # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
                 attraction = {
                     "id": item.get("id"),
-                    "name": item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " "),
+                    "name": item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", ""),
                     "entityType": item.get("entityType"),
                     "parkId": park_id,
                     "waitTime": '',      # Placeholder for wait time
@@ -128,6 +132,13 @@ def fetch_parks_and_attractions(disney_park_list):
     return parks
 
 
+def get_down_time(last_updated_date, date_format='%Y-%m-%dT%H:%M:%SZ'):
+    target_date = datetime.strptime(last_updated_date, date_format)
+    current_time = datetime.utcnow()
+    time_diff = current_time - target_date
+    minutes = time_diff.total_seconds() / 60
+    return round(minutes)
+
 async def fetch_live_data_for_attraction(session, attraction):
     """
     Fetch live data for a single attraction.
@@ -143,12 +154,14 @@ async def fetch_live_data_for_attraction(session, attraction):
                 live_data_info = data.get('liveData', [])
                 if live_data_info:
                     live_data_entry = live_data_info[0]  # Use the first liveData entry
-                    if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT"]:
-                        attraction["waitTime"] = live_data_entry.get("queue", {}) \
-                                                              .get("STANDBY", {}) \
-                                                              .get("waitTime", None)
-                    attraction["status"] = live_data_entry.get("status", None)
                     attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", None)
+                    attraction["status"] = live_data_entry.get("status", None)
+                    if live_data_entry.get("status") == "DOWN":
+                        attraction["waitTime"] = f"Down {get_down_time(live_data_entry.get("lastUpdated"))}" 
+                    if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT","DOWN"]:
+                        attraction["waitTime"] = live_data_entry.get("queue", {}) \
+                            .get("STANDBY", {}) \
+                            .get("waitTime", None)
             else:
                 logging.error(f"Failed to fetch live data for {attraction['name']}, Status Code: {response.status}")
     except Exception as e:

@@ -1,5 +1,5 @@
 SCRIPT_NAME = "Lightning-Live-LED"
-SCRIPT_VERSION = "0.2.0"
+SCRIPT_VERSION = "0.3.5"
 
 
 if __name__ == "__main__":
