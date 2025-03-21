@@ -90,6 +90,7 @@ def main():
                 logging.info("No parks data yet, waiting...")
                 time.sleep(5)
     except Exception as e:
+        matrix.Clear()
         logging.error(f"An error occurred: {e}")
     finally:
         matrix.Clear()

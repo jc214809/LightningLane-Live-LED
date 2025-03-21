@@ -7,6 +7,7 @@ from utils.utils import logJSONPrettyPrint
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
+troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
 
 
 def fetch_disney_world_parks():
@@ -156,7 +157,7 @@ async def fetch_live_data_for_attraction(session, attraction):
                     live_data_entry = live_data_info[0]  # Use the first liveData entry
                     attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", None)
                     attraction["status"] = live_data_entry.get("status", None)
-                    if live_data_entry.get("status") == "DOWN":
+                    if live_data_entry.get("status") == "DOWN" and live_data_entry.get("entityType") == "ATTRACTION":
                         attraction["waitTime"] = f"Down {get_down_time(live_data_entry.get('lastUpdated'))}"
                     if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT","DOWN"]:
                         attraction["waitTime"] = live_data_entry.get("queue", {}) \
