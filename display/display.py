@@ -227,116 +227,113 @@ def format_iso_time(iso_str):
     except Exception:
         return iso_str  # Fallback if parsing fails.
 
+def draw_centered_text_block(matrix, font, text_lines, region_width, region_height, color):
+    """Draws multiple lines of text centered vertically in a region."""
+    font_height = getattr(font, "height", 9)
+    block_height = len(text_lines) * font_height
+    # Start baseline so the entire block is vertically centered.
+    current_y = (region_height - block_height) // 2 + font_height
+    for line in text_lines:
+        line_width = get_text_width(font, line)
+        x = (region_width - line_width) // 2
+        graphics.DrawText(matrix, font, x, current_y, color, line)
+        current_y += font_height
+
+def draw_single_line_centered(matrix, font, text, region_width, region_height, color):
+    """Draws a single line of text centered vertically in a region."""
+    font_height = getattr(font, "height", 9)
+    line_width = get_text_width(font, text)
+    baseline = (region_height - font_height) // 2 + font_height
+    x = (region_width - line_width) // 2
+    graphics.DrawText(matrix, font, x, baseline, color, text)
+
 def render_park_information_screen(matrix, park_obj):
     """
     Renders the park name at the top and the hours/price at the bottom.
-    For a 64x32 board, if the park name is a single line, it is centered;
-    if multi-line, the lines are drawn from the top. For a 64x64 board,
-    the park name block is vertically centered.
-    Hours are rendered at the bottom-left and price at the bottom-right.
+    Uses board-specific fonts based on board size.
     """
-    # Load fonts.
-    name_font = graphics.Font()
-    name_font.LoadFont("assets/fonts/patched/6x9.bdf")
-    info_font = graphics.Font()
-    info_font.LoadFont("assets/fonts/patched/4x6-legacy.bdf")
-
-    name_color = graphics.Color(242, 5, 5)     # Mickey Mouse Red
-    info_color = graphics.Color(17, 60, 207)   # Disney Blue
-
     board_width = matrix.width
     board_height = matrix.height
 
-    # Set padding and bottom area height based on board size.
-    if board_height == 32:
-        top_padding = 0
-        bottom_padding = 0
-        info_font_height = getattr(info_font, "height", 6)
-        bottom_area_height = info_font_height  # no extra padding
-    elif board_height == 64:
-        top_padding = 0
-        bottom_padding = 0
-        info_font_height = getattr(info_font, "height", 6)
-        bottom_area_height = info_font_height  # no extra padding
+    # Define font paths for different board sizes.
+    font_paths = {
+        32: {
+            "name": "assets/fonts/patched/6x9.bdf",
+            "info": "assets/fonts/patched/4x6-legacy.bdf"
+        },
+        64: {
+            "name": "assets/fonts/patched/6x13.bdf",
+            "info": "assets/fonts/patched/4x6-legacy.bdf"
+        }
+    }
+
+    # Choose fonts based on board size; default to 32x settings if not recognized.
+    if board_height in font_paths:
+        name_font_path = font_paths[board_height]["name"]
+        info_font_path = font_paths[board_height]["info"]
     else:
-        logging.warning("Unsupported board height; defaulting to 64x32 settings.")
-        top_padding = 0
-        bottom_padding = 0
-        info_font_height = getattr(info_font, "height", 6)
-        bottom_area_height = info_font_height
+        logging.warning("Unsupported board height; defaulting to 32x settings.")
+        name_font_path = font_paths[32]["name"]
+        info_font_path = font_paths[32]["info"]
+
+    # Load fonts.
+    name_font = graphics.Font()
+    name_font.LoadFont(name_font_path)
+    info_font = graphics.Font()
+    info_font.LoadFont(info_font_path)
+
+    name_color = graphics.Color(242, 5, 5)   # Mickey Mouse Red
+    info_color = graphics.Color(17, 60, 207)   # Disney Blue
+
+    # Determine bottom area height using info_font's height.
+    info_font_height = getattr(info_font, "height")
+    bottom_area_height = info_font_height
 
     available_top_height = board_height - bottom_area_height
-    name_font_height = getattr(name_font, "height", 9)
 
-    # Wrap park name.
-    park_name_text = park_obj.get("name", "Unknown")
-    wrapped_name = wrap_text(name_font, park_name_text, board_width, available_top_height, 1)
+    # Wrap park name
+    wrapped_name = wrap_text(name_font, park_obj.get("name"), board_width, available_top_height, 1)
 
-    # For 32-pixel boards, either center one line or center the entire block if multiple lines
+    # Draw the park name based on board size.
     if board_height == 32:
         if len(wrapped_name) == 1:
-            single_line_text = wrapped_name[0]
-            single_line_width = get_text_width(name_font, single_line_text)
-            top_region_height = available_top_height
-            single_line_baseline = (top_region_height - name_font_height) // 2 + name_font_height
-            x = (board_width - single_line_width) // 2
-            graphics.DrawText(matrix, name_font, x, single_line_baseline, name_color, single_line_text)
+            draw_single_line_centered(matrix, name_font, wrapped_name[0], board_width, available_top_height, name_color)
         else:
-            # Center the entire block
-            total_lines = len(wrapped_name)
-            block_height = total_lines * name_font_height
-            top_of_block = (available_top_height - block_height) // 2
-            current_y = top_of_block + name_font_height
-            for line in wrapped_name:
-                line_width = get_text_width(name_font, line)
-                x = (board_width - line_width) // 2
-                graphics.DrawText(matrix, name_font, x, current_y, name_color, line)
-                current_y += name_font_height
-
+            draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height, name_color)
     elif board_height == 64:
-        # For 64-pixel boards, always center the entire block
-        total_lines = len(wrapped_name)
-        block_height = total_lines * name_font_height
-        top_of_block = (available_top_height - block_height) // 2
-        current_y = top_of_block + name_font_height
-        for line in wrapped_name:
-            line_width = get_text_width(name_font, line)
-            x = (board_width - line_width) // 2
-            graphics.DrawText(matrix, name_font, x, current_y, name_color, line)
-            current_y += name_font_height
+        # Always center the entire block for 64-pixel boards.
+        draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height, name_color)
     else:
-        # Fallback for any unexpected board size
+        # Fallback for any unexpected board size.
         if len(wrapped_name) == 1:
-            single_line_text = wrapped_name[0]
-            single_line_width = get_text_width(name_font, single_line_text)
-            top_region_height = available_top_height
-            single_line_baseline = (top_region_height - name_font_height) // 2 + name_font_height
-            x = (board_width - single_line_width) // 2
-            graphics.DrawText(matrix, name_font, x, single_line_baseline, name_color, single_line_text)
+            draw_single_line_centered(matrix, name_font, wrapped_name[0], board_width, available_top_height, name_color)
         else:
-            current_y = name_font_height
-            for line in wrapped_name:
-                line_width = get_text_width(name_font, line)
-                x = (board_width - line_width) // 2
-                graphics.DrawText(matrix, name_font, x, current_y, name_color, line)
-                current_y += name_font_height
+            draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height, name_color)
 
-    # Render operating hours & price at the bottom.
     baseline_y = board_height - 1
-    opening_time = park_obj.get("openingTime", "")
-    closing_time = park_obj.get("closingTime", "")
-    hours_text = f"{format_iso_time(opening_time)}-{format_iso_time(closing_time)}" \
-                 if opening_time and closing_time else "??-??"
-    left_padding = 0
-    graphics.DrawText(matrix, info_font, left_padding, baseline_y, info_color, hours_text)
+    rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj)
+    render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, park_obj)
 
+
+def render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, park_obj):
     llmp_price = park_obj.get("llmpPrice", "")
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
     price_width = get_text_width(info_font, llmp_price)
-    right_padding = 0
+    right_padding = 1
     price_x = board_width - price_width - right_padding
     graphics.DrawText(matrix, info_font, price_x, baseline_y, info_color, llmp_price)
 
-    logging.debug(f"Wrapped park name: {wrapped_name}")
-    logging.debug(f"Baseline Y: {baseline_y}, Hours: '{hours_text}', Price: '{llmp_price}'")
+
+def rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj):
+    # Render operating hours & price at the bottom.
+    opening_time = park_obj.get("openingTime", "")
+    closing_time = park_obj.get("closingTime", "")
+    if opening_time and closing_time:
+        hours_text = f"{format_iso_time(opening_time)}-{format_iso_time(closing_time)}"
+    else:
+        hours_text = "??-??"
+    left_padding = 1
+    graphics.DrawText(matrix, info_font, left_padding, baseline_y, info_color, hours_text)
+
+
