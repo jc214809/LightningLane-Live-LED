@@ -3,19 +3,19 @@ from datetime import datetime
 from driver import graphics
 from display.display import get_text_width
 
-def wrap_text(font, text, max_width):
-    """Wrap text to fit within the specified max_width."""
+def wrap_text_in_lines(font, text, max_chars_per_line):
+    """Wrap a line of text into multiple lines that fit within the specified max_chars_per_line."""
     words = text.split()
     lines = []
     current_line = ""
 
     for word in words:
         if current_line:
-            test_line = current_line + " " + word
+            test_line = f"{current_line} {word}"
         else:
             test_line = word
 
-        if get_text_width(font, test_line) <= max_width:
+        if get_text_width(font, test_line) <= max_chars_per_line:
             current_line = test_line
         else:
             lines.append(current_line)
@@ -26,20 +26,18 @@ def wrap_text(font, text, max_width):
 
     return lines
 
-
-def draw_text(matrix, font, text, color, y):
+def draw_centered_text(matrix, font, text, color, y_position):
     """Draws wrapped text centered at a specific y position."""
     max_width = matrix.width
-    wrapped_lines = wrap_text(font, text, max_width)
+    wrapped_lines = wrap_text_in_lines(font, text, max_width)
 
     total_height = len(wrapped_lines) * font.height
-    start_y = y - total_height // 2  # Center the text vertically around the provided y position
+    center_y = y_position - total_height // 2  # Center the text vertically around the provided y position
 
-    for line in wrapped_lines:
-        width = get_text_width(font, line)
-        x = (matrix.width - width) // 2  # Center horizontally
-        graphics.DrawText(matrix, font, x, start_y, color, line)
-        start_y += font.height  # Move down for the next line
+    for idx, line in enumerate(wrapped_lines):
+        line_width = get_text_width(font, line)
+        center_x = (matrix.width - line_width) // 2  # Center horizontally
+        graphics.DrawText(matrix, font, center_x, center_y + (idx * font.height), color, line)
 
 
 def render_countdown_to_disney(matrix, trip_date):
@@ -48,18 +46,14 @@ def render_countdown_to_disney(matrix, trip_date):
     font.LoadFont("assets/fonts/patched/6x9.bdf")
     text_color = graphics.Color(255, 255, 255)  # White text
 
-    now = datetime.now()
-    time_remaining = trip_date - now
+    time_remaining = trip_date - datetime.now()
 
-    # Calculate the countdown string
     if time_remaining.days < 0:
-        countdown_string = "Trip has already started!"
+        days_remaining = "Trip has already started!"
     else:
-        countdown_string = f"{time_remaining.days} Days"
+        days_remaining = f"{time_remaining.days} Days"
 
-    # Combine title and countdown
-    combined_string = f"COUNTDOWN TO DISNEY {countdown_string}"
+    title = "COUNTDOWN TO DISNEY"
+    countdown_string = f"{title} {days_remaining}"
 
-    # Draw the title and countdown together
-    draw_text(matrix, font, combined_string, text_color, ((matrix.height // 2) + 5))  # Position below title
-
+    draw_centered_text(matrix, font, countdown_string, text_color, matrix.height // 2 + 5)
