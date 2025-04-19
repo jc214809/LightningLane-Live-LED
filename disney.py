@@ -4,7 +4,7 @@ import time
 import logging
 import threading
 import json
-from datetime import timedelta, datetime
+from datetime import datetime
 
 from display.startup import render_mickey_classic
 from utils.utils import logJSONPrettyPrint, args, led_matrix_options
@@ -104,10 +104,7 @@ def main():
                     time.sleep(5)
                     for ride_info in park.get("attractions", []):
                         matrix.Clear()
-                        logging.info(
-                            f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "
-                            f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}"
-                        )
+                        logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
                         if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
                             and ride_info.get("waitTime") is not None):
                             render_ride_info(matrix, ride_info)
