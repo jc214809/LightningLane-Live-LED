@@ -3,12 +3,14 @@ import os
 import time
 import logging
 import threading
+from datetime import timedelta, datetime
 
 from display.startup import render_mickey_classic
 from utils.utils import logJSONPrettyPrint, args, led_matrix_options
 from api.disney_api import fetch_disney_world_parks
 from display.display import render_park_information_screen, render_ride_info
 from updater.data_updater import live_data_updater
+from display.Countdown.countdown import render_countdown_to_disney
 
 from utils import debug
 
@@ -19,6 +21,7 @@ from driver import RGBMatrix, RGBMatrixOptions
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
 is_image_ready = False
+next_trip_time = datetime(2025, 6, 25, 0, 0)
 
 def main():
     # Check Python version.
@@ -67,6 +70,10 @@ def main():
     try:
         while True:
             logging.debug(f"Parks Data: {logJSONPrettyPrint(parks_holder)}")
+            # Render the next trip count down
+            matrix.Clear()
+            render_countdown_to_disney(matrix, next_trip_time)
+            time.sleep(30)
             if parks_holder:
                 for park in parks_holder:
                     if not park.get("operating"):

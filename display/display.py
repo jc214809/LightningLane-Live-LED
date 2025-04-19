@@ -189,7 +189,7 @@ def render_ride_info(matrix, ride_info):
     name_line_height = getattr(rideFont, "height")
     waittime_line_height = getattr(waittimeFont, "height")
     wrapped_ride_name = wrap_text(rideFont, ride_name, matrix.width, matrix.height, 1)
-    if get_max_lines(matrix.height, rideFont)-1 < len(wrapped_ride_name):
+    if get_max_lines(matrix.height, rideFont) - 1 < len(wrapped_ride_name):
         wrapped_ride_name = wrap_text(rideFont, ride_name, matrix.width, matrix.height, 0)
     wrapped_wait_time = wrap_text(waittimeFont, wait_time, matrix.width, matrix.height, 1)
 
@@ -335,5 +335,3 @@ def rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj):
         hours_text = "??-??"
     left_padding = 1
     graphics.DrawText(matrix, info_font, left_padding, baseline_y, info_color, hours_text)
-
-
