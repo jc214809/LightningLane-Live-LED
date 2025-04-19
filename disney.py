@@ -3,6 +3,7 @@ import os
 import time
 import logging
 import threading
+import json
 from datetime import timedelta, datetime
 
 from display.startup import render_mickey_classic
@@ -20,10 +21,19 @@ from driver import RGBMatrix, RGBMatrixOptions
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
+def load_config(file_path):
+    """Load the configuration from a JSON file."""
+    with open(file_path, 'r') as file:
+        config = json.load(file)
+    return config
+
 is_image_ready = False
-next_trip_time = datetime(2025, 6, 25, 0, 0)
 
 def main():
+    # Load configuration
+    config = load_config('config.json')
+    next_trip_time = datetime.fromisoformat(config['trip_date'])  # This works fine with the new format
+
     # Check Python version.
     if sys.version_info <= (3, 5):
         debug.error("Please run with python3")
