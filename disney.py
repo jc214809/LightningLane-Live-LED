@@ -19,7 +19,7 @@ import driver
 from driver import RGBMatrix, RGBMatrixOptions
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
 def load_config(file_path):
     """Load the configuration from a JSON file."""
@@ -29,10 +29,19 @@ def load_config(file_path):
 
 is_image_ready = False
 
+def validate_date(date_string):
+    """Validate the date string and convert it to a datetime object."""
+    try:
+        # Attempt to create a datetime object from the string
+        date = datetime.fromisoformat(date_string)
+        return date
+    except ValueError:
+        raise ValueError(f"Invalid date format: {date_string}. Please use YYYY-MM-DD.")
+
 def main():
     # Load configuration
     config = load_config('config.json')
-    next_trip_time = datetime.fromisoformat(config['trip_date'])  # This works fine with the new format
+    next_trip_time = validate_date(config['trip_date'])
 
     # Check Python version.
     if sys.version_info <= (3, 5):
