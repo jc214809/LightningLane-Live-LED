@@ -3,6 +3,8 @@ import logging
 import asyncio
 import aiohttp
 from datetime import datetime, timedelta
+
+from api.weather import fetch_weather_data
 from utils.utils import logJSONPrettyPrint
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
@@ -46,7 +48,8 @@ def fetch_disney_world_parks():
                 filtered_parks.append({
                     "name": park.get("name", "Unknown"),
                     "id": park.get("id", "Unknown"),
-                    "schedule": schedule_filtered
+                    "schedule": schedule_filtered,
+                    "weather": fetch_weather_data()  # Get initial weather data
                 })
 
         logging.info(f"Found {len(filtered_parks)} parks under Walt Disney World after filtering by date.")
@@ -76,6 +79,7 @@ def fetch_parks_and_attractions(disney_park_list):
         park_name = park_info.get("name", "Unknown")
         park_id = park_info.get("id", "Unknown")
         schedule = park_info.get("schedule", [])
+        weather = park_info.get("weather", [])
 
         # Determine if a "Special Ticketed Event" exists in the schedule.
         special_ticketed_event = any(
@@ -127,7 +131,8 @@ def fetch_parks_and_attractions(disney_park_list):
             "specialTicketedEvent": special_ticketed_event,
             "closingTime": closing_time,
             "openingTime": opening_time,
-            "llmpPrice": lightning_lane_multi_pass_price
+            "llmpPrice": lightning_lane_multi_pass_price,
+            "weather": weather
         }
         parks.append(park_obj)
     return parks

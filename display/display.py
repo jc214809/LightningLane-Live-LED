@@ -1,7 +1,13 @@
+import os
+
+from PIL import Image
+import requests
+from io import BytesIO
 import logging
 
 from datetime import datetime
 from driver import graphics
+from utils.utils import logJSONPrettyPrint
 
 
 def get_text_width(font, text):
@@ -282,8 +288,8 @@ def render_park_information_screen(matrix, park_obj):
     info_font = graphics.Font()
     info_font.LoadFont(info_font_path)
 
-    name_color = graphics.Color(242, 5, 5)   # Mickey Mouse Red
-    info_color = graphics.Color(17, 60, 207)   # Disney Blue
+    name_color = graphics.Color(242, 5, 5)  # Mickey Mouse Red
+    info_color = graphics.Color(17, 60, 207)  # Disney Blue
 
     # Determine bottom area height using info_font's height.
     info_font_height = getattr(info_font, "height")
@@ -312,11 +318,12 @@ def render_park_information_screen(matrix, park_obj):
 
     baseline_y = board_height - 1
     rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj)
-    render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, park_obj)
+    render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, park_obj.get("llmpPrice", ""))
+    logging.debug(f"{park_obj.get("name")} Park Dude Data: {logJSONPrettyPrint(park_obj)}")
+    display_icon_in_upper_left(matrix, park_obj.get("weather", ""))
 
 
-def render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, park_obj):
-    llmp_price = park_obj.get("llmpPrice", "")
+def render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
     price_width = get_text_width(info_font, llmp_price)
@@ -335,3 +342,33 @@ def rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj):
         hours_text = "??-??"
     left_padding = 1
     graphics.DrawText(matrix, info_font, left_padding, baseline_y, info_color, hours_text)
+
+
+def render_weather_icon(matrix, icon_code):
+    icon_filename = f"{icon_code}@2x.png"  # Adjust this based on your naming convention
+    icon_path = os.path.join("assets", "weather", icon_filename)  # Path to the icon in the assets folder
+
+    try:
+        # Open the icon image from the local path
+        img = Image.open(icon_path)
+        img = img.resize((16, 16))  # Resize the image to a smaller size
+
+        matrix.Clear()  # Clear the matrix before drawing
+        matrix.SetImage(img.convert("RGB"))  # Draw the image on the matrix
+    except FileNotFoundError:
+        logging.error(f"Icon not found: {icon_path}")  # Log if the file does not exist
+    except Exception as e:
+        logging.error(f"Failed to load icon: {e}")
+
+
+def icon_filename(self):
+    return os.path.abspath("./assets/weather/{}.png".format(self))
+
+
+def display_icon_in_upper_left(matrix, weather_info):
+    """Display only the weather icon in the upper left corner."""
+    # logging.info("123456", {weather_info and "icon" in weather_info})
+    logging.info(f"Weather Info: {weather_info}")
+    if weather_info and "icon" in weather_info:
+        logging.info(f"1234567890")
+        render_weather_icon(matrix, weather_info['icon'])

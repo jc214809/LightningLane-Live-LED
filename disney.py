@@ -19,7 +19,7 @@ import driver
 from driver import RGBMatrix, RGBMatrixOptions
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
 def load_config(file_path):
     """Load the configuration from a JSON file."""
@@ -90,8 +90,8 @@ def main():
             render_mickey_logo(matrix)
             # Render the next trip count down
             matrix.Clear()
-            render_countdown_to_disney(matrix, next_trip_time)
-            time.sleep(10)
+            # render_countdown_to_disney(matrix, next_trip_time)
+            # time.sleep(10)
             if parks_holder:
                 for park in parks_holder:
                     if not park.get("operating"):
@@ -101,13 +101,13 @@ def main():
                     logging.info(f"Rendering {park['name']} Title Screen.")
                     render_park_information_screen(matrix, park)
                     time.sleep(5)
-                    for ride_info in park.get("attractions", []):
-                        matrix.Clear()
-                        logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
-                        if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
-                            and ride_info.get("waitTime") is not None):
-                            render_ride_info(matrix, ride_info)
-                            time.sleep(15)
+                    # for ride_info in park.get("attractions", []):
+                    #     matrix.Clear()
+                    #     logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
+                    #     if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
+                    #         and ride_info.get("waitTime") is not None):
+                    #         render_ride_info(matrix, ride_info)
+                    #         time.sleep(15)
             else:
                 logging.info("No parks data yet, waiting...")
                 time.sleep(5)
