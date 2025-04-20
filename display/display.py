@@ -345,15 +345,13 @@ def rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj):
 
 
 def render_weather_icon(matrix, icon_code):
-    icon_filename = f"{icon_code}@2x.png"  # Adjust this based on your naming convention
-    icon_path = os.path.join("assets", "weather", icon_filename)  # Path to the icon in the assets folder
-
+    icon_path = os.path.abspath(f"./assets/weather/{icon_code}.png")  # Path to the icon in the assets folder
     try:
         # Open the icon image from the local path
         img = Image.open(icon_path)
         img = img.resize((16, 16))  # Resize the image to a smaller size
 
-        matrix.Clear()  # Clear the matrix before drawing
+        #matrix.Clear()  # Clear the matrix before drawing
         matrix.SetImage(img.convert("RGB"))  # Draw the image on the matrix
     except FileNotFoundError:
         logging.error(f"Icon not found: {icon_path}")  # Log if the file does not exist
