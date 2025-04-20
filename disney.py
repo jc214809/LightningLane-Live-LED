@@ -6,8 +6,8 @@ import threading
 import json
 from datetime import datetime
 
-from display.startup import render_mickey_classic
-from utils.utils import logJSONPrettyPrint, args, led_matrix_options
+from display.startup import render_mickey_logo
+from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_disney_world_parks
 from display.display import render_park_information_screen, render_ride_info
 from updater.data_updater import live_data_updater
@@ -68,8 +68,7 @@ def main():
     else:
         # If no logo is available, render the Mickey silhouette as an intro.
         logging.info("No logo found. Rendering Mickey silhouette as intro...")
-        render_mickey_classic(matrix)
-        #time.sleep(10)
+        render_mickey_logo(matrix)
 
     disney_park_list = fetch_disney_world_parks()
     if not disney_park_list:
@@ -88,7 +87,7 @@ def main():
 
     try:
         while True:
-            logging.debug(f"Parks Data: {logJSONPrettyPrint(parks_holder)}")
+            render_mickey_logo(matrix)
             # Render the next trip count down
             matrix.Clear()
             render_countdown_to_disney(matrix, next_trip_time)
@@ -96,7 +95,7 @@ def main():
             if parks_holder:
                 for park in parks_holder:
                     if not park.get("operating"):
-                        logging.info(f"Skipping park {park['name']} because no attractions are operating.")
+                        logging.info(f"Skipping {park['name']} because no attractions are operating.")
                         continue
                     matrix.Clear()
                     logging.info(f"Rendering {park['name']} Title Screen.")
