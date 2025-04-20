@@ -56,4 +56,4 @@ def render_countdown_to_disney(matrix, trip_date):
     title = "COUNTDOWN TO DISNEY"
     countdown_string = f"{title} {days_remaining}"
 
-    draw_centered_text(matrix, font, countdown_string, text_color, matrix.height // 2 + 5)
+    draw_centered_text(matrix, font, countdown_string, text_color, matrix.height // 2 + 7)

@@ -91,7 +91,7 @@ def main():
             # Render the next trip count down
             matrix.Clear()
             render_countdown_to_disney(matrix, next_trip_time)
-            time.sleep(30)
+            time.sleep(10)
             if parks_holder:
                 for park in parks_holder:
                     if not park.get("operating"):
