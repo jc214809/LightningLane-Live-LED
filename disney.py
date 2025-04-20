@@ -3,12 +3,15 @@ import os
 import time
 import logging
 import threading
+import json
+from datetime import datetime
 
-from display.startup import render_mickey_classic
-from utils.utils import logJSONPrettyPrint, args, led_matrix_options
+from display.startup import render_mickey_logo
+from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_disney_world_parks
 from display.display import render_park_information_screen, render_ride_info
 from updater.data_updater import live_data_updater
+from display.Countdown.countdown import render_countdown_to_disney
 
 from utils import debug
 
@@ -16,11 +19,30 @@ import driver
 from driver import RGBMatrix, RGBMatrixOptions
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
+
+def load_config(file_path):
+    """Load the configuration from a JSON file."""
+    with open(file_path, 'r') as file:
+        config = json.load(file)
+    return config
 
 is_image_ready = False
 
+def validate_date(date_string):
+    """Validate the date string and convert it to a datetime object."""
+    try:
+        # Attempt to create a datetime object from the string
+        date = datetime.fromisoformat(date_string)
+        return date
+    except ValueError:
+        raise ValueError(f"Invalid date format: {date_string}. Please use YYYY-MM-DD.")
+
 def main():
+    # Load configuration
+    config = load_config('config.json')
+    next_trip_time = validate_date(config['trip_date'])
+
     # Check Python version.
     if sys.version_info <= (3, 5):
         debug.error("Please run with python3")
@@ -46,8 +68,7 @@ def main():
     else:
         # If no logo is available, render the Mickey silhouette as an intro.
         logging.info("No logo found. Rendering Mickey silhouette as intro...")
-        render_mickey_classic(matrix)
-        #time.sleep(10)
+        render_mickey_logo(matrix)
 
     disney_park_list = fetch_disney_world_parks()
     if not disney_park_list:
@@ -66,11 +87,15 @@ def main():
 
     try:
         while True:
-            logging.debug(f"Parks Data: {logJSONPrettyPrint(parks_holder)}")
+            render_mickey_logo(matrix)
+            # Render the next trip count down
+            matrix.Clear()
+            render_countdown_to_disney(matrix, next_trip_time)
+            time.sleep(30)
             if parks_holder:
                 for park in parks_holder:
                     if not park.get("operating"):
-                        logging.info(f"Skipping park {park['name']} because no attractions are operating.")
+                        logging.info(f"Skipping {park['name']} because no attractions are operating.")
                         continue
                     matrix.Clear()
                     logging.info(f"Rendering {park['name']} Title Screen.")
@@ -78,10 +103,7 @@ def main():
                     time.sleep(5)
                     for ride_info in park.get("attractions", []):
                         matrix.Clear()
-                        logging.info(
-                            f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "
-                            f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}"
-                        )
+                        logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
                         if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
                             and ride_info.get("waitTime") is not None):
                             render_ride_info(matrix, ride_info)

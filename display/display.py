@@ -73,7 +73,7 @@ def calculate_text_height(combined_lines, wrapped_ride_name, name_line_height, w
         line_height = name_line_height if line in wrapped_ride_name else waittime_line_height
         line_heights.append(line_height)
         total_lines_height += line_height
-        logging.info(f"Line: '{line}' has height: {line_height}")
+        logging.debug(f"Line: '{line}' has height: {line_height}")
 
     return total_lines_height, line_heights
 
@@ -106,7 +106,7 @@ def get_max_lines(board_height, font):
     # Calculate the maximum number of lines the board can support
     max_lines = board_height // line_height
 
-    logging.info(f"Board height: {board_height}, Line height: {line_height}, Max lines: {max_lines}")
+    logging.debug(f"Board height: {board_height}, Line height: {line_height}, Max lines: {max_lines}")
 
     return max_lines
 
@@ -117,10 +117,10 @@ def calculate_x_position(matrix, longest_line_width, padding):
     total_width_with_padding = longest_line_width + 2 * padding  # 1 unit on left and right
     if total_width_with_padding <= matrix.width:
         x_position = (matrix.width - total_width_with_padding) // 2
-        logging.info(f"Padding applied. x_position: {x_position}")
+        logging.debug(f"Padding applied. x_position: {x_position}")
     else:
         x_position = (matrix.width - longest_line_width) // 2
-        logging.info(f"No padding applied. x_position: {x_position}")
+        logging.debug(f"No padding applied. x_position: {x_position}")
 
     return x_position
 
@@ -130,7 +130,7 @@ def calculate_y_position(matrix, total_lines_height):
     Calculate the y_position to center the text vertically on the board.
     """
     y_position = (matrix.height - total_lines_height) // 2
-    logging.info(f"y_position calculated: {y_position}")
+    logging.debug(f"y_position calculated: {y_position}")
     return y_position
 
 
@@ -147,7 +147,7 @@ def render_lines(matrix, combined_lines, rideFont, waittimeFont, x_position, y_p
 
         # Center horizontally with or without padding
         line_x_position = (matrix.width - line_width) // 2
-        logging.info(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
+        logging.debug(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
 
         # Draw the text on the matrix
         text_color = graphics.Color(255, 255, 255)
@@ -189,7 +189,7 @@ def render_ride_info(matrix, ride_info):
     name_line_height = getattr(rideFont, "height")
     waittime_line_height = getattr(waittimeFont, "height")
     wrapped_ride_name = wrap_text(rideFont, ride_name, matrix.width, matrix.height, 1)
-    if get_max_lines(matrix.height, rideFont)-1 < len(wrapped_ride_name):
+    if get_max_lines(matrix.height, rideFont) - 1 < len(wrapped_ride_name):
         wrapped_ride_name = wrap_text(rideFont, ride_name, matrix.width, matrix.height, 0)
     wrapped_wait_time = wrap_text(waittimeFont, wait_time, matrix.width, matrix.height, 1)
 
@@ -335,5 +335,3 @@ def rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj):
         hours_text = "??-??"
     left_padding = 1
     graphics.DrawText(matrix, info_font, left_padding, baseline_y, info_color, hours_text)
-
-
