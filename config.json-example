@@ -1,7 +1,7 @@
 {
     "trip_date": "2025-06-25",
     "weather": {
-		"apikey": "054fa4c1c39a3abd19c40fb1f7534fbe",
+		"apikey": "d3fa92bb95a31ebf62643c25d6b9aa10",
 		"city": "Orlando",
 		"metric_units": false
 	}
