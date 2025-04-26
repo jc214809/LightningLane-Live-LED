@@ -1,8 +1,6 @@
 import os
 
 from PIL import Image
-import requests
-from io import BytesIO
 import logging
 
 from datetime import datetime
@@ -140,7 +138,7 @@ def calculate_y_position(matrix, total_lines_height):
     return y_position
 
 
-def render_lines(matrix, combined_lines, rideFont, waittimeFont, x_position, y_position, line_heights,
+def render_lines(matrix, combined_lines, ride_font, waittime_font, x_position, y_position, line_heights,
                  wrapped_ride_name):
     """
     Render each line of text at the specified position on the matrix.
@@ -149,7 +147,7 @@ def render_lines(matrix, combined_lines, rideFont, waittimeFont, x_position, y_p
     gap_between_ride_and_wait_time = 2  # Default gap between the sections
 
     for idx, line in enumerate(combined_lines):
-        line_width = get_text_width(rideFont, line) if line in wrapped_ride_name else get_text_width(waittimeFont, line)
+        line_width = get_text_width(ride_font, line) if line in wrapped_ride_name else get_text_width(waittime_font, line)
 
         # Center horizontally with or without padding
         line_x_position = (matrix.width - line_width) // 2
@@ -159,12 +157,12 @@ def render_lines(matrix, combined_lines, rideFont, waittimeFont, x_position, y_p
         text_color = graphics.Color(255, 255, 255)
 
         if line in wrapped_ride_name:
-            graphics.DrawText(matrix, rideFont, line_x_position, current_y_position, text_color,
+            graphics.DrawText(matrix, ride_font, line_x_position, current_y_position, text_color,
                               line)
         else:
             if "down" in line.lower():
                 text_color = graphics.Color(242, 5, 5)
-            graphics.DrawText(matrix, waittimeFont, line_x_position, current_y_position, text_color,
+            graphics.DrawText(matrix, waittime_font, line_x_position, current_y_position, text_color,
                               line)
 
         # Move the y_position down for the next line
@@ -238,10 +236,10 @@ def draw_centered_text_block(matrix, font, text_lines, region_width, region_heig
     font_height = getattr(font, "height", 9)
     block_height = len(text_lines) * font_height
     # Start baseline so the entire block is vertically centered.
-    current_y = (region_height - block_height) // 2 + font_height
+    current_y =  font_height
     for line in text_lines:
         line_width = get_text_width(font, line)
-        x = (region_width - line_width) // 2
+        x = 1
         graphics.DrawText(matrix, font, x, current_y, color, line)
         current_y += font_height
 
@@ -319,7 +317,7 @@ def render_park_information_screen(matrix, park_obj):
 
     baseline_y = board_height - 1
     rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj)
-    render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, park_obj.get("llmpPrice", ""))
+    render_lightning_lane_multi_pass_price(baseline_y-info_font_height, 1, info_color, info_font, matrix, park_obj.get("llmpPrice", ""))
     logging.debug(f"{park_obj.get("name")} Park Dude Data: {logJSONPrettyPrint(park_obj)}")
     display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height, info_font)
 
@@ -328,9 +326,8 @@ def render_lightning_lane_multi_pass_price(vertical_start, board_width, info_col
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
     price_width = get_text_width(info_font, llmp_price)
-    right_padding = 1
-    price_x = board_width - price_width - right_padding
-    graphics.DrawText(matrix, info_font, price_x, vertical_start, info_color, llmp_price)
+    left_padding = 1
+    graphics.DrawText(matrix, info_font, left_padding, vertical_start, info_color, llmp_price)
 
 
 def rendar_park_hours(vertical_start, info_color, info_font, matrix, park_obj):
@@ -344,7 +341,6 @@ def rendar_park_hours(vertical_start, info_color, info_font, matrix, park_obj):
     left_padding = 1
     graphics.DrawText(matrix, info_font, left_padding, vertical_start, info_color, hours_text)
 
-
 def render_weather_icon(matrix, icon_code, font_height, color=(255, 255, 255)):  # Default color is white
     icon_path = os.path.abspath(f"./assets/weather/{icon_code}.png")  # Adjust filename if needed
     # icon_path = os.path.abspath(f"./assets/weather/11d.png")  # Adjust filename if needed
@@ -357,62 +353,53 @@ def render_weather_icon(matrix, icon_code, font_height, color=(255, 255, 255)): 
 
         return img
     except FileNotFoundError:
-        logging.error(f"Icon not found: {icon_path}")  # Log if the file does not exist
+        logging.error(f"Icon not found: {icon_path}")
         return None
     except Exception as e:
         logging.error(f"Failed to load icon: {e}")
         return None
 
 
-def display_weather_icon_and_description(matrix, weather_info, font_height, font, show_icon=False):
-    """Display the weather icon and its description centered horizontally in the bottom left corner."""
-    # logging.info(f"Weather Info: {weather_info}")
+def display_weather_icon_and_description(matrix, weather_info, font_height, font, show_icon=True):
+    """Display the weather icon and its description in the top right corner."""
+    logging.info(f"Weather Info: {weather_info}")
 
-    # Initialize the text to display
-    f_temp = int(round(weather_info.get('temperature', 0)) * 9 / 5 + 32)  # Convert Celsius to Fahrenheit
+    f_temp = int(round(weather_info.get('temperature', 0)) * 9 / 5 + 32)
     weather_text = str(f_temp) + "° " + weather_info['short_description']
 
-    # Get the width of the weather text
     weather_text_width = get_text_width(font, weather_text)
 
+
+
+    padding = 5+2
     if show_icon and "icon" in weather_info:
-        # Render icon if the flag is set
         img = render_weather_icon(matrix, weather_info['icon'], font_height)
 
         if img:
-            # Calculate the icon width
             icon_width = img.width
 
-            # Calculate total width for icon + text + padding
-            total_width = icon_width + weather_text_width + 5  # 5 pixels space between icon and text
-            x_position = (matrix.width - total_width) // 2  # Centering the combined width
+            total_width = icon_width + weather_text_width + padding
+            x_position = matrix.width - total_width
 
-            # Draw the icon at the calculated position
-            matrix.SetImage(img.convert("RGB"), x_position, matrix.height - (font_height + 15))  # Draw the image
+            matrix.SetImage(img.convert("RGB"), matrix.width-icon_width-1,1)
+            graphics.DrawText(matrix, font, matrix.width-get_text_width(font, str(f_temp) + "°"), img.height + padding, graphics.Color(242, 242, 242), str(f_temp) + "°")
+            graphics.DrawText(matrix, font, matrix.width - get_text_width(font, weather_info['short_description']),
+                               (img.height + font_height + padding), graphics.Color(242, 242, 242), weather_info['short_description'])
 
-            # Position the text after the icon
-            text_x_position = x_position + icon_width + 5
+            text_x_position = x_position + icon_width + padding
         else:
-            logging.warning("Icon could not be rendered.")
-            text_x_position = (matrix.width - weather_text_width) // 2  # Only center text if the icon isn't shown
-
+            logging.warning("Icon could not be rendered, only displaying text.")
+            text_x_position = matrix.width - weather_text_width - padding
     else:
-        # If the icon should not be shown, only center the text
-        text_x_position = (matrix.width - weather_text_width) // 2
+        text_x_position = matrix.width - weather_text_width - padding
 
-    # Draw the weather text
     logging.info(f"Drawing weather text at position: {text_x_position}")
-    graphics.DrawText(matrix, font, text_x_position, matrix.height - font_height - 3, graphics.Color(242, 242, 242),
-                      weather_text)  # Draw the text
-
+    # graphics.DrawText(matrix, font, text_x_position, padding, graphics.Color(242, 242, 242), weather_text)
 def change_color(img, color):
     """Change the color of the image to a specified RGB color."""
-    # Convert the image to RGBA if not already in that mode
     img = img.convert("RGBA")
-    # Get the pixel data
     data = img.getdata()
 
-    # Create a new list to hold modified pixel data
     new_data = []
     for item in data:
         # Change color only for pixels that are not transparent
