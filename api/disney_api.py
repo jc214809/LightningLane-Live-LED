@@ -12,25 +12,37 @@ troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6
 troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
 
 
-def fetch_disney_world_parks():
+def get_park_location(parkId):
+    api_url = f"https://api.themeparks.wiki/v1/entity/{parkId}"
+    logging.info("Fetching Disney World schedule data...")
+
+    try:
+        response = requests.get(api_url)
+        park_data = response.json()
+        return park_data.get("location")
+    except requests.RequestException as e:
+        logging.error(f"Failed get park data with location data: {e}")
+        return []
+
+
+def fetch_list_of_disney_world_parks():
     """
     Fetch and return a list of Walt Disney World parks with their respective IDs
     and schedule info, excluding water parks. The schedule is filtered to only include
     events for today and the day before.
     """
-    api_url = "https://api.themeparks.wiki/v1/entity/e957da41-3552-4cf6-b636-5babc5cbc4e5/schedule"
+    walt_disney_world_entity_id = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
+    api_url = f"https://api.themeparks.wiki/v1/entity/{walt_disney_world_entity_id}/schedule"
     logging.info("Fetching Disney World schedule data...")
 
     try:
         response = requests.get(api_url)
-        response.raise_for_status()
-        data = response.json()
-        logging.debug(f"API Response (Schedule): {data}")
+        # response.raise_for_status()
 
-        parks_data = data.get("parks", [])
-        if not isinstance(parks_data, list):
-            logging.error(f"Unexpected format for 'parks' key: {parks_data}")
-            return []
+        parks_data = response.json().get("parks", [])
+        # if not isinstance(parks_data, list):
+        #     logging.error(f"Unexpected format for 'parks' key: {parks_data}")
+        #     return []
 
         # Determine today's date and yesterday's date as strings.
         today = datetime.now()
@@ -39,17 +51,20 @@ def fetch_disney_world_parks():
 
         filtered_parks = []
         for park in parks_data:
+            logging.debug(f"Park Location: {logJSONPrettyPrint(park)}")
             if isinstance(park, dict) and "Water Park" not in park.get("name", ""):
-                schedule = park.get("schedule", [])
+                schedule = park.get("schedule")
                 # Filter schedule events to include only those from today or yesterday.
                 schedule_filtered = [
                     event for event in schedule if event.get("date") in (today_str, yesterday_str)
                 ]
+
                 filtered_parks.append({
                     "name": park.get("name", "Unknown"),
                     "id": park.get("id", "Unknown"),
                     "schedule": schedule_filtered,
-                    "weather": fetch_weather_data()  # Get initial weather data
+                    "weather": [],  # Get initial weather data
+                    "location": get_park_location(park.get("id"))
                 })
 
         logging.info(f"Found {len(filtered_parks)} parks under Walt Disney World after filtering by date.")
@@ -79,24 +94,11 @@ def fetch_parks_and_attractions(disney_park_list):
         park_name = park_info.get("name", "Unknown")
         park_id = park_info.get("id", "Unknown")
         schedule = park_info.get("schedule", [])
-        weather = park_info.get("weather", [])
-
-        # Determine if a "Special Ticketed Event" exists in the schedule.
-        special_ticketed_event = any(
-            event.get("type") == "TICKETED_EVENT" and "Special Ticketed Event" in event.get("description", "")
-            for event in schedule
-        )
+        location = park_info.get("location")
+        logging.debug(f"{park_name} Park Location: {logJSONPrettyPrint(park_info)}")
 
         # Use the first OPERATING event to extract opening/closing times and pricing info.
         operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
-        closing_time = operating_event.get("closingTime", "")
-        opening_time = operating_event.get("openingTime", "")
-        lightning_lane_multi_pass_price = ""
-        if operating_event and "purchases" in operating_event:
-            for purchase in operating_event["purchases"]:
-                if purchase.get("name") == "Lightning Lane Multi Pass":
-                    lightning_lane_multi_pass_price = purchase.get("price", {}).get("formatted", "")
-                    break
 
         logging.info(f"Fetching attractions for park: {park_name} (ID: {park_id})")
         api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
@@ -128,14 +130,33 @@ def fetch_parks_and_attractions(disney_park_list):
             "id": park_id,
             "name": park_name.replace("Theme", " ").replace("Park", " ").replace("Disney's", "").strip(),
             "attractions": attractions,
-            "specialTicketedEvent": special_ticketed_event,
-            "closingTime": closing_time,
-            "openingTime": opening_time,
-            "llmpPrice": lightning_lane_multi_pass_price,
-            "weather": weather
+            "specialTicketedEvent": is_special_event(schedule),
+            "closingTime": operating_event.get("closingTime", ""),
+            "openingTime": operating_event.get("openingTime", ""),
+            "llmpPrice": deterimine_llmp_price(operating_event),
+            "weather": fetch_weather_data(location.get("latitude"), location.get("longitude")),
+            "location": location
         }
         parks.append(park_obj)
     return parks
+
+
+def is_special_event(schedule):
+    special_ticketed_event = any(
+        event.get("type") == "TICKETED_EVENT" and "Special Ticketed Event" in event.get("description", "")
+        for event in schedule
+    )
+    return special_ticketed_event
+
+
+def deterimine_llmp_price(operating_event):
+    lightning_lane_multi_pass_price = ""
+    if operating_event and "purchases" in operating_event:
+        for purchase in operating_event["purchases"]:
+            if purchase.get("name") == "Lightning Lane Multi Pass":
+                lightning_lane_multi_pass_price = purchase.get("price", {}).get("formatted", "")
+                break
+    return lightning_lane_multi_pass_price
 
 
 def get_down_time(last_updated_date, date_format='%Y-%m-%dT%H:%M:%SZ'):
@@ -213,11 +234,9 @@ def update_parks_operating_status(parks):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     # Fetch parks with filtered schedule (today and yesterday)
-    parks_list = fetch_disney_world_parks()
-    logging.info("Parks List:")
-    logging.info(parks_list)
+    parks_list = fetch_list_of_disney_world_parks()
+    logging.info(f"Parks List: {parks_list}")
 
     # Fetch attractions and additional schedule-derived fields
     parks_with_attractions = fetch_parks_and_attractions(parks_list)
-    logging.info("Parks with Attractions:")
-    logging.info(parks_with_attractions)
+    logging.info(f"Parks with Attractions: {parks_with_attractions}")

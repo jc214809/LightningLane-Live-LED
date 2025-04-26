@@ -8,7 +8,7 @@ from datetime import datetime
 
 from display.startup import render_mickey_logo
 from utils.utils import args, led_matrix_options
-from api.disney_api import fetch_disney_world_parks
+from api.disney_api import fetch_list_of_disney_world_parks
 from display.display import render_park_information_screen, render_ride_info
 from updater.data_updater import live_data_updater
 from display.Countdown.countdown import render_countdown_to_disney
@@ -70,7 +70,7 @@ def main():
         logging.info("No logo found. Rendering Mickey silhouette as intro...")
         render_mickey_logo(matrix)
 
-    disney_park_list = fetch_disney_world_parks()
+    disney_park_list = fetch_list_of_disney_world_parks()
     if not disney_park_list:
         logging.error("No Disney parks found. Exiting.")
         return
@@ -88,10 +88,11 @@ def main():
     try:
         while True:
             render_mickey_logo(matrix)
+            time.sleep(10)
             # Render the next trip count down
             matrix.Clear()
-            # render_countdown_to_disney(matrix, next_trip_time)
-            # time.sleep(10)
+            render_countdown_to_disney(matrix, next_trip_time)
+            time.sleep(10)
             if parks_holder:
                 for park in parks_holder:
                     if not park.get("operating"):
@@ -101,13 +102,14 @@ def main():
                     logging.info(f"Rendering {park['name']} Title Screen.")
                     render_park_information_screen(matrix, park)
                     time.sleep(5)
-                    # for ride_info in park.get("attractions", []):
-                    #     matrix.Clear()
-                    #     logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
-                    #     if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
-                    #         and ride_info.get("waitTime") is not None):
-                    #         render_ride_info(matrix, ride_info)
-                    #         time.sleep(15)
+                    for ride_info in park.get("attractions", []):
+                        matrix.Clear()
+                        logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
+                        if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
+                            and ride_info.get("waitTime") is not None):
+                            render_ride_info(matrix, ride_info)
+                            time.sleep(15)
+                    matrix.Clear()
             else:
                 logging.info("No parks data yet, waiting...")
                 time.sleep(5)

@@ -264,7 +264,7 @@ def render_park_information_screen(matrix, park_obj):
     # Define font paths for different board sizes.
     font_paths = {
         32: {
-            "name": "assets/fonts/patched/6x9.bdf",
+            "name": "assets/fonts/patched/5x8.bdf",
             "info": "assets/fonts/patched/4x6-legacy.bdf"
         },
         64: {
@@ -302,13 +302,14 @@ def render_park_information_screen(matrix, park_obj):
 
     # Draw the park name based on board size.
     if board_height == 32:
+        ParkNameFontHeight = (getattr(name_font, "height") * len(wrapped_name))+1
         if len(wrapped_name) == 1:
             draw_single_line_centered(matrix, name_font, wrapped_name[0], board_width, available_top_height, name_color)
         else:
-            draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height, name_color)
+            draw_centered_text_block(matrix, name_font, wrapped_name, board_width, ParkNameFontHeight, name_color)
     elif board_height == 64:
         # Always center the entire block for 64-pixel boards.
-        draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height, name_color)
+        draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height-5, name_color)
     else:
         # Fallback for any unexpected board size.
         if len(wrapped_name) == 1:
@@ -320,19 +321,19 @@ def render_park_information_screen(matrix, park_obj):
     rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj)
     render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, park_obj.get("llmpPrice", ""))
     logging.debug(f"{park_obj.get("name")} Park Dude Data: {logJSONPrettyPrint(park_obj)}")
-    display_icon_in_upper_left(matrix, park_obj.get("weather", ""))
+    display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height, info_font)
 
 
-def render_lightning_lane_multi_pass_price(baseline_y, board_width, info_color, info_font, matrix, llmp_price):
+def render_lightning_lane_multi_pass_price(vertical_start, board_width, info_color, info_font, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
     price_width = get_text_width(info_font, llmp_price)
     right_padding = 1
     price_x = board_width - price_width - right_padding
-    graphics.DrawText(matrix, info_font, price_x, baseline_y, info_color, llmp_price)
+    graphics.DrawText(matrix, info_font, price_x, vertical_start, info_color, llmp_price)
 
 
-def rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj):
+def rendar_park_hours(vertical_start, info_color, info_font, matrix, park_obj):
     # Render operating hours & price at the bottom.
     opening_time = park_obj.get("openingTime", "")
     closing_time = park_obj.get("closingTime", "")
@@ -341,32 +342,86 @@ def rendar_park_hours(baseline_y, info_color, info_font, matrix, park_obj):
     else:
         hours_text = "??-??"
     left_padding = 1
-    graphics.DrawText(matrix, info_font, left_padding, baseline_y, info_color, hours_text)
+    graphics.DrawText(matrix, info_font, left_padding, vertical_start, info_color, hours_text)
 
 
-def render_weather_icon(matrix, icon_code):
-    icon_path = os.path.abspath(f"./assets/weather/{icon_code}.png")  # Path to the icon in the assets folder
+def render_weather_icon(matrix, icon_code, font_height, color=(255, 255, 255)):  # Default color is white
+    icon_path = os.path.abspath(f"./assets/weather/{icon_code}.png")  # Adjust filename if needed
+    # icon_path = os.path.abspath(f"./assets/weather/11d.png")  # Adjust filename if needed
     try:
         # Open the icon image from the local path
         img = Image.open(icon_path)
-        img = img.resize((16, 16))  # Resize the image to a smaller size
 
-        #matrix.Clear()  # Clear the matrix before drawing
-        matrix.SetImage(img.convert("RGB"))  # Draw the image on the matrix
+        # Change the image color
+        img = change_color(img, color)  # Call the function to change the color
+
+        return img
     except FileNotFoundError:
         logging.error(f"Icon not found: {icon_path}")  # Log if the file does not exist
+        return None
     except Exception as e:
         logging.error(f"Failed to load icon: {e}")
+        return None
 
 
-def icon_filename(self):
-    return os.path.abspath("./assets/weather/{}.png".format(self))
+def display_weather_icon_and_description(matrix, weather_info, font_height, font, show_icon=False):
+    """Display the weather icon and its description centered horizontally in the bottom left corner."""
+    # logging.info(f"Weather Info: {weather_info}")
 
+    # Initialize the text to display
+    f_temp = int(round(weather_info.get('temperature', 0)) * 9 / 5 + 32)  # Convert Celsius to Fahrenheit
+    weather_text = str(f_temp) + "° " + weather_info['short_description']
 
-def display_icon_in_upper_left(matrix, weather_info):
-    """Display only the weather icon in the upper left corner."""
-    # logging.info("123456", {weather_info and "icon" in weather_info})
-    logging.info(f"Weather Info: {weather_info}")
-    if weather_info and "icon" in weather_info:
-        logging.info(f"1234567890")
-        render_weather_icon(matrix, weather_info['icon'])
+    # Get the width of the weather text
+    weather_text_width = get_text_width(font, weather_text)
+
+    if show_icon and "icon" in weather_info:
+        # Render icon if the flag is set
+        img = render_weather_icon(matrix, weather_info['icon'], font_height)
+
+        if img:
+            # Calculate the icon width
+            icon_width = img.width
+
+            # Calculate total width for icon + text + padding
+            total_width = icon_width + weather_text_width + 5  # 5 pixels space between icon and text
+            x_position = (matrix.width - total_width) // 2  # Centering the combined width
+
+            # Draw the icon at the calculated position
+            matrix.SetImage(img.convert("RGB"), x_position, matrix.height - (font_height + 15))  # Draw the image
+
+            # Position the text after the icon
+            text_x_position = x_position + icon_width + 5
+        else:
+            logging.warning("Icon could not be rendered.")
+            text_x_position = (matrix.width - weather_text_width) // 2  # Only center text if the icon isn't shown
+
+    else:
+        # If the icon should not be shown, only center the text
+        text_x_position = (matrix.width - weather_text_width) // 2
+
+    # Draw the weather text
+    logging.info(f"Drawing weather text at position: {text_x_position}")
+    graphics.DrawText(matrix, font, text_x_position, matrix.height - font_height - 3, graphics.Color(242, 242, 242),
+                      weather_text)  # Draw the text
+
+def change_color(img, color):
+    """Change the color of the image to a specified RGB color."""
+    # Convert the image to RGBA if not already in that mode
+    img = img.convert("RGBA")
+    # Get the pixel data
+    data = img.getdata()
+
+    # Create a new list to hold modified pixel data
+    new_data = []
+    for item in data:
+        # Change color only for pixels that are not transparent
+        if item[3] > 0:  # Check if the pixel is not transparent
+            # Change the pixel color to the specified color (as a tuple)
+            new_data.append((color[0], color[1], color[2], item[3]))  # Preserve the alpha channel
+        else:
+            new_data.append(item)
+
+    # Update the image data
+    img.putdata(new_data)
+    return img
