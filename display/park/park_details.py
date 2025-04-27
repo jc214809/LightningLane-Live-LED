@@ -18,35 +18,38 @@ def render_park_information_screen(matrix, park_obj):
     board_height = matrix.height
 
     # Determine bottom area height using info_font's height.
+    logging.info(f"Loaded fonts: {loaded_fonts}")
     info_font_height = getattr(loaded_fonts["info"], "height")
+    logging.info(f"Info font: {loaded_fonts["info"]}")
     bottom_area_height = info_font_height
-
+    logging.info(f"Bottom area height: {bottom_area_height}")
     available_top_height = board_height - bottom_area_height
     baseline_y = board_height - 1
+    logging.info(f"Board size: {board_width}x{board_height}, Baseline Y: {baseline_y}")
+
     # Wrap park name
     wrapped_name = wrap_text(loaded_fonts["park"], park_obj.get("name"), board_width, 1)
+    logging.info(f"Wrapped park name: {wrapped_name}")
 
     # Draw the park name based on board size.
     if board_height == 32:
+        logging.info("Rendering for 32 pixel height")
         render_park_hours(baseline_y, 1, matrix, park_obj)
-        render_lightning_lane_multi_pass_price(baseline_y-info_font_height, 1, matrix, park_obj.get("llmpPrice", ""))
-        #ParkNameFontHeight = (getattr(loaded_fonts["park"], "height") * len(wrapped_name))+1
-        # if len(wrapped_name) == 1:
-        # draw_single_line_centered(matrix, loaded_fonts["park"], wrapped_name[0], board_width, available_top_height)
-        # else:
+        render_lightning_lane_multi_pass_price(baseline_y - info_font_height, 1, matrix, park_obj.get("llmpPrice", ""))
         draw_multi_line_park_name_text_block(matrix, loaded_fonts["park"], wrapped_name)
     elif board_height == 64:
+        logging.info("Rendering for 64 pixel height")
         render_park_hours(baseline_y, 1, matrix, park_obj)
         render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(loaded_fonts["info"], park_obj.get("llmpPrice", "")), matrix, park_obj.get("llmpPrice", ""))
-        # Always center the entire block for 64-pixel boards.
         draw_multi_line_park_name_text_block(matrix, loaded_fonts["park"], wrapped_name)
     else:
-        # Fallback for any unexpected board size.
+        logging.info("Rendering for unexpected board height")
         if len(wrapped_name) == 1:
             draw_single_line_park_name_text(matrix, loaded_fonts["park"], wrapped_name[0], board_width, available_top_height)
         else:
             draw_multi_line_park_name_text_block(matrix, loaded_fonts["park"], wrapped_name)
 
+    logging.info(f"Displaying weather: {park_obj.get('weather', '')}")
     display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height)
 
 def render_special_ticketed_events(vertical_start, matrix, hours_text):
