@@ -59,7 +59,8 @@ def colors():
         "mickey_mouse_red": graphics.Color(242, 5, 5),
         "disney_blue": graphics.Color(17, 60, 207),
         "white": graphics.Color(255, 255, 255),
-        "down": graphics.Color(250, 0, 0)
+        "down": graphics.Color(250, 0, 0),
+        "gold": graphics.Color(255, 215, 0)
     }
 
 color_dict = colors()
@@ -69,7 +70,7 @@ def get_text_width(font, text):
     return sum(font.CharacterWidth(ord(ch)) for ch in text)
 
 
-def wrap_text(font, text, max_width, max_height, padding):
+def wrap_text(font, text, max_width, padding):
     """
     Wrap text to fit within the specified max_width (ignoring max_height here for brevity).
     Returns a list of lines (strings).

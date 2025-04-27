@@ -20,10 +20,10 @@ def render_ride_info(matrix, ride_info):
     waittime_font = loaded_fonts["waittime"]
 
     # Wrap the text for both ride name and wait time
-    wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width, matrix.height, 1)
+    wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width,1)
     if get_max_lines(matrix.height, ride_font) - 1 < len(wrapped_ride_name):
-        wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width, matrix.height, 0)
-    wrapped_wait_time = wrap_text(waittime_font, wait_time, matrix.width, matrix.height, 1)
+        wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width, 0)
+    wrapped_wait_time = wrap_text(waittime_font, wait_time, matrix.width, 1)
 
     # Combine wrapped ride name and wait time into one list of lines
     combined_lines = wrapped_ride_name + wrapped_wait_time
