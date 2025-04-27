@@ -116,7 +116,7 @@ def main():
                 logging.info("No parks data yet, waiting...")
                 time.sleep(5)
             render_mickey_logo(matrix)
-            time.sleep(7)
+            time.sleep(5)
             matrix.Clear()
     except Exception as e:
         matrix.Clear()
