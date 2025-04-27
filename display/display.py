@@ -303,10 +303,10 @@ def render_park_information_screen(matrix, park_obj):
     # Draw the park name based on board size.
     if board_height == 32:
         ParkNameFontHeight = (getattr(name_font, "height") * len(wrapped_name))+1
-        if len(wrapped_name) == 1:
-            draw_single_line_centered(matrix, name_font, wrapped_name[0], board_width, available_top_height, name_color)
-        else:
-            draw_centered_text_block(matrix, name_font, wrapped_name, board_width, ParkNameFontHeight, name_color)
+        # if len(wrapped_name) == 1:
+        # draw_single_line_centered(matrix, name_font, wrapped_name[0], board_width, available_top_height, name_color)
+        # else:
+        draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height-5, name_color)
     elif board_height == 64:
         # Always center the entire block for 64-pixel boards.
         draw_centered_text_block(matrix, name_font, wrapped_name, board_width, available_top_height-5, name_color)
@@ -327,7 +327,7 @@ def render_park_information_screen(matrix, park_obj):
 def render_lightning_lane_multi_pass_price(vertical_start, board_width, info_color, info_font, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
-    price_width = get_text_width(info_font, llmp_price)
+    # price_width = get_text_width(info_font, llmp_price)
     left_padding = 1
     graphics.DrawText(matrix, info_font, left_padding, vertical_start, info_color, llmp_price)
 
@@ -338,6 +338,8 @@ def rendar_park_hours(vertical_start, info_color, info_font, matrix, park_obj):
     closing_time = park_obj.get("closingTime", "")
     if opening_time and closing_time:
         hours_text = f"{format_iso_time(opening_time)}-{format_iso_time(closing_time)}"
+        if park_obj.get("specialTicketedEvent", False):
+            hours_text += "*"
     else:
         hours_text = "??-??"
     left_padding = 1
@@ -363,7 +365,6 @@ def render_weather_icon(matrix, icon_code, font_height, color=(255, 255, 255)):
     except Exception as e:
         logging.error(f"Failed to load icon: {e}")  # Log other errors
         return None
-
 
 def display_weather_icon_and_description(matrix, weather_info, font_height, font, show_icon=True):
     """Display the weather icon and its description in the top right corner."""
