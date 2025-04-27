@@ -6,12 +6,14 @@ import threading
 import json
 from datetime import datetime
 
+from display.park.park_details import render_park_information_screen
+from display.display import colors, initialize_fonts
 from display.startup import render_mickey_logo
 from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks
-from display.display import render_park_information_screen, render_ride_info
+from display.attractions.ride_info import render_ride_info
 from updater.data_updater import live_data_updater
-from display.Countdown.countdown import render_countdown_to_disney
+from display.countdown.countdown import render_countdown_to_disney
 
 from utils import debug
 
@@ -55,6 +57,8 @@ def main():
     matrixOptions = led_matrix_options(command_line_args)
 
     matrix = RGBMatrix(options=matrixOptions)
+    initialize_fonts(matrix.height)
+
     logging.info("Starting Disney Ride Wait Time Display...")
 
     # Optional: Display a logo if available.
@@ -87,8 +91,6 @@ def main():
 
     try:
         while True:
-            render_mickey_logo(matrix)
-            time.sleep(10)
             # Render the next trip count down
             matrix.Clear()
             render_countdown_to_disney(matrix, next_trip_time)
@@ -101,14 +103,18 @@ def main():
                     matrix.Clear()
                     logging.info(f"Rendering {park['name']} Title Screen.")
                     render_park_information_screen(matrix, park)
-                    time.sleep(5)
+                    time.sleep(7)
                     for ride_info in park.get("attractions", []):
                         matrix.Clear()
                         logging.info(f"Displaying ride: {ride_info['name']} (Park: {park['name']}) | "f"Wait Time: {ride_info['waitTime']} min | Status: {ride_info['status']}")
                         if (ride_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
                             and ride_info.get("waitTime") is not None):
                             render_ride_info(matrix, ride_info)
-                            time.sleep(15)
+                            time.sleep(10)
+                    matrix.Clear()
+                    render_mickey_logo(matrix)
+                    time.sleep(10)
+                    # Render the next trip count down
                     matrix.Clear()
             else:
                 logging.info("No parks data yet, waiting...")
