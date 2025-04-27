@@ -59,7 +59,7 @@ def colors():
         "mickey_mouse_red": graphics.Color(242, 5, 5),
         "disney_blue": graphics.Color(17, 60, 207),
         "white": graphics.Color(255, 255, 255),
-        "down": graphics.Color(0, 0, 0),
+        "down": graphics.Color(250, 0, 0)
     }
 
 color_dict = colors()

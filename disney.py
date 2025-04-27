@@ -112,13 +112,12 @@ def main():
                             render_ride_info(matrix, ride_info)
                             time.sleep(10)
                     matrix.Clear()
-                    render_mickey_logo(matrix)
-                    time.sleep(10)
-                    # Render the next trip count down
-                    matrix.Clear()
             else:
                 logging.info("No parks data yet, waiting...")
                 time.sleep(5)
+            render_mickey_logo(matrix)
+            time.sleep(10)
+            matrix.Clear()
     except Exception as e:
         matrix.Clear()
         logging.error(f"An error occurred: {e}")
