@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 from display.park.park_details import render_park_information_screen
-from display.display import colors, initialize_fonts
+from display.display import initialize_fonts
 from display.startup import render_mickey_logo
 from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks
