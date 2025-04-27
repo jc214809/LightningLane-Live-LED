@@ -1,5 +1,7 @@
 import os
+from io import BytesIO
 
+import requests
 from PIL import Image
 import logging
 
@@ -341,22 +343,25 @@ def rendar_park_hours(vertical_start, info_color, info_font, matrix, park_obj):
     left_padding = 1
     graphics.DrawText(matrix, info_font, left_padding, vertical_start, info_color, hours_text)
 
-def render_weather_icon(matrix, icon_code, font_height, color=(255, 255, 255)):  # Default color is white
-    icon_path = os.path.abspath(f"./assets/weather/{icon_code}.png")  # Adjust filename if needed
-    # icon_path = os.path.abspath(f"./assets/weather/11d.png")  # Adjust filename if needed
-    try:
-        # Open the icon image from the local path
-        img = Image.open(icon_path)
 
-        # Change the image color
-        img = change_color(img, color)  # Call the function to change the color
+def render_weather_icon(matrix, icon_code, font_height, color=(255, 255, 255)):
+
+    # Construct the URL for the weather icon
+    icon_url = f"https://openweathermap.org/img/wn/{icon_code}.png"
+
+    try:
+        # Fetch the icon image from the URL
+        response = requests.get(icon_url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        img = Image.open(BytesIO(response.content))
+        img = img.resize((16, 16))  # Resize the image to a smaller display size for the matrix
 
         return img
-    except FileNotFoundError:
-        logging.error(f"Icon not found: {icon_path}")
+    except requests.RequestException as e:
+        logging.error(f"Failed to fetch icon from URL: {icon_url} - {e}")  # Log any issues
         return None
     except Exception as e:
-        logging.error(f"Failed to load icon: {e}")
+        logging.error(f"Failed to load icon: {e}")  # Log other errors
         return None
 
 
@@ -382,6 +387,7 @@ def display_weather_icon_and_description(matrix, weather_info, font_height, font
             x_position = matrix.width - total_width
 
             matrix.SetImage(img.convert("RGB"), matrix.width-icon_width-1,1)
+            # graphics.DrawText(matrix, font, matrix.width-weather_text_width, img.height + padding, graphics.Color(242, 242, 242), weather_text)
             graphics.DrawText(matrix, font, matrix.width-get_text_width(font, str(f_temp) + "°"), img.height + padding, graphics.Color(242, 242, 242), str(f_temp) + "°")
             graphics.DrawText(matrix, font, matrix.width - get_text_width(font, weather_info['short_description']),
                                (img.height + font_height + padding), graphics.Color(242, 242, 242), weather_info['short_description'])
