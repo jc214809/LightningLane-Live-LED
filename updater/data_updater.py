@@ -2,6 +2,7 @@ import time
 import logging
 import asyncio
 from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
+from api.weather import fetch_weather_data
 
 
 def merge_live_data(existing_attractions, new_live_data):
@@ -40,6 +41,11 @@ def update_parks_live_data(parks):
     For each park in parks, update its attractions with live data.
     """
     for park in parks:
+        location = park.get("location")
+        if location and park.get("operating"):
+            latitude = location.get("latitude")
+            longitude = location.get("longitude")
+            park["weather"] = fetch_weather_data(latitude, longitude) # Update weather data
         if park.get("attractions"):
             # Fetch the latest live data for the current attractions.
             new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
