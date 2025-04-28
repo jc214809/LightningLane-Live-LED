@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from io import BytesIO
 
@@ -8,6 +9,12 @@ from RGBMatrixEmulator import graphics
 
 from display.display import get_text_width, wrap_text, loaded_fonts, color_dict
 
+info_font = graphics.Font()
+absolute_path = os.path.abspath("assets/fonts/patched/4x6-legacy.bdf")
+info_font.LoadFont(absolute_path)
+park_font = graphics.Font()
+absolute_path = os.path.abspath("assets/fonts/patched/5x8.bdf")
+park_font.LoadFont(absolute_path)
 
 def render_park_information_screen(matrix, park_obj):
     """
@@ -18,45 +25,45 @@ def render_park_information_screen(matrix, park_obj):
     board_height = matrix.height
 
     # Determine bottom area height using info_font's height.
-    info_font_height = getattr(loaded_fonts["info"], "height")
+    info_font_height = getattr(info_font, "height")
     bottom_area_height = info_font_height
 
     available_top_height = board_height - bottom_area_height
     baseline_y = board_height - 1
     # Wrap park name
-    wrapped_name = wrap_text(loaded_fonts["park"], park_obj.get("name"), board_width, 1)
+    wrapped_name = wrap_text(park_font, park_obj.get("name"), board_width, 1)
 
     # Draw the park name based on board size.
     if board_height == 32:
         render_park_hours(baseline_y, 1, matrix, park_obj)
         render_lightning_lane_multi_pass_price(baseline_y-info_font_height, 1, matrix, park_obj.get("llmpPrice", ""))
-        #ParkNameFontHeight = (getattr(loaded_fonts["park"], "height") * len(wrapped_name))+1
+        #ParkNameFontHeight = (getattr(park_font, "height") * len(wrapped_name))+1
         # if len(wrapped_name) == 1:
-        # draw_single_line_centered(matrix, loaded_fonts["park"], wrapped_name[0], board_width, available_top_height)
+        # draw_single_line_centered(matrix, park_font, wrapped_name[0], board_width, available_top_height)
         # else:
-        draw_multi_line_park_name_text_block(matrix, loaded_fonts["park"], wrapped_name)
+        draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
     elif board_height == 64:
         render_park_hours(baseline_y, 1, matrix, park_obj)
-        render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(loaded_fonts["info"], park_obj.get("llmpPrice", "")), matrix, park_obj.get("llmpPrice", ""))
+        render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(info_font, park_obj.get("llmpPrice", "")), matrix, park_obj.get("llmpPrice", ""))
         # Always center the entire block for 64-pixel boards.
-        draw_multi_line_park_name_text_block(matrix, loaded_fonts["park"], wrapped_name)
+        draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
     else:
         # Fallback for any unexpected board size.
         if len(wrapped_name) == 1:
-            draw_single_line_park_name_text(matrix, loaded_fonts["park"], wrapped_name[0], board_width, available_top_height)
+            draw_single_line_park_name_text(matrix, park_font, wrapped_name[0], board_width, available_top_height)
         else:
-            draw_multi_line_park_name_text_block(matrix, loaded_fonts["park"], wrapped_name)
+            draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
 
     display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height)
 
 def render_special_ticketed_events(vertical_start, matrix, hours_text):
-    graphics.DrawText(matrix, loaded_fonts["info"], 1 + get_text_width(loaded_fonts["info"], hours_text), vertical_start, color_dict["gold"], "*")
+    graphics.DrawText(matrix, info_font, 1 + get_text_width(info_font, hours_text), vertical_start, color_dict["gold"], "*")
 
 def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
     left_padding = 1
-    graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], llmp_price)
+    graphics.DrawText(matrix, info_font, horizontal_start, vertical_start, color_dict["disney_blue"], llmp_price)
 
 
 def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
@@ -69,7 +76,7 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
             render_special_ticketed_events(vertical_start, matrix, hours_text)
     else:
         hours_text = "??-??"
-    graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], hours_text)
+    graphics.DrawText(matrix, info_font, horizontal_start, vertical_start, color_dict["disney_blue"], hours_text)
 
 def render_weather_icon(icon_code):
     # Construct the URL for the weather icon
@@ -104,14 +111,14 @@ def display_weather_icon_and_description(matrix, weather_info, font_height, show
             icon_width = img.width
             if matrix.height == 32:
                 matrix.SetImage(img.convert("RGB"), matrix.width - icon_width - 1, 1)
-                graphics.DrawText(matrix, loaded_fonts["info"], matrix.width - get_text_width(loaded_fonts["info"], temp), img.height + padding, color_dict["white"], temp)
-                graphics.DrawText(matrix, loaded_fonts["info"], matrix.width - get_text_width(loaded_fonts["info"], weather_info['short_description']), (img.height + font_height + padding), color_dict["white"], weather_info['short_description'])
+                graphics.DrawText(matrix, info_font, matrix.width - get_text_width(info_font, temp), img.height + padding, color_dict["white"], temp)
+                graphics.DrawText(matrix, info_font, matrix.width - get_text_width(info_font, weather_info['short_description']), (img.height + font_height + padding), color_dict["white"], weather_info['short_description'])
             if matrix.height >= 64:
                 weather_text_width = temp + ' ' + weather_info['short_description']
-                horizontal_point = int((matrix.width - img.width - get_text_width(loaded_fonts["info"], weather_text_width))/2)
-                vertical_point = int(matrix.height-(loaded_fonts["info"].height * 2.5))
+                horizontal_point = int((matrix.width - img.width - get_text_width(info_font, weather_text_width)) / 2)
+                vertical_point = int(matrix.height - (info_font.height * 2.5))
                 matrix.SetImage(img.convert("RGB"), horizontal_point,vertical_point - img.height)
-                graphics.DrawText(matrix, loaded_fonts["info"], horizontal_point + img.width, vertical_point-3, color_dict["white"], weather_text_width)
+                graphics.DrawText(matrix, info_font, horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text_width)
         else:
             logging.warning("Icon could not be rendered, only displaying text.")
 
@@ -141,7 +148,7 @@ def draw_multi_line_park_name_text_block(matrix, font, text_lines):
             else:
                 current_y = int(current_y * 2)
         if matrix.height == 64:
-            line_width = get_text_width(loaded_fonts["park"], line)
+            line_width = get_text_width(park_font, line)
             x = (matrix.width - line_width) // 2
         graphics.DrawText(matrix, font, x, current_y, color_dict["mickey_mouse_red"], line)
         current_y += font_height
