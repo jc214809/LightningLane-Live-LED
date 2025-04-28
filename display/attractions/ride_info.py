@@ -1,8 +1,9 @@
 import logging
+import os
 
 from RGBMatrixEmulator import graphics
 
-from display.display import wrap_text, loaded_fonts, get_text_width, color_dict
+from display.display import wrap_text, loaded_fonts, get_text_width, color_dict, fonts
 
 
 def render_ride_info(matrix, ride_info):
@@ -16,8 +17,12 @@ def render_ride_info(matrix, ride_info):
     ride_name = ride_info["name"]
     wait_time = f"{ride_info['waitTime']} Mins"
 
-    ride_font = loaded_fonts["ride"]
-    waittime_font = loaded_fonts["waittime"]
+    ride_font = graphics.Font()
+    absolute_path = os.path.abspath(fonts()[matrix.height]["ride"])
+    ride_font.LoadFont(absolute_path)
+    waittime_font = graphics.Font()
+    absolute_path = os.path.abspath(fonts()[matrix.height]["waittime"])
+    waittime_font.LoadFont(absolute_path)
 
     # Wrap the text for both ride name and wait time
     wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width,1)
