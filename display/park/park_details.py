@@ -36,7 +36,7 @@ def render_park_information_screen(matrix, park_obj):
 
     # Draw the park name based on board size.
     if board_height == 32:
-        render_park_hours(baseline_y, 1, matrix, park_obj)
+        render_park_hours(baseline_y, 1, matrix, park_obj, info_font)
         render_lightning_lane_multi_pass_price(baseline_y-info_font_height, 1, matrix, park_obj.get("llmpPrice", ""),info_font)
         #ParkNameFontHeight = (getattr(park_font, "height") * len(wrapped_name))+1
         # if len(wrapped_name) == 1:
