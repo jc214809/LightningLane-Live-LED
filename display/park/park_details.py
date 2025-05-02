@@ -35,27 +35,15 @@ def render_park_information_screen(matrix, park_obj):
     wrapped_name = wrap_text(park_font, park_obj.get("name"), board_width, 1)
 
     # Draw the park name based on board size.
+    draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
+    display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height, info_font)
+    llmp_price = park_obj.get("llmpPrice", "")
     if board_height == 32:
         render_park_hours(baseline_y, 1, matrix, park_obj, info_font)
-        render_lightning_lane_multi_pass_price(baseline_y-info_font_height, 1, matrix, park_obj.get("llmpPrice", ""),info_font)
-        #ParkNameFontHeight = (getattr(park_font, "height") * len(wrapped_name))+1
-        # if len(wrapped_name) == 1:
-        # draw_single_line_centered(matrix, park_font, wrapped_name[0], board_width, available_top_height)
-        # else:
-        draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
-    elif board_height == 64:
-        render_park_hours(baseline_y, 1, matrix, park_obj, info_font)
-        render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(info_font, park_obj.get("llmpPrice", "")), matrix, park_obj.get("llmpPrice", ""),info_font)
-        # Always center the entire block for 64-pixel boards.
-        draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
+        render_lightning_lane_multi_pass_price(baseline_y - info_font_height, 1, matrix, llmp_price, info_font)
     else:
-        # Fallback for any unexpected board size.
-        if len(wrapped_name) == 1:
-            draw_single_line_park_name_text(matrix, park_font, wrapped_name[0], board_width, available_top_height)
-        else:
-            draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
-
-    display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height, info_font)
+        render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(info_font, llmp_price), matrix, llmp_price, info_font)
+        render_park_hours(baseline_y, 1, matrix, park_obj, info_font)
 
 def render_special_ticketed_events(vertical_start, matrix, hours_text, info_font):
     graphics.DrawText(matrix, info_font, 1 + get_text_width(info_font, hours_text), vertical_start, color_dict["gold"], "*")
@@ -63,7 +51,6 @@ def render_special_ticketed_events(vertical_start, matrix, hours_text, info_font
 def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price, info_font):
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
-    left_padding = 1
     graphics.DrawText(matrix, info_font, horizontal_start, vertical_start, color_dict["disney_blue"], llmp_price)
 
 
