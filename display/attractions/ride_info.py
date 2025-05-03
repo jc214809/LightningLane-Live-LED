@@ -27,7 +27,11 @@ def render_ride_info(matrix, ride_info):
     # Wrap the text for both ride name and wait time
     wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width,1)
     if get_max_lines(matrix.height, ride_font) - 1 < len(wrapped_ride_name):
-        wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width, 0)
+        if "Meet " in ride_name:
+            ride_name = ride_name.rsplit(" at ", 1)[0]
+            wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width, 1)
+        else:
+            wrapped_ride_name = wrap_text(ride_font, ride_name, matrix.width, 0)
     wrapped_wait_time = wrap_text(waittime_font, wait_time, matrix.width, 1)
 
     # Combine wrapped ride name and wait time into one list of lines
