@@ -51,14 +51,13 @@ def render_ride_info(matrix, ride_info):
     y_position = calculate_y_position(matrix, total_lines_height)
 
     # Render each line of text
-    render_lines(matrix, combined_lines, ride_font, waittime_font, x_position, y_position, line_heights,
+    render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, line_heights,
                  wrapped_ride_name)
 
     logging.debug(f"Total text height: {total_lines_height}, Final Y position: {y_position}")
 
 
-def render_lines(matrix, combined_lines, ride_font, waittime_font, x_position, y_position, line_heights,
-                 wrapped_ride_name):
+def render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, line_heights, wrapped_ride_name):
     """
     Render each line of text at the specified position on the matrix.
     """
@@ -73,16 +72,9 @@ def render_lines(matrix, combined_lines, ride_font, waittime_font, x_position, y
         logging.debug(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
 
         # Draw the text on the matrix
-        text_color = color_dict["white"]
-
-        if line in wrapped_ride_name:
-            graphics.DrawText(matrix, ride_font, line_x_position, current_y_position, text_color,
-                              line)
-        else:
-            if "down" in line.lower():
-                text_color = color_dict["down"]
-            graphics.DrawText(matrix, waittime_font, line_x_position, current_y_position,text_color,
-                              line)
+        text_color = color_dict["white"] if line in wrapped_ride_name else color_dict[
+            "down"] if "down" in line.lower() or line not in wrapped_ride_name else color_dict["white"]
+        graphics.DrawText(matrix, ride_font, line_x_position, current_y_position, text_color, line)
 
         # Move the y_position down for the next line
         current_y_position += line_heights[idx]
