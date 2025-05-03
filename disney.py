@@ -11,7 +11,7 @@ from display.display import initialize_fonts
 from display.startup import render_mickey_logo
 from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks
-from display.attractions.ride_info import render_ride_info
+from display.attractions.attraction_info import render_ride_info
 from updater.data_updater import live_data_updater
 from display.countdown.countdown import render_countdown_to_disney
 
