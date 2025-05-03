@@ -9,7 +9,8 @@ from RGBMatrixEmulator import graphics
 
 from display.display import get_text_width, wrap_text, loaded_fonts, color_dict, fonts
 
-
+# Icon cache for storing loaded weather icons
+icon_cache = {}
 def render_park_information_screen(matrix, park_obj):
     """
     Renders the park name at the top and the hours/price at the bottom.
@@ -68,6 +69,12 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj, info_f
 
 def render_weather_icon(icon_code):
     # Construct the URL for the weather icon
+    # Check if the icon is already cached
+    logging.debug(f"Fetching cache: {icon_cache}")
+    if icon_code in icon_cache:
+        logging.info(f"Fetching icon from cache for code: {icon_code}")
+        return icon_cache[icon_code]
+
     icon_url = f"https://openweathermap.org/img/wn/{icon_code}.png"
 
     try:
@@ -76,6 +83,7 @@ def render_weather_icon(icon_code):
         response.raise_for_status()  # Raise an exception for HTTP errors
         img = Image.open(BytesIO(response.content))
         img = img.resize((12, 12))  # Resize the image to a smaller display size for the matrix
+        icon_cache[icon_code] = img
 
         return img
     except requests.RequestException as e:
