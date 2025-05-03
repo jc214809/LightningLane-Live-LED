@@ -37,12 +37,8 @@ def fetch_list_of_disney_world_parks():
 
     try:
         response = requests.get(api_url)
-        # response.raise_for_status()
 
         parks_data = response.json().get("parks", [])
-        # if not isinstance(parks_data, list):
-        #     logging.error(f"Unexpected format for 'parks' key: {parks_data}")
-        #     return []
 
         # Determine today's date and yesterday's date as strings.
         today = datetime.now()
@@ -113,10 +109,10 @@ def fetch_parks_and_attractions(disney_park_list):
 
         attractions = []
         for item in park_data.get("children", []):
-            if item.get("entityType") == "ATTRACTION": # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
+            if (item.get("entityType") == "ATTRACTION") or (item.get("entityType") == "SHOW" and "Meet" in item.get("name", "")): # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
                 attraction = {
                     "id": item.get("id"),
-                    "name": item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", ""),
+                    "name": get_attraction_name(item),
                     "entityType": item.get("entityType"),
                     "parkId": park_id,
                     "waitTime": '',      # Placeholder for wait time
@@ -133,12 +129,16 @@ def fetch_parks_and_attractions(disney_park_list):
             "specialTicketedEvent": is_special_event(schedule),
             "closingTime": operating_event.get("closingTime", ""),
             "openingTime": operating_event.get("openingTime", ""),
-            "llmpPrice": deterimine_llmp_price(operating_event),
+            "llmpPrice": determine_llmp_price(operating_event),
             "weather": fetch_weather_data(location.get("latitude"), location.get("longitude")),
             "location": location
         }
         parks.append(park_obj)
     return parks
+
+
+def get_attraction_name(item):
+    return item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", "")
 
 
 def is_special_event(schedule):
@@ -149,7 +149,7 @@ def is_special_event(schedule):
     return special_ticketed_event
 
 
-def deterimine_llmp_price(operating_event):
+def determine_llmp_price(operating_event):
     lightning_lane_multi_pass_price = ""
     if operating_event and "purchases" in operating_event:
         for purchase in operating_event["purchases"]:

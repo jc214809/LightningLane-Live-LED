@@ -21,7 +21,7 @@ import driver
 from driver import RGBMatrix, RGBMatrixOptions
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
 
 def load_config(file_path):
     """Load the configuration from a JSON file."""
@@ -78,6 +78,8 @@ def main():
     if not disney_park_list:
         logging.error("No Disney parks found. Exiting.")
         return
+
+    time.sleep(10)
 
     parks_holder = []
     update_interval = 300  # seconds
