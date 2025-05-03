@@ -52,12 +52,12 @@ def render_ride_info(matrix, ride_info):
 
     # Render each line of text
     render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, line_heights,
-                 wrapped_ride_name)
+                 wrapped_ride_name, wrapped_wait_time)
 
     logging.debug(f"Total text height: {total_lines_height}, Final Y position: {y_position}")
 
 
-def render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, line_heights, wrapped_ride_name):
+def render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, line_heights, wrapped_ride_name, wrapped_wait_time):
     """
     Render each line of text at the specified position on the matrix.
     """
@@ -72,8 +72,13 @@ def render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, l
         logging.debug(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
 
         # Draw the text on the matrix
-        text_color = color_dict["white"] if line in wrapped_ride_name else color_dict[
-            "down"] if "down" in line.lower() or line not in wrapped_ride_name else color_dict["white"]
+        text_color = (
+            color_dict["white"]
+            if line in wrapped_ride_name
+            else color_dict["down"]
+            if "down" in line.lower() or (any("down" in item.lower() for item in wrapped_wait_time) and line in wrapped_wait_time)
+            else color_dict["white"]
+        )
         graphics.DrawText(matrix, ride_font, line_x_position, current_y_position, text_color, line)
 
         # Move the y_position down for the next line
