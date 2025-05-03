@@ -7,7 +7,7 @@ import requests
 from PIL import Image
 from RGBMatrixEmulator import graphics
 
-from display.display import get_text_width, wrap_text, loaded_fonts, color_dict, fonts
+from display.display import get_text_width, wrap_text, color_dict, fonts
 
 # Icon cache for storing loaded weather icons
 icon_cache = {}
@@ -113,7 +113,7 @@ def display_weather_icon_and_description(matrix, weather_info, font_height, info
                 weather_text_width = temp + ' ' + weather_info['short_description']
                 horizontal_point = int((matrix.width - img.width - get_text_width(info_font, weather_text_width)) / 2)
                 vertical_point = int(matrix.height - (info_font.height * 2.5))
-                matrix.SetImage(img.convert("RGB"), horizontal_point,vertical_point - img.height)
+                matrix.SetImage(img.convert("RGB"), horizontal_point, vertical_point - img.height)
                 graphics.DrawText(matrix, info_font, horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text_width)
         else:
             logging.warning("Icon could not be rendered, only displaying text.")
