@@ -1,51 +1,52 @@
 # LightningLane-Live-LED
 
-This project is a Python application designed to fetch and display wait times for attractions at Walt Disney World on an LED matrix display. It retrieves park and attraction data from the [ThemeParks Wiki API](https://api.themeparks.wiki) and dynamically renders ride information—including park names, ride names, and wait times—onto an LED matrix. The application supports both actual hardware and an emulator for testing purposes.
+LightningLane-Live-LED is a Python application designed to fetch and display wait times for attractions at Walt Disney World on an LED matrix display. It retrieves park and attraction data from the [ThemeParks Wiki API](https://api.themeparks.wiki) and dynamically renders ride information—including park names, ride names, and wait times—onto an LED matrix. The application supports both actual hardware and an emulator for testing purposes.
 
 ## Features
 
 - **API Integration:**  
-  Retrieves Walt Disney World park data and attraction details using synchronous (`requests`) and asynchronous (`aiohttp`) HTTP requests.
+  Retrieves Walt Disney World park data and attraction details using HTTP requests.
 - **Live Data Updates:**  
   Uses a background thread to periodically update live wait times for attractions.
 - **Dynamic Display Rendering:**  
-  Renders park names and ride information with dynamic text wrapping and spacing on an LED matrix.
+  Renders park details, character meet and greets (w/ Wait Times) and ride information with dynamic text wrapping and spacing on an LED matrix.
+- **Trip Countdown:**  
+  Displays a countdown to your next Disney visit for added excitement.
+- **Current Weather Updates:**  
+  Provides live weather information for each park.
 - **Emulation Mode:**  
-  Supports running in emulation mode via `RGBMatrixEmulator` for testing without physical hardware.
+  Supports running the application in emulation mode via `RGBMatrixEmulator` for testing without physical hardware.
 - **Detailed Logging:**  
-  Provides extensive logging for monitoring application behavior and debugging issues.
+  Offers extensive logging for monitoring application behavior and debugging issues.
 
 ## Prerequisites
 
 - **Python 3.7+**
 - **Pip** package manager
 
-
-**Currently supported boards:**
+**Currently supported board configurations:**
  * 64x32
  * 64x64
 
 ## Installation
+
 ### Hardware Assembly
-Please refer to my inspiration project MLB-LED-Scoreboard [here](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard).
+For users interested in physical hardware setup, please refer to the [inspiration project MLB-LED-Scoreboard](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard).
 
-If you'd like to see support for another set of board dimensions, or have design suggestions for an existing one, file an issue!
+If you'd like to see support for another set of board dimensions, or have design suggestions for an existing one, feel free to file an issue!
 
-For hardware setups, ensure you have an LED matrix display (or the appropriate emulator) available.
-
-## Installation
+## Software Installation
 
 **Pi's with known issues**
- * Raspberry Pi Zero has had numerous reports of slowness and unreliability during installation and running the software.
+ * Raspberry Pi Zero has had numerous reports of slowness and unreliability during installation and running with other software.
+ * HOWEVER, I was able to run this project in a headless version on Pi OS on a Pi Zero 2 W
 
 ### Software Installation
 #### Requirements
 You need Git for cloning this repo and PIP for installing the software.
-```
+```bash
 sudo apt-get update
 sudo apt-get install git python3-pip
-```
-
 ### Using a Virtual Environment (Recommended)
 
 #### Installing the scoreboard software
