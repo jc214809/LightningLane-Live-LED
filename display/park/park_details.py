@@ -37,7 +37,8 @@ def render_park_information_screen(matrix, park_obj):
 
     # Draw the park name based on board size.
     draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
-    display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height, info_font)
+    if park_obj.get("weather"):
+        display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height, info_font)
     llmp_price = park_obj.get("llmpPrice", "")
     if board_height == 32:
         render_park_hours(baseline_y, 1, matrix, park_obj, info_font)
