@@ -2,7 +2,7 @@ import logging
 from driver import graphics
 
 
-def render_mickey_classic(matrix):
+def render_mickey_logo(matrix):
     """
     Draw a Mickey Mouse silhouette in a fixed 40×40 region centered on the matrix.
     This won't fill the entire board, but ensures a consistent shape.
