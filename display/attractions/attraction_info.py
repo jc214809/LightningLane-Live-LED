@@ -6,7 +6,7 @@ from RGBMatrixEmulator import graphics
 from display.display import wrap_text, loaded_fonts, get_text_width, color_dict, fonts
 
 
-def render_ride_info(matrix, ride_info):
+def render_attraction_info(matrix, ride_info):
     """
     Renders ride name at the top and wait time at the bottom in a single draw call.
     The combined text block is drawn from the center of the screen.
