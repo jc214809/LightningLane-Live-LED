@@ -54,7 +54,7 @@ def fetch_list_of_disney_world_parks():
                 schedule_filtered = [
                     event for event in schedule if event.get("date") in (today_str, yesterday_str)
                 ]
-
+                logging.debug(f"Schedule Filter: {schedule_filtered}")
                 filtered_parks.append({
                     "name": park.get("name", "Unknown"),
                     "id": park.get("id", "Unknown"),
@@ -142,12 +142,13 @@ def get_attraction_name(item):
 
 
 def is_special_event(schedule):
-    special_ticketed_event = any(
-        event.get("type") == "TICKETED_EVENT" and "Special Ticketed Event" in event.get("description", "")
+    return any(
+        event.get("type") == "TICKETED_EVENT" and (
+            "special ticketed event" in event.get("description", "").lower() or
+            "extended evening" in event.get("description", "").lower()
+        )
         for event in schedule
     )
-    return special_ticketed_event
-
 
 def determine_llmp_price(operating_event):
     lightning_lane_multi_pass_price = ""
