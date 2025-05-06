@@ -107,7 +107,7 @@ def render_logo(matrix):
         from PIL import Image
         logo = Image.open(logo_path)
         matrix.SetImage(logo.convert("RGB"))
-        time.sleep(10)
+        time.sleep(8)
         logo.close()
     else:
         # If no logo is available, render the Mickey silhouette as an intro.
@@ -120,7 +120,7 @@ def initialize_park_information_screen(matrix, park):
     matrix.Clear()
     logging.info(f"Rendering {park['name']} Title Screen.")
     render_park_information_screen(matrix, park)
-    time.sleep(5)
+    time.sleep(8)
 
 def loop_through_attractions(matrix, park):
     for attraction_info in park.get("attractions", []):
@@ -136,7 +136,7 @@ def show_trip_countdown(matrix, next_trip_time):
     # Render the next trip count down
     matrix.Clear()
     render_countdown_to_disney(matrix, next_trip_time)
-    time.sleep(8)
+    time.sleep(7)
 
 if __name__ == "__main__":
     main()
