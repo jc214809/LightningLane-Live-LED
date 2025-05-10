@@ -109,7 +109,8 @@ def display_weather_icon_and_description(matrix, weather_info, font_height, info
             if matrix.height == 32:
                 matrix.SetImage(img.convert("RGB"), matrix.width - icon_width - 1, 1)
                 graphics.DrawText(matrix, info_font, matrix.width - get_text_width(info_font, temp), img.height + padding, color_dict["white"], temp)
-                graphics.DrawText(matrix, info_font, matrix.width - get_text_width(info_font, weather_info['short_description']), (img.height + font_height + padding), color_dict["white"], weather_info['short_description'])
+                weather_text = "T-Storm" if "thunderstorm" in weather_info['short_description'].lower() else weather_info['short_description']
+                graphics.DrawText(matrix, info_font, matrix.width - get_text_width(info_font, weather_text), (img.height + font_height + padding), color_dict["white"],weather_text)
             if matrix.height >= 64:
                 weather_text_width = temp + ' ' + weather_info['short_description']
                 horizontal_point = int((matrix.width - img.width - get_text_width(info_font, weather_text_width)) / 2)

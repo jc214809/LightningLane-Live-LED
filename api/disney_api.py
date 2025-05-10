@@ -13,8 +13,8 @@ troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6
 troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
 
 
-def get_park_location(parkId):
-    api_url = f"https://api.themeparks.wiki/v1/entity/{parkId}"
+def get_park_location(park_id):
+    api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}"
     debug.info("Fetching Disney World schedule data...")
 
     try:
@@ -74,18 +74,6 @@ def fetch_list_of_disney_world_parks():
 
 
 def fetch_parks_and_attractions(disney_park_list):
-    """
-    For each park in disney_park_list (a list of dicts with keys 'name', 'id', 'schedule'),
-    fetch the attractions and return a list of park objects.
-    Each park object is a dict with keys:
-      - 'id'
-      - 'name'
-      - 'attractions'
-      - 'specialTicketedEvent': boolean indicating if any schedule event is a Special Ticketed Event.
-      - 'closingTime': from the first OPERATING event.
-      - 'openingTime': from the first OPERATING event.
-      - 'LigtningLaneMultiPassPrice': from the purchase list in the OPERATING event.
-    """
     parks = []
     for park_info in disney_park_list:
         park_name = park_info.get("name", "Unknown")
@@ -217,11 +205,12 @@ def park_has_operating_attraction(park):
     for attraction in park.get("attractions", []):
         wait_time = attraction.get("waitTime")
         status = attraction.get("status")
-        debug.info(
+        debug.log(
             f"Attraction: {attraction['name']} (Park: {park['name']}) | "
             f"Wait Time: {attraction['waitTime']} | Status: {attraction['status']}"
         )
         if wait_time not in [None, ''] and status.upper() == "OPERATING":
+            debug.info(f"Found open ride in {park['name']}: {attraction['name']}")
             return True
     return False
 
