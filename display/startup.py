@@ -1,6 +1,6 @@
-import logging
 from driver import graphics
 
+from utils import debug
 
 def render_mickey_logo(matrix):
     """
@@ -47,4 +47,4 @@ def render_mickey_logo(matrix):
                 matrix_y = offset_y + sy
                 graphics.DrawLine(matrix, matrix_x, matrix_y, matrix_x, matrix_y, color_white)
 
-    logging.info("Rendered fixed-size Mickey silhouette at center of the board.")
+    debug.info("Rendered fixed-size Mickey silhouette at center of the board.")

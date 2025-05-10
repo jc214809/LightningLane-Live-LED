@@ -6,3 +6,4 @@ Pillow>=10.0.1
 RGBMatrixEmulator>=0.12.4
 pyowm>=3.3.0
 setuptools; python_version >= "3.12"
+pytz>=2023.3

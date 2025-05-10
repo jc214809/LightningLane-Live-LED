@@ -27,13 +27,11 @@ def load_config(file_path):
         config = json.load(file)
     return config
 
-def get_logging_level():
-    if load_config('config.json')['debug']:
-        return logging.DEBUG
-    else:
-        return logging.INFO
-
-logging.basicConfig(level=get_logging_level(), format='%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s')
+logger = logging.getLogger("disney-lll")
+if load_config('config.json')['debug']:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 use_image_logo = False
 
@@ -58,7 +56,7 @@ def main():
 
     disney_park_list = fetch_list_of_disney_world_parks()
     if not disney_park_list:
-        logging.error("No Disney parks found. Exiting.")
+        debug.error("No Disney parks found. Exiting.")
         return
 
     update_thread = threading.Thread(
@@ -81,12 +79,12 @@ def main():
                     loop_through_attractions(matrix, park)
                     matrix.Clear()
             else:
-                logging.info("No parks data yet, waiting...")
+                debug.info("No parks data yet, waiting...")
                 time.sleep(5)
             matrix.Clear()
     except Exception as e:
         matrix.Clear()
-        logging.error(f"An error occurred: {e}")
+        debug.error(f"An error occurred: {e}")
     finally:
         matrix.Clear()
 
@@ -103,7 +101,7 @@ def render_logo(matrix):
     matrix.Clear()
     logo_path = os.path.abspath("./assets/MK.png")
     if os.path.exists(logo_path) and use_image_logo:
-        logging.info("Logo found. Displaying...")
+        debug.info("Logo found. Displaying...")
         from PIL import Image
         logo = Image.open(logo_path)
         matrix.SetImage(logo.convert("RGB"))
@@ -111,21 +109,21 @@ def render_logo(matrix):
         logo.close()
     else:
         # If no logo is available, render the Mickey silhouette as an intro.
-        logging.info("No logo found. Rendering Mickey silhouette as intro...")
+        debug.info("No logo found. Rendering Mickey silhouette as intro...")
         render_mickey_logo(matrix)
         time.sleep(8)
 
 
 def initialize_park_information_screen(matrix, park):
     matrix.Clear()
-    logging.info(f"Rendering {park['name']} Title Screen.")
+    debug.info(f"Rendering {park['name']} Title Screen.")
     render_park_information_screen(matrix, park)
     time.sleep(8)
 
 def loop_through_attractions(matrix, park):
     for attraction_info in park.get("attractions", []):
         matrix.Clear()
-        logging.info(
+        debug.info(
             f"Displaying ride: {attraction_info['name']} (Park: {park['name']}) | "f"Wait Time: {attraction_info['waitTime']} min | Status: {attraction_info['status']}")
         if (attraction_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
             and attraction_info.get("waitTime") is not None):
