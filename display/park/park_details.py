@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import datetime
 from io import BytesIO
@@ -8,6 +7,7 @@ from PIL import Image
 from RGBMatrixEmulator import graphics
 
 from display.display import get_text_width, wrap_text, color_dict, fonts
+from utils import debug
 
 # Icon cache for storing loaded weather icons
 icon_cache = {}
@@ -71,9 +71,9 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj, info_f
 def render_weather_icon(icon_code):
     # Construct the URL for the weather icon
     # Check if the icon is already cached
-    logging.debug(f"Fetching cache: {icon_cache}")
+    debug.log(f"Fetching cache: {icon_cache}")
     if icon_code in icon_cache:
-        logging.info(f"Fetching icon from cache for code: {icon_code}")
+        debug.info(f"Fetching icon from cache for code: {icon_code}")
         return icon_cache[icon_code]
 
     icon_url = f"https://openweathermap.org/img/wn/{icon_code}.png"
@@ -83,20 +83,20 @@ def render_weather_icon(icon_code):
         response = requests.get(icon_url)
         response.raise_for_status()  # Raise an exception for HTTP errors
         img = Image.open(BytesIO(response.content))
-        img = img.resize((12, 12))  # Resize the image to a smaller display size for the matrix
+        img = img.resize((15, 15))  # Resize the image to a smaller display size for the matrix
         icon_cache[icon_code] = img
 
         return img
     except requests.RequestException as e:
-        logging.error(f"Failed to fetch icon from URL: {icon_url} - {e}")  # Log any issues
+        debug.error(f"Failed to fetch icon from URL: {icon_url} - {e}")  # Log any issues
         return None
     except Exception as e:
-        logging.error(f"Failed to load icon: {e}")  # Log other errors
+        debug.error(f"Failed to load icon: {e}")  # Log other errors
         return None
 
 def display_weather_icon_and_description(matrix, weather_info, font_height, info_font, show_icon=True):
     """Display the weather icon and its description in the top right corner."""
-    logging.info(f"Weather Info: {weather_info}")
+    debug.info(f"Weather Info: {weather_info}")
 
     temp = weather_info.get("temperature", "?")
 
@@ -117,7 +117,7 @@ def display_weather_icon_and_description(matrix, weather_info, font_height, info
                 matrix.SetImage(img.convert("RGB"), horizontal_point, vertical_point - img.height)
                 graphics.DrawText(matrix, info_font, horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text_width)
         else:
-            logging.warning("Icon could not be rendered, only displaying text.")
+            debug.warning("Icon could not be rendered, only displaying text.")
 
 def format_iso_time(iso_str):
     """
@@ -136,7 +136,7 @@ def draw_multi_line_park_name_text_block(matrix, font, text_lines):
     font_height = getattr(font, "height", 9)
     x = 1
     # Start baseline so the entire block is vertically centered.
-    logging.debug(f"font_height: {font_height}")
+    debug.log(f"font_height: {font_height}")
     current_y =  font_height
     for line in text_lines:
         if len(text_lines) is 1:

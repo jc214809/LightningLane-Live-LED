@@ -1,9 +1,9 @@
-import logging
 import os
 
 from RGBMatrixEmulator import graphics
 
-from display.display import wrap_text, loaded_fonts, get_text_width, color_dict, fonts
+from display.display import wrap_text, get_text_width, color_dict, fonts
+from utils import debug
 
 
 def render_attraction_info(matrix, ride_info):
@@ -13,7 +13,7 @@ def render_attraction_info(matrix, ride_info):
     Each line is vertically centered, with a dynamic gap between ride name and wait time.
     Padding is added only if the text fits within the width and height of the board.
     """
-    logging.debug(f"Rendering ride info: {ride_info}")
+    debug.log(f"Rendering ride info: {ride_info}")
     ride_name = ride_info["name"]
     wait_time = f"{ride_info['waitTime']} Mins"
 
@@ -54,7 +54,7 @@ def render_attraction_info(matrix, ride_info):
     render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, line_heights,
                  wrapped_ride_name, wrapped_wait_time)
 
-    logging.debug(f"Total text height: {total_lines_height}, Final Y position: {y_position}")
+    debug.log(f"Total text height: {total_lines_height}, Final Y position: {y_position}")
 
 
 def render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, line_heights, wrapped_ride_name, wrapped_wait_time):
@@ -69,7 +69,7 @@ def render_lines(matrix, combined_lines, ride_font, waittime_font, y_position, l
 
         # Center horizontally with or without padding
         line_x_position = (matrix.width - line_width) // 2
-        logging.debug(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
+        debug.log(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
 
         # Draw the text on the matrix
         text_color = (
@@ -99,7 +99,7 @@ def calculate_text_height(combined_lines, wrapped_ride_name, name_line_height, w
         line_height = name_line_height if line in wrapped_ride_name else waittime_line_height
         line_heights.append(line_height)
         total_lines_height += line_height
-        logging.debug(f"Line: '{line}' has height: {line_height}")
+        debug.log(f"Line: '{line}' has height: {line_height}")
 
     return total_lines_height, line_heights
 
@@ -132,7 +132,7 @@ def get_max_lines(board_height, font):
     # Calculate the maximum number of lines the board can support
     max_lines = board_height // line_height
 
-    logging.debug(f"Board height: {board_height}, Line height: {line_height}, Max lines: {max_lines}")
+    debug.log(f"Board height: {board_height}, Line height: {line_height}, Max lines: {max_lines}")
 
     return max_lines
 
@@ -144,10 +144,10 @@ def calculate_x_position(matrix, longest_line_width, padding):
     total_width_with_padding = longest_line_width + 2 * padding  # 1 unit on left and right
     if total_width_with_padding <= matrix.width:
         x_position = (matrix.width - total_width_with_padding) // 2
-        logging.debug(f"Padding applied. x_position: {x_position}")
+        debug.log(f"Padding applied. x_position: {x_position}")
     else:
         x_position = (matrix.width - longest_line_width) // 2
-        logging.debug(f"No padding applied. x_position: {x_position}")
+        debug.log(f"No padding applied. x_position: {x_position}")
 
     return x_position
 
@@ -157,5 +157,5 @@ def calculate_y_position(matrix, total_lines_height):
     Calculate the y_position to center the text vertically on the board.
     """
     y_position = (matrix.height - total_lines_height) // 2
-    logging.debug(f"y_position calculated: {y_position}")
+    debug.log(f"y_position calculated: {y_position}")
     return y_position

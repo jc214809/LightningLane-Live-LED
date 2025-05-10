@@ -1,8 +1,9 @@
 import time
-import logging
+
 import asyncio
 from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
 from api.weather import fetch_weather_data
+from utils import debug
 
 
 def merge_live_data(existing_attractions, new_live_data):
@@ -52,7 +53,7 @@ def update_parks_live_data(parks):
             # Merge new live data into the existing attractions list.
             park["attractions"] = merge_live_data(park["attractions"], new_live_data)
 
-    logging.debug(f"Updated parks data: {parks}")
+    debug.log(f"Updated parks data: {parks}")
     return parks
 
 
@@ -70,7 +71,7 @@ def live_data_updater(disney_park_list, update_interval, parks_data):
             # Update each park with operating status.
             updated_parks = update_parks_operating_status(updated_parks)
             parks_data[:] = updated_parks  # Update shared list in-place.
-            logging.info("Parks live data updated in background.")
+            debug.info("Parks live data updated in background.")
         else:
-            logging.warning("No parks found during live data update.")
+            debug.warning("No parks found during live data update.")
         time.sleep(update_interval)
