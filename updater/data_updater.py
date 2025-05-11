@@ -12,8 +12,9 @@ def merge_live_data(existing_attractions, new_live_data):
 
     # Create a mapping from attraction id to the existing attraction object.
     attraction_map = {attr["id"]: attr for attr in existing_attractions}
-
+    debug.info(f"Starting to update new live data for attractions.")
     for new_attr in new_live_data:
+        debug.info(f"Processing new live data for attraction {new_attr['name']} - Wait time: {new_attr['waitTime']} status: {new_attr['status']} ({get_eastern(new_attr['lastUpdatedTs'])})" )
         attr_id = new_attr.get("id")
         if attr_id in attraction_map:
             # Merge the new live data fields into the existing attraction.
@@ -24,7 +25,8 @@ def merge_live_data(existing_attractions, new_live_data):
 
             # Check if the new timestamp is newer before updating
             if new_ts:  # Ensure new timestamp exists
-                if existing_ts is None or new_ts > existing_ts:  # Compare timestamps
+                debug.info(f"Should we update for {new_attr['name']}? {existing_ts in (None, "") or new_ts > existing_ts}")
+                if existing_ts in (None, "") or new_ts > existing_ts:  # Compare timestamps
                     debug.info(
                         f"Updating attraction {new_attr['name']} - Wait time: {existing['waitTime']} vs {new_attr['waitTime']} ({get_eastern(new_ts)})")
                     existing.update({
