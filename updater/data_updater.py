@@ -1,11 +1,13 @@
+import asyncio
 import time
 from datetime import datetime
+
 import pytz
 
-import asyncio
 from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
 from api.weather import fetch_weather_data
 from utils import debug
+
 
 def merge_live_data(existing_attractions, new_live_data):
     """ Update existing attractions with new live data. Preserve the 'down_since' field if it already exists. """
@@ -14,48 +16,36 @@ def merge_live_data(existing_attractions, new_live_data):
     attraction_map = {attr["id"]: attr for attr in existing_attractions}
     debug.info(f"Starting to update new live data for attractions.")
     for new_attr in new_live_data:
-        debug.info(f"Processing new live data for attraction {new_attr['name']} - Wait time: {new_attr['waitTime']} status: {new_attr['status']} ({get_eastern(new_attr['lastUpdatedTs'])})" )
+        debug.info(
+            f"Processing new live data for attraction {new_attr['name']} - Wait time: {new_attr['waitTime']} status: {new_attr['status']} ({get_eastern(new_attr['lastUpdatedTs'])})")
         attr_id = new_attr.get("id")
         if attr_id in attraction_map:
             # Merge the new live data fields into the existing attraction.
             existing = attraction_map[attr_id]
 
-            new_ts = new_attr.get("lastUpdatedTs")
-            existing_ts = existing.get("lastUpdatedTs")
+            debug.info(f"Updating {new_attr['name']}: Wait time: {existing['waitTime']}(E) vs {new_attr['waitTime']}(N)")
+            debug.info(f"Updating {new_attr['name']}: Status: {existing['status']}(E) vs {new_attr['status']}(N)")
+            debug.info(f"Updating {new_attr['name']}: Last updated: {existing['lastUpdatedTs']}(E) vs {new_attr['lastUpdatedTs']}(N)")
+            existing.update({
+                "waitTime": new_attr.get("waitTime"),
+                "status": new_attr.get("status"),
+                "lastUpdatedTs": new_attr.get("lastUpdatedTs")
+            })
 
-            # Convert new_ts to datetime or default to None
-            new_ts_dt = datetime.fromisoformat(new_ts[:-1]).replace(tzinfo=pytz.utc) if new_ts else None
-
-            # Convert existing_ts to datetime or default to None
-            existing_ts_dt = datetime.fromisoformat(existing_ts[:-1]).replace(tzinfo=pytz.utc) if existing_ts else None
-
-            # Check if the new timestamp is newer before updating
-            if new_ts_dt:  # Ensure new timestamp exists
-                debug.info(f"Should we update for {new_attr['name']}? {'No' if existing_ts_dt not in (None, '') or new_ts_dt > existing_ts_dt else 'Yes'}")
-                if existing_ts_dt in (None, "") or new_ts_dt > existing_ts_dt:  # Compare timestamps
-                    debug.info(
-                        f"Updating attraction {new_attr['name']} - Wait time: {existing['waitTime']} vs {new_attr['waitTime']} ({get_eastern(new_ts)})")
-                    existing.update({
-                        "waitTime": new_attr.get("waitTime"),
-                        "status": new_attr.get("status"),
-                        "lastUpdatedTs": new_ts
-                    })
-
-                    # Do not overwrite down_since if already set, unless status is no longer DOWN.
-                    if new_attr.get("status") != "DOWN":
-                        existing["down_since"] = ""
-                    else:
-                        # If it's still DOWN and down_since is not set, set it now.
-                        if not existing.get("down_since"):
-                            existing["down_since"] = new_ts
+            # Do not overwrite down_since if already set, unless status is no longer DOWN.
+            if new_attr.get("status") != "DOWN":
+                existing["down_since"] = ""
             else:
-                debug.warning(f"New timestamp is missing for attraction {new_attr['name']}")
+                # If it's still DOWN and down_since is not set, set it now.
+                if not existing.get("down_since"):
+                    existing["down_since"] = new_attr.get("lastUpdatedTs")
+        # else:
+        #     debug.warning(f"New timestamp is missing for attraction {new_attr['name']}")
 
-        else:
-            # If new attraction is not present in the existing map, add it.
-            attraction_map[attr_id] = new_attr
-            debug.info(f"Adding new attraction {attr_id}: {new_attr}")
-
+    else:
+        # If new attraction is not present in the existing map, add it.
+        attraction_map[attr_id] = new_attr
+        debug.info(f"Adding new attraction {attr_id}: {new_attr}")
     return list(attraction_map.values())
 
 
@@ -80,7 +70,7 @@ def update_parks_live_data(parks):
         if location and park.get("operating"):
             latitude = location.get("latitude")
             longitude = location.get("longitude")
-            park["weather"] = fetch_weather_data(latitude, longitude) # Update weather data
+            park["weather"] = fetch_weather_data(latitude, longitude)  # Update weather data
         if park.get("attractions"):
             # Fetch the latest live data for the current attractions.
             new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
