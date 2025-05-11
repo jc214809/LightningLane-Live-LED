@@ -23,25 +23,13 @@ def merge_live_data(existing_attractions, new_live_data):
             # Merge the new live data fields into the existing attraction.
             existing = attraction_map[attr_id]
 
-            new_ts = new_attr.get("lastUpdatedTs")
-            existing_ts = existing.get("lastUpdatedTs")
-
-            # Convert new_ts to datetime or default to None
-            # new_ts_dt = datetime.fromisoformat(new_ts[:-1]).replace(tzinfo=pytz.utc) if new_ts else None
-
-            # Convert existing_ts to datetime or default to None
-            # existing_ts_dt = datetime.fromisoformat(existing_ts[:-1]).replace(tzinfo=pytz.utc) if existing_ts else None
-
-            # Check if the new timestamp is newer before updating
-            # if new_ts_dt:  # Ensure new timestamp exists
-            #     debug.info(f"Should we update for {new_attr['name']}? {'No' if existing_ts_dt not in (None, '') or new_ts_dt > existing_ts_dt else 'Yes'}")
-            #     if existing_ts_dt in (None, "") or new_ts_dt > existing_ts_dt:  # Compare timestamps
-            debug.info(
-                f"Updating attraction {new_attr['name']} - Wait time: {existing['waitTime']}(E) vs {new_attr['waitTime']}(N) ({get_eastern(new_ts)})")
+            debug.info(f"Updating {new_attr['name']}: Wait time: {existing['waitTime']}(E) vs {new_attr['waitTime']}(N)")
+            debug.info(f"Updating {new_attr['name']}: Status: {existing['status']}(E) vs {new_attr['status']}(N)")
+            debug.info(f"Updating {new_attr['name']}: Last updated: {existing['lastUpdatedTs']}(E) vs {new_attr['lastUpdatedTs']}(N)")
             existing.update({
                 "waitTime": new_attr.get("waitTime"),
                 "status": new_attr.get("status"),
-                "lastUpdatedTs": new_ts
+                "lastUpdatedTs": new_attr.get("lastUpdatedTs")
             })
 
             # Do not overwrite down_since if already set, unless status is no longer DOWN.
@@ -50,7 +38,7 @@ def merge_live_data(existing_attractions, new_live_data):
             else:
                 # If it's still DOWN and down_since is not set, set it now.
                 if not existing.get("down_since"):
-                    existing["down_since"] = new_ts
+                    existing["down_since"] = new_attr.get("lastUpdatedTs")
         # else:
         #     debug.warning(f"New timestamp is missing for attraction {new_attr['name']}")
 
