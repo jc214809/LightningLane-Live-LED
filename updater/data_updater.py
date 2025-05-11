@@ -37,7 +37,7 @@ def merge_live_data(existing_attractions, new_live_data):
             #     debug.info(f"Should we update for {new_attr['name']}? {'No' if existing_ts_dt not in (None, '') or new_ts_dt > existing_ts_dt else 'Yes'}")
             #     if existing_ts_dt in (None, "") or new_ts_dt > existing_ts_dt:  # Compare timestamps
             debug.info(
-                f"Updating attraction {new_attr['name']} - Wait time: {existing['waitTime']} vs {new_attr['waitTime']} ({get_eastern(new_ts)})")
+                f"Updating attraction {new_attr['name']} - Wait time: {existing['waitTime']}(E) vs {new_attr['waitTime']}(N) ({get_eastern(new_ts)})")
             existing.update({
                 "waitTime": new_attr.get("waitTime"),
                 "status": new_attr.get("status"),
