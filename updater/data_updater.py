@@ -23,10 +23,16 @@ def merge_live_data(existing_attractions, new_live_data):
             new_ts = new_attr.get("lastUpdatedTs")
             existing_ts = existing.get("lastUpdatedTs")
 
+            # Convert new_ts to datetime or default to None
+            new_ts_dt = datetime.fromisoformat(new_ts[:-1]).replace(tzinfo=pytz.utc) if new_ts else None
+
+            # Convert existing_ts to datetime or default to None
+            existing_ts_dt = datetime.fromisoformat(existing_ts[:-1]).replace(tzinfo=pytz.utc) if existing_ts else None
+
             # Check if the new timestamp is newer before updating
-            if new_ts:  # Ensure new timestamp exists
-                debug.info(f"Should we update for {new_attr['name']}? {'No' if existing_ts not in (None, '') or new_ts > existing_ts else 'Yes'}")
-                if existing_ts in (None, "") or new_ts > existing_ts:  # Compare timestamps
+            if new_ts_dt:  # Ensure new timestamp exists
+                debug.info(f"Should we update for {new_attr['name']}? {'No' if existing_ts_dt not in (None, '') or new_ts_dt > existing_ts_dt else 'Yes'}")
+                if existing_ts_dt in (None, "") or new_ts_dt > existing_ts_dt:  # Compare timestamps
                     debug.info(
                         f"Updating attraction {new_attr['name']} - Wait time: {existing['waitTime']} vs {new_attr['waitTime']} ({get_eastern(new_ts)})")
                     existing.update({
