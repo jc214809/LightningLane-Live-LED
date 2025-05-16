@@ -1,12 +1,11 @@
 import asyncio
 import time
-from datetime import datetime
 
-import pytz
-
-from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
+from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status, \
+    fetch_park_schedule
 from api.weather import fetch_weather_data
 from utils import debug
+from utils.utils import get_eastern
 
 
 def merge_live_data(existing_attractions, new_live_data):
@@ -49,18 +48,6 @@ def merge_live_data(existing_attractions, new_live_data):
     return list(attraction_map.values())
 
 
-def get_eastern(utc_timestamp):
-    # Parse the timestamp and create a UTC datetime object
-    utc_time = datetime.fromisoformat(utc_timestamp[:-1])  # Remove 'Z' for parsing
-    utc_time = utc_time.replace(tzinfo=pytz.utc)
-    # Define the Eastern Time zone
-    eastern = pytz.timezone('US/Eastern')
-    # Convert to Eastern Time
-    eastern_time = utc_time.astimezone(eastern)
-    # Format the time in a non-military format (12-hour) with AM/PM
-    return eastern_time.strftime("%Y-%m-%d %I:%M %p")  # e.g., "2025-05-10 04:11 PM"
-
-
 def update_parks_live_data(parks):
     """
     For each park in parks, update its attractions with live data.
@@ -76,6 +63,12 @@ def update_parks_live_data(parks):
             new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
             # Merge new live data into the existing attractions list.
             park["attractions"] = merge_live_data(park["attractions"], new_live_data)
+        if not park.get("operating"):
+            debug.info(f"{park.get('name')} is not operating. Updating schedule for the next day...")
+            park["schedule"] = fetch_park_schedule(park.get("id"))
+            debug.info(f"Updated schedule for {park.get('name')}")
+        else:
+            debug.log(f"{park.get('name')} is operating. No need to update schedule.")
 
     debug.log(f"Updated parks data: {parks}")
     return parks
