@@ -25,6 +25,33 @@ def get_park_location(park_id):
         debug.error(f"Failed get park data with location data: {e}")
         return []
 
+def fetch_park_schedule(park_id):
+    """
+    Fetch and return the schedule for a specific park using its park_id.
+    """
+    # Determine today's date and yesterday's date as strings.
+    today = datetime.now()
+    today_str = today.strftime('%Y-%m-%d')
+    yesterday_str = (today - timedelta(days=1)).strftime('%Y-%m-%d')
+
+    api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/schedule"
+    debug.info(f"Fetching schedule for park with ID: {park_id}")
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()  # Ensure we raise an error for bad responses
+        schedule_data = response.json().get("schedule", [])
+
+        # Filter schedule events to include only those from today or yesterday.
+        schedule_filtered = [
+            event for event in schedule_data if event.get("date") in (today_str, yesterday_str)
+        ]
+
+        debug.info(f"Schedule Data for park ID {park_id}: {schedule_data}")
+        return schedule_filtered
+    except requests.RequestException as e:
+        debug.error(f"Failed to fetch schedule for park ID {park_id}: {e}")
+        return []
 
 def fetch_list_of_disney_world_parks():
     """
@@ -221,6 +248,10 @@ def update_parks_operating_status(parks):
     """
     for park in parks:
         park["operating"] = park_has_operating_attraction(park)
+        if not park["operating"]:
+            debug.info(f"No open rides in {park['name']}")
+            park["attractions"] = []
+            debug.info(f"Attractions for {park['name']} cleared")
     return parks
 
 if __name__ == "__main__":
