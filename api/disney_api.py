@@ -248,10 +248,6 @@ def update_parks_operating_status(parks):
     """
     for park in parks:
         park["operating"] = park_has_operating_attraction(park)
-        if not park["operating"]:
-            debug.info(f"No open rides in {park['name']}")
-            park["attractions"] = []
-            debug.info(f"Attractions for {park['name']} cleared")
     return parks
 
 if __name__ == "__main__":
