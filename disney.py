@@ -7,6 +7,9 @@ import json
 import traceback
 from datetime import datetime
 
+import driver
+from driver import RGBMatrix, __version__
+
 from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.startup import render_mickey_logo
@@ -18,8 +21,6 @@ from display.countdown.countdown import render_countdown_to_disney
 
 from utils import debug
 
-import driver
-from driver import RGBMatrix, RGBMatrixOptions
 
 # Configure logging
 def load_config(file_path):
@@ -47,6 +48,14 @@ def main():
     if sys.version_info <= (3, 5):
         debug.error("Please run with python3")
         sys.exit(1)
+
+    if driver.is_emulated():
+        if driver.hardware_load_failed:
+            debug.log("rgbmatrix not installed, falling back to emulator!")
+
+        debug.log("Using RGBMatrixEmulator version %s", __version__)
+    else:
+        debug.log("Using rgbmatrix version %s", __version__)
 
     # Use your helper functions to get proper options.
     command_line_args = args()
