@@ -4,6 +4,7 @@ import time
 import logging
 import threading
 import json
+import traceback
 from datetime import datetime
 
 from display.park.park_details import render_park_information_screen
@@ -85,6 +86,8 @@ def main():
     except Exception as e:
         matrix.Clear()
         debug.error(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
+        logging.error(traceback.format_exc())
     finally:
         matrix.Clear()
 
