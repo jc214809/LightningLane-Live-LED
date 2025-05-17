@@ -43,13 +43,10 @@ def draw_countdown_text(matrix, y_position, text):
 def render_countdown_to_disney(matrix, trip_date):
     """Displays countdown to Disney on the LED matrix."""
     time_remaining = trip_date.date() - datetime.now().date()
+    countdown_string = "Have a Magical Trip!"
 
-    if time_remaining.days < 0:
-        days_remaining = "Trip has already started!"
-    else:
+    if time_remaining.days > 0:
         days_remaining = f"{time_remaining.days} Day{'s' if time_remaining.days > 1 else ''}"
-
-    title = "COUNTDOWN TO DISNEY"
-    countdown_string = f"{title} {days_remaining}"
+        countdown_string = f"COUNTDOWN TO DISNEY {days_remaining}"
 
     draw_countdown_text(matrix, matrix.height // 2 + 7, countdown_string)
