@@ -2,10 +2,10 @@ import requests
 
 import asyncio
 import aiohttp
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from api.weather import fetch_weather_data
-from utils.utils import logJSONPrettyPrint
+from utils.utils import pretty_print_json
 from utils import debug
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
@@ -75,7 +75,7 @@ def fetch_list_of_disney_world_parks():
 
         filtered_parks = []
         for park in parks_data:
-            debug.log(f"Park Location: {logJSONPrettyPrint(park)}")
+            debug.log(f"Park Location: {pretty_print_json(park)}")
             if isinstance(park, dict) and "Water Park" not in park.get("name", ""):
                 schedule = park.get("schedule")
                 # Filter schedule events to include only those from today or yesterday.
@@ -107,7 +107,7 @@ def fetch_parks_and_attractions(disney_park_list):
         park_id = park_info.get("id", "Unknown")
         schedule = park_info.get("schedule", [])
         location = park_info.get("location")
-        debug.log(f"{park_name} Park Location: {logJSONPrettyPrint(park_info)}")
+        debug.log(f"{park_name} Park Location: {pretty_print_json(park_info)}")
 
         # Use the first OPERATING event to extract opening/closing times and pricing info.
         operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
@@ -118,7 +118,7 @@ def fetch_parks_and_attractions(disney_park_list):
             response = requests.get(api_url)
             response.raise_for_status()
             park_data = response.json()
-            debug.log(f"{park_name} Park Data: {logJSONPrettyPrint(park_data)}")
+            debug.log(f"{park_name} Park Data: {pretty_print_json(park_data)}")
         except requests.RequestException as e:
             debug.error(f"Failed to fetch attractions for park {park_name}: {e}")
             continue
@@ -177,11 +177,15 @@ def determine_llmp_price(operating_event):
 
 
 def get_down_time(last_updated_date, date_format='%Y-%m-%dT%H:%M:%SZ'):
-    target_date = datetime.strptime(last_updated_date, date_format)
-    current_time = datetime.utcnow()
-    time_diff = current_time - target_date
-    minutes = time_diff.total_seconds() / 60
-    return round(minutes)
+    try:
+        target_date = datetime.strptime(last_updated_date, date_format).replace(tzinfo=timezone.utc)
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - target_date
+        minutes = time_diff.total_seconds() / 60
+        return round(minutes)
+    except ValueError:
+        debug.error(f"Invalid date format: {last_updated_date}")
+        return None
 
 async def fetch_live_data_for_attraction(session, attraction):
     """
