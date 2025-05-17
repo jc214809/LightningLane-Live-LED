@@ -5,7 +5,7 @@ from driver import graphics
 import requests
 from PIL import Image
 
-from display.display import get_text_width, wrap_text, color_dict, fonts, loaded_fonts
+from display.display import get_text_width, wrap_text, color_dict, loaded_fonts
 from utils import debug
 
 # Icon cache for storing loaded weather icons
@@ -37,13 +37,13 @@ def render_park_information_screen(matrix, park_obj):
         render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(loaded_fonts["info"], llmp_price), matrix, llmp_price)
         render_park_hours(baseline_y, 1, matrix, park_obj)
 
-def render_special_ticketed_events(vertical_start, matrix, hours_text, info_font):
-    graphics.DrawText(matrix, info_font, 1 + get_text_width(info_font, hours_text), vertical_start, color_dict["gold"], "*")
+def render_special_ticketed_events(vertical_start, matrix, hours_text):
+    graphics.DrawText(matrix, loaded_fonts["info"], 1 + get_text_width(loaded_fonts["info"], hours_text), vertical_start, color_dict["gold"], "*")
 
-def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price, info_font):
+def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
-    graphics.DrawText(matrix, info_font, horizontal_start, vertical_start, color_dict["disney_blue"], llmp_price)
+    graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], llmp_price)
 
 
 def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
@@ -53,7 +53,7 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
     if opening_time and closing_time:
         hours_text = f"{format_iso_time(opening_time)}-{format_iso_time(closing_time)}"
         if park_obj.get("specialTicketedEvent", False):
-            render_special_ticketed_events(vertical_start, matrix, hours_text, loaded_fonts["info"])
+            render_special_ticketed_events(vertical_start, matrix, hours_text)
     else:
         hours_text = "??-??"
     graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], hours_text)
