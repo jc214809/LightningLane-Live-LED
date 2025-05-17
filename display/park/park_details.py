@@ -36,15 +36,22 @@ def render_park_information_screen(matrix, park_obj):
     wrapped_name = wrap_text(park_font, park_obj.get("name"), board_width, 1)
 
     # Draw the park name based on board size.
+    debug.info(f"1")
     draw_multi_line_park_name_text_block(matrix, park_font, wrapped_name)
+    debug.info(f"2")
     if park_obj.get("weather"):
+        debug.info(f"3")
         display_weather_icon_and_description(matrix, park_obj.get("weather", ""), info_font_height, info_font)
     llmp_price = park_obj.get("llmpPrice", "")
     if board_height == 32:
+        debug.info(f"4")
         render_park_hours(baseline_y, 1, matrix, park_obj, info_font)
+        debug.info(f"5")
         render_lightning_lane_multi_pass_price(baseline_y - info_font_height, 1, matrix, llmp_price, info_font)
     else:
+        debug.info(f"6")
         render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(info_font, llmp_price), matrix, llmp_price, info_font)
+        debug.info(f"7")
         render_park_hours(baseline_y, 1, matrix, park_obj, info_font)
 
 def render_special_ticketed_events(vertical_start, matrix, hours_text, info_font):
