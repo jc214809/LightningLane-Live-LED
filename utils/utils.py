@@ -3,13 +3,12 @@ from collections.abc import Mapping
 from datetime import datetime
 
 import pytz
-
-from utils import debug
 import json
+from utils import debug
 
-def logJSONPrettyPrint(jsonObj):
+def pretty_print_json(json_obj):
     """Return a pretty-printed JSON string."""
-    return "\n%s" % json.dumps(jsonObj, indent=4, sort_keys=True)
+    return "\n%s" % json.dumps(json_obj, indent=4, sort_keys=True)
 
 
 def center_text_position(text, center_pos, font_width):
