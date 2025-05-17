@@ -1,5 +1,5 @@
 import os
-from RGBMatrixEmulator import graphics
+
 from driver import graphics
 from utils import debug
 
@@ -55,7 +55,6 @@ def initialize_fonts(matrix_height):
 
 def colors():
     # Return a dictionary of colors
-    from RGBMatrixEmulator import graphics
     return {
         "mickey_mouse_red": graphics.Color(242, 5, 5),
         "disney_blue": graphics.Color(17, 60, 207),

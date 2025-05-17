@@ -1,6 +1,6 @@
 import os
 
-from RGBMatrixEmulator import graphics
+from driver import graphics
 
 from display.display import wrap_text, get_text_width, color_dict, fonts
 from utils import debug

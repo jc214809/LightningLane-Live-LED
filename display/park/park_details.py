@@ -1,10 +1,10 @@
 import os
 from datetime import datetime
 from io import BytesIO
+from driver import graphics
 
 import requests
 from PIL import Image
-from RGBMatrixEmulator import graphics
 
 from display.display import get_text_width, wrap_text, color_dict, fonts
 from utils import debug
