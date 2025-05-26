@@ -15,15 +15,11 @@ def merge_live_data(existing_attractions, new_live_data):
     attraction_map = {attr["id"]: attr for attr in existing_attractions}
     debug.info(f"Starting to update new live data for attractions.")
     for new_attr in new_live_data:
-        debug.info(
-            f"Processing new live data for attraction {new_attr['name']} - Wait time: {new_attr['waitTime']} status: {new_attr['status']} ({get_eastern(new_attr['lastUpdatedTs'])})")
         attr_id = new_attr.get("id")
+
         if attr_id in attraction_map:
             # Merge the new live data fields into the existing attraction.
             existing = attraction_map[attr_id]
-            debug.info(f"Updating {new_attr['name']}: Wait time: {existing['waitTime']}(E) vs {new_attr['waitTime']}(N)")
-            debug.info(f"Updating {new_attr['name']}: Status: {existing['status']}(E) vs {new_attr['status']}(N)")
-            debug.info(f"Updating {new_attr['name']}: Last updated: {existing['lastUpdatedTs']}(E) vs {new_attr['lastUpdatedTs']}(N)")
             existing.update({
                 "waitTime": new_attr.get("waitTime"),
                 "status": new_attr.get("status"),
@@ -37,13 +33,10 @@ def merge_live_data(existing_attractions, new_live_data):
                 # If it's still DOWN and down_since is not set, set it now.
                 if not existing.get("down_since"):
                     existing["down_since"] = new_attr.get("lastUpdatedTs")
-        # else:
-        #     debug.warning(f"New timestamp is missing for attraction {new_attr['name']}")
-
-    else:
-        # If new attraction is not present in the existing map, add it.
-        attraction_map[attr_id] = new_attr
-        debug.info(f"Adding new attraction {attr_id}: {new_attr}")
+        else:
+            # If new attraction is not present in the existing map, add it.
+            attraction_map[attr_id] = new_attr
+            debug.info(f"Adding new attraction {attr_id}: {new_attr}")
     return list(attraction_map.values())
 
 
