@@ -114,8 +114,6 @@ def get_max_lines(board_height):
     # Calculate the maximum number of lines the board can support
     max_lines = board_height // line_height
 
-    debug.log(f"Board height: {board_height}, Line height: {line_height}, Max lines: {max_lines}")
-
     return max_lines
 
 

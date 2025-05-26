@@ -128,7 +128,6 @@ def draw_multi_line_park_name_text_block(matrix, text_lines):
     font_height = getattr(loaded_fonts["park"], "height", 9)
     x = 1
     # Start baseline so the entire block is vertically centered.
-    debug.log(f"font_height: {font_height}")
     current_y =  font_height
     for line in text_lines:
         if len(text_lines) is 1:
