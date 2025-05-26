@@ -21,7 +21,6 @@ def merge_live_data(existing_attractions, new_live_data):
         if attr_id in attraction_map:
             # Merge the new live data fields into the existing attraction.
             existing = attraction_map[attr_id]
-
             debug.info(f"Updating {new_attr['name']}: Wait time: {existing['waitTime']}(E) vs {new_attr['waitTime']}(N)")
             debug.info(f"Updating {new_attr['name']}: Status: {existing['status']}(E) vs {new_attr['status']}(N)")
             debug.info(f"Updating {new_attr['name']}: Last updated: {existing['lastUpdatedTs']}(E) vs {new_attr['lastUpdatedTs']}(N)")
@@ -58,11 +57,13 @@ def update_parks_live_data(parks):
             latitude = location.get("latitude")
             longitude = location.get("longitude")
             park["weather"] = fetch_weather_data(latitude, longitude)  # Update weather data
+
         if park.get("attractions"):
             # Fetch the latest live data for the current attractions.
             new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
             # Merge new live data into the existing attractions list.
             park["attractions"] = merge_live_data(park["attractions"], new_live_data)
+
         if not park.get("operating"):
             debug.info(f"{park.get('name')} is not operating. Updating schedule for the next day...")
             park["schedule"] = fetch_park_schedule(park.get("id"))
