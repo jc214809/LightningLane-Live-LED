@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 import requests
 
 import asyncio
@@ -5,7 +7,7 @@ import aiohttp
 from datetime import datetime, timedelta, timezone
 
 from api.weather import fetch_weather_data
-from utils.utils import pretty_print_json
+from utils.utils import get_eastern
 from utils import debug
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
@@ -75,7 +77,7 @@ def fetch_list_of_disney_world_parks():
 
         filtered_parks = []
         for park in parks_data:
-            debug.log(f"Park Location: {pretty_print_json(park)}")
+            # debug.log(f"Park Location: {pretty_print_json(park)}")
             if isinstance(park, dict) and "Water Park" not in park.get("name", ""):
                 schedule = park.get("schedule")
                 # Filter schedule events to include only those from today or yesterday.
@@ -107,7 +109,7 @@ def fetch_parks_and_attractions(disney_park_list):
         park_id = park_info.get("id", "Unknown")
         schedule = park_info.get("schedule", [])
         location = park_info.get("location")
-        debug.log(f"{park_name} Park Location: {pretty_print_json(park_info)}")
+        debug.log(f"{park_name} Park Location: {park_info}")
 
         # Use the first OPERATING event to extract opening/closing times and pricing info.
         operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
@@ -118,7 +120,7 @@ def fetch_parks_and_attractions(disney_park_list):
             response = requests.get(api_url)
             response.raise_for_status()
             park_data = response.json()
-            debug.log(f"{park_name} Park Data: {pretty_print_json(park_data)}")
+            debug.log(f"{park_name} Park Data: {park_data}")
         except requests.RequestException as e:
             debug.error(f"Failed to fetch attractions for park {park_name}: {e}")
             continue
@@ -192,13 +194,14 @@ async def fetch_live_data_for_attraction(session, attraction):
     Fetch live data for a single attraction.
     If the status is not "CLOSED" or "REFURBISHMENT", update the waitTime.
     """
+    current_data = attraction.copy()
+
     api_url = f"https://api.themeparks.wiki/v1/entity/{attraction['id']}/live"
     debug.info(f"Fetching live data for attraction: {attraction['name']} (ID: {attraction['id']})")
     try:
         async with session.get(api_url) as response:
             if response.status == 200:
                 data = await response.json()
-                debug.log(f"Live Data for {attraction['name']}: {data}")
                 live_data_info = data.get('liveData', [])
                 if live_data_info:
                     live_data_entry = live_data_info[0]  # Use the first liveData entry
@@ -214,6 +217,10 @@ async def fetch_live_data_for_attraction(session, attraction):
                 debug.error(f"Failed to fetch live data for {attraction['name']}, Status Code: {response.status}")
     except Exception as e:
         debug.error(f"Error occurred while fetching live data for {attraction['name']}: {e}")
+    if current_data != attraction:
+        debug.info(f"There is new data for {attraction['name']} | Wait time: {current_data['waitTime']}(Existing) vs {attraction['waitTime']}(New) | Status: {current_data['status']}(Existing) vs {attraction['status']}(New) | Last updated: {get_eastern(current_data['lastUpdatedTs'])}(Existing) vs {get_eastern(attraction['lastUpdatedTs'])}(New)")
+    else:
+        debug.info(f"No new data for {attraction['name']}")
     return attraction
 
 async def fetch_live_data(attractions):
