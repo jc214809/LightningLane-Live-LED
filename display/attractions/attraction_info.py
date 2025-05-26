@@ -42,9 +42,6 @@ def render_attraction_info(matrix, ride_info):
     # Render each line of text
     render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time)
 
-    debug.log(f"Total text height: {total_lines_height}, Final Y position: {y_position}")
-
-
 def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time):
     """
     Render each line of text at the specified position on the matrix.
@@ -57,7 +54,6 @@ def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_
 
         # Center horizontally with or without padding
         line_x_position = (matrix.width - line_width) // 2
-        debug.log(f"Drawing line: '{line}' at position ({line_x_position}, {current_y_position})")
 
         # Draw the text on the matrix
         text_color = (
@@ -87,7 +83,6 @@ def calculate_text_height(combined_lines, wrapped_ride_name, name_line_height, w
         line_height = name_line_height if line in wrapped_ride_name else waittime_line_height
         line_heights.append(line_height)
         total_lines_height += line_height
-        debug.log(f"Line: '{line}' has height: {line_height}")
 
     return total_lines_height, line_heights
 
@@ -131,10 +126,8 @@ def calculate_x_position(matrix, longest_line_width, padding):
     total_width_with_padding = longest_line_width + 2 * padding  # 1 unit on left and right
     if total_width_with_padding <= matrix.width:
         x_position = (matrix.width - total_width_with_padding) // 2
-        debug.log(f"Padding applied. x_position: {x_position}")
     else:
         x_position = (matrix.width - longest_line_width) // 2
-        debug.log(f"No padding applied. x_position: {x_position}")
 
     return x_position
 
@@ -144,5 +137,4 @@ def calculate_y_position(matrix, total_lines_height):
     Calculate the y_position to center the text vertically on the board.
     """
     y_position = (matrix.height - total_lines_height) // 2
-    debug.log(f"y_position calculated: {y_position}")
     return y_position

@@ -95,7 +95,6 @@ def main():
     except Exception as e:
         matrix.Clear()
         debug.error(f"An error occurred: {e}")
-        debug.error(f"An error occurred: {e}")
         debug.error(traceback.format_exc())
     finally:
         matrix.Clear()
