@@ -257,16 +257,19 @@ def update_parks_operating_status(parks):
     if the park has at least one operating attraction with a valid wait time, otherwise False.
     """
     for park in parks:
-        is_open = park_has_operating_attraction(park)
-        # Update park schedule
-        if is_open != park.get("operating") and is_open == False:
-            park["operating"] = is_open
+        is_park_open = park_has_operating_attraction(park)
+
+        # Check if the park was previously open and is now closed
+        previously_operating = park.get("operating")
+
+        if previously_operating and not is_park_open:  # Changed from operating to not operating
             debug.info(f"{park.get('name')} is not operating. Updating schedule for the next day...")
             park["schedule"] = fetch_park_schedule(park.get("id"))
             debug.info(f"Updated schedule for {park.get('name')}")
         else:
-            park["operating"] = is_open
             debug.info(f"{park.get('name')} is operating. No need to update schedule.")
+        park["operating"] = is_park_open
+
     return parks
 
 if __name__ == "__main__":
