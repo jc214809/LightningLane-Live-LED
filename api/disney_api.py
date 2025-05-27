@@ -109,7 +109,6 @@ def fetch_parks_and_attractions(disney_park_list):
         park_id = park_info.get("id", "Unknown")
         schedule = park_info.get("schedule", [])
         location = park_info.get("location")
-        debug.log(f"{park_name} Park Location: {park_info}")
 
         # Use the first OPERATING event to extract opening/closing times and pricing info.
         operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
@@ -137,9 +136,9 @@ def fetch_parks_and_attractions(disney_park_list):
                     "status": '',        # Placeholder for status
                     "lastUpdatedTs": ''  # Placeholder for timestamp
                 }
-                debug.info(f"Attraction found: {attraction}")
+                debug.log(f"Attraction found: {attraction}")
                 attractions.append(attraction)
-
+        debug.info(f"{len(attractions)} were found in {park_name}")
         park_obj = {
             "id": park_id,
             "name": park_name.replace("Theme", " ").replace("Park", " ").replace("Disney's", "").strip(),
@@ -258,7 +257,19 @@ def update_parks_operating_status(parks):
     if the park has at least one operating attraction with a valid wait time, otherwise False.
     """
     for park in parks:
-        park["operating"] = park_has_operating_attraction(park)
+        is_park_open = park_has_operating_attraction(park)
+
+        # Check if the park was previously open and is now closed
+        previously_operating = park.get("operating")
+
+        if previously_operating and not is_park_open:  # Changed from operating to not operating
+            debug.info(f"{park.get('name')} is not operating. Updating schedule for the next day...")
+            park["schedule"] = fetch_park_schedule(park.get("id"))
+            debug.info(f"Updated schedule for {park.get('name')}")
+        else:
+            debug.info(f"{park.get('name')} is operating. No need to update schedule.")
+        park["operating"] = is_park_open
+
     return parks
 
 if __name__ == "__main__":

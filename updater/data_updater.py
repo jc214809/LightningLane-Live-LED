@@ -42,27 +42,19 @@ def merge_live_data(existing_attractions, new_live_data):
 
 def update_parks_live_data(parks):
     """
-    For each park in parks, update its attractions with live data.
+    For each park in parks, update live data for attractions.
+    If the park is not operating, update the schedule for the next day.
+    If the park is operating, do not update the schedule.
     """
     for park in parks:
-        location = park.get("location")
-        if location and park.get("operating"):
-            latitude = location.get("latitude")
-            longitude = location.get("longitude")
-            park["weather"] = fetch_weather_data(latitude, longitude)  # Update weather data
-
+        # Fetch live data for the current attractions.
         if park.get("attractions"):
-            # Fetch the latest live data for the current attractions.
             new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
-            # Merge new live data into the existing attractions list.
             park["attractions"] = merge_live_data(park["attractions"], new_live_data)
 
-        if not park.get("operating"):
-            debug.info(f"{park.get('name')} is not operating. Updating schedule for the next day...")
-            park["schedule"] = fetch_park_schedule(park.get("id"))
-            debug.info(f"Updated schedule for {park.get('name')}")
-        else:
-            debug.log(f"{park.get('name')} is operating. No need to update schedule.")
+        # Update weather data
+        if park.get("location") and park.get("operating"):
+            park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
 
     debug.log(f"Updated parks data: {parks}")
     return parks
