@@ -216,6 +216,7 @@ async def fetch_live_data_for_attraction(session, attraction):
                 debug.error(f"Failed to fetch live data for {attraction['name']}, Status Code: {response.status}")
     except Exception as e:
         debug.error(f"Error occurred while fetching live data for {attraction['name']}: {e}")
+
     if current_data != attraction:
         debug.info(f"There is new data for {attraction['name']} | Wait time: {current_data['waitTime']}(Existing) vs {attraction['waitTime']}(New) | Status: {current_data['status']}(Existing) vs {attraction['status']}(New) | Last updated: {get_eastern(current_data['lastUpdatedTs'])}(Existing) vs {get_eastern(attraction['lastUpdatedTs'])}(New)")
     else:
@@ -261,20 +262,30 @@ def update_parks_operating_status(parks):
 
     for park in parks:
         is_park_open = park_has_operating_attraction(park)  # Check if any attractions are operating
-
-        # Check if the park was previously closed
-        previously_operating = park.get("operating")
-
-        # If the park was previously closed but is now open
-        if not previously_operating and is_park_open:
-            debug.info(f"{park.get('name')} is now operating. Fetching schedule...")
-            park["schedule"] = fetch_park_schedule(park.get("id"))  # Fetch the updated schedule
-            debug.info(f"Updated schedule for {park.get('name')}")
-
+        handle_park_schedule_update(is_park_open, park)
         # Update the operating status
         park["operating"] = is_park_open
 
     return parks
+
+
+def handle_park_schedule_update(is_park_open, park):
+    # Check if the park was previously closed
+    previously_operating = park.get("operating")
+    # If the park was previously closed but is now open
+    if not previously_operating and is_park_open:
+        debug.info(f"{park.get('name')} is now operating. Fetching schedule...")
+        schedule = fetch_park_schedule(park.get("id"))
+        park["schedule"] = schedule
+        debug.info(f"Updated schedule for {park.get('name')}")
+
+        # Update park schedule details
+        operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
+        park["llmpPrice"] = determine_llmp_price(operating_event)
+        park["specialTicketedEvent"] = is_special_event(schedule)
+        park["closingTime"] = operating_event.get("closingTime", "")
+        park["openingTime"] = operating_event.get("openingTime", "")
+
 
 if __name__ == "__main__":
     # Fetch parks with filtered schedule (today and yesterday)
