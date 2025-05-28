@@ -1,8 +1,8 @@
 import asyncio
 import time
+import traceback
 
-from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status, \
-    fetch_park_schedule
+from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
 from api.weather import fetch_weather_data
 from utils import debug
 from utils.utils import get_eastern
@@ -68,13 +68,17 @@ def live_data_updater(disney_park_list, update_interval, parks_data):
     # Initial fetch of parks and attractions.
     parks_data[:] = fetch_parks_and_attractions(disney_park_list)
     while True:
-        if parks_data:
-            # Only update live data for existing parks.
-            updated_parks = update_parks_live_data(parks_data)
-            # Update each park with operating status.
-            updated_parks = update_parks_operating_status(updated_parks)
-            parks_data[:] = updated_parks  # Update shared list in-place.
-            debug.info("Parks live data updated in background.")
-        else:
-            debug.warning("No parks found during live data update.")
+        try:
+            if parks_data:
+                # Only update live data for existing parks.
+                updated_parks = update_parks_live_data(parks_data)
+                # Update each park with operating status.
+                updated_parks = update_parks_operating_status(updated_parks)
+                parks_data[:] = updated_parks  # Update shared list in-place.
+                debug.info("Parks live data updated in background.")
+            else:
+                debug.warning("No parks found during live data update.")
+        except Exception as e:
+            debug.error(f"Error during live data update: {e}")
+            debug.error(traceback.format_exc())
         time.sleep(update_interval)

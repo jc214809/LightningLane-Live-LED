@@ -99,14 +99,13 @@ def display_weather_icon_and_description(matrix, weather_info, font_height,show_
             if matrix.height == 32:
                 matrix.SetImage(img.convert("RGB"), matrix.width - icon_width - 1, 1)
                 graphics.DrawText(matrix, loaded_fonts["info"], matrix.width - get_text_width(loaded_fonts["info"], temp), img.height + padding, color_dict["white"], temp)
-                weather_text = "T-Storm" if "thunderstorm" in weather_info['short_description'].lower() else weather_info['short_description']
-                graphics.DrawText(matrix, loaded_fonts["info"], matrix.width - get_text_width(loaded_fonts["info"], weather_text), (img.height + font_height + padding), color_dict["white"],weather_text)
+                graphics.DrawText(matrix, loaded_fonts["info"], matrix.width - get_text_width(loaded_fonts["info"], weather_info['short_description']), (img.height + font_height + padding), color_dict["white"],weather_info['short_description'])
             if matrix.height >= 64:
-                weather_text_width = temp + ' ' + weather_info['short_description']
-                horizontal_point = int((matrix.width - img.width - get_text_width(loaded_fonts["info"], weather_text_width)) / 2)
+                weather_text = temp + ' ' + weather_info['short_description']
+                horizontal_point = int((matrix.width - img.width - get_text_width(loaded_fonts["info"], weather_text)) / 2)
                 vertical_point = int(matrix.height - (loaded_fonts["info"].height * 2.5))
                 matrix.SetImage(img.convert("RGB"), horizontal_point, vertical_point - img.height)
-                graphics.DrawText(matrix, loaded_fonts["info"], horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text_width)
+                graphics.DrawText(matrix, loaded_fonts["info"], horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text)
         else:
             debug.warning("Icon could not be rendered, only displaying text.")
 
