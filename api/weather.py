@@ -30,7 +30,7 @@ def fetch_weather_data(lat, lon):
             return {
                 "temperature": str(int(weather_data.temperature('fahrenheit')["temp"])) + "°",
                 "description": weather_data.detailed_status,
-                "short_description": weather_data.status,
+                "short_description": "T-Storm" if "thunderstorm" in weather_data.status.lower() else weather_data.status,
                 "city": observation.location.name,
                 "icon": weather_data.weather_icon_name # Icon code
             }
