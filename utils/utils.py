@@ -1,12 +1,14 @@
 import argparse
 from collections.abc import Mapping
+from datetime import datetime
 
-from utils import debug
+import pytz
 import json
+from utils import debug
 
-def logJSONPrettyPrint(jsonObj):
+def pretty_print_json(json_obj):
     """Return a pretty-printed JSON string."""
-    return "\n%s" % json.dumps(jsonObj, indent=4, sort_keys=True)
+    return "\n%s" % json.dumps(json_obj, indent=4, sort_keys=True)
 
 
 def center_text_position(text, center_pos, font_width):
@@ -199,3 +201,17 @@ def deep_update(source, overrides):
         else:
             source[key] = overrides[key]
     return source
+
+
+def get_eastern(utc_timestamp):
+    if not utc_timestamp:
+        return None
+    # Parse the timestamp and create a UTC datetime object
+    utc_time = datetime.fromisoformat(utc_timestamp[:-1])  # Remove 'Z' for parsing
+    utc_time = utc_time.replace(tzinfo=pytz.utc)
+    # Define the Eastern Time zone
+    eastern = pytz.timezone('US/Eastern')
+    # Convert to Eastern Time
+    eastern_time = utc_time.astimezone(eastern)
+    # Format the time in a non-military format (12-hour) with AM/PM
+    return eastern_time.strftime("%Y-%m-%d %I:%M %p")  # e.g., "2025-05-10 04:11 PM"

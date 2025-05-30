@@ -1,7 +1,7 @@
-import logging
 import os
 
 from driver import graphics
+from utils import debug
 
 loaded_fonts = {}
 
@@ -36,7 +36,7 @@ def initialize_fonts(matrix_height):
     font_dict = fonts().get(matrix_height)
 
     if font_dict is None:
-        logging.error(f"No font definitions found for height {matrix_height}.")
+        debug.error(f"No font definitions found for height {matrix_height}.")
         return None  # Handle case where no fonts are defined
 
     # Load each font and log the process
@@ -46,11 +46,11 @@ def initialize_fonts(matrix_height):
         try:
             font.LoadFont(absolute_path)  # Attempt to load the font
             loaded_fonts[name] = font  # Cache the loaded font
-            logging.info(f"Successfully loaded font '{name}' from '{absolute_path}'")
+            debug.info(f"Successfully loaded font '{name}' from '{absolute_path}'")
         except Exception as e:
-            logging.error(f"Error loading font from path {absolute_path}: {e}")
+            debug.error(f"Error loading font from path {absolute_path}: {e}")
 
-    logging.info(f"Loaded fonts: {list(loaded_fonts.keys())}")  # Show successfully loaded fonts
+    debug.info(f"Loaded fonts: {list(loaded_fonts.keys())}")  # Show successfully loaded fonts
     return loaded_fonts  # Return the loaded fonts dictionary
 
 def colors():

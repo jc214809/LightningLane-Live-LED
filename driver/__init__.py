@@ -1,5 +1,7 @@
 import sys
 
+from utils import debug
+
 from utils.utils import args
 from driver.mode import DriverMode
 
@@ -13,7 +15,10 @@ class DriverWrapper:
         else:
             self.set_mode(DriverMode.HARDWARE)
 
+        if self.hardware_load_failed:
+            debug.info("Failed to load hardware driver. Using software emulation.")
 
+        debug.info(f"Driver mode: {self.mode}")
     @property
     def __name__(self):
         return 'driver'
