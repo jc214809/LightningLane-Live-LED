@@ -197,6 +197,16 @@ pip3 install pipreqs
 pipreqs . --force
 ```
 
+### Running Tests
+
+Unit tests are written with `pytest`. After installing the project
+dependencies, you can run the entire test suite from the repository
+root directory with:
+
+```sh
+pytest
+```
+
 ## Licensing
 This project as of v0.1.0 uses the GNU Public License. If you intend to sell these, the code must remain open source.
 
