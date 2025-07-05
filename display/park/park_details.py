@@ -129,7 +129,7 @@ def draw_multi_line_park_name_text_block(matrix, text_lines):
     # Start baseline so the entire block is vertically centered.
     current_y =  font_height
     for line in text_lines:
-        if len(text_lines) is 1:
+        if len(text_lines) == 1:
             if matrix.height == 32:
                 current_y = int(current_y * 1.5)
             else:
