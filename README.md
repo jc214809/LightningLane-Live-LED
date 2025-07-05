@@ -47,6 +47,7 @@ You need Git for cloning this repo and PIP for installing the software.
 ```bash
 sudo apt-get update
 sudo apt-get install git python3-pip
+```
 ### Using a Virtual Environment (Recommended)
 
 #### Installing the scoreboard software
