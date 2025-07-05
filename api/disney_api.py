@@ -1,5 +1,3 @@
-from types import MappingProxyType
-
 import requests
 
 import asyncio
