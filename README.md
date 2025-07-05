@@ -180,7 +180,7 @@ This project relies on two libraries:
 [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix) is the library used for making everything work with the LED board.
 
 ### Accuracy Disclaimer
-The API is using realtime data but could change at anypoint
+The API uses realtime data but could change at any point.
 
 ## Help and Contributing
 If you run into any issues and have steps to reproduce, open an issue. If you have a feature request, open an issue. If you want to contribute a small to medium sized change, open a pull request. If you want to contribute a new feature, open an issue first before opening a PR.
