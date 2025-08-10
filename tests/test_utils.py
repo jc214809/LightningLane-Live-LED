@@ -1,8 +1,3 @@
-import builtins
-import types
-
-import pytest
-
 from utils.utils import center_text_position, split_string, deep_update, get_eastern
 
 

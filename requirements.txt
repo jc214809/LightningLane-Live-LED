@@ -7,3 +7,4 @@ RGBMatrixEmulator>=0.13.3
 pyowm==3.3.0
 setuptools; python_version >= "3.12"
 pytz>=2023.3
+pytest>=7.2.0

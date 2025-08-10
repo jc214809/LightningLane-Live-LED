@@ -1,6 +1,5 @@
 import sys
 import types
-import pytest
 
 # Provide a minimal 'driver' module before importing attraction_info
 graphics_stub = types.SimpleNamespace()
