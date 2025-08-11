@@ -1,7 +1,6 @@
-import requests
+import requests, aiohttp
 
 import asyncio
-import aiohttp
 from datetime import datetime, timedelta, timezone
 
 from api.weather import fetch_weather_data
@@ -61,11 +60,14 @@ def fetch_list_of_disney_world_parks():
     """
     walt_disney_world_entity_id = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
     api_url = f"https://api.themeparks.wiki/v1/entity/{walt_disney_world_entity_id}/schedule"
+    debug.info("url: %s", api_url)
     debug.info("Fetching Disney World schedule data...")
 
     try:
         response = requests.get(api_url)
-
+        response.raise_for_status()
+        debug.info("Status Code: %s", response.raise_for_status())
+        debug.info("Fetched Walt Disney World schedule data. Response: %s", response.json())
         parks_data = response.json().get("parks", [])
 
         # Determine today's date and yesterday's date as strings.

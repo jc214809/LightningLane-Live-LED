@@ -1,10 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
-
-import api.weather
-import pyowm
 import requests
+import api.weather
 from api.weather import load_config, fetch_weather_data
+import pyowm
 
 
 class TestWeatherModule(unittest.TestCase):
@@ -73,19 +72,22 @@ class TestWeatherModule(unittest.TestCase):
 
     @patch('api.weather.load_config')
     @patch('pyowm.OWM')
-    def test_fetch_weather_data_request_failure(self, mock_requests_get, mock_load_config):
-        # Mock load_config to return valid API key
+    def test_fetch_weather_data_request_failure(self, mock_owm, mock_load_config):
+        # Set up the config to return a valid API key
         mock_load_config.return_value = {'weather': {'apikey': 'valid_api_key'}}
 
-        # Simulate a request exception
-        mock_requests_get.side_effect = requests.RequestException("Request failed")
+        # Create a mock weather_manager and configure weather_at_coords to raise a RequestException
+        mock_weather_manager = MagicMock()
+        mock_weather_manager.weather_at_coords.side_effect = requests.RequestException("Request failed")
 
-        # Ensure patching points to the correct full path of debug.error
+        # Configure the patched OWM so that weather_manager() returns our mock manager
+        mock_owm.return_value.weather_manager.return_value = mock_weather_manager
+
+        # Patch debug.error to verify the logging of the error
         with patch('api.weather.debug.error') as mock_error:
             result = fetch_weather_data(0, 0)
-            self.assertIsNone(result)  # Should return None on request failure
+            self.assertIsNone(result)  # On request failure, fetch_weather_data should return None
             mock_error.assert_called_with("Failed to fetch weather data: Request failed")
-
 
 if __name__ == '__main__':
     unittest.main()
