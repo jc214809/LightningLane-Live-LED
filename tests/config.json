@@ -1,0 +1,10 @@
+{
+	"trip_countdown": {
+		"enabled": true,
+		"trip_date": "2027-07-30"
+	},
+    	"weather": {
+		"apikey": "somethinghere"
+	},
+	"debug": true
+}
