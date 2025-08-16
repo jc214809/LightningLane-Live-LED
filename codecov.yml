@@ -2,9 +2,5 @@ fixes:
   - "/home/runner/work/LightningLane-Live-LED/LightningLane-Live-LED/::"
 coverage:
   status:
-    project:
-      default:
-        target: auto
-    patch:
-      default:
-        target: auto
+    project: { default: { target: auto } }
+    patch:   { default: { target: auto } }
