@@ -32,4 +32,5 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: jc214809/LightningLane-Live-LED  # replace with your GitHub username and repo name
           files: coverage.xml
