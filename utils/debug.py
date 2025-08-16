@@ -5,7 +5,7 @@ from logging.handlers import RotatingFileHandler
 logger = logging.getLogger("disney-lll")
 
 # Determine the base directory path dynamically
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Adjust according to your project's structure
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Define the logs directory path
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
