@@ -26,3 +26,5 @@ jobs:
         with:
           files: ./coverage.xml
           use_oidc: true
+          verbose: true
+          fail_ci_if_error: true
