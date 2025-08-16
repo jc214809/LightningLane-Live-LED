@@ -1,9 +1,9 @@
 import sys
 
-from utils import debug
-
-from utils.utils import args
 from driver.mode import DriverMode
+from utils import debug
+from utils.utils import args
+
 
 class DriverWrapper:
     def __init__(self):
