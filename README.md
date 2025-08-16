@@ -47,6 +47,7 @@ You need Git for cloning this repo and PIP for installing the software.
 ```bash
 sudo apt-get update
 sudo apt-get install git python3-pip
+```
 ### Using a Virtual Environment (Recommended)
 
 #### Installing the scoreboard software
@@ -194,6 +195,16 @@ Dependencies requirements are managed using `pipreqs`. If you are adding or maki
 pip3 install pipreqs
 
 pipreqs . --force
+```
+
+### Running Tests
+
+Unit tests are written with `pytest`. After installing the project
+dependencies, you can run the entire test suite from the repository
+root directory with:
+
+```sh
+pytest
 ```
 
 ## Licensing

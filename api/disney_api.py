@@ -1,9 +1,6 @@
-from types import MappingProxyType
-
-import requests
+import requests, aiohttp
 
 import asyncio
-import aiohttp
 from datetime import datetime, timedelta, timezone
 
 from api.weather import fetch_weather_data
@@ -63,11 +60,14 @@ def fetch_list_of_disney_world_parks():
     """
     walt_disney_world_entity_id = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
     api_url = f"https://api.themeparks.wiki/v1/entity/{walt_disney_world_entity_id}/schedule"
+    debug.info("url: %s", api_url)
     debug.info("Fetching Disney World schedule data...")
 
     try:
         response = requests.get(api_url)
-
+        response.raise_for_status()
+        debug.info("Status Code: %s", response.raise_for_status())
+        debug.info("Fetched Walt Disney World schedule data. Response: %s", response.json())
         parks_data = response.json().get("parks", [])
 
         # Determine today's date and yesterday's date as strings.
@@ -126,7 +126,7 @@ def fetch_parks_and_attractions(disney_park_list):
 
         attractions = []
         for item in park_data.get("children", []):
-            if (item.get("entityType") == "ATTRACTION") or (item.get("entityType") == "SHOW" and "Meet" in item.get("name", "")): # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
+            if (item.get("entityType") == "ATTRACTION") or (item.get("entityType") == "SHOW" and ("Meet" in item.get("name", "") or "Star Wars Launch Bay:" in item.get("name", ""))): # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
                 attraction = {
                     "id": item.get("id"),
                     "name": get_attraction_name(item),
@@ -155,7 +155,7 @@ def fetch_parks_and_attractions(disney_park_list):
 
 
 def get_attraction_name(item):
-    return item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", "")
+    return item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", "").replace(" at Mickey's Not-So-Scary Halloween Party", "")
 
 
 def is_special_event(schedule):
@@ -239,7 +239,7 @@ def park_has_operating_attraction(park):
     Returns True if at least one attraction is operating (i.e. its 'status' is not "CLOSED" or "REFURBISHMENT")
     and its 'waitTime' is not None or empty, otherwise returns False.
     """
-    debug.info(f"Searching for open rides in {park['name']}")
+    debug.info(f"Searching for open attraction's in {park['name']}")
     for attraction in park.get("attractions", []):
         wait_time = attraction.get("waitTime")
         status = attraction.get("status")
@@ -248,7 +248,7 @@ def park_has_operating_attraction(park):
             f"Wait Time: {attraction['waitTime']} | Status: {attraction['status']}"
         )
         if wait_time not in [None, ''] and status.upper() == "OPERATING":
-            debug.info(f"Found open ride in {park['name']}: {attraction['name']}")
+            debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")
             return True
     return False
 

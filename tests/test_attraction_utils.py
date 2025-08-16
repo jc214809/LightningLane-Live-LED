@@ -1,0 +1,53 @@
+import sys
+import types
+
+# Provide a minimal 'driver' module before importing attraction_info
+graphics_stub = types.SimpleNamespace()
+
+class Font:
+    def CharacterWidth(self, _):
+        return 1
+    def LoadFont(self, _):
+        pass
+
+graphics_stub.Font = Font
+graphics_stub.DrawText = lambda *a, **k: None
+graphics_stub.Color = lambda r, g, b: (r, g, b)
+
+sys.modules['driver'] = types.SimpleNamespace(graphics=graphics_stub)
+
+from display.attractions.attraction_info import (
+    get_longest_line_width,
+    calculate_x_position,
+    calculate_y_position,
+)
+
+class DummyFont:
+    def __init__(self, width):
+        self.width = width
+    def CharacterWidth(self, _):
+        return self.width
+
+class DummyMatrix:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+def test_get_longest_line_width():
+    ride_font = DummyFont(width=2)
+    wait_font = DummyFont(width=1)
+    wrapped = ["RideA"]
+    combined = ["RideA", "10"]
+    result = get_longest_line_width(wrapped, combined, ride_font, wait_font)
+    expected = max(len("RideA") * 2, len("10") * 1)
+    assert result == expected
+
+def test_calculate_x_position():
+    matrix = DummyMatrix(20, 10)
+    assert calculate_x_position(matrix, 10, 2) == 3
+    matrix = DummyMatrix(10, 10)
+    assert calculate_x_position(matrix, 10, 2) == 0
+
+def test_calculate_y_position():
+    matrix = DummyMatrix(10, 32)
+    assert calculate_y_position(matrix, 10) == 11
