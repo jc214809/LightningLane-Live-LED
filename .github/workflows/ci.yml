@@ -1,23 +1,26 @@
 name: CI
 on:
   push:
-    branches: [main, develop]      # runs on merge commits
-  pull_request:           # runs on PRs
+    branches: [main, develop]
+  pull_request:
 jobs:
   test:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write     # required for Codecov OIDC
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - run: pip install -r requirements.txt pytest pytest-cov
-      - run: pytest --cov=your_package --cov-report=xml
+        with: { python-version: '3.13' }
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov coverage
+      - name: Run tests with coverage
+        run: |
+          pytest -q --cov --cov-report=xml:coverage.xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
