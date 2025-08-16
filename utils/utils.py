@@ -1,10 +1,12 @@
 import argparse
+import json
 from collections.abc import Mapping
 from datetime import datetime
 
 import pytz
-import json
+
 from utils import debug
+
 
 def pretty_print_json(json_obj):
     """Return a pretty-printed JSON string."""

@@ -1,11 +1,12 @@
-import requests, aiohttp
-
 import asyncio
 from datetime import datetime, timedelta, timezone
 
+import aiohttp
+import requests
+
 from api.weather import fetch_weather_data
-from utils.utils import get_eastern
 from utils import debug
+from utils.utils import get_eastern
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]

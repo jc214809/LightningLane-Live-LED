@@ -1,16 +1,18 @@
 import unittest
 from unittest.mock import patch, MagicMock
-import requests
-import api.weather
-from api.weather import load_config, fetch_weather_data
 import pyowm
+import requests
 
+from api.weather import load_config, fetch_weather_data
 
 class TestWeatherModule(unittest.TestCase):
 
     def setUp(self):
-        # Ensure any global state is reset before each test
-        api.weather.weather_api_key_valid = True
+        try:
+            import api.weather as weather_mod
+            weather_mod.weather_api_key_valid = True
+        except AttributeError:
+            pass
 
     @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data='{"weather": {"apikey": "valid_api_key"}}')
     def test_load_config(self, mock_open):
@@ -19,36 +21,27 @@ class TestWeatherModule(unittest.TestCase):
 
     @patch('api.weather.load_config')
     @patch('pyowm.OWM')
-    def test_fetch_weather_data_valid(self, mock_owm, mock_load_config):
-        # Manually reset the global variable
-        api.weather.weather_api_key_valid = True
-
-        # Mock load_config to return valid API key
+    def test_fetch_weather_data_valid(self, mock_OWM, mock_load_config):
+        from api.weather import fetch_weather_data
         mock_load_config.return_value = {'weather': {'apikey': 'valid_api_key'}}
+        import api.weather as weather_mod
+        weather_mod.weather_api_key_valid = True
 
-        # Create mocks for the weather manager and response
         mock_weather_manager = MagicMock()
         mock_observation = MagicMock()
         mock_weather_data = MagicMock()
-
-        # Define the expected weather data
         mock_weather_data.temperature.return_value = {"temp": 75.0}
         mock_weather_data.detailed_status = "Sunny"
         mock_weather_data.status = "Clear"
         mock_weather_data.weather_icon_name = "01d"
 
-        # Set up mock relationships
         mock_observation.weather = mock_weather_data
         mock_observation.location.name = "Test City"
 
-        # Configure the mock OWM to return the correct structures
-        mock_owm.return_value.weather_manager.return_value = mock_weather_manager
+        mock_OWM.return_value.weather_manager.return_value = mock_weather_manager
         mock_weather_manager.weather_at_coords.return_value = mock_observation
 
-        # Call the function
         result = fetch_weather_data(0, 0)
-
-        # Validate results
         self.assertIsNotNone(result)
         self.assertEqual(result['temperature'], "75°")
         self.assertEqual(result['description'], "Sunny")
@@ -56,37 +49,29 @@ class TestWeatherModule(unittest.TestCase):
 
     @patch('api.weather.load_config')
     @patch('pyowm.OWM')
-    @patch('api.weather.debug.warning')  # Mock the debug warning function
-    def test_fetch_weather_data_invalid_key(self, mock_debug_warning, mock_owm, mock_load_config):
-        # Mock load_config to return invalid API key
+    @patch('api.weather.debug.warning')
+    def test_fetch_weather_data_invalid_key(self, mock_warning, mock_OWM, mock_load_config):
+        from api.weather import fetch_weather_data
         mock_load_config.return_value = {'weather': {'apikey': 'invalid_api_key'}}
-
-        # Simulate the invalid API key behavior
-        mock_owm.side_effect = pyowm.commons.exceptions.UnauthorizedError()
-
+        mock_OWM.side_effect = pyowm.commons.exceptions.UnauthorizedError()
         result = fetch_weather_data(0, 0)
-
         self.assertIsNone(result)
-        mock_debug_warning.assert_called_with(
-            "[WEATHER] The API key provided doesn't appear to be valid. Please check your config.json.")
+        mock_warning.assert_called_with(
+            "[WEATHER] The API key provided doesn't appear to be valid. Please check your config.json."
+        )
 
     @patch('api.weather.load_config')
     @patch('pyowm.OWM')
-    def test_fetch_weather_data_request_failure(self, mock_owm, mock_load_config):
-        # Set up the config to return a valid API key
+    def test_fetch_weather_data_request_failure(self, mock_OWM, mock_load_config):
+        from api.weather import fetch_weather_data
         mock_load_config.return_value = {'weather': {'apikey': 'valid_api_key'}}
-
-        # Create a mock weather_manager and configure weather_at_coords to raise a RequestException
         mock_weather_manager = MagicMock()
         mock_weather_manager.weather_at_coords.side_effect = requests.RequestException("Request failed")
+        mock_OWM.return_value.weather_manager.return_value = mock_weather_manager
 
-        # Configure the patched OWM so that weather_manager() returns our mock manager
-        mock_owm.return_value.weather_manager.return_value = mock_weather_manager
-
-        # Patch debug.error to verify the logging of the error
         with patch('api.weather.debug.error') as mock_error:
             result = fetch_weather_data(0, 0)
-            self.assertIsNone(result)  # On request failure, fetch_weather_data should return None
+            self.assertIsNone(result)
             mock_error.assert_called_with("Failed to fetch weather data: Request failed")
 
 if __name__ == '__main__':

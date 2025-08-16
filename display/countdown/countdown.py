@@ -1,6 +1,7 @@
 from datetime import datetime
-from driver import graphics
+
 from display.display import get_text_width, loaded_fonts, color_dict
+from driver import graphics
 
 
 def wrap_text_in_lines(font, text, max_width):
