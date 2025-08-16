@@ -1,0 +1,14 @@
+[run]
+branch = True
+# Replace '.' with your package directory if needed.
+source = .
+
+[report]
+# Exclude test files and __init__.py files from the report.
+omit =
+    tests/*
+    */__init__.py
+
+[html]
+# Specify the output directory for HTML reports.
+directory = htmlcov
