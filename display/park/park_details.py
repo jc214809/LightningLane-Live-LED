@@ -1,11 +1,11 @@
 from datetime import datetime
 from io import BytesIO
-from driver import graphics
 
 import requests
 from PIL import Image
 
 from display.display import get_text_width, wrap_text, color_dict, loaded_fonts
+from driver import graphics
 from utils import debug
 
 # Icon cache for storing loaded weather icons

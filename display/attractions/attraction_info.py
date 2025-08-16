@@ -1,6 +1,5 @@
-from driver import graphics
-
 from display.display import wrap_text, get_text_width, color_dict, loaded_fonts
+from driver import graphics
 from utils import debug
 
 
