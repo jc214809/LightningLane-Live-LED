@@ -1,5 +1,6 @@
 # LightningLane-Live-LED
 [![codecov](https://codecov.io/gh/jc214809/LightningLane-Live-LED/branch/main/graph/badge.svg)](https://codecov.io/gh/jc214809/LightningLane-Live-LED)
+New:[![codecov](https://codecov.io/github/jc214809/lightninglane-live-led/graph/badge.svg?token=AIYRNC20P6)](https://codecov.io/github/jc214809/lightninglane-live-led)
 
 LightningLane-Live-LED is a Python application designed to fetch and display wait times for attractions at Walt Disney World on an LED matrix display. It retrieves park and attraction data from the [ThemeParks Wiki API](https://api.themeparks.wiki) and dynamically renders ride information—including park names, ride names, and wait times—onto an LED matrix. The application supports both actual hardware and an emulator for testing purposes.
 
