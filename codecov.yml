@@ -1,15 +1,10 @@
-codecov:
-  notify:
-    require_ci_to_pass: no
-
+fixes:
+  - "/home/runner/work/LightningLane-Live-LED/LightningLane-Live-LED/::"
 coverage:
-  precision: 2
-  round: down
-  range: "70...100"
   status:
     project:
       default:
         target: auto
-        threshold: 1%
-        base: auto 
-    patch: off
+    patch:
+      default:
+        target: auto
