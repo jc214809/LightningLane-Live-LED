@@ -20,7 +20,23 @@ from updater.data_updater import live_data_updater
 from display.countdown.countdown import render_countdown_to_disney
 
 from utils import debug
+import io
 
+
+def test_load_config_with_dummy(monkeypatch):
+    # Define a dummy JSON configuration string.
+    dummy_config = '{"debug": true, "trip_countdown": {"trip_date": "2023-10-01", "enabled": true}}'
+
+    # Monkeypatch builtins.open to return a StringIO object with dummy_config content.
+    monkeypatch.setattr("builtins.open", lambda file, mode='r': io.StringIO(dummy_config))
+
+    # Call load_config which will read from our dummy configuration.
+    config = load_config('config.json')
+
+    # Assert that the configuration is loaded as expected.
+    assert config["debug"] is True
+    assert config["trip_countdown"]["trip_date"] == "2023-10-01"
+    assert config["trip_countdown"]["enabled"] is True
 
 # Configure logging
 def load_config(file_path):
