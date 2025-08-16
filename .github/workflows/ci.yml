@@ -31,9 +31,6 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: coverage.xml
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: jc214809/LightningLane-Live-LED
+          slug: jc214809/LightningLane-Live-LED  # replace with your GitHub username and repo name
+          files: coverage.xml
