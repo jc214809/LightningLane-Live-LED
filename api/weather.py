@@ -1,6 +1,7 @@
 import json
 
-import requests, pyowm
+import pyowm
+import requests
 
 from utils import debug
 
