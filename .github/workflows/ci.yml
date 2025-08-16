@@ -21,6 +21,11 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest -q --cov --cov-report=xml:coverage.xml
+      - name: Debug coverage files
+        run: |
+          pwd
+          ls -lah
+          sed -n '1,40p' coverage.xml | sed -n '1,5p'   # shows the header with paths
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
