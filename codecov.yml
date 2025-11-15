@@ -1,6 +1,13 @@
-fixes:
-  - "/home/runner/work/LightningLane-Live-LED/LightningLane-Live-LED/::"
-coverage:
-  status:
-    project: { default: { target: auto } }
-    patch:   { default: { target: auto } }
+flag_management:
+  individual_flags:
+    - name: smart-tests
+      carryforward: true
+      carryforward_mode: "labels"
+      statuses:
+        - type: "project"
+        - type: "patch"
+
+cli:
+  plugins:
+    pycoverage:
+      report_type: "json"

@@ -6,23 +6,3 @@ source =
     display
     updater
     utils
-
-[report]
-omit =
-    tests/*
-    */tests/*
-    */__init__.py
-    .venv/*
-    venv/*
-    build/*
-    dist/*
-    .pytest_cache/*
-
-[paths]
-source =
-    .
-    /home/runner/work/LightningLane-Live-LED/LightningLane-Live-LED
-
-[html]
-# Specify the output directory for HTML reports.
-directory = htmlcov
