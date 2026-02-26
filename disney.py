@@ -5,7 +5,7 @@ import logging
 import threading
 import json
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import driver
 from driver import RGBMatrix, __version__
@@ -56,7 +56,6 @@ use_image_logo = False
 def main():
     # Load configuration
     config = load_config('config.json')
-    next_trip_time = validate_date(config['trip_countdown']['trip_date'])
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
@@ -92,10 +91,33 @@ def main():
     )
     update_thread.start()
 
+    # Log configured trip dates at startup
+    configured_dates = [d.date().isoformat() for d in parse_trip_dates(config)]
+    if configured_dates:
+        debug.info(f"Configured trip dates: {configured_dates}")
+    else:
+        debug.info("No trip dates configured.")
+
+    last_active_trip_logged = None
     try:
         while True:
             render_logo(matrix)
-            show_trip_countdown(matrix, next_trip_time) if (config['trip_countdown']['enabled']) else logging.info("Trip countdown is not enabled.")
+            # Determine active trip date each cycle to handle week-after window and upcoming trips
+            if config.get('trip_countdown', {}).get('enabled'):
+                trip_list = parse_trip_dates(config)
+                active_trip = get_active_trip_date(trip_list)
+                if active_trip is not None:
+                    # Log when the active trip changes
+                    if (last_active_trip_logged is None) or (last_active_trip_logged.date() != active_trip.date()):
+                        today = datetime.now().date()
+                        mode = "Countdown" if active_trip.date() > today else "Magical trip (within 7 days after)"
+                        debug.info(f"Trip countdown active date: {active_trip.date().isoformat()} | Mode: {mode}")
+                        last_active_trip_logged = active_trip
+                    show_trip_countdown(matrix, active_trip)
+                else:
+                    logging.info("No upcoming trips; countdown hidden.")
+            else:
+                logging.info("Trip countdown is not enabled.")
             if parks_data:
                 for park in parks_data:
                     if not park.get("operating"):
@@ -116,13 +138,57 @@ def main():
         matrix.Clear()
 
 def validate_date(date_string):
-    """Validate the date string and convert it to a datetime object."""
+    """Validate the date string and convert it to a datetime object (date-only if needed)."""
     try:
-        # Attempt to create a datetime object from the string
-        date = datetime.fromisoformat(date_string)
-        return date
+        # Support YYYY-MM-DD (date-only)
+        if len(date_string) == 10:
+            return datetime.fromisoformat(date_string)
+        # Fallback for full ISO strings
+        return datetime.fromisoformat(date_string)
     except ValueError:
         raise ValueError(f"Invalid date format: {date_string}. Please use YYYY-MM-DD.")
+
+def parse_trip_dates(config):
+    """Return a list of datetime objects from config trip_countdown.
+    Supports both legacy "trip_date" (single string) and new "trip_dates" (array of strings).
+    """
+    tc = config.get('trip_countdown', {})
+    dates = []
+    if 'trip_dates' in tc and isinstance(tc['trip_dates'], list):
+        for s in tc['trip_dates']:
+            try:
+                dates.append(validate_date(str(s)))
+            except Exception:
+                debug.warning(f"Ignoring invalid trip date: {s}")
+    elif 'trip_date' in tc and tc['trip_date']:
+        try:
+            dates.append(validate_date(str(tc['trip_date'])))
+        except Exception:
+            debug.warning(f"Ignoring invalid legacy trip date: {tc['trip_date']}")
+    return dates
+
+def get_active_trip_date(trip_dates):
+    """Select the active trip date to display.
+    - If there are upcoming trips (today or future), choose the closest upcoming date.
+    - Otherwise, if we are within 7 days AFTER the most recent past trip, keep showing that trip ("Have a Magical Trip!").
+    - If neither, return None.
+    """
+    if not trip_dates:
+        return None
+    today = datetime.now().date()
+    # Normalize to date (ignore time component)
+    date_list = [d.date() for d in trip_dates]
+    # If we are within a week after the most recent past trip, keep showing that first
+    past = [d for d in date_list if d < today]
+    if past:
+        last_past = max(past)
+        if (today - last_past) <= timedelta(days=7):
+            return datetime.combine(last_past, datetime.min.time())
+    # Otherwise, pick the closest upcoming (today or future)
+    future_or_today = [d for d in date_list if d >= today]
+    if future_or_today:
+        return datetime.combine(min(future_or_today), datetime.min.time())
+    return None
 
 def render_logo(matrix):
     matrix.Clear()
@@ -159,6 +225,8 @@ def loop_through_attractions(matrix, park):
 
 def show_trip_countdown(matrix, next_trip_time):
     # Render the next trip count down
+    if next_trip_time is None:
+        return
     matrix.Clear()
     render_countdown_to_disney(matrix, next_trip_time)
     time.sleep(7)
