@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import pytest
 
@@ -54,6 +54,7 @@ def test_parse_trip_dates_array_and_legacy(monkeypatch):
     }
     dates_array = disney.parse_trip_dates(config_array)
     assert len(dates_array) == 1
+    assert dates_array[0].isoformat() == datetime.now().date().isoformat()
 
     # Legacy mode single trip_date
     today_iso = datetime.now().date().isoformat()
@@ -65,4 +66,27 @@ def test_parse_trip_dates_array_and_legacy(monkeypatch):
     }
     dates_legacy = disney.parse_trip_dates(config_legacy)
     assert len(dates_legacy) == 1
-    assert dates_legacy[0].date().isoformat() == today_iso
+    assert dates_legacy[0].isoformat() == today_iso
+
+
+def test_exactly_seven_days_past_is_kept_over_future():
+    seven_days_ago = datetime.now().date() - timedelta(days=7)
+    future = datetime.now().date() + timedelta(days=30)
+    active = disney.get_active_trip_date([seven_days_ago, future])
+    assert active is not None
+    assert active.date() == seven_days_ago
+
+
+def test_eight_days_past_prefers_nearest_future():
+    eight_days_ago = datetime.now().date() - timedelta(days=8)
+    near_future = datetime.now().date() + timedelta(days=5)
+    active = disney.get_active_trip_date([eight_days_ago, near_future])
+    assert active is not None
+    assert active.date() == near_future
+
+
+def test_parse_trip_dates_returns_date_objects():
+    today_iso = datetime.now().date().isoformat()
+    dates = disney.parse_trip_dates({"trip_countdown": {"trip_dates": [today_iso]}})
+    assert len(dates) == 1
+    assert isinstance(dates[0], date)

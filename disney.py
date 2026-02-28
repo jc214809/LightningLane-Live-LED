@@ -5,7 +5,8 @@ import logging
 import threading
 import json
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, date
+from typing import Iterable, Union, Optional
 
 import driver
 from driver import RGBMatrix, __version__
@@ -20,23 +21,6 @@ from updater.data_updater import live_data_updater
 from display.countdown.countdown import render_countdown_to_disney
 
 from utils import debug
-import io
-
-
-def test_load_config_with_dummy(monkeypatch):
-    # Define a dummy JSON configuration string.
-    dummy_config = '{"debug": true, "trip_countdown": {"trip_date": "2023-10-01", "enabled": true}}'
-
-    # Monkeypatch builtins.open to return a StringIO object with dummy_config content.
-    monkeypatch.setattr("builtins.open", lambda file, mode='r': io.StringIO(dummy_config))
-
-    # Call load_config which will read from our dummy configuration.
-    config = load_config('config.json')
-
-    # Assert that the configuration is loaded as expected.
-    assert config["debug"] is True
-    assert config["trip_countdown"]["trip_date"] == "2023-10-01"
-    assert config["trip_countdown"]["enabled"] is True
 
 # Configure logging
 def load_config(file_path):
@@ -92,7 +76,7 @@ def main():
     update_thread.start()
 
     # Log configured trip dates at startup
-    configured_dates = [d.date().isoformat() for d in parse_trip_dates(config)]
+    configured_dates = [d.isoformat() for d in parse_trip_dates(config)]
     if configured_dates:
         debug.info(f"Configured trip dates: {configured_dates}")
     else:
@@ -138,18 +122,22 @@ def main():
         matrix.Clear()
 
 def validate_date(date_string):
-    """Validate the date string and convert it to a datetime object (date-only if needed)."""
+    """Validate the date string and convert it to a datetime object at midnight.
+    Accepts YYYY-MM-DD or full ISO datetime strings; returns datetime.datetime.
+    """
     try:
-        # Support YYYY-MM-DD (date-only)
+        # Prefer parsing as a date-only string (YYYY-MM-DD)
         if len(date_string) == 10:
-            return datetime.fromisoformat(date_string)
-        # Fallback for full ISO strings
+            # Return a datetime at midnight for date-only input
+            d = date.fromisoformat(date_string)
+            return datetime.combine(d, datetime.min.time())
+        # Fallback: parse as datetime
         return datetime.fromisoformat(date_string)
-    except ValueError:
-        raise ValueError(f"Invalid date format: {date_string}. Please use YYYY-MM-DD.")
+    except Exception:
+        raise ValueError(f"Invalid date format: {date_string}. Please use YYYY-MM-DD or ISO datetime.")
 
 def parse_trip_dates(config):
-    """Return a list of datetime objects from config trip_countdown.
+    """Return a list of date objects from config trip_countdown.
     Supports both legacy "trip_date" (single string) and new "trip_dates" (array of strings).
     """
     tc = config.get('trip_countdown', {})
@@ -157,37 +145,45 @@ def parse_trip_dates(config):
     if 'trip_dates' in tc and isinstance(tc['trip_dates'], list):
         for s in tc['trip_dates']:
             try:
-                dates.append(validate_date(str(s)))
+                dt = validate_date(str(s))
+                dates.append(dt.date())
             except Exception:
                 debug.warning(f"Ignoring invalid trip date: {s}")
     elif 'trip_date' in tc and tc['trip_date']:
         try:
-            dates.append(validate_date(str(tc['trip_date'])))
+            dt = validate_date(str(tc['trip_date']))
+            dates.append(dt.date())
         except Exception:
             debug.warning(f"Ignoring invalid legacy trip date: {tc['trip_date']}")
     return dates
 
-def get_active_trip_date(trip_dates):
-    """Select the active trip date to display.
-    - If there are upcoming trips (today or future), choose the closest upcoming date.
-    - Otherwise, if we are within 7 days AFTER the most recent past trip, keep showing that trip ("Have a Magical Trip!").
-    - If neither, return None.
+def get_active_trip_date(trip_dates: Iterable[Union[datetime, date]]) -> Optional[datetime]:
     """
-    if not trip_dates:
-        return None
-    today = datetime.now().date()
-    # Normalize to date (ignore time component)
-    date_list = [d.date() for d in trip_dates]
-    # If we are within a week after the most recent past trip, keep showing that first
-    past = [d for d in date_list if d < today]
-    if past:
-        last_past = max(past)
-        if (today - last_past) <= timedelta(days=7):
-            return datetime.combine(last_past, datetime.min.time())
-    # Otherwise, pick the closest upcoming (today or future)
-    future_or_today = [d for d in date_list if d >= today]
-    if future_or_today:
-        return datetime.combine(min(future_or_today), datetime.min.time())
+    Single-pass implementation that prefers the newest date in the list (max) as long as
+    it is not more than 7 days in the past. Otherwise returns the nearest upcoming date
+    (earliest >= today). Returns a datetime at midnight or None.
+    """
+    today = date.today()
+    latest_past = None  # most recent past date (< today)
+    nearest_future = None  # earliest date >= today
+
+    for d in trip_dates:
+        dt = d.date() if isinstance(d, datetime) else d
+        if dt < today:
+            if (latest_past is None) or (dt > latest_past):
+                latest_past = dt
+        else:
+            if (nearest_future is None) or (dt < nearest_future):
+                nearest_future = dt
+
+    # If the most recent past is within 7 days, show it
+    if latest_past and (today - latest_past).days <= 7:
+        return datetime.combine(latest_past, datetime.min.time())
+
+    # Otherwise show the nearest upcoming (if any)
+    if nearest_future:
+        return datetime.combine(nearest_future, datetime.min.time())
+
     return None
 
 def render_logo(matrix):

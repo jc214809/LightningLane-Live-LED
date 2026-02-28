@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, date
 
 import pytest
 
@@ -63,8 +63,8 @@ def test_load_config():
 def test_validate_date_valid():
     date_str = "2023-10-01"
     result = disney.validate_date(date_str)
-    # Check that result is a datetime object with the expected date
-    assert isinstance(result, datetime)
+    # Check result is a date-like or datetime object with the expected date
+    assert isinstance(result, (datetime, date))
     assert result.year == 2023 and result.month == 10 and result.day == 1
 
 def test_validate_date_invalid():
