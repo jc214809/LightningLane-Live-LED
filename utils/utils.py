@@ -138,6 +138,11 @@ def args():
     parser.add_argument(
         "--drop-privileges", action="store_true", help="Force the matrix driver to drop root privileges after setup."
     )
+    parser.add_argument(
+        "--fireworks",
+        action="store_true",
+        help="Play a short fireworks animation before continuing with the display."
+    )
     return parser.parse_args()
 
 

@@ -63,6 +63,10 @@ def main():
     matrix = RGBMatrix(options=matrixOptions)
     initialize_fonts(matrix.height)
 
+    if command_line_args.fireworks:
+        # Show Mickey silhouette with coordinated fireworks, then proceed.
+        render_mickey_logo(matrix, fireworks=True)
+
     disney_park_list = fetch_list_of_disney_world_parks()
     if not disney_park_list:
         debug.error("No Disney parks found. Exiting.")
@@ -199,7 +203,7 @@ def render_logo(matrix):
     else:
         # If no logo is available, render the Mickey silhouette as an intro.
         debug.info("No logo found. Rendering Mickey silhouette as intro...")
-        render_mickey_logo(matrix)
+        render_mickey_logo(matrix, fireworks=True)
         time.sleep(8)
 
 
