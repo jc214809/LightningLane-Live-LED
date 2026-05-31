@@ -170,6 +170,14 @@ def test_resolve_parks_from_config_request_error(monkeypatch):
     result = resolve_parks_from_config(["Cedar Point"])
     assert result == []
 
+def test_resolve_parks_from_config_preserves_config_order(monkeypatch):
+    monkeypatch.setattr(requests, "get", _make_fake_get(monkeypatch))
+    result = resolve_parks_from_config(["Cedar Point", "EPCOT"])
+    assert [p["id"] for p in result] == ["cp-id", "ep-id"]
+
+    result2 = resolve_parks_from_config(["EPCOT", "Cedar Point"])
+    assert [p["id"] for p in result2] == ["ep-id", "cp-id"]
+
 ###########
 # Tests for HTTP Functions
 ###########

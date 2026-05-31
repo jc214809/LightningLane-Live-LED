@@ -173,6 +173,9 @@ def resolve_parks_from_config(park_names):
         parks = fetch_parks_from_destination(dest_id)
         result.extend(p for p in parks if p["id"] in park_ids)
 
+    name_to_index = {n.lower(): i for i, n in enumerate(park_names)}
+    result.sort(key=lambda p: name_to_index.get(p["name"].lower(), len(park_names)))
+
     debug.info(f"Resolved {len(result)} park(s) from config: {[p['name'] for p in result]}")
     return result
 
