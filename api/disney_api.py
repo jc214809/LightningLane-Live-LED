@@ -1,8 +1,10 @@
 import asyncio
 import re
+import ssl
 from datetime import datetime, timedelta, timezone
 
 import aiohttp
+import certifi
 import requests
 
 from api.weather import fetch_weather_data
@@ -128,7 +130,51 @@ def fetch_parks_from_destination(destination_id):
 
 def fetch_list_of_disney_world_parks():
     """Fetch Walt Disney World parks. Retained for backward compatibility."""
-    return fetch_parks_from_destination("e957da41-3552-4cf6-b636-5babc5cbc4e5")
+    return fetch_parks_from_destination(DISNEY_WORLD_DESTINATION_ID)
+
+
+def resolve_parks_from_config(park_names):
+    """
+    Given a list of park names from config, fetch only the destinations that contain
+    those parks and return the matching park dicts. Matches against both raw API names
+    and Disney-cleaned names, case-insensitively. If park_names is empty, returns all
+    Walt Disney World parks.
+    """
+    if not park_names:
+        return fetch_list_of_disney_world_parks()
+
+    try:
+        response = requests.get("https://api.themeparks.wiki/v1/destinations")
+        response.raise_for_status()
+        destinations = response.json().get("destinations", [])
+    except requests.RequestException as e:
+        debug.error(f"Failed to fetch destinations list: {e}")
+        return []
+
+    names_lower = {n.lower() for n in park_names}
+
+    # Map destination_id -> set of matched park IDs
+    dest_park_ids = {}
+    for dest in destinations:
+        dest_id = dest["id"]
+        is_disney = dest_id == DISNEY_WORLD_DESTINATION_ID
+        for park in dest.get("parks", []):
+            raw = park.get("name", "")
+            cleaned = clean_park_name(raw) if is_disney else raw
+            if raw.lower() in names_lower or cleaned.lower() in names_lower:
+                dest_park_ids.setdefault(dest_id, set()).add(park["id"])
+
+    if not dest_park_ids:
+        debug.error(f"No destinations found for parks: {park_names}")
+        return []
+
+    result = []
+    for dest_id, park_ids in dest_park_ids.items():
+        parks = fetch_parks_from_destination(dest_id)
+        result.extend(p for p in parks if p["id"] in park_ids)
+
+    debug.info(f"Resolved {len(result)} park(s) from config: {[p['name'] for p in result]}")
+    return result
 
 
 def fetch_parks_and_attractions(disney_park_list):
@@ -271,7 +317,9 @@ async def fetch_live_data(attractions):
     """
     Fetch live data for all attractions concurrently.
     """
-    async with aiohttp.ClientSession() as session:
+    ssl_ctx = ssl.create_default_context(cafile=certifi.where())
+    connector = aiohttp.TCPConnector(ssl=ssl_ctx)
+    async with aiohttp.ClientSession(connector=connector) as session:
         tasks = [fetch_live_data_for_attraction(session, attraction) for attraction in attractions]
         results = await asyncio.gather(*tasks)
     debug.info(f"Total live data fetched: {len(results)}")

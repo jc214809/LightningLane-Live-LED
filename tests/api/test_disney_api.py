@@ -24,6 +24,7 @@ from api.disney_api import (
     update_parks_operating_status,
     handle_park_schedule_update,
     resolve_destination_id,
+    resolve_parks_from_config,
     DISNEY_WORLD_DESTINATION_ID,
 )
 
@@ -82,6 +83,92 @@ def test_resolve_destination_id_request_error(monkeypatch):
     monkeypatch.setattr(requests, "get",
                         lambda url, **kw: (_ for _ in ()).throw(requests.RequestException("err")))
     assert resolve_destination_id("Cedar Point") is None
+
+###########
+# Tests for resolve_parks_from_config
+###########
+
+FAKE_DESTINATIONS = {
+    "destinations": [
+        {
+            "id": DISNEY_WORLD_DESTINATION_ID,
+            "name": "Walt Disney World® Resort",
+            "parks": [
+                {"id": "mk-id", "name": "Magic Kingdom Park"},
+                {"id": "ep-id", "name": "EPCOT"},
+            ],
+        },
+        {
+            "id": "cedar-dest-id",
+            "name": "Cedar Point",
+            "parks": [
+                {"id": "cp-id", "name": "Cedar Point"},
+                {"id": "cps-id", "name": "Cedar Point Shores"},
+            ],
+        },
+    ]
+}
+
+FAKE_WDW_SCHEDULE = {
+    "parks": [
+        {"id": "mk-id", "name": "Magic Kingdom Park", "schedule": []},
+        {"id": "ep-id", "name": "EPCOT", "schedule": []},
+    ]
+}
+
+FAKE_CEDAR_SCHEDULE = {
+    "parks": [
+        {"id": "cp-id", "name": "Cedar Point", "schedule": []},
+        {"id": "cps-id", "name": "Cedar Point Shores", "schedule": []},
+    ]
+}
+
+def _make_fake_get(monkeypatch):
+    def fake_get(url, **kwargs):
+        if url.endswith("/destinations"):
+            return DummyResponse(FAKE_DESTINATIONS, 200)
+        elif DISNEY_WORLD_DESTINATION_ID in url and "schedule" in url:
+            return DummyResponse(FAKE_WDW_SCHEDULE, 200)
+        elif "cedar-dest-id" in url and "schedule" in url:
+            return DummyResponse(FAKE_CEDAR_SCHEDULE, 200)
+        else:
+            return DummyResponse({"location": None}, 200)
+    return fake_get
+
+def test_resolve_parks_from_config_by_raw_name(monkeypatch):
+    monkeypatch.setattr(requests, "get", _make_fake_get(monkeypatch))
+    result = resolve_parks_from_config(["Cedar Point"])
+    assert len(result) == 1
+    assert result[0]["id"] == "cp-id"
+
+def test_resolve_parks_from_config_by_cleaned_disney_name(monkeypatch):
+    monkeypatch.setattr(requests, "get", _make_fake_get(monkeypatch))
+    result = resolve_parks_from_config(["Magic Kingdom"])
+    assert len(result) == 1
+    assert result[0]["id"] == "mk-id"
+
+def test_resolve_parks_from_config_cross_destination(monkeypatch):
+    monkeypatch.setattr(requests, "get", _make_fake_get(monkeypatch))
+    result = resolve_parks_from_config(["EPCOT", "Cedar Point"])
+    ids = {p["id"] for p in result}
+    assert ids == {"ep-id", "cp-id"}
+
+def test_resolve_parks_from_config_empty_defaults_to_wdw(monkeypatch):
+    monkeypatch.setattr(requests, "get", _make_fake_get(monkeypatch))
+    result = resolve_parks_from_config([])
+    ids = {p["id"] for p in result}
+    assert "mk-id" in ids and "ep-id" in ids
+
+def test_resolve_parks_from_config_no_match(monkeypatch):
+    monkeypatch.setattr(requests, "get", _make_fake_get(monkeypatch))
+    result = resolve_parks_from_config(["Nonexistent Park"])
+    assert result == []
+
+def test_resolve_parks_from_config_request_error(monkeypatch):
+    monkeypatch.setattr(requests, "get",
+                        lambda url, **kw: (_ for _ in ()).throw(requests.RequestException("err")))
+    result = resolve_parks_from_config(["Cedar Point"])
+    assert result == []
 
 ###########
 # Tests for HTTP Functions
@@ -444,7 +531,7 @@ async def test_fetch_live_data_exception(monkeypatch):
             return self
         async def __aexit__(self, exc_type, exc, tb):
             pass
-    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda: FakeSession())
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: FakeSession())
     dummy_attractions = [{
         "id": "attr-1",
         "name": "Space Mountain",

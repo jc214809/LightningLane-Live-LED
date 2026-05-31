@@ -1,5 +1,4 @@
 {
-  "destinations": ["Walt Disney World Resort"],
   "parks": ["Magic Kingdom", "EPCOT", "Hollywood Studios", "Animal Kingdom"],
   "trip_countdown": {
     "enabled": true,

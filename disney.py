@@ -15,7 +15,7 @@ from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.startup import render_mickey_logo
 from utils.utils import args, led_matrix_options
-from api.disney_api import fetch_list_of_disney_world_parks, fetch_parks_from_destination, resolve_destination_id
+from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from display.attractions.attraction_info import render_attraction_info
 from updater.data_updater import live_data_updater
 from display.countdown.countdown import render_countdown_to_disney
@@ -63,25 +63,11 @@ def main():
     matrix = RGBMatrix(options=matrixOptions)
     initialize_fonts(matrix.height)
 
-    destination_entries = config.get('destinations', ["Walt Disney World Resort"])
-    disney_park_list = []
-    for entry in destination_entries:
-        dest_id = resolve_destination_id(entry)
-        if dest_id:
-            disney_park_list.extend(fetch_parks_from_destination(dest_id))
-        else:
-            debug.error(f"Could not resolve destination: {entry}")
+    park_names = config.get('parks', [])
+    disney_park_list = resolve_parks_from_config(park_names)
     if not disney_park_list:
         debug.error("No parks found. Exiting.")
         return
-
-    park_filter = config.get('parks')
-    if park_filter:
-        disney_park_list = [p for p in disney_park_list if p['name'] in park_filter]
-        debug.info(f"Park filter active: {park_filter}")
-        if not disney_park_list:
-            debug.error("No parks matched the configured filter. Exiting.")
-            return
 
     update_thread = threading.Thread(
         target=live_data_updater,
