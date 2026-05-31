@@ -1,4 +1,5 @@
 import asyncio
+import re
 from datetime import datetime, timedelta, timezone
 
 import aiohttp
@@ -11,6 +12,30 @@ from utils.utils import get_eastern
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
+
+DISNEY_WORLD_DESTINATION_ID = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
+_UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+
+
+def resolve_destination_id(name_or_id):
+    """Return a destination UUID. If name_or_id already looks like a UUID, return it as-is.
+    Otherwise fetch the destinations list and match by name (case-insensitive)."""
+    if _UUID_RE.match(name_or_id):
+        return name_or_id
+    try:
+        response = requests.get("https://api.themeparks.wiki/v1/destinations")
+        response.raise_for_status()
+        destinations = response.json().get("destinations", [])
+        name_lower = name_or_id.lower()
+        for dest in destinations:
+            if dest.get("name", "").lower() == name_lower:
+                debug.info(f"Resolved destination '{name_or_id}' → {dest['id']}")
+                return dest["id"]
+        debug.error(f"No destination found matching '{name_or_id}'")
+        return None
+    except requests.RequestException as e:
+        debug.error(f"Failed to fetch destinations list: {e}")
+        return None
 
 
 def get_park_location(park_id):
@@ -53,54 +78,57 @@ def fetch_park_schedule(park_id):
         debug.error(f"Failed to fetch schedule for park ID {park_id}: {e}")
         return []
 
-def fetch_list_of_disney_world_parks():
+WATER_PARK_KEYWORDS = ("Water Park", "Shores")
+
+def fetch_parks_from_destination(destination_id):
     """
-    Fetch and return a list of Walt Disney World parks with their respective IDs
-    and schedule info, excluding water parks. The schedule is filtered to only include
-    events for today and the day before.
+    Fetch parks from any ThemeParks Wiki destination, excluding water parks.
+    Schedule is filtered to today and yesterday only.
     """
-    walt_disney_world_entity_id = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
-    api_url = f"https://api.themeparks.wiki/v1/entity/{walt_disney_world_entity_id}/schedule"
-    debug.info("url: %s", api_url)
-    debug.info("Fetching Disney World schedule data...")
+    api_url = f"https://api.themeparks.wiki/v1/entity/{destination_id}/schedule"
+    debug.info("Fetching parks for destination %s", destination_id)
 
     try:
         response = requests.get(api_url)
         response.raise_for_status()
-        debug.info("Status Code: %s", response.raise_for_status())
-        debug.info("Fetched Walt Disney World schedule data. Response: %s", response.json())
         parks_data = response.json().get("parks", [])
 
-        # Determine today's date and yesterday's date as strings.
         today = datetime.now()
         today_str = today.strftime('%Y-%m-%d')
         yesterday_str = (today - timedelta(days=1)).strftime('%Y-%m-%d')
 
+        is_disney = destination_id == DISNEY_WORLD_DESTINATION_ID
         filtered_parks = []
         for park in parks_data:
-            # debug.log(f"Park Location: {pretty_print_json(park)}")
-            if isinstance(park, dict) and "Water Park" not in park.get("name", ""):
-                schedule = park.get("schedule")
-                # Filter schedule events to include only those from today or yesterday.
-                schedule_filtered = [
-                    event for event in schedule if event.get("date") in (today_str, yesterday_str)
-                ]
-                debug.log(f"Schedule Filter: {schedule_filtered}")
-                filtered_parks.append({
-                    "name": park.get("name", "Unknown"),
-                    "id": park.get("id", "Unknown"),
-                    "schedule": schedule_filtered,
-                    "weather": [],  # Get initial weather data
-                    "location": get_park_location(park.get("id"))
-                })
+            if not isinstance(park, dict):
+                continue
+            park_name = park.get("name", "")
+            if any(kw in park_name for kw in WATER_PARK_KEYWORDS):
+                continue
+            schedule = park.get("schedule") or []
+            schedule_filtered = [
+                event for event in schedule if event.get("date") in (today_str, yesterday_str)
+            ]
+            debug.log(f"Schedule Filter: {schedule_filtered}")
+            filtered_parks.append({
+                "name": clean_park_name(park_name) if is_disney else park_name,
+                "id": park.get("id", "Unknown"),
+                "schedule": schedule_filtered,
+                "weather": [],
+                "location": get_park_location(park.get("id"))
+            })
 
-        debug.info(f"Found {len(filtered_parks)} parks under Walt Disney World after filtering by date.")
-        debug.log(f"Filtered Parks: {filtered_parks}")
+        debug.info(f"Found {len(filtered_parks)} parks for destination {destination_id}.")
         return filtered_parks
 
     except requests.RequestException as e:
-        debug.error(f"Failed to fetch schedule data: {e}")
+        debug.error(f"Failed to fetch parks for destination {destination_id}: {e}")
         return []
+
+
+def fetch_list_of_disney_world_parks():
+    """Fetch Walt Disney World parks. Retained for backward compatibility."""
+    return fetch_parks_from_destination("e957da41-3552-4cf6-b636-5babc5cbc4e5")
 
 
 def fetch_parks_and_attractions(disney_park_list):
@@ -127,7 +155,7 @@ def fetch_parks_and_attractions(disney_park_list):
 
         attractions = []
         for item in park_data.get("children", []):
-            if (item.get("entityType") == "ATTRACTION") or (item.get("entityType") == "SHOW" and ("Meet" in item.get("name", "") or "Star Wars Launch Bay:" in item.get("name", ""))): # and (item.get("id") in troublesome_attraction_64x64_ids or item.get("id") in troublesome_attraction_64x32_ids):
+            if item.get("entityType") in ("ATTRACTION", "SHOW"):
                 attraction = {
                     "id": item.get("id"),
                     "name": get_attraction_name(item),
@@ -142,7 +170,7 @@ def fetch_parks_and_attractions(disney_park_list):
         debug.info(f"{len(attractions)} were found in {park_name}")
         park_obj = {
             "id": park_id,
-            "name": park_name.replace("Theme", " ").replace("Park", " ").replace("Disney's", "").strip(),
+            "name": park_name,
             "attractions": attractions,
             "specialTicketedEvent": is_special_event(schedule),
             "closingTime": operating_event.get("closingTime", ""),
@@ -153,6 +181,10 @@ def fetch_parks_and_attractions(disney_park_list):
         }
         parks.append(park_obj)
     return parks
+
+
+def clean_park_name(raw_name):
+    return raw_name.replace("Theme", " ").replace("Park", " ").replace("Disney's", "").strip()
 
 
 def get_attraction_name(item):
@@ -210,9 +242,20 @@ async def fetch_live_data_for_attraction(session, attraction):
                     if live_data_entry.get("status") == "DOWN" and live_data_entry.get("entityType") == "ATTRACTION":
                         attraction["waitTime"] = f"Down {get_down_time(live_data_entry.get('lastUpdated'))}"
                     if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT","DOWN"]:
-                        attraction["waitTime"] = live_data_entry.get("queue", {}) \
-                            .get("STANDBY", {}) \
-                            .get("waitTime", None)
+                        queue = live_data_entry.get("queue", {})
+                        standby_wait = queue.get("STANDBY", {}).get("waitTime", None)
+                        if standby_wait is not None:
+                            attraction["waitTime"] = standby_wait
+                        else:
+                            bg = queue.get("BOARDING_GROUP", {})
+                            start = bg.get("currentGroupStart")
+                            end = bg.get("currentGroupEnd")
+                            if start is not None and end is not None:
+                                attraction["waitTime"] = f"Groups {start}-{end}"
+                            elif start is not None:
+                                attraction["waitTime"] = f"Group {start}+"
+                            else:
+                                attraction["waitTime"] = None
             else:
                 debug.error(f"Failed to fetch live data for {attraction['name']}, Status Code: {response.status}")
     except Exception as e:
