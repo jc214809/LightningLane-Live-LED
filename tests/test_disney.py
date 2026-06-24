@@ -158,6 +158,41 @@ def test_loop_through_attractions_skips_closed(monkeypatch):
     assert "Haunted Mansion" not in fake_matrix.rendered_attractions
 
 
+def test_loop_through_attractions_skips_empty_wait_time(monkeypatch):
+    fake_matrix = FakeMatrix()
+
+    def fake_render_attraction_info(matrix, attraction_info):
+        matrix.rendered_attractions.append(attraction_info['name'])
+
+    monkeypatch.setattr(disney, "render_attraction_info", fake_render_attraction_info)
+
+    park = {
+        "name": "Hollywood Studios",
+        "attractions": [
+            {"name": "Meet Disney Jr. Stars", "waitTime": "", "status": ""},
+            {"name": "Tron", "waitTime": "25", "status": "OPERATING"}
+        ]
+    }
+    disney.loop_through_attractions(fake_matrix, park)
+
+    assert "Tron" in fake_matrix.rendered_attractions
+    assert "Meet Disney Jr. Stars" not in fake_matrix.rendered_attractions
+
+
+def test_park_filter_limits_parks(monkeypatch):
+    from api.disney_api import clean_park_name
+    all_parks = [
+        {"name": "Disney's Animal Kingdom Theme Park", "id": "ak-id"},
+        {"name": "Magic Kingdom Park", "id": "mk-id"},
+        {"name": "Disney's Hollywood Studios", "id": "hs-id"},
+        {"name": "EPCOT", "id": "ep-id"},
+    ]
+    park_filter = ["Animal Kingdom"]
+    filtered = [p for p in all_parks if clean_park_name(p["name"]) in park_filter]
+    assert len(filtered) == 1
+    assert filtered[0]["id"] == "ak-id"
+
+
 # Test that show_trip_countdown passes along the correct next_trip_time.
 def test_show_trip_countdown_format(monkeypatch):
     fake_matrix = FakeMatrix()

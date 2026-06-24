@@ -1,4 +1,5 @@
 {
+  "parks": ["Magic Kingdom", "EPCOT", "Hollywood Studios", "Animal Kingdom"],
   "trip_countdown": {
     "enabled": true,
     "trip_dates": [
