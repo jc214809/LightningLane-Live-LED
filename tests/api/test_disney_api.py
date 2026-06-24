@@ -23,6 +23,7 @@ from api.disney_api import (
     park_has_operating_attraction,
     update_parks_operating_status,
     handle_park_schedule_update,
+    refresh_park_attractions,
     resolve_destination_id,
     resolve_parks_from_config,
     DISNEY_WORLD_DESTINATION_ID,
@@ -588,6 +589,81 @@ def test_handle_park_schedule_update(monkeypatch):
     assert park["specialTicketedEvent"] is True
     assert park["openingTime"] == "09:00"
     assert park["closingTime"] == "22:00"
+
+def test_handle_park_schedule_update_calls_refresh(monkeypatch):
+    park = {"name": "Test Park", "id": "dummy-id", "schedule": [], "attractions": []}
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [])
+    refreshed = []
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
+    handle_park_schedule_update(True, park)
+    assert refreshed == [park]
+
+def test_handle_park_schedule_update_no_refresh_when_already_operating(monkeypatch):
+    park = {"name": "Test Park", "id": "dummy-id", "schedule": [], "operating": True, "attractions": []}
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [])
+    refreshed = []
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
+    handle_park_schedule_update(True, park)
+    assert refreshed == []
+
+###########
+# Tests for refresh_park_attractions
+###########
+
+def _make_children_response(children):
+    return DummyResponse({"children": children}, 200)
+
+def test_refresh_park_attractions_updates_name(monkeypatch):
+    park = {
+        "id": "park-1", "name": "Test Park",
+        "attractions": [{"id": "a1", "name": "Old Name", "waitTime": 10, "status": "OPERATING", "lastUpdatedTs": "ts"}]
+    }
+    monkeypatch.setattr(requests, "get", lambda url, **kw: _make_children_response([
+        {"id": "a1", "name": "New Name", "entityType": "ATTRACTION"}
+    ]))
+    refresh_park_attractions(park)
+    assert park["attractions"][0]["name"] == "New Name"
+    assert park["attractions"][0]["waitTime"] == 10  # live data preserved
+
+def test_refresh_park_attractions_adds_new(monkeypatch):
+    park = {
+        "id": "park-1", "name": "Test Park",
+        "attractions": [{"id": "a1", "name": "Ride A", "waitTime": 5, "status": "OPERATING", "lastUpdatedTs": ""}]
+    }
+    monkeypatch.setattr(requests, "get", lambda url, **kw: _make_children_response([
+        {"id": "a1", "name": "Ride A", "entityType": "ATTRACTION"},
+        {"id": "a2", "name": "Ride B", "entityType": "ATTRACTION"},
+    ]))
+    refresh_park_attractions(park)
+    ids = [a["id"] for a in park["attractions"]]
+    assert "a1" in ids and "a2" in ids
+    new = next(a for a in park["attractions"] if a["id"] == "a2")
+    assert new["waitTime"] == ""
+
+def test_refresh_park_attractions_removes_dropped(monkeypatch):
+    park = {
+        "id": "park-1", "name": "Test Park",
+        "attractions": [
+            {"id": "a1", "name": "Ride A", "waitTime": 5, "status": "OPERATING", "lastUpdatedTs": ""},
+            {"id": "a2", "name": "Ride B", "waitTime": 0, "status": "CLOSED", "lastUpdatedTs": ""},
+        ]
+    }
+    monkeypatch.setattr(requests, "get", lambda url, **kw: _make_children_response([
+        {"id": "a1", "name": "Ride A", "entityType": "ATTRACTION"},
+    ]))
+    refresh_park_attractions(park)
+    assert len(park["attractions"]) == 1
+    assert park["attractions"][0]["id"] == "a1"
+
+def test_refresh_park_attractions_request_error(monkeypatch):
+    park = {
+        "id": "park-1", "name": "Test Park",
+        "attractions": [{"id": "a1", "name": "Ride A", "waitTime": 5, "status": "OPERATING", "lastUpdatedTs": ""}]
+    }
+    monkeypatch.setattr(requests, "get",
+                        lambda url, **kw: (_ for _ in ()).throw(requests.RequestException("err")))
+    refresh_park_attractions(park)
+    assert len(park["attractions"]) == 1  # unchanged on error
 
 def test_update_parks_operating_status(monkeypatch):
     park = {

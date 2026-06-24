@@ -381,6 +381,61 @@ def handle_park_schedule_update(is_park_open, park):
         park["closingTime"] = operating_event.get("closingTime", "")
         park["openingTime"] = operating_event.get("openingTime", "")
 
+        refresh_park_attractions(park)
+
+
+def refresh_park_attractions(park):
+    """
+    Re-fetch the children endpoint when a park opens and reconcile the attraction list:
+    update names, add new attractions, remove ones no longer returned.
+    """
+    park_id = park.get("id")
+    park_name = park.get("name", "Unknown")
+    api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        children = response.json().get("children", [])
+    except requests.RequestException as e:
+        debug.error(f"Failed to refresh attractions for {park_name}: {e}")
+        return
+
+    fresh = {
+        item["id"]: item
+        for item in children
+        if item.get("entityType") in ("ATTRACTION", "SHOW")
+    }
+
+    existing = park.get("attractions", [])
+
+    for attr in existing:
+        if attr["id"] in fresh:
+            attr["name"] = get_attraction_name(fresh[attr["id"]])
+
+    existing_ids = {a["id"] for a in existing}
+    for attr_id, item in fresh.items():
+        if attr_id not in existing_ids:
+            existing.append({
+                "id": attr_id,
+                "name": get_attraction_name(item),
+                "entityType": item.get("entityType"),
+                "parkId": park_id,
+                "waitTime": "",
+                "status": "",
+                "lastUpdatedTs": "",
+                "down_since": ""
+            })
+            debug.info(f"New attraction added to {park_name}: {get_attraction_name(item)}")
+
+    before = len(existing)
+    park["attractions"] = [a for a in existing if a["id"] in fresh]
+    removed = before - len(park["attractions"])
+    if removed:
+        debug.info(f"Removed {removed} attraction(s) from {park_name} no longer in roster")
+
+    debug.info(f"Refreshed {len(park['attractions'])} attractions for {park_name}")
+
 
 if __name__ == "__main__":
     # Fetch parks with filtered schedule (today and yesterday)
