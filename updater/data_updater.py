@@ -13,7 +13,7 @@ def merge_live_data(existing_attractions, new_live_data):
 
     # Create a mapping from attraction id to the existing attraction object.
     attraction_map = {attr["id"]: attr for attr in existing_attractions}
-    debug.info(f"Starting to update new live data for attractions.")
+    debug.log(f"Starting to update new live data for attractions.")
     for new_attr in new_live_data:
         attr_id = new_attr.get("id")
 
@@ -40,19 +40,16 @@ def merge_live_data(existing_attractions, new_live_data):
     return list(attraction_map.values())
 
 
-def update_parks_live_data(parks):
+def update_parks_live_data(parks, use_websocket=False):
     """
     For each park in parks, update live data for attractions.
-    If the park is not operating, update the schedule for the next day.
-    If the park is operating, do not update the schedule.
+    If use_websocket is True, skip HTTP live data fetching — the WS handles it.
     """
     for park in parks:
-        # Fetch live data for the current attractions.
-        if park.get("attractions"):
+        if not use_websocket and park.get("attractions"):
             new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
             park["attractions"] = merge_live_data(park["attractions"], new_live_data)
 
-        # Update weather data
         if park.get("location") and park.get("operating"):
             park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
 
@@ -60,22 +57,27 @@ def update_parks_live_data(parks):
     return parks
 
 
-def live_data_updater(disney_park_list, update_interval, parks_data):
+def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False):
     """
     Background thread that updates live data for parks every 'update_interval' seconds.
-    The initial fetch of parks is done only once, and then live data is updated on the existing parks.
+    When use_websocket is True, skips HTTP live data polling — the WS thread handles that.
+    Always performs an initial REST live data fetch so attractions have data before WS catches up.
     """
-    # Initial fetch of parks and attractions.
     parks_data[:] = fetch_parks_and_attractions(disney_park_list)
+    if use_websocket:
+        debug.info("WebSocket mode: performing initial REST live data fetch, then handing off to WS.")
+        initial_parks = update_parks_live_data(list(parks_data), use_websocket=False)
+        initial_parks = update_parks_operating_status(initial_parks)
+        parks_data[:] = initial_parks
+        debug.info("Initial REST live data fetch complete — WebSocket will handle updates from here.")
     while True:
         try:
             if parks_data:
-                # Only update live data for existing parks.
-                updated_parks = update_parks_live_data(parks_data)
-                # Update each park with operating status.
-                updated_parks = update_parks_operating_status(updated_parks)
-                parks_data[:] = updated_parks  # Update shared list in-place.
-                debug.info("Parks live data updated in background.")
+                updated_parks = update_parks_live_data(parks_data, use_websocket=use_websocket)
+                if not use_websocket:
+                    updated_parks = update_parks_operating_status(updated_parks)
+                parks_data[:] = updated_parks
+                debug.info("Parks data updated in background.")
             else:
                 debug.warning("No parks found during live data update.")
         except Exception as e:
