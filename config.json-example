@@ -1,5 +1,6 @@
 {
   "parks": ["Magic Kingdom", "EPCOT", "Hollywood Studios", "Animal Kingdom"],
+  "themeparks_api_key": "89e4add6-30cd-4960-83a7-eb7882a1649a",
   "trip_countdown": {
     "enabled": true,
     "trip_dates": [

@@ -74,7 +74,7 @@ def fetch_park_schedule(park_id):
             event for event in schedule_data if event.get("date") in (today_str, yesterday_str)
         ]
 
-        debug.info(f"Schedule Data for park ID {park_id}: {schedule_data}")
+        debug.log(f"Schedule Data for park ID {park_id}: {schedule_data}")
         return schedule_filtered
     except requests.RequestException as e:
         debug.error(f"Failed to fetch schedule for park ID {park_id}: {e}")
@@ -115,6 +115,7 @@ def fetch_parks_from_destination(destination_id):
             filtered_parks.append({
                 "name": clean_park_name(park_name) if is_disney else park_name,
                 "id": park.get("id", "Unknown"),
+                "destination_id": destination_id,
                 "schedule": schedule_filtered,
                 "weather": [],
                 "location": get_park_location(park.get("id"))
@@ -220,6 +221,7 @@ def fetch_parks_and_attractions(disney_park_list):
         park_obj = {
             "id": park_id,
             "name": park_name,
+            "destination_id": park_info.get("destination_id"),
             "attractions": attractions,
             "specialTicketedEvent": is_special_event(schedule),
             "closingTime": operating_event.get("closingTime", ""),
@@ -278,7 +280,7 @@ async def fetch_live_data_for_attraction(session, attraction):
     current_data = attraction.copy()
 
     api_url = f"https://api.themeparks.wiki/v1/entity/{attraction['id']}/live"
-    debug.info(f"Fetching live data for attraction: {attraction['name']} (ID: {attraction['id']})")
+    debug.log(f"Fetching live data for attraction: {attraction['name']} (ID: {attraction['id']})")
     try:
         async with session.get(api_url) as response:
             if response.status == 200:
@@ -311,9 +313,9 @@ async def fetch_live_data_for_attraction(session, attraction):
         debug.error(f"Error occurred while fetching live data for {attraction['name']}: {e}")
 
     if current_data != attraction:
-        debug.info(f"There is new data for {attraction['name']} | Wait time: {current_data['waitTime']}(Existing) vs {attraction['waitTime']}(New) | Status: {current_data['status']}(Existing) vs {attraction['status']}(New) | Last updated: {get_eastern(current_data['lastUpdatedTs'])}(Existing) vs {get_eastern(attraction['lastUpdatedTs'])}(New)")
+        debug.log(f"There is new data for {attraction['name']} | Wait time: {current_data['waitTime']}(Existing) vs {attraction['waitTime']}(New) | Status: {current_data['status']}(Existing) vs {attraction['status']}(New) | Last updated: {get_eastern(current_data['lastUpdatedTs'])}(Existing) vs {get_eastern(attraction['lastUpdatedTs'])}(New)")
     else:
-        debug.info(f"No new data for {attraction['name']}")
+        debug.log(f"No new data for {attraction['name']}")
     return attraction
 
 async def fetch_live_data(attractions):
@@ -325,7 +327,7 @@ async def fetch_live_data(attractions):
     async with aiohttp.ClientSession(connector=connector) as session:
         tasks = [fetch_live_data_for_attraction(session, attraction) for attraction in attractions]
         results = await asyncio.gather(*tasks)
-    debug.info(f"Total live data fetched: {len(results)}")
+    debug.log(f"Total live data fetched: {len(results)}")
     return results
 
 def park_has_operating_attraction(park):
@@ -334,7 +336,7 @@ def park_has_operating_attraction(park):
     Returns True if at least one attraction is operating (i.e. its 'status' is not "CLOSED" or "REFURBISHMENT")
     and its 'waitTime' is not None or empty, otherwise returns False.
     """
-    debug.info(f"Searching for open attraction's in {park['name']}")
+    debug.log(f"Searching for open attraction's in {park['name']}")
     for attraction in park.get("attractions", []):
         wait_time = attraction.get("waitTime")
         status = attraction.get("status")

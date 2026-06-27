@@ -304,6 +304,31 @@ def test_fetch_parks_and_attractions_includes_shows(monkeypatch):
     assert "show-1" in ids
     assert "other-1" not in ids
 
+def test_fetch_parks_and_attractions_includes_destination_id(monkeypatch):
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    fake_parks_list = [{
+        "id": "dummy-id",
+        "name": "Magic Kingdom",
+        "destination_id": "dest-abc",
+        "schedule": [{"date": today_str, "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00"}],
+        "weather": [],
+        "location": {"latitude": 28.3759, "longitude": -81.5494},
+    }]
+
+    def fake_get(url, **kwargs):
+        if "children" in url:
+            return DummyResponse({"children": [
+                {"id": "attr-1", "name": "Space Mountain", "entityType": "ATTRACTION"}
+            ]}, 200)
+        return DummyResponse({}, 200)
+
+    monkeypatch.setattr(requests, "get", fake_get)
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {})
+    result = fetch_parks_and_attractions(fake_parks_list)
+    assert len(result) == 1
+    assert result[0]["destination_id"] == "dest-abc"
+
+
 def test_fetch_parks_and_attractions_exception(monkeypatch):
     fake_parks_list = [{
         "id": "dummy-id",
