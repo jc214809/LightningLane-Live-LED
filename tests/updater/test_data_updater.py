@@ -294,3 +294,76 @@ def test_merge_live_data_no_change():
     result = merge_live_data(copy.deepcopy(existing), new_live)
     # Expect the output to be identical to the original existing data.
     assert result == existing
+
+
+def test_update_parks_live_data_websocket_skips_http_fetch(monkeypatch):
+    """When use_websocket=True, fetch_live_data must not be called."""
+    called = []
+
+    async def should_not_be_called(attractions):
+        called.append(True)
+        return []
+
+    monkeypatch.setattr("updater.data_updater.fetch_live_data", should_not_be_called)
+
+    parks_copy = copy.deepcopy(DUMMY_PARKS)
+    update_parks_live_data(parks_copy, use_websocket=True)
+
+    assert called == [], "fetch_live_data should not be called when use_websocket=True"
+
+
+def test_update_parks_live_data_no_websocket_calls_http_fetch(monkeypatch):
+    """When use_websocket=False (default), fetch_live_data must be called."""
+    called = []
+
+    async def dummy_fetch_live_data(attractions):
+        called.append(True)
+        return attractions
+
+    monkeypatch.setattr("updater.data_updater.fetch_live_data", dummy_fetch_live_data)
+
+    parks_copy = copy.deepcopy(DUMMY_PARKS)
+    update_parks_live_data(parks_copy, use_websocket=False)
+
+    assert called == [True], "fetch_live_data should be called when use_websocket=False"
+
+
+def test_live_data_updater_websocket_does_initial_fetch_then_skips_polling(monkeypatch):
+    """
+    live_data_updater with use_websocket=True must call fetch_live_data once for the
+    initial population, then skip it in the polling loop.
+    """
+    parks_data = []
+    fetch_call_count = []
+
+    async def counting_fetch(attractions):
+        fetch_call_count.append(1)
+        return attractions
+
+    monkeypatch.setattr("updater.data_updater.fetch_live_data", counting_fetch)
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
+    monkeypatch.setattr("updater.data_updater.update_parks_operating_status", lambda parks: parks)
+
+    loop_iterations = []
+
+    def fake_sleep(duration):
+        loop_iterations.append(1)
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr("updater.data_updater.time", type("t", (), {"sleep": fake_sleep}))
+
+    updater_thread = threading.Thread(
+        target=live_data_updater,
+        args=(copy.deepcopy(DUMMY_PARKS), 0, parks_data),
+        kwargs={"use_websocket": True},
+        daemon=True,
+    )
+    try:
+        updater_thread.start()
+        updater_thread.join(timeout=2)
+    except KeyboardInterrupt:
+        pass
+
+    # fetch_live_data called exactly once (initial fetch), not again in the loop
+    assert len(fetch_call_count) == 1, "fetch_live_data should be called once for the initial fetch"
+    assert loop_iterations == [1], "polling loop should have run once then stopped"
