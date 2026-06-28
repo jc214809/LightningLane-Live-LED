@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 import aiohttp
 import certifi
 
-from api.disney_api import get_down_time, update_parks_operating_status
-from updater.data_updater import update_parks_live_data
+from api.disney_api import fetch_live_data, get_down_time, update_parks_operating_status
+from updater.data_updater import merge_live_data
 from utils import debug
 
 WS_URL = "wss://ws.themeparks.wiki/v1/live"
@@ -91,8 +91,11 @@ async def _ws_loop(api_key, parks_data):
                 async with session.ws_connect(WS_URL, headers=headers, ssl=ssl_ctx) as ws:
                     if is_reconnect:
                         debug.info("WebSocket reconnected — refreshing live data via REST.")
-                        updated = update_parks_live_data(list(parks_data), use_websocket=False)
-                        updated = update_parks_operating_status(updated)
+                        for park in parks_data:
+                            if park.get("attractions"):
+                                new_live_data = await fetch_live_data(park["attractions"])
+                                park["attractions"] = merge_live_data(park["attractions"], new_live_data)
+                        updated = update_parks_operating_status(list(parks_data))
                         parks_data[:] = updated
                         debug.info("REST refresh after reconnect complete.")
                     else:
