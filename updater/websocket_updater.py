@@ -48,9 +48,10 @@ def _apply_live_update(data, parks_data):
             attr["lastUpdatedTs"] = last_updated
 
             if status == "DOWN":
-                attr["waitTime"] = f"Down {get_down_time(last_updated)}" if last_updated else "Down"
                 if not attr.get("down_since"):
                     attr["down_since"] = last_updated
+                down_time = get_down_time(attr["down_since"])
+                attr["waitTime"] = f"Down {down_time}" if down_time is not None else "Down"
             elif status in ("CLOSED", "REFURBISHMENT"):
                 attr["down_since"] = ""
             else:

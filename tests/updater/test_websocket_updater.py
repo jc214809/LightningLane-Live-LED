@@ -134,6 +134,32 @@ def test_down_status_preserves_existing_down_since():
     assert parks[0]["attractions"][0]["down_since"] == "2026-01-01T00:00:00Z"
 
 
+def test_down_wait_time_uses_down_since_not_current_time():
+    """down_since set 30 min ago — waitTime should reflect ~30 min, not 0."""
+    from datetime import datetime, timezone, timedelta
+    down_since = (datetime.now(timezone.utc) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    parks = _parks_with_attr({"status": "DOWN", "down_since": down_since})
+    msg = _make_livedata_msg(data={"status": "DOWN", "queue": {"STANDBY": {"waitTime": None}}})
+    with patch("updater.websocket_updater.update_parks_operating_status"):
+        _apply_live_update(msg, parks)
+    wait = parks[0]["attractions"][0]["waitTime"]
+    assert wait.startswith("Down ")
+    minutes = int(wait.split(" ")[1])
+    assert 28 <= minutes <= 32  # allow a couple seconds of drift
+
+
+def test_down_wait_time_is_zero_on_first_down_message():
+    """Ride just went down — down_since not set yet, so elapsed time should be ~0."""
+    parks = _parks_with_attr({"status": "OPERATING", "down_since": ""})
+    msg = _make_livedata_msg(data={"status": "DOWN", "queue": {"STANDBY": {"waitTime": None}}})
+    with patch("updater.websocket_updater.update_parks_operating_status"):
+        _apply_live_update(msg, parks)
+    wait = parks[0]["attractions"][0]["waitTime"]
+    assert wait.startswith("Down ")
+    minutes = int(wait.split(" ")[1])
+    assert 0 <= minutes <= 1
+
+
 # --- boarding group ---
 
 def test_boarding_group_range():

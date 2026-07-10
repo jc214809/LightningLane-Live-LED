@@ -261,14 +261,15 @@ def determine_llmp_price(operating_event):
     return lightning_lane_multi_pass_price
 
 
-def get_down_time(last_updated_date, date_format='%Y-%m-%dT%H:%M:%SZ'):
+def get_down_time(last_updated_date):
     try:
-        target_date = datetime.strptime(last_updated_date, date_format).replace(tzinfo=timezone.utc)
+        normalized = last_updated_date.replace("Z", "+00:00")
+        target_date = datetime.fromisoformat(normalized)
         current_time = datetime.now(timezone.utc)
         time_diff = current_time - target_date
         minutes = time_diff.total_seconds() / 60
         return round(minutes)
-    except ValueError:
+    except (ValueError, AttributeError):
         debug.error(f"Invalid date format: {last_updated_date}")
         return None
 
