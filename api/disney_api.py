@@ -333,21 +333,34 @@ async def fetch_live_data(attractions):
 
 def park_has_operating_attraction(park):
     """
-    Check if any attraction in the park is operating and has a wait time.
-    Returns True if at least one attraction is operating (i.e. its 'status' is not "CLOSED" or "REFURBISHMENT")
-    and its 'waitTime' is not None or empty, otherwise returns False.
+    Returns True only if the park is within its scheduled hours AND has at least
+    one OPERATING attraction with a non-empty wait time.
+    A park whose entire live feed has gone stale (all DOWN, no OPERATING) returns False.
+    A park past its closing time returns False regardless of API status.
     """
-    debug.log(f"Searching for open attraction's in {park['name']}")
+    closing_time_str = park.get("closingTime")
+    if closing_time_str:
+        try:
+            closing_dt = datetime.fromisoformat(closing_time_str)
+            now = datetime.now(closing_dt.tzinfo)
+            if now > closing_dt:
+                debug.info(f"{park['name']} is past closing time ({closing_time_str}), marking non-operating.")
+                return False
+        except (ValueError, TypeError):
+            pass
+
+    debug.log(f"Searching for open attractions in {park['name']}")
     for attraction in park.get("attractions", []):
         wait_time = attraction.get("waitTime")
         status = attraction.get("status")
         debug.log(
             f"Attraction: {attraction['name']} (Park: {park['name']}) | "
-            f"Wait Time: {attraction['waitTime']} | Status: {attraction['status']}"
+            f"Wait Time: {wait_time} | Status: {status}"
         )
-        if wait_time not in [None, ''] and status.upper() == "OPERATING":
+        if status and status.upper() == "OPERATING" and wait_time not in (None, ''):
             debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")
             return True
+    debug.info(f"{park['name']}: no OPERATING attractions found, marking non-operating.")
     return False
 
 

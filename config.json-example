@@ -11,5 +11,6 @@
   "weather": {
     "apikey": "<API_KEY_HERE>"
   },
+  "websocket_only": false,
   "debug": false
 }

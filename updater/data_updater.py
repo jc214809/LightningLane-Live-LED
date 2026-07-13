@@ -33,6 +33,7 @@ def merge_live_data(existing_attractions, new_live_data):
                 # If it's still DOWN and down_since is not set, set it now.
                 if not existing.get("down_since"):
                     existing["down_since"] = new_attr.get("lastUpdatedTs")
+                    debug.info(f"DOWN (REST): {existing.get('name')} — down_since set to {existing['down_since']}")
         else:
             # If new attraction is not present in the existing map, add it.
             attraction_map[attr_id] = new_attr
@@ -60,7 +61,8 @@ def update_parks_live_data(parks, use_websocket=False):
 def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False):
     """
     Background thread that updates live data for parks every 'update_interval' seconds.
-    When use_websocket is True, skips HTTP live data polling — the WS thread handles that.
+    When use_websocket is True, skips HTTP live data polling — the WS thread handles that —
+    but continues to poll weather every update_interval seconds.
     Always performs an initial REST live data fetch so attractions have data before WS catches up.
     """
     parks_data[:] = fetch_parks_and_attractions(disney_park_list)
@@ -69,7 +71,7 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
         initial_parks = update_parks_live_data(list(parks_data), use_websocket=False)
         initial_parks = update_parks_operating_status(initial_parks)
         parks_data[:] = initial_parks
-        debug.info("Initial REST live data fetch complete — WebSocket will handle updates from here.")
+        debug.info("Initial REST live data fetch complete — WebSocket will handle attraction updates.")
     while True:
         try:
             if parks_data:
@@ -77,7 +79,19 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
                 if not use_websocket:
                     updated_parks = update_parks_operating_status(updated_parks)
                 parks_data[:] = updated_parks
-                debug.info("Parks data updated in background.")
+                if use_websocket:
+                    debug.info("REST loop (websocket_only mode): weather refreshed, attraction polling skipped.")
+                else:
+                    for park in updated_parks:
+                        attrs = park.get("attractions") or []
+                        total = len(attrs)
+                        down = [a for a in attrs if a.get("status") == "DOWN"]
+                        operating = [a for a in attrs if a.get("status") == "OPERATING"]
+                        debug.info(
+                            f"REST poll [{park['name']}]: {len(operating)} operating, "
+                            f"{len(down)} DOWN, {total} total"
+                            + (f" | DOWN: {', '.join(a['name'] for a in down)}" if down else "")
+                        )
             else:
                 debug.warning("No parks found during live data update.")
         except Exception as e:

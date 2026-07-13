@@ -16,9 +16,31 @@ WS_URL = "wss://ws.themeparks.wiki/v1/live"
 _RECONNECT_DELAY_INITIAL = 5
 _RECONNECT_DELAY_MAX = 60
 
+# Rolling message counter for heartbeat diagnostics
+_ws_msg_count = 0
+_ws_last_heartbeat = None
+
+
+def _log_ws_heartbeat(force=False):
+    """Log a periodic WS health summary every 5 minutes."""
+    global _ws_msg_count, _ws_last_heartbeat
+    now = datetime.now(timezone.utc)
+    if _ws_last_heartbeat is None:
+        _ws_last_heartbeat = now
+    elapsed = (now - _ws_last_heartbeat).total_seconds()
+    if force or elapsed >= 300:
+        debug.info(
+            f"WS heartbeat: {_ws_msg_count} messages received in last "
+            f"{int(elapsed)}s (since {_ws_last_heartbeat.strftime('%H:%M:%S')} UTC)"
+        )
+        _ws_msg_count = 0
+        _ws_last_heartbeat = now
+
 
 def _apply_live_update(data, parks_data):
     """Apply a single WebSocket live-data event to the shared parks_data list."""
+    global _ws_msg_count
+    _ws_msg_count += 1
     event = data.get("event")
     debug.log(f"WS message: {data}")
 
@@ -50,6 +72,7 @@ def _apply_live_update(data, parks_data):
             if status == "DOWN":
                 if not attr.get("down_since"):
                     attr["down_since"] = last_updated
+                    debug.info(f"DOWN (WS): {attr['name']} ({park['name']}) — down_since set to {last_updated}")
                 down_time = get_down_time(attr["down_since"])
                 attr["waitTime"] = f"Down {down_time}" if down_time is not None else "Down"
             elif status in ("CLOSED", "REFURBISHMENT"):
@@ -120,6 +143,7 @@ async def _ws_loop(api_key, parks_data):
                     debug.info(f"Subscribed to destinations: {destination_ids}")
 
                     async for msg in ws:
+                        _log_ws_heartbeat()
                         if msg.type == aiohttp.WSMsgType.TEXT:
                             debug.log(f"WS raw: {msg.data}")
                             try:
@@ -133,6 +157,7 @@ async def _ws_loop(api_key, parks_data):
         except Exception as e:
             debug.error(f"WebSocket error: {e}\n{traceback.format_exc()}")
 
+        _log_ws_heartbeat(force=True)
         debug.info(f"WebSocket disconnected; reconnecting in {delay}s")
         await asyncio.sleep(delay)
         delay = min(delay * 2, _RECONNECT_DELAY_MAX)

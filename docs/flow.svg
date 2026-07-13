@@ -1,0 +1,221 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 1340" font-family="monospace" font-size="13">
+  <rect width="980" height="1340" fill="#0f1117"/>
+
+  <defs>
+    <marker id="arr"        markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#888"/></marker>
+    <marker id="arr-green"  markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#4caf50"/></marker>
+    <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ce93d8"/></marker>
+    <marker id="arr-yellow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ffd54f"/></marker>
+    <marker id="arr-indigo" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#7986cb"/></marker>
+    <marker id="arr-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#ff7043"/></marker>
+  </defs>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TITLE                                                      -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <text x="490" y="36" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="bold">LightningLane Live LED — Full Data Flow</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- STARTUP BOX  y=55..115                                     -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="320" y="55" width="340" height="60" rx="8" fill="#1e3a5f" stroke="#4a9eff" stroke-width="2"/>
+  <text x="490" y="76"  text-anchor="middle" fill="#4a9eff" font-size="14" font-weight="bold">disney.py  (startup)</text>
+  <text x="490" y="93"  text-anchor="middle" fill="#a0c4ff" font-size="11">loads config.json · initialises fonts · spawns threads</text>
+  <text x="490" y="108" text-anchor="middle" fill="#a0c4ff" font-size="11">reads websocket_only flag</text>
+
+  <!-- startup → Thread A (left) -->
+  <line x1="390" y1="115" x2="220" y2="165" stroke="#4a9eff" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- startup → Thread B (right) -->
+  <line x1="590" y1="115" x2="760" y2="165" stroke="#4a9eff" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- startup → main display loop: dashed indigo runs in the gap x=420, well clear of both columns -->
+  <line x1="490" y1="115" x2="490" y2="780" stroke="#7986cb" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr-indigo)"/>
+  <text x="498" y="450" fill="#7986cb" font-size="10">main thread</text>
+  <text x="498" y="463" fill="#7986cb" font-size="10">(display loop)</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- THREAD A — LEFT COLUMN  x=55..375                         -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+
+  <!-- A1: header  y=165..215 -->
+  <rect x="55" y="165" width="310" height="50" rx="8" fill="#1a3a1a" stroke="#4caf50" stroke-width="2"/>
+  <text x="210" y="185" text-anchor="middle" fill="#4caf50" font-size="13" font-weight="bold">Thread A — live_data_updater</text>
+  <text x="210" y="203" text-anchor="middle" fill="#a5d6a7" font-size="11">data_updater.py · loop every 5 min</text>
+
+  <!-- ── STARTUP-ONLY section label -->
+  <text x="210" y="232" text-anchor="middle" fill="#888" font-size="10">── startup only ──────────────────────────</text>
+
+  <line x1="210" y1="236" x2="210" y2="248" stroke="#4caf50" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- A2: fetch_parks_and_attractions  y=248..300  (startup only) -->
+  <rect x="55" y="248" width="310" height="52" rx="6" fill="#0d2a0d" stroke="#4caf50" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="210" y="269" text-anchor="middle" fill="#81c784" font-weight="bold">fetch_parks_and_attractions()</text>
+  <text x="210" y="285" text-anchor="middle" fill="#a5d6a7" font-size="11">ThemeParks.wiki REST · park list + attr stubs</text>
+  <text x="210" y="299" text-anchor="middle" fill="#888" font-size="10">one-time at startup</text>
+
+  <line x1="210" y1="300" x2="210" y2="320" stroke="#4caf50" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- A3: fetch_live_data  y=320..380  (startup always; loop only if websocket_only=false) -->
+  <rect x="55" y="320" width="310" height="60" rx="6" fill="#0d2a0d" stroke="#4caf50" stroke-width="1"/>
+  <text x="210" y="341" text-anchor="middle" fill="#81c784" font-weight="bold">fetch_live_data()  [async / aiohttp]</text>
+  <text x="210" y="357" text-anchor="middle" fill="#a5d6a7" font-size="11">GET /entity/{parkId}/live · all parks parallel</text>
+  <text x="210" y="373" text-anchor="middle" fill="#ffb74d" font-size="10">⚑ loop: only if websocket_only=false</text>
+
+  <line x1="210" y1="380" x2="210" y2="400" stroke="#4caf50" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- A4: merge_live_data  y=400..458 -->
+  <rect x="55" y="400" width="310" height="58" rx="6" fill="#0d2a0d" stroke="#4caf50" stroke-width="1"/>
+  <text x="210" y="421" text-anchor="middle" fill="#81c784" font-weight="bold">merge_live_data()</text>
+  <text x="210" y="437" text-anchor="middle" fill="#a5d6a7" font-size="11">preserves down_since if already DOWN</text>
+  <text x="210" y="453" text-anchor="middle" fill="#ffb74d" font-size="10">⚑ loop: only if websocket_only=false</text>
+
+  <line x1="210" y1="458" x2="210" y2="478" stroke="#4caf50" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- A5: get_down_time  y=478..530 -->
+  <rect x="55" y="478" width="310" height="52" rx="6" fill="#0d2a0d" stroke="#4caf50" stroke-width="1"/>
+  <text x="210" y="499" text-anchor="middle" fill="#81c784" font-weight="bold">get_down_time(down_since)</text>
+  <text x="210" y="515" text-anchor="middle" fill="#a5d6a7" font-size="11">fromisoformat · handles .ms · → elapsed min</text>
+  <text x="210" y="529" text-anchor="middle" fill="#ffb74d" font-size="10">⚑ loop: only if websocket_only=false</text>
+
+  <line x1="210" y1="530" x2="210" y2="550" stroke="#4caf50" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- A6: fetch_weather_data  y=550..602  (always runs in loop) -->
+  <rect x="55" y="550" width="310" height="52" rx="6" fill="#1a1a00" stroke="#ffeb3b" stroke-width="1.5"/>
+  <text x="210" y="571" text-anchor="middle" fill="#ffeb3b" font-weight="bold">fetch_weather_data()</text>
+  <text x="210" y="587" text-anchor="middle" fill="#fff9c4" font-size="11">OpenWeatherMap · per operating park</text>
+  <text x="210" y="601" text-anchor="middle" fill="#ffeb3b" font-size="10">✓ always runs every 5 min (both modes)</text>
+
+  <!-- Thread A → shared state  (from bottom-right of A6) -->
+  <line x1="365" y1="576" x2="430" y2="686" stroke="#4caf50" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- THREAD B — RIGHT COLUMN  x=615..915                       -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+
+  <!-- B1: header  y=165..215 -->
+  <rect x="615" y="165" width="310" height="50" rx="8" fill="#3a1a3a" stroke="#ce93d8" stroke-width="2"/>
+  <text x="770" y="185" text-anchor="middle" fill="#ce93d8" font-size="13" font-weight="bold">Thread B — websocket_live_updater</text>
+  <text x="770" y="203" text-anchor="middle" fill="#e1bee7" font-size="11">websocket_updater.py · persistent connection</text>
+
+  <line x1="770" y1="215" x2="770" y2="248" stroke="#ce93d8" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+  <!-- B2: WS connect  y=248..300 -->
+  <rect x="615" y="248" width="310" height="52" rx="6" fill="#2a0d2a" stroke="#ce93d8" stroke-width="1"/>
+  <text x="770" y="269" text-anchor="middle" fill="#ba68c8" font-weight="bold">wss://ws.themeparks.wiki/v1/live</text>
+  <text x="770" y="285" text-anchor="middle" fill="#e1bee7" font-size="11">subscribe → destination_id (per park)</text>
+  <text x="770" y="299" text-anchor="middle" fill="#e1bee7" font-size="10">real-time push on every status change</text>
+
+  <line x1="770" y1="300" x2="770" y2="320" stroke="#ce93d8" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+  <!-- B3: apply update  y=320..380 -->
+  <rect x="615" y="320" width="310" height="60" rx="6" fill="#2a0d2a" stroke="#ce93d8" stroke-width="1"/>
+  <text x="770" y="341" text-anchor="middle" fill="#ba68c8" font-weight="bold">_apply_live_update(msg)</text>
+  <text x="770" y="357" text-anchor="middle" fill="#e1bee7" font-size="11">livedata event · ATTRACTION or SHOW</text>
+  <text x="770" y="373" text-anchor="middle" fill="#e1bee7" font-size="11">→ update waitTime / status in parks_data</text>
+
+  <line x1="770" y1="380" x2="770" y2="400" stroke="#ce93d8" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+  <!-- B4: DOWN handler  y=400..458 -->
+  <rect x="615" y="400" width="310" height="58" rx="6" fill="#2a0d2a" stroke="#ce93d8" stroke-width="1"/>
+  <text x="770" y="421" text-anchor="middle" fill="#ba68c8" font-weight="bold">DOWN handler</text>
+  <text x="770" y="437" text-anchor="middle" fill="#e1bee7" font-size="11">set down_since on first DOWN (preserves after)</text>
+  <text x="770" y="453" text-anchor="middle" fill="#e1bee7" font-size="11">waitTime = "Down N min" via get_down_time()</text>
+
+  <line x1="770" y1="458" x2="770" y2="478" stroke="#ce93d8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr-purple)"/>
+
+  <!-- B5: reconnect  y=478..530  (dashed = conditional) -->
+  <rect x="615" y="478" width="310" height="52" rx="6" fill="#2a0d2a" stroke="#ce93d8" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="770" y="499" text-anchor="middle" fill="#ba68c8" font-weight="bold">on reconnect: REST refresh</text>
+  <text x="770" y="515" text-anchor="middle" fill="#e1bee7" font-size="11">await fetch_live_data() + merge_live_data()</text>
+  <text x="770" y="529" text-anchor="middle" fill="#e1bee7" font-size="10">re-seeds parks_data after WS drop</text>
+
+  <!-- Thread B → shared state  (from bottom of B5) -->
+  <line x1="770" y1="530" x2="556" y2="686" stroke="#ce93d8" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SHARED STATE  y=686..760                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="190" y="686" width="580" height="64" rx="8" fill="#3a2a00" stroke="#ffd54f" stroke-width="2"/>
+  <text x="480" y="710" text-anchor="middle" fill="#ffd54f" font-size="14" font-weight="bold">parks_data [ ]  — shared in-memory list</text>
+  <text x="480" y="727" text-anchor="middle" fill="#ffe082" font-size="11">park · attractions · waitTime · status · down_since · weather</text>
+  <text x="480" y="742" text-anchor="middle" fill="#ffe082" font-size="11">updated in-place by both threads · read by main display thread</text>
+
+  <!-- shared state → display loop -->
+  <line x1="490" y1="750" x2="490" y2="780" stroke="#ffd54f" stroke-width="2" marker-end="url(#arr-yellow)"/>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- DISPLAY LOOP  y=780..1040                                  -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="110" y="780" width="760" height="260" rx="8" fill="#0d0d2a" stroke="#7986cb" stroke-width="2"/>
+  <text x="490" y="806" text-anchor="middle" fill="#7986cb" font-size="14" font-weight="bold">Main Thread — Display Loop  (disney.py)</text>
+  <text x="490" y="824" text-anchor="middle" fill="#9fa8da" font-size="11">cycles parks indefinitely · skips non-operating parks</text>
+
+  <!-- Row: Mickey → Countdown → Park Title -->
+  <rect x="132" y="838" width="150" height="36" rx="5" fill="#1a1a4a" stroke="#7986cb" stroke-width="1"/>
+  <text x="207" y="861" text-anchor="middle" fill="#c5cae9" font-size="12">Mickey Logo</text>
+
+  <line x1="282" y1="856" x2="304" y2="856" stroke="#7986cb" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+
+  <rect x="304" y="838" width="162" height="36" rx="5" fill="#1a1a4a" stroke="#7986cb" stroke-width="1"/>
+  <text x="385" y="861" text-anchor="middle" fill="#c5cae9" font-size="12">Trip Countdown</text>
+
+  <line x1="466" y1="856" x2="488" y2="856" stroke="#7986cb" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+
+  <rect x="488" y="838" width="194" height="36" rx="5" fill="#1a1a4a" stroke="#7986cb" stroke-width="1"/>
+  <text x="585" y="861" text-anchor="middle" fill="#c5cae9" font-size="12">Park Title + Weather</text>
+
+  <!-- arrow down to attractions -->
+  <line x1="490" y1="874" x2="490" y2="900" stroke="#7986cb" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+
+  <!-- loop_through_attractions -->
+  <rect x="220" y="900" width="540" height="44" rx="5" fill="#1a1a4a" stroke="#7986cb" stroke-width="1"/>
+  <text x="490" y="921" text-anchor="middle" fill="#c5cae9" font-size="12" font-weight="bold">loop_through_attractions()</text>
+  <text x="490" y="937" text-anchor="middle" fill="#9fa8da" font-size="11">reads parks_data · one attraction per 8 s frame</text>
+
+  <line x1="490" y1="944" x2="490" y2="968" stroke="#7986cb" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+
+  <!-- format box -->
+  <rect x="132" y="968" width="668" height="36" rx="5" fill="#1a1a4a" stroke="#7986cb" stroke-width="1"/>
+  <text x="490" y="991" text-anchor="middle" fill="#9fa8da" font-size="11">_format_wait_time()  →  "45 Mins"  |  "Down 12 min"  |  "Groups 1-50"  |  "Closed"</text>
+
+  <!-- repeats-forever arrow: right side of display loop box curves back to top -->
+  <path d="M 870 1010 Q 930 1010 930 790 Q 930 780 870 780" stroke="#7986cb" stroke-width="1.2" fill="none" stroke-dasharray="6,3" marker-end="url(#arr-indigo)"/>
+  <text x="946" y="900" fill="#7986cb" font-size="11" text-anchor="middle" transform="rotate(90,946,900)">repeats forever</text>
+
+  <!-- display loop → LED -->
+  <line x1="490" y1="1040" x2="490" y2="1076" stroke="#ff7043" stroke-width="2" marker-end="url(#arr-orange)"/>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LED MATRIX  y=1076..1148                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="290" y="1076" width="400" height="64" rx="8" fill="#1a0d00" stroke="#ff7043" stroke-width="2"/>
+  <text x="490" y="1100" text-anchor="middle" fill="#ff7043" font-size="14" font-weight="bold">RGB LED Matrix</text>
+  <text x="490" y="1118" text-anchor="middle" fill="#ffccbc" font-size="11">rgbmatrix (Raspberry Pi)  or  RGBMatrixEmulator</text>
+  <text x="490" y="1134" text-anchor="middle" fill="#ffccbc" font-size="11">driver/__init__.py auto-selects at startup</text>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- LEGEND  y=1168..1220                                       -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <rect x="55" y="1168" width="870" height="102" rx="6" fill="#1a1a1a" stroke="#444" stroke-width="1"/>
+
+  <!-- row 1 -->
+  <rect x="76"  y="1182" width="12" height="12" fill="#4caf50"/>
+  <text x="94"  y="1193" fill="#a5d6a7" font-size="11">REST thread</text>
+  <rect x="200" y="1182" width="12" height="12" fill="#ce93d8"/>
+  <text x="218" y="1193" fill="#e1bee7" font-size="11">WebSocket thread (real-time)</text>
+  <rect x="440" y="1182" width="12" height="12" fill="#ffd54f"/>
+  <text x="458" y="1193" fill="#ffe082" font-size="11">Shared state</text>
+  <rect x="590" y="1182" width="12" height="12" fill="#7986cb"/>
+  <text x="608" y="1193" fill="#c5cae9" font-size="11">Main display thread</text>
+  <rect x="770" y="1182" width="12" height="12" fill="#ff7043"/>
+  <text x="788" y="1193" fill="#ffccbc" font-size="11">Hardware output</text>
+
+  <!-- row 2: mode notes -->
+  <rect x="76"  y="1210" width="12" height="12" fill="#0d2a0d" stroke="#4caf50" stroke-width="1"/>
+  <text x="94"  y="1221" fill="#a5d6a7" font-size="11">websocket_only=false: fetch_live_data + merge + get_down_time + weather run every 5 min</text>
+  <rect x="76"  y="1228" width="12" height="12" fill="#1a1a00" stroke="#ffeb3b" stroke-width="1"/>
+  <text x="94"  y="1239" fill="#fff9c4" font-size="11">websocket_only=true:  weather only runs every 5 min  ·  attraction data handled by Thread B</text>
+
+  <!-- ⚑ note -->
+  <text x="76"  y="1257" fill="#ffb74d" font-size="10">⚑ = skipped in loop when websocket_only=true     dashed border = startup-only or conditional</text>
+
+</svg>

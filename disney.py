@@ -71,7 +71,8 @@ def main():
         return
 
     api_key = config.get("themeparks_api_key")
-    use_websocket = bool(api_key and not api_key.startswith("<"))
+    websocket_only = config.get("websocket_only", False)
+    use_websocket = bool(api_key and not api_key.startswith("<")) or websocket_only
 
     update_thread = threading.Thread(
         target=live_data_updater,
