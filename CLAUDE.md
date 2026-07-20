@@ -62,4 +62,11 @@ All rendering lives under `display/`. Fonts are loaded once at startup by `displ
 
 Tests use `pytest`. The `tests/stubs/conftest.py` patches `builtins.open` to intercept `config.json` reads (returns a dummy config) and stubs out the `driver` module entirely so tests run without hardware or the `rgbmatrix` binary. Stub modules for `aiohttp`, `requests`, `pyowm`, and `pytz` live in `tests/stubs/`.
 
-The `operating` field on a park dict is set by `update_parks_operating_status()` — a park is considered operating only if at least one attraction has a non-null wait time and `OPERATING` status. The main loop skips parks where `operating` is falsy.
+The `operating` field on a park dict is set by `update_parks_operating_status()` — a park is considered operating only if at least one attraction has a non-null wait time and `OPERATING` status. The main loop skips parks where `operating` is falsy. Its `fetch_schedules` flag controls whether a closed→open transition fetches the park schedule immediately (blocking HTTP) or only sets `schedule_refresh_needed`; the WebSocket thread always passes `fetch_schedules=False` (never block the asyncio event loop) and the REST thread services the flag on its next 5-minute cycle.
+
+### Gotchas
+
+- The app must run from the repo root — font paths (`assets/fonts/...`) and `config.json`/`emulator_config.json` are resolved relative to the cwd.
+- The emulator's browser adapter binds port 8888 (`emulator_config.json`); a second instance fails with `[Errno 48] Address already in use`.
+- The ThemeParks.wiki WS server closes duplicate/rate-limited connections with close code 4029; `ws.close_code` is logged when the receive loop ends.
+- macOS has no GNU `timeout`; use `perl -e 'alarm N; exec "python3", @ARGV' disney.py ...` for time-boxed runs.
