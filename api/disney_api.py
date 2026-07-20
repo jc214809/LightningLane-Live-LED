@@ -1,4 +1,3 @@
-import asyncio
 import re
 import ssl
 from datetime import datetime, timedelta, timezone
@@ -9,7 +8,6 @@ import requests
 
 from api.weather import fetch_weather_data
 from utils import debug
-from utils.utils import get_eastern
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
@@ -273,63 +271,72 @@ def get_down_time(last_updated_date):
         debug.error(f"Invalid date format: {last_updated_date}")
         return None
 
-async def fetch_live_data_for_attraction(session, attraction):
+def parse_queue_wait(queue):
     """
-    Fetch live data for a single attraction.
-    If the status is not "CLOSED" or "REFURBISHMENT", update the waitTime.
+    Extract a display wait value from a liveData queue block: STANDBY minutes,
+    a boarding group range, or None when neither is available.
     """
-    current_data = attraction.copy()
+    standby_wait = (queue.get("STANDBY") or {}).get("waitTime")
+    if standby_wait is not None:
+        return standby_wait
+    bg = queue.get("BOARDING_GROUP") or {}
+    start = bg.get("currentGroupStart")
+    end = bg.get("currentGroupEnd")
+    if start is not None and end is not None:
+        return f"Groups {start}-{end}"
+    if start is not None:
+        return f"Group {start}+"
+    return None
 
-    api_url = f"https://api.themeparks.wiki/v1/entity/{attraction['id']}/live"
-    debug.log(f"Fetching live data for attraction: {attraction['name']} (ID: {attraction['id']})")
-    try:
-        async with session.get(api_url) as response:
-            if response.status == 200:
-                data = await response.json()
-                live_data_info = data.get('liveData', [])
-                if live_data_info:
-                    live_data_entry = live_data_info[0]  # Use the first liveData entry
-                    attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", None)
-                    attraction["status"] = live_data_entry.get("status", None)
-                    if live_data_entry.get("status") == "DOWN" and live_data_entry.get("entityType") == "ATTRACTION":
-                        attraction["waitTime"] = f"Down {get_down_time(live_data_entry.get('lastUpdated'))}"
-                    if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT","DOWN"]:
-                        queue = live_data_entry.get("queue", {})
-                        standby_wait = queue.get("STANDBY", {}).get("waitTime", None)
-                        if standby_wait is not None:
-                            attraction["waitTime"] = standby_wait
-                        else:
-                            bg = queue.get("BOARDING_GROUP", {})
-                            start = bg.get("currentGroupStart")
-                            end = bg.get("currentGroupEnd")
-                            if start is not None and end is not None:
-                                attraction["waitTime"] = f"Groups {start}-{end}"
-                            elif start is not None:
-                                attraction["waitTime"] = f"Group {start}+"
-                            else:
-                                attraction["waitTime"] = None
-            else:
-                debug.error(f"Failed to fetch live data for {attraction['name']}, Status Code: {response.status}")
-    except Exception as e:
-        debug.error(f"Error occurred while fetching live data for {attraction['name']}: {e}")
 
-    if current_data != attraction:
-        debug.log(f"There is new data for {attraction['name']} | Wait time: {current_data['waitTime']}(Existing) vs {attraction['waitTime']}(New) | Status: {current_data['status']}(Existing) vs {attraction['status']}(New) | Last updated: {get_eastern(current_data['lastUpdatedTs'])}(Existing) vs {get_eastern(attraction['lastUpdatedTs'])}(New)")
-    else:
-        debug.log(f"No new data for {attraction['name']}")
-    return attraction
+def build_live_updates(live_entries):
+    """
+    Convert raw liveData entries into the minimal update dicts merge_live_data
+    consumes. CLOSED/REFURBISHMENT entries (and DOWN shows) omit waitTime so the
+    last known value is preserved.
+    """
+    updates = []
+    for entry in live_entries:
+        if entry.get("entityType") not in ("ATTRACTION", "SHOW"):
+            continue
+        status = entry.get("status")
+        update = {
+            "id": entry.get("id"),
+            "status": status,
+            "lastUpdatedTs": entry.get("lastUpdated"),
+        }
+        if status == "DOWN":
+            if entry.get("entityType") == "ATTRACTION":
+                update["waitTime"] = f"Down {get_down_time(entry.get('lastUpdated'))}"
+        elif status not in ("CLOSED", "REFURBISHMENT"):
+            update["waitTime"] = parse_queue_wait(entry.get("queue") or {})
+        updates.append(update)
+    return updates
 
-async def fetch_live_data(attractions):
+
+async def fetch_park_live_data(park):
     """
-    Fetch live data for all attractions concurrently.
+    Fetch live data for all of a park's attractions with a single request to the
+    park-level live endpoint. Returns a list of update dicts for merge_live_data,
+    or None if the fetch failed (caller keeps existing data and retries later).
     """
+    api_url = f"https://api.themeparks.wiki/v1/entity/{park['id']}/live"
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     connector = aiohttp.TCPConnector(ssl=ssl_ctx)
-    async with aiohttp.ClientSession(connector=connector) as session:
-        tasks = [fetch_live_data_for_attraction(session, attraction) for attraction in attractions]
-        results = await asyncio.gather(*tasks)
-    debug.log(f"Total live data fetched: {len(results)}")
-    return results
+    try:
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    debug.error(f"Failed to fetch live data for {park.get('name')}, Status Code: {response.status}")
+                    return None
+                data = await response.json()
+    except Exception as e:
+        debug.error(f"Error occurred while fetching live data for {park.get('name')}: {e}")
+        return None
+
+    updates = build_live_updates(data.get("liveData", []))
+    debug.log(f"Live data fetched for {park.get('name')}: {len(updates)} entries")
+    return updates
 
 def park_has_operating_attraction(park):
     """

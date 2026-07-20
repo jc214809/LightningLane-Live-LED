@@ -18,8 +18,9 @@ from api.disney_api import (
     is_special_event,
     determine_llmp_price,
     get_down_time,
-    fetch_live_data_for_attraction,
-    fetch_live_data,
+    fetch_park_live_data,
+    parse_queue_wait,
+    build_live_updates,
     park_has_operating_attraction,
     update_parks_operating_status,
     handle_park_schedule_update,
@@ -413,184 +414,168 @@ def test_get_down_time_empty_string():
     assert result is None
 
 ###########
-# Asynchronous Live Data Tests
+# Live Data Tests (per-park endpoint)
 ###########
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_success(monkeypatch):
-    # Dummy live entry with status "OPERATING" that should update waitTime.
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
+
+def test_parse_queue_wait_standby():
+    assert parse_queue_wait({"STANDBY": {"waitTime": 45}}) == 45
+
+def test_parse_queue_wait_standby_takes_priority_over_boarding_group():
+    queue = {
+        "STANDBY": {"waitTime": 30},
+        "BOARDING_GROUP": {"currentGroupStart": 1, "currentGroupEnd": 50},
+    }
+    assert parse_queue_wait(queue) == 30
+
+def test_parse_queue_wait_boarding_group_range():
+    queue = {"BOARDING_GROUP": {"currentGroupStart": 1, "currentGroupEnd": 50}}
+    assert parse_queue_wait(queue) == "Groups 1-50"
+
+def test_parse_queue_wait_boarding_group_open_ended():
+    queue = {"BOARDING_GROUP": {"currentGroupStart": 10, "currentGroupEnd": None}}
+    assert parse_queue_wait(queue) == "Group 10+"
+
+def test_parse_queue_wait_boarding_group_closed():
+    queue = {"BOARDING_GROUP": {"currentGroupStart": None, "currentGroupEnd": None}}
+    assert parse_queue_wait(queue) is None
+
+def test_parse_queue_wait_empty_or_null_blocks():
+    assert parse_queue_wait({}) is None
+    assert parse_queue_wait({"STANDBY": None, "BOARDING_GROUP": None}) is None
+
+
+def test_build_live_updates_operating_attraction():
+    entries = [{
+        "id": "attr-1",
+        "entityType": "ATTRACTION",
         "status": "OPERATING",
+        "lastUpdated": "2023-10-01T12:00:00Z",
         "queue": {"STANDBY": {"waitTime": 45}},
-        "entityType": "ATTRACTION"
-    }
-
-    # Define a fake response that implements async context manager.
-    class FakeResponse:
-        def __init__(self, json_data, status=200):
-            self._json = json_data
-            self.status = status
-
-        async def json(self):
-            return self._json
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc, tb):
-            pass
-
-    # Define a FakeSession with a normal get() method returning FakeResponse.
-    class FakeSession:
-        def get(self, url, **kwargs):
-            return FakeResponse({"liveData": [dummy_live_entry]}, 200)
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc, tb):
-            pass
-
-    # Create a dummy attraction with blank waitTime values.
-    dummy_attraction = {
-        "id": "attr-1",
-        "name": "Space Mountain",
-        "waitTime": '',
-        "status": '',
-        "lastUpdatedTs": ''
-    }
-
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-
-    # Assert that waitTime was updated to 45 (as an int),
-    # and that status and lastUpdatedTs are updated properly.
-    assert result["waitTime"] == 45, f"Expected waitTime 45, got {result['waitTime']}"
-    assert result["status"] == "OPERATING"
-    assert result["lastUpdatedTs"] == "2023-10-01T12:00:00Z"
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_standby_takes_priority_over_boarding_group():
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
-        "status": "OPERATING",
-        "queue": {
-            "STANDBY": {"waitTime": 30},
-            "BOARDING_GROUP": {
-                "currentGroupStart": 1,
-                "currentGroupEnd": 50,
-                "allocationStatus": "OPEN",
-                "estimatedWait": None,
-                "nextAllocationTime": None
-            }
-        },
-        "entityType": "ATTRACTION"
-    }
-
-    class FakeResponse:
-        status = 200
-        async def json(self): return {"liveData": [dummy_live_entry]}
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    class FakeSession:
-        def get(self, url, **kwargs): return FakeResponse()
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    dummy_attraction = {"id": "attr-3", "name": "Test Ride", "waitTime": "", "status": "", "lastUpdatedTs": ""}
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-    assert result["waitTime"] == 30
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_boarding_group_range():
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
-        "status": "OPERATING",
-        "queue": {
-            "BOARDING_GROUP": {
-                "currentGroupStart": 1,
-                "currentGroupEnd": 50,
-                "allocationStatus": "OPEN",
-                "estimatedWait": None,
-                "nextAllocationTime": None
-            }
-        },
-        "entityType": "ATTRACTION"
-    }
-
-    class FakeResponse:
-        status = 200
-        async def json(self): return {"liveData": [dummy_live_entry]}
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    class FakeSession:
-        def get(self, url, **kwargs): return FakeResponse()
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    dummy_attraction = {"id": "attr-2", "name": "Tron", "waitTime": "", "status": "", "lastUpdatedTs": ""}
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-    assert result["waitTime"] == "Groups 1-50"
-    assert result["status"] == "OPERATING"
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_boarding_group_closed():
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
-        "status": "OPERATING",
-        "queue": {
-            "BOARDING_GROUP": {
-                "currentGroupStart": None,
-                "currentGroupEnd": None,
-                "allocationStatus": "CLOSED",
-                "estimatedWait": None,
-                "nextAllocationTime": None
-            }
-        },
-        "entityType": "ATTRACTION"
-    }
-
-    class FakeResponse:
-        status = 200
-        async def json(self): return {"liveData": [dummy_live_entry]}
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    class FakeSession:
-        def get(self, url, **kwargs): return FakeResponse()
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    dummy_attraction = {"id": "attr-2", "name": "Tron", "waitTime": "", "status": "", "lastUpdatedTs": ""}
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-    assert result["waitTime"] is None
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_exception(monkeypatch):
-    class FakeSession:
-        async def get(self, url, **kwargs):
-            raise Exception("Live data error")
-        async def __aenter__(self):
-            return self
-        async def __aexit__(self, exc_type, exc, tb):
-            pass
-    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: FakeSession())
-    dummy_attractions = [{
-        "id": "attr-1",
-        "name": "Space Mountain",
-        "waitTime": '',
-        "status": '',
-        "lastUpdatedTs": ''
     }]
-    result = await fetch_live_data(dummy_attractions)
-    assert result[0]["waitTime"] == ''
-    assert result[0]["status"] == ''
-    assert result[0]["lastUpdatedTs"] == ''
+    updates = build_live_updates(entries)
+    assert updates == [{
+        "id": "attr-1",
+        "status": "OPERATING",
+        "lastUpdatedTs": "2023-10-01T12:00:00Z",
+        "waitTime": 45,
+    }]
+
+def test_build_live_updates_filters_non_attraction_entities():
+    entries = [
+        {"id": "r-1", "entityType": "RESTAURANT", "status": "OPERATING", "lastUpdated": "ts"},
+        {"id": "p-1", "entityType": "PARK", "status": "OPERATING", "lastUpdated": "ts"},
+        {"id": "s-1", "entityType": "SHOW", "status": "OPERATING", "lastUpdated": "ts", "queue": {}},
+    ]
+    updates = build_live_updates(entries)
+    assert [u["id"] for u in updates] == ["s-1"]
+
+def test_build_live_updates_down_attraction_gets_down_wait(monkeypatch):
+    monkeypatch.setattr("api.disney_api.get_down_time", lambda ts: 12)
+    entries = [{
+        "id": "attr-1", "entityType": "ATTRACTION", "status": "DOWN",
+        "lastUpdated": "2023-10-01T12:00:00Z",
+    }]
+    updates = build_live_updates(entries)
+    assert updates[0]["waitTime"] == "Down 12"
+
+def test_build_live_updates_down_show_omits_wait_time():
+    entries = [{
+        "id": "show-1", "entityType": "SHOW", "status": "DOWN",
+        "lastUpdated": "2023-10-01T12:00:00Z",
+    }]
+    updates = build_live_updates(entries)
+    assert "waitTime" not in updates[0]
+    assert updates[0]["status"] == "DOWN"
+
+def test_build_live_updates_closed_omits_wait_time():
+    """CLOSED/REFURBISHMENT keep the last known wait time via omission."""
+    for status in ("CLOSED", "REFURBISHMENT"):
+        entries = [{
+            "id": "attr-1", "entityType": "ATTRACTION", "status": status,
+            "lastUpdated": "ts",
+        }]
+        updates = build_live_updates(entries)
+        assert "waitTime" not in updates[0]
+        assert updates[0]["status"] == status
+
+def test_build_live_updates_missing_queue_fields():
+    entries = [{
+        "id": "attr-1", "entityType": "ATTRACTION", "status": "OPERATING",
+        "lastUpdated": "ts",
+    }]
+    updates = build_live_updates(entries)
+    assert updates[0]["waitTime"] is None
+
+
+class _FakeLiveResponse:
+    def __init__(self, json_data=None, status=200, raise_on_json=False):
+        self._json = json_data
+        self.status = status
+        self._raise_on_json = raise_on_json
+
+    async def json(self):
+        if self._raise_on_json:
+            raise ValueError("bad json")
+        return self._json
+
+    async def __aenter__(self): return self
+    async def __aexit__(self, *a): pass
+
+
+class _FakeLiveSession:
+    def __init__(self, response=None, raise_on_get=False):
+        self._response = response
+        self._raise_on_get = raise_on_get
+        self.requested_urls = []
+
+    def get(self, url, **kwargs):
+        self.requested_urls.append(url)
+        if self._raise_on_get:
+            raise Exception("network error")
+        return self._response
+
+    async def __aenter__(self): return self
+    async def __aexit__(self, *a): pass
+
+
+DUMMY_PARK = {"id": "park-1", "name": "Magic Kingdom"}
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_success(monkeypatch):
+    live = [{
+        "id": "attr-1", "entityType": "ATTRACTION", "status": "OPERATING",
+        "lastUpdated": "2023-10-01T12:00:00Z",
+        "queue": {"STANDBY": {"waitTime": 45}},
+    }]
+    session = _FakeLiveSession(_FakeLiveResponse({"liveData": live}))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    updates = await fetch_park_live_data(DUMMY_PARK)
+    assert updates[0]["waitTime"] == 45
+    assert session.requested_urls == ["https://api.themeparks.wiki/v1/entity/park-1/live"]
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_rate_limited_returns_none(monkeypatch):
+    session = _FakeLiveSession(_FakeLiveResponse(status=429))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) is None
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_network_error_returns_none(monkeypatch):
+    session = _FakeLiveSession(raise_on_get=True)
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) is None
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_bad_json_returns_none(monkeypatch):
+    session = _FakeLiveSession(_FakeLiveResponse(raise_on_json=True))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) is None
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_missing_livedata_key(monkeypatch):
+    session = _FakeLiveSession(_FakeLiveResponse({"id": "park-1"}))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) == []
 
 ###########
 # Tests for Park Operating Status & Schedule Update

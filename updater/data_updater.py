@@ -2,7 +2,7 @@ import asyncio
 import time
 import traceback
 
-from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
+from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, update_parks_operating_status
 from api.weather import fetch_weather_data
 from utils import debug
 from utils.utils import get_eastern
@@ -18,12 +18,13 @@ def merge_live_data(existing_attractions, new_live_data):
         attr_id = new_attr.get("id")
 
         if attr_id in attraction_map:
-            # Merge the new live data fields into the existing attraction.
+            # Merge only the fields present in the update; a CLOSED/REFURBISHMENT
+            # update omits waitTime so the last known value is preserved.
             existing = attraction_map[attr_id]
             existing.update({
-                "waitTime": new_attr.get("waitTime"),
-                "status": new_attr.get("status"),
-                "lastUpdatedTs": new_attr.get("lastUpdatedTs")
+                key: new_attr[key]
+                for key in ("waitTime", "status", "lastUpdatedTs")
+                if key in new_attr
             })
 
             # Do not overwrite down_since if already set, unless status is no longer DOWN.
@@ -35,9 +36,9 @@ def merge_live_data(existing_attractions, new_live_data):
                     existing["down_since"] = new_attr.get("lastUpdatedTs")
                     debug.info(f"DOWN (REST): {existing.get('name')} — down_since set to {existing['down_since']}")
         else:
-            # If new attraction is not present in the existing map, add it.
-            attraction_map[attr_id] = new_attr
-            debug.info(f"Adding new attraction {attr_id}: {new_attr}")
+            # Unknown ids are skipped: live updates carry no name/entityType, and
+            # roster changes are handled by refresh_park_attractions.
+            debug.log(f"Ignoring live data for unknown attraction id {attr_id}")
     return list(attraction_map.values())
 
 
@@ -48,8 +49,15 @@ def update_parks_live_data(parks, use_websocket=False):
     """
     for park in parks:
         if not use_websocket and park.get("attractions"):
-            new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
-            park["attractions"] = merge_live_data(park["attractions"], new_live_data)
+            new_live_data = asyncio.run(fetch_park_live_data(park))
+            if new_live_data is None:
+                # Fetch failed (rate limit, timeout, bad response): keep existing
+                # data and flag it stale so the next cycle is a retry, not a skip.
+                park["live_data_stale"] = True
+                debug.warning(f"Live data fetch failed for {park.get('name')}; keeping existing data.")
+            else:
+                park["live_data_stale"] = False
+                park["attractions"] = merge_live_data(park["attractions"], new_live_data)
 
         if park.get("location") and park.get("operating"):
             park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
