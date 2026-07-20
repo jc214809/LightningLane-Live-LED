@@ -64,6 +64,8 @@ Tests use `pytest`. The `tests/stubs/conftest.py` patches `builtins.open` to int
 
 The `operating` field on a park dict is set by `update_parks_operating_status()` — a park is considered operating only if at least one attraction has a non-null wait time and `OPERATING` status. The main loop skips parks where `operating` is falsy. Its `fetch_schedules` flag controls whether a closed→open transition fetches the park schedule immediately (blocking HTTP) or only sets `schedule_refresh_needed`; the WebSocket thread always passes `fetch_schedules=False` (never block the asyncio event loop) and the REST thread services the flag on its next 5-minute cycle.
 
+Mutations of the shared `parks_data` structure (WS thread and REST thread) must hold `updater/shared.py:parks_data_lock` — but only for in-memory writes, never across HTTP calls. `merge_live_data` mutates attraction dicts in place and returns the same list; don't rebuild the list, that drops concurrent WS updates. The display thread reads without locking by design.
+
 ### Gotchas
 
 - The app must run from the repo root — font paths (`assets/fonts/...`) and `config.json`/`emulator_config.json` are resolved relative to the cwd.
