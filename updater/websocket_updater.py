@@ -27,31 +27,49 @@ def _next_delay(current_delay, connection_duration):
         return _RECONNECT_DELAY_INITIAL
     return min(max(current_delay, _RECONNECT_DELAY_INITIAL) * 2, _RECONNECT_DELAY_MAX)
 
-# Rolling message counter for heartbeat diagnostics
-_ws_msg_count = 0
-_ws_last_heartbeat = None
+_WATCHDOG_INTERVAL_SECS = 300
 
 
-def _log_ws_heartbeat(force=False):
-    """Log a periodic WS health summary every 5 minutes."""
-    global _ws_msg_count, _ws_last_heartbeat
-    now = datetime.now(timezone.utc)
-    if _ws_last_heartbeat is None:
-        _ws_last_heartbeat = now
-    elapsed = (now - _ws_last_heartbeat).total_seconds()
-    if force or elapsed >= 300:
-        debug.info(
-            f"WS heartbeat: {_ws_msg_count} messages received in last "
-            f"{int(elapsed)}s (since {_ws_last_heartbeat.strftime('%H:%M:%S')} UTC)"
-        )
-        _ws_msg_count = 0
-        _ws_last_heartbeat = now
+class _WsStats:
+    """Per-connection message counter for the watchdog's health window."""
+
+    def __init__(self):
+        self.msg_count = 0
+        self.window_started = time.monotonic()
+
+    def note_message(self):
+        self.msg_count += 1
+
+    def snapshot_and_reset(self):
+        elapsed = time.monotonic() - self.window_started
+        count = self.msg_count
+        self.msg_count = 0
+        self.window_started = time.monotonic()
+        return count, elapsed
+
+
+def _should_force_reconnect(msg_count, parks_data):
+    """Silence is only suspicious while something is open and should be streaming."""
+    if msg_count > 0:
+        return False
+    return any(p.get("operating") for p in parks_data)
+
+
+async def _watchdog(ws, stats, parks_data):
+    """Log a periodic health summary and force a reconnect if the connection is
+    alive at the protocol level but no data flows while parks are operating."""
+    while True:
+        await asyncio.sleep(_WATCHDOG_INTERVAL_SECS)
+        count, elapsed = stats.snapshot_and_reset()
+        debug.info(f"WS heartbeat: {count} messages received in last {int(elapsed)}s")
+        if _should_force_reconnect(count, parks_data):
+            debug.warning("WS watchdog: no messages while parks operating — forcing reconnect.")
+            await ws.close()
+            return
 
 
 def _apply_live_update(data, parks_data):
     """Apply a single WebSocket live-data event to the shared parks_data list."""
-    global _ws_msg_count
-    _ws_msg_count += 1
     event = data.get("event")
     debug.log(f"WS message: {data}")
 
@@ -69,7 +87,9 @@ def _apply_live_update(data, parks_data):
     entity_id = data.get("entityId")
     live = data.get("data") or {}
     status = live.get("status")
-    last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Prefer the server's event timestamp; fall back to receive time only for a
+    # malformed message (down_since and staleness math depend on this).
+    last_updated = live.get("lastUpdated") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     for park in parks_data:
         for attr in park.get("attractions", []):
@@ -157,17 +177,24 @@ async def _ws_loop(api_key, parks_data):
                         })
                     debug.info(f"Subscribed to destinations: {destination_ids}")
 
-                    async for msg in ws:
-                        _log_ws_heartbeat()
-                        if msg.type == aiohttp.WSMsgType.TEXT:
-                            debug.log(f"WS raw: {msg.data}")
-                            try:
-                                _apply_live_update(json.loads(msg.data), parks_data)
-                            except json.JSONDecodeError:
-                                debug.warning(f"Non-JSON WS message: {msg.data}")
-                        elif msg.type == aiohttp.WSMsgType.ERROR:
-                            debug.warning(f"WebSocket error message: {ws.exception()}")
-                            break
+                    stats = _WsStats()
+                    watchdog = asyncio.create_task(_watchdog(ws, stats, parks_data))
+                    try:
+                        async for msg in ws:
+                            stats.note_message()
+                            if msg.type == aiohttp.WSMsgType.TEXT:
+                                debug.log(f"WS raw: {msg.data}")
+                                try:
+                                    _apply_live_update(json.loads(msg.data), parks_data)
+                                except json.JSONDecodeError:
+                                    debug.warning(f"Non-JSON WS message: {msg.data}")
+                            elif msg.type == aiohttp.WSMsgType.ERROR:
+                                debug.warning(f"WebSocket error message: {ws.exception()}")
+                                break
+                    finally:
+                        # Without this, every reconnect leaks a watchdog task
+                        # holding a reference to a dead connection.
+                        watchdog.cancel()
 
                     # aiohttp ends the async-for on close rather than yielding
                     # a CLOSED message; surface why the connection ended.
@@ -179,7 +206,6 @@ async def _ws_loop(api_key, parks_data):
         except Exception as e:
             debug.error(f"WebSocket error: {e}\n{traceback.format_exc()}")
 
-        _log_ws_heartbeat(force=True)
         duration = (time.monotonic() - connected_at) if connected_at is not None else None
         delay = _next_delay(delay, duration)
         debug.info(f"WebSocket disconnected; reconnecting in {delay}s")
