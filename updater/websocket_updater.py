@@ -10,6 +10,7 @@ import certifi
 
 from api.disney_api import fetch_park_live_data, get_down_time, parse_queue_wait, update_parks_operating_status
 from updater.data_updater import merge_live_data
+from updater.shared import parks_data_lock
 from utils import debug
 
 WS_URL = "wss://ws.themeparks.wiki/v1/live"
@@ -91,36 +92,37 @@ def _apply_live_update(data, parks_data):
     # malformed message (down_since and staleness math depend on this).
     last_updated = live.get("lastUpdated") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    for park in parks_data:
-        for attr in park.get("attractions", []):
-            if attr.get("id") != entity_id:
-                continue
+    with parks_data_lock:
+        for park in parks_data:
+            for attr in park.get("attractions", []):
+                if attr.get("id") != entity_id:
+                    continue
 
-            prev_status = attr.get("status")
-            attr["status"] = status
-            attr["lastUpdatedTs"] = last_updated
+                prev_status = attr.get("status")
+                attr["status"] = status
+                attr["lastUpdatedTs"] = last_updated
 
-            if status == "DOWN":
-                if not attr.get("down_since"):
-                    attr["down_since"] = last_updated
-                    debug.info(f"DOWN (WS): {attr['name']} ({park['name']}) — down_since set to {last_updated}")
-                down_time = get_down_time(attr["down_since"])
-                attr["waitTime"] = f"Down {down_time}" if down_time is not None else "Down"
-            elif status in ("CLOSED", "REFURBISHMENT"):
-                attr["down_since"] = ""
-            else:
-                attr["down_since"] = ""
-                attr["waitTime"] = parse_queue_wait(live.get("queue") or {})
+                if status == "DOWN":
+                    if not attr.get("down_since"):
+                        attr["down_since"] = last_updated
+                        debug.info(f"DOWN (WS): {attr['name']} ({park['name']}) — down_since set to {last_updated}")
+                    down_time = get_down_time(attr["down_since"])
+                    attr["waitTime"] = f"Down {down_time}" if down_time is not None else "Down"
+                elif status in ("CLOSED", "REFURBISHMENT"):
+                    attr["down_since"] = ""
+                else:
+                    attr["down_since"] = ""
+                    attr["waitTime"] = parse_queue_wait(live.get("queue") or {})
 
-            if prev_status != status:
-                debug.info(
-                    f"WS update: {attr['name']} ({park['name']}) "
-                    f"{prev_status} → {status}, wait={attr.get('waitTime')}"
-                )
-                # fetch_schedules=False: we're on the WS event loop — schedule
-                # fetching is blocking HTTP and is deferred to the REST thread.
-                update_parks_operating_status([park], fetch_schedules=False)
-            return
+                if prev_status != status:
+                    debug.info(
+                        f"WS update: {attr['name']} ({park['name']}) "
+                        f"{prev_status} → {status}, wait={attr.get('waitTime')}"
+                    )
+                    # fetch_schedules=False: we're on the WS event loop — schedule
+                    # fetching is blocking HTTP and is deferred to the REST thread.
+                    update_parks_operating_status([park], fetch_schedules=False)
+                return
 
 
 async def _ws_loop(api_key, parks_data):
@@ -153,10 +155,10 @@ async def _ws_loop(api_key, parks_data):
                                         "keeping existing data."
                                     )
                                 else:
-                                    park["live_data_stale"] = False
-                                    park["attractions"] = merge_live_data(park["attractions"], new_live_data)
-                        updated = update_parks_operating_status(list(parks_data), fetch_schedules=False)
-                        parks_data[:] = updated
+                                    with parks_data_lock:
+                                        park["live_data_stale"] = False
+                                        merge_live_data(park["attractions"], new_live_data)
+                        update_parks_operating_status(list(parks_data), fetch_schedules=False)
                         debug.info("REST refresh after reconnect complete.")
                     else:
                         debug.info("WebSocket connected to ThemeParks.wiki")

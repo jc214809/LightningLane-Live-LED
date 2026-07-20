@@ -206,6 +206,38 @@ def test_no_queue_data_sets_wait_none():
     assert parks[0]["attractions"][0]["waitTime"] is None
 
 
+# --- thread safety ---
+
+class _SpyLock:
+    def __init__(self):
+        self.acquisitions = 0
+
+    def __enter__(self):
+        self.acquisitions += 1
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def test_apply_live_update_holds_parks_data_lock():
+    spy = _SpyLock()
+    parks = _parks_with_attr()
+    msg = _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 30}}})
+    with patch("updater.websocket_updater.parks_data_lock", spy), \
+         patch("updater.websocket_updater.update_parks_operating_status"):
+        _apply_live_update(msg, parks)
+    assert spy.acquisitions == 1
+
+
+def test_apply_live_update_skips_lock_for_non_livedata_events():
+    spy = _SpyLock()
+    parks = _parks_with_attr()
+    with patch("updater.websocket_updater.parks_data_lock", spy):
+        _apply_live_update({"event": "heartbeat"}, parks)
+    assert spy.acquisitions == 0
+
+
 # --- event timestamps ---
 
 def test_event_timestamp_used_when_present():
