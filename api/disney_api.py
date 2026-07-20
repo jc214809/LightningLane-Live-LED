@@ -364,40 +364,46 @@ def park_has_operating_attraction(park):
     return False
 
 
-def update_parks_operating_status(parks):
+def update_parks_operating_status(parks, fetch_schedules=True):
     """
     Updates each park object in the list with a new key 'operating' that is
     True if the park has at least one operating attraction with a valid
     wait time, otherwise False.
+
+    When a park transitions from closed to open it needs a schedule fetch
+    (blocking HTTP). With fetch_schedules=False that work is only flagged via
+    'schedule_refresh_needed' — safe to call from the WS event loop — and a
+    later call with fetch_schedules=True (the REST thread) performs it.
     """
 
     for park in parks:
         is_park_open = park_has_operating_attraction(park)  # Check if any attractions are operating
-        handle_park_schedule_update(is_park_open, park)
+        if not park.get("operating") and is_park_open:
+            park["schedule_refresh_needed"] = True
         # Update the operating status
         park["operating"] = is_park_open
+
+        if fetch_schedules and park.get("schedule_refresh_needed"):
+            handle_park_schedule_update(park)
+            park["schedule_refresh_needed"] = False
 
     return parks
 
 
-def handle_park_schedule_update(is_park_open, park):
-    # Check if the park was previously closed
-    previously_operating = park.get("operating")
-    # If the park was previously closed but is now open
-    if not previously_operating and is_park_open:
-        debug.info(f"{park.get('name')} is now operating. Fetching schedule...")
-        schedule = fetch_park_schedule(park.get("id"))
-        park["schedule"] = schedule
-        debug.info(f"Updated schedule for {park.get('name')}")
+def handle_park_schedule_update(park):
+    debug.info(f"{park.get('name')} is now operating. Fetching schedule...")
+    schedule = fetch_park_schedule(park.get("id"))
+    park["schedule"] = schedule
+    debug.info(f"Updated schedule for {park.get('name')}")
 
-        # Update park schedule details
-        operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
-        park["llmpPrice"] = determine_llmp_price(operating_event)
-        park["specialTicketedEvent"] = is_special_event(schedule)
-        park["closingTime"] = operating_event.get("closingTime", "")
-        park["openingTime"] = operating_event.get("openingTime", "")
+    # Update park schedule details
+    operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
+    park["llmpPrice"] = determine_llmp_price(operating_event)
+    park["specialTicketedEvent"] = is_special_event(schedule)
+    park["closingTime"] = operating_event.get("closingTime", "")
+    park["openingTime"] = operating_event.get("openingTime", "")
 
-        refresh_park_attractions(park)
+    refresh_park_attractions(park)
 
 
 def refresh_park_attractions(park):

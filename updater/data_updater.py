@@ -76,8 +76,9 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
         try:
             if parks_data:
                 updated_parks = update_parks_live_data(parks_data, use_websocket=use_websocket)
-                if not use_websocket:
-                    updated_parks = update_parks_operating_status(updated_parks)
+                # Runs in websocket mode too: the WS thread defers schedule
+                # fetches (schedule_refresh_needed) to this thread.
+                updated_parks = update_parks_operating_status(updated_parks)
                 parks_data[:] = updated_parks
                 if use_websocket:
                     debug.info("REST loop (websocket_only mode): weather refreshed, attraction polling skipped.")

@@ -15,6 +15,17 @@ from utils import debug
 WS_URL = "wss://ws.themeparks.wiki/v1/live"
 _RECONNECT_DELAY_INITIAL = 5
 _RECONNECT_DELAY_MAX = 60
+_WS_HEARTBEAT_SECS = 30
+_WS_RECEIVE_TIMEOUT_SECS = 120
+_STABLE_CONNECTION_SECS = 60
+
+
+def _next_delay(current_delay, connection_duration):
+    """Reset backoff only after a stable connection; otherwise keep doubling so a
+    connect-then-immediately-die loop can't hammer the server every 5s."""
+    if connection_duration is not None and connection_duration >= _STABLE_CONNECTION_SECS:
+        return _RECONNECT_DELAY_INITIAL
+    return min(max(current_delay, _RECONNECT_DELAY_INITIAL) * 2, _RECONNECT_DELAY_MAX)
 
 # Rolling message counter for heartbeat diagnostics
 _ws_msg_count = 0
@@ -99,7 +110,9 @@ def _apply_live_update(data, parks_data):
                     f"WS update: {attr['name']} ({park['name']}) "
                     f"{prev_status} → {status}, wait={attr.get('waitTime')}"
                 )
-                update_parks_operating_status([park])
+                # fetch_schedules=False: we're on the WS event loop — schedule
+                # fetching is blocking HTTP and is deferred to the REST thread.
+                update_parks_operating_status([park], fetch_schedules=False)
             return
 
 
@@ -109,22 +122,29 @@ async def _ws_loop(api_key, parks_data):
     is_reconnect = False
 
     while True:
+        connected_at = None
         try:
             headers = {"X-API-Key": api_key}
             async with aiohttp.ClientSession() as session:
-                async with session.ws_connect(WS_URL, headers=headers, ssl=ssl_ctx) as ws:
+                async with session.ws_connect(
+                    WS_URL,
+                    headers=headers,
+                    ssl=ssl_ctx,
+                    heartbeat=_WS_HEARTBEAT_SECS,
+                    receive_timeout=_WS_RECEIVE_TIMEOUT_SECS,
+                ) as ws:
+                    connected_at = time.monotonic()
                     if is_reconnect:
                         debug.info("WebSocket reconnected — refreshing live data via REST.")
                         for park in parks_data:
                             if park.get("attractions"):
                                 new_live_data = await fetch_live_data(park["attractions"])
                                 park["attractions"] = merge_live_data(park["attractions"], new_live_data)
-                        updated = update_parks_operating_status(list(parks_data))
+                        updated = update_parks_operating_status(list(parks_data), fetch_schedules=False)
                         parks_data[:] = updated
                         debug.info("REST refresh after reconnect complete.")
                     else:
                         debug.info("WebSocket connected to ThemeParks.wiki")
-                    delay = _RECONNECT_DELAY_INITIAL
                     is_reconnect = True
 
                     destination_ids = list({
@@ -150,17 +170,25 @@ async def _ws_loop(api_key, parks_data):
                                 _apply_live_update(json.loads(msg.data), parks_data)
                             except json.JSONDecodeError:
                                 debug.warning(f"Non-JSON WS message: {msg.data}")
-                        elif msg.type in (aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.CLOSED):
-                            debug.warning(f"WebSocket closed/error: {ws.exception()}")
+                        elif msg.type == aiohttp.WSMsgType.ERROR:
+                            debug.warning(f"WebSocket error message: {ws.exception()}")
                             break
+
+                    # aiohttp ends the async-for on close rather than yielding
+                    # a CLOSED message; surface why the connection ended.
+                    debug.warning(
+                        f"WebSocket receive loop ended: close_code={ws.close_code}, "
+                        f"exception={ws.exception()}"
+                    )
 
         except Exception as e:
             debug.error(f"WebSocket error: {e}\n{traceback.format_exc()}")
 
         _log_ws_heartbeat(force=True)
+        duration = (time.monotonic() - connected_at) if connected_at is not None else None
+        delay = _next_delay(delay, duration)
         debug.info(f"WebSocket disconnected; reconnecting in {delay}s")
         await asyncio.sleep(delay)
-        delay = min(delay * 2, _RECONNECT_DELAY_MAX)
 
 
 def websocket_live_updater(api_key, parks_data):

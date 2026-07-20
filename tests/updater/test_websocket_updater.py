@@ -1,7 +1,18 @@
+import asyncio
 import copy
 from unittest.mock import patch
 
-from updater.websocket_updater import _apply_live_update
+import pytest
+
+from updater.websocket_updater import (
+    _RECONNECT_DELAY_INITIAL,
+    _RECONNECT_DELAY_MAX,
+    _WS_HEARTBEAT_SECS,
+    _WS_RECEIVE_TIMEOUT_SECS,
+    _apply_live_update,
+    _next_delay,
+    _ws_loop,
+)
 
 DUMMY_ATTRACTION = {
     "id": "attr-1",
@@ -79,7 +90,7 @@ def test_operating_status_updated_on_status_change():
     msg = _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 10}}})
     with patch("updater.websocket_updater.update_parks_operating_status") as mock_update:
         _apply_live_update(msg, parks)
-    mock_update.assert_called_once_with([parks[0]])
+    mock_update.assert_called_once_with([parks[0]], fetch_schedules=False)
 
 
 def test_operating_status_not_updated_when_status_unchanged():
@@ -190,6 +201,85 @@ def test_no_queue_data_sets_wait_none():
     with patch("updater.websocket_updater.update_parks_operating_status"):
         _apply_live_update(msg, parks)
     assert parks[0]["attractions"][0]["waitTime"] is None
+
+
+# --- reconnect backoff ---
+
+def test_next_delay_resets_after_stable_connection():
+    assert _next_delay(40, 3600) == _RECONNECT_DELAY_INITIAL
+    assert _next_delay(40, 60) == _RECONNECT_DELAY_INITIAL
+
+
+def test_next_delay_doubles_after_quick_death():
+    assert _next_delay(5, 2) == 10
+    assert _next_delay(10, 2) == 20
+
+
+def test_next_delay_doubles_when_never_connected():
+    assert _next_delay(5, None) == 10
+
+
+def test_next_delay_caps_at_max():
+    assert _next_delay(40, 1) == _RECONNECT_DELAY_MAX
+    assert _next_delay(_RECONNECT_DELAY_MAX, None) == _RECONNECT_DELAY_MAX
+
+
+# --- connection settings ---
+
+class _FakeWS:
+    """Minimal stand-in for aiohttp's ClientWebSocketResponse: connects,
+    accepts subscriptions, yields no messages, then closes."""
+
+    close_code = 1000
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        raise StopAsyncIteration
+
+    async def send_json(self, payload):
+        pass
+
+    def exception(self):
+        return None
+
+
+class _FakeSession:
+    def __init__(self, captured):
+        self._captured = captured
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    def ws_connect(self, url, **kwargs):
+        self._captured.update(kwargs, url=url)
+        return _FakeWS()
+
+
+def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
+    captured = {}
+    parks = [{"id": "park-1", "name": "MK", "destination_id": "dest-1", "attractions": []}]
+
+    async def cancel_sleep(_delay):
+        raise asyncio.CancelledError
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession", lambda: _FakeSession(captured)), \
+         patch("updater.websocket_updater.asyncio.sleep", cancel_sleep):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_ws_loop("dummy-key", parks))
+
+    assert captured["heartbeat"] == _WS_HEARTBEAT_SECS
+    assert captured["receive_timeout"] == _WS_RECEIVE_TIMEOUT_SECS
 
 
 # --- no match ---

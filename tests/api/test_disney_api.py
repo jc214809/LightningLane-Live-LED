@@ -619,9 +619,10 @@ def test_handle_park_schedule_update(monkeypatch):
     monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: dummy_schedule)
     # Patch is_special_event to return True.
     monkeypatch.setattr("api.disney_api.is_special_event", lambda sch: True)
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
     # Capture debug info if desired.
     from api.disney_api import handle_park_schedule_update
-    handle_park_schedule_update(True, park)
+    handle_park_schedule_update(park)
     # Verify that schedule is updated, and llmpPrice and specialTicketedEvent are set.
     assert park["schedule"] == dummy_schedule
     assert park["llmpPrice"] == "$25"
@@ -634,16 +635,53 @@ def test_handle_park_schedule_update_calls_refresh(monkeypatch):
     monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [])
     refreshed = []
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
-    handle_park_schedule_update(True, park)
+    handle_park_schedule_update(park)
     assert refreshed == [park]
 
-def test_handle_park_schedule_update_no_refresh_when_already_operating(monkeypatch):
-    park = {"name": "Test Park", "id": "dummy-id", "schedule": [], "operating": True, "attractions": []}
-    monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [])
+def test_update_parks_operating_status_no_refresh_when_already_operating(monkeypatch):
+    park = {
+        "name": "Test Park", "id": "dummy-id", "schedule": [], "operating": True,
+        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
+    }
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule",
+                        lambda park_id: (_ for _ in ()).throw(AssertionError("schedule fetched")))
     refreshed = []
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
-    handle_park_schedule_update(True, park)
+    updated = update_parks_operating_status([park])
+    assert updated[0]["operating"] is True
     assert refreshed == []
+    assert not updated[0].get("schedule_refresh_needed")
+
+def test_update_parks_operating_status_defers_schedule_fetch(monkeypatch):
+    """fetch_schedules=False (WS thread): transition flags the park but does no HTTP."""
+    park = {
+        "name": "Test Park", "id": "dummy-id", "schedule": [],
+        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
+    }
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule",
+                        lambda park_id: (_ for _ in ()).throw(AssertionError("schedule fetched")))
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions",
+                        lambda p: (_ for _ in ()).throw(AssertionError("attractions refreshed")))
+    updated = update_parks_operating_status([park], fetch_schedules=False)
+    assert updated[0]["operating"] is True
+    assert updated[0]["schedule_refresh_needed"] is True
+
+def test_update_parks_operating_status_consumes_deferred_flag(monkeypatch):
+    """fetch_schedules=True (REST thread): a pending flag triggers the fetch and is cleared."""
+    park = {
+        "name": "Test Park", "id": "dummy-id", "schedule": [],
+        "operating": True, "schedule_refresh_needed": True,
+        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
+    }
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [{
+        "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00"
+    }])
+    refreshed = []
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
+    updated = update_parks_operating_status([park])
+    assert updated[0]["schedule_refresh_needed"] is False
+    assert updated[0]["openingTime"] == "09:00"
+    assert refreshed == [park]
 
 ###########
 # Tests for refresh_park_attractions
@@ -722,5 +760,6 @@ def test_update_parks_operating_status(monkeypatch):
         "closingTime": "22:00"
     }])
     monkeypatch.setattr("api.disney_api.fetch_weather_data", lambda lat, lon: {"temp": "dummy"})
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
     updated = update_parks_operating_status(copy.deepcopy(parks))
     assert updated[0]["operating"] is True

@@ -367,3 +367,42 @@ def test_live_data_updater_websocket_does_initial_fetch_then_skips_polling(monke
     # fetch_live_data called exactly once (initial fetch), not again in the loop
     assert len(fetch_call_count) == 1, "fetch_live_data should be called once for the initial fetch"
     assert loop_iterations == [1], "polling loop should have run once then stopped"
+
+
+def test_live_data_updater_websocket_loop_updates_operating_status(monkeypatch):
+    """
+    In websocket mode the polling loop must still call update_parks_operating_status
+    (with schedule fetching enabled) so schedule refreshes deferred by the WS thread
+    via 'schedule_refresh_needed' get serviced.
+    """
+    parks_data = []
+    status_calls = []
+
+    async def dummy_fetch(attractions):
+        return attractions
+
+    def recording_update(parks, fetch_schedules=True):
+        status_calls.append(fetch_schedules)
+        return parks
+
+    monkeypatch.setattr("updater.data_updater.fetch_live_data", dummy_fetch)
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
+    monkeypatch.setattr("updater.data_updater.update_parks_operating_status", recording_update)
+
+    def fake_sleep(duration):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr("updater.data_updater.time", type("t", (), {"sleep": fake_sleep}))
+
+    updater_thread = threading.Thread(
+        target=live_data_updater,
+        args=(copy.deepcopy(DUMMY_PARKS), 0, parks_data),
+        kwargs={"use_websocket": True},
+        daemon=True,
+    )
+    updater_thread.start()
+    updater_thread.join(timeout=2)
+
+    # One call from the initial fetch, one from the loop iteration — both with
+    # schedule fetching enabled (the REST thread is where blocking HTTP belongs).
+    assert status_calls == [True, True]
