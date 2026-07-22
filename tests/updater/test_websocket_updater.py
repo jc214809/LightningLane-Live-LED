@@ -9,8 +9,11 @@ from updater.websocket_updater import (
     _RECONNECT_DELAY_MAX,
     _WS_HEARTBEAT_SECS,
     _WS_RECEIVE_TIMEOUT_SECS,
+    _WsStats,
     _apply_live_update,
     _next_delay,
+    _should_force_reconnect,
+    _watchdog,
     _ws_loop,
 )
 
@@ -201,6 +204,162 @@ def test_no_queue_data_sets_wait_none():
     with patch("updater.websocket_updater.update_parks_operating_status"):
         _apply_live_update(msg, parks)
     assert parks[0]["attractions"][0]["waitTime"] is None
+
+
+# --- event timestamps ---
+
+def test_event_timestamp_used_when_present():
+    parks = _parks_with_attr()
+    msg = _make_livedata_msg(data={
+        "status": "OPERATING",
+        "lastUpdated": "2026-07-19T18:00:00Z",
+        "queue": {"STANDBY": {"waitTime": 10}},
+    })
+    with patch("updater.websocket_updater.update_parks_operating_status"):
+        _apply_live_update(msg, parks)
+    assert parks[0]["attractions"][0]["lastUpdatedTs"] == "2026-07-19T18:00:00Z"
+
+
+def test_down_since_uses_event_timestamp():
+    """A DOWN event replayed after a reconnect carries the real outage start —
+    the display should show 'Down 30', not 'Down 0'."""
+    from datetime import datetime, timezone, timedelta
+    went_down = (datetime.now(timezone.utc) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    parks = _parks_with_attr({"status": "OPERATING", "down_since": ""})
+    msg = _make_livedata_msg(data={"status": "DOWN", "lastUpdated": went_down})
+    with patch("updater.websocket_updater.update_parks_operating_status"):
+        _apply_live_update(msg, parks)
+    attr = parks[0]["attractions"][0]
+    assert attr["down_since"] == went_down
+    minutes = int(attr["waitTime"].split(" ")[1])
+    assert 28 <= minutes <= 32
+
+
+# --- watchdog ---
+
+def test_should_force_reconnect_silent_and_operating():
+    assert _should_force_reconnect(0, [{"operating": True}]) is True
+
+
+def test_should_force_reconnect_tolerates_overnight_silence():
+    assert _should_force_reconnect(0, [{"operating": False}, {"operating": False}]) is False
+
+
+def test_should_force_reconnect_not_when_messages_flow():
+    assert _should_force_reconnect(12, [{"operating": True}]) is False
+
+
+def test_should_force_reconnect_empty_parks():
+    assert _should_force_reconnect(0, []) is False
+
+
+def test_ws_stats_snapshot_resets_counter():
+    stats = _WsStats()
+    stats.note_message()
+    stats.note_message()
+    count, elapsed = stats.snapshot_and_reset()
+    assert count == 2
+    assert elapsed >= 0
+    count2, _ = stats.snapshot_and_reset()
+    assert count2 == 0
+
+
+class _WatchdogFakeWS:
+    def __init__(self):
+        self.closed = False
+
+    async def close(self):
+        self.closed = True
+
+
+def test_watchdog_forces_reconnect_when_silent_while_operating():
+    ws = _WatchdogFakeWS()
+
+    async def instant_sleep(_delay):
+        pass
+
+    with patch("updater.websocket_updater.asyncio.sleep", instant_sleep):
+        asyncio.run(_watchdog(ws, _WsStats(), [{"operating": True}]))
+    assert ws.closed is True
+
+
+def test_watchdog_does_not_reconnect_while_messages_flow():
+    ws = _WatchdogFakeWS()
+    stats = _WsStats()
+    sleeps = []
+
+    async def traffic_then_stop(_delay):
+        sleeps.append(1)
+        if len(sleeps) >= 3:
+            raise asyncio.CancelledError
+        stats.note_message()  # traffic arrives during each window
+
+    with patch("updater.websocket_updater.asyncio.sleep", traffic_then_stop):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_watchdog(ws, stats, [{"operating": True}]))
+    assert ws.closed is False
+
+
+def test_watchdog_tolerates_silence_when_parks_closed():
+    ws = _WatchdogFakeWS()
+    sleeps = []
+
+    async def two_windows(_delay):
+        sleeps.append(1)
+        if len(sleeps) >= 2:
+            raise asyncio.CancelledError
+
+    with patch("updater.websocket_updater.asyncio.sleep", two_windows):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_watchdog(ws, _WsStats(), [{"operating": False}]))
+    assert ws.closed is False
+
+
+def test_ws_loop_cancels_watchdog_on_disconnect():
+    started = []
+    cancelled = []
+    real_sleep = asyncio.sleep
+
+    async def parked_watchdog(ws, stats, parks):
+        started.append(True)
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            cancelled.append(True)
+            raise
+
+    captured = {}
+    parks = [{"id": "park-1", "name": "MK", "destination_id": "dest-1", "attractions": []}]
+
+    async def fake_sleep(delay):
+        # The reconnect backoff sleep ends the test; zero-delay yields run for real
+        # so the watchdog task gets scheduled before the receive loop finishes.
+        if delay:
+            raise asyncio.CancelledError
+        await real_sleep(0)
+
+    class _YieldingWS(_FakeWS):
+        def __init__(self):
+            self._yielded = False
+
+        async def __anext__(self):
+            if not self._yielded:
+                self._yielded = True
+                await real_sleep(0)  # let the watchdog task start
+            raise StopAsyncIteration
+
+    class _YieldingSession(_FakeSession):
+        def ws_connect(self, url, **kwargs):
+            return _YieldingWS()
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession", lambda: _YieldingSession(captured)), \
+         patch("updater.websocket_updater._watchdog", parked_watchdog), \
+         patch("updater.websocket_updater.asyncio.sleep", fake_sleep):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_ws_loop("dummy-key", parks))
+
+    assert started == [True]
+    assert cancelled == [True]
 
 
 # --- reconnect backoff ---
