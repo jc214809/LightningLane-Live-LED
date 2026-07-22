@@ -25,7 +25,7 @@ DUMMY_PARKS = [{
 def test_update_parks_live_data(monkeypatch):
     """
     Assume update_parks_live_data takes a parks list and updates each park's attractions
-    using live data. For testing, we patch updater.data_updater.fetch_live_data to return dummy live data.
+    using live data. For testing, we patch updater.data_updater.fetch_park_live_data to return dummy live data.
     """
     # Dummy live data that should update the attraction.
     dummy_live_data = [{
@@ -39,7 +39,7 @@ def test_update_parks_live_data(monkeypatch):
         return dummy_live_data
 
     # Patch fetch_live_data inside updater.data_updater.
-    monkeypatch.setattr("updater.data_updater.fetch_live_data", dummy_fetch_live_data)
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
 
     # Call update_parks_live_data with a copy of the dummy parks.
     parks_copy = copy.deepcopy(DUMMY_PARKS)
@@ -56,7 +56,7 @@ def test_update_parks_live_data(monkeypatch):
 def test_live_data_updater(monkeypatch):
     """
     Test live_data_updater by running it in a separate thread and forcing it to break out
-    after one iteration. We patch updater.data_updater.fetch_live_data to return updated live data,
+    after one iteration. We patch updater.data_updater.fetch_park_live_data to return updated live data,
     and patch time.sleep along with fetch_parks_and_attractions to bypass real HTTP calls.
     """
     parks_data = []
@@ -73,7 +73,7 @@ def test_live_data_updater(monkeypatch):
         return dummy_live_data
 
     # Patch fetch_live_data inside updater.data_updater.
-    monkeypatch.setattr("updater.data_updater.fetch_live_data", dummy_fetch_live_data)
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
 
     # Patch fetch_parks_and_attractions to return the parks unchanged.
     monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: parks)
@@ -157,7 +157,9 @@ def test_merge_live_data_down_since_handling():
     assert result2[0]["down_since"] == ""
 
 
-def test_merge_live_data_appends_new():
+def test_merge_live_data_ignores_unknown_ids():
+    """Live updates carry no name/entityType, so unknown ids must be skipped —
+    roster additions are handled by refresh_park_attractions."""
     existing = [{
         "id": "1",
         "waitTime": 10,
@@ -180,13 +182,93 @@ def test_merge_live_data_appends_new():
         },
     ]
     result = merge_live_data(copy.deepcopy(existing), new_live)
-    assert len(result) == 2
-    ids = {a["id"] for a in result}
-    assert ids == {"1", "2"}
-    attr2 = next(a for a in result if a["id"] == "2")
-    assert attr2["waitTime"] == 5
-    assert attr2["status"] == "OPERATING"
-    assert attr2["lastUpdatedTs"] == "new2"
+    assert len(result) == 1
+    assert result[0]["id"] == "1"
+    assert result[0]["waitTime"] == 15
+
+
+def test_merge_live_data_mutates_in_place():
+    """merge must return the same list and same dict objects it was given —
+    rebuilding either would drop concurrent WS-thread updates."""
+    existing = [{
+        "id": "1",
+        "waitTime": 10,
+        "status": "OPERATING",
+        "down_since": "",
+        "lastUpdatedTs": "old",
+    }]
+    original_attr = existing[0]
+    result = merge_live_data(existing, [
+        {"id": "1", "waitTime": 15, "status": "OPERATING", "lastUpdatedTs": "new"},
+    ])
+    assert result is existing
+    assert result[0] is original_attr
+    assert original_attr["waitTime"] == 15
+
+
+class SpyLock:
+    def __init__(self):
+        self.acquisitions = 0
+
+    def __enter__(self):
+        self.acquisitions += 1
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def test_update_parks_live_data_merges_under_lock(monkeypatch):
+    async def ok_fetch(park):
+        return [{"id": "1", "waitTime": 12, "status": "OPERATING", "lastUpdatedTs": "new"}]
+
+    spy = SpyLock()
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", ok_fetch)
+    monkeypatch.setattr("updater.data_updater.parks_data_lock", spy)
+    update_parks_live_data(copy.deepcopy(DUMMY_PARKS))
+    assert spy.acquisitions == 1
+
+
+def test_merge_live_data_preserves_wait_time_when_omitted():
+    """A CLOSED update omits waitTime; the last known value must survive."""
+    existing = [{
+        "id": "1",
+        "waitTime": 25,
+        "status": "OPERATING",
+        "down_since": "",
+        "lastUpdatedTs": "old",
+    }]
+    new_live = [{"id": "1", "status": "CLOSED", "lastUpdatedTs": "new"}]
+    result = merge_live_data(copy.deepcopy(existing), new_live)
+    assert result[0]["status"] == "CLOSED"
+    assert result[0]["waitTime"] == 25
+    assert result[0]["lastUpdatedTs"] == "new"
+
+
+def test_update_parks_live_data_fetch_failure_keeps_data_and_flags_stale(monkeypatch):
+    """A failed park fetch (429/timeout) must keep existing data and set live_data_stale."""
+    async def failing_fetch(park):
+        return None
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", failing_fetch)
+    parks_copy = copy.deepcopy(DUMMY_PARKS)
+    updated = update_parks_live_data(parks_copy)
+    attr = updated[0]["attractions"][0]
+    assert attr["waitTime"] == 10
+    assert attr["lastUpdatedTs"] == "old"
+    assert updated[0]["live_data_stale"] is True
+
+
+def test_update_parks_live_data_success_clears_stale_flag(monkeypatch):
+    async def ok_fetch(park):
+        return [{"id": "1", "waitTime": 12, "status": "OPERATING", "lastUpdatedTs": "new"}]
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", ok_fetch)
+    parks_copy = copy.deepcopy(DUMMY_PARKS)
+    parks_copy[0]["live_data_stale"] = True
+    updated = update_parks_live_data(parks_copy)
+    assert updated[0]["live_data_stale"] is False
+    assert updated[0]["attractions"][0]["waitTime"] == 12
 
 
 # --- Additional Tests to Increase Coverage ---
@@ -207,7 +289,7 @@ def test_update_parks_live_data_no_change(monkeypatch):
     async def dummy_fetch_live_data(attractions):
         return dummy_live_data
 
-    monkeypatch.setattr("updater.data_updater.fetch_live_data", dummy_fetch_live_data)
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
 
     parks_copy = copy.deepcopy(DUMMY_PARKS)
     updated_parks = update_parks_live_data(parks_copy)
@@ -262,7 +344,7 @@ def test_update_parks_live_data_multiple_attractions(monkeypatch):
     async def dummy_fetch_live_data(attractions):
         return dummy_live_data
 
-    monkeypatch.setattr("updater.data_updater.fetch_live_data", dummy_fetch_live_data)
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
 
     parks_copy = copy.deepcopy(parks)
     updated_parks = update_parks_live_data(parks_copy)
@@ -294,3 +376,115 @@ def test_merge_live_data_no_change():
     result = merge_live_data(copy.deepcopy(existing), new_live)
     # Expect the output to be identical to the original existing data.
     assert result == existing
+
+
+def test_update_parks_live_data_websocket_skips_http_fetch(monkeypatch):
+    """When use_websocket=True, fetch_live_data must not be called."""
+    called = []
+
+    async def should_not_be_called(attractions):
+        called.append(True)
+        return []
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", should_not_be_called)
+
+    parks_copy = copy.deepcopy(DUMMY_PARKS)
+    update_parks_live_data(parks_copy, use_websocket=True)
+
+    assert called == [], "fetch_live_data should not be called when use_websocket=True"
+
+
+def test_update_parks_live_data_no_websocket_calls_http_fetch(monkeypatch):
+    """When use_websocket=False (default), fetch_live_data must be called."""
+    called = []
+
+    async def dummy_fetch_live_data(park):
+        called.append(True)
+        return []
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
+
+    parks_copy = copy.deepcopy(DUMMY_PARKS)
+    update_parks_live_data(parks_copy, use_websocket=False)
+
+    assert called == [True], "fetch_live_data should be called when use_websocket=False"
+
+
+def test_live_data_updater_websocket_does_initial_fetch_then_skips_polling(monkeypatch):
+    """
+    live_data_updater with use_websocket=True must call fetch_live_data once for the
+    initial population, then skip it in the polling loop.
+    """
+    parks_data = []
+    fetch_call_count = []
+
+    async def counting_fetch(park):
+        fetch_call_count.append(1)
+        return []
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", counting_fetch)
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
+    monkeypatch.setattr("updater.data_updater.update_parks_operating_status", lambda parks: parks)
+
+    loop_iterations = []
+
+    def fake_sleep(duration):
+        loop_iterations.append(1)
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr("updater.data_updater.time", type("t", (), {"sleep": fake_sleep}))
+
+    updater_thread = threading.Thread(
+        target=live_data_updater,
+        args=(copy.deepcopy(DUMMY_PARKS), 0, parks_data),
+        kwargs={"use_websocket": True},
+        daemon=True,
+    )
+    try:
+        updater_thread.start()
+        updater_thread.join(timeout=2)
+    except KeyboardInterrupt:
+        pass
+
+    # fetch_live_data called exactly once (initial fetch), not again in the loop
+    assert len(fetch_call_count) == 1, "fetch_live_data should be called once for the initial fetch"
+    assert loop_iterations == [1], "polling loop should have run once then stopped"
+
+
+def test_live_data_updater_websocket_loop_updates_operating_status(monkeypatch):
+    """
+    In websocket mode the polling loop must still call update_parks_operating_status
+    (with schedule fetching enabled) so schedule refreshes deferred by the WS thread
+    via 'schedule_refresh_needed' get serviced.
+    """
+    parks_data = []
+    status_calls = []
+
+    async def dummy_fetch(park):
+        return []
+
+    def recording_update(parks, fetch_schedules=True):
+        status_calls.append(fetch_schedules)
+        return parks
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch)
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
+    monkeypatch.setattr("updater.data_updater.update_parks_operating_status", recording_update)
+
+    def fake_sleep(duration):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr("updater.data_updater.time", type("t", (), {"sleep": fake_sleep}))
+
+    updater_thread = threading.Thread(
+        target=live_data_updater,
+        args=(copy.deepcopy(DUMMY_PARKS), 0, parks_data),
+        kwargs={"use_websocket": True},
+        daemon=True,
+    )
+    updater_thread.start()
+    updater_thread.join(timeout=2)
+
+    # One call from the initial fetch, one from the loop iteration — both with
+    # schedule fetching enabled (the REST thread is where blocking HTTP belongs).
+    assert status_calls == [True, True]

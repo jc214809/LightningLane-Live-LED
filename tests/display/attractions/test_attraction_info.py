@@ -92,3 +92,70 @@ def test_render_attraction_info(monkeypatch):
     # For basic test purposes, just check that render_attraction_info runs without KeyError.
     # (More in-depth tests would patch graphics.DrawText to record draw calls.)
     assert True
+
+
+def test_boarding_group_3digit_fits_32row(monkeypatch):
+    """Groups 100-200 on a 32-row board: all draw calls must land within board height."""
+    import display.attractions.attraction_info as mod
+
+    loaded_fonts["ride"] = DummyFont(width=5, height=8)
+    loaded_fonts["waittime"] = DummyFont(width=4, height=6)
+
+    calls = []
+    monkeypatch.setattr(mod.graphics, "DrawText", lambda matrix, font, x, y, color, text: calls.append((y, text)))
+
+    class FakeMatrix:
+        width, height = 32, 32
+        def Clear(self): pass
+
+    mod.render_attraction_info(
+        FakeMatrix(),
+        {"name": "Tron", "entityType": "ATTRACTION", "waitTime": "Groups 100-200", "status": "OPERATING"}
+    )
+    assert calls, "No DrawText calls were made"
+    for y, text in calls:
+        assert y <= 32, f"Text '{text}' drawn at y={y}, outside 32-row board"
+
+
+def test_boarding_group_3digit_fits_64row(monkeypatch):
+    """Groups 100-200 on a 64-row board: all draw calls must land within board height."""
+    import display.attractions.attraction_info as mod
+
+    loaded_fonts["ride"] = DummyFont(width=5, height=8)
+    loaded_fonts["waittime"] = DummyFont(width=5, height=8)
+
+    calls = []
+    monkeypatch.setattr(mod.graphics, "DrawText", lambda matrix, font, x, y, color, text: calls.append((y, text)))
+
+    class FakeMatrix:
+        width, height = 64, 64
+        def Clear(self): pass
+
+    mod.render_attraction_info(
+        FakeMatrix(),
+        {"name": "Tron", "entityType": "ATTRACTION", "waitTime": "Groups 100-200", "status": "OPERATING"}
+    )
+    assert calls, "No DrawText calls were made"
+    for y, text in calls:
+        assert y <= 64, f"Text '{text}' drawn at y={y}, outside 64-row board"
+
+
+def test_wait_time_formatting_integer():
+    """Numeric wait times get ' Mins' appended."""
+    from display.attractions.attraction_info import _format_wait_time
+    assert _format_wait_time(45) == "45 Mins"
+
+def test_wait_time_formatting_down():
+    """'Down X' strings still get ' Mins' appended."""
+    from display.attractions.attraction_info import _format_wait_time
+    assert _format_wait_time("Down 15") == "Down 15 Mins"
+
+def test_wait_time_formatting_boarding_group_range():
+    """Boarding group range strings are used as-is."""
+    from display.attractions.attraction_info import _format_wait_time
+    assert _format_wait_time("Groups 1-50") == "Groups 1-50"
+
+def test_wait_time_formatting_boarding_group_single():
+    """Single boarding group strings are used as-is."""
+    from display.attractions.attraction_info import _format_wait_time
+    assert _format_wait_time("Group 1+") == "Group 1+"

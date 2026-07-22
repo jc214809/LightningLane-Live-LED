@@ -7,8 +7,9 @@ logger = logging.getLogger("disney-lll")
 # Determine the base directory path dynamically
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Define the logs directory path
-LOG_DIR = os.path.join(BASE_DIR, 'logs')
+# Define the logs directory path. Tests override this (LLL_LOG_DIR) so pytest
+# runs never interleave with a live app's real logs/app.log.
+LOG_DIR = os.environ.get('LLL_LOG_DIR') or os.path.join(BASE_DIR, 'logs')
 
 # Ensure the directory exists
 if not os.path.exists(LOG_DIR):
