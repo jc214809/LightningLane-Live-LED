@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import aiohttp
 import certifi
 
-from api.disney_api import fetch_live_data, get_down_time, update_parks_operating_status
+from api.disney_api import fetch_park_live_data, get_down_time, parse_queue_wait, update_parks_operating_status
 from updater.data_updater import merge_live_data
 from utils import debug
 
@@ -90,20 +90,7 @@ def _apply_live_update(data, parks_data):
                 attr["down_since"] = ""
             else:
                 attr["down_since"] = ""
-                queue = live.get("queue", {})
-                standby = queue.get("STANDBY", {}).get("waitTime")
-                if standby is not None:
-                    attr["waitTime"] = standby
-                else:
-                    bg = queue.get("BOARDING_GROUP", {})
-                    start = bg.get("currentGroupStart")
-                    end = bg.get("currentGroupEnd")
-                    if start is not None and end is not None:
-                        attr["waitTime"] = f"Groups {start}-{end}"
-                    elif start is not None:
-                        attr["waitTime"] = f"Group {start}+"
-                    else:
-                        attr["waitTime"] = None
+                attr["waitTime"] = parse_queue_wait(live.get("queue") or {})
 
             if prev_status != status:
                 debug.info(
@@ -138,8 +125,16 @@ async def _ws_loop(api_key, parks_data):
                         debug.info("WebSocket reconnected — refreshing live data via REST.")
                         for park in parks_data:
                             if park.get("attractions"):
-                                new_live_data = await fetch_live_data(park["attractions"])
-                                park["attractions"] = merge_live_data(park["attractions"], new_live_data)
+                                new_live_data = await fetch_park_live_data(park)
+                                if new_live_data is None:
+                                    park["live_data_stale"] = True
+                                    debug.warning(
+                                        f"Live data refresh failed for {park.get('name')} after reconnect; "
+                                        "keeping existing data."
+                                    )
+                                else:
+                                    park["live_data_stale"] = False
+                                    park["attractions"] = merge_live_data(park["attractions"], new_live_data)
                         updated = update_parks_operating_status(list(parks_data), fetch_schedules=False)
                         parks_data[:] = updated
                         debug.info("REST refresh after reconnect complete.")
