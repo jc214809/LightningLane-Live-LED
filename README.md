@@ -9,7 +9,7 @@ LightningLane-Live-LED is a Python application designed to fetch and display wai
 - **API Integration:**  
   Retrieves park data and attraction details for Walt Disney World, Cedar Point, Kings Island, and any other destination supported by the ThemeParks Wiki API. Parks are configured by name in `config.json`.
 - **Real-Time WebSocket Updates:**  
-  When a ThemeParks API key is configured, live wait times are delivered via a persistent WebSocket connection (`wss://ws.themeparks.wiki/v1/live`) for instant updates as attraction statuses change. The app performs an initial REST fetch at startup to populate all data, then hands off to the WebSocket for ongoing updates. If the WebSocket disconnects and reconnects, a REST refresh is automatically triggered to catch any changes missed during the outage.
+  When a ThemeParks API key is configured (or `websocket_only` is enabled — see [below](#themeparks-api-key-recommended)), live wait times are delivered via a persistent WebSocket connection (`wss://ws.themeparks.wiki/v1/live`) for instant updates as attraction statuses change. The app performs an initial REST fetch at startup to populate all data, then hands off to the WebSocket for ongoing updates. The connection is self-healing: a dead or silently-stalled connection is detected and reconnected automatically (typically within 2 minutes), with a REST refresh triggered afterward to catch any changes missed during the outage.
 - **Polling Fallback:**  
   Without an API key, the app falls back to polling the REST API every 5 minutes for live wait times.
 - **Dynamic Display Rendering:**  
@@ -182,6 +182,24 @@ To enable real-time WebSocket updates, add a ThemeParks API key to `config.json`
 ```
 
 Without this key the app falls back to polling the REST API every 5 minutes. With it, attraction status changes appear on the display within seconds. You can request an API key from the [ThemeParks Wiki](https://api.themeparks.wiki).
+
+If you'd rather not use an API key, you can still enable WebSocket mode by setting `websocket_only` to `true` in `config.json`:
+
+```json
+"websocket_only": true
+```
+
+This connects to the same public WebSocket feed without sending an API key. Leave both `themeparks_api_key` unset (or set to the placeholder value) and `websocket_only: false` to use REST polling only.
+
+#### WebSocket Connection Health
+
+The WebSocket connection is monitored and self-healing:
+- A dead connection (network drop, server-side timeout) is detected within about 2 minutes and reconnected automatically.
+- A connection that stays open but silently stops delivering updates is detected by a background watchdog and force-reconnected, as long as at least one configured park is currently operating.
+- Every reconnect (whether from an error or the watchdog) triggers a REST refresh so the display catches up on anything missed during the outage.
+- Reconnect attempts back off (5s, 10s, 20s, ... up to 60s) if the connection keeps failing quickly, so a persistent outage doesn't hammer the API.
+
+You can watch this behavior in the logs (`logs/app.log`) — look for `WebSocket connected`, `WS heartbeat`, and `WebSocket disconnected; reconnecting in Ns` messages.
 
 ### Configuring Parks
 

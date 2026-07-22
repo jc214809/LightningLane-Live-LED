@@ -187,6 +187,48 @@ def test_merge_live_data_ignores_unknown_ids():
     assert result[0]["waitTime"] == 15
 
 
+def test_merge_live_data_mutates_in_place():
+    """merge must return the same list and same dict objects it was given —
+    rebuilding either would drop concurrent WS-thread updates."""
+    existing = [{
+        "id": "1",
+        "waitTime": 10,
+        "status": "OPERATING",
+        "down_since": "",
+        "lastUpdatedTs": "old",
+    }]
+    original_attr = existing[0]
+    result = merge_live_data(existing, [
+        {"id": "1", "waitTime": 15, "status": "OPERATING", "lastUpdatedTs": "new"},
+    ])
+    assert result is existing
+    assert result[0] is original_attr
+    assert original_attr["waitTime"] == 15
+
+
+class SpyLock:
+    def __init__(self):
+        self.acquisitions = 0
+
+    def __enter__(self):
+        self.acquisitions += 1
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def test_update_parks_live_data_merges_under_lock(monkeypatch):
+    async def ok_fetch(park):
+        return [{"id": "1", "waitTime": 12, "status": "OPERATING", "lastUpdatedTs": "new"}]
+
+    spy = SpyLock()
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", ok_fetch)
+    monkeypatch.setattr("updater.data_updater.parks_data_lock", spy)
+    update_parks_live_data(copy.deepcopy(DUMMY_PARKS))
+    assert spy.acquisitions == 1
+
+
 def test_merge_live_data_preserves_wait_time_when_omitted():
     """A CLOSED update omits waitTime; the last known value must survive."""
     existing = [{

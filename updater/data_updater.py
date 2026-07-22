@@ -4,12 +4,18 @@ import traceback
 
 from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, update_parks_operating_status
 from api.weather import fetch_weather_data
+from updater.shared import parks_data_lock
 from utils import debug
 from utils.utils import get_eastern
 
 
 def merge_live_data(existing_attractions, new_live_data):
-    """ Update existing attractions with new live data. Preserve the 'down_since' field if it already exists. """
+    """
+    Update existing attractions in place with new live data. Preserve the
+    'down_since' field if it already exists. Returns the same list object —
+    rebuilding the list would silently drop concurrent WS-thread updates to
+    the dicts it contains.
+    """
 
     # Create a mapping from attraction id to the existing attraction object.
     attraction_map = {attr["id"]: attr for attr in existing_attractions}
@@ -39,7 +45,7 @@ def merge_live_data(existing_attractions, new_live_data):
             # Unknown ids are skipped: live updates carry no name/entityType, and
             # roster changes are handled by refresh_park_attractions.
             debug.log(f"Ignoring live data for unknown attraction id {attr_id}")
-    return list(attraction_map.values())
+    return existing_attractions
 
 
 def update_parks_live_data(parks, use_websocket=False):
@@ -56,8 +62,9 @@ def update_parks_live_data(parks, use_websocket=False):
                 park["live_data_stale"] = True
                 debug.warning(f"Live data fetch failed for {park.get('name')}; keeping existing data.")
             else:
-                park["live_data_stale"] = False
-                park["attractions"] = merge_live_data(park["attractions"], new_live_data)
+                with parks_data_lock:
+                    park["live_data_stale"] = False
+                    merge_live_data(park["attractions"], new_live_data)
 
         if park.get("location") and park.get("operating"):
             park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
@@ -78,7 +85,8 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
         debug.info("WebSocket mode: performing initial REST live data fetch, then handing off to WS.")
         initial_parks = update_parks_live_data(list(parks_data), use_websocket=False)
         initial_parks = update_parks_operating_status(initial_parks)
-        parks_data[:] = initial_parks
+        with parks_data_lock:
+            parks_data[:] = initial_parks
         debug.info("Initial REST live data fetch complete — WebSocket will handle attraction updates.")
     while True:
         try:
@@ -87,7 +95,8 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
                 # Runs in websocket mode too: the WS thread defers schedule
                 # fetches (schedule_refresh_needed) to this thread.
                 updated_parks = update_parks_operating_status(updated_parks)
-                parks_data[:] = updated_parks
+                with parks_data_lock:
+                    parks_data[:] = updated_parks
                 if use_websocket:
                     debug.info("REST loop (websocket_only mode): weather refreshed, attraction polling skipped.")
                 else:
