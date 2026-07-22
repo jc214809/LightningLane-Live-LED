@@ -29,17 +29,26 @@ pipreqs . --force
 
 ## Architecture
 
-The application is a continuous display loop that fetches Disney World attraction wait times and renders them on an RGB LED matrix. Two threads run concurrently:
+The application is a continuous display loop that fetches Disney World attraction wait times and renders them on an RGB LED matrix. Two or three threads run concurrently:
 
 - **Main thread** (`disney.py`): Drives the display loop — renders Mickey logo → optional trip countdown → park title screen → attraction wait times, cycling indefinitely.
-- **Background thread** (`updater/data_updater.py:live_data_updater`): Fetches updated live wait times every 5 minutes and updates the shared `parks_data` list in-place.
+- **REST thread** (`updater/data_updater.py:live_data_updater`): Fetches live wait times every `update_interval` seconds (5 min) and updates the shared `parks_data` list in-place. Always does the initial fetch/populate, even in WebSocket mode.
+- **WebSocket thread** (`updater/websocket_updater.py:websocket_live_updater`), started only when `config.json`'s `themeparks_api_key` is set or `websocket_only: true`: maintains a persistent connection to `wss://ws.themeparks.wiki/v1/live` for real-time attraction updates. When active, the REST thread skips attraction polling (`use_websocket=True`) but keeps refreshing weather and servicing deferred schedule fetches.
 
 ### Data flow
 
 1. `api/disney_api.py:fetch_list_of_disney_world_parks()` — fetches the 4 WDW theme parks (excluding water parks) from the ThemeParks Wiki API.
 2. `api/disney_api.py:fetch_parks_and_attractions()` — fetches each park's attraction list; initial wait times are empty placeholders.
-3. Background thread calls `fetch_live_data()` (async, via `aiohttp`) to concurrently fetch live wait times for all attractions, then `merge_live_data()` merges them into the shared list.
+3. Live wait times come from one `api/disney_api.py:fetch_park_live_data()` call per park (`/entity/{parkId}/live` — all children in one request, not one call per attraction), parsed by `build_live_updates()`/`parse_queue_wait()`, then merged into the shared list by `updater/data_updater.py:merge_live_data()`. In WebSocket mode, per-event updates arrive instead via `updater/websocket_updater.py:_apply_live_update()`, which reuses `parse_queue_wait()`; the per-park REST fetch still runs once at startup and after every WS reconnect.
 4. `api/weather.py` provides weather data per park, fetched via OpenWeatherMap (requires API key in `config.json`).
+
+### WebSocket resilience
+
+`updater/websocket_updater.py` maintains the live connection with several layered defenses (see git history on `feature/websocket` and its stack for the incident that motivated each):
+- `ws_connect(..., heartbeat=30, receive_timeout=120)` detects a dead socket and forces a reconnect within ~2 minutes.
+- A per-connection `_watchdog` task force-reconnects if zero messages arrive in a 5-minute window while any park is `operating` — catches a connection that's alive at the protocol level but has stopped streaming data.
+- Reconnect backoff (`_next_delay`) only resets to 5s after a connection stays up 60s+; otherwise it doubles (capped at 60s), so a connect-then-die loop can't hammer the server.
+- `attr["lastUpdatedTs"]`/`down_since` are stamped from the event's own `lastUpdated`, not receive time — confirmed present on all ATTRACTION/SHOW entries from the live API.
 
 ### Display layer
 
