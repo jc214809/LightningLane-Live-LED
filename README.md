@@ -1,19 +1,21 @@
 # LightningLane-Live-LED
-[![codecov](https://codecov.io/gh/jc214809/LightningLane-Live-LED/branch/main/graph/badge.svg)](https://codecov.io/gh/jc214809/LightningLane-Live-LED)
-New:[![codecov](https://codecov.io/github/jc214809/lightninglane-live-led/graph/badge.svg?token=AIYRNC20P6)](https://codecov.io/github/jc214809/lightninglane-live-led)
+![Tests](https://github.com/jc214809/LightningLane-Live-LED/actions/workflows/coverage.yml/badge.svg) [![codecov](https://codecov.io/gh/jc214809/LightningLane-Live-LED/graph/badge.svg)](https://codecov.io/gh/jc214809/LightningLane-Live-LED)
 
-LightningLane-Live-LED is a Python application designed to fetch and display wait times for attractions at Walt Disney World on an LED matrix display. It retrieves park and attraction data from the [ThemeParks Wiki API](https://api.themeparks.wiki) and dynamically renders ride information—including park names, ride names, and wait times—onto an LED matrix. The application supports both actual hardware and an emulator for testing purposes.
+
+LightningLane-Live-LED is a Python application designed to fetch and display wait times for attractions at Walt Disney World and other theme parks on an LED matrix display. It retrieves park and attraction data from the [ThemeParks Wiki API](https://api.themeparks.wiki) and dynamically renders ride information—including park names, ride names, and wait times—onto an LED matrix. The application supports both actual hardware and an emulator for testing purposes.
 
 ## Features
 
 - **API Integration:**  
-  Retrieves Walt Disney World park data and attraction details using HTTP requests.
-- **Live Data Updates:**  
-  Uses a background thread to periodically update live wait times for attractions.
+  Retrieves park data and attraction details for Walt Disney World, Cedar Point, Kings Island, and any other destination supported by the ThemeParks Wiki API. Parks are configured by name in `config.json`.
+- **Real-Time WebSocket Updates:**  
+  When a ThemeParks API key is configured, live wait times are delivered via a persistent WebSocket connection (`wss://ws.themeparks.wiki/v1/live`) for instant updates as attraction statuses change. The app performs an initial REST fetch at startup to populate all data, then hands off to the WebSocket for ongoing updates. If the WebSocket disconnects and reconnects, a REST refresh is automatically triggered to catch any changes missed during the outage.
+- **Polling Fallback:**  
+  Without an API key, the app falls back to polling the REST API every 5 minutes for live wait times.
 - **Dynamic Display Rendering:**  
   Renders park details, character meet and greets (w/ Wait Times) and ride information with dynamic text wrapping and spacing on an LED matrix.
 - **Trip Countdown:**  
-  Displays a countdown to your next Disney visit for added excitement.
+  Displays a countdown to your next Disney visit for added excitement. Supports multiple upcoming trip dates.
 - **Current Weather Updates:**  
   Provides live weather information for each park.
 - **Emulation Mode:**  
@@ -170,6 +172,26 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --emulated                Force the scoreboard to run in software emulation mode.
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: true)
 ```
+
+### ThemeParks API Key (Recommended)
+
+To enable real-time WebSocket updates, add a ThemeParks API key to `config.json`:
+
+```json
+"themeparks_api_key": "your-api-key-here"
+```
+
+Without this key the app falls back to polling the REST API every 5 minutes. With it, attraction status changes appear on the display within seconds. You can request an API key from the [ThemeParks Wiki](https://api.themeparks.wiki).
+
+### Configuring Parks
+
+By default the app shows all four Walt Disney World theme parks. You can configure any combination of parks from any ThemeParks Wiki destination in `config.json`:
+
+```json
+"parks": ["Magic Kingdom", "EPCOT", "Hollywood Studios", "Animal Kingdom", "Cedar Point"]
+```
+
+Leave the list empty to default to all Walt Disney World parks.
 
 ### Weather (Future Enhancement)
  The weather API we use is from OpenWeatherMaps. OpenWeatherMaps API requires an API key to fetch this data so you will need to take a quick minute to sign up for an account and copy your own API key into your `config.json`.

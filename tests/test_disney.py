@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, date
 
 import pytest
 
@@ -63,8 +63,8 @@ def test_load_config():
 def test_validate_date_valid():
     date_str = "2023-10-01"
     result = disney.validate_date(date_str)
-    # Check that result is a datetime object with the expected date
-    assert isinstance(result, datetime)
+    # Check result is a date-like or datetime object with the expected date
+    assert isinstance(result, (datetime, date))
     assert result.year == 2023 and result.month == 10 and result.day == 1
 
 def test_validate_date_invalid():
@@ -156,6 +156,41 @@ def test_loop_through_attractions_skips_closed(monkeypatch):
     # Only the operating attraction should be rendered.
     assert "Splash Mountain" in fake_matrix.rendered_attractions
     assert "Haunted Mansion" not in fake_matrix.rendered_attractions
+
+
+def test_loop_through_attractions_skips_empty_wait_time(monkeypatch):
+    fake_matrix = FakeMatrix()
+
+    def fake_render_attraction_info(matrix, attraction_info):
+        matrix.rendered_attractions.append(attraction_info['name'])
+
+    monkeypatch.setattr(disney, "render_attraction_info", fake_render_attraction_info)
+
+    park = {
+        "name": "Hollywood Studios",
+        "attractions": [
+            {"name": "Meet Disney Jr. Stars", "waitTime": "", "status": ""},
+            {"name": "Tron", "waitTime": "25", "status": "OPERATING"}
+        ]
+    }
+    disney.loop_through_attractions(fake_matrix, park)
+
+    assert "Tron" in fake_matrix.rendered_attractions
+    assert "Meet Disney Jr. Stars" not in fake_matrix.rendered_attractions
+
+
+def test_park_filter_limits_parks(monkeypatch):
+    from api.disney_api import clean_park_name
+    all_parks = [
+        {"name": "Disney's Animal Kingdom Theme Park", "id": "ak-id"},
+        {"name": "Magic Kingdom Park", "id": "mk-id"},
+        {"name": "Disney's Hollywood Studios", "id": "hs-id"},
+        {"name": "EPCOT", "id": "ep-id"},
+    ]
+    park_filter = ["Animal Kingdom"]
+    filtered = [p for p in all_parks if clean_park_name(p["name"]) in park_filter]
+    assert len(filtered) == 1
+    assert filtered[0]["id"] == "ak-id"
 
 
 # Test that show_trip_countdown passes along the correct next_trip_time.

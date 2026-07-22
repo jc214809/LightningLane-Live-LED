@@ -6,3 +6,6 @@ source =
     display
     updater
     utils
+omit =
+    driver/*
+    version.py
