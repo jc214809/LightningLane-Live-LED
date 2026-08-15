@@ -196,6 +196,23 @@ def test_get_park_location_exception(monkeypatch):
     result = get_park_location("dummy-park-id")
     assert result == []
 
+def test_get_park_entity_info_success(monkeypatch):
+    from api.disney_api import get_park_entity_info
+    dummy_location = {"latitude": 28.3759, "longitude": -81.5494}
+    monkeypatch.setattr(requests, "get", lambda url, **kwargs: DummyResponse(
+        {"location": dummy_location, "timezone": "America/New_York"}, 200))
+    location, tz = get_park_entity_info("dummy-park-id")
+    assert location == dummy_location
+    assert tz == "America/New_York"
+
+def test_get_park_entity_info_exception(monkeypatch):
+    from api.disney_api import get_park_entity_info
+    monkeypatch.setattr(requests, "get",
+                        lambda url, **kwargs: (_ for _ in ()).throw(requests.RequestException("error")))
+    location, tz = get_park_entity_info("dummy-park-id")
+    assert location == []
+    assert tz is None
+
 def test_fetch_park_schedule_success(monkeypatch):
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
@@ -280,6 +297,25 @@ def test_fetch_parks_and_attractions_success(monkeypatch):
     assert len(park["attractions"]) == 1
     attraction = park["attractions"][0]
     assert get_attraction_name({"name": "Space Mountain\u2122"}) == "Space Mountain"
+
+def test_fetch_parks_and_attractions_carries_timezone_through(monkeypatch):
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    fake_parks_list = [{
+        "id": "dummy-id",
+        "name": "Magic Kingdom",
+        "schedule": [{"date": today_str, "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00"}],
+        "weather": [],
+        "location": {"latitude": 28.3759, "longitude": -81.5494},
+        "timezone": "America/New_York",
+    }]
+    def fake_get(url, **kwargs):
+        if "children" in url:
+            return DummyResponse({"children": []}, 200)
+        return DummyResponse({}, 200)
+    monkeypatch.setattr(requests, "get", fake_get)
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {})
+    result = fetch_parks_and_attractions(fake_parks_list)
+    assert result[0]["timezone"] == "America/New_York"
 
 def test_fetch_parks_and_attractions_includes_shows(monkeypatch):
     today_str = datetime.now().strftime('%Y-%m-%d')
@@ -580,24 +616,69 @@ async def test_fetch_park_live_data_missing_livedata_key(monkeypatch):
 ###########
 # Tests for Park Operating Status & Schedule Update
 ###########
+def _fresh_ts(minutes_ago=0):
+    return (datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)).isoformat()
+
 def test_park_has_operating_attraction(monkeypatch):
     park = {
         "name": "Test Park",
         "attractions": [
-            {"name": "Ride A", "waitTime": "15", "status": "OPERATING"},
-            {"name": "Ride B", "waitTime": "", "status": "CLOSED"}
+            {"name": "Ride A", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts()},
+            {"name": "Ride B", "waitTime": "", "status": "CLOSED", "lastUpdatedTs": _fresh_ts()}
         ]
     }
     assert park_has_operating_attraction(park) is True
     park["attractions"][0]["status"] = "CLOSED"
     assert park_has_operating_attraction(park) is False
 
+def test_park_has_operating_attraction_stale_not_counted(monkeypatch):
+    park = {
+        "name": "Test Park",
+        "attractions": [
+            {"name": "Ride A", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts(minutes_ago=30)},
+        ]
+    }
+    assert park_has_operating_attraction(park) is False
+
+def test_park_has_operating_attraction_freshness_boundary(monkeypatch):
+    """Pin the _ATTRACTION_FRESHNESS_MINUTES=20 cutoff: just inside counts as fresh,
+    just outside doesn't. Guards against a silent off-by-one if the constant changes."""
+    park_fresh = {
+        "name": "Test Park",
+        "attractions": [
+            {"name": "Ride A", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts(minutes_ago=19)},
+        ]
+    }
+    assert park_has_operating_attraction(park_fresh) is True
+
+    park_stale = {
+        "name": "Test Park",
+        "attractions": [
+            {"name": "Ride A", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts(minutes_ago=21)},
+        ]
+    }
+    assert park_has_operating_attraction(park_stale) is False
+
+def test_park_has_operating_attraction_fresh_past_closing_time(monkeypatch):
+    """Extended/ticketed-hours case: closingTime has passed but a fresh OPERATING
+    attraction still counts — closingTime is no longer a hard gate."""
+    past_closing = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    park = {
+        "name": "Test Park",
+        "closingTime": past_closing,
+        "attractions": [
+            {"name": "After Hours Ride", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts()},
+        ]
+    }
+    assert park_has_operating_attraction(park) is True
+
 def test_handle_park_schedule_update(monkeypatch):
     park = {"name": "Test Park", "id": "dummy-id", "schedule": []}
     # Patch fetch_park_schedule to return a dummy schedule with an OPERATING event.
     dummy_schedule = [{
-        "type": "OPERATING", 
-        "openingTime": "09:00", 
+        "type": "OPERATING",
+        "date": "2026-08-12",
+        "openingTime": "09:00",
         "closingTime": "22:00",
         "purchases": [{"name": "Lightning Lane Multi Pass", "price": {"formatted": "$25"}}]
     }]
@@ -614,6 +695,7 @@ def test_handle_park_schedule_update(monkeypatch):
     assert park["specialTicketedEvent"] is True
     assert park["openingTime"] == "09:00"
     assert park["closingTime"] == "22:00"
+    assert park["schedule_date"] == "2026-08-12"
 
 def test_handle_park_schedule_update_calls_refresh(monkeypatch):
     park = {"name": "Test Park", "id": "dummy-id", "schedule": [], "attractions": []}
@@ -626,7 +708,7 @@ def test_handle_park_schedule_update_calls_refresh(monkeypatch):
 def test_update_parks_operating_status_no_refresh_when_already_operating(monkeypatch):
     park = {
         "name": "Test Park", "id": "dummy-id", "schedule": [], "operating": True,
-        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
+        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING", "lastUpdatedTs": _fresh_ts()}],
     }
     monkeypatch.setattr("api.disney_api.fetch_park_schedule",
                         lambda park_id: (_ for _ in ()).throw(AssertionError("schedule fetched")))
@@ -641,7 +723,7 @@ def test_update_parks_operating_status_defers_schedule_fetch(monkeypatch):
     """fetch_schedules=False (WS thread): transition flags the park but does no HTTP."""
     park = {
         "name": "Test Park", "id": "dummy-id", "schedule": [],
-        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
+        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING", "lastUpdatedTs": _fresh_ts()}],
     }
     monkeypatch.setattr("api.disney_api.fetch_park_schedule",
                         lambda park_id: (_ for _ in ()).throw(AssertionError("schedule fetched")))
@@ -656,7 +738,7 @@ def test_update_parks_operating_status_consumes_deferred_flag(monkeypatch):
     park = {
         "name": "Test Park", "id": "dummy-id", "schedule": [],
         "operating": True, "schedule_refresh_needed": True,
-        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
+        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING", "lastUpdatedTs": _fresh_ts()}],
     }
     monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [{
         "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00"
@@ -667,6 +749,199 @@ def test_update_parks_operating_status_consumes_deferred_flag(monkeypatch):
     assert updated[0]["schedule_refresh_needed"] is False
     assert updated[0]["openingTime"] == "09:00"
     assert refreshed == [park]
+
+def test_daily_schedule_refresh_due_at_3am_when_schedule_stale(monkeypatch):
+    """schedule_date doesn't match today and it's within the 3am-9am local window:
+    the daily refresh is due."""
+    from api.disney_api import _daily_schedule_refresh_due
+    local_now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+    park = {"name": "Test Park", "schedule_date": "2026-08-12"}
+    assert _daily_schedule_refresh_due(park, local_now) is True
+
+def test_daily_schedule_refresh_not_due_before_3am(monkeypatch):
+    from api.disney_api import _daily_schedule_refresh_due
+    local_now = datetime(2026, 8, 13, 2, 59, tzinfo=timezone.utc)
+    park = {"name": "Test Park", "schedule_date": "2026-08-12"}
+    assert _daily_schedule_refresh_due(park, local_now) is False
+
+def test_daily_schedule_refresh_not_due_once_schedule_matches_today(monkeypatch):
+    from api.disney_api import _daily_schedule_refresh_due
+    local_now = datetime(2026, 8, 13, 5, 0, tzinfo=timezone.utc)
+    park = {"name": "Test Park", "schedule_date": "2026-08-13"}
+    assert _daily_schedule_refresh_due(park, local_now) is False
+
+def test_daily_schedule_refresh_stops_after_9am_local(monkeypatch):
+    """API still hasn't published today's hours by 9am: stop retrying for the day."""
+    from api.disney_api import _daily_schedule_refresh_due
+    local_now = datetime(2026, 8, 13, 9, 0, tzinfo=timezone.utc)
+    park = {"name": "Test Park", "schedule_date": "2026-08-12"}
+    assert _daily_schedule_refresh_due(park, local_now) is False
+
+def test_daily_schedule_refresh_retries_every_30_minutes(monkeypatch):
+    """A failed attempt (schedule still stale after fetch) doesn't retry again until
+    30 minutes have passed."""
+    from api.disney_api import _daily_schedule_refresh_due
+    last_attempt = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+    park = {"name": "Test Park", "schedule_date": "2026-08-12", "_daily_refresh_last_attempt": last_attempt}
+
+    too_soon = datetime(2026, 8, 13, 3, 20, tzinfo=timezone.utc)
+    assert _daily_schedule_refresh_due(park, too_soon) is False
+
+    due = datetime(2026, 8, 13, 3, 30, tzinfo=timezone.utc)
+    assert _daily_schedule_refresh_due(park, due) is True
+
+def test_park_local_now_uses_park_timezone(monkeypatch):
+    from api.disney_api import _park_local_now
+    park = {"name": "Test Park", "timezone": "America/New_York"}
+    local_now = _park_local_now(park)
+    assert str(local_now.tzinfo) == "America/New_York"
+
+def test_park_local_now_falls_back_to_utc_for_unknown_timezone(monkeypatch):
+    from api.disney_api import _park_local_now
+    park = {"name": "Test Park", "timezone": "Not/A_Real_Zone"}
+    local_now = _park_local_now(park)
+    assert local_now.tzinfo == timezone.utc
+
+def test_park_local_now_falls_back_to_utc_when_timezone_missing(monkeypatch):
+    from api.disney_api import _park_local_now
+    park = {"name": "Test Park"}
+    local_now = _park_local_now(park)
+    assert local_now.tzinfo == timezone.utc
+
+def test_update_parks_operating_status_triggers_daily_refresh_at_3am(monkeypatch):
+    """End-to-end: at 3am local with yesterday's schedule_date, a refresh fires and
+    updates schedule_date/closingTime — the proactive daily refresh, independent of
+    attraction status entirely (park attractions are empty/closed here)."""
+    class FakeDateTime(datetime):
+        _now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+
+        @classmethod
+        def now(cls, tz=None):
+            return cls._now if tz is None else cls._now.astimezone(tz)
+
+    monkeypatch.setattr("api.disney_api.datetime", FakeDateTime)
+
+    park = {
+        "name": "Test Park", "id": "dummy-id", "schedule": [],
+        "operating": False, "timezone": None,
+        "schedule_date": "2026-08-12",
+        "attractions": [],
+    }
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [{
+        "type": "OPERATING", "date": "2026-08-13",
+        "openingTime": "2026-08-13T09:00:00+00:00", "closingTime": "2026-08-13T22:00:00+00:00",
+    }])
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
+
+    updated = update_parks_operating_status([park])
+    assert updated[0]["schedule_date"] == "2026-08-13"
+    assert updated[0]["closingTime"] == "2026-08-13T22:00:00+00:00"
+    assert updated[0]["schedule_refresh_needed"] is False
+
+def test_update_parks_operating_status_daily_refresh_retries_on_stale_response(monkeypatch):
+    """API keeps returning yesterday's OPERATING event (hasn't published today's hours
+    yet): schedule_date stays stale, so the daily refresh keeps retrying every 30
+    minutes instead of firing every single 5-minute poll cycle."""
+    class FakeDateTime(datetime):
+        _now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+
+        @classmethod
+        def now(cls, tz=None):
+            return cls._now if tz is None else cls._now.astimezone(tz)
+
+    monkeypatch.setattr("api.disney_api.datetime", FakeDateTime)
+
+    park = {
+        "name": "Test Park", "id": "dummy-id", "schedule": [],
+        "operating": False, "timezone": None,
+        "schedule_date": "2026-08-12",
+        "attractions": [],
+    }
+    fetch_count = []
+
+    def stale_fetch(park_id):
+        fetch_count.append(1)
+        # API still hasn't rolled over to today's schedule.
+        return [{"type": "OPERATING", "date": "2026-08-12",
+                 "openingTime": "2026-08-12T09:00:00+00:00", "closingTime": "2026-08-12T22:00:00+00:00"}]
+
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule", stale_fetch)
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
+
+    update_parks_operating_status([park])
+    assert len(fetch_count) == 1
+
+    # 10 minutes later: too soon to retry, no second fetch.
+    FakeDateTime._now = datetime(2026, 8, 13, 3, 10, tzinfo=timezone.utc)
+    update_parks_operating_status([park])
+    assert len(fetch_count) == 1
+
+    # 30 minutes after the first attempt: retries.
+    FakeDateTime._now = datetime(2026, 8, 13, 3, 30, tzinfo=timezone.utc)
+    update_parks_operating_status([park])
+    assert len(fetch_count) == 2
+
+    # Past 9am local: stops retrying for the day even though schedule is still stale.
+    FakeDateTime._now = datetime(2026, 8, 13, 9, 30, tzinfo=timezone.utc)
+    update_parks_operating_status([park])
+    assert len(fetch_count) == 2
+
+def test_park_reopens_after_midnight_without_deadlock(monkeypatch):
+    """
+    End-to-end regression test for the original deadlock: a closed park with no
+    fresh attractions gets its schedule proactively refreshed by the 3am-local daily
+    trigger — without needing any attraction to flip OPERATING first — and then
+    correctly shows operating again once fresh live data arrives after opening.
+    """
+    class FakeDateTime(datetime):
+        _now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+
+        @classmethod
+        def now(cls, tz=None):
+            return cls._now if tz is None else cls._now.astimezone(tz)
+
+    monkeypatch.setattr("api.disney_api.datetime", FakeDateTime)
+
+    park = {
+        "name": "Test Park", "id": "dummy-id", "schedule": [],
+        "operating": False, "timezone": None,
+        "schedule_date": "2026-08-12",
+        "attractions": [
+            {"name": "Ride A", "waitTime": "10", "status": "CLOSED",
+             "lastUpdatedTs": "2026-08-12T23:50:00+00:00"},
+        ],
+    }
+
+    schedule_fetches = []
+
+    def fake_fetch_schedule(park_id):
+        schedule_fetches.append(1)
+        return [{
+            "type": "OPERATING", "date": "2026-08-13",
+            "openingTime": "2026-08-13T09:00:00+00:00",
+            "closingTime": "2026-08-13T22:00:00+00:00",
+        }]
+
+    monkeypatch.setattr("api.disney_api.fetch_park_schedule", fake_fetch_schedule)
+    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
+
+    # 3am, park closed overnight: daily refresh fires proactively.
+    updated = update_parks_operating_status([park])
+    assert updated[0]["operating"] is False
+    assert schedule_fetches == [1]
+    assert updated[0]["schedule_refresh_needed"] is False
+    assert updated[0]["closingTime"] == "2026-08-13T22:00:00+00:00"
+    assert updated[0]["schedule_date"] == "2026-08-13"
+
+    # Later that morning: a fresh OPERATING attraction update arrives (WS/REST).
+    FakeDateTime._now = datetime(2026, 8, 13, 9, 30, tzinfo=timezone.utc)
+    park["attractions"][0]["status"] = "OPERATING"
+    park["attractions"][0]["lastUpdatedTs"] = "2026-08-13T09:29:00+00:00"
+    updated = update_parks_operating_status([park])
+    assert updated[0]["operating"] is True
+    # closed->open transition triggers its own (separate) schedule refresh too.
+    assert schedule_fetches == [1, 1]
+
 
 ###########
 # Tests for refresh_park_attractions
@@ -733,7 +1008,8 @@ def test_update_parks_operating_status(monkeypatch):
         "attractions": [{
             "name": "Ride A",
             "waitTime": "10",
-            "status": "OPERATING"
+            "status": "OPERATING",
+            "lastUpdatedTs": _fresh_ts()
         }],
         "id": "dummy-id",
         "schedule": []

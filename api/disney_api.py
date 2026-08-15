@@ -1,6 +1,7 @@
 import re
 import ssl
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import aiohttp
 import certifi
@@ -49,6 +50,21 @@ def get_park_location(park_id):
     except requests.RequestException as e:
         debug.error(f"Failed get park data with location data: {e}")
         return []
+
+
+def get_park_entity_info(park_id):
+    """Location and IANA timezone (e.g. 'America/New_York') for the park, from the
+    same /entity/{id} lookup. Timezone drives the daily 3am-local schedule refresh."""
+    api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}"
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        park_data = response.json()
+        return park_data.get("location"), park_data.get("timezone")
+    except requests.RequestException as e:
+        debug.error(f"Failed to fetch entity info for park {park_id}: {e}")
+        return [], None
 
 def fetch_park_schedule(park_id):
     """
@@ -110,13 +126,15 @@ def fetch_parks_from_destination(destination_id):
                 event for event in schedule if event.get("date") in (today_str, yesterday_str)
             ]
             debug.log(f"Schedule Filter: {schedule_filtered}")
+            location, park_timezone = get_park_entity_info(park.get("id"))
             filtered_parks.append({
                 "name": clean_park_name(park_name) if is_disney else park_name,
                 "id": park.get("id", "Unknown"),
                 "destination_id": destination_id,
                 "schedule": schedule_filtered,
                 "weather": [],
-                "location": get_park_location(park.get("id"))
+                "location": location,
+                "timezone": park_timezone
             })
 
         debug.info(f"Found {len(filtered_parks)} parks for destination {destination_id}.")
@@ -226,7 +244,8 @@ def fetch_parks_and_attractions(disney_park_list):
             "openingTime": operating_event.get("openingTime", ""),
             "llmpPrice": determine_llmp_price(operating_event),
             "weather": fetch_weather_data(location.get("latitude"), location.get("longitude")),
-            "location": location
+            "location": location,
+            "timezone": park_info.get("timezone")
         }
         parks.append(park_obj)
     return parks
@@ -338,23 +357,73 @@ async def fetch_park_live_data(park):
     debug.log(f"Live data fetched for {park.get('name')}: {len(updates)} entries")
     return updates
 
+_ATTRACTION_FRESHNESS_MINUTES = 20  # wider than the 5-min REST cycle and normal WS cadence
+_DAILY_REFRESH_HOUR = 3    # local time the new day's schedule becomes available to fetch
+_DAILY_REFRESH_RETRY_UNTIL_HOUR = 9  # give up retrying once the park would normally be open
+_DAILY_REFRESH_RETRY_MINUTES = 30
+
+
+def _park_local_now(park):
+    """Current time in the park's own timezone, or UTC if unknown (fails safe: the
+    daily-refresh window just won't line up with local 3am for that park)."""
+    tz_name = park.get("timezone")
+    if tz_name:
+        try:
+            return datetime.now(ZoneInfo(tz_name))
+        except Exception:
+            debug.warning(f"{park.get('name')}: unknown timezone '{tz_name}', falling back to UTC.")
+    return datetime.now(timezone.utc)
+
+
+def _schedule_reflects_today(park, local_now):
+    """True once handle_park_schedule_update has stored a schedule_date matching the
+    park's current local date — i.e. the daily refresh actually got today's hours,
+    not a stale/yesterday's OPERATING event the API hadn't rolled over yet."""
+    return park.get("schedule_date") == local_now.strftime("%Y-%m-%d")
+
+
+def _daily_schedule_refresh_due(park, local_now):
+    """
+    True once a day, from _DAILY_REFRESH_HOUR local time: fetch the new day's
+    schedule proactively so closingTime/openingTime are ready before the park
+    opens, without waiting on an attraction to flip OPERATING first.
+
+    If schedule_date still doesn't match today by _DAILY_REFRESH_HOUR (API hasn't
+    published it yet), retry every _DAILY_REFRESH_RETRY_MINUTES until
+    _DAILY_REFRESH_RETRY_UNTIL_HOUR, then stop for the day — a live OPERATING
+    attraction later still forces a fetch via the closed->open trigger below, so
+    the board isn't stuck even if the daily refresh never lands.
+    """
+    if local_now.hour < _DAILY_REFRESH_HOUR or local_now.hour >= _DAILY_REFRESH_RETRY_UNTIL_HOUR:
+        return False
+    if _schedule_reflects_today(park, local_now):
+        return False
+
+    last_attempt = park.get("_daily_refresh_last_attempt")
+    if last_attempt is None:
+        return True
+    return (local_now - last_attempt) >= timedelta(minutes=_DAILY_REFRESH_RETRY_MINUTES)
+
+
+def _attraction_is_fresh(attraction, now):
+    last_updated = attraction.get("lastUpdatedTs")
+    if not last_updated:
+        return False
+    try:
+        ts = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return False
+    return (now - ts) <= timedelta(minutes=_ATTRACTION_FRESHNESS_MINUTES)
+
+
 def park_has_operating_attraction(park):
     """
-    Returns True only if the park is within its scheduled hours AND has at least
-    one OPERATING attraction with a non-empty wait time.
-    A park whose entire live feed has gone stale (all DOWN, no OPERATING) returns False.
-    A park past its closing time returns False regardless of API status.
+    Returns True if the park has at least one OPERATING attraction with a
+    non-empty wait time AND recently-updated live data. closingTime is not a
+    hard gate here — it only drives display of the regular hours — so a live,
+    fresh ticketed/extended-hours event still shows as operating.
     """
-    closing_time_str = park.get("closingTime")
-    if closing_time_str:
-        try:
-            closing_dt = datetime.fromisoformat(closing_time_str)
-            now = datetime.now(closing_dt.tzinfo)
-            if now > closing_dt:
-                debug.info(f"{park['name']} is past closing time ({closing_time_str}), marking non-operating.")
-                return False
-        except (ValueError, TypeError):
-            pass
+    now = datetime.now(timezone.utc)
 
     debug.log(f"Searching for open attractions in {park['name']}")
     for attraction in park.get("attractions", []):
@@ -365,9 +434,12 @@ def park_has_operating_attraction(park):
             f"Wait Time: {wait_time} | Status: {status}"
         )
         if status and status.upper() == "OPERATING" and wait_time not in (None, ''):
-            debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")
-            return True
-    debug.info(f"{park['name']}: no OPERATING attractions found, marking non-operating.")
+            if _attraction_is_fresh(attraction, now):
+                debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")
+                return True
+            debug.log(f"{attraction['name']} ({park['name']}) is OPERATING but stale; not counted.")
+
+    debug.info(f"{park['name']}: no fresh OPERATING attractions found, marking non-operating.")
     return False
 
 
@@ -381,12 +453,27 @@ def update_parks_operating_status(parks, fetch_schedules=True):
     (blocking HTTP). With fetch_schedules=False that work is only flagged via
     'schedule_refresh_needed' — safe to call from the WS event loop — and a
     later call with fetch_schedules=True (the REST thread) performs it.
+
+    A schedule refresh is also flagged once a day starting at 3am in the
+    park's own local time, independent of attraction status — this is what
+    lets a park get its new closingTime/openingTime ready before it opens,
+    without waiting on an attraction to flip OPERATING first (which itself
+    used to depend on a fresh schedule: a circular dependency). If the API
+    hasn't published the new day's hours yet, this retries every 30 minutes
+    until 9am local, then stops for the day — the closed->open trigger above
+    still catches it later if a live attraction starts reporting first.
     """
 
     for park in parks:
         is_park_open = park_has_operating_attraction(park)  # Check if any attractions are operating
+        local_now = _park_local_now(park)
+
         if not park.get("operating") and is_park_open:
             park["schedule_refresh_needed"] = True
+        elif _daily_schedule_refresh_due(park, local_now):
+            park["schedule_refresh_needed"] = True
+            park["_daily_refresh_last_attempt"] = local_now
+
         # Update the operating status
         park["operating"] = is_park_open
 
@@ -398,7 +485,7 @@ def update_parks_operating_status(parks, fetch_schedules=True):
 
 
 def handle_park_schedule_update(park):
-    debug.info(f"{park.get('name')} is now operating. Fetching schedule...")
+    debug.info(f"Fetching schedule for {park.get('name')}...")
     schedule = fetch_park_schedule(park.get("id"))
     park["schedule"] = schedule
     debug.info(f"Updated schedule for {park.get('name')}")
@@ -409,6 +496,7 @@ def handle_park_schedule_update(park):
     park["specialTicketedEvent"] = is_special_event(schedule)
     park["closingTime"] = operating_event.get("closingTime", "")
     park["openingTime"] = operating_event.get("openingTime", "")
+    park["schedule_date"] = operating_event.get("date", "")
 
     refresh_park_attractions(park)
 
