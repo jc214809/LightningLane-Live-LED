@@ -229,6 +229,54 @@ def test_update_parks_live_data_merges_under_lock(monkeypatch):
     assert spy.acquisitions == 1
 
 
+def test_rest_merge_and_ws_write_interleave_safely_under_lock(monkeypatch):
+    """
+    With REST polling always-on (Change 3), merge_live_data (REST thread) and a
+    simulated WS-thread write can run concurrently against the same attraction
+    dict. Both must serialize on the real parks_data_lock so neither write is lost —
+    extends test_update_parks_live_data_merges_under_lock to the continuous-polling
+    scenario described in the plan.
+    """
+    from updater.shared import parks_data_lock
+
+    parks_copy = copy.deepcopy(DUMMY_PARKS)
+    attr = parks_copy[0]["attractions"][0]
+
+    results = {}
+
+    async def slow_fetch(park):
+        return [{"id": "1", "waitTime": 12, "status": "OPERATING", "lastUpdatedTs": "rest-update"}]
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", slow_fetch)
+
+    def ws_write():
+        with parks_data_lock:
+            attr["status"] = "DOWN"
+            attr["lastUpdatedTs"] = "ws-update"
+        results["ws_done"] = True
+
+    def rest_update():
+        update_parks_live_data(parks_copy)
+        results["rest_done"] = True
+
+    t1 = threading.Thread(target=ws_write)
+    t2 = threading.Thread(target=rest_update)
+    t1.start()
+    t2.start()
+    t1.join(timeout=2)
+    t2.join(timeout=2)
+
+    assert results.get("ws_done") is True
+    assert results.get("rest_done") is True
+    # Whichever wrote last wins cleanly — status and lastUpdatedTs must be consistent
+    # with each other (no torn write mixing fields from both threads).
+    if attr["lastUpdatedTs"] == "ws-update":
+        assert attr["status"] == "DOWN"
+    else:
+        assert attr["lastUpdatedTs"] == "rest-update"
+        assert attr["status"] == "OPERATING"
+
+
 def test_merge_live_data_preserves_wait_time_when_omitted():
     """A CLOSED update omits waitTime; the last known value must survive."""
     existing = [{
@@ -378,20 +426,21 @@ def test_merge_live_data_no_change():
     assert result == existing
 
 
-def test_update_parks_live_data_websocket_skips_http_fetch(monkeypatch):
-    """When use_websocket=True, fetch_live_data must not be called."""
+def test_update_parks_live_data_polls_regardless_of_websocket(monkeypatch):
+    """REST polling is an always-on backstop (PR #73 made the per-park fetch cheap):
+    fetch_live_data must still be called even when use_websocket=True."""
     called = []
 
-    async def should_not_be_called(attractions):
+    async def dummy_fetch_live_data(park):
         called.append(True)
         return []
 
-    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", should_not_be_called)
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
 
     parks_copy = copy.deepcopy(DUMMY_PARKS)
     update_parks_live_data(parks_copy, use_websocket=True)
 
-    assert called == [], "fetch_live_data should not be called when use_websocket=True"
+    assert called == [True], "fetch_live_data should still be called when use_websocket=True"
 
 
 def test_update_parks_live_data_no_websocket_calls_http_fetch(monkeypatch):
@@ -410,10 +459,11 @@ def test_update_parks_live_data_no_websocket_calls_http_fetch(monkeypatch):
     assert called == [True], "fetch_live_data should be called when use_websocket=False"
 
 
-def test_live_data_updater_websocket_does_initial_fetch_then_skips_polling(monkeypatch):
+def test_live_data_updater_websocket_polls_every_loop_iteration(monkeypatch):
     """
-    live_data_updater with use_websocket=True must call fetch_live_data once for the
-    initial population, then skip it in the polling loop.
+    live_data_updater with use_websocket=True calls fetch_live_data for the initial
+    population AND again on every polling-loop iteration — REST stays on as a
+    continuous backstop rather than handing off exclusively to WS after startup.
     """
     parks_data = []
     fetch_call_count = []
@@ -446,8 +496,8 @@ def test_live_data_updater_websocket_does_initial_fetch_then_skips_polling(monke
     except KeyboardInterrupt:
         pass
 
-    # fetch_live_data called exactly once (initial fetch), not again in the loop
-    assert len(fetch_call_count) == 1, "fetch_live_data should be called once for the initial fetch"
+    # fetch_live_data called for the initial fetch AND once in the polling loop
+    assert len(fetch_call_count) == 2, "fetch_live_data should be called for the initial fetch and each loop iteration"
     assert loop_iterations == [1], "polling loop should have run once then stopped"
 
 
