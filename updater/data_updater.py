@@ -97,6 +97,13 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
                 # Runs in websocket mode too: the WS thread defers schedule
                 # fetches (schedule_refresh_needed) to this thread.
                 updated_parks = update_parks_operating_status(updated_parks)
+                # No-op today: both functions above mutate parks_data's dicts in
+                # place and return the same list object, so this just reassigns
+                # parks_data to itself. If either is ever changed to rebuild the
+                # list instead of mutating in place, this line would start
+                # replacing parks_data wholesale — and any WS-thread write to an
+                # old dict reference would silently vanish. Keep mutating in
+                # place; don't "clean up" this line without checking that first.
                 with parks_data_lock:
                     parks_data[:] = updated_parks
                 for park in updated_parks:
