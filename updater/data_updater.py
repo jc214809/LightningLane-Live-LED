@@ -48,6 +48,15 @@ def merge_live_data(existing_attractions, new_live_data):
     return existing_attractions
 
 
+async def _fetch_all_live_data(parks):
+    """Fetch every park's live data concurrently on one event loop, instead of
+    one asyncio.run per park — avoids paying event-loop startup cost per park
+    and lets independent HTTP calls overlap instead of running serially."""
+    fetchable = [park for park in parks if park.get("attractions")]
+    results = await asyncio.gather(*(fetch_park_live_data(park) for park in fetchable))
+    return list(zip(fetchable, results))
+
+
 def update_parks_live_data(parks, use_websocket=False):
     """
     For each park in parks, update live data for attractions via REST.
@@ -55,19 +64,18 @@ def update_parks_live_data(parks, use_websocket=False):
     (PR #73), so REST polling stays on as an independent backstop/correction
     source even while the WS thread is also delivering per-event updates.
     """
-    for park in parks:
-        if park.get("attractions"):
-            new_live_data = asyncio.run(fetch_park_live_data(park))
-            if new_live_data is None:
-                # Fetch failed (rate limit, timeout, bad response): keep existing
-                # data and flag it stale so the next cycle is a retry, not a skip.
-                park["live_data_stale"] = True
-                debug.warning(f"Live data fetch failed for {park.get('name')}; keeping existing data.")
-            else:
-                with parks_data_lock:
-                    park["live_data_stale"] = False
-                    merge_live_data(park["attractions"], new_live_data)
+    for park, new_live_data in asyncio.run(_fetch_all_live_data(parks)):
+        if new_live_data is None:
+            # Fetch failed (rate limit, timeout, bad response): keep existing
+            # data and flag it stale so the next cycle is a retry, not a skip.
+            park["live_data_stale"] = True
+            debug.warning(f"Live data fetch failed for {park.get('name')}; keeping existing data.")
+        else:
+            with parks_data_lock:
+                park["live_data_stale"] = False
+                merge_live_data(park["attractions"], new_live_data)
 
+    for park in parks:
         if park.get("location") and park.get("operating"):
             park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
 
@@ -90,6 +98,7 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
         with parks_data_lock:
             parks_data[:] = initial_parks
         debug.info("Initial REST live data fetch complete — WebSocket will handle attraction updates.")
+    consecutive_failures = 0
     while True:
         try:
             if parks_data:
@@ -118,7 +127,9 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
                     )
             else:
                 debug.warning("No parks found during live data update.")
+            consecutive_failures = 0
         except Exception as e:
-            debug.error(f"Error during live data update: {e}")
+            consecutive_failures += 1
+            debug.error(f"Error during live data update (consecutive failure #{consecutive_failures}): {e}")
             debug.error(traceback.format_exc())
         time.sleep(update_interval)

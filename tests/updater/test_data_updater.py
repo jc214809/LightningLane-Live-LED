@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import threading
 
@@ -102,6 +103,56 @@ def test_live_data_updater(monkeypatch):
     updated_attr = parks_data[0]["attractions"][0]
     assert updated_attr["waitTime"] == 30
     assert updated_attr["lastUpdatedTs"] == "new_live"
+
+
+def test_live_data_updater_logs_consecutive_failure_count(monkeypatch):
+    """Repeated loop failures log an incrementing consecutive-failure count, and a
+    subsequent success resets it back to 0 — surfaces a persistent bug in the logs
+    with escalating visibility instead of an identical line forever."""
+    parks_data = []
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: parks)
+
+    call_count = []
+
+    def failing_operating_status(parks, **kwargs):
+        call_count.append(1)
+        if len(call_count) <= 2:
+            raise RuntimeError("boom")
+        return parks
+
+    monkeypatch.setattr("updater.data_updater.update_parks_operating_status", failing_operating_status)
+
+    async def dummy_fetch_live_data(park):
+        return None
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
+
+    logged_errors = []
+    monkeypatch.setattr("updater.data_updater.debug.error", lambda msg, *a: logged_errors.append(msg))
+
+    iterations = []
+
+    def fake_sleep(duration):
+        iterations.append(1)
+        if len(iterations) >= 3:
+            raise KeyboardInterrupt()
+
+    monkeypatch.setattr("updater.data_updater.time", type("t", (), {"sleep": fake_sleep}))
+
+    updater_thread = threading.Thread(
+        target=live_data_updater,
+        args=(copy.deepcopy(DUMMY_PARKS), 0, parks_data),
+        daemon=True,
+    )
+    try:
+        updater_thread.start()
+        updater_thread.join(timeout=2)
+    except KeyboardInterrupt:
+        pass
+
+    failure_logs = [m for m in logged_errors if "consecutive failure" in m]
+    assert "consecutive failure #1" in failure_logs[0]
+    assert "consecutive failure #2" in failure_logs[1]
 
 
 def test_merge_live_data_updates_existing():
@@ -402,6 +453,61 @@ def test_update_parks_live_data_multiple_attractions(monkeypatch):
     assert attr1["lastUpdatedTs"] == "new1"
     assert attr2["waitTime"] == 18
     assert attr2["lastUpdatedTs"] == "new2"
+
+
+def test_update_parks_live_data_fetches_multiple_parks_concurrently(monkeypatch):
+    """
+    fetch_park_live_data is called once per park, on one shared event loop, via
+    asyncio.gather rather than one asyncio.run per park — all in-flight
+    simultaneously rather than strictly sequential.
+    """
+    parks = [
+        {"id": "park1", "name": "Fantasy Land",
+         "attractions": [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
+        {"id": "park2", "name": "Adventure Land",
+         "attractions": [{"id": "2", "waitTime": 5, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
+    ]
+
+    in_flight = []
+    max_concurrent = []
+
+    async def tracking_fetch(park):
+        in_flight.append(park["id"])
+        max_concurrent.append(len(in_flight))
+        await asyncio.sleep(0)  # yield control, allowing the other fetch to start
+        in_flight.remove(park["id"])
+        return [{"id": park["attractions"][0]["id"], "waitTime": 99, "status": "OPERATING", "lastUpdatedTs": "new"}]
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", tracking_fetch)
+    updated = update_parks_live_data(copy.deepcopy(parks))
+
+    assert max(max_concurrent) == 2, "both parks' fetches should overlap, not run strictly sequentially"
+    assert updated[0]["attractions"][0]["waitTime"] == 99
+    assert updated[1]["attractions"][0]["waitTime"] == 99
+
+
+def test_update_parks_live_data_one_park_failure_does_not_block_another(monkeypatch):
+    """One park's fetch failing (returns None) must not prevent another park's
+    successful fetch from being merged."""
+    parks = [
+        {"id": "park1", "name": "Fantasy Land",
+         "attractions": [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
+        {"id": "park2", "name": "Adventure Land",
+         "attractions": [{"id": "2", "waitTime": 5, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
+    ]
+
+    async def flaky_fetch(park):
+        if park["id"] == "park1":
+            return None
+        return [{"id": "2", "waitTime": 42, "status": "OPERATING", "lastUpdatedTs": "new"}]
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", flaky_fetch)
+    updated = update_parks_live_data(copy.deepcopy(parks))
+
+    assert updated[0]["live_data_stale"] is True
+    assert updated[0]["attractions"][0]["waitTime"] == 10  # unchanged
+    assert updated[1]["live_data_stale"] is False
+    assert updated[1]["attractions"][0]["waitTime"] == 42
 
 
 def test_merge_live_data_no_change():
