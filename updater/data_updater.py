@@ -6,7 +6,6 @@ from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, up
 from api.weather import fetch_weather_data
 from updater.shared import parks_data_lock
 from utils import debug
-from utils.utils import get_eastern
 
 
 def merge_live_data(existing_attractions, new_live_data):
@@ -49,21 +48,16 @@ def merge_live_data(existing_attractions, new_live_data):
 
 
 async def _fetch_all_live_data(parks):
-    """Fetch every park's live data concurrently on one event loop, instead of
-    one asyncio.run per park — avoids paying event-loop startup cost per park
-    and lets independent HTTP calls overlap instead of running serially."""
+    """Fetch every park's live data concurrently on one shared event loop."""
     fetchable = [park for park in parks if park.get("attractions")]
     results = await asyncio.gather(*(fetch_park_live_data(park) for park in fetchable))
     return list(zip(fetchable, results))
 
 
-def update_parks_live_data(parks, use_websocket=False):
-    """
-    For each park in parks, update live data for attractions via REST.
-    Runs regardless of use_websocket: the per-park live-data endpoint is cheap
-    (PR #73), so REST polling stays on as an independent backstop/correction
-    source even while the WS thread is also delivering per-event updates.
-    """
+def update_parks_live_data(parks):
+    """Fetch and merge live attraction data for every park via REST, then
+    refresh weather for operating parks. See CLAUDE.md for why this runs
+    continuously even when the WS thread is also active."""
     for park, new_live_data in asyncio.run(_fetch_all_live_data(parks)):
         if new_live_data is None:
             # Fetch failed (rate limit, timeout, bad response): keep existing
@@ -79,40 +73,36 @@ def update_parks_live_data(parks, use_websocket=False):
         if park.get("location") and park.get("operating"):
             park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
 
-    debug.log(f"Updated parks data: {parks}")
     return parks
 
 
 def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False):
     """
     Background thread that updates live data for parks every 'update_interval' seconds.
-    Runs REST attraction polling and weather refresh regardless of use_websocket: the
-    per-park live-data endpoint is cheap (PR #73), so REST stays on as an independent
-    backstop/correction source even while the WS thread also delivers per-event updates.
+    use_websocket only controls the initial synchronous fetch below and the
+    schedule_refresh_needed handling further down — update_parks_live_data
+    itself always polls REST. See CLAUDE.md for the WS/REST design.
     """
     parks_data[:] = fetch_parks_and_attractions(disney_park_list)
     if use_websocket:
-        debug.info("WebSocket mode: performing initial REST live data fetch, then handing off to WS.")
-        initial_parks = update_parks_live_data(list(parks_data), use_websocket=False)
+        debug.info("WebSocket mode: performing initial REST live data fetch before WS takes over per-event updates.")
+        initial_parks = update_parks_live_data(list(parks_data))
         initial_parks = update_parks_operating_status(initial_parks)
         with parks_data_lock:
             parks_data[:] = initial_parks
-        debug.info("Initial REST live data fetch complete — WebSocket will handle attraction updates.")
+        debug.info("Initial REST live data fetch complete — WS will now deliver per-event updates; REST continues polling as a backstop.")
     consecutive_failures = 0
     while True:
         try:
             if parks_data:
-                updated_parks = update_parks_live_data(parks_data, use_websocket=use_websocket)
+                updated_parks = update_parks_live_data(parks_data)
                 # Runs in websocket mode too: the WS thread defers schedule
                 # fetches (schedule_refresh_needed) to this thread.
                 updated_parks = update_parks_operating_status(updated_parks)
-                # No-op today: both functions above mutate parks_data's dicts in
-                # place and return the same list object, so this just reassigns
-                # parks_data to itself. If either is ever changed to rebuild the
-                # list instead of mutating in place, this line would start
-                # replacing parks_data wholesale — and any WS-thread write to an
-                # old dict reference would silently vanish. Keep mutating in
-                # place; don't "clean up" this line without checking that first.
+                # No-op today (both calls above mutate parks_data in place and
+                # return it unchanged) — but if either starts rebuilding the
+                # list instead, this line starts silently dropping concurrent
+                # WS writes to the old dicts. Don't remove without checking.
                 with parks_data_lock:
                     parks_data[:] = updated_parks
                 for park in updated_parks:

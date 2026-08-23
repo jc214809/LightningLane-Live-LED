@@ -532,9 +532,10 @@ def test_merge_live_data_no_change():
     assert result == existing
 
 
-def test_update_parks_live_data_polls_regardless_of_websocket(monkeypatch):
+def test_update_parks_live_data_always_calls_http_fetch(monkeypatch):
     """REST polling is an always-on backstop (PR #73 made the per-park fetch cheap):
-    fetch_live_data must still be called even when use_websocket=True."""
+    fetch_live_data must be called regardless of whether WS is also active —
+    update_parks_live_data no longer takes a use_websocket flag at all."""
     called = []
 
     async def dummy_fetch_live_data(park):
@@ -544,25 +545,9 @@ def test_update_parks_live_data_polls_regardless_of_websocket(monkeypatch):
     monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
 
     parks_copy = copy.deepcopy(DUMMY_PARKS)
-    update_parks_live_data(parks_copy, use_websocket=True)
+    update_parks_live_data(parks_copy)
 
-    assert called == [True], "fetch_live_data should still be called when use_websocket=True"
-
-
-def test_update_parks_live_data_no_websocket_calls_http_fetch(monkeypatch):
-    """When use_websocket=False (default), fetch_live_data must be called."""
-    called = []
-
-    async def dummy_fetch_live_data(park):
-        called.append(True)
-        return []
-
-    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
-
-    parks_copy = copy.deepcopy(DUMMY_PARKS)
-    update_parks_live_data(parks_copy, use_websocket=False)
-
-    assert called == [True], "fetch_live_data should be called when use_websocket=False"
+    assert called == [True], "fetch_live_data should always be called"
 
 
 def test_live_data_updater_websocket_polls_every_loop_iteration(monkeypatch):

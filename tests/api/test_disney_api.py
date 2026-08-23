@@ -9,7 +9,6 @@ import requests
 
 from api import disney_api
 from api.disney_api import (
-    get_park_location,
     fetch_park_schedule,
     fetch_list_of_disney_world_parks,
     fetch_parks_and_attractions,
@@ -183,18 +182,6 @@ def test_resolve_parks_from_config_preserves_config_order(monkeypatch):
 ###########
 # Tests for HTTP Functions
 ###########
-
-def test_get_park_location_success(monkeypatch):
-    dummy_location = {"latitude": 28.3759, "longitude": -81.5494}
-    monkeypatch.setattr(requests, "get", lambda url, **kwargs: DummyResponse({"location": dummy_location}, 200))
-    result = get_park_location("dummy-park-id")
-    assert result == dummy_location
-
-def test_get_park_location_exception(monkeypatch):
-    monkeypatch.setattr(requests, "get",
-                        lambda url, **kwargs: (_ for _ in ()).throw(requests.RequestException("error")))
-    result = get_park_location("dummy-park-id")
-    assert result == []
 
 def test_get_park_entity_info_success(monkeypatch):
     from api.disney_api import get_park_entity_info

@@ -39,19 +39,6 @@ def resolve_destination_id(name_or_id):
         return None
 
 
-def get_park_location(park_id):
-    api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}"
-    debug.info("Fetching Disney World schedule data...")
-
-    try:
-        response = requests.get(api_url)
-        park_data = response.json()
-        return park_data.get("location")
-    except requests.RequestException as e:
-        debug.error(f"Failed get park data with location data: {e}")
-        return []
-
-
 def get_park_entity_info(park_id):
     """Location and IANA timezone (e.g. 'America/New_York') for the park, from the
     same /entity/{id} lookup. Timezone drives the daily 3am-local schedule refresh."""
@@ -383,17 +370,8 @@ def _schedule_reflects_today(park, local_now):
 
 
 def _daily_schedule_refresh_due(park, local_now):
-    """
-    True once a day, from _DAILY_REFRESH_HOUR local time: fetch the new day's
-    schedule proactively so closingTime/openingTime are ready before the park
-    opens, without waiting on an attraction to flip OPERATING first.
-
-    If schedule_date still doesn't match today by _DAILY_REFRESH_HOUR (API hasn't
-    published it yet), retry every _DAILY_REFRESH_RETRY_MINUTES until
-    _DAILY_REFRESH_RETRY_UNTIL_HOUR, then stop for the day — a live OPERATING
-    attraction later still forces a fetch via the closed->open trigger below, so
-    the board isn't stuck even if the daily refresh never lands.
-    """
+    """True within the once-daily 3am-9am local refresh window, with a 30-min
+    retry backoff, until schedule_date matches today. See CLAUDE.md for why."""
     if local_now.hour < _DAILY_REFRESH_HOUR or local_now.hour >= _DAILY_REFRESH_RETRY_UNTIL_HOUR:
         return False
     if _schedule_reflects_today(park, local_now):
@@ -418,10 +396,9 @@ def _attraction_is_fresh(attraction, now):
 
 def park_has_operating_attraction(park):
     """
-    Returns True if the park has at least one OPERATING attraction with a
-    non-empty wait time AND recently-updated live data. closingTime is not a
-    hard gate here — it only drives display of the regular hours — so a live,
-    fresh ticketed/extended-hours event still shows as operating.
+    True if the park has at least one OPERATING attraction with a non-empty
+    wait time and live data updated within _ATTRACTION_FRESHNESS_MINUTES.
+    Ignores closingTime, so a live extended-hours event still counts.
     """
     now = datetime.now(timezone.utc)
 
@@ -445,23 +422,12 @@ def park_has_operating_attraction(park):
 
 def update_parks_operating_status(parks, fetch_schedules=True):
     """
-    Updates each park object in the list with a new key 'operating' that is
-    True if the park has at least one operating attraction with a valid
-    wait time, otherwise False.
-
-    When a park transitions from closed to open it needs a schedule fetch
-    (blocking HTTP). With fetch_schedules=False that work is only flagged via
-    'schedule_refresh_needed' — safe to call from the WS event loop — and a
-    later call with fetch_schedules=True (the REST thread) performs it.
-
-    A schedule refresh is also flagged once a day starting at 3am in the
-    park's own local time, independent of attraction status — this is what
-    lets a park get its new closingTime/openingTime ready before it opens,
-    without waiting on an attraction to flip OPERATING first (which itself
-    used to depend on a fresh schedule: a circular dependency). If the API
-    hasn't published the new day's hours yet, this retries every 30 minutes
-    until 9am local, then stops for the day — the closed->open trigger above
-    still catches it later if a live attraction starts reporting first.
+    Sets each park's 'operating' key from park_has_operating_attraction, and
+    flags 'schedule_refresh_needed' on a closed->open transition or the daily
+    refresh window (see _daily_schedule_refresh_due). With fetch_schedules=False
+    (the WS event loop) that flag is only set, never acted on — the REST thread
+    calls again with fetch_schedules=True to actually perform the fetch. See
+    CLAUDE.md for the full design and why both triggers exist.
     """
 
     for park in parks:
