@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Disney (Emulated) 64x32",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/disney.py",
+      "args": ["--emulated", "--led-cols=64", "--led-rows=32"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUNBUFFERED": "1" }
+    },
+    {
+      "name": "Disney (Emulated) 64x64",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/disney.py",
+      "args": ["--emulated", "--led-cols=64", "--led-rows=64"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUNBUFFERED": "1" }
+    },
+    {
+      "name": "Pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-v"],
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUNBUFFERED": "1" }
+    }
+  ]
+}

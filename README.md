@@ -2,18 +2,20 @@
 ![Tests](https://github.com/jc214809/LightningLane-Live-LED/actions/workflows/coverage.yml/badge.svg) [![codecov](https://codecov.io/gh/jc214809/LightningLane-Live-LED/graph/badge.svg)](https://codecov.io/gh/jc214809/LightningLane-Live-LED)
 
 
-LightningLane-Live-LED is a Python application designed to fetch and display wait times for attractions at Walt Disney World on an LED matrix display. It retrieves park and attraction data from the [ThemeParks Wiki API](https://api.themeparks.wiki) and dynamically renders ride information—including park names, ride names, and wait times—onto an LED matrix. The application supports both actual hardware and an emulator for testing purposes.
+LightningLane-Live-LED is a Python application designed to fetch and display wait times for attractions at Walt Disney World and other theme parks on an LED matrix display. It retrieves park and attraction data from the [ThemeParks Wiki API](https://api.themeparks.wiki) and dynamically renders ride information—including park names, ride names, and wait times—onto an LED matrix. The application supports both actual hardware and an emulator for testing purposes.
 
 ## Features
 
 - **API Integration:**  
-  Retrieves Walt Disney World park data and attraction details using HTTP requests.
-- **Live Data Updates:**  
-  Uses a background thread to periodically update live wait times for attractions.
+  Retrieves park data and attraction details for Walt Disney World, Cedar Point, Kings Island, and any other destination supported by the ThemeParks Wiki API. Parks are configured by name in `config.json`.
+- **Real-Time WebSocket Updates:**  
+  When a ThemeParks API key is configured (or `websocket_only` is enabled — see [below](#themeparks-api-key-recommended)), live wait times are delivered via a persistent WebSocket connection (`wss://ws.themeparks.wiki/v1/live`) for instant updates as attraction statuses change. The app performs an initial REST fetch at startup to populate all data, then hands off to the WebSocket for ongoing updates. The connection is self-healing: a dead or silently-stalled connection is detected and reconnected automatically (typically within 2 minutes), with a REST refresh triggered afterward to catch any changes missed during the outage.
+- **Polling Fallback:**  
+  Without an API key, the app falls back to polling the REST API every 5 minutes for live wait times.
 - **Dynamic Display Rendering:**  
   Renders park details, character meet and greets (w/ Wait Times) and ride information with dynamic text wrapping and spacing on an LED matrix.
 - **Trip Countdown:**  
-  Displays a countdown to your next Disney visit for added excitement.
+  Displays a countdown to your next Disney visit for added excitement. Supports multiple upcoming trip dates.
 - **Current Weather Updates:**  
   Provides live weather information for each park.
 - **Emulation Mode:**  
@@ -170,6 +172,44 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --emulated                Force the scoreboard to run in software emulation mode.
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: true)
 ```
+
+### ThemeParks API Key (Recommended)
+
+To enable real-time WebSocket updates, add a ThemeParks API key to `config.json`:
+
+```json
+"themeparks_api_key": "your-api-key-here"
+```
+
+Without this key the app falls back to polling the REST API every 5 minutes. With it, attraction status changes appear on the display within seconds. You can request an API key from the [ThemeParks Wiki](https://api.themeparks.wiki).
+
+If you'd rather not use an API key, you can still enable WebSocket mode by setting `websocket_only` to `true` in `config.json`:
+
+```json
+"websocket_only": true
+```
+
+This connects to the same public WebSocket feed without sending an API key. Leave both `themeparks_api_key` unset (or set to the placeholder value) and `websocket_only: false` to use REST polling only.
+
+#### WebSocket Connection Health
+
+The WebSocket connection is monitored and self-healing:
+- A dead connection (network drop, server-side timeout) is detected within about 2 minutes and reconnected automatically.
+- A connection that stays open but silently stops delivering updates is detected by a background watchdog and force-reconnected, as long as at least one configured park is currently operating.
+- Every reconnect (whether from an error or the watchdog) triggers a REST refresh so the display catches up on anything missed during the outage.
+- Reconnect attempts back off (5s, 10s, 20s, ... up to 60s) if the connection keeps failing quickly, so a persistent outage doesn't hammer the API.
+
+You can watch this behavior in the logs (`logs/app.log`) — look for `WebSocket connected`, `WS heartbeat`, and `WebSocket disconnected; reconnecting in Ns` messages.
+
+### Configuring Parks
+
+By default the app shows all four Walt Disney World theme parks. You can configure any combination of parks from any ThemeParks Wiki destination in `config.json`:
+
+```json
+"parks": ["Magic Kingdom", "EPCOT", "Hollywood Studios", "Animal Kingdom", "Cedar Point"]
+```
+
+Leave the list empty to default to all Walt Disney World parks.
 
 ### Weather (Future Enhancement)
  The weather API we use is from OpenWeatherMaps. OpenWeatherMaps API requires an API key to fetch this data so you will need to take a quick minute to sign up for an account and copy your own API key into your `config.json`.

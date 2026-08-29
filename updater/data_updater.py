@@ -2,28 +2,34 @@ import asyncio
 import time
 import traceback
 
-from api.disney_api import fetch_parks_and_attractions, fetch_live_data, update_parks_operating_status
+from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, update_parks_operating_status
 from api.weather import fetch_weather_data
+from updater.shared import parks_data_lock
 from utils import debug
-from utils.utils import get_eastern
 
 
 def merge_live_data(existing_attractions, new_live_data):
-    """ Update existing attractions with new live data. Preserve the 'down_since' field if it already exists. """
+    """
+    Update existing attractions in place with new live data. Preserve the
+    'down_since' field if it already exists. Returns the same list object —
+    rebuilding the list would silently drop concurrent WS-thread updates to
+    the dicts it contains.
+    """
 
     # Create a mapping from attraction id to the existing attraction object.
     attraction_map = {attr["id"]: attr for attr in existing_attractions}
-    debug.info(f"Starting to update new live data for attractions.")
+    debug.log(f"Starting to update new live data for attractions.")
     for new_attr in new_live_data:
         attr_id = new_attr.get("id")
 
         if attr_id in attraction_map:
-            # Merge the new live data fields into the existing attraction.
+            # Merge only the fields present in the update; a CLOSED/REFURBISHMENT
+            # update omits waitTime so the last known value is preserved.
             existing = attraction_map[attr_id]
             existing.update({
-                "waitTime": new_attr.get("waitTime"),
-                "status": new_attr.get("status"),
-                "lastUpdatedTs": new_attr.get("lastUpdatedTs")
+                key: new_attr[key]
+                for key in ("waitTime", "status", "lastUpdatedTs")
+                if key in new_attr
             })
 
             # Do not overwrite down_since if already set, unless status is no longer DOWN.
@@ -33,52 +39,87 @@ def merge_live_data(existing_attractions, new_live_data):
                 # If it's still DOWN and down_since is not set, set it now.
                 if not existing.get("down_since"):
                     existing["down_since"] = new_attr.get("lastUpdatedTs")
+                    debug.info(f"DOWN (REST): {existing.get('name')} — down_since set to {existing['down_since']}")
         else:
-            # If new attraction is not present in the existing map, add it.
-            attraction_map[attr_id] = new_attr
-            debug.info(f"Adding new attraction {attr_id}: {new_attr}")
-    return list(attraction_map.values())
+            # Unknown ids are skipped: live updates carry no name/entityType, and
+            # roster changes are handled by refresh_park_attractions.
+            debug.log(f"Ignoring live data for unknown attraction id {attr_id}")
+    return existing_attractions
+
+
+async def _fetch_all_live_data(parks):
+    """Fetch every park's live data concurrently on one shared event loop."""
+    fetchable = [park for park in parks if park.get("attractions")]
+    results = await asyncio.gather(*(fetch_park_live_data(park) for park in fetchable))
+    return list(zip(fetchable, results))
 
 
 def update_parks_live_data(parks):
-    """
-    For each park in parks, update live data for attractions.
-    If the park is not operating, update the schedule for the next day.
-    If the park is operating, do not update the schedule.
-    """
-    for park in parks:
-        # Fetch live data for the current attractions.
-        if park.get("attractions"):
-            new_live_data = asyncio.run(fetch_live_data(park["attractions"]))
-            park["attractions"] = merge_live_data(park["attractions"], new_live_data)
+    """Fetch and merge live attraction data for every park via REST, then
+    refresh weather for operating parks. See CLAUDE.md for why this runs
+    continuously even when the WS thread is also active."""
+    for park, new_live_data in asyncio.run(_fetch_all_live_data(parks)):
+        if new_live_data is None:
+            # Fetch failed (rate limit, timeout, bad response): keep existing
+            # data and flag it stale so the next cycle is a retry, not a skip.
+            park["live_data_stale"] = True
+            debug.warning(f"Live data fetch failed for {park.get('name')}; keeping existing data.")
+        else:
+            with parks_data_lock:
+                park["live_data_stale"] = False
+                merge_live_data(park["attractions"], new_live_data)
 
-        # Update weather data
+    for park in parks:
         if park.get("location") and park.get("operating"):
             park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
 
-    debug.log(f"Updated parks data: {parks}")
     return parks
 
 
-def live_data_updater(disney_park_list, update_interval, parks_data):
+def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False):
     """
     Background thread that updates live data for parks every 'update_interval' seconds.
-    The initial fetch of parks is done only once, and then live data is updated on the existing parks.
+    use_websocket only controls the initial synchronous fetch below and the
+    schedule_refresh_needed handling further down — update_parks_live_data
+    itself always polls REST. See CLAUDE.md for the WS/REST design.
     """
-    # Initial fetch of parks and attractions.
     parks_data[:] = fetch_parks_and_attractions(disney_park_list)
+    if use_websocket:
+        debug.info("WebSocket mode: performing initial REST live data fetch before WS takes over per-event updates.")
+        initial_parks = update_parks_live_data(list(parks_data))
+        initial_parks = update_parks_operating_status(initial_parks)
+        with parks_data_lock:
+            parks_data[:] = initial_parks
+        debug.info("Initial REST live data fetch complete — WS will now deliver per-event updates; REST continues polling as a backstop.")
+    consecutive_failures = 0
     while True:
         try:
             if parks_data:
-                # Only update live data for existing parks.
                 updated_parks = update_parks_live_data(parks_data)
-                # Update each park with operating status.
+                # Runs in websocket mode too: the WS thread defers schedule
+                # fetches (schedule_refresh_needed) to this thread.
                 updated_parks = update_parks_operating_status(updated_parks)
-                parks_data[:] = updated_parks  # Update shared list in-place.
-                debug.info("Parks live data updated in background.")
+                # No-op today (both calls above mutate parks_data in place and
+                # return it unchanged) — but if either starts rebuilding the
+                # list instead, this line starts silently dropping concurrent
+                # WS writes to the old dicts. Don't remove without checking.
+                with parks_data_lock:
+                    parks_data[:] = updated_parks
+                for park in updated_parks:
+                    attrs = park.get("attractions") or []
+                    total = len(attrs)
+                    down = [a for a in attrs if a.get("status") == "DOWN"]
+                    operating = [a for a in attrs if a.get("status") == "OPERATING"]
+                    debug.info(
+                        f"REST poll [{park['name']}]: {len(operating)} operating, "
+                        f"{len(down)} DOWN, {total} total"
+                        + (f" | DOWN: {', '.join(a['name'] for a in down)}" if down else "")
+                    )
             else:
                 debug.warning("No parks found during live data update.")
+            consecutive_failures = 0
         except Exception as e:
-            debug.error(f"Error during live data update: {e}")
+            consecutive_failures += 1
+            debug.error(f"Error during live data update (consecutive failure #{consecutive_failures}): {e}")
             debug.error(traceback.format_exc())
         time.sleep(update_interval)

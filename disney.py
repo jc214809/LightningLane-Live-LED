@@ -15,9 +15,10 @@ from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.startup import render_mickey_logo
 from utils.utils import args, led_matrix_options
-from api.disney_api import fetch_list_of_disney_world_parks
+from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from display.attractions.attraction_info import render_attraction_info
 from updater.data_updater import live_data_updater
+from updater.websocket_updater import websocket_live_updater
 from display.countdown.countdown import render_countdown_to_disney
 
 from utils import debug
@@ -63,17 +64,34 @@ def main():
     matrix = RGBMatrix(options=matrixOptions)
     initialize_fonts(matrix.height)
 
-    disney_park_list = fetch_list_of_disney_world_parks()
+    park_names = config.get('parks', [])
+    disney_park_list = resolve_parks_from_config(park_names)
     if not disney_park_list:
-        debug.error("No Disney parks found. Exiting.")
+        debug.error("No parks found. Exiting.")
         return
+
+    api_key = config.get("themeparks_api_key")
+    websocket_only = config.get("websocket_only", False)
+    use_websocket = bool(api_key and not api_key.startswith("<")) or websocket_only
 
     update_thread = threading.Thread(
         target=live_data_updater,
         args=(disney_park_list, update_interval, parks_data),
+        kwargs={"use_websocket": use_websocket},
         daemon=True
     )
     update_thread.start()
+
+    if use_websocket:
+        ws_thread = threading.Thread(
+            target=websocket_live_updater,
+            args=(api_key, parks_data),
+            daemon=True
+        )
+        ws_thread.start()
+        debug.info("WebSocket live updater started — REST live data polling disabled.")
+    else:
+        debug.info("No ThemeParks API key configured; using polling only.")
 
     # Log configured trip dates at startup
     configured_dates = [d.isoformat() for d in parse_trip_dates(config)]
@@ -211,11 +229,12 @@ def initialize_park_information_screen(matrix, park):
 
 def loop_through_attractions(matrix, park):
     for attraction_info in park.get("attractions", []):
-        matrix.Clear()
-        debug.info(
-            f"Displaying ride: {attraction_info['name']} (Park: {park['name']}) | "f"Wait Time: {attraction_info['waitTime']} min | Status: {attraction_info['status']}")
         if (attraction_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
-            and attraction_info.get("waitTime") is not None):
+                and attraction_info.get("waitTime") not in [None, '']):
+            matrix.Clear()
+            debug.info(
+                f"Displaying ride: {attraction_info['name']} (Park: {park['name']}) | "
+                f"Wait Time: {attraction_info['waitTime']} min | Status: {attraction_info['status']}")
             render_attraction_info(matrix, attraction_info)
             time.sleep(8)
 

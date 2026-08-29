@@ -3,6 +3,12 @@ from driver import graphics
 from utils import debug
 
 
+def _format_wait_time(raw_wait):
+    if isinstance(raw_wait, str) and raw_wait.startswith("Group"):
+        return raw_wait
+    return f"{raw_wait} Mins"
+
+
 def render_attraction_info(matrix, ride_info):
     """
     Renders ride name at the top and wait time at the bottom in a single draw call.
@@ -12,7 +18,7 @@ def render_attraction_info(matrix, ride_info):
     """
     debug.log(f"Rendering ride info: {ride_info}")
     ride_name = ride_info["name"]
-    wait_time = f"{ride_info['waitTime']} Mins"
+    wait_time = _format_wait_time(ride_info["waitTime"])
 
 
     # waittime_font = loaded_fonts["waittime"]
