@@ -77,7 +77,7 @@ def test_live_data_updater(monkeypatch):
     monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch_live_data)
 
     # Patch fetch_parks_and_attractions to return the parks unchanged.
-    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: parks)
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks, weather_api_key=None: parks)
 
     # Fake sleep function that raises KeyboardInterrupt to break the loop.
     def fake_sleep(duration):
@@ -110,7 +110,7 @@ def test_live_data_updater_logs_consecutive_failure_count(monkeypatch):
     subsequent success resets it back to 0 — surfaces a persistent bug in the logs
     with escalating visibility instead of an identical line forever."""
     parks_data = []
-    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: parks)
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks, weather_api_key=None: parks)
 
     call_count = []
 
@@ -564,7 +564,7 @@ def test_live_data_updater_websocket_polls_every_loop_iteration(monkeypatch):
         return []
 
     monkeypatch.setattr("updater.data_updater.fetch_park_live_data", counting_fetch)
-    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks, weather_api_key=None: copy.deepcopy(DUMMY_PARKS))
     monkeypatch.setattr("updater.data_updater.update_parks_operating_status", lambda parks: parks)
 
     loop_iterations = []
@@ -609,7 +609,7 @@ def test_live_data_updater_websocket_loop_updates_operating_status(monkeypatch):
         return parks
 
     monkeypatch.setattr("updater.data_updater.fetch_park_live_data", dummy_fetch)
-    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks, weather_api_key=None: copy.deepcopy(DUMMY_PARKS))
     monkeypatch.setattr("updater.data_updater.update_parks_operating_status", recording_update)
 
     def fake_sleep(duration):
