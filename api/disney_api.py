@@ -17,6 +17,12 @@ troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
 DISNEY_WORLD_DESTINATION_ID = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
 _UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
 
+# Every synchronous request to the ThemeParks Wiki API uses this timeout so a
+# slow/unreachable API fails fast instead of hanging the caller indefinitely —
+# resolve_parks_from_config runs on bullpen's render/update thread when used
+# as a plugin, so a hang here freezes the whole scoreboard.
+REQUEST_TIMEOUT_SECONDS = 10
+
 
 def resolve_destination_id(name_or_id):
     """Return a destination UUID. If name_or_id already looks like a UUID, return it as-is.
@@ -24,7 +30,7 @@ def resolve_destination_id(name_or_id):
     if _UUID_RE.match(name_or_id):
         return name_or_id
     try:
-        response = requests.get("https://api.themeparks.wiki/v1/destinations")
+        response = requests.get("https://api.themeparks.wiki/v1/destinations", timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         destinations = response.json().get("destinations", [])
         name_lower = name_or_id.lower()
@@ -45,7 +51,7 @@ def get_park_entity_info(park_id):
     api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}"
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         park_data = response.json()
         return park_data.get("location"), park_data.get("timezone")
@@ -66,7 +72,7 @@ def fetch_park_schedule(park_id):
     debug.info(f"Fetching schedule for park with ID: {park_id}")
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()  # Ensure we raise an error for bad responses
         schedule_data = response.json().get("schedule", [])
 
@@ -92,7 +98,7 @@ def fetch_parks_from_destination(destination_id):
     debug.info("Fetching parks for destination %s", destination_id)
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         parks_data = response.json().get("parks", [])
 
@@ -148,7 +154,7 @@ def resolve_parks_from_config(park_names):
         return fetch_list_of_disney_world_parks()
 
     try:
-        response = requests.get("https://api.themeparks.wiki/v1/destinations")
+        response = requests.get("https://api.themeparks.wiki/v1/destinations", timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         destinations = response.json().get("destinations", [])
     except requests.RequestException as e:
@@ -198,7 +204,7 @@ def fetch_parks_and_attractions(disney_park_list):
         debug.info(f"Fetching attractions for park: {park_name} (ID: {park_id})")
         api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
         try:
-            response = requests.get(api_url)
+            response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
             park_data = response.json()
             debug.log(f"{park_name} Park Data: {park_data}")
@@ -477,7 +483,7 @@ def refresh_park_attractions(park):
     api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         children = response.json().get("children", [])
     except requests.RequestException as e:

@@ -85,6 +85,19 @@ def test_resolve_destination_id_request_error(monkeypatch):
                         lambda url, **kw: (_ for _ in ()).throw(requests.RequestException("err")))
     assert resolve_destination_id("Cedar Point") is None
 
+def test_resolve_destination_id_passes_timeout(monkeypatch):
+    """Regression test: every request to the ThemeParks Wiki API must pass a
+    timeout, so a slow/unreachable API fails fast instead of hanging the
+    caller -- resolve_parks_from_config runs synchronously on bullpen's
+    render/update thread when used as a plugin."""
+    calls = []
+    monkeypatch.setattr(
+        requests, "get",
+        lambda url, **kw: calls.append(kw) or DummyResponse({"destinations": []}, 200),
+    )
+    resolve_destination_id("Cedar Point")
+    assert calls and calls[0].get("timeout") == disney_api.REQUEST_TIMEOUT_SECONDS
+
 ###########
 # Tests for resolve_parks_from_config
 ###########
