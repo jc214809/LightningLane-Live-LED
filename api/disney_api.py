@@ -298,8 +298,9 @@ def parse_queue_wait(queue):
 def build_live_updates(live_entries):
     """
     Convert raw liveData entries into the minimal update dicts merge_live_data
-    consumes. CLOSED/REFURBISHMENT entries (and DOWN shows) omit waitTime so the
-    last known value is preserved.
+    consumes. CLOSED/REFURBISHMENT entries, and all DOWN entries, omit waitTime:
+    merge_live_data derives the DOWN wait string from the persisted down_since
+    timestamp rather than the raw per-poll lastUpdated value.
     """
     updates = []
     for entry in live_entries:
@@ -312,8 +313,7 @@ def build_live_updates(live_entries):
             "lastUpdatedTs": entry.get("lastUpdated"),
         }
         if status == "DOWN":
-            if entry.get("entityType") == "ATTRACTION":
-                update["waitTime"] = f"Down {get_down_time(entry.get('lastUpdated'))}"
+            pass  # waitTime is derived from down_since once merged; see merge_live_data
         elif status not in ("CLOSED", "REFURBISHMENT"):
             update["waitTime"] = parse_queue_wait(entry.get("queue") or {})
         updates.append(update)

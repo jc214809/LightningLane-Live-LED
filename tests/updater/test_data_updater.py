@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import threading
+from datetime import datetime, timedelta, timezone
 
 from updater.data_updater import (
     merge_live_data,
@@ -206,6 +207,31 @@ def test_merge_live_data_down_since_handling():
     result2 = merge_live_data(result, new_up)
     assert result2[0]["status"] == "OPERATING"
     assert result2[0]["down_since"] == ""
+
+
+def test_merge_live_data_down_wait_time_uses_down_since_not_last_updated():
+    """Regression test: waitTime for a DOWN attraction must reflect elapsed
+    time since down_since (when the ride actually went down), not the raw
+    per-poll lastUpdatedTs, which stays recent on every REST poll."""
+    down_since_ts = (datetime.now(timezone.utc) - timedelta(minutes=42)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    existing = [{
+        "id": "1",
+        "waitTime": 5,
+        "status": "DOWN",
+        "down_since": down_since_ts,
+        "lastUpdatedTs": down_since_ts,
+    }]
+
+    # A fresh REST poll re-reports DOWN with a lastUpdatedTs from "just now".
+    new_still_down = [{
+        "id": "1",
+        "status": "DOWN",
+        "lastUpdatedTs": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }]
+    result = merge_live_data(copy.deepcopy(existing), new_still_down)
+
+    assert result[0]["down_since"] == down_since_ts
+    assert result[0]["waitTime"] == "Down 42"
 
 
 def test_merge_live_data_ignores_unknown_ids():

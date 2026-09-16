@@ -492,14 +492,16 @@ def test_build_live_updates_filters_non_attraction_entities():
     updates = build_live_updates(entries)
     assert [u["id"] for u in updates] == ["s-1"]
 
-def test_build_live_updates_down_attraction_gets_down_wait(monkeypatch):
-    monkeypatch.setattr("api.disney_api.get_down_time", lambda ts: 12)
+def test_build_live_updates_down_attraction_omits_wait_time():
+    # waitTime for DOWN attractions is derived later in merge_live_data from
+    # the persisted down_since, not from the raw per-poll lastUpdated here.
     entries = [{
         "id": "attr-1", "entityType": "ATTRACTION", "status": "DOWN",
         "lastUpdated": "2023-10-01T12:00:00Z",
     }]
     updates = build_live_updates(entries)
-    assert updates[0]["waitTime"] == "Down 12"
+    assert "waitTime" not in updates[0]
+    assert updates[0]["status"] == "DOWN"
 
 def test_build_live_updates_down_show_omits_wait_time():
     entries = [{

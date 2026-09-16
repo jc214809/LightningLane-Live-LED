@@ -2,7 +2,7 @@ import asyncio
 import time
 import traceback
 
-from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, update_parks_operating_status
+from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, get_down_time, update_parks_operating_status
 from api.weather import fetch_weather_data
 from updater.shared import parks_data_lock
 from utils import debug
@@ -40,6 +40,8 @@ def merge_live_data(existing_attractions, new_live_data):
                 if not existing.get("down_since"):
                     existing["down_since"] = new_attr.get("lastUpdatedTs")
                     debug.info(f"DOWN (REST): {existing.get('name')} — down_since set to {existing['down_since']}")
+                down_time = get_down_time(existing.get("down_since"))
+                existing["waitTime"] = f"Down {down_time}" if down_time is not None else "Down"
         else:
             # Unknown ids are skipped: live updates carry no name/entityType, and
             # roster changes are handled by refresh_park_attractions.
