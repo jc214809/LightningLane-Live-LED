@@ -190,7 +190,7 @@ def resolve_parks_from_config(park_names):
     return result
 
 
-def fetch_parks_and_attractions(disney_park_list):
+def fetch_parks_and_attractions(disney_park_list, weather_api_key=None):
     parks = []
     for park_info in disney_park_list:
         park_name = park_info.get("name", "Unknown")
@@ -236,7 +236,7 @@ def fetch_parks_and_attractions(disney_park_list):
             "closingTime": operating_event.get("closingTime", ""),
             "openingTime": operating_event.get("openingTime", ""),
             "llmpPrice": determine_llmp_price(operating_event),
-            "weather": fetch_weather_data(location.get("latitude"), location.get("longitude")),
+            "weather": fetch_weather_data(location.get("latitude"), location.get("longitude"), api_key=weather_api_key),
             "location": location,
             "timezone": park_info.get("timezone")
         }

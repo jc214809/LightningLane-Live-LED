@@ -56,7 +56,7 @@ async def _fetch_all_live_data(parks):
     return list(zip(fetchable, results))
 
 
-def update_parks_live_data(parks):
+def update_parks_live_data(parks, weather_api_key=None):
     """Fetch and merge live attraction data for every park via REST, then
     refresh weather for operating parks. See CLAUDE.md for why this runs
     continuously even when the WS thread is also active."""
@@ -73,22 +73,27 @@ def update_parks_live_data(parks):
 
     for park in parks:
         if park.get("location") and park.get("operating"):
-            park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
+            park["weather"] = fetch_weather_data(
+                park.get("location").get("latitude"), park.get("location").get("longitude"), api_key=weather_api_key
+            )
 
     return parks
 
 
-def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False):
+def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False, weather_api_key=None):
     """
     Background thread that updates live data for parks every 'update_interval' seconds.
     use_websocket only controls the initial synchronous fetch below and the
     schedule_refresh_needed handling further down — update_parks_live_data
     itself always polls REST. See CLAUDE.md for the WS/REST design.
+
+    weather_api_key overrides config.json's weather.apikey — for callers (e.g.
+    the bullpen plugin) that have no config.json in the process cwd.
     """
-    parks_data[:] = fetch_parks_and_attractions(disney_park_list)
+    parks_data[:] = fetch_parks_and_attractions(disney_park_list, weather_api_key=weather_api_key)
     if use_websocket:
         debug.info("WebSocket mode: performing initial REST live data fetch before WS takes over per-event updates.")
-        initial_parks = update_parks_live_data(list(parks_data))
+        initial_parks = update_parks_live_data(list(parks_data), weather_api_key=weather_api_key)
         initial_parks = update_parks_operating_status(initial_parks)
         with parks_data_lock:
             parks_data[:] = initial_parks
@@ -97,7 +102,7 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
     while True:
         try:
             if parks_data:
-                updated_parks = update_parks_live_data(parks_data)
+                updated_parks = update_parks_live_data(parks_data, weather_api_key=weather_api_key)
                 # Runs in websocket mode too: the WS thread defers schedule
                 # fetches (schedule_refresh_needed) to this thread.
                 updated_parks = update_parks_operating_status(updated_parks)
