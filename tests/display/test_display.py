@@ -29,7 +29,7 @@ def test_fonts():
     assert 64 in font_dict
     for board_size in font_dict:
         assert isinstance(font_dict[board_size], dict)
-        for key in ["park", "info", "waittime", "ride", "countdown"]:
+        for key in ["park", "info", "waittime", "ride", "countdown", "title"]:
             assert key in font_dict[board_size]
 
 # --- Fixture to patch graphics and os.path.exists ---

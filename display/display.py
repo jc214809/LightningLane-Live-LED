@@ -14,14 +14,16 @@ def fonts():
             "info": "assets/fonts/patched/4x6-legacy.bdf",
             "waittime": "assets/fonts/patched/4x6-legacy.bdf",
             "ride": "assets/fonts/patched/4x6-legacy.bdf",
-            "countdown": "assets/fonts/patched/6x9.bdf"
+            "countdown": "assets/fonts/patched/6x9.bdf",
+            "title": "assets/fonts/patched/4x6-legacy.bdf"
         },
         64: {
             "park": "assets/fonts/patched/6x13.bdf",
             "info": "assets/fonts/patched/4x6-legacy.bdf",
             "waittime": "assets/fonts/patched/5x8.bdf",
             "ride": "assets/fonts/patched/5x8.bdf",
-            "countdown": "assets/fonts/patched/6x9.bdf"
+            "countdown": "assets/fonts/patched/6x9.bdf",
+            "title": "assets/fonts/patched/4x6-legacy.bdf"
         }
     }
 
