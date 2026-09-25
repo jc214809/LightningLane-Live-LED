@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import aiohttp
 import certifi
 
-from api.disney_api import fetch_park_live_data, get_down_time, parse_queue_wait, update_parks_operating_status
+from api.disney_api import fetch_park_live_data, get_down_time, parse_forecast, parse_queue_wait, update_parks_operating_status
 from updater.data_updater import merge_live_data
 from updater.shared import parks_data_lock
 from utils import debug
@@ -101,6 +101,8 @@ def _apply_live_update(data, parks_data):
                 prev_status = attr.get("status")
                 attr["status"] = status
                 attr["lastUpdatedTs"] = last_updated
+                if live.get("forecast"):
+                    attr["forecast"] = parse_forecast(live["forecast"])
 
                 if status == "DOWN":
                     if not attr.get("down_since"):

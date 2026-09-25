@@ -655,3 +655,11 @@ def test_live_data_updater_websocket_loop_updates_operating_status(monkeypatch):
     # One call from the initial fetch, one from the loop iteration — both with
     # schedule fetching enabled (the REST thread is where blocking HTTP belongs).
     assert status_calls == [True, True]
+
+def test_merge_live_data_copies_forecast_and_keeps_it_when_an_update_has_none():
+    forecast = [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
+    existing = [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]
+    merge_live_data(existing, [{"id": "1", "waitTime": 20, "status": "OPERATING", "lastUpdatedTs": "a", "forecast": forecast}])
+    assert existing[0]["forecast"] == forecast
+    merge_live_data(existing, [{"id": "1", "waitTime": 25, "status": "OPERATING", "lastUpdatedTs": "b"}])
+    assert existing[0]["forecast"] == forecast
