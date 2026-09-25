@@ -481,3 +481,14 @@ def test_unknown_entity_id_is_ignored():
     _apply_live_update(msg, parks)
     assert parks[0]["attractions"][0]["waitTime"] == 20
     assert parks[0]["attractions"][0]["lastUpdatedTs"] == "old"
+
+
+def test_ws_update_stores_forecast_and_keeps_it_when_absent():
+    parks = _parks_with_attr()
+    raw = [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20, "percentage": 17}, {"bad": 1}]
+    _apply_live_update(_make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 30}},
+                                                "forecast": raw}), parks)
+    attr = parks[0]["attractions"][0]
+    assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
+    _apply_live_update(_make_livedata_msg(), parks)
+    assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]

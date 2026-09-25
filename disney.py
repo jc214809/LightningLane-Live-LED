@@ -4,6 +4,7 @@ import time
 import logging
 import threading
 import json
+import random
 import traceback
 from datetime import datetime, date
 from typing import Iterable, Union, Optional
@@ -15,8 +16,10 @@ from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from utils.utils import args, led_matrix_options
-from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
-from display.attractions.attraction_info import render_attraction_info
+from api.disney_api import fetch_list_of_disney_world_parks, forecast_wait_now, resolve_parks_from_config
+from display.animation import forget_screen, show_screen
+from display.landmarks import LANDMARK_S, landmark_for, landmark_screen
+from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
 from display.countdown.countdown import render_countdown_to_disney
@@ -37,6 +40,7 @@ else:
     logger.setLevel(logging.INFO)
 
 use_image_logo = False
+PARK_REVEALS = ("tink", "buzz")
 
 def main():
     # Load configuration
@@ -127,7 +131,6 @@ def main():
                         continue
                     initialize_park_information_screen(matrix, park)
                     loop_through_attractions(matrix, park)
-                    matrix.Clear()
             else:
                 debug.info("No parks data yet, waiting...")
                 time.sleep(5)
@@ -217,32 +220,45 @@ def render_logo(matrix):
     else:
         debug.info("Rendering castle fireworks intro...")
         render_castle_fireworks(matrix)
+    forget_screen(matrix)
+
+
+def _static(render, *args):
+    def draw(canvas, t):
+        render(canvas, *args)
+        return False
+    return draw
 
 
 def initialize_park_information_screen(matrix, park):
-    matrix.Clear()
+    landmark = landmark_for(park.get("name"))
+    if landmark:
+        debug.info(f"Rendering {park['name']} landmark.")
+        show_screen(matrix, landmark_screen(landmark(matrix.width, matrix.height)), LANDMARK_S)
     debug.info(f"Rendering {park['name']} Title Screen.")
-    render_park_information_screen(matrix, park)
-    time.sleep(8)
+    show_screen(matrix, _static(render_park_information_screen, park), 8, transition=random.choice(PARK_REVEALS))
 
 def loop_through_attractions(matrix, park):
     for attraction_info in park.get("attractions", []):
         if (attraction_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
                 and attraction_info.get("waitTime") not in [None, '']):
-            matrix.Clear()
+            # Snapshot the dict: the updater threads mutate it in place mid-animation.
+            ride = dict(attraction_info)
+            expected = forecast_wait_now(ride.get("forecast"))
             debug.info(
-                f"Displaying ride: {attraction_info['name']} (Park: {park['name']}) | "
-                f"Wait Time: {attraction_info['waitTime']} min | Status: {attraction_info['status']}")
-            render_attraction_info(matrix, attraction_info)
-            time.sleep(8)
+                f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
+                f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']}")
+            show_screen(matrix, _attraction_screen(ride, expected), 8)
+
+def _attraction_screen(ride, expected):
+    # A closure per ride: the next screen's sweep redraws this one, so it must not see later loop values.
+    return lambda canvas, t: draw_attraction_frame(canvas, ride, t, expected)
 
 def show_trip_countdown(matrix, next_trip_time):
     # Render the next trip count down
     if next_trip_time is None:
         return
-    matrix.Clear()
-    render_countdown_to_disney(matrix, next_trip_time)
-    time.sleep(7)
+    show_screen(matrix, _static(render_countdown_to_disney, next_trip_time), 7)
 
 if __name__ == "__main__":
     main()

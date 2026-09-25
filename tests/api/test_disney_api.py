@@ -20,6 +20,8 @@ from api.disney_api import (
     fetch_park_live_data,
     parse_queue_wait,
     build_live_updates,
+    parse_forecast,
+    forecast_wait_now,
     park_has_operating_attraction,
     update_parks_operating_status,
     handle_park_schedule_update,
@@ -1026,3 +1028,55 @@ def test_update_parks_operating_status(monkeypatch):
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
     updated = update_parks_operating_status(copy.deepcopy(parks))
     assert updated[0]["operating"] is True
+
+# ---- Wait-time forecasts ----
+
+FORECAST = [
+    {"time": "2026-09-25T10:00:00-04:00", "waitTime": 20, "percentage": 17},
+    {"time": "2026-09-25T11:00:00-04:00", "waitTime": 40, "percentage": 34},
+]
+
+
+def test_parse_forecast_keeps_time_and_wait_only():
+    assert parse_forecast(FORECAST) == [
+        {"time": "2026-09-25T10:00:00-04:00", "waitTime": 20},
+        {"time": "2026-09-25T11:00:00-04:00", "waitTime": 40},
+    ]
+
+
+@pytest.mark.parametrize("raw", [None, [], "nope", [None], [{"time": "2026-09-25T10:00:00-04:00"}],
+                                 [{"waitTime": 10}], [{"time": 5, "waitTime": 10}],
+                                 [{"time": "2026-09-25T10:00:00-04:00", "waitTime": "10"}],
+                                 [{"time": "2026-09-25T10:00:00-04:00", "waitTime": True}]])
+def test_parse_forecast_drops_malformed_points(raw):
+    assert parse_forecast(raw) == []
+
+
+@pytest.mark.parametrize("now_utc, expected", [
+    ("2026-09-25T14:00:00+00:00", 20),   # 10:00 EDT, start of the hour
+    ("2026-09-25T14:59:59+00:00", 20),
+    ("2026-09-25T15:30:00+00:00", 40),   # 11:30 EDT
+    ("2026-09-25T13:59:00+00:00", None),  # before the forecast starts
+    ("2026-09-25T16:00:00+00:00", None),  # after the last hour
+])
+def test_forecast_wait_now_picks_the_hour_containing_now(now_utc, expected):
+    now = datetime.fromisoformat(now_utc)
+    assert forecast_wait_now(parse_forecast(FORECAST), now) == expected
+
+
+@pytest.mark.parametrize("forecast", [None, [], [{"time": "garbage", "waitTime": 5}],
+                                      [{"time": "2026-09-25T10:00:00", "waitTime": 5}]])
+def test_forecast_wait_now_without_usable_data_is_none(forecast):
+    assert forecast_wait_now(forecast, datetime(2026, 9, 25, 14, 30, tzinfo=timezone.utc)) is None
+
+
+def test_build_live_updates_includes_forecast_only_when_present():
+    entries = [
+        {"id": "a", "entityType": "ATTRACTION", "status": "OPERATING", "lastUpdated": "t",
+         "queue": {"STANDBY": {"waitTime": 30}}, "forecast": FORECAST},
+        {"id": "b", "entityType": "ATTRACTION", "status": "OPERATING", "lastUpdated": "t",
+         "queue": {"STANDBY": {"waitTime": 10}}},
+    ]
+    with_fc, without_fc = build_live_updates(entries)
+    assert with_fc["forecast"] == parse_forecast(FORECAST)
+    assert "forecast" not in without_fc

@@ -301,6 +301,33 @@ def parse_queue_wait(queue):
     return None
 
 
+def parse_forecast(raw_forecast):
+    """Keep the hourly (time, waitTime) points from a liveData forecast, dropping malformed ones."""
+    points = []
+    for point in raw_forecast or []:
+        if not isinstance(point, dict):
+            continue
+        when, wait = point.get("time"), point.get("waitTime")
+        if isinstance(when, str) and isinstance(wait, int) and not isinstance(wait, bool):
+            points.append({"time": when, "waitTime": wait})
+    return points
+
+
+def forecast_wait_now(forecast, now=None):
+    """The forecast wait for the hour containing now, or None if the forecast doesn't cover it."""
+    now = now or datetime.now(timezone.utc)
+    for point in forecast or []:
+        try:
+            start = datetime.fromisoformat(point["time"].replace("Z", "+00:00"))
+        except (ValueError, AttributeError, KeyError, TypeError):
+            continue
+        if start.tzinfo is None:
+            continue
+        if start <= now < start + timedelta(hours=1):
+            return point["waitTime"]
+    return None
+
+
 def build_live_updates(live_entries):
     """
     Convert raw liveData entries into the minimal update dicts merge_live_data
@@ -322,6 +349,8 @@ def build_live_updates(live_entries):
             pass  # waitTime is derived from down_since once merged; see merge_live_data
         elif status not in ("CLOSED", "REFURBISHMENT"):
             update["waitTime"] = parse_queue_wait(entry.get("queue") or {})
+        if entry.get("forecast"):
+            update["forecast"] = parse_forecast(entry["forecast"])
         updates.append(update)
     return updates
 

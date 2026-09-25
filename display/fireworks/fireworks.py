@@ -3,6 +3,7 @@ import random
 import time
 
 from driver import graphics
+from display.animation import frame_canvas, present
 from display.display import get_text_width, loaded_fonts
 from utils import debug
 
@@ -301,7 +302,7 @@ def draw_title(canvas, font, layout, alpha):
 def render_castle_fireworks(matrix, duration=12.0, fps=30, rng=None):
     """Animate the castle fireworks scene on the matrix for `duration` seconds."""
     show = FireworksShow(matrix.width, matrix.height, rng)
-    canvas = matrix.CreateFrameCanvas()
+    canvas = frame_canvas(matrix)
     frame_time = 1.0 / fps
     frames = int(duration * fps)
     font = loaded_fonts.get("title")
@@ -318,7 +319,7 @@ def render_castle_fireworks(matrix, duration=12.0, fps=30, rng=None):
             canvas.SetPixel(x, y, r, g, b)
         # Drawn over the sparks so bursts pass behind the name.
         draw_title(canvas, font, layout, title_alpha(i / fps))
-        canvas = matrix.SwapOnVSync(canvas)
+        canvas = present(matrix, canvas)
         remaining = frame_time - (time.monotonic() - start)
         if remaining > 0:
             time.sleep(remaining)

@@ -2,7 +2,7 @@
 import os
 import tempfile
 import pytest
-from display.display import fonts, initialize_fonts, colors, get_text_width, wrap_text
+from display.display import fonts, initialize_fonts, colors, get_text_width, plain_text, wrap_text
 from display.display import loaded_fonts  # Import the global loaded_fonts variable
 
 # Create dummy implementations for graphics.Font and graphics.Color
@@ -64,7 +64,7 @@ def test_initialize_fonts_no_definition(monkeypatch):
 
 def test_colors():
     color_dict = colors()
-    for expected in ["mickey_mouse_red", "disney_blue", "white", "down", "gold"]:
+    for expected in ["mickey_mouse_red", "disney_blue", "white", "down", "gold", "wait"]:
         assert expected in color_dict
         c = color_dict[expected]
         assert hasattr(c, "r") and hasattr(c, "g") and hasattr(c, "b")
@@ -154,3 +154,47 @@ def test_wrap_text_word_too_long():
     text2 = "Hello world"
     result2 = wrap_text(dummy_font, text2, 40, 0)
     assert result2 == ["Hello", "world"]
+
+class FixedWidthFont:
+    def CharacterWidth(self, char):
+        return 5
+
+
+def test_wrap_text_breaks_an_overwide_hyphenated_word_after_the_hyphen():
+    # "Circle-Vision" is 65px on a 64px board.
+    assert wrap_text(FixedWidthFont(), "Wide in Circle-Vision 360", 64, 1) == ["Wide in", "Circle-", "Vision 360"]
+
+
+def test_wrap_text_keeps_hyphenated_words_that_fit_whole():
+    assert wrap_text(FixedWidthFont(), "Walt Disney World Railroad - Main", 64, 1) == ["Walt Disney", "World", "Railroad -", "Main"]
+
+
+def test_plain_text_swaps_characters_the_board_fonts_lack():
+    assert plain_text("Buzz Lightyear’s") == "Buzz Lightyear's"
+    assert plain_text("Rock ’n’ Roller Coaster") == "Rock 'n' Roller Coaster"
+    assert plain_text("Star Tours – The Adventures Continue") == "Star Tours - The Adventures Continue"
+    assert plain_text("“Quoted” — Wait…") == '"Quoted" - Wait...'
+    assert plain_text("Presented by Enterprise® at EPCOT™") == "Presented by Enterprise at EPCOT"
+    assert plain_text("Space Mountain") == "Space Mountain"
+
+
+def test_narrow_spaces_are_measured_at_space_px():
+    assert get_text_width(FixedWidthFont(), "Down 100 Mins") == 65
+    assert get_text_width(FixedWidthFont(), "Down 100 Mins", space_px=2) == 59
+
+
+def test_wrap_text_with_narrow_spaces_keeps_down_100_mins_on_one_line():
+    assert wrap_text(FixedWidthFont(), "Down 100 Mins", 64, 1) == ["Down 100", "Mins"]
+    assert wrap_text(FixedWidthFont(), "Down 100 Mins", 64, 1, space_px=2) == ["Down 100 Mins"]
+
+
+def test_draw_text_with_narrow_spaces_places_each_word(monkeypatch):
+    import display.display as disp
+    calls = []
+    monkeypatch.setattr(disp, "graphics", type("G", (), {
+        "DrawText": staticmethod(lambda c, f, x, y, color, text: calls.append((x, text)))}))
+    disp.draw_text("canvas", FixedWidthFont(), 3, 7, "white", "Down 100 Mins", space_px=2)
+    assert calls == [(3, "Down"), (25, "100"), (42, "Mins")]
+    calls.clear()
+    disp.draw_text("canvas", FixedWidthFont(), 3, 7, "white", "Down 100 Mins")
+    assert calls == [(3, "Down 100 Mins")], "without space_px it's a single normal DrawText"

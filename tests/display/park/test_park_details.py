@@ -147,7 +147,9 @@ def test_render_weather_icon_success(monkeypatch):
             self.content = content
         def raise_for_status(self):
             pass
-    def dummy_get(url):
+    timeouts = []
+    def dummy_get(url, timeout=None):
+        timeouts.append(timeout)
         return DummyResponse(b"\x89PNG\r\n\x1a\n")
     monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
     # Patch PIL.Image.open to return a fake image.
@@ -164,15 +166,34 @@ def test_render_weather_icon_success(monkeypatch):
     # Ensure caching: calling again returns the same object.
     cached = render_weather_icon("01d")
     assert cached is img
+    assert timeouts == [park_details.ICON_TIMEOUT_S], "one download, with a timeout"
 
 def test_render_weather_icon_failure(monkeypatch):
     # Dummy get that simulates a network failure.
-    def dummy_get(url):
+    def dummy_get(url, timeout=None):
         raise Exception("Network error")
     monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
     park_details.icon_cache.clear()
+    park_details.icon_failures.clear()
     img = render_weather_icon("badcode")
     assert img is None
+
+def test_failed_weather_icon_is_not_redownloaded_every_frame(monkeypatch):
+    calls = []
+    def dummy_get(url, timeout=None):
+        calls.append(url)
+        raise Exception("Network error")
+    monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
+    now = [1000.0]
+    monkeypatch.setattr(park_details.time, "monotonic", lambda: now[0])
+    park_details.icon_cache.clear()
+    park_details.icon_failures.clear()
+    for _ in range(30):
+        assert render_weather_icon("10d") is None
+    assert len(calls) == 1
+    now[0] += park_details.ICON_RETRY_S
+    render_weather_icon("10d")
+    assert len(calls) == 2, "retries once the back-off has passed"
 
 def test_display_weather_icon_and_description(monkeypatch):
     fake_matrix = FakeMatrix(width=128, height=32)

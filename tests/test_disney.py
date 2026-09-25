@@ -6,6 +6,7 @@ from datetime import datetime, date
 import pytest
 
 import disney  # Import your main module (disney.py)
+import display.animation as disney_animation
 
 
 # ---- Helper/Fake Classes ----
@@ -30,12 +31,9 @@ class FakeMatrix2:
 
 class FakeMatrix:
     def __init__(self):
+        self.width, self.height = 64, 32
         self.clear_count = 0
-        self.park_info_rendered = False
-        self.attraction_info_rendered = False
-        self.countdown_rendered = False
         self.rendered_attractions = []
-        self.countdown_called = False
 
     def Clear(self):
         self.clear_count += 1
@@ -87,56 +85,112 @@ def test_render_logo_without_image_plays_castle_fireworks(monkeypatch):
     disney.render_logo(fake_matrix)
     assert played == [fake_matrix]
 
-def test_initialize_park_information_screen(monkeypatch):
+class PixelCanvas:
+    def SetPixel(self, x, y, r, g, b):
+        pass
+
+
+FAKE_CANVAS = PixelCanvas()
+
+
+@pytest.fixture
+def screens(monkeypatch):
+    """Replace the animation player: draw each screen once and record how it was played."""
+    played = []
+
+    def fake_show_screen(matrix, draw, hold_s, transition="wipe"):
+        played.append({"hold": hold_s, "transition": transition, "animating": draw(FAKE_CANVAS, 0.0)})
+
+    monkeypatch.setattr(disney, "show_screen", fake_show_screen)
+    return played
+
+
+def test_initialize_park_information_screen(monkeypatch, screens):
     fake_matrix = FakeMatrix()
-    # Override render_park_information_screen to record the call
-    called = False
-    def fake_render_park_information_screen(matrix, park):
-        nonlocal called
-        called = True
-    monkeypatch.setattr(disney, "render_park_information_screen", fake_render_park_information_screen)
+    drawn_on = []
+    monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: drawn_on.append((canvas, park)))
     park = {"name": "Magic Kingdom"}
     disney.initialize_park_information_screen(fake_matrix, park)
-    assert called is True
-    # Also, ensure that Clear was called (at least once)
-    assert fake_matrix.clear_count > 0
+    assert drawn_on == [(FAKE_CANVAS, park)]
+    landmark, title = screens
+    assert landmark == {"hold": disney.LANDMARK_S, "transition": "wipe", "animating": True}
+    assert title["hold"] == 8 and title["animating"] is False
+    assert title["transition"] in disney.PARK_REVEALS
 
-def test_loop_through_attractions(monkeypatch):
+
+def test_parks_without_a_landmark_go_straight_to_the_title(monkeypatch, screens):
+    monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
+    disney.initialize_park_information_screen(FakeMatrix(), {"name": "Cedar Point"})
+    assert len(screens) == 1 and screens[0]["hold"] == 8
+
+
+def test_park_screens_are_revealed_by_both_tink_and_buzz(monkeypatch, screens):
+    monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
+    for _ in range(60):
+        disney.initialize_park_information_screen(FakeMatrix(), {"name": "Magic Kingdom"})
+    titles = [s for s in screens if s["hold"] == 8]
+    assert {s["transition"] for s in titles} == {"tink", "buzz"}
+    assert set(disney.PARK_REVEALS) <= set(disney_animation.TRANSITIONS)
+
+def test_loop_through_attractions(monkeypatch, screens):
     fake_matrix = FakeMatrix()
-    # Override render_attraction_info to mark call on the matrix
-    def fake_render_attraction_info(matrix, attraction_info):
-        matrix.attraction_info_rendered = True
-    monkeypatch.setattr(disney, "render_attraction_info", fake_render_attraction_info)
-    # Create a dummy park with one attraction that is operating
-    park = {
-        "name": "Magic Kingdom",
-        "attractions": [
-            {"name": "Space Mountain", "waitTime": "30", "status": "OPERATING"}
-        ]
-    }
+    drawn = []
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: drawn.append(ride) or True)
+    attraction = {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}
+    park = {"name": "Magic Kingdom", "attractions": [attraction]}
     disney.loop_through_attractions(fake_matrix, park)
-    assert fake_matrix.attraction_info_rendered is True
+    assert drawn == [attraction]
+    assert drawn[0] is not attraction, "the updater threads mutate the live dict; animate a snapshot"
+    assert screens == [{"hold": 8, "transition": "wipe", "animating": True}]
 
-def test_show_trip_countdown(monkeypatch):
+def test_loop_through_attractions_passes_this_hours_forecast(monkeypatch, screens):
+    seen = []
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: seen.append(expected))
+    monkeypatch.setattr(disney, "forecast_wait_now", lambda forecast: forecast[0]["waitTime"] if forecast else None)
+    park = {"name": "MK", "attractions": [
+        {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING", "forecast": [{"time": "x", "waitTime": 40}]},
+        {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
+    ]}
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert seen == [40, None]
+
+def test_each_attraction_screen_keeps_its_own_ride(monkeypatch):
+    """The next screen's sweep redraws the previous one; it must still show the previous ride."""
+    screens = []
+    monkeypatch.setattr(disney, "show_screen", lambda matrix, draw, hold_s, transition="wipe": screens.append(draw))
+    drawn = []
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: drawn.append(ride["name"]))
+    park = {"name": "MK", "attractions": [
+        {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
+        {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
+    ]}
+    disney.loop_through_attractions(FakeMatrix(), park)
+    screens[0]("canvas", 1.0)
+    assert drawn == ["Space Mountain"]
+
+def test_show_trip_countdown(monkeypatch, screens):
     fake_matrix = FakeMatrix()
-    # Override render_countdown_to_disney to record the call
-    def fake_render_countdown_to_disney(matrix, next_trip_time):
-        matrix.countdown_rendered = True
-    monkeypatch.setattr(disney, "render_countdown_to_disney", fake_render_countdown_to_disney)
+    drawn = []
+    monkeypatch.setattr(disney, "render_countdown_to_disney", lambda canvas, when: drawn.append(when))
     next_trip_time = datetime(2023, 12, 25)
     disney.show_trip_countdown(fake_matrix, next_trip_time)
-    assert fake_matrix.countdown_rendered is True
+    assert drawn == [next_trip_time]
+    assert screens[0]["hold"] == 7
+
+
+def test_show_trip_countdown_skips_when_no_trip(screens):
+    disney.show_trip_countdown(FakeMatrix(), None)
+    assert screens == []
 
 
 # Test that loop_through_attractions only renders operating attractions.
-def test_loop_through_attractions_skips_closed(monkeypatch):
+def test_loop_through_attractions_skips_closed(monkeypatch, screens):
     fake_matrix = FakeMatrix()
 
-    # Create a fake version of render_attraction_info that records the attraction name.
-    def fake_render_attraction_info(matrix, attraction_info):
-        matrix.rendered_attractions.append(attraction_info['name'])
+    def fake_draw(canvas, attraction_info, t, expected):
+        fake_matrix.rendered_attractions.append(attraction_info['name'])
 
-    monkeypatch.setattr(disney, "render_attraction_info", fake_render_attraction_info)
+    monkeypatch.setattr(disney, "draw_attraction_frame", fake_draw)
 
     # Build a dummy park with one closed and one operating attraction.
     park = {
@@ -153,13 +207,13 @@ def test_loop_through_attractions_skips_closed(monkeypatch):
     assert "Haunted Mansion" not in fake_matrix.rendered_attractions
 
 
-def test_loop_through_attractions_skips_empty_wait_time(monkeypatch):
+def test_loop_through_attractions_skips_empty_wait_time(monkeypatch, screens):
     fake_matrix = FakeMatrix()
 
-    def fake_render_attraction_info(matrix, attraction_info):
-        matrix.rendered_attractions.append(attraction_info['name'])
+    def fake_draw(canvas, attraction_info, t, expected):
+        fake_matrix.rendered_attractions.append(attraction_info['name'])
 
-    monkeypatch.setattr(disney, "render_attraction_info", fake_render_attraction_info)
+    monkeypatch.setattr(disney, "draw_attraction_frame", fake_draw)
 
     park = {
         "name": "Hollywood Studios",
@@ -189,7 +243,7 @@ def test_park_filter_limits_parks(monkeypatch):
 
 
 # Test that show_trip_countdown passes along the correct next_trip_time.
-def test_show_trip_countdown_format(monkeypatch):
+def test_show_trip_countdown_format(monkeypatch, screens):
     fake_matrix = FakeMatrix()
     recorded_time = None
 
