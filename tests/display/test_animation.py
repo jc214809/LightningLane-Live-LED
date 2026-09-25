@@ -158,7 +158,7 @@ def test_screen_time_starts_after_the_reveal():
     assert seen[reveal_frames + 3] > 0
 
 
-FLYBYS = [animation.TinkReveal, animation.BuzzReveal]
+FLYBYS = [animation.TinkReveal, animation.BuzzReveal, animation.FigmentReveal]
 
 
 @pytest.mark.parametrize("reveal_cls", FLYBYS)

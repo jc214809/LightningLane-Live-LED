@@ -212,7 +212,37 @@ class BuzzReveal(FlyByReveal):
                 for _ in range(4 * self.scale)]
 
 
-TRANSITIONS = {"wipe": Wipe, "tink": TinkReveal, "buzz": BuzzReveal}
+class FigmentReveal(FlyByReveal):
+    """Figment flutters across, trailing sparkly imagination dust."""
+
+    duration = FLYBY_S * 1.8
+
+    # Side view flying right. '.' empty, P purple body, G green wing, O orange horn/spine,
+    # E big white eye, B black pupil.
+    art = [
+        ".O....O.",
+        "PPGG.PP.",
+        "EPPPPPP.",
+        "BEPPPPO.",
+        ".PPPPOO.",
+        "..PP....",
+    ]
+    colors = {"P": (150, 70, 190), "G": (90, 200, 110), "O": (235, 140, 40), "E": (250, 250, 250), "B": (30, 30, 40)}
+    dust_colors = [(210, 140, 255), (255, 255, 255), (140, 220, 255)]
+
+    def position(self, t):
+        p = t / self.duration
+        # A gentler, wider bob than Tinker Bell's.
+        return self.progress_x(t), self.height * 0.5 + math.sin(p * math.pi * 3) * self.height * 0.15
+
+    def spawn(self, x, y):
+        r = self.rng
+        return [[x + r.uniform(0, self.sprite_w / 2), y + r.uniform(0, self.sprite_w / 2),
+                 r.uniform(-0.2, 0.1), r.uniform(0.05, 0.3), r.randint(10, 20), r.choice(self.dust_colors)]
+                for _ in range(2 * self.scale)]
+
+
+TRANSITIONS = {"wipe": Wipe, "tink": TinkReveal, "buzz": BuzzReveal, "figment": FigmentReveal}
 
 
 def show_screen(matrix, draw_screen, hold_s, transition="wipe", rng=None):
