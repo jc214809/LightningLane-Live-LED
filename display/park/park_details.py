@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from io import BytesIO
 
@@ -8,8 +9,12 @@ from display.display import get_text_width, wrap_text, color_dict, loaded_fonts
 from driver import graphics
 from utils import debug
 
+ICON_TIMEOUT_S = 5
+ICON_RETRY_S = 300
+
 # Icon cache for storing loaded weather icons
 icon_cache = {}
+icon_failures = {}
 def render_park_information_screen(matrix, park_obj):
     """
     Renders the park name at the top and the hours/price at the bottom.
@@ -63,30 +68,35 @@ def render_weather_icon(icon_code):
     # Check if the icon is already cached
     debug.log(f"Fetching cache: {icon_cache}")
     if icon_code in icon_cache:
-        debug.info(f"Fetching icon from cache for code: {icon_code}")
+        debug.log(f"Fetching icon from cache for code: {icon_code}")
         return icon_cache[icon_code]
+    # The park screen is redrawn every animation frame; don't re-download a failing icon each time.
+    failed_at = icon_failures.get(icon_code)
+    if failed_at is not None and time.monotonic() - failed_at < ICON_RETRY_S:
+        return None
 
     icon_url = f"https://openweathermap.org/img/wn/{icon_code}.png"
 
     try:
         # Fetch the icon image from the URL
-        response = requests.get(icon_url)
+        response = requests.get(icon_url, timeout=ICON_TIMEOUT_S)
         response.raise_for_status()  # Raise an exception for HTTP errors
         img = Image.open(BytesIO(response.content))
         img = img.resize((15, 15))  # Resize the image to a smaller display size for the matrix
         icon_cache[icon_code] = img
+        icon_failures.pop(icon_code, None)
 
         return img
     except requests.RequestException as e:
         debug.error(f"Failed to fetch icon from URL: {icon_url} - {e}")  # Log any issues
-        return None
     except Exception as e:
         debug.error(f"Failed to load icon: {e}")  # Log other errors
-        return None
+    icon_failures[icon_code] = time.monotonic()
+    return None
 
 def display_weather_icon_and_description(matrix, weather_info, font_height,show_icon=True):
     """Display the weather icon and its description in the top right corner."""
-    debug.info(f"Weather Info: {weather_info}")
+    debug.log(f"Weather Info: {weather_info}")
 
     temp = weather_info.get("temperature", "?")
 
