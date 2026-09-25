@@ -13,7 +13,7 @@ from driver import RGBMatrix, __version__
 
 from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
-from display.startup import render_mickey_logo
+from display.fireworks.fireworks import render_castle_fireworks
 from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from display.attractions.attraction_info import render_attraction_info
@@ -215,10 +215,8 @@ def render_logo(matrix):
         time.sleep(8)
         logo.close()
     else:
-        # If no logo is available, render the Mickey silhouette as an intro.
-        debug.info("No logo found. Rendering Mickey silhouette as intro...")
-        render_mickey_logo(matrix)
-        time.sleep(8)
+        debug.info("Rendering castle fireworks intro...")
+        render_castle_fireworks(matrix)
 
 
 def initialize_park_information_screen(matrix, park):

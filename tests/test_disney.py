@@ -31,7 +31,6 @@ class FakeMatrix2:
 class FakeMatrix:
     def __init__(self):
         self.clear_count = 0
-        self.mickey_rendered = False
         self.park_info_rendered = False
         self.attraction_info_rendered = False
         self.countdown_rendered = False
@@ -80,17 +79,13 @@ def disable_sleep(monkeypatch):
     # Override time.sleep globally to avoid delays during tests
     monkeypatch.setattr(__import__("time"), "sleep", lambda x: None)
 
-def test_render_logo_without_image(monkeypatch):
+def test_render_logo_without_image_plays_castle_fireworks(monkeypatch):
     fake_matrix = FakeMatrix()
-    # Ensure logo is not used by forcing os.path.exists to return False
     monkeypatch.setattr(os.path, "exists", lambda path: False)
-    # Override render_mickey_logo to record that it was called
-    def fake_render_mickey_logo(matrix):
-        matrix.mickey_rendered = True
-    monkeypatch.setattr(disney, "render_mickey_logo", fake_render_mickey_logo)
-    # Call render_logo; since use_image_logo is False by default, it should go to the else branch
+    played = []
+    monkeypatch.setattr(disney, "render_castle_fireworks", lambda matrix: played.append(matrix))
     disney.render_logo(fake_matrix)
-    assert fake_matrix.mickey_rendered is True
+    assert played == [fake_matrix]
 
 def test_initialize_park_information_screen(monkeypatch):
     fake_matrix = FakeMatrix()
