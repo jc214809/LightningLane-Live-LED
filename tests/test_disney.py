@@ -307,3 +307,18 @@ def test_validate_date_error_message():
 
 # Note: Testing main() is more challenging because it runs an infinite loop.
 # If needed, you could refactor main() for better testability (e.g., extract functionality into smaller functions)a
+
+def test_baymax_is_a_rare_surprise_on_ride_screens(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+
+    monkeypatch.setattr(disney.random, "random", lambda: 0.99)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "wipe", "almost always the plain wipe"
+
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "baymax"
+
+    assert 0 < disney.BAYMAX_CHANCE < 0.05, "kept rare on purpose"
+    assert "baymax" in disney_animation.TRANSITIONS

@@ -41,6 +41,10 @@ else:
 
 use_image_logo = False
 PARK_REVEALS = ("tink", "buzz")
+# Baymax pops up over a ride screen now and then. He's a peek, not a sweep, so the
+# wait time stays readable behind him. Rare on purpose: a park loop is dozens of
+# rides, so even a small chance means he turns up a couple of times an hour.
+BAYMAX_CHANCE = 0.015
 
 def main():
     # Load configuration
@@ -248,7 +252,10 @@ def loop_through_attractions(matrix, park):
             debug.info(
                 f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
                 f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']}")
-            show_screen(matrix, _attraction_screen(ride, expected), 8)
+            surprise = "baymax" if random.random() < BAYMAX_CHANCE else "wipe"
+            if surprise != "wipe":
+                debug.info(f"Baymax is visiting {ride['name']}.")
+            show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
 
 def _attraction_screen(ride, expected):
     # A closure per ride: the next screen's sweep redraws this one, so it must not see later loop values.
