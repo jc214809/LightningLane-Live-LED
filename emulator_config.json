@@ -1,7 +1,7 @@
 {
     "pixel_outline": 0,
     "pixel_size": 16,
-    "pixel_style": "square",
+    "pixel_style": "circle",
     "pixel_glow": 6,
     "display_adapter": "browser",
     "icon_path": null,
