@@ -31,7 +31,7 @@ pipreqs . --force
 
 The application is a continuous display loop that fetches Disney World attraction wait times and renders them on an RGB LED matrix. Two or three threads run concurrently:
 
-- **Main thread** (`disney.py`): Drives the display loop — renders Mickey logo → optional trip countdown → park title screen → attraction wait times, cycling indefinitely.
+- **Main thread** (`disney.py`): Drives the display loop — renders castle fireworks intro (`display/fireworks/fireworks.py`; length is the `duration` default of `render_castle_fireworks`) → optional trip countdown → park title screen → attraction wait times, cycling indefinitely.
 - **REST thread** (`updater/data_updater.py:live_data_updater`): Fetches live wait times every `update_interval` seconds (5 min) and updates the shared `parks_data` list in-place. Always does the initial fetch/populate, even in WebSocket mode.
 - **WebSocket thread** (`updater/websocket_updater.py:websocket_live_updater`), started only when `config.json`'s `themeparks_api_key` is set or `websocket_only: true`: maintains a persistent connection to `wss://ws.themeparks.wiki/v1/live` for real-time attraction updates. When active, the REST thread keeps polling attractions on its normal interval too — since PR #73 made the per-park fetch cheap, REST runs continuously as an independent backstop/correction source for WS-sourced status, alongside refreshing weather and servicing deferred schedule fetches.
 
@@ -52,7 +52,9 @@ The application is a continuous display loop that fetches Disney World attractio
 
 ### Display layer
 
-All rendering lives under `display/`. Fonts are loaded once at startup by `display/display.py:initialize_fonts()` into the module-level `loaded_fonts` dict, keyed by board height (32 or 64). Each sub-module (`park/park_details.py`, `attractions/attraction_info.py`, `countdown/countdown.py`, `startup.py`) imports from that shared dict. Font sizes and paths differ between 64-row and 32-row boards.
+All rendering lives under `display/`. Fonts are loaded once at startup by `display/display.py:initialize_fonts()` into the module-level `loaded_fonts` dict, keyed by board height (32 or 64). Each sub-module (`park/park_details.py`, `attractions/attraction_info.py`, `countdown/countdown.py`, `fireworks/fireworks.py`) imports from that shared dict. Font sizes and paths differ between 64-row and 32-row boards.
+
+`display/fireworks/fireworks.py` splits a pure simulation (`FireworksShow.step()`/`frame_pixels()`, seedable via `rng`) from the matrix renderer, which double-buffers with `CreateFrameCanvas`/`SwapOnVSync`. The castle is ASCII art in `_CASTLE_ART`, doubled on 64-row boards; `_BIG_CASTLE_ROW_PATCH` adjusts the doubled castle only (taller door), so edits to the art show at 2x on 64x64.
 
 ### Driver abstraction
 
