@@ -102,29 +102,13 @@ def main():
     else:
         debug.info("No ThemeParks API key configured; using polling only.")
 
-    # Log configured trips at startup
-    configured_trips = parse_trips(config)
-    if configured_trips:
-        debug.info(f"Configured trips: {[_describe_trip(t) for t in configured_trips]}")
-    else:
-        debug.info("No trip dates configured.")
+    log_configured_trips(config)
 
-    last_active_trip_logged = None
+    last_trip_shown = None
     try:
         while True:
             render_logo(matrix)
-            # Pick the trip each cycle so the screen moves on as trips start, end and pass.
-            if config.get('trip_countdown', {}).get('enabled'):
-                trip = active_trip(parse_trips(config))
-                if trip is not None:
-                    if trip != last_active_trip_logged:
-                        debug.info(f"Trip countdown showing: {_describe_trip(trip)}")
-                        last_active_trip_logged = trip
-                    show_trip_countdown(matrix, trip)
-                else:
-                    logging.info("No upcoming trips; countdown hidden.")
-            else:
-                logging.info("Trip countdown is not enabled.")
+            last_trip_shown = play_trip_countdown(matrix, config, last_trip_shown)
             if parks_data:
                 for park in parks_data:
                     if not park.get("operating"):
@@ -142,6 +126,33 @@ def main():
         debug.error(traceback.format_exc())
     finally:
         matrix.Clear()
+
+def log_configured_trips(config):
+    trips = parse_trips(config)
+    if trips:
+        debug.info(f"Configured trips: {[_describe_trip(t) for t in trips]}")
+    else:
+        debug.info("No trip dates configured.")
+
+
+def play_trip_countdown(matrix, config, last_shown=None):
+    """
+    Show the countdown for the one trip that's current, if the countdown is on.
+    Picked each cycle so the screen moves on as trips start, end and pass. Returns
+    the trip shown (or last_shown), so a change is logged once rather than every cycle.
+    """
+    if not config.get('trip_countdown', {}).get('enabled'):
+        logging.info("Trip countdown is not enabled.")
+        return last_shown
+    trip = active_trip(parse_trips(config))
+    if trip is None:
+        logging.info("No upcoming trips; countdown hidden.")
+        return last_shown
+    if trip != last_shown:
+        debug.info(f"Trip countdown showing: {_describe_trip(trip)}")
+    show_trip_countdown(matrix, trip)
+    return trip
+
 
 def _describe_trip(trip):
     span = trip.start.isoformat() + (f" to {trip.end.isoformat()}" if trip.end else "")
