@@ -390,6 +390,7 @@ class PeekReveal:
     """
 
     duration = 0
+    over_screen = True
     art = []
     colors = {}
     rise_frac = 0.55  # fraction of the sprite's height that stays visible at the peek's peak
@@ -866,6 +867,7 @@ class BaymaxReveal:
     scaled in whole-pixel steps, which reads as popping rather than filling with air.
     """
 
+    over_screen = True
     INFLATE_S, HOLD_S, DEFLATE_S = 0.9, 2.2, 0.7
     duration = INFLATE_S + HOLD_S + DEFLATE_S
 
@@ -1443,7 +1445,10 @@ def show_screen(matrix, draw_screen, hold_s, transition="wipe", rng=None):
             _edge(canvas, x, matrix.width, matrix.height)
             return True
         t_reveal = t - cover_s
-        last_t[0] = max(0.0, t_reveal - reveal.duration)
+        # A surprise that plays over a finished screen lets it keep animating underneath;
+        # a reveal holds the screen at its first frame until it has been uncovered.
+        over = getattr(reveal, "over_screen", False)
+        last_t[0] = t_reveal if over else max(0.0, t_reveal - reveal.duration)
         moving = draw_screen(canvas, last_t[0])
         revealing = reveal.overlay(canvas, t_reveal)
         return bool(moving or revealing)

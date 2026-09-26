@@ -821,3 +821,11 @@ def test_slinky_reveals_behind_him_and_stays_on_the_board():
             assert all(0 <= x < 64 and 0 <= y < height for x, y in canvas.px)
 
 
+def test_surprises_let_the_screen_underneath_keep_animating():
+    def times(transition):
+        seen = []
+        animation.show_screen(FakeMatrix(), lambda canvas, t: seen.append(t) or True, 0.5,
+                              transition=transition, rng=random.Random(0))
+        return seen
+    assert max(times("baymax")) > 0.3, "under a surprise the ride screen plays on"
+    assert max(times("wipe")) == 0, "a reveal still holds it at its first frame"
