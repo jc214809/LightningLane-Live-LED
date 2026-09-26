@@ -10,7 +10,7 @@ import certifi
 
 from api.disney_api import fetch_park_live_data, get_down_time, parse_forecast, parse_queue_wait, update_parks_operating_status
 from updater.data_updater import merge_live_data
-from updater.shared import parks_data_lock
+from updater.shared import note_network_result, parks_data_lock
 from utils import debug
 
 WS_URL = "wss://ws.themeparks.wiki/v1/live"
@@ -186,6 +186,7 @@ async def _ws_loop(api_key, parks_data):
                     try:
                         async for msg in ws:
                             stats.note_message()
+                            note_network_result(True)
                             if msg.type == aiohttp.WSMsgType.TEXT:
                                 debug.log(f"WS raw: {msg.data}")
                                 try:
@@ -209,6 +210,10 @@ async def _ws_loop(api_key, parks_data):
 
         except Exception as e:
             debug.error(f"WebSocket error: {e}\n{traceback.format_exc()}")
+            # A connect that fails at the socket level (DNS, refused, timeout — aiohttp's
+            # connector errors are OSErrors) means no internet; a server rejection doesn't.
+            if connected_at is None and isinstance(e, OSError):
+                note_network_result(False)
 
         duration = (time.monotonic() - connected_at) if connected_at is not None else None
         delay = _next_delay(delay, duration)

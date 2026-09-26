@@ -14,7 +14,9 @@ def fonts():
             "info": "assets/fonts/patched/4x6-legacy.bdf",
             "waittime": "assets/fonts/patched/4x6-legacy.bdf",
             "ride": "assets/fonts/patched/4x6-legacy.bdf",
-            "countdown": "assets/fonts/patched/6x9.bdf",
+            "countdown_number": "assets/fonts/patched/7x13B.bdf",
+            "countdown_label": "assets/fonts/patched/4x6-legacy.bdf",
+            "countdown_message": "assets/fonts/patched/5x8.bdf",
             "title": "assets/fonts/patched/4x6-legacy.bdf"
         },
         64: {
@@ -22,7 +24,9 @@ def fonts():
             "info": "assets/fonts/patched/4x6-legacy.bdf",
             "waittime": "assets/fonts/patched/5x8.bdf",
             "ride": "assets/fonts/patched/5x8.bdf",
-            "countdown": "assets/fonts/patched/6x9.bdf",
+            "countdown_number": "assets/fonts/patched/10x20.bdf",
+            "countdown_label": "assets/fonts/patched/5x8.bdf",
+            "countdown_message": "assets/fonts/patched/6x13.bdf",
             "title": "assets/fonts/patched/4x6-legacy.bdf"
         }
     }

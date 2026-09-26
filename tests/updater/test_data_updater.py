@@ -663,3 +663,40 @@ def test_merge_live_data_copies_forecast_and_keeps_it_when_an_update_has_none():
     assert existing[0]["forecast"] == forecast
     merge_live_data(existing, [{"id": "1", "waitTime": 25, "status": "OPERATING", "lastUpdatedTs": "b"}])
     assert existing[0]["forecast"] == forecast
+
+
+# --- network badge flag ---
+
+TWO_PARKS = [
+    {"id": "park1", "name": "MK", "attractions": [{"id": "1", "down_since": ""}]},
+    {"id": "park2", "name": "EP", "attractions": [{"id": "2", "down_since": ""}]},
+]
+
+
+def _fetch_results(monkeypatch, by_park):
+    async def fetch(park):
+        return by_park[park["id"]]
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", fetch)
+
+
+def test_every_park_failing_flags_a_network_issue(monkeypatch):
+    from updater.shared import network_issues
+    _fetch_results(monkeypatch, {"park1": None, "park2": None})
+    update_parks_live_data(copy.deepcopy(TWO_PARKS))
+    assert network_issues() is True
+
+
+def test_one_park_getting_through_clears_the_network_issue(monkeypatch):
+    from updater.shared import network_issues, note_network_result
+    note_network_result(False)
+    _fetch_results(monkeypatch, {"park1": None, "park2": []})
+    update_parks_live_data(copy.deepcopy(TWO_PARKS))
+    assert network_issues() is False
+
+
+def test_no_fetchable_parks_leaves_the_network_flag_alone(monkeypatch):
+    from updater.shared import network_issues, note_network_result
+    note_network_result(False)
+    _fetch_results(monkeypatch, {})
+    update_parks_live_data([{"id": "park1", "name": "MK", "attractions": []}])
+    assert network_issues() is True, "nothing was fetched, so nothing was learned"

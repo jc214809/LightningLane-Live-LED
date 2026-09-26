@@ -93,6 +93,14 @@ def args():
         type=str,
     )
     parser.add_argument(
+        "--led-panel-type",
+        action="store",
+        help="Chipset initialization for panels that need it. (Default: none)",
+        default="",
+        choices=["", "FM6126A", "FM6127"],
+        type=str,
+    )
+    parser.add_argument(
         "--led-pixel-mapper", action="store", help='Apply pixel mappers. e.g "Rotate:90"', default="", type=str
     )
     parser.add_argument(
@@ -167,6 +175,16 @@ def led_matrix_options(args):
     except AttributeError:
         debug.warning("Your compiled RGB Matrix Library is out of date.")
         debug.warning("The --led-pixel-mapper argument will not work until it is updated.")
+
+    # Unset leaves the library's default (no chipset init); getattr keeps callers
+    # that build their own Namespace without the flag working.
+    panel_type = getattr(args, "led_panel_type", "")
+    if panel_type:
+        try:
+            options.panel_type = panel_type
+        except AttributeError:
+            debug.warning("Your compiled RGB Matrix Library is out of date.")
+            debug.warning("The --led-panel-type argument will not work until it is updated.")
 
     try:
         options.pwm_dither_bits = args.led_pwm_dither_bits

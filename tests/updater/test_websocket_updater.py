@@ -492,3 +492,60 @@ def test_ws_update_stores_forecast_and_keeps_it_when_absent():
     assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
     _apply_live_update(_make_livedata_msg(), parks)
     assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
+
+
+# --- network badge flag ---
+
+def _run_ws_loop_once(session_factory):
+    parks = [{"id": "park-1", "name": "MK", "destination_id": "dest-1", "attractions": []}]
+
+    async def cancel_sleep(_delay):
+        raise asyncio.CancelledError
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession", session_factory), \
+         patch("updater.websocket_updater.asyncio.sleep", cancel_sleep):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_ws_loop("dummy-key", parks))
+
+
+class _RefusingSession(_FakeSession):
+    def __init__(self, error):
+        super().__init__({})
+        self._error = error
+
+    def ws_connect(self, url, **kwargs):
+        raise self._error
+
+
+def test_ws_connect_failing_at_the_socket_level_flags_a_network_issue():
+    from updater.shared import network_issues
+    # aiohttp's ClientConnectorError (DNS failure, refused, unreachable) is an OSError.
+    _run_ws_loop_once(lambda: _RefusingSession(OSError("Temporary failure in name resolution")))
+    assert network_issues() is True
+
+
+def test_ws_server_rejection_is_not_a_network_issue():
+    from updater.shared import network_issues
+    _run_ws_loop_once(lambda: _RefusingSession(RuntimeError("handshake rejected: 429")))
+    assert network_issues() is False
+
+
+def test_ws_message_arriving_clears_the_network_issue():
+    from updater.shared import network_issues, note_network_result
+    note_network_result(False)
+
+    class _OneMessageWS(_FakeWS):
+        sent = False
+
+        async def __anext__(self):
+            if self.sent:
+                raise StopAsyncIteration
+            self.sent = True
+            return type("Msg", (), {"type": None, "data": ""})()
+
+    class _OneMessageSession(_FakeSession):
+        def ws_connect(self, url, **kwargs):
+            return _OneMessageWS()
+
+    _run_ws_loop_once(lambda: _OneMessageSession({}))
+    assert network_issues() is False

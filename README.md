@@ -25,7 +25,7 @@ LightningLane-Live-LED is a Python application designed to fetch and display wai
 
 ## Prerequisites
 
-- **Python 3.7+**
+- **Python 3.9+**
 - **Pip** package manager
 
 **Currently supported board configurations:**
