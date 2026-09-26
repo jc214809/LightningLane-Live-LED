@@ -4,6 +4,8 @@ import time
 
 from driver import graphics
 
+from display.network import draw_if_offline
+
 FPS = 30
 COVER_S = 0.55
 WIPE_S = 0.65
@@ -24,6 +26,8 @@ def frame_canvas(matrix):
 
 def present(matrix, canvas):
     """Show canvas and keep the returned back buffer for the next frame."""
+    # Every frame on the board passes through here, so the badge sits on top of all of them.
+    draw_if_offline(canvas)
     _canvases[id(matrix)] = matrix.SwapOnVSync(canvas)
     return _canvases[id(matrix)]
 

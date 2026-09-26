@@ -4,7 +4,7 @@ import traceback
 
 from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, get_down_time, update_parks_operating_status
 from api.weather import fetch_weather_data
-from updater.shared import parks_data_lock
+from updater.shared import note_network_result, parks_data_lock
 from utils import debug
 
 
@@ -60,7 +60,11 @@ def update_parks_live_data(parks):
     """Fetch and merge live attraction data for every park via REST, then
     refresh weather for operating parks. See CLAUDE.md for why this runs
     continuously even when the WS thread is also active."""
-    for park, new_live_data in asyncio.run(_fetch_all_live_data(parks)):
+    results = asyncio.run(_fetch_all_live_data(parks))
+    if results:
+        # One park getting through proves the connection; only all failing flags it.
+        note_network_result(any(data is not None for _, data in results))
+    for park, new_live_data in results:
         if new_live_data is None:
             # Fetch failed (rate limit, timeout, bad response): keep existing
             # data and flag it stale so the next cycle is a retry, not a skip.

@@ -106,6 +106,15 @@ def test_canvas_is_created_once_and_reused_across_screens():
     assert matrix.canvases_created == 1
 
 
+def test_network_badge_is_drawn_over_every_frame_while_offline():
+    from updater.shared import note_network_result
+    note_network_result(False)
+    matrix = FakeMatrix()
+    animation.show_screen(matrix, fill((0, 0, 255)), 1)
+    assert all(frame[(63, 31)] == (255, 0, 0) for frame in matrix.frames), "badge over the wipe and the screen"
+    assert matrix.frames[-1][(56, 31)] == (0, 0, 255), "screen untouched outside the badge"
+
+
 def test_first_screen_wipes_in_from_black():
     matrix = FakeMatrix()
     animation.show_screen(matrix, fill((255, 0, 0)), 2)
@@ -939,7 +948,10 @@ def test_slinky_wrap_draws_over_the_screen_and_stays_on_the_board():
 def test_surprises_let_the_screen_underneath_keep_animating():
     def times(transition):
         seen = []
-        animation.show_screen(FakeMatrix(), lambda canvas, t: seen.append(t) or True, 0.5,
+        matrix = FakeMatrix()
+        # A new matrix can reuse a collected one's id() and inherit its last screen.
+        animation.forget_screen(matrix)
+        animation.show_screen(matrix, lambda canvas, t: seen.append(t) or True, 0.5,
                               transition=transition, rng=random.Random(0))
         return seen
     assert max(times("baymax")) > 0.3, "under a surprise the ride screen plays on"
