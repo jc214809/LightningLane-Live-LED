@@ -42,10 +42,11 @@ else:
 use_image_logo = False
 PARK_REVEALS = ("tink", "buzz")
 # Rare visitors on ride screens, and each one's chance per screen. Genie erupts from his
-# lamp and sweeps the next ride in; Baymax peeks over it so the wait stays readable.
-# Rare on purpose: a park loop is dozens of rides, so even 1.5% is a couple an hour.
-# Genie is the rarer treat.
-SURPRISES = {"genie": 0.005, "baymax": 0.015}
+# lamp and sweeps the next ride in; Baymax peeks over it so the wait stays readable;
+# Slinky walks off the right edge and his spring wraps round the back of the board.
+# Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
+# four visits an hour.
+SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01}
 
 def main():
     # Load configuration
@@ -260,10 +261,11 @@ def loop_through_attractions(matrix, park):
 
 def _surprise(roll):
     # Each visitor owns a slice of the roll as wide as their chance, so order doesn't change the odds.
+    edge = 0.0
     for name, chance in SURPRISES.items():
-        if roll < chance:
+        edge += chance  # a running total; subtracting from the roll drifts at slice edges
+        if roll < edge:
             return name
-        roll -= chance
     return "wipe"
 
 def _attraction_screen(ride, expected):
