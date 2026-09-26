@@ -1043,6 +1043,8 @@ class GenieReveal:
     ]
     # The spout's upturned tip, in lamp cells: smoke pours from here and Genie grows out of it.
     LAMP_SPOUT = (24.5, 6.0)
+    # The lamp stays 1x on both boards: doubled, it swamps the 64x64 board under Genie.
+    LAMP_SCALE = 1
 
     # Genie facing forward: swept-back black topknot, wide blue face, gold hoop earrings,
     # a grin over a pointed black goatee, folded arms in gold cuffs, and -- instead of
@@ -1099,9 +1101,8 @@ class GenieReveal:
         self.scale = 2 if height >= 64 else 1
         self.sprite_w = len(self.ART[0]) * self.scale
         self.sprite_h = len(self.ART) * self.scale
-        # The lamp stays 1x on both boards: doubled it swamps the 64x64 board under Genie.
-        self.lamp_w = len(self.LAMP_ART[0])
-        self.lamp_h = len(self.LAMP_ART)
+        self.lamp_w = len(self.LAMP_ART[0]) * self.LAMP_SCALE
+        self.lamp_h = len(self.LAMP_ART) * self.LAMP_SCALE
         self.lamp_x = 2
         self.lamp_y = height - self.lamp_h
         # Each puff: [x, y, vx, vy, frames_left, rgb, radius]
@@ -1110,7 +1111,8 @@ class GenieReveal:
 
     def spout(self):
         """Where the smoke leaves the lamp, and the point Genie scales up out of."""
-        return self.lamp_x + self.LAMP_SPOUT[0], self.lamp_y + self.LAMP_SPOUT[1]
+        return (self.lamp_x + self.LAMP_SPOUT[0] * self.LAMP_SCALE,
+                self.lamp_y + self.LAMP_SPOUT[1] * self.LAMP_SCALE)
 
     def grow(self, t):
         """0 (not yet formed) to 1 (full size). Smoke pours alone for the first third."""
@@ -1216,9 +1218,14 @@ class GenieReveal:
         x0, y0 = int(round(x0)), int(round(y0))
         for row, line in enumerate(art):
             for col, kind in enumerate(line):
-                px, py = x0 + col, y0 + row
-                if kind != "." and clip_x <= px < self.width and 0 <= py < self.height:
-                    canvas.SetPixel(px, py, *self.COLORS[kind])
+                if kind == ".":
+                    continue
+                for sy in range(self.LAMP_SCALE):
+                    for sx in range(self.LAMP_SCALE):
+                        px = x0 + col * self.LAMP_SCALE + sx
+                        py = y0 + row * self.LAMP_SCALE + sy
+                        if clip_x <= px < self.width and 0 <= py < self.height:
+                            canvas.SetPixel(px, py, *self.COLORS[kind])
 
     def _draw_genie(self, canvas, t):
         """
