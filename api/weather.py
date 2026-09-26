@@ -13,10 +13,20 @@ def load_config(file_path):
         config = json.load(file)
     return config
 
-def fetch_weather_data(lat, lon):
-    """Fetch the current weather data for the specified city."""
-    config = load_config('config.json')
-    weather_api_key = config['weather']['apikey']  # Set up your weather API key
+def fetch_weather_data(lat, lon, api_key=None):
+    """Fetch the current weather data for the specified city.
+
+    api_key overrides config.json's weather.apikey, for callers (e.g. the
+    bullpen plugin) that have no config.json and pass the key directly.
+    """
+    weather_api_key = api_key
+    if weather_api_key is None:
+        try:
+            config = load_config('config.json')
+            weather_api_key = config['weather']['apikey']
+        except (FileNotFoundError, KeyError, json.JSONDecodeError):
+            debug.warning("[WEATHER] No API key available (no config.json weather.apikey, no api_key argument). Skipping weather.")
+            return None
     global weather_api_key_valid  # Use the global flag to modify the outside state
     debug.info(f"Your Open Weather API Key is valid? {weather_api_key_valid}")
     try:

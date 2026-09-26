@@ -289,7 +289,7 @@ def test_fetch_parks_and_attractions_success(monkeypatch):
             return DummyResponse({"location": {"latitude": 28.3759, "longitude": -81.5494}}, 200)
     monkeypatch.setattr(requests, "get", fake_get)
     # To avoid real weather calls, patch fetch_weather_data.
-    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {"temp": "dummy"})
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon, api_key=None: {"temp": "dummy"})
     result = fetch_parks_and_attractions(fake_parks_list)
     assert len(result) == 1
     park = result[0]
@@ -313,7 +313,7 @@ def test_fetch_parks_and_attractions_carries_timezone_through(monkeypatch):
             return DummyResponse({"children": []}, 200)
         return DummyResponse({}, 200)
     monkeypatch.setattr(requests, "get", fake_get)
-    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {})
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon, api_key=None: {})
     result = fetch_parks_and_attractions(fake_parks_list)
     assert result[0]["timezone"] == "America/New_York"
 
@@ -334,7 +334,7 @@ def test_fetch_parks_and_attractions_includes_shows(monkeypatch):
             ]}, 200)
         return DummyResponse({}, 200)
     monkeypatch.setattr(requests, "get", fake_get)
-    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {})
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon, api_key=None: {})
     result = fetch_parks_and_attractions(fake_parks_list)
     attractions = result[0]["attractions"]
     ids = [a["id"] for a in attractions]
@@ -360,7 +360,7 @@ def test_fetch_parks_and_attractions_includes_destination_id(monkeypatch):
         return DummyResponse({}, 200)
 
     monkeypatch.setattr(requests, "get", fake_get)
-    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {})
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon, api_key=None: {})
     result = fetch_parks_and_attractions(fake_parks_list)
     assert len(result) == 1
     assert result[0]["destination_id"] == "dest-abc"
@@ -1022,7 +1022,7 @@ def test_update_parks_operating_status(monkeypatch):
         "openingTime": "09:00",
         "closingTime": "22:00"
     }])
-    monkeypatch.setattr("api.disney_api.fetch_weather_data", lambda lat, lon: {"temp": "dummy"})
+    monkeypatch.setattr("api.disney_api.fetch_weather_data", lambda lat, lon, api_key=None: {"temp": "dummy"})
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
     updated = update_parks_operating_status(copy.deepcopy(parks))
     assert updated[0]["operating"] is True
