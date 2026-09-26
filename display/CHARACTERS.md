@@ -42,17 +42,19 @@ A 25-cell-wide sprite is 50 of 64 columns there, which leaves almost nothing for
 anything else. Slinky Dog's spring nearly vanished at 2x for exactly this reason.
 Check both board sizes every time; they fail differently.
 
-**If a character needs more room than the board is wide, change its path, not its
-size.** Slinky is two sprites with a spring between them; run straight across, the
-pair ate all 64 columns and the spring — his best feature — had nowhere to stretch.
-Walking him along the bottom edge and up the right side gives the spring more than
-the board's width without shrinking him.
+**If a character's motion needs the board's width, keep him 1x rather than bending
+his path.** Slinky is two sprites with a spring between them. Doubled on 64x64 the
+halves ate 54 of 64 columns and the spring — his best feature — had nowhere to go.
+Earlier versions tried to buy room with the path instead: walking the bottom edge and
+turning up the right side, then running corner to corner on the diagonal. Both lost
+the one pose that sells him. The Slinky that landed stays 1x on both boards
+(`SCALE = 1`) and stretches straight across a single ground line, rear on the left
+edge and nose on the right. Genie's lamp is 1x for the same reason; declare a fixed
+size with a `SCALE` or `<NAME>_SCALE` attribute so the sprite editor previews it right.
 
-A rejected attempt is worth recording here: running him corner to corner on the
-diagonal gave the most room of all, and looked wrong. Both sprites had to rotate to
-follow the line, and a tilted dog reads as two separate animals joined by a spring
-rather than one dog stretching. **Keep characters upright on a ground line.** The
-path can bend around the board; the character should not tilt with it.
+The diagonal also forced both sprites to rotate, and a tilted dog reads as two
+separate animals joined by a spring rather than one dog stretching. **Keep characters
+upright on a ground line.**
 
 ## Reading at low resolution
 
@@ -195,13 +197,15 @@ What worked and what didn't, so we don't repeat it:
 - **Sorcerer Mickey** — the materialize effect is the best mechanic here, but his
   face reads as a flat mask.
 - **Dumbo** — ears and flap are great; he's missing his back half entirely.
-- **Slinky Dog** — much improved. Walking him around the board's edge gave the spring
-  the room it never had running straight across, and it's now the best part of him;
-  the face was redrawn three-quarter and he has a spring for a tail. He took more
-  rounds than any other character, and every round was caught by looking at a render,
-  never by a test.
+- **Slinky Dog** — redrawn from scratch around one pose: rear planted on the left
+  edge, front half walking out until his nose touches the right edge, spring pulled
+  across the whole board between them; then the rear snaps across and both bound off.
+  The coils are tilted rings, shaded behind and bright in front, so they bunch into a
+  tube when squashed and separate when stretched; his tail is a banded spring. The
+  earlier versions took more rounds than any other character; the rewrite landed in
+  three renders because it started from the pose, not the path.
 
 The pattern: the characters that landed are the ones with a simple, strong silhouette
 and one well-executed motion. The ones that fell short tried for detail and lost the
-shape. Slinky is the clearest case of the other lesson — when a character won't fit,
-change the path before you shrink the character.
+shape. Slinky is the clearest case of the other lesson — decide the one pose that
+sells the character, then size him to hold it.
