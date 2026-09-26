@@ -433,13 +433,26 @@ def test_slinky_head_leads_the_rear_the_whole_way_across():
     slinky = animation.SlinkyReveal(64, 32, random.Random(2))
     for f in range(int(slinky.duration * animation.FPS)):
         t = f / animation.FPS
-        assert slinky.head_x(t) >= slinky.rear_x(t), "the head always leads"
-    assert slinky.head_x(0) < 1, "starts at the left edge"
-    assert slinky.head_x(slinky.duration) + slinky.head_w >= 64, "nose clears the right edge"
+        assert slinky.head_d(t) >= slinky.rear_d(t), "the head always leads"
+    assert slinky.head_d(0) < slinky.bottom_len / 4, "starts back at the left edge"
+    assert slinky.head_d(slinky.duration) >= slinky.bottom_len, "nose clears the right edge"
+
+
+def test_slinky_stands_upright_on_one_ground_line():
+    """Both halves are a dog standing up and stretching, not a body tilted along a
+    diagonal: they share a ground line, and the rear stays left of the head."""
+    for height in (32, 64):
+        slinky = animation.SlinkyReveal(64, height, random.Random(8))
+        t = slinky.STRETCH_S
+        rear_x, rear_y = slinky._point(slinky.rear_d(t))
+        head_x, head_y = slinky._point(slinky.head_d(t))
+        assert rear_y == head_y, "both halves stand on the same ground line"
+        assert head_y > height / 2, "that ground line is down near the bottom edge"
+        assert rear_x < 64 / 3, "rear is still parked back at the left"
+        assert head_x > 64 * 2 / 3, "head has walked away to the right"
 
 
 def test_slinky_reveal_front_follows_the_stretch_across_the_board():
-    fronts = []
     for height in (32, 64):
         slinky = animation.SlinkyReveal(64, height, random.Random(3))
         seen = []
@@ -447,12 +460,18 @@ def test_slinky_reveal_front_follows_the_stretch_across_the_board():
             canvas = FakeCanvas(64, height)
             fill((9, 9, 9))(canvas, 0)
             slinky.overlay(canvas, f / animation.FPS)
-            revealed = [x for (x, y), rgb in canvas.px.items() if rgb == (9, 9, 9)]
-            seen.append(max(revealed) if revealed else -1)
+            # How far the revealed region reaches, counted as whole revealed columns from
+            # the left. Scanning for surviving black pixels instead would read as going
+            # backwards on the frames where his own sprite happens to cover the last
+            # black column.
+            revealed = {x for (x, _), rgb in canvas.px.items() if rgb == (9, 9, 9)}
+            front = 0
+            while front in revealed:
+                front += 1
+            seen.append(front)
         assert seen == sorted(seen), "the reveal only ever moves right"
         assert seen[0] < 32 < seen[-1], "starts on the left and finishes past the far edge"
-        fronts.append(seen)
-    assert all(f[-1] >= 63 for f in fronts), "the whole board is revealed by the end"
+        assert seen[-1] >= 64, "the whole board is revealed by the end"
 
 
 def test_slinky_reveal_tracks_his_nose_rather_than_a_fixed_sweep():
@@ -461,9 +480,11 @@ def test_slinky_reveal_tracks_his_nose_rather_than_a_fixed_sweep():
     canvas = FakeCanvas(64, 64)
     fill((9, 9, 9))(canvas, 0)
     slinky.overlay(canvas, mid)
-    nose = int(round(slinky.head_x(mid) + slinky.head_w))
     assert canvas.px[(0, 0)] == (9, 9, 9), "behind him the new screen is showing"
-    assert canvas.px[(min(63, nose + 2), 0)] == (0, 0, 0), "ahead of his nose is still dark"
+    # A column comfortably past his nose is still black.
+    nose_x, _ = slinky._point(slinky.head_d(mid) + slinky.head_inset)
+    ahead = min(63, int(nose_x) + 4)
+    assert canvas.px[(ahead, 0)] == (0, 0, 0), "ahead of his nose is still dark"
 
 
 def test_slinky_finishes_and_never_draws_outside_the_board():
@@ -480,17 +501,19 @@ def test_slinky_finishes_and_never_draws_outside_the_board():
 def test_slinky_coils_spread_apart_when_stretched_and_bunch_when_short():
     slinky = animation.SlinkyReveal(64, 32, random.Random(6))
 
-    def coil_xs(span):
+    def coil_spread(span):
+        """Columns covered by the drawn coils, for a spring of length `span`."""
         canvas = FakeCanvas(64, 32)
-        slinky._draw_coils(canvas, 2, 2 + span, 16)
-        return sorted({x for (x, _), rgb in canvas.px.items()
-                       if rgb in (slinky.COIL_RGB, slinky.COIL_SHADE_RGB)})
+        slinky._draw_coils(canvas, 4, 4 + span)
+        return [x for (x, _), rgb in canvas.px.items()
+                if rgb in (slinky.COIL_RGB, slinky.COIL_SHADE_RGB)]
 
-    short, long = coil_xs(12), coil_xs(50)
+    short, long = coil_spread(12), coil_spread(50)
     assert short and long
-    assert max(long) - min(long) > max(short) - min(short), "a stretched spring spans further"
+    short_span, long_span = max(short) - min(short), max(long) - min(long)
+    assert long_span > short_span, "a stretched spring spans further"
     # Ring centres are one step apart; a long spring's rings sit further from each other.
-    assert (max(long) - min(long)) / max(1, len(long)) > (max(short) - min(short)) / max(1, len(short))
+    assert long_span / max(1, len(long)) > short_span / max(1, len(short))
 
 
 def test_slinky_art_rows_are_even_and_use_defined_colors():
@@ -498,6 +521,63 @@ def test_slinky_art_rows_are_even_and_use_defined_colors():
         assert len({len(row) for row in art}) == 1, "every row is the same width"
         assert {ch for row in art for ch in row} - {"."} <= set(animation.SlinkyReveal.COLORS)
     assert animation.TRANSITIONS["slinky"] is animation.SlinkyReveal
+
+
+def test_slinky_faces_the_viewer_with_both_eyes_on_the_muzzle():
+    """He is drawn three-quarter rather than in profile: a broad tan muzzle out front
+    carrying two eyes and a mouth. In profile at this size the face collapsed into a
+    dark mass with a single dot on it."""
+    art = animation.SlinkyReveal.HEAD_ART
+    cell = [(r, c, ch) for r, row in enumerate(art) for c, ch in enumerate(row)]
+    muzzle = [(r, c) for r, c, ch in cell if ch == "T"]
+    eyes = [(r, c) for r, c, ch in cell if ch == "P"]
+    mouth = [(r, c) for r, c, ch in cell if ch == "M"]
+    assert muzzle and eyes and mouth
+
+    # Two separate eyes, not one bar: there is a column of muzzle between them.
+    eye_cols = sorted({c for _, c in eyes})
+    gaps = [b - a for a, b in zip(eye_cols, eye_cols[1:]) if b - a > 1]
+    assert gaps, "the two eyes are separated rather than merged into one block"
+    assert len(eyes) >= 4, "each eye is a block, not a single pixel"
+
+    # The face sits on the muzzle, with the mouth below the eyes.
+    # Each feature is bordered by muzzle rather than by the head or the outline, so it
+    # reads as being on his face. Interior cells of a feature touch only that feature,
+    # so this checks the block as a whole.
+    muzzle_cells = set(muzzle)
+    for feature, name in ((set(eyes), "eyes"), (set(mouth), "mouth")):
+        border = {(r + dr, c + dc) for r, c in feature
+                  for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0))} - feature
+        assert border <= muzzle_cells, f"the {name} sit surrounded by muzzle"
+    assert min(r for r, _ in mouth) > max(r for r, _ in eyes), "the mouth is below the eyes"
+
+
+def test_slinky_face_colors_stand_off_what_they_sit_on():
+    """Position alone isn't enough. Eyes drawn near the outline's color are in exactly
+    the right place and still invisible — that is how the nose was lost once and the
+    eyes a second time, both times with the layout tests passing."""
+    colors = animation.SlinkyReveal.COLORS
+
+    def distance(a, b):
+        return sum(abs(x - y) for x, y in zip(colors[a], colors[b]))
+
+    assert distance("P", "T") > 200, "the eyes read as dark blocks against the muzzle"
+    assert distance("M", "T") > 150, "and the mouth stands off it too"
+    assert distance("P", "M") > 100, "the eyes and mouth don't read as the same feature"
+
+
+def test_slinky_has_a_spring_for_a_tail():
+    """He is Slinky Dog, so the tail is coiled wire rising off the back of the haunch,
+    not fur — it has to be drawn in the spring colors and sit above the body."""
+    art = animation.SlinkyReveal.REAR_ART
+    tail = [(r, c) for r, row in enumerate(art)
+            for c, ch in enumerate(row) if ch in ("S", "W")]
+    assert tail, "the rear has a spring tail"
+    body_rows = [r for r, row in enumerate(art) if "B" in row]
+    assert max(r for r, _ in tail) <= min(body_rows), "the tail rises above the body"
+    assert max(c for _, c in tail) > max(c for r, row in enumerate(art)
+                                        for c, ch in enumerate(row) if ch == "B"), \
+        "and angles back off the rear"
 
 
 def test_slinky_plays_as_a_screen_transition():

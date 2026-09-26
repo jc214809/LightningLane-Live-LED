@@ -851,64 +851,92 @@ class MickeyReveal:
 
 class SlinkyReveal:
     """
-    TODO (art): currently reads as a plain dog with a spring stuck between its halves,
-    not as Slinky Dog. The head/rear need to be the actual character. Also note the
-    2x sprites nearly meet on a 64-row board, leaving almost no visible spring — the
-    stretch only really reads on a 32-row board. Trim the art or scale it down there.
+    Slinky Dog stretches around the board: his rear stays planted near the left edge
+    while his front half walks away to the right along the same ground line, the spring
+    between them pulling out into widely spaced coils, then the rear snaps forward and
+    the coil bunches back up.
 
-    Slinky Dog stretches across the board: his head pushes in from the left while his
-    rear stays put, the spring between them pulling out into widely spaced coils, then
-    the rear snaps forward and the coil bunches back up. The new screen is revealed in
-    the wake of the stretch — the blackout front tracks his nose, not a fixed sweep,
-    so the reveal and the elongation are the same motion.
+    Both halves stand upright, facing the way he walks, on a shared ground line — he is
+    a dog stretching himself out, not a body tilted along a diagonal. (An earlier pass
+    ran him corner to corner and rotated both sprites to match; it read as two separate
+    animals joined by a spring.) His tail is a spring too, coiled up off the haunch.
+
+    The new screen is revealed in the wake of the stretch: the blackout front tracks his
+    nose, so the reveal and the elongation are one motion.
     """
 
     STRETCH_S, SNAP_S, SETTLE_S = 1.1, 0.5, 0.3
     duration = STRETCH_S + SNAP_S + SETTLE_S
 
-    # Head, facing right: floppy ear, snout with a black nose, red collar at the back
-    # where the spring attaches. '.' empty, B brown head, D darker floppy ear, T tan
-    # muzzle, K outline, E eye white, P pupil, N nose, R collar, G collar tag.
+    # Head and front half, in three-quarter view looking toward the viewer rather than in
+    # profile. Profile failed at this size: the face collapsed into a dark mass with one
+    # dot on it. Turned toward you, the parts separate — a dark cap across the top, one
+    # long ear hanging down the side, and a broad tan muzzle out front carrying both eyes
+    # and the mouth, which is what actually makes him read as a dog.
+    # '.' empty, B brown body, D dark cap and ear, T tan muzzle, K outline,
+    # P eye, M red mouth, R green collar.
     HEAD_ART = [
-        "....KKKKKK...",
-        "..KKBBBBBBKK.",
-        ".KDDKBBBBBBBK",
-        ".KDDKBEEBBBBK",
-        "KRKDDKBEPBTTK",
-        "KRKDDKBBBTTTK",
-        "KRGDDKBBBTTNK",
-        "KRKDDKBBBTTNK",
-        "KRKDDDKBBTTTK",
-        ".KRKDDKBBKTTK",
-        "..KKDDKBBKKK.",
-        "...KKKKKKK...",
+        "..KKKKKK....",
+        ".KDDDDDDKK..",
+        "KDDDDDDDDDK.",
+        "KDDDDDDDDDDK",
+        "KDKTTTTKDDDK",
+        "KKTTTTTTKDDK",
+        ".KTPTTPTKDDK",
+        ".KTPTTPTKDDK",
+        ".KTTMMTTKDDK",
+        ".KTMMMMTKDK.",
+        ".KTTMMTTKDK.",
+        "..KTTTTKKDK.",
+        "..KKTTKKKK..",
+        "...KRRRK....",
+        "..KBBBBBK...",
+        "..KBBKBBK...",
+        ".KTBK.KTBK..",
+        ".KTTK.KTTK..",
+        "..KK...KK...",
     ]
 
-    # Rear, facing right (the spring attaches on its right edge): curled tail, haunch,
-    # two back legs. '.' empty, B brown, T tan paws, K outline, R collar.
+    # Rear, facing right: a rounded ribbed haunch with a coiled spring for a tail
+    # angling up off the back, and two hind legs. The body spring attaches on its LEFT
+    # edge, toward the head. '.' empty, B brown, D darker shading, T tan paws,
+    # K outline, S spring tail (bright wire), W spring tail shade.
     REAR_ART = [
-        "..KK.......",
-        ".KBBK......",
-        ".KBBK.KKKK.",
-        "..KBKKBBBRK",
-        "...KBBBBBRK",
-        "..KBBBBBBRK",
-        ".KBBBBBBBRK",
-        ".KBBBBBBBRK",
-        ".KBBBKKBBRK",
-        ".KTBK..KTBK",
-        ".KTTK..KTTK",
-        "..KK....KK.",
+        ".........SWS",
+        "........SW..",
+        "......SWS...",
+        ".....WS.....",
+        "....WS......",
+        "....WS......",
+        "...KKKK.....",
+        "..KBBBBK....",
+        ".KBDBBDBK...",
+        "KBBDBBDBBK..",
+        "KBBDBBDBBK..",
+        "KBBDBBDBBK..",
+        "KBBDBBDBBK..",
+        ".KBDBBDBK...",
+        "..KBKKBK....",
+        "..KBKKBK....",
+        ".KTBK.KTBK..",
+        ".KTTK.KTTK..",
+        "..KK...KK...",
     ]
 
     COLORS = {
-        "B": (150, 95, 45), "D": (102, 60, 28), "T": (228, 190, 130), "K": (35, 22, 14),
-        "E": (250, 250, 250), "P": (25, 20, 20), "N": (28, 24, 24),
-        "R": (200, 45, 45), "G": (235, 190, 60),
+        "B": (150, 95, 45), "D": (110, 66, 32), "T": (232, 196, 138), "K": (46, 28, 16),
+        # The eyes have to stand off the tan muzzle they sit on AND off the outline they
+        # sit near. Drawn near-black they satisfy the first and fail the second: they
+        # merge into the border and the face reads as blank, which is how the nose was
+        # lost once and the eyes a second time.
+        "E": (238, 232, 224), "P": (58, 38, 30),
+        "R": (74, 120, 62), "G": (235, 190, 60), "M": (196, 40, 40),
+        "S": (205, 210, 220), "W": (115, 124, 138),
     }
     COIL_RGB = (205, 210, 220)
     COIL_SHADE_RGB = (115, 124, 138)
-    COILS = 7
+    # Ring count when fully stretched; the spacing floor thins them out when he bunches.
+    COILS = 11
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height
@@ -918,45 +946,68 @@ class SlinkyReveal:
         self.head_h = len(self.HEAD_ART) * self.scale
         self.rear_w = len(self.REAR_ART[0]) * self.scale
         self.rear_h = len(self.REAR_ART) * self.scale
-        # The body's centre line — the height the spring runs along.
-        self.body_y = height / 2
-        # The rear plants itself just inside the left edge and holds there while the head
-        # drives right; the blackout front (his nose) therefore sweeps the whole board.
+        # He walks the board's perimeter rather than straight across it, so the spring has
+        # more than the board's width to stretch into — the pair of sprites is ~48px wide
+        # at 2x, which would leave almost nothing on a 64px straight run. Distances below
+        # are measured along that path; `_point` turns one into a centre (x, y).
+        self.ground_y = height - self.head_h / 2 - 1
+        # Along the bottom edge, then up the right edge if he still needs room.
+        self.bottom_len = width + self.head_w
+        self.path_len = self.bottom_len + max(0.0, self.ground_y - self.head_h / 2)
+        self.rear_inset = self.rear_w / 2
+        self.head_inset = self.head_w / 2
         # A shade of him is already on the board at t=0 rather than a wasted black frame.
-        self.start_x = -self.rear_w * 0.6
-        self.anchor_x = 1.0
-        self.lead_x = width - self.head_w - self.scale  # nose at the right edge, still on board
-        self.end_x = width + self.scale
+        self.start_d = -self.rear_inset * 0.5
+        self.anchor_d = self.rear_inset * 0.9
+        # Far enough that the pair plus a long spring spans the bottom edge.
+        self.lead_d = self.bottom_len - self.head_inset * 0.9
+        self.end_d = self.bottom_len + self.head_w
 
-    def head_x(self, t):
-        """Left edge of the head sprite. It leads the whole way, easing out as it arrives."""
+    def _point(self, d):
+        """
+        The (x, y) centre at distance d along his path: left to right along the ground
+        line, then turning up the right edge. Both halves stay upright the whole way.
+        """
+        if d <= self.bottom_len:
+            return d - self.head_w / 2, self.ground_y
+        return self.width - self.head_w / 2, self.ground_y - (d - self.bottom_len)
+
+    def head_d(self, t):
+        """Distance of the head's centre along the path. It leads the whole way."""
         if t < self.STRETCH_S:
             # Half the easing of ease_out: he pushes out steadily rather than leaping to
             # the far edge in the first few frames, so the stretch itself is what you see.
             p = t / self.STRETCH_S
             eased = 0.5 * p + 0.5 * ease_out(p)
-            return self.start_x + eased * (self.lead_x - self.start_x)
+            return self.start_d + eased * (self.lead_d - self.start_d)
         # Once stretched to the far edge he only inches on while the rear catches up.
         p = min(1.0, (t - self.STRETCH_S) / (self.SNAP_S + self.SETTLE_S))
-        return self.lead_x + p * (self.end_x - self.lead_x)
+        return self.lead_d + p * (self.end_d - self.lead_d)
 
-    def rear_x(self, t):
+    def rear_d(self, t):
         """
-        Left edge of the rear sprite. It plants itself near the left edge through the
-        stretch — that lag is the elongation — then snaps forward to close the gap.
+        Distance of the rear's centre along the path. It plants itself near the left edge
+        through the stretch — that lag is the elongation — then snaps forward.
         """
         if t < self.STRETCH_S:
-            return self.start_x + ease_out(min(1.0, t / (self.STRETCH_S * 0.4))) * (self.anchor_x - self.start_x)
+            settle = ease_out(min(1.0, t / (self.STRETCH_S * 0.4)))
+            return self.start_d + settle * (self.anchor_d - self.start_d)
         snap = min(1.0, (t - self.STRETCH_S) / self.SNAP_S)
-        caught_up = self.head_x(t) - self.rear_w + 2 * self.scale
-        return self.anchor_x + ease_out(snap) * (caught_up - self.anchor_x)
+        caught_up = self.head_d(t) - (self.head_inset + self.rear_inset) * 0.8
+        return self.anchor_d + ease_out(snap) * (caught_up - self.anchor_d)
 
     def gap(self, t):
         """Spring length in pixels: how far the rear trails the head. Grows, then collapses."""
-        return max(0.0, self.head_x(t) - (self.rear_x(t) + self.rear_w))
+        return max(0.0, self.head_d(t) - self.head_inset - (self.rear_d(t) + self.rear_inset))
 
-    def _draw_art(self, canvas, art, x0, y0):
-        x0, y0 = int(round(x0)), int(round(y0))
+    def _draw_art(self, canvas, art, cx, cy):
+        """
+        Draw a sprite centred on (cx, cy), upright. He stays the right way up wherever he
+        is on the path: he is a dog stretching himself out, not a body swung around a
+        corner, so nothing here rotates.
+        """
+        x0 = int(round(cx - len(art[0]) * self.scale / 2))
+        y0 = int(round(cy - len(art) * self.scale / 2))
         for row, line in enumerate(art):
             for col, kind in enumerate(line):
                 if kind == ".":
@@ -967,55 +1018,98 @@ class SlinkyReveal:
                         if 0 <= px < self.width and 0 <= py < self.height:
                             canvas.SetPixel(px, py, *self.COLORS[kind])
 
-    def _draw_coils(self, canvas, x_from, x_to, cy):
+    def _draw_coils(self, canvas, d_from, d_to):
         """
-        The spring: a run of vertical ellipse rings between the rear and the head, linked
-        top and bottom. Their spacing is the span divided by the ring count, so a long
-        span draws them far apart (stretched) and a short one bunches them together
+        The spring: a run of rings along the path between the rear and the head, linked
+        rim to rim. Their spacing is the span divided by the ring count, so a long span
+        draws them far apart (stretched) and a short one bunches them together
         (compressed). A stretched spring is also drawn narrower, as a real slinky thins
         when it is pulled.
+
+        Each ring's long axis is perpendicular to the path where that ring sits, so the
+        spring bends with him when it runs around the board's corner.
         """
-        span = x_to - x_from
+        span = d_to - d_from
         if span <= 1:
             return
         # Bunched when short, thinned out when pulled long — a real slinky narrows as it
-        # stretches, and that change in ring height sells the elongation.
+        # stretches, and that change in ring size sells the elongation.
         squeeze = max(0.0, min(1.0, 1.0 - span / (self.width * 0.75)))
-        ry = max(2.0 * self.scale, self.head_h * (0.22 + 0.16 * squeeze))
-        rx = max(1.2 * self.scale, ry * 0.55)
-        # Fewer rings when he is bunched up, so a short spring stays legible instead of
-        # collapsing into a solid block of wire.
-        coils = max(3, min(self.COILS, int(span / (4.0 * self.scale))))
+        # Kept well under the body depth: a ring as tall as he is reads as a fat tube
+        # rather than a coil you can see daylight through.
+        r_long = max(2.5 * self.scale, self.head_h * (0.20 + 0.10 * squeeze))
+        # Each coil is a bracket — a vertical stroke with short returns top and bottom —
+        # rather than a closed ellipse. At this size a filled ring is a 3px blob, and a
+        # row of them linked rim to rim reads as a solid bar; separated brackets are what
+        # make it look like a spring you can see through.
+        ret = max(1, int(round(self.scale)))
+        # Spacing is what sells the stretch, so rings are never packed closer than the
+        # width of one bracket plus a clear gap.
+        pitch = max(3.0 * self.scale, span / (self.COILS * 1.6))
+        coils = max(2, int(span / pitch))
         step = span / coils
+        # The spring joins him at body height, above the legs — the bottom three art rows
+        # are legs and paws, so riding on the sprite's centre line would run it through
+        # his knees.
+        lift = 1.5 * self.scale
         for i in range(coils + 1):
-            cx = x_from + i * step
+            d = d_from + i * step
+            cx, cy = self._point(d)
+            ux, uy = self._tangent(d)
+            nx, ny = -uy, ux
+            cy -= lift * ux  # only while he is level; no lift once he turns up the edge
             rgb = self.COIL_RGB if i % 2 == 0 else self.COIL_SHADE_RGB
-            # The ring: an ellipse seen almost edge-on, so it reads as a loop of wire.
-            for a in range(0, 360, 4):
-                rad = math.radians(a)
-                for w in range(self.scale):
-                    px = int(round(cx + math.cos(rad) * (rx - w * 0.5)))
-                    py = int(round(cy + math.sin(rad) * (ry - w * 0.5)))
+            for w in range(self.scale):
+                # The upright stroke of the coil.
+                for s in range(-int(r_long), int(r_long) + 1):
+                    px = int(round(cx + nx * s + ux * w))
+                    py = int(round(cy + ny * s + uy * w))
                     if 0 <= px < self.width and 0 <= py < self.height:
                         canvas.SetPixel(px, py, *rgb)
-            # A short link from this ring's top and bottom to the next one, so the coils
-            # read as one connected spring rather than a row of loose hoops.
-            if i < coils:
-                for py, link in ((int(round(cy - ry)), self.COIL_RGB), (int(round(cy + ry)), self.COIL_SHADE_RGB)):
-                    for px in range(int(round(cx)), int(round(cx + step)) + 1):
+                # Short returns at top and bottom, angled toward the next coil, so each
+                # one reads as a loop of wire rather than a bare tick.
+                for side in (1, -1):
+                    bx = cx + nx * r_long * side + ux * w
+                    by = cy + ny * r_long * side + uy * w
+                    for s in range(1, ret + 1):
+                        px, py = int(round(bx + ux * s)), int(round(by + uy * s))
                         if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *link)
+                            canvas.SetPixel(px, py, *rgb)
+
+    def _tangent(self, d):
+        """Unit direction of travel at distance d — rightward, or upward past the corner."""
+        return (1.0, 0.0) if d <= self.bottom_len else (0.0, -1.0)
+
+    def _blackout_ahead(self, canvas, d):
+        """
+        Black everything ahead of his nose, so the new screen appears in the wake of the
+        stretch. The front is the vertical line at his nose while he is crossing the
+        bottom edge; once he turns the corner the board behind him is fully revealed.
+        """
+        # Clamped to the bottom run: past the corner `_point` turns upward and its x
+        # stops advancing, which would re-black the right-hand columns he had already
+        # revealed and leave them dark for the rest of the animation.
+        x_from = min(d, self.bottom_len) - self.head_w / 2
+        for x in range(max(0, int(math.ceil(x_from))), self.width):
+            for y in range(self.height):
+                canvas.SetPixel(x, y, 0, 0, 0)
 
     def overlay(self, canvas, t):
         if t >= self.duration:
             return False
-        head_x, rear_x = self.head_x(t), self.rear_x(t)
+        head_d, rear_d = self.head_d(t), self.rear_d(t)
         # Everything ahead of his nose is still black: the new screen is revealed in the
         # wake of the stretch, so the reveal front and the elongation are one motion.
-        _blackout(canvas, int(round(head_x + self.head_w)), self.width, self.height)
-        self._draw_coils(canvas, rear_x + self.rear_w - self.scale, head_x + self.scale, self.body_y)
-        self._draw_art(canvas, self.REAR_ART, rear_x, self.body_y - self.rear_h / 2)
-        self._draw_art(canvas, self.HEAD_ART, head_x, self.body_y - self.head_h / 2)
+        self._blackout_ahead(canvas, head_d + self.head_inset * 0.6)
+        # The spring spans the clear run between the two halves: it leaves the rear's
+        # front edge and meets the head's back edge, rather than overlapping either.
+        self._draw_coils(canvas, rear_d + self.rear_inset * 0.9, head_d - self.head_inset * 0.9)
+        # Both halves stand on the same ground line, so each is centred by its own height.
+        rear_x, rear_y = self._point(rear_d)
+        head_x, head_y = self._point(head_d)
+        self._draw_art(canvas, self.REAR_ART, rear_x,
+                       rear_y + self.head_h / 2 - self.rear_h / 2)
+        self._draw_art(canvas, self.HEAD_ART, head_x, head_y)
         return True
 
 
