@@ -135,6 +135,9 @@ def test_park_screens_are_revealed_by_both_tink_and_buzz(monkeypatch, screens):
 def test_loop_through_attractions(monkeypatch, screens):
     fake_matrix = FakeMatrix()
     drawn = []
+    # Pin the surprise-Baymax roll: it fires on BAYMAX_CHANCE of runs and would
+    # otherwise fail this "wipe" assertion about once every seventy runs.
+    monkeypatch.setattr(disney.random, "random", lambda: 1.0)
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: drawn.append(ride) or True)
     attraction = {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}
     park = {"name": "Magic Kingdom", "attractions": [attraction]}
@@ -142,6 +145,21 @@ def test_loop_through_attractions(monkeypatch, screens):
     assert drawn == [attraction]
     assert drawn[0] is not attraction, "the updater threads mutate the live dict; animate a snapshot"
     assert screens == [{"hold": 8, "transition": "wipe", "animating": True}]
+
+def test_baymax_rarely_turns_up_on_a_ride_screen(monkeypatch, screens):
+    """The surprise branch is a 1-in-70 roll, so only a pinned RNG ever exercises it."""
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: True)
+    park = {"name": "Magic Kingdom",
+            "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "baymax", "a low roll brings Baymax out"
+
+    monkeypatch.setattr(disney.random, "random", lambda: 1.0)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "wipe", "and normally he stays away"
+
 
 def test_loop_through_attractions_passes_this_hours_forecast(monkeypatch, screens):
     seen = []
