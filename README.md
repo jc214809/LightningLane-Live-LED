@@ -160,9 +160,10 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --led-scan-mode           Progressive or interlaced scan. 0 = Progressive, 1 = Interlaced. (Default: 1)
 --led-pwm-lsb-nanosecond  Base time-unit for the on-time in the lowest significant bit in nanoseconds. (Default: 130)
 --led-show-refresh        Shows the current refresh rate of the LED panel.
-        Slow down writing to GPIO. Range: 0..4. (Default: 1)
+--led-slowdown-gpio       Slow down writing to GPIO. Range: 0..4. (Default: 1)
 --led-no-hardware-pulse   Don't use hardware pin-pulse generation.
 --led-rgb-sequence        Switch if your matrix has led colors swapped. (Default: RGB)
+--led-panel-type          Chipset initialization for panels that need it: FM6126A or FM6127. (Default: none)
 --led-pixel-mapper        Apply pixel mappers. e.g Rotate:90, U-mapper
 --led-row-addr-type       0 = default; 1 = AB-addressed panels. (Default: 0)
 --led-multiplexing        Multiplexing type: 0 = direct; 1 = strip; 2 = checker; 3 = spiral; 4 = Z-strip; 5 = ZnMirrorZStripe; 6 = coreman; 7 = Kaler2Scan; 8 = ZStripeUneven. (Default: 0)
@@ -172,6 +173,30 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --emulated                Force the scoreboard to run in software emulation mode.
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: true)
 ```
+
+### Waveshare P5 64×32 panel
+
+The Waveshare P5 64×32 panel labeled `P5(2121)-3264-16S-M5` and `HUB75-D` needs a panel initialization setting with this project. In our testing, the display stayed black with the default settings but worked with `--led-panel-type=FM6126A`. This flag selects a compatible initialization sequence; it does **not** mean the chips on the panel are FM6126A.
+
+```bash
+sudo ./disney.py \
+  --led-rows=32 \
+  --led-cols=64 \
+  --led-chain=1 \
+  --led-gpio-mapping=adafruit-hat-pwm \
+  --led-slowdown-gpio=2 \
+  --led-panel-type=FM6126A
+```
+
+| Option | Why it is used |
+| --- | --- |
+| `--led-rows=32 --led-cols=64` | Sets the panel’s 64×32 pixel resolution. |
+| `--led-chain=1` | Configures one panel on the HUB75 connection. |
+| `--led-gpio-mapping=adafruit-hat-pwm` | Uses the Adafruit HAT/Bonnet wiring with the GPIO 4-to-18 PWM modification. Use `adafruit-hat` if that modification is absent. |
+| `--led-slowdown-gpio=2` | Slows GPIO timing to the setting that worked in our Pi test. |
+| `--led-panel-type=FM6126A` | Sends the initialization sequence that made this particular panel light up. |
+
+The panel also needs its own 5V power connection. `--led-panel-type` needs an rpi-rgb-led-matrix build that supports panel types; if startup logs "Your compiled RGB Matrix Library is out of date", rebuild the driver with `sudo ./LLL-install.sh -c -p -f`.
 
 ### ThemeParks API Key (Recommended)
 
