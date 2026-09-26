@@ -6,8 +6,6 @@ import threading
 import json
 import random
 import traceback
-from datetime import datetime, date
-from typing import Iterable, Union, Optional
 
 import driver
 from driver import RGBMatrix, __version__
@@ -23,6 +21,7 @@ from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
 from display.countdown.countdown import render_countdown_to_disney
+from utils.trips import active_trip, parse_trips
 
 from utils import debug
 
@@ -103,10 +102,10 @@ def main():
     else:
         debug.info("No ThemeParks API key configured; using polling only.")
 
-    # Log configured trip dates at startup
-    configured_dates = [d.isoformat() for d in parse_trip_dates(config)]
-    if configured_dates:
-        debug.info(f"Configured trip dates: {configured_dates}")
+    # Log configured trips at startup
+    configured_trips = parse_trips(config)
+    if configured_trips:
+        debug.info(f"Configured trips: {[_describe_trip(t) for t in configured_trips]}")
     else:
         debug.info("No trip dates configured.")
 
@@ -114,18 +113,14 @@ def main():
     try:
         while True:
             render_logo(matrix)
-            # Determine active trip date each cycle to handle week-after window and upcoming trips
+            # Pick the trip each cycle so the screen moves on as trips start, end and pass.
             if config.get('trip_countdown', {}).get('enabled'):
-                trip_list = parse_trip_dates(config)
-                active_trip = get_active_trip_date(trip_list)
-                if active_trip is not None:
-                    # Log when the active trip changes
-                    if (last_active_trip_logged is None) or (last_active_trip_logged.date() != active_trip.date()):
-                        today = datetime.now().date()
-                        mode = "Countdown" if active_trip.date() > today else "Magical trip (within 7 days after)"
-                        debug.info(f"Trip countdown active date: {active_trip.date().isoformat()} | Mode: {mode}")
-                        last_active_trip_logged = active_trip
-                    show_trip_countdown(matrix, active_trip)
+                trip = active_trip(parse_trips(config))
+                if trip is not None:
+                    if trip != last_active_trip_logged:
+                        debug.info(f"Trip countdown showing: {_describe_trip(trip)}")
+                        last_active_trip_logged = trip
+                    show_trip_countdown(matrix, trip)
                 else:
                     logging.info("No upcoming trips; countdown hidden.")
             else:
@@ -148,70 +143,9 @@ def main():
     finally:
         matrix.Clear()
 
-def validate_date(date_string):
-    """Validate the date string and convert it to a datetime object at midnight.
-    Accepts YYYY-MM-DD or full ISO datetime strings; returns datetime.datetime.
-    """
-    try:
-        # Prefer parsing as a date-only string (YYYY-MM-DD)
-        if len(date_string) == 10:
-            # Return a datetime at midnight for date-only input
-            d = date.fromisoformat(date_string)
-            return datetime.combine(d, datetime.min.time())
-        # Fallback: parse as datetime
-        return datetime.fromisoformat(date_string)
-    except Exception:
-        raise ValueError(f"Invalid date format: {date_string}. Please use YYYY-MM-DD or ISO datetime.")
-
-def parse_trip_dates(config):
-    """Return a list of date objects from config trip_countdown.
-    Supports both legacy "trip_date" (single string) and new "trip_dates" (array of strings).
-    """
-    tc = config.get('trip_countdown', {})
-    dates = []
-    if 'trip_dates' in tc and isinstance(tc['trip_dates'], list):
-        for s in tc['trip_dates']:
-            try:
-                dt = validate_date(str(s))
-                dates.append(dt.date())
-            except Exception:
-                debug.warning(f"Ignoring invalid trip date: {s}")
-    elif 'trip_date' in tc and tc['trip_date']:
-        try:
-            dt = validate_date(str(tc['trip_date']))
-            dates.append(dt.date())
-        except Exception:
-            debug.warning(f"Ignoring invalid legacy trip date: {tc['trip_date']}")
-    return dates
-
-def get_active_trip_date(trip_dates: Iterable[Union[datetime, date]]) -> Optional[datetime]:
-    """
-    Single-pass implementation that prefers the newest date in the list (max) as long as
-    it is not more than 7 days in the past. Otherwise returns the nearest upcoming date
-    (earliest >= today). Returns a datetime at midnight or None.
-    """
-    today = date.today()
-    latest_past = None  # most recent past date (< today)
-    nearest_future = None  # earliest date >= today
-
-    for d in trip_dates:
-        dt = d.date() if isinstance(d, datetime) else d
-        if dt < today:
-            if (latest_past is None) or (dt > latest_past):
-                latest_past = dt
-        else:
-            if (nearest_future is None) or (dt < nearest_future):
-                nearest_future = dt
-
-    # If the most recent past is within 7 days, show it
-    if latest_past and (today - latest_past).days <= 7:
-        return datetime.combine(latest_past, datetime.min.time())
-
-    # Otherwise show the nearest upcoming (if any)
-    if nearest_future:
-        return datetime.combine(nearest_future, datetime.min.time())
-
-    return None
+def _describe_trip(trip):
+    span = trip.start.isoformat() + (f" to {trip.end.isoformat()}" if trip.end else "")
+    return f"{trip.name} ({span})" if trip.name else span
 
 def render_logo(matrix):
     matrix.Clear()
@@ -272,11 +206,10 @@ def _attraction_screen(ride, expected):
     # A closure per ride: the next screen's sweep redraws this one, so it must not see later loop values.
     return lambda canvas, t: draw_attraction_frame(canvas, ride, t, expected)
 
-def show_trip_countdown(matrix, next_trip_time):
-    # Render the next trip count down
-    if next_trip_time is None:
+def show_trip_countdown(matrix, trip):
+    if trip is None:
         return
-    show_screen(matrix, _static(render_countdown_to_disney, next_trip_time), 7)
+    show_screen(matrix, lambda canvas, t: render_countdown_to_disney(canvas, trip, t), 7)
 
 if __name__ == "__main__":
     main()

@@ -61,6 +61,8 @@ Every screen after the intro plays through `display/animation.py:show_screen(mat
 
 `present()` stamps a red "!" network badge (`display/network.py`, after mlb-led-scoreboard's) in the bottom-right 7x7 of every frame while `updater/shared.py:network_issues()` is set. The updaters drive it via `note_network_result()`: a REST cycle where every park's fetch fails sets it and any success clears it; in WS mode, a socket-level connect failure (an `OSError`, not a server rejection) sets it and any received message clears it. Tests reset the flag in the root `conftest.py`.
 
+The trip countdown (`display/countdown/countdown.py`) draws the fireworks castle at 1x (beside the text on 32-row, above it on 64-row) with its windows twinkling, and the days left rolling up (`COUNT_UP_S`) in big gold digits over a red "DAYS TO DISNEY" label; `countdown_message()` swaps in "DAY n / OF N" during a trip with an end date and gold messages for tomorrow, trip day, "Welcome Home" and the open-ended week after, picking the largest `countdown_message`/`countdown_label` font it fits in. Its spaces are half a cell wide (via `draw_text`'s `space_px`).
+
 Before each park title screen, `display/landmarks.py` plays a 3s animated landmark (castle, Spaceship Earth, Tower of Terror, Tree of Life), matched loosely on the park name by `landmark_for()`; parks with no match go straight to the title. Long ride names that don't fit scroll vertically (`attraction_info.overflow_rows`/`scroll_offset`); the wait bar is drawn only when the text fits above it. The ride screen draws 2px word spaces (`attraction_info.SPACE_PX`) instead of the fonts' full-cell space — wrap, measure and draw its text through `wrap_text`/`get_text_width`/`draw_text` with `space_px` so all three agree.
 
 `display/fireworks/fireworks.py` splits a pure simulation (`FireworksShow.step()`/`frame_pixels()`, seedable via `rng`) from the matrix renderer, which double-buffers with `CreateFrameCanvas`/`SwapOnVSync`. The castle is ASCII art in `_CASTLE_ART`, doubled on 64-row boards; `_BIG_CASTLE_ROW_PATCH` adjusts the doubled castle only (taller door), so edits to the art show at 2x on 64x64.
@@ -73,7 +75,7 @@ Before each park title screen, `display/landmarks.py` plays a 3s animated landma
 
 `config.json` (gitignored; copy from `config.json-example`) controls:
 - `trip_countdown.enabled` — show/hide countdown
-- `trip_countdown.trip_dates` — list of ISO date strings (`YYYY-MM-DD`); supports multiple trips
+- `trip_countdown.trip_dates` — list of trips, each an ISO date string (`YYYY-MM-DD`) or `{"start", "end", "name"}` (end and name optional); `utils/trips.py:active_trip()` shows only one — a trip under way (or ended within 2 days, "Welcome Home"; open-ended trips hold for 7 days after start), else the nearest upcoming. A name replaces "DISNEY" under the day count when it fits on one line (~10 chars on 32-row, ~12 on 64-row)
 - `trip_countdown.trip_date` — legacy single-date fallback
 - `weather.apikey` — OpenWeatherMap API key
 - `debug` — enables verbose logging

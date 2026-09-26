@@ -1,11 +1,12 @@
 import json
 import os
 import tempfile
-from datetime import datetime, date
+from datetime import date
 
 import pytest
 
 import disney  # Import your main module (disney.py)
+from utils.trips import Trip
 import display.animation as disney_animation
 
 
@@ -42,7 +43,7 @@ class FakeMatrix:
     def SetImage(self, img):
         pass
 
-# ---- Tests for load_config and validate_date ----
+# ---- Tests for load_config ----
 
 def test_load_config():
     # Create a temporary config file
@@ -56,19 +57,6 @@ def test_load_config():
     os.unlink(tmp_path)  # Clean up
 
     assert loaded_config == config_data
-
-def test_validate_date_valid():
-    date_str = "2023-10-01"
-    result = disney.validate_date(date_str)
-    # Check result is a date-like or datetime object with the expected date
-    assert isinstance(result, (datetime, date))
-    assert result.year == 2023 and result.month == 10 and result.day == 1
-
-def test_validate_date_invalid():
-    invalid_date = "not-a-date"
-    with pytest.raises(ValueError) as excinfo:
-        disney.validate_date(invalid_date)
-    assert "Invalid date format" in str(excinfo.value)
 
 # ---- Tests for rendering functions ----
 
@@ -172,13 +160,12 @@ def test_each_attraction_screen_keeps_its_own_ride(monkeypatch):
     assert drawn == ["Space Mountain"]
 
 def test_show_trip_countdown(monkeypatch, screens):
-    fake_matrix = FakeMatrix()
     drawn = []
-    monkeypatch.setattr(disney, "render_countdown_to_disney", lambda canvas, when: drawn.append(when))
-    next_trip_time = datetime(2023, 12, 25)
-    disney.show_trip_countdown(fake_matrix, next_trip_time)
-    assert drawn == [next_trip_time]
+    monkeypatch.setattr(disney, "render_countdown_to_disney", lambda canvas, trip, t: drawn.append((trip, t)))
+    trip = Trip(date(2023, 12, 25))
+    disney.show_trip_countdown(FakeMatrix(), trip)
     assert screens[0]["hold"] == 7
+    assert drawn == [(trip, 0.0)], "the screen animates, so it passes t through"
 
 
 def test_show_trip_countdown_skips_when_no_trip(screens):
@@ -245,30 +232,6 @@ def test_park_filter_limits_parks(monkeypatch):
     assert filtered[0]["id"] == "ak-id"
 
 
-# Test that show_trip_countdown passes along the correct next_trip_time.
-def test_show_trip_countdown_format(monkeypatch, screens):
-    fake_matrix = FakeMatrix()
-    recorded_time = None
-
-    def fake_render_countdown(matrix, next_trip_time):
-        nonlocal recorded_time
-        recorded_time = next_trip_time
-
-    monkeypatch.setattr(disney, "render_countdown_to_disney", fake_render_countdown)
-
-    test_date = datetime(2023, 12, 31)
-    disney.show_trip_countdown(fake_matrix, test_date)
-    assert recorded_time == test_date
-
-
-# Optionally, test validate_date boundary conditions more thoroughly.
-def test_validate_date_leap_year():
-    # Test a valid leap year date.
-    date_str = "2020-02-29"
-    result = disney.validate_date(date_str)
-    assert result.year == 2020 and result.month == 2 and result.day == 29
-
-
 def test_load_config_nonexistent(tmp_path):
     # Test that load_config raises FileNotFoundError when the file doesn't exist.
     non_existent = tmp_path / "nonexistent_config.json"
@@ -299,14 +262,6 @@ def test_render_logo_with_image(monkeypatch):
     # Check that SetImage was called and it received "converted_image"
     assert fake_matrix.image_set == "converted_image"
 
-
-def test_validate_date_error_message():
-    """
-    Test validate_date to ensure that it raises a ValueError with the expected message.
-    """
-    with pytest.raises(ValueError) as excinfo:
-        disney.validate_date("invalid-date")
-    assert "Invalid date format:" in str(excinfo.value)
 
 # Note: Testing main() is more challenging because it runs an infinite loop.
 # If needed, you could refactor main() for better testability (e.g., extract functionality into smaller functions)a
