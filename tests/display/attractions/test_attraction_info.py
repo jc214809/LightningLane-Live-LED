@@ -272,11 +272,33 @@ def test_no_tick_without_a_forecast(frame_recorder):
     assert len(frame_recorder["lines"]) == 1
 
 
-def test_long_names_drop_the_bar_instead_of_colliding(frame_recorder):
-    # 4 name lines + the wait fill a 32-row board, so there is no room left for the bar.
+def test_a_name_that_only_just_overflows_keeps_the_bar_by_tightening(frame_recorder):
+    # 4 name lines + the wait is 3px over on a 32-row board with normal spacing, but
+    # fits once the blank row and the name/wait gap are dropped.
     long_ride = {"name": "Meet Beloved Disney Pals at Mickey and Friends", "waitTime": 35}
-    assert not attraction_mod.text_fits_above_bar(RecordingCanvas(64, 32), long_ride)
-    assert attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), long_ride, 0.1, expected=40) is True
+    canvas = RecordingCanvas(64, 32)
+    reserve, gap = attraction_mod.bar_layout(canvas, long_ride)
+    assert reserve == attraction_mod.bar_reserve_rows(32, tight=True)
+    assert gap == 0, "the gap above the wait is given up to make room"
+    assert attraction_mod.text_fits_above_bar(canvas, long_ride)
+    attraction_mod.draw_attraction_frame(canvas, long_ride, 5.0, expected=40)
+    assert len(frame_recorder["lines"]) == 2, "bar and tick are drawn"
+
+
+def test_roomy_names_keep_normal_spacing(frame_recorder):
+    canvas = RecordingCanvas(64, 32)
+    reserve, gap = attraction_mod.bar_layout(canvas, {"name": "Space Mountain", "waitTime": 35})
+    assert reserve == attraction_mod.bar_reserve_rows(32), "no tightening when there's room"
+    assert gap == attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT
+
+
+def test_names_too_long_even_when_tightened_drop_the_bar(frame_recorder):
+    # 6 name lines can't fit however the spacing is squeezed; the text wins.
+    huge = {"name": " ".join(["Halloween"] * 9), "waitTime": 35}
+    canvas = RecordingCanvas(64, 32)
+    assert attraction_mod.bar_layout(canvas, huge) == (0, attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT)
+    assert not attraction_mod.text_fits_above_bar(canvas, huge)
+    attraction_mod.draw_attraction_frame(canvas, huge, 0.1, expected=40)
     assert frame_recorder["lines"] == [], "no bar or tick"
 
 
