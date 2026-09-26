@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -171,6 +171,49 @@ def test_show_trip_countdown(monkeypatch, screens):
 def test_show_trip_countdown_skips_when_no_trip(screens):
     disney.show_trip_countdown(FakeMatrix(), None)
     assert screens == []
+
+
+def _trip_config(enabled=True, *entries):
+    return {"trip_countdown": {"enabled": enabled, "trip_dates": list(entries)}}
+
+
+@pytest.fixture
+def infos(monkeypatch):
+    logged = []
+    monkeypatch.setattr(disney.debug, "info", lambda msg, *a: logged.append(msg))
+    return logged
+
+
+def test_play_trip_countdown_shows_the_next_trip_and_logs_it_once(monkeypatch, infos):
+    shown = []
+    monkeypatch.setattr(disney, "show_trip_countdown", lambda matrix, trip: shown.append(trip))
+    soon, later = date.today() + timedelta(days=5), date.today() + timedelta(days=90)
+    config = _trip_config(True, later.isoformat(), {"start": soon.isoformat(), "name": "Fall Trip"})
+
+    first = disney.play_trip_countdown(FakeMatrix(), config)
+    again = disney.play_trip_countdown(FakeMatrix(), config, first)
+
+    assert first == again == Trip(soon, None, "Fall Trip")
+    assert shown == [first, first]
+    assert infos == [f"Trip countdown showing: Fall Trip ({soon.isoformat()})"]
+
+
+def test_play_trip_countdown_skipped_when_disabled_or_no_trip(monkeypatch):
+    monkeypatch.setattr(disney, "show_trip_countdown", lambda matrix, trip: pytest.fail("nothing to show"))
+    previous = Trip(date(2020, 1, 1))
+    future = (date.today() + timedelta(days=5)).isoformat()
+    assert disney.play_trip_countdown(FakeMatrix(), _trip_config(False, future), previous) is previous
+    assert disney.play_trip_countdown(FakeMatrix(), _trip_config(True, "2020-01-01"), previous) is previous
+    assert disney.play_trip_countdown(FakeMatrix(), {}) is None
+
+
+def test_log_configured_trips(infos):
+    disney.log_configured_trips(_trip_config(True, "2026-11-10", {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring"}))
+    disney.log_configured_trips({})
+    assert infos == [
+        "Configured trips: ['2026-11-10', 'Spring (2027-03-14 to 2027-03-19)']",
+        "No trip dates configured.",
+    ]
 
 
 # Test that loop_through_attractions only renders operating attractions.
