@@ -106,6 +106,7 @@ def test_led_matrix_options():
         led_rgb_sequence="RGB",
         drop_privileges=False,
         led_pixel_mapper="Rotate:90",
+        led_panel_type="FM6127",
         led_pwm_dither_bits=0,
         led_limit_refresh=0,
         led_show_refresh=True,
@@ -127,11 +128,56 @@ def test_led_matrix_options():
     assert options.led_rgb_sequence == "RGB"
     assert options.drop_privileges is False
     assert options.pixel_mapper_config == "Rotate:90"
+    assert options.panel_type == "FM6127"
     assert options.pwm_dither_bits == 0
     assert options.limit_refresh_rate_hz == 0
     assert options.show_refresh_rate == 1
     assert options.gpio_slowdown == 1
     assert options.disable_hardware_pulsing is True
+
+def test_unset_panel_type_leaves_the_library_default():
+    base = dict(
+        led_gpio_mapping="regular", led_rows=32, led_cols=64, led_chain=1, led_parallel=1,
+        led_row_addr_type=0, led_multiplexing=0, led_pwm_bits=11, led_brightness=100,
+        led_scan_mode=1, led_pwm_lsb_nanoseconds=130, led_rgb_sequence="RGB",
+        drop_privileges=False, led_pixel_mapper="", led_pwm_dither_bits=0,
+        led_limit_refresh=0, led_show_refresh=False, led_slowdown_gpio=1,
+        led_no_hardware_pulse=False,
+    )
+    for extra in ({}, {"led_panel_type": ""}):
+        options = led_matrix_options(Namespace(**base, **extra))
+        assert not hasattr(options, "panel_type"), "never set, so the binding's default stands"
+
+
+def test_panel_type_on_an_old_library_warns_instead_of_crashing(monkeypatch):
+    warnings = []
+    monkeypatch.setattr(debug, "warning", lambda msg: warnings.append(msg))
+
+    class OldOptions(DummyRGBMatrixOptions):
+        __slots__ = ()
+
+        def __setattr__(self, name, value):
+            if name == "panel_type":
+                raise AttributeError(name)
+            super().__setattr__(name, value)
+
+    monkeypatch.setattr(driver, "RGBMatrixOptions", OldOptions)
+    args_obj = Namespace(
+        led_gpio_mapping="regular", led_rows=32, led_cols=64, led_chain=1, led_parallel=1,
+        led_row_addr_type=0, led_multiplexing=0, led_pwm_bits=11, led_brightness=100,
+        led_scan_mode=1, led_pwm_lsb_nanoseconds=130, led_rgb_sequence="RGB",
+        drop_privileges=False, led_pixel_mapper="", led_panel_type="FM6126A",
+        led_pwm_dither_bits=0, led_limit_refresh=0, led_show_refresh=False,
+        led_slowdown_gpio=1, led_no_hardware_pulse=False,
+    )
+    led_matrix_options(args_obj)
+    assert "The --led-panel-type argument will not work until it is updated." in warnings
+
+
+def test_panel_type_rejects_unknown_chipsets(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["program", "--led-panel-type", "FM9999"])
+    with pytest.raises(SystemExit):
+        args()
 
 # -----------------------------------------------------------------------------
 # Tests for utility functions
@@ -181,6 +227,7 @@ def test_args_defaults():
         assert parsed.led_pwm_lsb_nanoseconds == 130
         assert parsed.led_rgb_sequence == "RGB"
         assert parsed.led_pixel_mapper == ""
+        assert parsed.led_panel_type == ""
         assert parsed.led_row_addr_type == 0
         assert parsed.led_multiplexing == 0
         assert parsed.led_limit_refresh == 0
@@ -211,6 +258,7 @@ def test_args_custom():
             "--led-no-hardware-pulse", "dummy",
             "--led-rgb-sequence", "BGR",
             "--led-pixel-mapper", "Rotate:180",
+            "--led-panel-type", "FM6126A",
             "--led-row-addr-type", "2",
             "--led-multiplexing", "3",
             "--led-limit-refresh", "60",
@@ -235,6 +283,7 @@ def test_args_custom():
         assert parsed.led_no_hardware_pulse == "dummy"
         assert parsed.led_rgb_sequence == "BGR"
         assert parsed.led_pixel_mapper == "Rotate:180"
+        assert parsed.led_panel_type == "FM6126A"
         assert parsed.led_row_addr_type == 2
         assert parsed.led_multiplexing == 3
         assert parsed.led_limit_refresh == 60
