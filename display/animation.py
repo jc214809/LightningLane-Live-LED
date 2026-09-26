@@ -541,19 +541,20 @@ class RalphReveal:
     duration = RISE_S + WIND_S + FALL_S
     GRAVITY = 0.055
 
-    # Ralph mid-swing: spiky dark-red hair, big pink fists, red shirt, maroon overalls.
-    # '.' empty, H hair, F face/skin, E eye, M mouth, S shirt, O overalls, B buckle, K outline.
+    # Ralph mid-swing: spiky dark-red hair, big pink fists, red shirt, overalls.
+    # '.' empty, H hair, F face/skin, E eye, A teeth, M mouth, S shirt, O overalls,
+    # B buckle, K outline.
     ART = [
-        "KKKK.....KHHHK.....KKKK",
-        "KFFFK...KHHHHHK...KFFFK",
-        "KFFFFK.KHHHHHHHK.KFFFFK",
-        "KFFFFFKKHFFFFFHKKFFFFFK",
-        "KFFFFFK.KFEFEFK.KFFFFFK",
-        "KFFFFFK.KFFFFFK.KFFFFFK",
-        ".KFFFK..KFMMMFK..KFFFK.",
-        "..KFK....KFFFK....KFK..",
-        "..KFK...KSSSSSK...KFK..",
-        "..KFFKKKKSSSSSKKKKFFK..",
+        ".......KHKHKHKHK.......",
+        ".......KHHHHHHHK.......",
+        "KKKKKK.KHHHHHHHK.KKKKKK",
+        "KFFFFK.KHFFFFFHK.KFFFFK",
+        "KFFFFK.KFFEFEFFK.KFFFFK",
+        "KFFFFK.KFFFFFFFK.KFFFFK",
+        ".KFFFK.KFFAAAFFK.KFFFK.",
+        "..KFFK.KKFFFFFKK.KFFK..",
+        "..KFFKKKKSSSSSK..KFFK..",
+        "..KFFFFFSSSSSSSFFFFFK..",
         "...KFFFFSSSSSSSFFFFK...",
         "....KSSSSSSSSSSSSSK....",
         "....KSSSSOBBBOSSSSK....",
@@ -561,13 +562,20 @@ class RalphReveal:
         ".....KOOOOOOOOOOOK.....",
         ".....KOOOOOOOOOOOK.....",
         ".....KOOOOKKKOOOOK.....",
-        ".....KOOOK...KOOOK.....",
+        ".....KFFFK...KFFFK.....",
         ".....KFFK.....KFFK.....",
         ".....KKKK.....KKKK.....",
     ]
     COLORS = {
-        "H": (140, 25, 30), "F": (240, 180, 160), "E": (20, 20, 25), "M": (90, 30, 35),
-        "S": (200, 40, 45), "O": (110, 25, 35), "B": (190, 120, 50), "K": (25, 15, 20),
+        "H": (140, 25, 30),
+        "F": (240, 180, 160),
+        "E": (20, 20, 25),
+        "M": (90, 30, 35),
+        "S": (200, 40, 45),
+        "O": (255, 220, 170),
+        "B": (190, 120, 50),
+        "K": (25, 15, 20),
+        "A": (250, 250, 250),
     }
 
     def __init__(self, width, height, rng=None):
