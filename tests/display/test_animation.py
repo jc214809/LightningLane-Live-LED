@@ -769,6 +769,56 @@ def test_genie_art_rows_are_even_and_use_defined_colors():
         assert {ch for row in art for ch in row} - {"."} <= set(animation.GenieReveal.COLORS)
 
 
+def test_genie_lamp_is_big_with_its_spout_tip_up_and_right():
+    lamp, (sc, sr) = animation.GenieReveal.LAMP_ART, animation.GenieReveal.LAMP_SPOUT
+    for height in (32, 64):
+        genie = animation.GenieReveal(64, height, random.Random(0))
+        assert genie.lamp_w >= 64 * 0.35, "big enough to read as a lamp, not a blob"
+        assert genie.lamp_x + genie.lamp_w <= 64 and genie.lamp_y >= 0, "and wholly on the board"
+        assert (genie.lamp_w, genie.lamp_h) == (len(lamp[0]), len(lamp)), \
+            "1x on both boards: doubled, it swamps the 64x64 board"
+    width = len(lamp[0])
+    tip = [c for c, ch in enumerate(lamp[int(sr)]) if ch != "."]
+    assert max(tip) >= width - 3, "the spout reaches out to the lamp's right end"
+    assert int(sc) in tip and sr < len(lamp) / 2, "smoke leaves from the upturned tip, not the body"
+
+
+def test_genie_lamp_does_not_share_colors_with_genie():
+    """A shared outline key once turned Genie's blue outline bronze."""
+    lamp = {ch for row in animation.GenieReveal.LAMP_ART for ch in row} - {"."}
+    genie = {ch for row in animation.GenieReveal.ART for ch in row} - {"."}
+    assert not lamp & genie
+    outline = animation.GenieReveal.COLORS["A"]
+    assert sum(outline) > 150, "the lamp's outline still shows on the black board"
+
+
+def test_genie_is_drawn_solid_just_before_full_size():
+    """Near full size every cell landed on x.5 and rounding dropped every other column."""
+    for height in (32, 64):
+        genie = animation.GenieReveal(64, height, random.Random(0))
+        full, almost = FakeCanvas(64, height), FakeCanvas(64, height)
+        genie._draw_genie(full, genie.EMERGE_S)
+        t = genie.EMERGE_S - 0.001
+        assert 0.99 < genie.grow(t) < 1
+        genie._draw_genie(almost, t)
+        assert len(almost.px) >= len(full.px) * 0.97
+
+
+def test_genie_lamp_stays_on_the_dark_side_while_he_flies():
+    gold = {animation.GenieReveal.COLORS[k] for k in "AYLO"}
+    genie = animation.GenieReveal(64, 64, random.Random(0))
+    for f in range(int(genie.EMERGE_S * animation.FPS), int(genie.duration * animation.FPS)):
+        t = f / animation.FPS
+        genie.puffs = []
+        canvas = FakeCanvas(64, 64)
+        genie.overlay(canvas, t)
+        front = genie.reveal_x(t)
+        lamp = [x for (x, _), rgb in canvas.px.items() if rgb in gold and x < genie.lamp_x + genie.lamp_w]
+        assert all(x >= front for x in lamp), "never drawn over the revealed screen"
+        if f == int(genie.EMERGE_S * animation.FPS):
+            assert lamp, "and doesn't vanish the moment he takes off"
+
+
 def test_genie_finishes_within_its_duration_and_its_smoke_settles():
     for height in (32, 64):
         genie = animation.GenieReveal(64, height, random.Random(1))
@@ -842,6 +892,7 @@ def test_genie_reveals_the_new_screen_behind_him_but_not_while_forming():
         genie.overlay(canvas, f / animation.FPS)
     canvas.Clear()
     fill((9, 9, 9))(canvas, 0)
+    genie.puffs = []  # drifting emerge smoke would tint the dark corner checked below
     genie.overlay(canvas, mid)
     assert canvas.px[(0, 0)] == (9, 9, 9), "revealed in his wake"
     assert canvas.px[(63, 63)] == (0, 0, 0), "still dark ahead of him"

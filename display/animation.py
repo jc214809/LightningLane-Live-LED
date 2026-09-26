@@ -1258,9 +1258,6 @@ class BaymaxReveal:
 
 class GenieReveal:
     """
-    TODO (art): the lamp needs work — it doesn't read as a lamp at this size. Genie
-    himself is good.
-
     Genie erupts from his lamp and flies off with the new screen in his wake. Not a
     FlyByReveal: the first half of the run is an emerge, where he has no flight path at
     all -- a plume of smoke pours out of the lamp's spout and he scales up out of it from
@@ -1275,16 +1272,31 @@ class GenieReveal:
     EMERGE_S, FLY_S = 1.6, 2.0
     duration = EMERGE_S + FLY_S
 
-    # The lamp he comes out of: a squat gold vessel with a spout at the top left.
-    # '.' empty, K outline, Y gold body.
+    # The lamp he comes out of, drawn big enough to read as Aladdin's lamp: a looped
+    # handle on the left, domed lid with a knob, a low wide body on a short foot, and a
+    # long spout tapering off to the right with its tip turned up. It has its own color
+    # keys so it never borrows Genie's blue outline.
+    # '.' empty, A outline bronze, Y gold, L glint, O shaded gold.
     LAMP_ART = [
-        "....K....",
-        "...KYK...",
-        "KKKYYYKK.",
-        "KYYYYYYKK",
-        "KYYYYYYYK",
-        ".KKKKKKK.",
+        "...........AA.............",
+        "..........ALYA............",
+        "...........AA.............",
+        ".........AAYYAA...........",
+        "........ALYYYYOA..........",
+        "..AAA.AAAAAAAAAAAA........",
+        ".AOOOALLYYYYYYYYYOA....AAA",
+        "AO..ALYYYYYYYYYYYYOAAAALYA",
+        "AO..AYYYYYYYYYYYYYYYYYYYA.",
+        ".AO.AYYYYYYYYYYYYYYOOOAA..",
+        "..AOAOYYYYYYYYYYYOOAAA....",
+        "...AAOOOYYYYYYYOOAA.......",
+        "......AAAAOOOOOAAA........",
+        ".........AYYYYA...........",
+        "........AOOOOOOA..........",
+        "........AAAAAAAA..........",
     ]
+    # The spout's upturned tip, in lamp cells: smoke pours from here and Genie grows out of it.
+    LAMP_SPOUT = (24.5, 6.0)
 
     # Genie facing forward: swept-back black topknot, wide blue face, gold hoop earrings,
     # a grin over a pointed black goatee, folded arms in gold cuffs, and -- instead of
@@ -1330,7 +1342,8 @@ class GenieReveal:
         "K": (20, 60, 120), "H": (16, 16, 30), "J": (70, 72, 105), "B": (60, 150, 235),
         "N": (42, 115, 200), "E": (250, 250, 255), "W": (250, 250, 255), "P": (18, 18, 32),
         "U": (252, 250, 245), "T": (200, 60, 80), "M": (16, 16, 30),
-        "G": (250, 205, 70), "C": (250, 205, 70), "Y": (250, 205, 70), "S": (105, 180, 242),
+        "G": (250, 205, 70), "C": (250, 205, 70), "S": (105, 180, 242),
+        "A": (125, 72, 12), "Y": (250, 200, 60), "L": (255, 246, 190), "O": (205, 135, 25),
     }
     SMOKE_COLORS = [(120, 160, 235), (150, 120, 225), (95, 130, 210), (185, 165, 245)]
 
@@ -1340,9 +1353,10 @@ class GenieReveal:
         self.scale = 2 if height >= 64 else 1
         self.sprite_w = len(self.ART[0]) * self.scale
         self.sprite_h = len(self.ART) * self.scale
-        self.lamp_w = len(self.LAMP_ART[0]) * self.scale
-        self.lamp_h = len(self.LAMP_ART) * self.scale
-        self.lamp_x = 2 * self.scale
+        # The lamp stays 1x on both boards: doubled it swamps the 64x64 board under Genie.
+        self.lamp_w = len(self.LAMP_ART[0])
+        self.lamp_h = len(self.LAMP_ART)
+        self.lamp_x = 2
         self.lamp_y = height - self.lamp_h
         # Each puff: [x, y, vx, vy, frames_left, rgb, radius]
         self.puffs = []
@@ -1350,7 +1364,7 @@ class GenieReveal:
 
     def spout(self):
         """Where the smoke leaves the lamp, and the point Genie scales up out of."""
-        return self.lamp_x + 4.5 * self.scale, self.lamp_y + 0.5 * self.scale
+        return self.lamp_x + self.LAMP_SPOUT[0], self.lamp_y + self.LAMP_SPOUT[1]
 
     def grow(self, t):
         """0 (not yet formed) to 1 (full size). Smoke pours alone for the first third."""
@@ -1446,22 +1460,19 @@ class GenieReveal:
             _blackout(canvas, self.reveal_x(t), self.width, self.height)
         self._draw_puffs(canvas)
         if t < self.duration:
-            if t < self.EMERGE_S:
-                self._draw_art(canvas, self.LAMP_ART, self.lamp_x, self.lamp_y)
+            # The lamp stays put on the still-dark side until the reveal sweeps past it.
+            self._draw_art(canvas, self.LAMP_ART, self.lamp_x, self.lamp_y,
+                           clip_x=self.reveal_x(t))
             self._draw_genie(canvas, t)
         return t < self.duration or bool(self.puffs)
 
-    def _draw_art(self, canvas, art, x0, y0):
+    def _draw_art(self, canvas, art, x0, y0, clip_x=0):
         x0, y0 = int(round(x0)), int(round(y0))
         for row, line in enumerate(art):
             for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.scale):
-                    for sx in range(self.scale):
-                        px, py = x0 + col * self.scale + sx, y0 + row * self.scale + sy
-                        if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *self.COLORS[kind])
+                px, py = x0 + col, y0 + row
+                if kind != "." and clip_x <= px < self.width and 0 <= py < self.height:
+                    canvas.SetPixel(px, py, *self.COLORS[kind])
 
     def _draw_genie(self, canvas, t):
         """
@@ -1471,7 +1482,9 @@ class GenieReveal:
         g = self.grow(t)
         if g <= 0.02:
             return
-        x0, y0 = self.position(t)
+        # Whole pixels first: a half-pixel home splits cells either side of the spout
+        # in opposite directions as he scales, opening a gap down his middle.
+        x0, y0 = (math.floor(v + 0.5) for v in self.position(t))
         ax, ay = self.spout()
         for row, line in enumerate(self.ART):
             for col, kind in enumerate(line):
@@ -1479,11 +1492,14 @@ class GenieReveal:
                     continue
                 bx, by = x0 + col * self.scale, y0 + row * self.scale
                 if g < 1.0:
-                    bx = ax + (bx + self.scale / 2 - ax) * g
-                    by = ay + (by + self.scale / 2 - ay) * g
+                    # Scale the cell's centre, not its corner: otherwise near full size every
+                    # column lands on x.5 and round-half-to-even drops every other one.
+                    half = self.scale / 2
+                    bx = ax + (bx + half - ax) * g - half
+                    by = ay + (by + half - ay) * g - half
                 for sy in range(self.scale):
                     for sx in range(self.scale):
-                        px, py = int(round(bx)) + sx, int(round(by)) + sy
+                        px, py = math.floor(bx + 0.5) + sx, math.floor(by + 0.5) + sy
                         if 0 <= px < self.width and 0 <= py < self.height:
                             canvas.SetPixel(px, py, *self.COLORS[kind])
 

@@ -187,7 +187,11 @@ What worked and what didn't, so we don't repeat it:
   driving everything, and a face of two dots and a line that's unmistakable at any
   size. Simple shapes, well animated, beat detailed art.
 - **Genie** — strong. Big, and his emerge-from-the-lamp gives him a story beat the
-  others don't have. His lamp still needs work.
+  others don't have. The lamp was a 9x6 blob until it was redrawn at 26x16 with the
+  parts that make the silhouette — looped handle, domed lid, long upturned spout.
+  It stays 1x on both boards; doubled on 64x64 it swamped Genie.
+  Give props their own color keys: the lamp once shared Genie's `K` and turned his
+  outline bronze.
 - **Sorcerer Mickey** — the materialize effect is the best mechanic here, but his
   face reads as a flat mask.
 - **Dumbo** — ears and flap are great; he's missing his back half entirely.
