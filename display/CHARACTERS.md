@@ -39,8 +39,22 @@ Rough sizes that work, in sprite cells before scaling:
 
 **But watch the 2x scale.** Sprites double on 64-row boards (`scale = 2 if height >= 64`).
 A 25-cell-wide sprite is 50 of 64 columns there, which leaves almost nothing for
-anything else. Slinky Dog's spring nearly vanishes at 2x for exactly this reason.
+anything else. Slinky Dog's spring nearly vanished at 2x for exactly this reason.
 Check both board sizes every time; they fail differently.
+
+**If a character's motion needs the board's width, keep him 1x rather than bending
+his path.** Slinky is two sprites with a spring between them. Doubled on 64x64 the
+halves ate 54 of 64 columns and the spring — his best feature — had nowhere to go.
+Earlier versions tried to buy room with the path instead: walking the bottom edge and
+turning up the right side, then running corner to corner on the diagonal. Both lost
+the one pose that sells him. The Slinky that landed stays 1x on both boards
+(`SCALE = 1`) and stretches straight across a single ground line, rear on the left
+edge and nose on the right. Genie's lamp is 1x for the same reason; declare a fixed
+size with a `SCALE` or `<NAME>_SCALE` attribute so the sprite editor previews it right.
+
+The diagonal also forced both sprites to rotate, and a tilted dog reads as two
+separate animals joined by a spring rather than one dog stretching. **Keep characters
+upright on a ground line.**
 
 ## Reading at low resolution
 
@@ -52,11 +66,27 @@ identifies the character.
 uses a `K` outline color around the body. Sorcerer Mickey's ears were invisible as
 true black; lifting them to charcoal `(74, 72, 88)` fixed it.
 
-**Eyes are the hardest part, and the most important.** Three separate failures:
+**Faces want three-quarter view, not profile.** Slinky's head was drawn in profile
+first and the face collapsed into a dark mass with one dot on it — in profile a dog is
+mostly skull and ear, and the features that identify him are edge-on. Turned toward
+the viewer, the parts separate: cap on top, ear down one side, and a broad muzzle out
+front carrying both eyes and the mouth. Nearly every character here reads better
+facing you.
+
+**Eyes are the hardest part, and the most important.** Five separate failures:
 - White rectangles with tiny pupils → looks startled and cartoonishly wrong.
 - Near-black pupils on a mid-tone face → the eye vanishes into the fur.
 - Dark eyes on a dark background → the eye sockets read as holes punched through
   the head.
+- Eyes up on the skull rather than beside the muzzle → they read as sitting on top
+  of the face instead of in it.
+- Eyes flush against the body outline → they merge into the border and the face
+  reads as blank. Inset them so they sit surrounded by the face color.
+
+**A feature must differ from what it sits ON and from what it sits NEXT TO.** Slinky's
+nose was drawn at `(28,24,24)` beside an outline at `(35,22,14)`: correctly placed,
+strongly contrasting with the muzzle, and completely invisible, because it touched a
+border it matched. The eyes were then lost the same way. Check both distances.
 
 What works: make the eye a distinct mid-dark tone that differs from *both* the face
 and the background, ring it with the outline color so it's clearly a separate shape,
@@ -132,6 +162,25 @@ non-`.` character has a color.
 Test the *motion*, not the pixels. Asserting on exact pixel positions makes the art
 impossible to iterate on.
 
+**Assert relationships in the art, not coordinates.** "The eyes sit surrounded by
+muzzle", "the mouth is below the eyes", "the tail rises above the body" survive a
+redraw; `art[6][3] == "P"` does not, and it will be the first thing you delete.
+
+**Pin the colors too.** Slinky's nose passed every layout assertion while being
+invisible, twice, because the tests only knew where things were, not whether you could
+see them. A cheap channel-distance check catches exactly the failure that renders look
+fine to a test and wrong to a person:
+
+```python
+def distance(a, b):
+    return sum(abs(x - y) for x, y in zip(colors[a], colors[b]))
+
+assert distance("P", "T") > 200   # eye against the muzzle it sits on
+```
+
+None of this replaces looking at it. It stops a feature you already fixed from
+silently going missing the next time you redraw the head — which happened here twice.
+
 ## Scorecard
 
 What worked and what didn't, so we don't repeat it:
@@ -140,13 +189,23 @@ What worked and what didn't, so we don't repeat it:
   driving everything, and a face of two dots and a line that's unmistakable at any
   size. Simple shapes, well animated, beat detailed art.
 - **Genie** — strong. Big, and his emerge-from-the-lamp gives him a story beat the
-  others don't have. His lamp still needs work.
+  others don't have. The lamp was a 9x6 blob until it was redrawn at 26x16 with the
+  parts that make the silhouette — looped handle, domed lid, long upturned spout.
+  It stays 1x on both boards; doubled on 64x64 it swamped Genie.
+  Give props their own color keys: the lamp once shared Genie's `K` and turned his
+  outline bronze.
 - **Sorcerer Mickey** — the materialize effect is the best mechanic here, but his
   face reads as a flat mask.
 - **Dumbo** — ears and flap are great; he's missing his back half entirely.
-- **Slinky Dog** — the weakest. Reads as a generic dog with a spring between its
-  halves rather than the character, and the spring nearly disappears at 2x.
+- **Slinky Dog** — redrawn from scratch around one pose: rear planted on the left
+  edge, front half walking out until his nose touches the right edge, spring pulled
+  across the whole board between them; then the rear snaps across and both bound off.
+  The coils are tilted rings, shaded behind and bright in front, so they bunch into a
+  tube when squashed and separate when stretched; his tail is a banded spring. The
+  earlier versions took more rounds than any other character; the rewrite landed in
+  three renders because it started from the pose, not the path.
 
 The pattern: the characters that landed are the ones with a simple, strong silhouette
 and one well-executed motion. The ones that fell short tried for detail and lost the
-shape.
+shape. Slinky is the clearest case of the other lesson — decide the one pose that
+sells the character, then size him to hold it.

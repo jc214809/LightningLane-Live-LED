@@ -418,88 +418,6 @@ def test_show_screen_hands_mickey_the_new_screens_pixels():
     assert matrix.frames[-1][(63, 5)] == (120, 30, 200), "screen fully materialized by the end"
 
 
-def test_slinky_stretches_out_then_snaps_shut():
-    slinky = animation.SlinkyReveal(64, 32, random.Random(1))
-    gaps = [slinky.gap(f / animation.FPS) for f in range(int(slinky.duration * animation.FPS))]
-    peak = max(gaps)
-    peak_at = gaps.index(peak)
-    assert peak > 20, "the spring really pulls open across the board"
-    assert gaps[0] < peak / 2, "starts bunched up"
-    assert gaps[peak_at // 2] < peak, "grows into the stretch"
-    assert gaps[-1] < peak / 2, "rear catches up and the coil compresses again"
-
-
-def test_slinky_head_leads_the_rear_the_whole_way_across():
-    slinky = animation.SlinkyReveal(64, 32, random.Random(2))
-    for f in range(int(slinky.duration * animation.FPS)):
-        t = f / animation.FPS
-        assert slinky.head_x(t) >= slinky.rear_x(t), "the head always leads"
-    assert slinky.head_x(0) < 1, "starts at the left edge"
-    assert slinky.head_x(slinky.duration) + slinky.head_w >= 64, "nose clears the right edge"
-
-
-def test_slinky_reveal_front_follows_the_stretch_across_the_board():
-    fronts = []
-    for height in (32, 64):
-        slinky = animation.SlinkyReveal(64, height, random.Random(3))
-        seen = []
-        for f in range(int(slinky.duration * animation.FPS)):
-            canvas = FakeCanvas(64, height)
-            fill((9, 9, 9))(canvas, 0)
-            slinky.overlay(canvas, f / animation.FPS)
-            revealed = [x for (x, y), rgb in canvas.px.items() if rgb == (9, 9, 9)]
-            seen.append(max(revealed) if revealed else -1)
-        assert seen == sorted(seen), "the reveal only ever moves right"
-        assert seen[0] < 32 < seen[-1], "starts on the left and finishes past the far edge"
-        fronts.append(seen)
-    assert all(f[-1] >= 63 for f in fronts), "the whole board is revealed by the end"
-
-
-def test_slinky_reveal_tracks_his_nose_rather_than_a_fixed_sweep():
-    slinky = animation.SlinkyReveal(64, 64, random.Random(4))
-    mid = slinky.STRETCH_S / 2
-    canvas = FakeCanvas(64, 64)
-    fill((9, 9, 9))(canvas, 0)
-    slinky.overlay(canvas, mid)
-    nose = int(round(slinky.head_x(mid) + slinky.head_w))
-    assert canvas.px[(0, 0)] == (9, 9, 9), "behind him the new screen is showing"
-    assert canvas.px[(min(63, nose + 2), 0)] == (0, 0, 0), "ahead of his nose is still dark"
-
-
-def test_slinky_finishes_and_never_draws_outside_the_board():
-    for height in (32, 64):
-        slinky = animation.SlinkyReveal(64, height, random.Random(5))
-        for f in range(int(slinky.duration * animation.FPS)):
-            canvas = FakeCanvas(64, height)
-            assert slinky.overlay(canvas, f / animation.FPS) is True
-            for x, y in canvas.px:
-                assert 0 <= x < 64 and 0 <= y < height
-        assert slinky.overlay(FakeCanvas(64, height), slinky.duration) is False
-
-
-def test_slinky_coils_spread_apart_when_stretched_and_bunch_when_short():
-    slinky = animation.SlinkyReveal(64, 32, random.Random(6))
-
-    def coil_xs(span):
-        canvas = FakeCanvas(64, 32)
-        slinky._draw_coils(canvas, 2, 2 + span, 16)
-        return sorted({x for (x, _), rgb in canvas.px.items()
-                       if rgb in (slinky.COIL_RGB, slinky.COIL_SHADE_RGB)})
-
-    short, long = coil_xs(12), coil_xs(50)
-    assert short and long
-    assert max(long) - min(long) > max(short) - min(short), "a stretched spring spans further"
-    # Ring centres are one step apart; a long spring's rings sit further from each other.
-    assert (max(long) - min(long)) / max(1, len(long)) > (max(short) - min(short)) / max(1, len(short))
-
-
-def test_slinky_art_rows_are_even_and_use_defined_colors():
-    for art in (animation.SlinkyReveal.HEAD_ART, animation.SlinkyReveal.REAR_ART):
-        assert len({len(row) for row in art}) == 1, "every row is the same width"
-        assert {ch for row in art for ch in row} - {"."} <= set(animation.SlinkyReveal.COLORS)
-    assert animation.TRANSITIONS["slinky"] is animation.SlinkyReveal
-
-
 def test_slinky_plays_as_a_screen_transition():
     matrix = FakeMatrix()
     animation.show_screen(matrix, fill((10, 200, 90)), animation.SlinkyReveal.duration + 0.5,
@@ -689,6 +607,56 @@ def test_genie_art_rows_are_even_and_use_defined_colors():
         assert {ch for row in art for ch in row} - {"."} <= set(animation.GenieReveal.COLORS)
 
 
+def test_genie_lamp_is_big_with_its_spout_tip_up_and_right():
+    lamp, (sc, sr) = animation.GenieReveal.LAMP_ART, animation.GenieReveal.LAMP_SPOUT
+    for height in (32, 64):
+        genie = animation.GenieReveal(64, height, random.Random(0))
+        assert genie.lamp_w >= 64 * 0.35, "big enough to read as a lamp, not a blob"
+        assert genie.lamp_x + genie.lamp_w <= 64 and genie.lamp_y >= 0, "and wholly on the board"
+        assert (genie.lamp_w, genie.lamp_h) == (len(lamp[0]), len(lamp)), \
+            "1x on both boards: doubled, it swamps the 64x64 board"
+    width = len(lamp[0])
+    tip = [c for c, ch in enumerate(lamp[int(sr)]) if ch != "."]
+    assert max(tip) >= width - 3, "the spout reaches out to the lamp's right end"
+    assert int(sc) in tip and sr < len(lamp) / 2, "smoke leaves from the upturned tip, not the body"
+
+
+def test_genie_lamp_does_not_share_colors_with_genie():
+    """A shared outline key once turned Genie's blue outline bronze."""
+    lamp = {ch for row in animation.GenieReveal.LAMP_ART for ch in row} - {"."}
+    genie = {ch for row in animation.GenieReveal.ART for ch in row} - {"."}
+    assert not lamp & genie
+    outline = animation.GenieReveal.COLORS["A"]
+    assert sum(outline) > 150, "the lamp's outline still shows on the black board"
+
+
+def test_genie_is_drawn_solid_just_before_full_size():
+    """Near full size every cell landed on x.5 and rounding dropped every other column."""
+    for height in (32, 64):
+        genie = animation.GenieReveal(64, height, random.Random(0))
+        full, almost = FakeCanvas(64, height), FakeCanvas(64, height)
+        genie._draw_genie(full, genie.EMERGE_S)
+        t = genie.EMERGE_S - 0.001
+        assert 0.99 < genie.grow(t) < 1
+        genie._draw_genie(almost, t)
+        assert len(almost.px) >= len(full.px) * 0.97
+
+
+def test_genie_lamp_stays_on_the_dark_side_while_he_flies():
+    gold = {animation.GenieReveal.COLORS[k] for k in "AYLO"}
+    genie = animation.GenieReveal(64, 64, random.Random(0))
+    for f in range(int(genie.EMERGE_S * animation.FPS), int(genie.duration * animation.FPS)):
+        t = f / animation.FPS
+        genie.puffs = []
+        canvas = FakeCanvas(64, 64)
+        genie.overlay(canvas, t)
+        front = genie.reveal_x(t)
+        lamp = [x for (x, _), rgb in canvas.px.items() if rgb in gold and x < genie.lamp_x + genie.lamp_w]
+        assert all(x >= front for x in lamp), "never drawn over the revealed screen"
+        if f == int(genie.EMERGE_S * animation.FPS):
+            assert lamp, "and doesn't vanish the moment he takes off"
+
+
 def test_genie_finishes_within_its_duration_and_its_smoke_settles():
     for height in (32, 64):
         genie = animation.GenieReveal(64, height, random.Random(1))
@@ -762,6 +730,7 @@ def test_genie_reveals_the_new_screen_behind_him_but_not_while_forming():
         genie.overlay(canvas, f / animation.FPS)
     canvas.Clear()
     fill((9, 9, 9))(canvas, 0)
+    genie.puffs = []  # drifting emerge smoke would tint the dark corner checked below
     genie.overlay(canvas, mid)
     assert canvas.px[(0, 0)] == (9, 9, 9), "revealed in his wake"
     assert canvas.px[(63, 63)] == (0, 0, 0), "still dark ahead of him"
@@ -782,3 +751,196 @@ def test_genie_is_drawn_big_on_both_board_sizes():
         assert min(xs) >= 0 and max(xs) < 64, "drawn entirely on the board, not half off it"
         assert max(xs) - min(xs) >= genie.sprite_w * 0.8, "nearly his full width is on screen"
         assert max(ys) - min(ys) >= height * 0.7, "and he fills most of the board's height"
+
+
+def test_slinky_is_registered_with_well_formed_art():
+    cls = animation.SlinkyReveal
+    assert animation.TRANSITIONS["slinky"] is cls
+    for art in (cls.FRONT_ART, cls.REAR_ART):
+        assert len({len(row) for row in art}) == 1, "every row is the same width"
+        assert {ch for row in art for ch in row} - {"."} <= set(cls.COLORS)
+
+
+def test_slinky_holds_with_his_rear_on_one_side_and_head_on_the_other():
+    for height in (32, 64):
+        dog = animation.SlinkyReveal(64, height)
+        hold = dog.STRETCH_S + dog.HOLD_S / 2
+        assert dog.rear_x(hold) == 0, "his rear sits on the left edge"
+        assert dog.front_x(hold) + dog.front_w == 64, "and his nose reaches the right edge"
+        assert dog.front_h <= height and dog.rear_h <= height
+
+
+def test_slinky_walks_out_then_the_rear_catches_up_and_both_leave():
+    dog = animation.SlinkyReveal(64, 32)
+    walk = [dog.front_x(f / animation.FPS) for f in range(int(dog.STRETCH_S * animation.FPS))]
+    assert walk == sorted(walk) and walk[-1] > walk[0] + 20, "the front half walks steadily right"
+    gap = lambda t: dog.front_x(t) - dog.rear_x(t)
+    snap_end = dog.STRETCH_S + dog.HOLD_S + dog.SNAP_S
+    assert gap(0.0) < gap(dog.STRETCH_S) > gap(snap_end), "stretches out, then snaps back together"
+    assert dog.rear_x(dog.duration) >= 64, "and the whole dog has left the board"
+
+
+def test_slinky_tail_is_a_spring():
+    art, colors = animation.SlinkyReveal.REAR_ART, animation.SlinkyReveal.COLORS
+    body_top = next(i for i, row in enumerate(art) if "B" in row)
+    tail = [(r, c) for r, row in enumerate(art) for c, ch in enumerate(row) if ch in "SW"]
+    assert tail and all(r < body_top for r, _ in tail), "the tail rises above his rump"
+    assert {art[r][c] for r, c in tail} == {"S", "W"}, "banded bright and dark like a coil"
+    assert sum(abs(a - b) for a, b in zip(colors["S"], colors["W"])) > 150
+
+
+def test_slinky_spring_spreads_as_he_stretches():
+    coil = {animation.SlinkyReveal.COIL_FRONT, animation.SlinkyReveal.COIL_BACK}
+
+    def spring_span(t):
+        canvas = FakeCanvas(64, 32)
+        animation.SlinkyReveal(64, 32).overlay(canvas, t)
+        xs = [x for (x, _), rgb in canvas.px.items() if rgb in coil]
+        return max(xs) - min(xs)
+
+    dog = animation.SlinkyReveal
+    assert spring_span(dog.STRETCH_S + 0.1) > spring_span(0.0) + 20
+
+
+def test_slinky_reveals_behind_him_and_stays_on_the_board():
+    for height in (32, 64):
+        dog = animation.SlinkyReveal(64, height)
+        mid = dog.STRETCH_S / 2
+        canvas = FakeCanvas(64, height)
+        fill((9, 9, 9))(canvas, 0)
+        dog.overlay(canvas, mid)
+        assert canvas.px[(0, 0)] == (9, 9, 9), "revealed behind his front half"
+        assert canvas.px[(63, 0)] == (0, 0, 0), "still dark ahead of him"
+        frames = 0
+        while dog.overlay(FakeCanvas(64, height), frames / animation.FPS):
+            frames += 1
+            assert frames < 10 * animation.FPS, "reveal never ended"
+        for f in range(frames + 1):
+            canvas = FakeCanvas(64, height)
+            dog.overlay(canvas, f / animation.FPS)
+            assert all(0 <= x < 64 and 0 <= y < height for x, y in canvas.px)
+
+
+def _wrap(height=32, seed=0):
+    return animation.SlinkyWrapReveal(64, height, random.Random(seed))
+
+
+def _at(dog, name, frac):
+    """A time `frac` of the way through the named phase."""
+    names = ["walk_in", "walk_off", "pause", "peek", "look", "cross", "follow", "exit"]
+    i = names.index(name)
+    start = dog.beats[i - 1] if i else 0.0
+    return start + (dog.beats[i] - start) * frac
+
+
+def test_slinky_wrap_is_a_registered_surprise_with_well_formed_art():
+    cls = animation.SlinkyWrapReveal
+    assert animation.TRANSITIONS["slinky_wrap"] is cls and cls.over_screen
+    arts = (cls.FRONT_ART, cls.FRONT_LOOK_ART, cls.REAR_ART, cls.REAR_WAG_ART)
+    for art in arts:
+        assert len({len(row) for row in art}) == 1
+        assert {ch for row in art for ch in row} - {"."} <= set(cls.COLORS)
+    changed = {r for r, (a, b) in enumerate(zip(cls.FRONT_ART, cls.FRONT_LOOK_ART)) if a != b}
+    assert changed and changed <= {3, 4, 5}, "the look-down head only moves his pupils"
+    body_top = next(i for i, row in enumerate(cls.REAR_ART) if "B" in row)
+    changed = {r for r, (a, b) in enumerate(zip(cls.REAR_ART, cls.REAR_WAG_ART)) if a != b}
+    assert changed and max(changed) < body_top, "the wag only moves his tail"
+
+
+def test_slinky_wrap_pause_is_random_and_the_visit_fits_a_ride_screen():
+    pauses = set()
+    for seed in range(40):
+        dog = _wrap(seed=seed)
+        assert 1.0 <= dog.pause <= 3.0
+        assert animation.COVER_S + dog.duration <= 8 - 1 / animation.FPS, "done before the screen changes"
+        pauses.add(round(dog.pause, 2))
+    assert len(pauses) > 20
+
+
+def test_slinky_wrap_rear_holds_the_bottom_right_while_his_front_goes_round():
+    for height in (32, 64):
+        dog = _wrap(height)
+        for name in ("walk_off", "pause", "peek", "look", "cross"):
+            for frac in (0.1, 0.5, 0.9):
+                rx, ground = dog.pose(_at(dog, name, frac))["rear"]
+                assert (rx, ground) == (dog.rear_home, height), f"rear stays put during {name}"
+        assert dog.rear_home > 64 / 2 and dog.rear_home + dog.rear_w < 64
+        assert dog.pose(_at(dog, "walk_off", 0.999))["front"][0] > 64 - 2, "front walks off the right edge"
+        assert dog.pose(_at(dog, "pause", 0.5))["front"] is None
+        fx, fg = dog.pose(_at(dog, "look", 0.5))["front"]
+        assert fx < 64 / 4 and fg == dog.front_h, "and peeks back in at the top-left"
+
+
+def test_slinky_wrap_spring_goes_round_the_back_of_the_board():
+    dog = _wrap(32)
+    coil = {dog.COIL_FRONT, dog.COIL_BACK}
+    t = _at(dog, "look", 0.5)
+    canvas = FakeCanvas(64, 32)
+    dog.overlay(canvas, t)
+    fx, _ = dog.pose(t)["front"]
+    xs = [x for (x, _), rgb in canvas.px.items() if rgb in coil]
+    assert min(xs) == 0 and max(xs) == 63, "stubs run off the left edge and the right edge"
+    assert not [x for x in xs if fx + dog.front_w <= x < dog.rear_home], "nothing across the middle"
+
+
+def test_slinky_wrap_looks_down_at_his_rear_and_wags():
+    dog = _wrap(32)
+    t = _at(dog, "look", 0.5)
+    canvas = FakeCanvas(64, 32)
+    dog.overlay(canvas, t)
+    fx, fg = dog.pose(t)["front"]
+    pupil = dog.COLORS["P"]
+    for r, (normal, looking) in enumerate(zip(dog.FRONT_ART, dog.FRONT_LOOK_ART)):
+        for c, (a, b) in enumerate(zip(normal, looking)):
+            px = canvas.px.get((int(fx) + c, fg - dog.front_h + r))
+            if b == "P":
+                assert px == pupil, "pupils drop to look down"
+            elif a == "P":
+                assert px != pupil
+    tails = set()
+    rx, rg = dog.pose(t)["rear"]
+    for frac in (0.1, 0.3, 0.5, 0.7, 0.9):
+        c = FakeCanvas(64, 32)
+        dog.overlay(c, _at(dog, "look", frac))
+        tails.add(frozenset(p for p, rgb in c.px.items() if rgb in (dog.COLORS["S"], dog.COLORS["W"])
+                            and p[1] < rg - dog.rear_h + 3 and p[0] < rx + dog.rear_w))
+    assert len(tails) >= 2, "the tail swings between poses"
+
+
+def test_slinky_wrap_rear_follows_his_path_round_then_both_leave():
+    for height in (32, 64):
+        dog = _wrap(height)
+        out = [dog.pose(_at(dog, "follow", f * dog.FOLLOW_OUT))["rear"] for f in (0.1, 0.5, 0.99)]
+        assert all(g == height for _, g in out), "leaves along the bottom, the way his front went"
+        assert out[0][0] < out[1][0] < out[2][0] and out[2][0] > 64 - 3, "off the right edge"
+        back = [dog.pose(_at(dog, "follow", dog.FOLLOW_OUT + f * (1 - dog.FOLLOW_OUT)))["rear"]
+                for f in (0.01, 0.5, 0.999)]
+        assert all(g == dog.front_h for _, g in back), "and comes back along the top"
+        assert back[0][0] < 0, "in from the left edge"
+        fx, _ = dog.pose(_at(dog, "follow", 0.999))["front"]
+        assert back[2][0] + dog.rear_w <= fx and back[2][0] > back[1][0], "catching up behind him"
+        assert dog.pose(dog.duration - 1e-6)["rear"][0] > 64 - dog.rear_w, "then the whole dog walks off right"
+        assert dog.overlay(FakeCanvas(64, height), dog.duration) is False
+
+
+def test_slinky_wrap_draws_over_the_screen_and_stays_on_the_board():
+    for height in (32, 64):
+        dog = _wrap(height)
+        canvas = FakeCanvas(64, height)
+        fill((9, 9, 9))(canvas, 0)
+        dog.overlay(canvas, _at(dog, "look", 0.5))
+        assert canvas.px[(32, height // 2 + 4)] == (9, 9, 9), "no blackout: the ride screen shows through"
+        for f in range(int(dog.duration * animation.FPS) + 1):
+            c = FakeCanvas(64, height)
+            dog.overlay(c, f / animation.FPS)
+            assert all(0 <= x < 64 and 0 <= y < height for x, y in c.px)
+
+
+def test_surprises_let_the_screen_underneath_keep_animating():
+    def times(transition):
+        seen = []
+        animation.show_screen(FakeMatrix(), lambda canvas, t: seen.append(t) or True, 0.5,
+                              transition=transition, rng=random.Random(0))
+        return seen
+    assert max(times("baymax")) > 0.3, "under a surprise the ride screen plays on"
+    assert max(times("wipe")) == 0, "a reveal still holds it at its first frame"

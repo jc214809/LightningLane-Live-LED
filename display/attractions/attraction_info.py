@@ -77,11 +77,11 @@ def draw_attraction_frame(canvas, ride_info, t, expected=None):
         down_color = graphics.Color(*(int(c * level) for c in DOWN_RGB))
     has_bar = isinstance(wait, int) and not isinstance(wait, bool)
     # Laid out against the final wait so the text doesn't jump while the number counts up.
-    reserve = bar_reserve_rows(canvas.height) if has_bar and text_fits_above_bar(canvas, ride_info) else 0
+    reserve, gap = bar_layout(canvas, ride_info) if has_bar else (0, GAP_BETWEEN_RIDE_AND_WAIT)
     overflow = overflow_rows(canvas, ride_info)
     scroll = scroll_offset(t, overflow) if overflow > 0 else None
     render_attraction_info(canvas, {**ride_info, "waitTime": shown}, down_color=down_color,
-                           reserve_bottom=reserve, scroll_px=scroll)
+                           reserve_bottom=reserve, scroll_px=scroll, gap=gap)
     if reserve:
         draw_wait_bar(canvas, shown, expected)
     return down or overflow > 0 or (has_bar and t < COUNT_UP_S)
@@ -113,9 +113,13 @@ def scroll_offset(t, overflow):
     return round(overflow - (t - SCROLL_PAUSE_S) * SCROLL_PX_PER_S)
 
 
-def bar_reserve_rows(board_height):
-    """Rows kept clear for the wait bar: the bar, the forecast tick above it, and one blank row."""
-    return (2 if board_height >= 64 else 1) + 2
+def bar_reserve_rows(board_height, tight=False):
+    """
+    Rows kept clear for the wait bar: the bar, the forecast tick above it, and a blank
+    row. `tight` drops the blank row — used only for names that would otherwise lose
+    the bar entirely.
+    """
+    return (2 if board_height >= 64 else 1) + (1 if tight else 2)
 
 
 def _layout(matrix, ride_info):
@@ -145,20 +149,37 @@ def _layout(matrix, ride_info):
     return combined_lines, wrapped_ride_name, wrapped_wait_time, total_lines_height, line_heights
 
 
-def text_fits_above_bar(matrix, ride_info):
+def bar_layout(matrix, ride_info):
+    """
+    How to fit the wait bar under this ride, as (reserve_rows, gap). Normal spacing
+    first; a name that only just overflows falls back to tight spacing (no blank row
+    above the bar, no gap above the wait) rather than losing the bar. Returns
+    (0, GAP_BETWEEN_RIDE_AND_WAIT) when even that won't fit and the text wins.
+    """
     *_, total_lines_height, _ = _layout(matrix, ride_info)
-    return total_lines_height + GAP_BETWEEN_RIDE_AND_WAIT <= matrix.height - bar_reserve_rows(matrix.height)
+    for tight in (False, True):
+        reserve = bar_reserve_rows(matrix.height, tight)
+        gap = 0 if tight else GAP_BETWEEN_RIDE_AND_WAIT
+        if total_lines_height + gap <= matrix.height - reserve:
+            return reserve, gap
+    return 0, GAP_BETWEEN_RIDE_AND_WAIT
 
 
-def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0, scroll_px=None):
+def text_fits_above_bar(matrix, ride_info):
+    return bar_layout(matrix, ride_info)[0] > 0
+
+
+def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0, scroll_px=None, gap=None):
     """
     Renders ride name at the top and wait time at the bottom in a single draw call.
     The combined text block is drawn from the center of the screen.
     Each line is vertically centered, with a dynamic gap between ride name and wait time.
     Padding is added only if the text fits within the width and height of the board.
-    reserve_bottom keeps that many rows clear at the bottom (for the wait bar).
+    reserve_bottom keeps that many rows clear at the bottom (for the wait bar); gap
+    overrides the space between the ride name and the wait time.
     """
     debug.log(f"Rendering ride info: {ride_info}")
+    gap_px = GAP_BETWEEN_RIDE_AND_WAIT if gap is None else gap
     combined_lines, wrapped_ride_name, wrapped_wait_time, total_lines_height, line_heights = _layout(matrix, ride_info)
 
     # Calculate x and y positions for centering the text
@@ -168,19 +189,19 @@ def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0,
         y_position = (1 if matrix.height >= 64 else 0) - scroll_px
     elif reserve_bottom:
         # Center the whole block, gap included, in the rows above the bar.
-        y_position = (matrix.height - reserve_bottom - total_lines_height - GAP_BETWEEN_RIDE_AND_WAIT) // 2
+        y_position = (matrix.height - reserve_bottom - total_lines_height - gap_px) // 2
     else:
         y_position = calculate_y_position(matrix, total_lines_height)
 
     # Render each line of text
-    render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color)
+    render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color, gap_px)
 
-def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color=None):
+def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color=None, gap_px=None):
     """
     Render each line of text at the specified position on the matrix.
     """
     current_y_position = y_position + 5  # Add any necessary offset to center properly
-    gap_between_ride_and_wait_time = GAP_BETWEEN_RIDE_AND_WAIT
+    gap_between_ride_and_wait_time = GAP_BETWEEN_RIDE_AND_WAIT if gap_px is None else gap_px
 
     for idx, line in enumerate(combined_lines):
         line_width = get_text_width(loaded_fonts["ride"], line, SPACE_PX) if line in wrapped_ride_name else get_text_width(loaded_fonts["waittime"], line, SPACE_PX)

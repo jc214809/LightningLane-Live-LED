@@ -41,10 +41,12 @@ else:
 
 use_image_logo = False
 PARK_REVEALS = ("tink", "buzz")
-# Baymax pops up over a ride screen now and then. He's a peek, not a sweep, so the
-# wait time stays readable behind him. Rare on purpose: a park loop is dozens of
-# rides, so even a small chance means he turns up a couple of times an hour.
-BAYMAX_CHANCE = 0.015
+# Rare visitors on ride screens, and each one's chance per screen. Genie erupts from his
+# lamp and sweeps the next ride in; Baymax peeks over it so the wait stays readable;
+# Slinky walks off the right edge and his spring wraps round the back of the board.
+# Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
+# four visits an hour.
+SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01}
 
 def main():
     # Load configuration
@@ -252,10 +254,19 @@ def loop_through_attractions(matrix, park):
             debug.info(
                 f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
                 f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']}")
-            surprise = "baymax" if random.random() < BAYMAX_CHANCE else "wipe"
+            surprise = _surprise(random.random())
             if surprise != "wipe":
-                debug.info(f"Baymax is visiting {ride['name']}.")
+                debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
+
+def _surprise(roll):
+    # Each visitor owns a slice of the roll as wide as their chance, so order doesn't change the odds.
+    edge = 0.0
+    for name, chance in SURPRISES.items():
+        edge += chance  # a running total; subtracting from the roll drifts at slice edges
+        if roll < edge:
+            return name
+    return "wipe"
 
 def _attraction_screen(ride, expected):
     # A closure per ride: the next screen's sweep redraws this one, so it must not see later loop values.

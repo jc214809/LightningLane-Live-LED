@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LED Sprite Editor</title>
+<style>
+:root{color-scheme:dark;--bg:#101216;--panel:#1a1e25;--line:#343b47;--ink:#f4f7fb;--muted:#9ba7b8;--accent:#278cff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px system-ui,sans-serif}
+header{padding:16px 22px;border-bottom:1px solid var(--line)}h1{font-size:20px;margin:0 0 4px}header p{margin:0;color:var(--muted)}
+main{display:grid;grid-template-columns:minmax(360px,1fr) 360px;gap:18px;padding:18px;max-width:1320px;margin:auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}
+button,select,input,textarea{background:#11151b;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:7px 9px;font:inherit}
+button{cursor:pointer}button:hover,button.active{border-color:var(--accent);background:#17283d}button.danger:hover{border-color:#ef5665}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+label{display:flex;align-items:center;gap:6px;color:var(--muted)}input[type=number]{width:62px}
+#gridWrap{overflow:auto;display:flex;justify-content:center;align-items:center;min-height:560px;background:#090b0e;border-radius:9px;border:1px solid #292f38}
+#grid{touch-action:none;display:block;cursor:crosshair}
+main>.panel{align-self:start;position:sticky;top:12px}
+.stack{display:grid;gap:12px;align-content:start}.section h2{font-size:13px;margin:0 0 9px;color:#cbd4df;text-transform:uppercase;letter-spacing:.08em}
+textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospace}
+.status{display:flex;justify-content:space-between;gap:12px;color:var(--muted);margin-top:9px;font-variant-numeric:tabular-nums}
+.hint{font-size:12px;line-height:1.45;color:var(--muted);margin:0}.warning{color:#ffbc51}.ok{color:#67d391}
+#swatches{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.swatch{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 5px;font:12px ui-monospace,monospace}
+.swatch i{width:18px;height:18px;border-radius:50%;background:var(--c);border:1px solid #0008;display:block}
+.swatch.empty i{background:repeating-conic-gradient(#2a3039 0 25%,#151a20 0 50%) 0 0/8px 8px}
+.swatch.unused{opacity:.55}.swatch small{color:var(--muted)}
+.wheelRow{display:grid;grid-template-columns:200px 1fr;gap:12px;align-items:start}
+#wheel{touch-action:none;cursor:crosshair;display:block;border-radius:50%}
+.rgb{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center}.rgb input[type=number]{width:100%}
+#hex{width:100%}#led{display:block;background:#000;border-radius:8px;border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 10px}.chip{width:18px;height:18px;padding:0;border-radius:50%;background:var(--c);border:1px solid #0009}
+.chip:hover{outline:2px solid var(--accent)}
+#preview{display:block;background:#000;border:1px solid var(--line);border-radius:6px;max-width:100%}
+#checks{margin:0;padding-left:18px;display:grid;gap:4px;font-size:12px;line-height:1.4}
+@media(max-width:900px){main{grid-template-columns:1fr}main>.panel{position:static}#gridWrap{min-height:420px}}
+</style>
+</head>
+<body>
+<header><h1>LED Sprite Editor</h1><p>Edit the character sprites from <code>display/animation.py</code>, one color key per LED. Export and paste back into the class. Everything stays in this file.</p></header>
+<main>
+  <section class="panel" aria-label="Sprite canvas">
+    <div class="toolbar">
+      <select id="sprites" title="Sprite from animation.py" aria-label="Sprite"></select>
+      <button id="load" title="Reload this sprite from the embedded art">Load</button>
+      <button id="new">New blank</button>
+      <span style="flex:1"></span>
+      <button data-mode="paint" class="active" title="Paint with the selected key">Paint</button>
+      <button data-mode="erase" title="Clear to empty (right-click always erases)">Erase</button>
+      <button data-mode="fill" title="Flood-fill a region with the selected key">Fill</button>
+      <button data-mode="pick" title="Pick a key from the art (Alt-click always picks)">Pick</button>
+      <button id="undo" title="Undo (Cmd/Ctrl+Z)">Undo</button><button id="redo" title="Redo (Shift+Cmd/Ctrl+Z)">Redo</button>
+      <button id="clear" class="danger">Clear</button>
+    </div>
+    <div id="gridWrap"><canvas id="grid" aria-label="Sprite pixels"></canvas></div>
+    <div class="status"><span id="hover">&nbsp;</span><span id="dimensions"></span></div>
+  </section>
+
+  <aside class="stack">
+    <section class="panel section">
+      <h2>Palette</h2>
+      <div id="swatches" role="group" aria-label="Color keys"></div>
+      <div class="toolbar">
+        <button id="addKey" title="New key using the wheel's color">Add key</button>
+        <button id="removeKey" class="danger" title="Remove the selected key; its pixels become empty">Remove key</button>
+      </div>
+      <h2>LED color wheel</h2>
+      <div class="wheelRow">
+        <div>
+          <canvas id="wheel" width="200" height="200" aria-label="Hue and saturation wheel"></canvas>
+          <label style="margin-top:8px">Bright <input id="value" type="range" min="0" max="100" value="100" style="flex:1"></label>
+        </div>
+        <div class="rgb">
+          <span>R</span><input id="r" type="number" min="0" max="255">
+          <span>G</span><input id="g" type="number" min="0" max="255">
+          <span>B</span><input id="b" type="number" min="0" max="255">
+          <span>#</span><input id="hex" type="text" maxlength="7" spellcheck="false" aria-label="Hex color">
+          <span></span><button id="copyTuple" title="Copy as a Python tuple, e.g. (46, 28, 16)">Copy tuple</button>
+        </div>
+      </div>
+      <canvas id="led" width="332" height="74" aria-label="How the color looks lit on the board" style="margin-top:10px"></canvas>
+      <p id="ledNote" class="hint" style="margin-top:6px"></p>
+      <p class="hint" style="margin-top:8px">LED-friendly</p><div id="presets" class="chips"></div>
+      <p class="hint">Colors already used by the characters</p><div id="projectColors" class="chips"></div>
+      <p class="hint">The wheel edits the selected key live. With the empty key selected it only picks.</p>
+    </section>
+
+    <section class="panel section">
+      <h2>Board preview</h2>
+      <div class="toolbar"><select id="board" aria-label="Board size"><option value="32">64×32 board (1×)</option><option value="64">64×64 board (2×)</option></select></div>
+      <canvas id="preview"></canvas>
+      <p id="fit" class="hint" style="margin-top:6px"></p>
+    </section>
+
+    <section class="panel section">
+      <h2>Checks</h2>
+      <ul id="checks"></ul>
+      <p class="hint" style="margin-top:8px">From <code>display/CHARACTERS.md</code>: a feature must differ from what it sits on <em>and</em> what it touches, or it vanishes into its outline.</p>
+    </section>
+
+    <section class="panel section">
+      <h2>Canvas size</h2>
+      <div class="toolbar"><label>Width <input id="width" type="number" min="1" max="64"></label><label>Height <input id="height" type="number" min="1" max="64"></label></div>
+      <div class="toolbar"><select id="resizeMode" aria-label="Resize mode"><option value="crop">Keep top-left / crop</option><option value="scale">Scale artwork to fit</option></select><button id="resize">Resize</button></div>
+    </section>
+
+    <section class="panel section">
+      <h2>Image to pixels</h2>
+      <div class="toolbar"><input id="file" type="file" accept="image/*" aria-label="Image file"></div>
+      <div class="toolbar">
+        <label>Fit <select id="imgFit"><option value="contain">Contain</option><option value="cover">Cover / crop</option><option value="stretch">Stretch</option></select></label>
+        <label>Color <select id="imgColor"><option value="match">Match palette</option><option value="current">Selected key</option></select></label>
+      </div>
+      <div class="toolbar">
+        <label>Source <select id="imgSource"><option value="alpha">Alpha then luma</option><option value="luma">Brightness</option></select></label>
+        <label>Threshold <input id="imgThreshold" type="range" min="1" max="99" value="50"></label><span id="imgThresholdOut" class="hint">50%</span>
+      </div>
+      <div class="toolbar">
+        <label><input id="imgInvert" type="checkbox"> Invert</label>
+        <label><input id="imgDither" type="checkbox"> Dither</label>
+        <button id="imgApply">Apply to canvas</button>
+      </div>
+      <p id="imgStatus" class="hint">Choose an image; it is resampled to the current canvas size. Nothing is uploaded.</p>
+    </section>
+
+    <section class="panel section">
+      <h2>Import / export</h2>
+      <div class="toolbar"><label>Art <input id="attrName" type="text" style="width:110px" spellcheck="false"></label><label>Palette <input id="paletteName" type="text" style="width:90px" spellcheck="false"></label></div>
+      <div class="toolbar"><select id="format" aria-label="Export format"><option value="both">Python art + colors</option><option value="art">Python art</option><option value="colors">Python colors</option><option value="json">JSON</option></select><button id="export">Export</button><button id="copy">Copy</button><button id="download">Download</button></div>
+      <textarea id="text" spellcheck="false" aria-label="Sprite text" placeholder='Paste a class attribute like FRONT_ART = [...] and/or COLORS = {...}, JSON, or bare rows of keys, then Import.'></textarea>
+      <div class="toolbar" style="margin-top:8px"><button id="import">Import pasted sprite</button></div>
+      <p class="hint">Paste the export over the attribute in <code>display/animation.py</code>, then run <code>python3 tools/build_sprite_editor.py</code> so the editor picks it up.</p>
+    </section>
+  </aside>
+</main>
+
+<script id="core">
+// Pure helpers, no DOM: tests/tools/test_sprite_editor.py runs this block in Node.
+const EMPTY = ".";
+
+function colorDistance(a, b) {
+  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+}
+
+function hsvToRgb(h, s, v) {
+  const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+  return [f(5), f(3), f(1)].map(x => Math.round(x * 255));
+}
+
+function rgbToHsv([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), d = max - Math.min(r, g, b);
+  let h = 0;
+  if (d) h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [(h * 60 + 360) % 360, max ? d / max : 0, max];
+}
+
+function rgbToHex(rgb) { return "#" + rgb.map(x => x.toString(16).padStart(2, "0")).join(""); }
+
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  return m ? [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16)) : null;
+}
+
+function exportArt(rows, name, indent = "    ") {
+  return `${indent}${name} = [\n` + rows.map(r => `${indent}    "${r}",`).join("\n") + `\n${indent}]`;
+}
+
+function exportColors(colors, name, indent = "    ") {
+  const lines = Object.entries(colors).map(([k, [r, g, b]]) => `${indent}    "${k}": (${r}, ${g}, ${b}),`);
+  return `${indent}${name} = {\n` + lines.join("\n") + `\n${indent}}`;
+}
+
+// Reads what exportArt/exportColors write, the JSON export, or bare rows of keys.
+function parseSprite(text) {
+  text = text.trim();
+  try {
+    const j = JSON.parse(text);
+    if (Array.isArray(j)) return { rows: j, colors: null, name: null, paletteName: null };
+    if (j && Array.isArray(j.rows)) return { rows: j.rows, colors: j.colors || null, name: j.name || null, paletteName: j.paletteName || null };
+  } catch (e) { /* not JSON: fall through to Python */ }
+  const colors = {};
+  let found = false;
+  const paletteName = (text.match(/([A-Za-z_]\w*)\s*=\s*\{/) || [])[1] || null;
+  const rest = text.replace(/["'](.)["']\s*:\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/g, (m, k, r, g, b) => {
+    colors[k] = [+r, +g, +b].map(x => Math.min(255, x)); found = true; return "";
+  });
+  const name = (rest.match(/([A-Za-z_]\w*)\s*=\s*\[/) || [])[1] || null;
+  let rows = [...rest.matchAll(/["']([^"'\n]*)["']/g)].map(m => m[1]);
+  if (!rows.length) rows = rest.split(/\r?\n/).map(s => s.trim()).filter(s => /^[^\s=\[\]{}(),'"]+$/.test(s));
+  return { rows, colors: found ? colors : null, name, paletteName };
+}
+
+// Pairs of touching keys too close to tell apart, and keys that sink into the black board.
+function contrastIssues(rows, colors, touch = 60, dark = 90) {
+  const out = [], seen = new Set(), H = rows.length, W = H ? rows[0].length : 0;
+  const at = (x, y) => (y < 0 || y >= H || x < 0 || x >= W) ? EMPTY : rows[y][x];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const a = at(x, y);
+    if (a === EMPTY || !colors[a]) continue;
+    for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+      const b = at(x + dx, y + dy);
+      if (b === EMPTY) {
+        const sum = colors[a][0] + colors[a][1] + colors[a][2];
+        if (sum < dark && !seen.has("bg" + a)) { seen.add("bg" + a); out.push({ kind: "dark", a, sum }); }
+      } else if (b !== a && colors[b]) {
+        const pair = [a, b].sort().join("");
+        if (seen.has(pair)) continue;
+        seen.add(pair);
+        const distance = colorDistance(colors[a], colors[b]);
+        if (distance < touch) out.push({ kind: "touch", a: pair[0], b: pair[1], distance });
+      }
+    }
+  }
+  return out;
+}
+
+function floodFill(cells, x, y, key) {
+  const from = cells[y][x];
+  if (from === key) return 0;
+  const stack = [[x, y]];
+  let n = 0;
+  while (stack.length) {
+    const [cx, cy] = stack.pop();
+    if (cy < 0 || cy >= cells.length || cx < 0 || cx >= cells[0].length || cells[cy][cx] !== from) continue;
+    cells[cy][cx] = key; n++;
+    stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
+  }
+  return n;
+}
+
+function nearestKey(rgb, colors) {
+  let best = null, bestD = Infinity;
+  for (const [k, c] of Object.entries(colors)) { const d = colorDistance(rgb, c); if (d < bestD) { best = k; bestD = d; } }
+  return best;
+}
+</script>
+
+<script>
+const SPRITES = /*SPRITES:BEGIN*/{"tink/art":{"character":"tink","attr":"art","label":"art","scale":null,"palette_attr":"colors","rows":["WW.WW","WWYWW","..Y..",".GGG.","..G.."],"colors":{"W":[170,220,255],"Y":[255,245,170],"G":[60,220,90]},"unmapped":[]},"buzz/art":{"character":"buzz","attr":"art","label":"art","scale":null,"palette_attr":"colors","rows":["..GG....","...WWR..","WWWWGWPS","...WWR..","..GG...."],"colors":{"W":[235,235,245],"G":[60,210,60],"P":[140,70,210],"S":[255,205,170],"R":[255,40,40]},"unmapped":[]},"figment/art":{"character":"figment","attr":"art","label":"art","scale":null,"palette_attr":"colors","rows":["..............KK.....KK..",".............KOOK...KOOK.",".............KOOK..KOOK..","..............KOOKKOOK...","...............KPPPPK....","..............KPPPPPPK...",".....KKKK....KPPEBPPPPK..","...KKGGGGKK..KPPEBPPPPPK.","..KGGNNGGGGK.KPPPPPMMMPPK","..KGNNNNGGGKKPPPPPPMMMPPK","..KGGNNNGGKPPPPPPPPKKKKK.","...KGGGGGKPPPPPPPPPK.....","....KKKKKPPPPPPPPPK......","..KOK....KPPPPPPPK.......",".KOOOK...KPPPPPPK........","KOOKOOK..KPPDDPPK........","KOK.KOK...KPDDPK.........",".K...KK...KPPPPK.........","..........KOOOOK.........","...........KKKK.........."],"colors":{"P":[150,70,190],"D":[110,45,150],"G":[90,200,110],"N":[140,230,150],"O":[235,140,40],"E":[250,250,250],"B":[25,25,35],"K":[45,20,60],"M":[230,120,160]},"unmapped":[]},"stitch/_BASE":{"character":"stitch","attr":"_BASE","label":"_BASE","scale":null,"palette_attr":"colors","rows":["...KK...............KK...","..KRRK.............KRRK..","..KRRRK...........KRRRK..","..KRRRRK.........KRRRRK..","..KRRRRRK.......KRRRRRK..","...KRRRRRK.....KRRRRRK...","...KRRRRRRK...KRRRRRRK...","....KRRRRRKKKKKRRRRRK....","....KRRRRKUUUUUKRRRRK....",".....KRRKUUUUUUUKRRK.....",".....KRKUUUUUUUUUKRK.....","......KUUUUUUUUUUUKK.....",".....KUUUUUUUUUUUUUUK....","....KUUKKKKUUUKKKKUUUK...","....KUK####KUUUK####KUK..","....KUK####KUUUK####KUK..","....KUKKKKKUBBBUKKKKKUK..",".....KUUUUUKBBBKUUUUUK...",".....KUUUUUUKBKUUUUUUK...","......KUUMMMMMMMMMUUK....","......KMMTTTTTTTTTMMK....","......KMMMMMMMMMMMMMK....",".......KKUUUUUUUUUKK.....",".........KKKKKKKKK......."],"colors":{"U":[100,160,210],"R":[155,125,180],"K":[18,18,28],"P":[58,62,84],"W":[255,255,255],"B":[28,40,70],"M":[205,65,100],"T":[252,238,195],"#":[128,128,128]},"unmapped":["#"]},"stitch/art[0]":{"character":"stitch","attr":"art","label":"art[0]","scale":null,"palette_attr":"colors","rows":["...KK...............KK...","..KRRK.............KRRK..","..KRRRK...........KRRRK..","..KRRRRK.........KRRRRK..","..KRRRRRK.......KRRRRRK..","...KRRRRRK.....KRRRRRK...","...KRRRRRRK...KRRRRRRK...","....KRRRRRKKKKKRRRRRK....","....KRRRRKUUUUUKRRRRK....",".....KRRKUUUUUUUKRRK.....",".....KRKUUUUUUUUUKRK.....","......KUUUUUUUUUUUKK.....",".....KUUUUUUUUUUUUUUK....","....KUUKKKKUUUKKKKUUUK...","....KUKWPPPKUUUKWPPPKUK..","....KUKWPPPKUUUKWPPPKUK..","....KUKKKKKUBBBUKKKKKUK..",".....KUUUUUKBBBKUUUUUK...",".....KUUUUUUKBKUUUUUUK...","......KUUMMMMMMMMMUUK....","......KMMTTTTTTTTTMMK....","......KMMMMMMMMMMMMMK....",".......KKUUUUUUUUUKK.....",".........KKKKKKKKK......."],"colors":{"U":[100,160,210],"R":[155,125,180],"K":[18,18,28],"P":[58,62,84],"W":[255,255,255],"B":[28,40,70],"M":[205,65,100],"T":[252,238,195]},"unmapped":[]},"stitch/art[1]":{"character":"stitch","attr":"art","label":"art[1]","scale":null,"palette_attr":"colors","rows":["...KK...............KK...","..KRRK.............KRRK..","..KRRRK...........KRRRK..","..KRRRRK.........KRRRRK..","..KRRRRRK.......KRRRRRK..","...KRRRRRK.....KRRRRRK...","...KRRRRRRK...KRRRRRRK...","....KRRRRRKKKKKRRRRRK....","....KRRRRKUUUUUKRRRRK....",".....KRRKUUUUUUUKRRK.....",".....KRKUUUUUUUUUKRK.....","......KUUUUUUUUUUUKK.....",".....KUUUUUUUUUUUUUUK....","....KUUKKKKUUUKKKKUUUK...","....KUKPPPWKUUUKPPPWKUK..","....KUKPPPWKUUUKPPPWKUK..","....KUKKKKKUBBBUKKKKKUK..",".....KUUUUUKBBBKUUUUUK...",".....KUUUUUUKBKUUUUUUK...","......KUUMMMMMMMMMUUK....","......KMMTTTTTTTTTMMK....","......KMMMMMMMMMMMMMK....",".......KKUUUUUUUUUKK.....",".........KKKKKKKKK......."],"colors":{"U":[100,160,210],"R":[155,125,180],"K":[18,18,28],"P":[58,62,84],"W":[255,255,255],"B":[28,40,70],"M":[205,65,100],"T":[252,238,195]},"unmapped":[]},"ralph/ART":{"character":"ralph","attr":"ART","label":"ART","scale":null,"palette_attr":"COLORS","rows":[".......KHKHKHKHK.......",".......KHHHHHHHK.......","KKKKKK.KHHHHHHHK.KKKKKK","KFFFFK.KHFFFFFHK.KFFFFK","KFFFFK.KFFEFEFFK.KFFFFK","KFFFFK.KFFFFFFFK.KFFFFK",".KFFFK.KFFAAAFFK.KFFFK.","..KFFK.KKFFFFFKK.KFFK..","..KFFKKKKSSSSSK..KFFK..","..KFFFFFSSSSSSSFFFFFK..","...KFFFFSSSSSSSFFFFK...","....KSSSSSSSSSSSSSK....","....KSSSSOBBBOSSSSK....",".....KSSOOBBBOOSSK.....",".....KOOOOOOOOOOOK.....",".....KOOOOOOOOOOOK.....",".....KOOOOKKKOOOOK.....",".....KFFFK...KFFFK.....",".....KFFK.....KFFK.....",".....KKKK.....KKKK....."],"colors":{"H":[140,25,30],"F":[240,180,160],"E":[20,20,25],"M":[90,30,35],"S":[200,40,45],"O":[255,220,170],"B":[190,120,50],"K":[25,15,20],"A":[250,250,250]},"unmapped":[]},"mickey/ART":{"character":"mickey","attr":"ART","label":"ART","scale":null,"palette_attr":"COLORS","rows":[".........HHSH........YYY","........HHHHH.......YYYY","..KKK...HHHHHH.....WW...",".KKKKK..HHHSHH....WW....","KKKKKKK.HHHHHH...WW.....","KKKKKKK.HHHHHHH.GGG.KKK.","KKKKKKKHHHHSHHH.GGGKKKKK",".KKKKKHHHHHHHHHHGGGKKKKK","..KKKKBBBBBBBBBBGGKKKKKK","...KKKKKKKKKKKKKK.KKKKKK","...KKTTTTTTTTTTKK..KKKK.","...KTTTTTTTTTTTTK.......","...KTEEETTTTEEETK.......","...KTEPETTTTEPETK.......","...KTEPETTTTEPETK.......","...KTEEETTTTEEETK.......","...KTTTMMMMMMTTTK.......","....KMMMMNNMMMMK........","....KMMMUUUUMMMK........","....KKMUUUUUUMKK........",".....KKKMMMMKKK.........","....CCCCCCCCCCCC........","...RRRRRRRRRRRRRR.......","..RRRRRDDRRDDRRRRR......",".RRRRRRDDRRDDRRRRRR.....","RRRRRRRRRRRRRRRRRRRR...."],"colors":{"K":[74,72,88],"T":[245,200,160],"E":[255,255,255],"P":[18,18,24],"N":[26,24,30],"M":[255,248,238],"U":[155,45,58],"H":[50,80,205],"S":[255,220,80],"B":[28,45,130],"R":[195,32,44],"D":[130,18,28],"C":[240,240,245],"G":[252,252,252],"W":[215,195,150],"Y":[255,250,200]},"unmapped":[]},"slinky/FRONT_ART":{"character":"slinky","attr":"FRONT_ART","label":"FRONT_ART","scale":1,"palette_attr":"COLORS","rows":["....KKKKKK......","...KBBBBBBK.....","..KBBBBBBBBK....",".KDKBEEBEEBBK...","KDDKBEPBEPBBBKK.","KDDKBEPBEPBTTTTK","KDDKBBBBBBTTTTNK","KDDDKBBBBTTTTTNK","KDDDKBBBTTTTMMK.",".KDDKKBBTTTTTK..",".KDDK.KBBBBBK...","..KK..KBBBBBK...","....KKBTTTBBBK..","...KBBTTTTBBBK..","...KBBBTTBBBBK..","...KBBBBBBBBBK..","...KBBKKKKBBBK..","...KBBK..KBBK...","...KTTK..KTTK...","...KKKK..KKKK..."],"colors":{"K":[70,40,18],"B":[176,108,48],"D":[100,58,26],"T":[238,200,140],"N":[18,14,14],"E":[248,246,240],"P":[30,22,20],"M":[160,50,45],"S":[215,220,230],"W":[120,128,142]},"unmapped":[]},"slinky/REAR_ART":{"character":"slinky","attr":"REAR_ART","label":"REAR_ART","scale":1,"palette_attr":"COLORS","rows":["SWS.........",".SWS........","..SWS.......","...KKKKKKK..","..KBBBBBBBK.",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBKKKKBBBK",".KBBK..KBBK.",".KTTK..KTTK.",".KKKK..KKKK."],"colors":{"K":[70,40,18],"B":[176,108,48],"D":[100,58,26],"T":[238,200,140],"N":[18,14,14],"E":[248,246,240],"P":[30,22,20],"M":[160,50,45],"S":[215,220,230],"W":[120,128,142]},"unmapped":[]},"dumbo/EARS_DOWN":{"character":"dumbo","attr":"EARS_DOWN","label":"EARS_DOWN","scale":null,"palette_attr":"colors","rows":["............KKYYKK..........","............KUUUUK..........","............KYYYYK..........","...........KKYYYYKK.........","....KKK....KKKKKKKKK....KKK.","...KPPPKKKKKGGGGGGGKKKKPPPK.","..KPPPPPPPPGGGGGGGGGPPPPPPPK","..KPPPPPPPPGEEGGEEGGPPPPPPPK",".KPPPPPPPPPGBEGGBEGGPPPPPPPP",".KPPPPPPPPPGGGGGGGGGPPPPPPPP","KPPPPPPPPPPGGGGGGGGGPPPPPPPP","KPPPPPPPPPPGGGGGGGGGPPPPPPPP","KPPPPPPPPPK.KGGKLLGK.PPPPPPP","KDPPPPPPPK.KGGGKLLGK.KPPPPPP","KDDPPPPPK..KWWWKLLGK..KPPPPD",".KDDPPPK..KWWWWWKLLGK..KPPDD","..KDDPK...KGGGGGKLLLK..KPDDK","...KDK....KGGGGGKKLLLK..KDK.","....K.....KGGKGGGKKLLLK..KK.","..........KGGKKGGGK.KLLLK...","...........KK..KKK...KKKK..."],"colors":{"P":[238,170,182],"D":[176,132,142],"G":[150,158,172],"L":[196,204,218],"K":[30,32,42],"E":[252,252,252],"B":[30,34,52],"W":[252,252,252],"Y":[250,206,60],"U":[55,110,215]},"unmapped":[]},"dumbo/EARS_UP":{"character":"dumbo","attr":"EARS_UP","label":"EARS_UP","scale":null,"palette_attr":"colors","rows":["............KKYYKK..........","............KUUUUK..........","............KYYYYK..........","...KKKK....KKYYYYKK....KKKK.","..KPPPPKK..KKKKKKKKK..KPPPPK",".KPPPPPPPKKKGGGGGGGKKKPPPPPP","KPPPPPPPPPPGGGGGGGGGPPPPPPPP","KPPPPPPPPPPGEEGGEEGGPPPPPPPP","KPPPPPPPPPPGBEGGBEGGPPPPPPPP","KPPPPPPPPPPGGGGGGGGGPPPPPPPP","KPPPPPPPPPPGGGGGGGGGPPPPPPPP",".KPPPPPPPPKGGGGGGGGGKPPPPPPP",".KDPPPPPPK.KGGGKLLGK.KPPPPPD","..KDDPPPK..KGGGKLLGK..KPPPDK","...KDDPK...KWWWKLLGK...KPDK.","....KKK...KWWWWWKLLGK...KK..","..........KGGGGGKLLLK.......","..........KGGGGGKKLLLK......","..........KGGKGGGKKLLLK.....","..........KGGKKGGGK.KLLLK...","...........KK..KKK...KKKK..."],"colors":{"P":[238,170,182],"D":[176,132,142],"G":[150,158,172],"L":[196,204,218],"K":[30,32,42],"E":[252,252,252],"B":[30,34,52],"W":[252,252,252],"Y":[250,206,60],"U":[55,110,215]},"unmapped":[]},"genie/ART":{"character":"genie","attr":"ART","label":"ART","scale":null,"palette_attr":"COLORS","rows":[".............JHHJ.......","............JHHHHJ......","...........JHHHHHJ......","...........JHHHHJ.......","..........JHHHHJ........","..........JHHHJ.........","......KKKKKHHKKKK.......",".....KBBBBBJJBBBBK......","....KBBBBBBBBBBBBBK.....","...KBBBBBBBBBBBBBBBK....","GGGKBBEEEBBBBBEEEBBK.GGG","GGGKBEWPPEBBBEWPPEBKGGG.","GGGKBEWPPEBNBEWPPEBKGGG.","...KBBEEEBBNNBEEEBBK....","...KBBBBBBBNNNBBBBBK....","...KBBBBUUUUUUUUBBBK....","....KBBBBTTTTTTBBBK.....",".....KBBBJMMMMJBBBK.....","......KKBJMMMMMJBKK.....",".......KKJMMMMMJKK......","..KKKKKKKKJMMMJKKKKKKK..",".KBBBBBBKKKJMJKKKKBBBBBK","KBBBBBBBKBBBJBBBKBBBBBBK","KCCCCCCKBBBBBBBBBKCCCCCK","KCCCCCCKBBBBBBBBBKCCCCCK",".KBBBBKKBBBBBBBBBKKBBBBK","..KKKK..KBBBBBBBK..KKKK.",".........KBSSSBK........","..........KSSSK.........",".........KSSSSK.........","..........KSSK.........."],"colors":{"K":[20,60,120],"H":[16,16,30],"J":[70,72,105],"B":[60,150,235],"N":[42,115,200],"E":[250,250,255],"W":[250,250,255],"P":[18,18,32],"U":[252,250,245],"T":[200,60,80],"M":[16,16,30],"G":[250,205,70],"C":[250,205,70],"S":[105,180,242],"A":[125,72,12],"Y":[250,200,60],"L":[255,246,190],"O":[205,135,25]},"unmapped":[]},"genie/LAMP_ART":{"character":"genie","attr":"LAMP_ART","label":"LAMP_ART","scale":1,"palette_attr":"COLORS","rows":["...........AA.............","..........ALYA............","...........AA.............",".........AAYYAA...........","........ALYYYYOA..........","..AAA.AAAAAAAAAAAA........",".AOOOALLYYYYYYYYYOA....AAA","AO..ALYYYYYYYYYYYYOAAAALYA","AO..AYYYYYYYYYYYYYYYYYYYA.",".AO.AYYYYYYYYYYYYYYOOOAA..","..AOAOYYYYYYYYYYYOOAAA....","...AAOOOYYYYYYYOOAA.......","......AAAAOOOOOAAA........",".........AYYYYA...........","........AOOOOOOA..........","........AAAAAAAA.........."],"colors":{"K":[20,60,120],"H":[16,16,30],"J":[70,72,105],"B":[60,150,235],"N":[42,115,200],"E":[250,250,255],"W":[250,250,255],"P":[18,18,32],"U":[252,250,245],"T":[200,60,80],"M":[16,16,30],"G":[250,205,70],"C":[250,205,70],"S":[105,180,242],"A":[125,72,12],"Y":[250,200,60],"L":[255,246,190],"O":[205,135,25]},"unmapped":[]},"slinky_wrap/FRONT_ART":{"character":"slinky_wrap","attr":"FRONT_ART","label":"FRONT_ART","scale":1,"palette_attr":"COLORS","rows":["....KKKKKK......","...KBBBBBBK.....","..KBBBBBBBBK....",".KDKBEEBEEBBK...","KDDKBEPBEPBBBKK.","KDDKBEPBEPBTTTTK","KDDKBBBBBBTTTTNK","KDDDKBBBBTTTTTNK","KDDDKBBBTTTTMMK.",".KDDKKBBTTTTTK..",".KDDK.KBBBBBK...","..KK..KBBBBBK...","....KKBTTTBBBK..","...KBBTTTTBBBK..","...KBBBTTBBBBK..","...KBBBBBBBBBK..","...KBBKKKKBBBK..","...KBBK..KBBK...","...KTTK..KTTK...","...KKKK..KKKK..."],"colors":{"K":[70,40,18],"B":[176,108,48],"D":[100,58,26],"T":[238,200,140],"N":[18,14,14],"E":[248,246,240],"P":[30,22,20],"M":[160,50,45],"S":[215,220,230],"W":[120,128,142]},"unmapped":[]},"slinky_wrap/FRONT_LOOK_ART":{"character":"slinky_wrap","attr":"FRONT_LOOK_ART","label":"FRONT_LOOK_ART","scale":1,"palette_attr":"COLORS","rows":["....KKKKKK......","...KBBBBBBK.....","..KBBBBBBBBK....",".KDKBEEBEEBBK...","KDDKBEEBEEBBBKK.","KDDKBEPBEPBTTTTK","KDDKBBBBBBTTTTNK","KDDDKBBBBTTTTTNK","KDDDKBBBTTTTMMK.",".KDDKKBBTTTTTK..",".KDDK.KBBBBBK...","..KK..KBBBBBK...","....KKBTTTBBBK..","...KBBTTTTBBBK..","...KBBBTTBBBBK..","...KBBBBBBBBBK..","...KBBKKKKBBBK..","...KBBK..KBBK...","...KTTK..KTTK...","...KKKK..KKKK..."],"colors":{"K":[70,40,18],"B":[176,108,48],"D":[100,58,26],"T":[238,200,140],"N":[18,14,14],"E":[248,246,240],"P":[30,22,20],"M":[160,50,45],"S":[215,220,230],"W":[120,128,142]},"unmapped":[]},"slinky_wrap/REAR_ART":{"character":"slinky_wrap","attr":"REAR_ART","label":"REAR_ART","scale":1,"palette_attr":"COLORS","rows":["SWS.........",".SWS........","..SWS.......","...KKKKKKK..","..KBBBBBBBK.",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBKKKKBBBK",".KBBK..KBBK.",".KTTK..KTTK.",".KKKK..KKKK."],"colors":{"K":[70,40,18],"B":[176,108,48],"D":[100,58,26],"T":[238,200,140],"N":[18,14,14],"E":[248,246,240],"P":[30,22,20],"M":[160,50,45],"S":[215,220,230],"W":[120,128,142]},"unmapped":[]},"slinky_wrap/REAR_WAG_ART":{"character":"slinky_wrap","attr":"REAR_WAG_ART","label":"REAR_WAG_ART","scale":1,"palette_attr":"COLORS","rows":[".....SWS....","....SWS.....","...SWS......","...KKKKKKK..","..KBBBBBBBK.",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBBBBBBBBK",".KBBKKKKBBBK",".KBBK..KBBK.",".KTTK..KTTK.",".KKKK..KKKK."],"colors":{"K":[70,40,18],"B":[176,108,48],"D":[100,58,26],"T":[238,200,140],"N":[18,14,14],"E":[248,246,240],"P":[30,22,20],"M":[160,50,45],"S":[215,220,230],"W":[120,128,142]},"unmapped":[]}}/*SPRITES:END*/;
+const GREY = [128, 128, 128];
+const PRESETS = [[255,0,0],[255,90,0],[255,150,0],[250,205,70],[255,235,0],[150,230,0],[0,220,60],[0,220,170],[0,210,240],
+  [30,110,255],[20,40,255],[120,50,235],[190,40,230],[255,0,170],[255,110,160],[255,220,170],[255,255,255],[120,120,120]];
+const $ = id => document.getElementById(id);
+const grid = $("grid"), gctx = grid.getContext("2d"), preview = $("preview"), pctx = preview.getContext("2d");
+const wheel = $("wheel"), wctx = wheel.getContext("2d"), led = $("led"), lctx = led.getContext("2d");
+
+let w = 16, h = 16, cells = blank(w, h), palette = {}, current = EMPTY, mode = "paint";
+let drag = false, dragKey = EMPTY, history = [], future = [], pending = null;
+let attrName = "ART", paletteName = "COLORS", spriteId = null;
+let hsv = [0, 0, 1], wheelBase = null, wheelBaseValue = null;
+
+function blank(W, H) { return Array.from({ length: H }, () => Array(W).fill(EMPTY)); }
+function css(rgb) { return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; }
+function colorOf(k) { return palette[k] || GREY; }
+function snapshot() {
+  return { w, h, cells: cells.map(r => r.slice()), palette: JSON.parse(JSON.stringify(palette)), attrName, paletteName, current };
+}
+function save() { history.push(snapshot()); if (history.length > 200) history.shift(); future = []; }
+function restore(s) {
+  ({ w, h, attrName, paletteName, current } = s);
+  cells = s.cells.map(r => r.slice()); palette = s.palette; pending = null;
+  syncFields(); renderAll(); if (palette[current]) setWheel(palette[current]);
+}
+function rows() { return cells.map(r => r.join("")); }
+
+function setCells(newRows, colors) {
+  h = newRows.length; w = Math.max(...newRows.map(r => r.length));
+  cells = newRows.map(r => Array.from(r.padEnd(w, EMPTY)));
+  if (colors) palette = JSON.parse(JSON.stringify(colors));
+  for (const k of new Set(cells.flat())) if (k !== EMPTY && !palette[k]) palette[k] = GREY.slice();
+  pending = null;
+}
+
+function loadSprite(id) {
+  const s = SPRITES[id];
+  if (!s) return;
+  spriteId = id; attrName = s.attr; paletteName = s.palette_attr;
+  setCells(s.rows, s.colors);
+  history = []; future = [];
+  const counts = usage();
+  current = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || EMPTY;
+  syncFields(); renderAll(); if (palette[current]) setWheel(palette[current]);
+  window.history.replaceState(null, "", "#" + id);
+}
+
+function syncFields() {
+  $("width").value = w; $("height").value = h; $("attrName").value = attrName; $("paletteName").value = paletteName;
+}
+
+function usage() {
+  const counts = {};
+  for (const k of cells.flat()) if (k !== EMPTY) counts[k] = (counts[k] || 0) + 1;
+  return counts;
+}
+
+// ---- Canvas ----
+function layout() {
+  const wrap = $("gridWrap");
+  const cell = Math.max(8, Math.min(30, Math.floor(Math.min((wrap.clientWidth - 24) / w, (Math.max(460, wrap.clientHeight) - 24) / h))));
+  grid.width = w * cell; grid.height = h * cell;
+  return cell;
+}
+
+function renderGrid() {
+  const cell = layout(), src = pending || cells;
+  gctx.fillStyle = "#090b0e"; gctx.fillRect(0, 0, grid.width, grid.height);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = src[y][x], cx = x * cell + cell / 2, cy = y * cell + cell / 2;
+    gctx.beginPath();
+    if (k === EMPTY) {
+      gctx.arc(cx, cy, Math.max(2, cell * .34), 0, Math.PI * 2);
+      gctx.fillStyle = "#1c222b"; gctx.fill(); gctx.strokeStyle = "#2e3642"; gctx.lineWidth = 1; gctx.stroke();
+    } else {
+      gctx.arc(cx, cy, Math.max(2, cell * .44), 0, Math.PI * 2);
+      gctx.fillStyle = css(colorOf(k)); gctx.fill();
+      if (!palette[k]) { gctx.strokeStyle = "#ff4d6d"; gctx.lineWidth = 2; gctx.stroke(); }
+    }
+  }
+  // A faint centre guide: the sprites are positioned by their middles.
+  gctx.strokeStyle = "#ffffff14"; gctx.lineWidth = 1;
+  gctx.beginPath(); gctx.moveTo(grid.width / 2, 0); gctx.lineTo(grid.width / 2, grid.height);
+  gctx.moveTo(0, grid.height / 2); gctx.lineTo(grid.width, grid.height / 2); gctx.stroke();
+  $("dimensions").textContent = `${w} × ${h} · ${cells.flat().filter(k => k !== EMPTY).length} lit`;
+}
+
+function renderPreview() {
+  const fixed = SPRITES[spriteId]?.scale, boardH = +$("board").value, src = pending || cells;
+  const scale = fixed || (boardH >= 64 ? 2 : 1);
+  const pitch = Math.max(2, Math.floor((preview.parentElement.clientWidth - 30) / 64));
+  preview.width = 64 * pitch; preview.height = boardH * pitch;
+  pctx.fillStyle = "#000"; pctx.fillRect(0, 0, preview.width, preview.height);
+  const sw = w * scale, sh = h * scale, ox = Math.floor((64 - sw) / 2), oy = Math.floor((boardH - sh) / 2);
+  for (let by = 0; by < boardH; by++) for (let bx = 0; bx < 64; bx++) {
+    const sx = Math.floor((bx - ox) / scale), sy = Math.floor((by - oy) / scale);
+    const k = bx >= ox && by >= oy && sx < w && sy < h ? src[sy][sx] : EMPTY;
+    pctx.beginPath(); pctx.arc(bx * pitch + pitch / 2, by * pitch + pitch / 2, pitch * .42, 0, Math.PI * 2);
+    pctx.fillStyle = k === EMPTY ? "#0d0f12" : css(colorOf(k)); pctx.fill();
+  }
+  const fits = sw <= 64 && sh <= boardH;
+  $("fit").className = "hint " + (fits ? "ok" : "warning");
+  $("fit").textContent = `${sw} × ${sh} px on this board` +
+    (fixed ? ` (drawn ${fixed}× on every board)` : scale > 1 ? " (sprites double on 64-row boards)" : "") +
+    (fits ? ` — leaves ${64 - sw} columns, ${boardH - sh} rows.` : " — does not fit.");
+}
+
+function renderPalette() {
+  const box = $("swatches"), counts = usage();
+  box.replaceChildren();
+  const keys = [EMPTY, ...Object.keys(palette)];
+  for (const k of keys) {
+    const b = document.createElement("button");
+    b.className = "swatch" + (k === current ? " active" : "") + (k === EMPTY ? " empty" : "") + (k !== EMPTY && !counts[k] ? " unused" : "");
+    b.type = "button";
+    const dot = document.createElement("i");
+    if (k !== EMPTY) b.style.setProperty("--c", css(palette[k]));
+    const label = document.createElement("span"); label.textContent = k === EMPTY ? "empty" : k;
+    const n = document.createElement("small"); n.textContent = k === EMPTY ? "" : String(counts[k] || 0);
+    b.append(dot, label, n);
+    b.title = k === EMPTY ? "Empty (erase)" : `${k}: (${palette[k].join(", ")}) · ${counts[k] || 0} px`;
+    b.setAttribute("aria-pressed", String(k === current));
+    b.onclick = () => selectKey(k);
+    box.append(b);
+  }
+  $("removeKey").disabled = current === EMPTY;
+}
+
+function renderChecks() {
+  const list = $("checks"), items = [], src = rows();
+  const unmapped = SPRITES[spriteId]?.unmapped || [];
+  for (const k of unmapped) if (src.some(r => r.includes(k)))
+    items.push(["warning", `${k} isn't in the class palette — it's a placeholder filled at draw time (shown grey).`]);
+  for (const issue of contrastIssues(src, palette)) {
+    items.push(issue.kind === "touch"
+      ? ["warning", `${issue.a} touches ${issue.b} but they're only ${issue.distance} apart — the edge between them may vanish.`]
+      : ["warning", `${issue.a} is nearly black (${issue.sum}) where it meets the empty board — it may disappear.`]);
+  }
+  if (!items.length) items.push(["ok", "Touching colors are all distinct, and nothing sinks into the black board."]);
+  list.replaceChildren(...items.map(([cls, text]) => { const li = document.createElement("li"); li.className = cls; li.textContent = text; return li; }));
+}
+
+function renderAll() { renderGrid(); renderPreview(); renderPalette(); renderChecks(); }
+
+// ---- Painting ----
+function cellAt(e) {
+  const r = grid.getBoundingClientRect(), cell = grid.width / w;
+  return [Math.floor((e.clientX - r.left) * grid.width / r.width / cell), Math.floor((e.clientY - r.top) * grid.height / r.height / cell)];
+}
+
+function inside(x, y) { return x >= 0 && x < w && y >= 0 && y < h; }
+
+function selectKey(k) {
+  current = k;
+  if (k !== EMPTY && palette[k]) setWheel(palette[k]);
+  renderPalette();
+}
+
+grid.addEventListener("contextmenu", e => e.preventDefault());
+grid.addEventListener("pointerdown", e => {
+  const [x, y] = cellAt(e);
+  if (!inside(x, y)) return;
+  if (mode === "pick" || e.altKey) { selectKey(cells[y][x]); return; }
+  save(); pending = null;
+  const key = e.button === 2 || mode === "erase" ? EMPTY : current;
+  if (mode === "fill" && e.button !== 2) { floodFill(cells, x, y, key); renderAll(); return; }
+  drag = true; dragKey = key; grid.setPointerCapture(e.pointerId);
+  cells[y][x] = key; renderAll();
+});
+grid.addEventListener("pointermove", e => {
+  const [x, y] = cellAt(e);
+  if (inside(x, y)) {
+    const k = cells[y][x];
+    $("hover").textContent = `x ${x}, y ${y} · ` + (k === EMPTY ? "empty" : `${k} (${colorOf(k).join(", ")})`);
+  }
+  if (drag && inside(x, y) && cells[y][x] !== dragKey) { cells[y][x] = dragKey; renderAll(); }
+});
+grid.addEventListener("pointerup", () => drag = false);
+grid.addEventListener("pointercancel", () => drag = false);
+grid.addEventListener("pointerleave", () => { $("hover").innerHTML = "&nbsp;"; });
+
+document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll("[data-mode]").forEach(x => x.classList.toggle("active", x === b));
+});
+
+function undo() { if (history.length) { future.push(snapshot()); restore(history.pop()); } }
+function redo() { if (future.length) { history.push(snapshot()); restore(future.pop()); } }
+$("undo").onclick = undo; $("redo").onclick = redo;
+document.addEventListener("keydown", e => {
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+  e.preventDefault(); e.shiftKey ? redo() : undo();
+});
+$("clear").onclick = () => { save(); cells = blank(w, h); pending = null; renderAll(); };
+$("load").onclick = () => loadSprite($("sprites").value);
+$("sprites").onchange = () => loadSprite($("sprites").value);
+$("new").onclick = () => {
+  save(); spriteId = null; attrName = "NEW_ART"; cells = blank(16, 16); w = h = 16; pending = null; syncFields(); renderAll();
+};
+
+$("resize").onclick = () => {
+  const nw = Math.min(64, +$("width").value), nh = Math.min(64, +$("height").value);
+  if (!nw || !nh) return;
+  save();
+  const old = cells, ow = w, oh = h, scale = $("resizeMode").value === "scale", next = blank(nw, nh);
+  for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
+    const sx = scale ? Math.min(ow - 1, Math.floor(x * ow / nw)) : x, sy = scale ? Math.min(oh - 1, Math.floor(y * oh / nh)) : y;
+    if (sx < ow && sy < oh) next[y][x] = old[sy][sx];
+  }
+  w = nw; h = nh; cells = next; syncFields(); renderAll(); if (sourceImage) previewImage();
+};
+
+// ---- Palette keys ----
+function nextFreeKey() {
+  for (const k of "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") if (!palette[k]) return k;
+  return null;
+}
+$("addKey").onclick = () => {
+  const k = nextFreeKey();
+  if (!k) return;
+  save(); palette[k] = hsvToRgb(...hsv); selectKey(k); renderAll();
+};
+$("removeKey").onclick = () => {
+  if (current === EMPTY) return;
+  const n = usage()[current] || 0;
+  if (n && !confirm(`${current} is used by ${n} pixels. Remove it and clear them?`)) return;
+  save();
+  const k = current;
+  cells = cells.map(r => r.map(c => c === k ? EMPTY : c));
+  delete palette[k]; current = EMPTY; renderAll();
+};
+
+// ---- Color wheel ----
+function drawWheel() {
+  const size = wheel.width, r0 = size / 2;
+  if (wheelBaseValue !== hsv[2]) {
+    const img = wctx.createImageData(size, size);
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      const dx = x + .5 - r0, dy = y + .5 - r0, d = Math.hypot(dx, dy), i = (y * size + x) * 4;
+      if (d > r0) continue;
+      const [r, g, b] = hsvToRgb((Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360, d / r0, hsv[2]);
+      img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = Math.min(255, (r0 - d) * 255);
+    }
+    wheelBase = img; wheelBaseValue = hsv[2];
+  }
+  wctx.putImageData(wheelBase, 0, 0);
+  const a = hsv[0] * Math.PI / 180, mx = r0 + Math.cos(a) * hsv[1] * r0, my = r0 + Math.sin(a) * hsv[1] * r0;
+  wctx.lineWidth = 2; wctx.strokeStyle = hsv[2] > .5 ? "#000" : "#fff";
+  wctx.beginPath(); wctx.arc(mx, my, 7, 0, Math.PI * 2); wctx.stroke();
+}
+
+function drawLed(rgb) {
+  const W = led.width, H = led.height;
+  lctx.fillStyle = "#000"; lctx.fillRect(0, 0, W, H);
+  // One big lit LED with its glow, then a patch at board density, as a block of it reads.
+  const g = lctx.createRadialGradient(37, 37, 4, 37, 37, 34);
+  g.addColorStop(0, css(rgb.map(c => Math.min(255, c + 60)))); g.addColorStop(.45, css(rgb)); g.addColorStop(1, "rgba(0,0,0,0)");
+  lctx.fillStyle = g; lctx.fillRect(0, 0, 74, 74);
+  for (let y = 0; y < 7; y++) for (let x = 0; x < 24; x++) {
+    lctx.beginPath(); lctx.arc(90 + x * 10 + 5, 2 + y * 10 + 5, 4, 0, Math.PI * 2);
+    lctx.fillStyle = css(rgb); lctx.fill();
+  }
+  const peak = Math.max(...rgb), note = $("ledNote");
+  note.className = "hint " + (peak < 40 ? "warning" : "");
+  note.textContent = peak < 40
+    ? "Very dim — at this level real panels barely light, and it will read as off next to anything bright."
+    : peak < 90 ? "Dark colors look darker on LEDs than on screen; keep outlines and shading distinct from black."
+    : "Reads well lit. Browns and greys lean toward their brightest channel on a panel.";
+}
+
+function setWheel(rgb) {
+  const [hh, s, v] = rgbToHsv(rgb);
+  hsv = [s ? hh : hsv[0], s, v];
+  $("value").value = Math.round(v * 100);
+  syncColorInputs(rgb); drawWheel(); drawLed(rgb);
+}
+
+function syncColorInputs(rgb) {
+  $("r").value = rgb[0]; $("g").value = rgb[1]; $("b").value = rgb[2]; $("hex").value = rgbToHex(rgb);
+}
+
+// Changing the color edits the selected key live; with the empty key selected it only picks.
+function applyColor(rgb, fromWheel) {
+  if (!fromWheel) { setWheel(rgb); } else { syncColorInputs(rgb); drawWheel(); drawLed(rgb); }
+  if (current !== EMPTY) { palette[current] = rgb.slice(); renderGrid(); renderPreview(); renderPalette(); renderChecks(); }
+}
+
+function wheelPick(e) {
+  const r = wheel.getBoundingClientRect(), r0 = r.width / 2;
+  const dx = e.clientX - r.left - r0, dy = e.clientY - r.top - r0;
+  hsv = [(Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360, Math.min(1, Math.hypot(dx, dy) / r0), hsv[2]];
+  applyColor(hsvToRgb(...hsv), true);
+}
+let wheelDrag = false;
+wheel.addEventListener("pointerdown", e => { if (current !== EMPTY) save(); wheelDrag = true; wheel.setPointerCapture(e.pointerId); wheelPick(e); });
+wheel.addEventListener("pointermove", e => { if (wheelDrag) wheelPick(e); });
+wheel.addEventListener("pointerup", () => wheelDrag = false);
+wheel.addEventListener("pointercancel", () => wheelDrag = false);
+$("value").addEventListener("pointerdown", () => { if (current !== EMPTY) save(); });
+$("value").addEventListener("input", () => { hsv[2] = +$("value").value / 100; applyColor(hsvToRgb(...hsv), true); });
+["r", "g", "b"].forEach(id => $(id).addEventListener("change", () => {
+  const rgb = ["r", "g", "b"].map(c => Math.max(0, Math.min(255, Math.round(+$(c).value || 0))));
+  if (current !== EMPTY) save();
+  applyColor(rgb, false);
+}));
+$("hex").addEventListener("change", () => {
+  const rgb = hexToRgb($("hex").value);
+  if (!rgb) { syncColorInputs(hsvToRgb(...hsv)); return; }
+  if (current !== EMPTY) save();
+  applyColor(rgb, false);
+});
+$("copyTuple").onclick = async () => {
+  const t = `(${$("r").value}, ${$("g").value}, ${$("b").value})`;
+  try { await navigator.clipboard.writeText(t); $("copyTuple").textContent = "Copied"; }
+  catch (e) { $("copyTuple").textContent = t; }
+  setTimeout(() => $("copyTuple").textContent = "Copy tuple", 1600);
+};
+
+function chips(box, colors) {
+  box.replaceChildren(...colors.map(([rgb, title]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.style.setProperty("--c", css(rgb));
+    b.title = title; b.setAttribute("aria-label", title);
+    b.onclick = () => { if (current !== EMPTY) save(); applyColor(rgb.slice(), false); };
+    return b;
+  }));
+}
+
+function projectColors() {
+  const seen = new Map();
+  for (const s of Object.values(SPRITES)) for (const [k, rgb] of Object.entries(s.colors)) {
+    if (s.unmapped.includes(k)) continue;
+    const id = rgb.join(",");
+    if (!seen.has(id)) seen.set(id, [rgb, `${s.character} ${k}: (${rgb.join(", ")})`]);
+  }
+  return [...seen.values()].sort((a, b) => rgbToHsv(a[0])[0] - rgbToHsv(b[0])[0]);
+}
+
+// ---- Image to pixels ----
+let sourceImage = null, usedAlpha = false;
+function sampleImage() {
+  if (!sourceImage) return null;
+  const buf = document.createElement("canvas"); buf.width = w; buf.height = h;
+  const bx = buf.getContext("2d", { willReadFrequently: true });
+  bx.imageSmoothingEnabled = true; bx.imageSmoothingQuality = "high";
+  const iw = sourceImage.naturalWidth, ih = sourceImage.naturalHeight, fit = $("imgFit").value;
+  let dw = w, dh = h, dx = 0, dy = 0;
+  if (fit !== "stretch") {
+    const s = fit === "cover" ? Math.max(w / iw, h / ih) : Math.min(w / iw, h / ih);
+    dw = iw * s; dh = ih * s; dx = (w - dw) / 2; dy = (h - dh) / 2;
+  }
+  bx.drawImage(sourceImage, dx, dy, dw, dh);
+  const data = bx.getImageData(0, 0, w, h).data;
+  // Only trust alpha when the source itself has transparency; letterbox margins are always clear.
+  const probe = document.createElement("canvas"); probe.width = probe.height = 24;
+  const px = probe.getContext("2d", { willReadFrequently: true });
+  px.drawImage(sourceImage, 0, 0, 24, 24);
+  const pd = px.getImageData(0, 0, 24, 24).data;
+  let clear = 0; for (let i = 3; i < pd.length; i += 4) if (pd[i] < 250) clear++;
+  usedAlpha = $("imgSource").value === "alpha" && clear > 24 * 24 * .02;
+  const level = [], rgb = [];
+  for (let y = 0; y < h; y++) {
+    const lr = [], cr = [];
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4, a = data[i + 3] / 255;
+      const luma = (.2126 * data[i] + .7152 * data[i + 1] + .0722 * data[i + 2]) / 255;
+      lr.push(a < .02 ? null : usedAlpha ? a : luma); cr.push([data[i], data[i + 1], data[i + 2]]);
+    }
+    level.push(lr); rgb.push(cr);
+  }
+  return { level, rgb };
+}
+
+function onOff(level) {
+  const t = +$("imgThreshold").value / 100, invert = $("imgInvert").checked, out = level.map(r => r.map(() => false));
+  if (!$("imgDither").checked) {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[y][x] = level[y][x] === null ? false : (level[y][x] >= t) !== invert;
+    return out;
+  }
+  const buf = level.map(r => r.map(v => v === null ? null : v + (.5 - t)));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (buf[y][x] === null) continue;
+    const old = buf[y][x], on = old >= .5, err = old - (on ? 1 : 0);
+    out[y][x] = on !== invert;
+    if (x + 1 < w && buf[y][x + 1] !== null) buf[y][x + 1] += err * 7 / 16;
+    if (y + 1 < h) {
+      if (x && buf[y + 1][x - 1] !== null) buf[y + 1][x - 1] += err * 3 / 16;
+      if (buf[y + 1][x] !== null) buf[y + 1][x] += err * 5 / 16;
+      if (x + 1 < w && buf[y + 1][x + 1] !== null) buf[y + 1][x + 1] += err / 16;
+    }
+  }
+  return out;
+}
+
+function previewImage() {
+  $("imgThresholdOut").textContent = $("imgThreshold").value + "%";
+  const sample = sampleImage();
+  if (!sample) return;
+  const on = onOff(sample.level), match = $("imgColor").value === "match" && Object.keys(palette).length;
+  const fallback = current !== EMPTY ? current : Object.keys(palette)[0] || "A";
+  if (!palette[fallback]) palette[fallback] = [255, 255, 255];
+  pending = on.map((r, y) => r.map((v, x) => !v ? EMPTY : match ? nearestKey(sample.rgb[y][x], palette) : fallback));
+  const lit = pending.flat().filter(k => k !== EMPTY).length, share = lit / (w * h);
+  $("imgStatus").className = "hint " + (share > .92 || share < .02 ? "warning" : "ok");
+  $("imgStatus").textContent = share > .92 ? `Nearly every pixel is on (${lit}/${w * h}) — try Invert or lower the threshold.`
+    : share < .02 ? `Almost nothing is on (${lit}/${w * h}) — try Invert or raise the threshold.`
+    : `Previewing ${lit} pixels on the canvas — press Apply to keep them.`;
+  renderGrid(); renderPreview();
+}
+
+$("file").onchange = e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url); sourceImage = img; $("imgInvert").checked = false;
+    // A mostly-bright brightness image is a dark subject on a light background: start inverted.
+    const sample = sampleImage();
+    if (sample && !usedAlpha) {
+      const t = +$("imgThreshold").value / 100, drawn = sample.level.flat().filter(v => v !== null);
+      $("imgInvert").checked = drawn.length > 0 && drawn.filter(v => v >= t).length > drawn.length * .6;
+    }
+    previewImage();
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url); sourceImage = null; pending = null;
+    $("imgStatus").className = "hint warning"; $("imgStatus").textContent = "Could not read that image file."; renderGrid();
+  };
+  img.src = url;
+};
+["imgFit", "imgSource", "imgThreshold", "imgInvert", "imgDither", "imgColor"].forEach(id => $(id).addEventListener("input", previewImage));
+$("imgApply").onclick = () => {
+  if (!pending) { $("imgStatus").className = "hint warning"; $("imgStatus").textContent = "Load an image first."; return; }
+  const next = pending.map(r => r.slice());
+  save(); cells = next; pending = null; renderAll();
+  $("imgStatus").className = "hint ok"; $("imgStatus").textContent = "Applied. Undo restores the previous artwork.";
+};
+
+// ---- Import / export ----
+function exported() {
+  attrName = $("attrName").value.trim() || "ART"; paletteName = $("paletteName").value.trim() || "COLORS";
+  const f = $("format").value, art = exportArt(rows(), attrName), cols = exportColors(palette, paletteName);
+  if (f === "art") return art;
+  if (f === "colors") return cols;
+  if (f === "json") return JSON.stringify({ name: attrName, paletteName, rows: rows(), colors: palette }, null, 2);
+  return art + "\n" + cols;
+}
+$("export").onclick = () => $("text").value = exported();
+$("copy").onclick = async () => {
+  if (!$("text").value) $("text").value = exported();
+  try { await navigator.clipboard.writeText($("text").value); $("copy").textContent = "Copied"; }
+  catch (e) { $("text").select(); $("copy").textContent = "Select + copy"; }
+  setTimeout(() => $("copy").textContent = "Copy", 1400);
+};
+$("download").onclick = () => {
+  const blob = new Blob([exported() + "\n"], { type: "text/plain" }), a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = (spriteId || "sprite").replace(/[^\w-]+/g, "_") + ".py.txt"; a.click();
+  URL.revokeObjectURL(a.href);
+};
+$("import").onclick = () => {
+  const parsed = parseSprite($("text").value);
+  if (!parsed.rows.length) { alert("No sprite rows found. Paste NAME = [\"..\", ...], a COLORS dict, JSON, or bare rows."); return; }
+  save();
+  setCells(parsed.rows, parsed.colors);
+  if (parsed.name) attrName = parsed.name;
+  if (parsed.paletteName) paletteName = parsed.paletteName;
+  syncFields(); renderAll();
+};
+
+// ---- Start ----
+const names = { tink: "Tinker Bell", buzz: "Buzz Lightyear", genie: "Genie", slinky: "Slinky Dog", mickey: "Sorcerer Mickey" };
+const groups = {};
+for (const [id, s] of Object.entries(SPRITES)) (groups[s.character] ||= []).push([id, s]);
+for (const [character, list] of Object.entries(groups)) {
+  const og = document.createElement("optgroup");
+  og.label = names[character] || character[0].toUpperCase() + character.slice(1);
+  for (const [id, s] of list) {
+    const o = document.createElement("option");
+    o.value = id; o.textContent = `${og.label} · ${s.label} (${s.rows[0].length}×${s.rows.length})`;
+    og.append(o);
+  }
+  $("sprites").append(og);
+}
+chips($("presets"), PRESETS.map(rgb => [rgb, `(${rgb.join(", ")})`]));
+chips($("projectColors"), projectColors());
+$("board").onchange = renderPreview;
+window.addEventListener("resize", () => { renderGrid(); renderPreview(); });
+
+const start = decodeURIComponent(location.hash.slice(1));
+const first = SPRITES[start] ? start : SPRITES["slinky/FRONT_ART"] ? "slinky/FRONT_ART" : Object.keys(SPRITES)[0];
+if (first) { $("sprites").value = first; loadSprite(first); }
+else { syncFields(); renderAll(); setWheel([255, 255, 255]); }
+</script>
+</body>
+</html>
