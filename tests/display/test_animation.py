@@ -1,3 +1,4 @@
+import math
 # tests/display/test_animation.py
 import random
 
@@ -1003,3 +1004,18 @@ def test_genie_smoke_sets_each_pixel_once_however_many_puffs_overlap():
     assert canvas.px == lone.px, "stacked identical puffs look like one, not a white blob"
     centre, edge = lone.px[(30, 30)], lone.px[(31, 30)]
     assert sum(centre) > sum(edge) > 0, "brightest at the centre, fading out"
+
+
+def test_genie_full_size_fast_path_draws_exactly_his_art():
+    for height in (32, 64):
+        genie = animation.GenieReveal(64, height, random.Random(0))
+        t = genie.EMERGE_S + 0.3
+        canvas = FakeCanvas(64, height)
+        genie._draw_genie(canvas, t)
+        x0, y0 = (math.floor(v + 0.5) for v in genie.position(t))
+        s = genie.scale
+        expected = {(x0 + c * s + sx, y0 + r * s + sy): genie.COLORS[k]
+                    for r, line in enumerate(genie.ART) for c, k in enumerate(line) if k != "."
+                    for sy in range(s) for sx in range(s)}
+        expected = {p: rgb for p, rgb in expected.items() if 0 <= p[0] < 64 and 0 <= p[1] < height}
+        assert canvas.px == expected
