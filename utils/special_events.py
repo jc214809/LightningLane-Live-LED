@@ -23,6 +23,10 @@ SPECIAL_EVENTS = {
 # A special event we can't name (e.g. extended evening hours) keeps the original gold star.
 DEFAULT_STAR_RGB = (255, 215, 0)
 
+# The fireworks show a park runs on an ordinary night, and its castle-fireworks theme (None is the
+# everyday look). A party night swaps in the party's own show and theme; see fireworks_show().
+NIGHTLY_FIREWORKS = ("Happily Ever After", None)
+
 
 def seasonal_event(children):
     """The SPECIAL_EVENTS key whose entities are in a park's children, or None."""
@@ -80,6 +84,15 @@ def active_party(park, now=None):
     if key in SPECIAL_EVENTS and special_event_now(park, now):
         return key
     return None
+
+
+def fireworks_show(park, now=None):
+    """(show name, fireworks theme) the park runs tonight, looked up from its schedule: the party's
+    own show on a party night (Happily Ever After doesn't run then), else NIGHTLY_FIREWORKS."""
+    event = SPECIAL_EVENTS.get(active_party(park, now), {})
+    if event.get("fireworks_show"):
+        return event["fireworks_show"], event.get("fireworks_theme")
+    return NIGHTLY_FIREWORKS
 
 
 def star_rgb(park, now=None):

@@ -18,7 +18,7 @@ from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, forecast_wait_now, resolve_parks_from_config, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen
-from utils.special_events import SPECIAL_EVENTS, active_party
+from utils.special_events import active_party, fireworks_show
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
@@ -53,14 +53,7 @@ SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01}
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
 # character on a real board; leave it unset otherwise.
 forced_surprise = None
-FIREWORKS_SHOW = "Happily Ever After"
 FIREWORKS_SHOW_S = 5 * 60
-# (show name, fireworks theme) for every show that plays the castle fireworks: the nightly show,
-# plus each party's own show in its own colours (utils/special_events.py).
-FIREWORKS_SHOWS = [(FIREWORKS_SHOW, None)] + [
-    (event["fireworks_show"], event.get("fireworks_theme"))
-    for event in SPECIAL_EVENTS.values() if event.get("fireworks_show")
-]
 _shows_played = set()
 
 def main():
@@ -211,13 +204,14 @@ def initialize_park_information_screen(matrix, park):
 
 def play_fireworks_show_if_due(matrix, parks, now=None):
     """
-    If one of FIREWORKS_SHOWS started in the last FIREWORKS_SHOW_S seconds in one of the
-    board's parks, play the castle fireworks in that show's theme, without the title, until
-    that window ends. Each performance plays once. Returns True if it played.
+    If the fireworks show a park runs tonight (from its schedule: see special_events.fireworks_show)
+    started in the last FIREWORKS_SHOW_S seconds, play the castle fireworks in that show's theme,
+    without the title, until that window ends. Each performance plays once. Returns True if it played.
     """
     now = now or datetime.now(timezone.utc)
-    for show, theme in FIREWORKS_SHOWS:
-        start = show_start_due(parks, show, FIREWORKS_SHOW_S, now)
+    for park in parks:
+        show, theme = fireworks_show(park, now)
+        start = show_start_due([park], show, FIREWORKS_SHOW_S, now)
         if start is None or (show, start) in _shows_played:
             continue
         _shows_played.add((show, start))

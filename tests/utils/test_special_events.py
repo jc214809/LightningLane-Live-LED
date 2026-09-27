@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 import pytest
 
 from utils.special_events import (
-    DEFAULT_STAR_RGB, SPECIAL_EVENTS, active_party, is_special, seasonal_event, special_event_now, star_rgb,
+    DEFAULT_STAR_RGB, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, fireworks_show, is_special, seasonal_event,
+    special_event_now, star_rgb,
 )
 
 ET = "America/New_York"
@@ -87,6 +88,21 @@ def test_star_is_the_partys_colour_gold_when_unnamed_and_absent_without_an_event
     assert star_rgb(mk(party("2026-09-27")), now) == SPECIAL_EVENTS["halloween"]["star_rgb"]
     assert star_rgb(mk(party("2026-09-27"), seasonal=None), now) == DEFAULT_STAR_RGB
     assert star_rgb(mk(party("2026-09-28")), now) is None
+
+
+def test_fireworks_show_comes_from_tonights_schedule():
+    now = et("2026-09-27 21:00")
+    assert fireworks_show(mk(party("2026-09-27")), now) == ("Disney's Not-So-Spooky Spectacular", "halloween")
+    assert fireworks_show(mk(party("2026-09-28")), now) == NIGHTLY_FIREWORKS, "not a party night"
+    assert fireworks_show(mk(party("2026-09-27"), seasonal=None), now) == NIGHTLY_FIREWORKS, "unnamed event"
+    assert fireworks_show({"name": "EPCOT"}, now) == NIGHTLY_FIREWORKS
+
+
+def test_every_fireworks_theme_exists():
+    from display.fireworks.fireworks import THEMES
+    for key, event in SPECIAL_EVENTS.items():
+        assert event.get("fireworks_theme") in (None, *THEMES), key
+    assert NIGHTLY_FIREWORKS[1] in (None, *THEMES)
 
 
 def test_every_event_is_fully_described():
