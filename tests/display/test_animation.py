@@ -1307,3 +1307,24 @@ def test_walle_leaves_the_board_black_then_uncovers_the_new_screen_as_he_rolls_o
     assert px[(63, 0)] != new, "still blank ahead of him"
     assert all(px[(x, 0)] == new for x in range(rear)), "a clean wake, no gaps"
     assert list(frame(walle.duration - 0.01).values()).count(new) > 64 * 32 * 0.6, "all but uncovered by the end"
+
+
+@pytest.mark.parametrize("plays_under", [False, True])
+def test_a_screen_can_ask_to_keep_playing_while_the_wipe_uncovers_it(plays_under):
+    seen = []
+
+    def screen(canvas, t):
+        seen.append(t)
+        return True
+    if plays_under:
+        screen.plays_under_reveal = True
+    matrix = FakeMatrix()
+    animation.show_screen(matrix, fill((1, 2, 3)), 0.1)  # something for the sweep to cover
+    seen.clear()
+    animation.show_screen(matrix, screen, animation.COVER_S + animation.WIPE_S + 0.2)
+    # The screen isn't drawn during the sweep, so its first frames are the wipe's.
+    during_wipe = [t for t in seen[:int(animation.WIPE_S * animation.FPS) - 1] if t > 0]
+    if plays_under:
+        assert during_wipe, "its clock runs from the start of the wipe"
+    else:
+        assert not during_wipe, "held at its first frame until it's uncovered"

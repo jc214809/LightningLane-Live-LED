@@ -19,6 +19,9 @@ class Landmark:
 
     SCREEN_S = LANDMARK_S  # how long the landmark's screen is held, sweep and wipe included
     STAR_SPACING = 4  # one twinkling star per this many columns
+    # False: the scene waits at its first frame until the wipe has uncovered it, then starts.
+    # True: it's already playing as the wipe uncovers it, so its clock starts with the wipe.
+    PLAYS_UNDER_WIPE = False
 
     def __init__(self, width, height, rng=None, park=None):
         self.width, self.height = width, height
@@ -151,13 +154,15 @@ class TowerOfTerrorLandmark(Landmark):
     """
 
     # Longer than the other landmarks: the sweep and wipe take 1.2s of the screen, and the
-    # tilt, strike, doors and drop need the 2.3s of scene that leaves.
-    SCREEN_S = 3.5
+    # strike, doors and drop get room to breathe in the 3.3s of scene that leaves, with a hold
+    # after the car lands. 64x32 is longer again: its camera tilts up to the dome first.
+    SCREEN_S = 4.5
+    SHORT_SCREEN_S = 5.5
     TOWER_L, TOWER_R = 17, 46
     STRIP_L, STRIP_R = 28, 35
-    PAN_S = 0.8
+    PAN_S = 1.2
     # Scene times of (strike, doors open, car drops, car lands), without and with the tilt.
-    BEATS = {False: (0.5, 0.9, 1.3, 1.8), True: (1.0, 1.35, 1.6, 2.0)}
+    BEATS = {False: (0.6, 1.2, 1.9, 2.5), True: (1.6, 2.2, 2.9, 3.5)}
     FLASH_S, DOORS_OPEN_S = 0.15, 0.25
     BOLT_RGB, BOLT_EDGE_RGB, CAR_RGB = (235, 235, 255), (170, 170, 230), (255, 235, 180)
     COLORS = {
@@ -178,6 +183,8 @@ class TowerOfTerrorLandmark(Landmark):
     def __init__(self, width, height, rng=None, park=None):
         self.view_h = height
         self.pans = height < 64
+        if self.pans:
+            self.SCREEN_S = self.SHORT_SCREEN_S
         self.STRIKE_AT, self.DOORS_AT, self.DROP_AT, self.LAND_AT = self.BEATS[self.pans]
         # The scene is always built 64 tall; frame() shows a window of it on a short board.
         super().__init__(width, 64, rng, park)
@@ -408,9 +415,12 @@ class ScaryJackOLanternLandmark(Landmark):
     """A scary Mickey-shaped jack-o'-lantern (triangle eyes, toothy grin) under a purple Halloween sky: it sits dark, then its
     candle catches and the carved face flickers, over a drifting green ground mist."""
 
-    # The sweep and wipe take 1.2s of the screen, leaving 4.8s of scene: dark, the candle catches
-    # (0.4-0.9s), the wink or hop, then the party's hours fade in and hold long enough to read.
+    # The sweep takes 0.55s of the screen and the scene's clock starts with the wipe, leaving
+    # 5.45s: dark, the candle catches (0.4-0.9s, while the wipe is still uncovering it), the wink
+    # or hop, then the party's hours fade in and hold long enough to read.
     SCREEN_S = 6.0
+    # The candle catches while the wipe is still uncovering it, rather than after.
+    PLAYS_UNDER_WIPE = True
     STAR_SPACING = 2  # twice the other landmarks' stars: a clear Halloween night
     IGNITE_AT, IGNITE_S = 0.4, 0.5
     OUTLINE = (70, 24, 4)
@@ -592,7 +602,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
     EYE_V, EYE_HW, EYE_HH = -0.38, 0.15, 0.31
     WINK_AT, WINK_S = 1.4, 0.6
     HOP_AT, HOP_S = 1.1, 0.45
-    # 64x32 tells its own story on a longer screen (5.3s of scene): the title holds to be read,
+    # 64x32 tells its own story on a longer screen (5.95s of scene): the title holds to be read,
     # then the pumpkin jumps left in an arc and its ear shoves the title off the board, landing in
     # its place; "TONIGHT / 7PM TO / 12AM" fades in where the pumpkin was, and it winks once landed.
     SHORT_SCREEN_S = 6.5
@@ -866,4 +876,5 @@ def landmark_screen(landmark):
                 graphics.DrawText(canvas, font, x + 1, y + 1, shadow, text)
                 graphics.DrawText(canvas, font, x, y, graphics.Color(*rgb), text)
         return True
+    draw.plays_under_reveal = landmark.PLAYS_UNDER_WIPE
     return draw
