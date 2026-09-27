@@ -109,7 +109,8 @@ def test_initialize_park_information_screen(monkeypatch, screens):
 def test_each_landmark_is_held_for_its_own_screen_length(monkeypatch, screens):
     monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
     disney.initialize_park_information_screen(FakeMatrix(), {"name": "Disney's Hollywood Studios"})
-    assert screens[0]["hold"] == 3.5, "the tower needs longer for its tilt, strike and drop"
+    # The test board is 64x32, where the tower gets its longest screen: the tilt comes first.
+    assert screens[0]["hold"] == 5.5, "the tower is held for its own, board-specific screen length"
 
 
 def test_party_night_swaps_the_castle_for_the_partys_landmark(monkeypatch, screens):

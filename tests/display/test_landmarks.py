@@ -64,32 +64,48 @@ def test_scenes_actually_move(cls):
     assert any(a != b for a, b in zip(frames, frames[1:]))
 
 
-def _tower_scene_s():
+def _tower_scene_s(tower):
     """Scene time the tower gets: its screen minus the sweep and the wipe in front of it."""
     import display.animation as animation
-    return (landmarks.TowerOfTerrorLandmark.SCREEN_S - animation.COVER_S
-            - animation.TRANSITIONS["wipe"].duration)
+    return tower.SCREEN_S - animation.COVER_S - animation.TRANSITIONS["wipe"].duration
 
 
-def test_tower_screen_is_longer_than_the_other_landmarks():
-    assert landmarks.TowerOfTerrorLandmark.SCREEN_S == 3.5
+def test_tower_screen_is_longer_than_the_other_landmarks_and_longest_on_64x32():
+    tall = landmarks.TowerOfTerrorLandmark(64, 64, random.Random(3))
+    short = landmarks.TowerOfTerrorLandmark(64, 32, random.Random(3))
+    assert (tall.SCREEN_S, short.SCREEN_S) == (4.5, 5.5)
     for cls in (landmarks.CastleLandmark, landmarks.SpaceshipEarthLandmark, landmarks.TreeOfLifeLandmark):
-        assert cls.SCREEN_S == landmarks.LANDMARK_S
+        assert cls.SCREEN_S == landmarks.LANDMARK_S < tall.SCREEN_S
 
 
 @pytest.mark.parametrize("height", [32, 64])
 def test_tower_story_plays_out_inside_its_screen(height):
     tower = landmarks.TowerOfTerrorLandmark(64, height, random.Random(3))
     assert tower.STRIKE_AT < tower.DOORS_AT < tower.DROP_AT < tower.LAND_AT
-    assert tower.LAND_AT <= _tower_scene_s() - 0.2, "the car lands with a beat to spare"
+    assert tower.LAND_AT <= _tower_scene_s(tower) - 0.8, "the car lands with time to take it in"
+    beats = (0.0, tower.STRIKE_AT, tower.DOORS_AT, tower.DROP_AT, tower.LAND_AT)
+    assert min(b - a for a, b in zip(beats[1:], beats[2:])) >= 0.5, "each beat gets room"
     if tower.pans:
-        assert tower.PAN_S < tower.STRIKE_AT, "the tilt finishes before anything happens"
+        assert tower.PAN_S + 0.3 <= tower.STRIKE_AT, "the tilt settles before anything happens"
 
 
 def _scene_s(cls):
-    """Scene time a landmark gets: its screen minus the sweep and the wipe in front of it."""
+    """Scene time a landmark gets: its screen minus the sweep, and minus the wipe unless it plays under it."""
     import display.animation as animation
-    return cls.SCREEN_S - animation.COVER_S - animation.TRANSITIONS["wipe"].duration
+    wipe = 0 if cls.PLAYS_UNDER_WIPE else animation.TRANSITIONS["wipe"].duration
+    return cls.SCREEN_S - animation.COVER_S - wipe
+
+
+def test_the_pumpkins_light_up_while_the_wipe_is_still_uncovering_them():
+    import display.animation as animation
+    wipe = animation.TRANSITIONS["wipe"].duration
+    for cls in (landmarks.ScaryJackOLanternLandmark, landmarks.FriendlyJackOLanternLandmark):
+        pumpkin = cls(64, 64, random.Random(5))
+        assert landmarks.landmark_screen(pumpkin).plays_under_reveal is True
+        assert pumpkin.IGNITE_AT < wipe, "the candle catches before the wipe has finished"
+    for cls in (landmarks.CastleLandmark, landmarks.SpaceshipEarthLandmark, landmarks.TreeOfLifeLandmark,
+                landmarks.TowerOfTerrorLandmark):
+        assert landmarks.landmark_screen(cls(64, 64, random.Random(5))).plays_under_reveal is False, cls
 
 
 @pytest.mark.parametrize("motion", ["wink", "bounce"])
@@ -109,7 +125,7 @@ def test_pumpkin_story_plays_out_inside_its_screen_with_time_to_read_the_name(mo
 @pytest.mark.parametrize("height", [32, 64])
 def test_tower_lightning_strikes_once_out_of_the_cloud(height):
     tower = landmarks.TowerOfTerrorLandmark(64, height, random.Random(3))
-    struck = [f for f in range(int(_tower_scene_s() * 30))
+    struck = [f for f in range(int(_tower_scene_s(tower) * 30))
               if tower.BOLT_RGB in tower.frame(f / 30).values()]
     assert struck, "the bolt appears"
     assert struck == list(range(struck[0], struck[-1] + 1)), "one continuous strike"
