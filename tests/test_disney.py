@@ -349,6 +349,31 @@ def test_each_surprise_visitor_turns_up_on_their_own_roll(monkeypatch, screens, 
     assert visitor in disney_animation.TRANSITIONS
 
 
+def test_ride_visitors_are_characters_and_stay_out_of_the_random_rotation():
+    for name in disney.RIDE_VISITORS:
+        assert name in disney_animation.TRANSITIONS
+        assert name not in disney.SURPRISES, "they only turn up on their own rides"
+
+
+@pytest.mark.parametrize("ride", ["Millennium Falcon: Smugglers Run", "Star Wars: Rise of the Resistance"])
+def test_the_falcon_visits_galaxys_edge_rides_one_time_in_ten(monkeypatch, screens, ride):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": ride, "waitTime": 45, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.09)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.11)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert [s["transition"] for s in screens[-2:]] == ["falcon", "wipe"]
+
+
+def test_the_falcon_never_visits_other_rides(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] != "falcon"
+
+
 def test_surprise_slices_match_their_chances_and_stay_rare():
     chances = disney.SURPRISES
     assert all(0 < c < 0.05 for c in chances.values()), "each kept rare on purpose"

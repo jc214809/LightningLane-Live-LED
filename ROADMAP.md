@@ -32,7 +32,7 @@ Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter
 | 17 | Goofy | MK: The Barnstormer | flies his biplane across the board | Fly-by |
 | 18 | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
 | 19 | R2-D2 | DHS: Galaxy's Edge | rolls across on his treads, dome swivelling, light blinking | Fly-by |
-| 20 | Millennium Falcon | DHS: Smugglers Run | stars stretch into hyperspace streaks, the Falcon jumps; the streaks are the wipe | Standalone |
+| ~~20~~ | ~~Millennium Falcon~~ Done | DHS: Smugglers Run | stars stretch into hyperspace streaks, the Falcon jumps; the streaks are the wipe | Standalone |
 | 21 | Baby Groot | EPCOT: Guardians: Cosmic Rewind | sprouts from the bottom edge, grows like Baymax inflates, then dances | Peek (procedural, not fixed art) |
 | 22 | Ray the firefly | MK: Tiana's Bayou Adventure | glowing firefly wanders across, leaving a light trail | Fly-by |
 | 23 | Tigger | MK: Many Adventures of Winnie the Pooh | bounces across on his tail | Fly-by (bounce) |
@@ -217,12 +217,16 @@ blue light are enough motion on their own.
 Questions: pure fly-by, or does he stop mid-board to swivel his dome and beep; size on
 64x64; reference image.
 
-**20. Millennium Falcon.** Stars stretch into hyperspace streaks that double as the wipe
-line, then the Falcon (a simple wedge-with-mandibles silhouette) jumps across. High
-contrast, and the hyperspace-streak wipe is a strong reused-idea for other space content.
-
-Questions: is the Falcon itself drawn in full, or is the hyperspace jump (streaks + flash)
-the whole beat; reference image; chance in `SURPRISES`.
+**~~20. Millennium Falcon.~~ Done** (`FalconReveal`, `"falcon"`, in `disney.RIDE_VISITORS`).
+Drawn from the user's top-down photo turned nose-right: the photo was downscaled for the
+outline, then only the bold features kept (the panelling came out as grey noise, the
+Spaceship Earth problem): the gap between the mandibles, turret ring, docking arms, red
+patches, the cockpit tube off the bottom edge (her starboard side, seen from above) with
+light-blue windows, and a blue engine band along the back. She arrives as a streak that
+snaps into the ship while star streaks shrink to points, cruises over the old screen,
+flares her engine and jumps: she and the old screen's rows stretch into streaks off the
+right edge, then a flash fades to the new ride. 1x on 64x32, 2x on 64x64. Only on
+Smugglers Run and Rise of the Resistance, 1 in 10 of their screens.
 
 **21. Baby Groot.** Sprouts up from the bottom edge and grows the way Baymax inflates —
 procedural, not fixed sprite art, keyed off one growth factor — then does his headphones
@@ -326,6 +330,10 @@ beats, and a 0.8s hold after the car lands on both boards.
 
 ## 3. Characters show up more on their own ride
 
+First cut built for the Falcon: `disney.RIDE_VISITORS` maps a visitor to pieces of ride
+names and a chance, rolled before the general `SURPRISES`. Extending it to the characters
+below is now just entries in that map (plus settling a boost versus only-on-their-ride).
+
 A character-to-ride map next to `SURPRISES` in `disney.py`, with a boosted chance when the
 ride on screen matches. For example: Buzz on Buzz Lightyear's Space Ranger Spin, Dumbo on
 Dumbo the Flying Elephant, Figment on Journey Into Imagination with Figment, Slinky on
@@ -415,3 +423,11 @@ Questions to settle first, with a reference image:
   spotted?
 - Size: 1x or 2x on 64x64 (the ears' width decides it), and whether he joins the
   `SURPRISES` rotation once redrawn (he's built but not in it today).
+
+## 8. Fix Ralph showing the new screen through the old one
+
+`RalphReveal` paints only the old screen's lit pixels while he rises, but `show_screen` has
+already drawn the new screen underneath, so the new ride shows through wherever the old
+screen was dark until he smashes it. The Army Men and Falcon paint every pixel of the old
+screen for this reason; Ralph needs the same (`test_new_screen_never_shows_through_the_old_screens_dark_pixels`
+can take him as another case).
