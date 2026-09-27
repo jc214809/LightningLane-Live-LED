@@ -1167,20 +1167,24 @@ class GenieReveal:
         return int(min(x + self.sprite_w * 0.35, p * (self.width + 1)))
 
     def spawn(self, t):
-        """Smoke for this frame: a plume rising from the spout, or a wake behind him."""
+        """
+        Smoke for this frame: a plume rising from the spout, or a wake behind him. The
+        same count on both boards: puffs are already twice as wide on 64x64, and doubling
+        the count as well made the smoke eight times the work there.
+        """
         r = self.rng
         if t < self.EMERGE_S:
             sx, sy = self.spout()
             return [[sx + r.uniform(-1, 1) * self.scale, sy,
                      r.uniform(-0.5, 0.5), r.uniform(-1.2, -0.5) * self.scale,
                      r.randint(14, 26), r.choice(self.SMOKE_COLORS), r.uniform(0.4, 1.0)]
-                    for _ in range(3 * self.scale)]
+                    for _ in range(3)]
         x, y = self.position(t)
         return [[x + r.uniform(0.25, 0.65) * self.sprite_w,
                  y + self.sprite_h * r.uniform(0.6, 1.0),
                  r.uniform(-0.9, -0.2) * self.scale, r.uniform(-0.25, 0.25),
                  r.randint(16, 28), r.choice(self.SMOKE_COLORS), r.uniform(0.7, 1.6)]
-                for _ in range(4 * self.scale)]
+                for _ in range(4)]
 
     def _step_puffs(self, t):
         frame = int(t * FPS)
@@ -1273,6 +1277,15 @@ class GenieReveal:
                         if clip_x <= px < self.width and 0 <= py < self.height:
                             canvas.SetPixel(px, py, *self.COLORS[kind])
 
+    def _full_pixels(self):
+        """(dx, dy, rgb) for every lit pixel of Genie at full size, worked out once."""
+        if getattr(self, "_full", None) is None:
+            s = self.scale
+            self._full = [(col * s + sx, row * s + sy, self.COLORS[kind])
+                          for row, line in enumerate(self.ART) for col, kind in enumerate(line) if kind != "."
+                          for sy in range(s) for sx in range(s)]
+        return self._full
+
     def _draw_genie(self, canvas, t):
         """
         Draw him at `grow(t)` of full size. Below full size every cell is pulled toward
@@ -1284,6 +1297,14 @@ class GenieReveal:
         # Whole pixels first: a half-pixel home splits cells either side of the spout
         # in opposite directions as he scales, opening a gap down his middle.
         x0, y0 = (math.floor(v + 0.5) for v in self.position(t))
+        if g >= 1.0:
+            # Full size, i.e. his whole flight: just offset the precomputed pixels.
+            width, height = self.width, self.height
+            for dx, dy, rgb in self._full_pixels():
+                px, py = x0 + dx, y0 + dy
+                if 0 <= px < width and 0 <= py < height:
+                    canvas.SetPixel(px, py, *rgb)
+            return
         ax, ay = self.spout()
         for row, line in enumerate(self.ART):
             for col, kind in enumerate(line):
