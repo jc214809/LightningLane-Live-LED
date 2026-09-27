@@ -333,8 +333,9 @@ def _box(text, center_x, top):
 
 
 def test_short_board_pumpkin_gets_a_longer_screen():
-    assert landmarks.FriendlyJackOLanternLandmark(64, 32, random.Random(21)).SCREEN_S == 6.0
-    assert landmarks.FriendlyJackOLanternLandmark(64, 64, random.Random(21)).SCREEN_S == 5.5
+    assert landmarks.FriendlyJackOLanternLandmark(64, 32, random.Random(21)).SCREEN_S == 6.5
+    assert landmarks.FriendlyJackOLanternLandmark(64, 64, random.Random(21)).SCREEN_S == 6.0
+    assert landmarks.ScaryJackOLanternLandmark.SCREEN_S == 6.0
 
 
 def test_short_board_pumpkin_jumps_into_the_titles_spot_and_shoves_it_off():

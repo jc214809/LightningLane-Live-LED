@@ -5,6 +5,7 @@ import time
 from driver import graphics
 from utils import debug
 
+from display.capture import Capture, capture_screen
 from display.network import draw_if_offline
 
 FPS = 30
@@ -534,18 +535,7 @@ class StitchReveal(PeekReveal):
         return int(settled / self.LOOK_S) % 2
 
 
-class _Capture:
-    """Stand-in canvas that records what a screen draws, so it can be shattered."""
-
-    def __init__(self, width, height):
-        self.width, self.height, self.px = width, height, {}
-
-    def SetPixel(self, x, y, r, g, b):
-        if 0 <= x < self.width and 0 <= y < self.height and (r or g or b):
-            self.px[(int(x), int(y))] = (r, g, b)
-
-    def Clear(self):
-        self.px = {}
+_Capture = Capture  # the recording canvas; see display/capture.py
 
 
 class RalphReveal:
@@ -609,10 +599,8 @@ class RalphReveal:
         self.prev_px = {}
 
     def capture_prev(self, prev_draw, prev_t):
-        """Redraw the old screen onto a capture canvas; those pixels become the debris."""
-        shot = _Capture(self.width, self.height)
-        prev_draw(shot, prev_t)
-        self.prev_px = shot.px
+        """Redraw the old screen in memory; those pixels become the debris."""
+        self.prev_px = capture_screen(prev_draw, prev_t, self.width, self.height)
 
     def _shatter(self):
         """Turn the captured screen into debris, thrown outward from the impact point."""
@@ -758,10 +746,8 @@ class MickeyReveal:
         self._last_frame = -1
 
     def capture_new(self, draw_new, new_t):
-        """Draw the incoming screen onto a capture canvas; those pixels are what materializes."""
-        shot = _Capture(self.width, self.height)
-        draw_new(shot, new_t)
-        self.new_px = shot.px
+        """Draw the incoming screen in memory; those pixels are what materializes."""
+        self.new_px = capture_screen(draw_new, new_t, self.width, self.height)
         self._build_motes()
 
     def _build_motes(self):
@@ -1776,10 +1762,8 @@ class WallEReveal:
         self._dusted = set()
 
     def capture_prev(self, prev_draw, prev_t):
-        """Redraw the old screen onto a capture canvas: those pixels get vacuumed up."""
-        shot = _Capture(self.width, self.height)
-        prev_draw(shot, prev_t)
-        self.prev_px = shot.px
+        """Redraw the old screen in memory: those pixels get vacuumed up."""
+        self.prev_px = capture_screen(prev_draw, prev_t, self.width, self.height)
         ix, iy = self.intake()
         # Nearest first: each pixel lifts off when the sweep front reaches it.
         self.flights = sorted(

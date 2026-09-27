@@ -1,5 +1,6 @@
 import os
 
+from display import capture
 from driver import graphics
 from utils import debug
 
@@ -56,6 +57,7 @@ def initialize_fonts(matrix_height):
         try:
             font.LoadFont(absolute_path)  # Attempt to load the font
             loaded_fonts[name] = font  # Cache the loaded font
+            capture.font_paths[id(font)] = absolute_path  # so transitions can draw it in memory
             debug.info(f"Successfully loaded font '{name}' from '{absolute_path}'")
         except Exception as e:
             debug.error(f"Error loading font from path {absolute_path}: {e}")
