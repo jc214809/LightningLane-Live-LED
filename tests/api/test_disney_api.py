@@ -14,7 +14,6 @@ from api.disney_api import (
     fetch_parks_and_attractions,
     get_attraction_name,
     clean_park_name,
-    is_special_event,
     determine_llmp_price,
     get_down_time,
     fetch_park_live_data,
@@ -403,18 +402,6 @@ def test_clean_park_name():
     assert clean_park_name("Disney's Hollywood Studios") == "Hollywood Studios"
     assert clean_park_name("EPCOT") == "EPCOT"
 
-def test_is_special_event():
-    schedule = [{
-        "type": "TICKETED_EVENT",
-        "description": "Special ticketed event extended evening"
-    }]
-    assert is_special_event(schedule) is True
-    schedule = [{
-        "type": "TICKETED_EVENT",
-        "description": "Regular event"
-    }]
-    assert is_special_event(schedule) is False
-
 def test_determine_llmp_price():
     operating_event = {
         "purchases": [
@@ -689,16 +676,13 @@ def test_handle_park_schedule_update(monkeypatch):
         "purchases": [{"name": "Lightning Lane Multi Pass", "price": {"formatted": "$25"}}]
     }]
     monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: dummy_schedule)
-    # Patch is_special_event to return True.
-    monkeypatch.setattr("api.disney_api.is_special_event", lambda sch: True)
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
     # Capture debug info if desired.
     from api.disney_api import handle_park_schedule_update
     handle_park_schedule_update(park)
-    # Verify that schedule is updated, and llmpPrice and specialTicketedEvent are set.
+    # Verify that schedule is updated and llmpPrice is set.
     assert park["schedule"] == dummy_schedule
     assert park["llmpPrice"] == "$25"
-    assert park["specialTicketedEvent"] is True
     assert park["openingTime"] == "09:00"
     assert park["closingTime"] == "22:00"
     assert park["schedule_date"] == "2026-08-12"

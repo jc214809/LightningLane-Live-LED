@@ -43,7 +43,8 @@ The application is a continuous display loop that fetches Disney World attractio
 1. `api/disney_api.py:fetch_list_of_disney_world_parks()` — fetches the 4 WDW theme parks (excluding water parks) from the ThemeParks Wiki API.
 2. `api/disney_api.py:fetch_parks_and_attractions()` — fetches each park's attraction list; initial wait times are empty placeholders.
 3. Live wait times come from one `api/disney_api.py:fetch_park_live_data()` call per park (`/entity/{parkId}/live` — all children in one request, not one call per attraction), parsed by `build_live_updates()`/`parse_queue_wait()`, then merged into the shared list by `updater/data_updater.py:merge_live_data()`. In WebSocket mode, per-event updates also arrive via `updater/websocket_updater.py:_apply_live_update()`, which reuses `parse_queue_wait()`; the per-park REST fetch keeps running on its normal 5-minute interval as an independent backstop (both write paths hold `parks_data_lock`), not just at startup and after WS reconnects.
-4. `api/weather.py` provides weather data per park, fetched via OpenWeatherMap (requires API key in `config.json`).
+4. Special events live in `utils/special_events.py`. The schedule only says "Special Ticketed Event", so each party in its `SPECIAL_EVENTS` map is named by a string found in the park's entity names ("not-so-scary halloween party" → `park["seasonalEvent"] = "halloween"`, set by `seasonal_event()` at startup and on attraction refresh) and carries its star colour. Whether a party is on is decided at draw time from `park["schedule"]` by `special_event_now()`: an event dated the park's local today, or one still running (parties go past midnight, and the schedule also holds yesterday's). The park screen's `*` after the hours uses `star_rgb()`; Add a party by adding one `SPECIAL_EVENTS` entry.
+5. `api/weather.py` provides weather data per park, fetched via OpenWeatherMap (requires API key in `config.json`).
 
 ### WebSocket resilience
 
