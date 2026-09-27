@@ -95,4 +95,5 @@ Mutations of the shared `parks_data` structure (WS thread and REST thread) must 
 - The app must run from the repo root — font paths (`assets/fonts/...`) and `config.json`/`emulator_config.json` are resolved relative to the cwd.
 - The emulator's browser adapter binds port 8888 (`emulator_config.json`); a second instance fails with `[Errno 48] Address already in use`.
 - The ThemeParks.wiki WS server closes duplicate/rate-limited connections with close code 4029; `ws.close_code` is logged when the receive loop ends.
+- On a Pi, rgbmatrix's `graphics.DrawText`/`DrawLine` only accept rgbmatrix's own canvas, and it can't be read back. Anything that needs a screen's pixels (WALL-E, Ralph, Mickey) must go through `display/capture.py:capture_screen()`, which swaps in Python text/line drawing from the BDF files (fonts register their path in `initialize_fonts`) while it draws onto a recording canvas. The emulator accepts any canvas, so tests and previews won't catch a direct capture — this crashed the board once.
 - macOS has no GNU `timeout`; use `perl -e 'alarm N; exec "python3", @ARGV' disney.py ...` for time-boxed runs.
