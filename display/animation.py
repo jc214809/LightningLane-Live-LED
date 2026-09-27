@@ -1183,27 +1183,55 @@ class GenieReveal:
                 p[6] += 0.06  # and it swells as it disperses
             self.puffs = [p for p in self.puffs if p[4] > 0]
 
+    _stamps = {}
+
+    @classmethod
+    def _stamp(cls, radius):
+        """(dx, dy, falloff) for a soft disc of `radius`, cached per quarter pixel."""
+        key = round(radius * 4) / 4
+        stamp = cls._stamps.get(key)
+        if stamp is None:
+            reach = int(math.ceil(key))
+            stamp = []
+            for dy in range(-reach, reach + 1):
+                for dx in range(-reach, reach + 1):
+                    d = math.hypot(dx, dy)
+                    if d <= key:
+                        falloff = (1.0 - d / (key + 0.001)) ** 0.7
+                        if falloff > 0.05:
+                            stamp.append((dx, dy, falloff))
+            cls._stamps[key] = stamp
+        return stamp
+
     def _draw_puffs(self, canvas):
         """
         Soft discs, brightest at the centre, added to what is already on the canvas -- a
         thinning puff lets the screen behind it show through instead of blacking it out.
+        Each lit pixel keeps its brightest puff and is set once: redrawing every puff
+        pixel by pixel was thousands of SetPixel calls a frame, too slow for a Pi.
         """
-        under = dict(getattr(canvas, "px", {}))
+        light = {}
+        width, height = self.width, self.height
         for cx, cy, _, _, life, rgb, rad in self.puffs:
             f = min(1.0, life / 18.0)
-            rr = rad * self.scale
-            for x in range(int(math.floor(cx - rr)), int(math.ceil(cx + rr)) + 1):
-                for y in range(int(math.floor(cy - rr)), int(math.ceil(cy + rr)) + 1):
-                    if not (0 <= x < self.width and 0 <= y < self.height):
-                        continue
-                    d = math.hypot(x - cx, y - cy)
-                    if d > rr:
-                        continue
-                    g = f * (1.0 - d / (rr + 0.001)) ** 0.7
-                    if g <= 0.05:
-                        continue
-                    base = under.get((x, y), (0, 0, 0))
-                    canvas.SetPixel(x, y, *(min(255, int(b + c * g)) for b, c in zip(base, rgb)))
+            ox, oy = int(round(cx)), int(round(cy))
+            r0, g0, b0 = rgb
+            for dx, dy, falloff in self._stamp(rad * self.scale):
+                x, y = ox + dx, oy + dy
+                if not (0 <= x < width and 0 <= y < height):
+                    continue
+                g = f * falloff
+                if g <= 0.05:
+                    continue
+                seen = light.get((x, y))
+                if seen is None:
+                    light[(x, y)] = [r0 * g, g0 * g, b0 * g]
+                else:
+                    seen[0], seen[1], seen[2] = max(seen[0], r0 * g), max(seen[1], g0 * g), max(seen[2], b0 * g)
+        under = getattr(canvas, "px", {})
+        for (x, y), (r, g, b) in light.items():
+            base = under.get((x, y), (0, 0, 0))
+            canvas.SetPixel(x, y, min(255, int(base[0] + r)), min(255, int(base[1] + g)), min(255, int(base[2] + b)))
 
     def overlay(self, canvas, t):
         self._step_puffs(t)

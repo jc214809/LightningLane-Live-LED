@@ -956,3 +956,29 @@ def test_surprises_let_the_screen_underneath_keep_animating():
         return seen
     assert max(times("baymax")) > 0.3, "under a surprise the ride screen plays on"
     assert max(times("wipe")) == 0, "a reveal still holds it at its first frame"
+
+
+def test_genie_smoke_sets_each_pixel_once_however_many_puffs_overlap():
+    """Drawing puff by puff was thousands of SetPixel calls a frame: too slow on a Pi."""
+    genie = animation.GenieReveal(64, 64, random.Random(0))
+    rgb = animation.GenieReveal.SMOKE_COLORS[0]
+    genie.puffs = [[30.0, 30.0, 0, 0, 18, rgb, 1.5] for _ in range(50)]
+
+    class Counting(FakeCanvas):
+        def __init__(self):
+            super().__init__(64, 64)
+            self.writes = {}
+
+        def SetPixel(self, x, y, r, g, b):
+            self.writes[(x, y)] = self.writes.get((x, y), 0) + 1
+            super().SetPixel(x, y, r, g, b)
+
+    canvas = Counting()
+    genie._draw_puffs(canvas)
+    assert canvas.writes and max(canvas.writes.values()) == 1
+    lone = Counting()
+    genie.puffs = genie.puffs[:1]
+    genie._draw_puffs(lone)
+    assert canvas.px == lone.px, "stacked identical puffs look like one, not a white blob"
+    centre, edge = lone.px[(30, 30)], lone.px[(31, 30)]
+    assert sum(centre) > sum(edge) > 0, "brightest at the centre, fading out"
