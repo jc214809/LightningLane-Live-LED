@@ -1019,3 +1019,122 @@ def test_genie_full_size_fast_path_draws_exactly_his_art():
                     for sy in range(s) for sx in range(s)}
         expected = {p: rgb for p, rgb in expected.items() if 0 <= p[0] < 64 and 0 <= p[1] < height}
         assert canvas.px == expected
+
+
+# ---- WALL-E ----
+
+def _walle(height=32, seed=1, screen=_striped_screen):
+    walle = animation.WallEReveal(64, height, random.Random(seed))
+    walle.capture_prev(screen, 0.0)
+    return walle
+
+
+def _walle_colour_distance(a, b):
+    colors = animation.WallEReveal.COLORS
+    return sum(abs(x - y) for x, y in zip(colors.get(a, a), colors.get(b, b)))
+
+
+def test_walle_opts_into_receiving_the_previous_screen():
+    assert animation.WallEReveal.wants_prev is True
+    assert animation.TRANSITIONS["walle"] is animation.WallEReveal
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_walle_finishes_and_never_draws_off_board(height):
+    walle = _walle(height)
+    for f in range(int(walle.duration * animation.FPS)):
+        canvas = FakeCanvas(64, height)
+        assert walle.overlay(canvas, f / animation.FPS) is True
+        assert all(0 <= x < 64 and 0 <= y < height for x, y in canvas.px)
+    assert walle.overlay(FakeCanvas(64, height), walle.duration) is False
+
+
+def test_walle_rolls_in_stops_then_drives_off_the_right():
+    walle = _walle()
+    assert walle.walle_x(0) <= -walle.sprite_w + 1, "starts off the left edge"
+    stopped = [walle.walle_x(t) for t in (walle.ENTER_S, walle.ENTER_S + walle.LOOK_S + walle.COMPACT_S)]
+    assert stopped == [walle.STOP_X, walle.STOP_X], "parked while he looks and compacts"
+    assert walle.walle_x(walle.duration - 0.01) > 60, "gone off the right edge by the end"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_walle_stays_the_same_size_on_both_boards(height):
+    walle = _walle(height)
+    assert walle.SCALE == 1 and walle.sprite_h == len(walle.ART) <= 20
+    assert walle.y0 + walle.sprite_h == height, "on the bottom edge"
+
+
+def test_the_old_screen_hides_the_new_one_until_he_starts_compacting():
+    walle = _walle()
+    canvas = FakeCanvas(64, 32)
+    fill((1, 2, 3))(canvas, 0)
+    walle.overlay(canvas, walle.ENTER_S + walle.LOOK_S - 0.05)
+    assert (1, 2, 3) not in canvas.px.values(), "no new screen peeking through yet"
+    assert list(canvas.px.values()).count((200, 100, 50)) > 64 * 32 * 0.6, "the old screen is still up"
+
+
+def test_walle_vacuums_the_whole_old_screen_nearest_first():
+    walle = _walle()
+    start = walle.ENTER_S + walle.LOOK_S
+    ix, iy = walle.intake()
+    mid = FakeCanvas(64, 32)
+    walle.overlay(mid, start + walle.SWEEP_S / 2)
+    left = [(x, y) for (x, y), rgb in mid.px.items() if rgb == (200, 100, 50)]
+    assert left and min(math.hypot(x - ix, y - iy) for x, y in left) > 5, "the pixels nearest him go first"
+    done = FakeCanvas(64, 32)
+    walle.overlay(done, start + walle.COMPACT_S + 0.01)
+    assert (200, 100, 50) not in done.px.values(), "every pixel of the old screen is in the cube"
+
+
+def test_the_cube_is_made_of_what_he_ate_and_carries_a_sprout():
+    walle = _walle()
+    assert set(walle.cube) == {(160, 80, 40)}, "the old screen's colour, dimmed by the squash"
+    canvas = FakeCanvas(64, 32)
+    walle.overlay(canvas, walle.duration - walle.LEAVE_S + 0.05)
+    assert (160, 80, 40) in canvas.px.values()
+    assert walle.PLANT_RGB["leaf"] in canvas.px.values()
+
+
+def test_walle_blinks_during_his_look():
+    walle = _walle()
+    def lenses(t):
+        canvas = FakeCanvas(64, 32)
+        walle.overlay(canvas, t)
+        return list(canvas.px.values()).count(walle.COLORS["L"])
+    look = walle.ENTER_S
+    assert lenses(look + walle.BLINK_AT + walle.BLINK_S / 2) == 0, "eyes shut"
+    assert lenses(look + walle.BLINK_AT - 0.05) > 0 and lenses(look + walle.BLINK_AT + walle.BLINK_S + 0.05) > 0
+
+
+def test_walle_tilts_his_head_before_the_blink():
+    walle = _walle()
+    def eye_tops(t):
+        canvas = FakeCanvas(64, 32)
+        walle.overlay(canvas, t)
+        housing = [(x, y) for (x, y), rgb in canvas.px.items() if rgb == walle.COLORS["E"]]
+        return min(y for x, y in housing if x < walle.STOP_X + 10), min(y for x, y in housing if x >= walle.STOP_X + 10)
+    left, right = eye_tops(walle.ENTER_S + walle.TILT_S / 2)
+    assert left < right, "one eye lifted: a curious tilt"
+    left, right = eye_tops(walle.ENTER_S + walle.BLINK_AT - 0.05)
+    assert left == right, "level again"
+
+
+def test_walle_kicks_up_dust_when_he_stops():
+    walle = _walle()
+    walle.overlay(FakeCanvas(64, 32), walle.ENTER_S)
+    assert walle.dust
+
+
+def test_walle_art_is_uniform_and_every_cell_has_a_colour():
+    art = animation.WallEReveal.ART
+    assert len({len(row) for row in art}) == 1
+    assert set("".join(art)) - {"."} <= set(animation.WallEReveal.COLORS)
+
+
+def test_walle_features_stand_out_from_what_they_sit_on():
+    assert _walle_colour_distance("L", "E") > 200, "lens against its housing"
+    assert _walle_colour_distance("G", "L") > 300, "glint against the lens"
+    assert _walle_colour_distance("Y", "K") > 300, "body against his outline"
+    assert _walle_colour_distance("D", "Y") > 60, "shaded side against the lit front"
+    assert _walle_colour_distance(animation.WallEReveal.PLANT_RGB["leaf"], "Y") > 150, "sprout against his body"
+    assert _walle_colour_distance(animation.WallEReveal.CUBE_EDGE_RGB, "K") > 150, "cube against his outline"

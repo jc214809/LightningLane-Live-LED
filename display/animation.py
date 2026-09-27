@@ -1690,6 +1690,264 @@ class SlinkyWrapReveal:
                         self._px(canvas, x0 + col * s + dx, y0 + row * s + dy, self.COLORS[kind])
 
 
+class WallEReveal:
+    """
+    WALL-E rolls in along the bottom over the old screen, stops in a puff of dust, tilts
+    his head and blinks at us, then opens his compactor hatch and vacuums the old screen
+    up: its pixels fly into the hatch nearest-first, and the new screen shows wherever
+    they've been taken from. The hatch closes, a trash cube with a sprout on top drops
+    into the gap between his treads, and he trundles off the right edge carrying it.
+
+    Needs the previous screen's pixels, so it opts in via wants_prev, like Ralph.
+    He stays 1x on both boards: doubled he'd cover most of the screen he's compacting.
+    """
+
+    wants_prev = True
+    SCALE = 1
+    ENTER_S, LOOK_S, SWEEP_S, FLY_S, DROP_S, LEAVE_S = 0.8, 0.9, 0.9, 0.3, 0.3, 1.0
+    COMPACT_S = SWEEP_S + FLY_S
+    duration = ENTER_S + LOOK_S + COMPACT_S + DROP_S + LEAVE_S
+    STOP_X = 3
+    BLINK_AT, BLINK_S = 0.55, 0.14  # into the look
+    TILT_S = 0.4  # the look's first part: head tilted, then level for the blink
+
+    # WALL-E in three-quarter view: binocular eyes on a short neck, a boxy yellow body
+    # (front face lit, right side shaded) with a dark charge panel and the compactor
+    # hatch's seam, grey arms on both sides, and a tread on each side with a gap between.
+    # '.' empty, K outline, E eye housing, L lens, G glint, N neck, Y body front,
+    # D body side (shade), S charge panel, A arm, T tread, W tread highlight.
+    ART = [
+        "..KKKKKK...KKKKKK...",
+        ".KEEEEEEK.KEEEEEEK..",
+        ".KELLLLEK.KELLLLEK..",
+        ".KELGLLEK.KELGLLEK..",
+        ".KEELLEEK.KEELLEEK..",
+        "..KKKKKK...KKKKKK...",
+        ".......KNNK.........",
+        ".......KNNK.........",
+        "..KKKKKKKKKKKKKKKK..",
+        "..KYYYYYYYYYYYDDDK..",
+        "KKKYSSYYYYYYYYDDDKKK",
+        "KAKYYYYYYYYYYYDDDKAK",
+        "KAKYKKKKKKKKKYDDDKAK",
+        "KAKYYYYYYYYYYYDDDKAK",
+        "KKKYYYYYYYYYYYDDDKKK",
+        "..KKKKKKKKKKKKKKKK..",
+        "KKKKKKK......KKKKKKK",
+        "KTWTWTK......KTWTWTK",
+        "KWTWTWK......KWTWTWK",
+        "KKKKKKK......KKKKKKK",
+    ]
+    COLORS = {
+        "K": (30, 26, 20),
+        "E": (175, 175, 185),
+        "L": (60, 80, 120),
+        "G": (255, 255, 255),
+        "N": (140, 140, 150),
+        "Y": (240, 190, 40),
+        "D": (180, 125, 20),
+        "S": (70, 70, 75),
+        "A": (150, 150, 160),
+        "T": (80, 80, 85),
+        "W": (160, 160, 165),
+    }
+    EYE_ROWS = range(0, 6)
+    HATCH_ROWS, HATCH_COLS = (12, 13), range(5, 12)  # the seam drops open into a slot while compacting
+    INTAKE = (8, 12)  # sprite cell the old screen is vacuumed into
+    CUBE_COLS, CUBE_ROWS = range(7, 13), range(14, 20)  # sits in the gap between the treads
+    # The sprout on top of the cube, as (col, row) sprite cells: a Y of two leaves on a stem.
+    PLANT = [(9, 11, "leaf"), (11, 11, "leaf"), (10, 12, "stem"), (10, 13, "stem")]
+    PLANT_RGB = {"leaf": (120, 255, 120), "stem": (40, 170, 60)}
+    CUBE_EDGE_RGB = (110, 110, 115)  # lighter than his outline, so the cube stands clear of him
+    DUST_RGB = (150, 135, 110)
+
+    def __init__(self, width, height, rng=None):
+        self.width, self.height = width, height
+        self.rng = rng or random.Random()
+        self.sprite_w, self.sprite_h = len(self.ART[0]), len(self.ART)
+        self.y0 = height - self.sprite_h
+        self.prev_px = {}
+        self.flights = []
+        self.cube = [self.COLORS["A"]] * 4
+        self.dust = []
+        self._dusted = set()
+
+    def capture_prev(self, prev_draw, prev_t):
+        """Redraw the old screen onto a capture canvas: those pixels get vacuumed up."""
+        shot = _Capture(self.width, self.height)
+        prev_draw(shot, prev_t)
+        self.prev_px = shot.px
+        ix, iy = self.intake()
+        # Nearest first: each pixel lifts off when the sweep front reaches it.
+        self.flights = sorted(
+            (math.hypot(x - ix, y - iy), x, y, rgb) for (x, y), rgb in self.prev_px.items())
+        # The cube is made of what he ate: its most common colours, dimmed by the squash.
+        counts = {}
+        for rgb in self.prev_px.values():
+            counts[rgb] = counts.get(rgb, 0) + 1
+        common = sorted(counts, key=counts.get, reverse=True)[:4]
+        if common:
+            self.cube = [tuple(int(c * 0.8) for c in common[i % len(common)]) for i in range(4)]
+
+    # --- timeline ---
+
+    def _phase(self, t):
+        for name, length in (("enter", self.ENTER_S), ("look", self.LOOK_S),
+                             ("compact", self.COMPACT_S), ("drop", self.DROP_S)):
+            if t < length:
+                return name, t
+            t -= length
+        return "leave", t
+
+    def walle_x(self, t):
+        """His left edge: rolls in from off the left, stops, then drives off the right."""
+        phase, p = self._phase(t)
+        if phase == "enter":
+            return -self.sprite_w + ease_out(p / self.ENTER_S) * (self.STOP_X + self.sprite_w)
+        if phase == "leave":
+            q = min(1.0, p / self.LEAVE_S)
+            return self.STOP_X + q * q * (self.width - self.STOP_X + 1)  # pulls away slowly, then goes
+        return float(self.STOP_X)
+
+    def intake(self):
+        return self.STOP_X + self.INTAKE[0], self.y0 + self.INTAKE[1]
+
+    def sweep_radius(self, t):
+        """How far from the hatch the old screen has been taken; -1 before compacting."""
+        phase, p = self._phase(t)
+        if phase in ("enter", "look"):
+            return -1.0
+        if phase == "compact" and p < self.SWEEP_S:
+            far = self.flights[-1][0] if self.flights else 0.0
+            return p / self.SWEEP_S * (far + 1)
+        return float("inf")
+
+    # --- drawing ---
+
+    def overlay(self, canvas, t):
+        if t >= self.duration:
+            return False
+        radius = self.sweep_radius(t)
+        self._draw_old_screen(canvas, radius)
+        self._draw_flights(canvas, t)
+        self._step_dust(t)
+        x = self.walle_x(t)
+        self._draw_walle(canvas, t, x)
+        self._draw_dust(canvas)
+        return True
+
+    def _draw_old_screen(self, canvas, radius):
+        """Everything beyond the sweep front is still the old screen: black it out and redraw it."""
+        if radius == float("inf"):
+            return
+        ix, iy = self.intake()
+        black = graphics.Color(0, 0, 0)
+        for x in range(self.width):
+            dx = x - ix
+            if radius < 0 or abs(dx) > radius:
+                graphics.DrawLine(canvas, x, 0, x, self.height - 1, black)
+                continue
+            # The front's chord through this column: above and below it is still old screen.
+            half = math.sqrt(radius * radius - dx * dx)
+            top, bottom = math.ceil(iy - half), math.floor(iy + half)
+            if top > 0:
+                graphics.DrawLine(canvas, x, 0, x, min(self.height - 1, top - 1), black)
+            if bottom < self.height - 1:
+                graphics.DrawLine(canvas, x, max(0, bottom + 1), x, self.height - 1, black)
+        for dist, x, y, rgb in reversed(self.flights):
+            if dist <= radius:
+                break
+            canvas.SetPixel(x, y, *rgb)
+
+    def _draw_flights(self, canvas, t):
+        """Pixels the front has passed, accelerating into the hatch."""
+        phase, p = self._phase(t)
+        if phase != "compact" or not self.flights:
+            return
+        far = self.flights[-1][0] + 1
+        ix, iy = self.intake()
+        for dist, x, y, rgb in self.flights:
+            lift = self.SWEEP_S * dist / far  # when the front passed it
+            q = (p - lift) / self.FLY_S
+            if q < 0:
+                break
+            if q >= 1:
+                continue
+            q = q * q
+            canvas.SetPixel(int(round(x + (ix - x) * q)), int(round(y + (iy - y) * q)), *rgb)
+
+    def _step_dust(self, t):
+        """A puff from the treads as he stops, and again as he pulls away."""
+        for at in (self.ENTER_S - 0.1, self.ENTER_S + self.LOOK_S + self.COMPACT_S + self.DROP_S):
+            if t >= at and at not in self._dusted:
+                self._dusted.add(at)
+                x = self.walle_x(at)
+                for side_x, push in ((x, -1), (x + self.sprite_w - 1, 1)):
+                    for _ in range(4):
+                        self.dust.append([side_x, self.height - 1.5, at,
+                                          push * self.rng.uniform(4, 10), -self.rng.uniform(2, 6)])
+        self.dust = [d for d in self.dust if t - d[2] < 0.5]
+        self._t = t
+
+    def _draw_dust(self, canvas):
+        under = getattr(canvas, "px", {})
+        for x0, y0, born, vx, vy in self.dust:
+            age = self._t - born
+            px, py = int(round(x0 + vx * age)), int(round(y0 + vy * age))
+            if not (0 <= px < self.width and 0 <= py < self.height):
+                continue
+            f = 1 - age / 0.5
+            base = under.get((px, py), (0, 0, 0))
+            canvas.SetPixel(px, py, *(min(255, int(b + c * f)) for b, c in zip(base, self.DUST_RGB)))
+
+    def _cell(self, t, row, col, kind):
+        """The colour key at one sprite cell this frame: treads roll, eyes blink, hatch opens."""
+        phase, p = self._phase(t)
+        if kind in "TW" and phase in ("enter", "leave"):
+            if int(self.walle_x(t)) % 2:
+                kind = "W" if kind == "T" else "T"
+        if row in self.EYE_ROWS and phase == "look" and self.BLINK_AT <= p < self.BLINK_AT + self.BLINK_S:
+            if kind in "LG":
+                kind = "K" if row == 3 else "E"
+        if phase == "compact" and row in self.HATCH_ROWS and col in self.HATCH_COLS:
+            kind = "K"
+        return kind
+
+    def _draw_walle(self, canvas, t, x):
+        x0 = int(round(x))
+        phase, p = self._phase(t)
+        tilt = phase == "look" and p < self.TILT_S
+        for row, line in enumerate(self.ART):
+            for col, kind in enumerate(line):
+                if kind == ".":
+                    continue
+                kind = self._cell(t, row, col, kind)
+                # The curious tilt: his left eye lifts a row while the right stays put.
+                dy = -1 if tilt and row in self.EYE_ROWS and col < 10 else 0
+                self._px(canvas, x0 + col, self.y0 + row + dy, self.COLORS[kind])
+        if phase in ("drop", "leave"):
+            self._draw_cube(canvas, x0, min(1.0, p / self.DROP_S) if phase == "drop" else 1.0)
+
+    def _draw_cube(self, canvas, x0, drop):
+        """The trash cube, sliding down out of the hatch into the gap between his treads."""
+        lift = int(round((1 - drop) * 3))
+        top = self.y0 + self.CUBE_ROWS[0] - lift
+        left = x0 + self.CUBE_COLS[0]
+        n = len(self.CUBE_COLS)
+        for r in range(n):
+            for c in range(n):
+                edge = r in (0, n - 1) or c in (0, n - 1)
+                rgb = self.CUBE_EDGE_RGB if edge else self.cube[(r // 2 + c // 2) % len(self.cube)]
+                self._px(canvas, left + c, top + r, rgb)
+        if drop >= 1:
+            for col, row, part in self.PLANT:
+                self._px(canvas, x0 + col, self.y0 + row, self.PLANT_RGB[part])
+
+    def _px(self, canvas, x, y, rgb):
+        if 0 <= x < self.width and 0 <= y < self.height:
+            canvas.SetPixel(x, y, *rgb)
+
+
 TRANSITIONS = {
     "wipe": Wipe, "tink": TinkReveal, "buzz": BuzzReveal,
     "figment": FigmentReveal, "stitch": StitchReveal, "ralph": RalphReveal,
@@ -1697,6 +1955,7 @@ TRANSITIONS = {
     "dumbo": DumboReveal,
     "genie": GenieReveal,
     "slinky_wrap": SlinkyWrapReveal,
+    "walle": WallEReveal,
 }
 
 

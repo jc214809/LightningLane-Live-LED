@@ -44,10 +44,11 @@ use_image_logo = False
 PARK_REVEALS = ("tink", "buzz")
 # Rare visitors on ride screens, and each one's chance per screen. Genie erupts from his
 # lamp and sweeps the next ride in; Baymax peeks over it so the wait stays readable;
-# Slinky walks off the right edge and his spring wraps round the back of the board.
+# Slinky walks off the right edge and his spring wraps round the back of the board;
+# WALL-E compacts the old ride into a cube and drives off with it.
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
-SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01}
+SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01, "walle": 0.0025}
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
