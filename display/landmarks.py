@@ -408,9 +408,9 @@ class ScaryJackOLanternLandmark(Landmark):
     """A scary Mickey-shaped jack-o'-lantern (triangle eyes, toothy grin) under a purple Halloween sky: it sits dark, then its
     candle catches and the carved face flickers, over a drifting green ground mist."""
 
-    # The sweep and wipe take 1.2s of the screen, leaving 4.3s of scene: dark, the candle catches
+    # The sweep and wipe take 1.2s of the screen, leaving 4.8s of scene: dark, the candle catches
     # (0.4-0.9s), the wink or hop, then the party's hours fade in and hold long enough to read.
-    SCREEN_S = 5.5
+    SCREEN_S = 6.0
     STAR_SPACING = 2  # twice the other landmarks' stars: a clear Halloween night
     IGNITE_AT, IGNITE_S = 0.4, 0.5
     OUTLINE = (70, 24, 4)
@@ -592,10 +592,10 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
     EYE_V, EYE_HW, EYE_HH = -0.38, 0.15, 0.31
     WINK_AT, WINK_S = 1.4, 0.6
     HOP_AT, HOP_S = 1.1, 0.45
-    # 64x32 tells its own story on a longer screen (4.8s of scene): the title holds to be read,
+    # 64x32 tells its own story on a longer screen (5.3s of scene): the title holds to be read,
     # then the pumpkin jumps left in an arc and its ear shoves the title off the board, landing in
     # its place; "TONIGHT / 7PM TO / 12AM" fades in where the pumpkin was, and it winks once landed.
-    SHORT_SCREEN_S = 6.0
+    SHORT_SCREEN_S = 6.5
     JUMP_AT, JUMP_S = 2.0, 0.8
     SHORT_WINK_AT = 3.0
     TONIGHT_AT, TONIGHT_FADE_S = 2.6, 0.8  # from the moment the pumpkin clears the right half
