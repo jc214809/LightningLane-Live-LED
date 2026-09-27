@@ -101,9 +101,15 @@ def test_initialize_park_information_screen(monkeypatch, screens):
     disney.initialize_park_information_screen(fake_matrix, park)
     assert drawn_on == [(FAKE_CANVAS, park)]
     landmark, title = screens
-    assert landmark == {"hold": disney.LANDMARK_S, "transition": "wipe", "animating": True}
+    assert landmark == {"hold": disney.landmark_for("Magic Kingdom").SCREEN_S, "transition": "wipe", "animating": True}
     assert title["hold"] == 8 and title["animating"] is False
     assert title["transition"] in disney.PARK_REVEALS
+
+
+def test_each_landmark_is_held_for_its_own_screen_length(monkeypatch, screens):
+    monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
+    disney.initialize_park_information_screen(FakeMatrix(), {"name": "Disney's Hollywood Studios"})
+    assert screens[0]["hold"] == 3.5, "the tower needs longer for its tilt, strike and drop"
 
 
 def test_parks_without_a_landmark_go_straight_to_the_title(monkeypatch, screens):
