@@ -3,10 +3,13 @@
 import math
 import random
 
+from driver import graphics
+from display.display import get_text_width, loaded_fonts
 from display.fireworks.fireworks import castle_sprite, _CASTLE_COLORS
 
 LANDMARK_S = 3.0
 SKY_RGB = (4, 6, 22)
+TITLE_SHADOW_RGB = (10, 2, 18)
 
 
 class Landmark:
@@ -44,6 +47,10 @@ class Landmark:
 
     def animate(self, out, t):
         pass
+
+    def title(self, t):
+        """Text drawn over the scene in the board's title font: [(text, center_x, top_y, rgb)]."""
+        return []
 
 
 class CastleLandmark(Landmark):
@@ -393,6 +400,342 @@ class TreeOfLifeLandmark(Landmark):
                 self.put(out, x, y, (int(255 * level), int(240 * level), int(90 * level)))
 
 
+class ScaryJackOLanternLandmark(Landmark):
+    """A scary Mickey-shaped jack-o'-lantern (triangle eyes, toothy grin) under a purple Halloween sky: it sits dark, then its
+    candle catches and the carved face flickers, over a drifting green ground mist."""
+
+    IGNITE_AT, IGNITE_S = 0.5, 0.6
+    OUTLINE = (70, 24, 4)
+    STEM = (60, 120, 40)
+    GLOW_HOT, GLOW_EDGE = (255, 245, 170), (255, 205, 60)
+    CUT_RIM = (55, 16, 2)
+    CARVED_DARK = (22, 8, 2)
+
+    def build(self):
+        w, h = self.width, self.height
+        self.R, self.cx, self.cy = self._layout()
+        ear_r = self.R * 0.56
+        ears = [(self.cx + dx * self.R, self.cy - self.R * 1.22, ear_r) for dx in (-0.95, 0.95)]
+        self.sky = {}
+        for y in range(h):
+            p = y / (h - 1)
+            rgb = (int(34 - 20 * p), int(6 + 2 * p), int(52 - 22 * p))
+            for x in range(w):
+                self.sky[(x, y)] = rgb
+        self.shell = {}  # (x, y) -> full-brightness pumpkin colour
+        for ex, ey, er in ears:
+            self._paint_pumpkin(ex, ey, er)
+        self._paint_pumpkin(self.cx, self.cy, self.R)
+        self._paint_stem()
+        self.carved = [(x, y) for x in range(w) for y in range(h) if self._is_carved(x, y)]
+        carved = set(self.carved)
+        for p in carved:
+            self.shell.pop(p, None)
+        # A dark cut wall around each carving keeps the glow from bleeding into the orange shell.
+        for x, y in self.carved:
+            for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                if n in self.shell and n not in carved:
+                    self.shell[n] = self.CUT_RIM
+        self.flicker = [(self.rng.uniform(5, 9), self.rng.uniform(11, 17), self.rng.uniform(0, 6.3)) for _ in range(2)]
+        self.mist = [(self.rng.uniform(0, w), self.rng.uniform(0.6, 1.4), self.rng.uniform(3, 7))
+                     for _ in range(4)]
+
+    def _layout(self):
+        """Head radius and centre. Proportions follow the height so the pumpkin fills the board."""
+        w, h = self.width, self.height
+        r = h * 0.28
+        return r, w / 2 - 0.5, h - 0.5 - r - h * 0.06
+
+    def _paint_pumpkin(self, cx, cy, r):
+        for y in range(int(cy - r) - 1, int(cy + r) + 2):
+            for x in range(int(cx - r) - 1, int(cx + r) + 2):
+                d = math.hypot(x - cx, y - cy)
+                if d > r:
+                    continue
+                if d > r - 1.2:
+                    self.shell[(x, y)] = self.OUTLINE
+                    continue
+                u, v = (x - cx) / r, (y - cy) / r
+                # Ribs: vertical grooves that bunch toward the sides like a real pumpkin's.
+                angle = math.asin(max(-1.0, min(1.0, u / math.sqrt(max(1e-6, 1 - v * v)))))
+                rib = 0.5 + 0.5 * math.cos(angle * 7)
+                light = 0.62 + 0.38 * (1 - d / r) + 0.12 * (-u - v) / 2
+                k = light * (0.72 + 0.28 * rib)
+                self.shell[(x, y)] = (min(255, int(250 * k)), min(255, int(115 * k)), int(10 * k))
+
+    def _paint_stem(self):
+        s = self.R / 18
+        top = self.cy - self.R
+        for i in range(max(3, round(5 * s))):
+            y = int(top) - i
+            x = int(self.cx + i * 0.35)
+            for dx in range(max(2, round(3 * s))):
+                self.shell[(x + dx - 1, y)] = self.STEM if dx else (40, 85, 28)
+
+    def _is_carved(self, x, y):
+        """Triangle eyes, a triangle nose and a toothy grin, in head-relative coordinates."""
+        u, v = (x - self.cx) / self.R, (y - self.cy) / self.R
+        for ex in (-0.4, 0.4):
+            # Eyes: upward-pointing triangles, apex tilted toward the nose for a sly look.
+            if -0.5 <= v <= -0.05:
+                q = (v + 0.5) / 0.45
+                apex = ex - 0.08 * (1 if ex > 0 else -1) * -1
+                if abs(u - (apex + (ex - apex) * q)) <= 0.23 * q:
+                    return True
+        if 0.02 <= v <= 0.24 and abs(u) <= 0.12 * (v - 0.02) / 0.22:
+            return True
+        if abs(u) <= 0.66:
+            m = 1 - (u / 0.66) ** 2
+            top, bottom = 0.3 + 0.16 * m, 0.42 + 0.3 * m
+            if top <= v <= bottom:
+                if -0.3 <= u <= -0.14 and v <= top + 0.12:
+                    return False  # a tooth hanging from the top lip
+                if 0.14 <= u <= 0.3 and v >= bottom - 0.12:
+                    return False  # a tooth standing on the bottom lip
+                return True
+        return False
+
+    def frame(self, t):
+        out = dict(self.sky)
+        self.draw_stars(out, t)
+        self.animate(out, t)
+        return out
+
+    def draw_stars(self, out, t):
+        for x, y, phase in self.stars:
+            level = 30 + int(40 * (1 + math.sin(t * 3 + phase)))
+            out[(x, y)] = (level + 20, level + 15, level + 40)
+
+    def _lit(self, t):
+        """0 while the pumpkin sits dark, easing to 1 as the candle catches."""
+        p = (t % LANDMARK_S - self.IGNITE_AT) / self.IGNITE_S
+        return 0.0 if p <= 0 else 1.0 if p >= 1 else p * p * (3 - 2 * p)
+
+    def animate(self, out, t):
+        self._draw_pumpkin(out, t)
+        self._draw_mist(out, t)
+
+    def _draw_pumpkin(self, out, t):
+        lit = self._lit(t)
+        # Flicker in -1..1. It mostly swells and shrinks the candle's hot spot; brightness only
+        # dips a little, so the glow never sinks to the shell's orange.
+        flicker = sum(0.5 * math.sin(t * a + ph) * math.sin(t * b) for a, b, ph in self.flicker)
+        # The shell warms with the candle but stays well under the glow, so the carved face pops.
+        shell_k = 0.3 + 0.52 * lit
+        for (x, y), (r, g, b) in self.shell.items():
+            out[(x, y)] = (int(r * shell_k), int(g * shell_k), int(b * shell_k))
+        glow = lit * (0.94 + 0.06 * flicker)
+        reach = self.R * (0.9 + 0.3 * flicker)
+        hot_x, hot_y = self.cx, self.cy + self.R * 0.25
+        for x, y in self.carved:
+            near = max(0.0, 1 - math.hypot(x - hot_x, y - hot_y) / reach)
+            base = tuple(e + (hc - e) * near for hc, e in zip(self.GLOW_HOT, self.GLOW_EDGE))
+            out[(x, y)] = tuple(min(255, int(d + (c - d) * glow)) for c, d in zip(base, self.CARVED_DARK))
+
+    # Two layers of ground mist: (height as a share of the board, wave number, speed, brightness).
+    # The back layer is taller and dimmer and rolls left; the front one is lower and brighter and
+    # rolls right, so the tops weave through each other.
+    MIST_LAYERS = ((0.2, 0.17, -1.3, 0.4), (0.13, 0.26, 1.7, 0.6))
+    MIST_RGB = (60, 150, 80)
+
+    def _draw_mist(self, out, t):
+        h, w = self.height, self.width
+        for i, (depth, k, speed, strength) in enumerate(self.MIST_LAYERS):
+            top_max = depth * h
+            phase = self.mist[i][0]
+            for x in range(w):
+                # Two sine waves at different scales give a rolling, uneven top edge.
+                wave = 0.55 + 0.35 * math.sin(k * x + speed * t + phase) \
+                    + 0.15 * math.sin(2.3 * k * x - 1.7 * speed * t + 2 * phase)
+                top = top_max * wave
+                # Brighter and fainter wisps drift along the band, so it swirls rather than sits.
+                swirl = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(0.6 * k * x + 1.4 * speed * t + phase + 1))
+                for y in range(h - 1, max(-1, h - 2 - int(top)), -1):
+                    rise = (h - 1 - y) / max(top, 1e-6)
+                    if rise > 1:
+                        break
+                    a = strength * swirl * (1 - rise) ** 0.7
+                    r, g, b = out.get((x, y), (0, 0, 0))
+                    mr, mg, mb = self.MIST_RGB
+                    out[(x, y)] = (min(255, int(r + mr * a)), min(255, int(g + mg * a)), min(255, int(b + mb * a)))
+
+class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
+    """The friendly Mickey pumpkin: ribbed ears and head, pie-cut eyes, an oval nose and an open
+    smile with a pink tongue. Once the candle catches it either winks or hops, picked at random
+    each showing unless MOTION pins one."""
+
+    MOTIONS = ("wink", "bounce")
+    MOTION = None
+    GOLD, GHOST, ORANGE = (255, 200, 60), (175, 255, 170), (255, 130, 20)
+    # The party's name: two lines over the pumpkin and one under it on 64x64, and a narrow
+    # column beside it on 64x32.
+    TITLE_TALL = (("MICKEY'S", GOLD), ("NOT-SO-SCARY", GHOST), ("HALLOWEEN PARTY", ORANGE))
+    TITLE_SHORT = (("MICKEY'S", GOLD), ("NOT-SO-", GHOST), ("SCARY", GHOST), ("HALLOWEEN", ORANGE), ("PARTY", ORANGE))
+    TITLE_ROW_H = 6
+    TITLE_COLUMN_X = 18  # centre of the 64x32 text column: HALLOWEEN, the widest line, starts at x=0
+    GROOVE = (150, 52, 4)
+    TONGUE = (230, 55, 110)
+    TONGUE_DARK = (30, 6, 10)
+    EYES = (-0.25, 0.25)
+    EYE_V, EYE_HW, EYE_HH = -0.38, 0.15, 0.31
+    WINK_AT, WINK_S = 1.75, 0.5
+    HOP_AT, HOP_S = 1.2, 0.45
+
+    def build(self):
+        self.motion = self.MOTION or self.rng.choice(self.MOTIONS)
+        super().build()
+        tongue = set(p for p in self.carved if self._is_tongue(*p))
+        self.tongue = sorted(tongue)
+        self.carved = [p for p in self.carved if p not in tongue]
+        self.eye_of = {}
+        for x, y in self.carved:
+            u, v = (x - self.cx) / self.R, (y - self.cy) / self.R
+            if v < -0.02:
+                self.eye_of[(x, y)] = 0 if u < 0 else 1
+        # Uncarved pumpkin under the winking eye and its cut rim, shown as the lid covers them.
+        wink = [p for p, e in self.eye_of.items() if e == 1]
+        rim = {(x + dx, y + dy) for x, y in wink for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))}
+        self.wink_rim = sorted(p for p in rim if p in self.shell and self.shell[p] == self.CUT_RIM)
+        self.eye_skin = {p: self._shade(self.cx, self.cy, self.R, *p) for p in wink + self.wink_rim}
+
+    def _shade(self, cx, cy, r, x, y, axis=(0.0, 1.0), grooves=(-1.0, -0.45, 0.45, 1.0)):
+        """Pumpkin colour at (x, y): lit toward the upper left, with 1px grooves between the ribs.
+        `axis` is the pumpkin's up-down direction, so tilted ears get grooves that follow them."""
+        ax, ay = axis
+        du, dv = x - cx, y - cy
+        along, across = du * ax + dv * ay, du * ay - dv * ax
+        d = math.hypot(du, dv)
+        half = r * math.sqrt(max(0.0, 1 - (along / r) ** 2))
+        light = 0.62 + 0.38 * (1 - d / r) + 0.12 * (-du - dv) / (2 * r)
+        if any(abs(across - half * math.sin(g)) < 0.55 for g in grooves):
+            base = self.GROOVE
+        else:
+            base = (250, 115, 10)
+        return tuple(min(255, int(c * light)) for c in base)
+
+    def _layout(self):
+        """Shrunk to leave room for the title: between its lines on 64x64, to its right on 64x32."""
+        if self.height >= 64:
+            r = 15.0
+            return r, self.width / 2 - 0.5, self.height - 7.5 - r
+        r = 9.5
+        return r, self.width - 15.5, self.height - 1.5 - r
+
+    def title(self, t):
+        lit = self._lit(t)
+        if not lit:
+            return []
+        fade = lambda rgb: tuple(int(c * lit) for c in rgb)
+        if self.height >= 64:
+            (a, ca), (b, cb), (c, cc) = self.TITLE_TALL
+            mid = self.width / 2
+            return [(a, mid, 1, fade(ca)), (b, mid, 1 + self.TITLE_ROW_H + 1, fade(cb)),
+                    (c, mid, self.height - self.TITLE_ROW_H - 1, fade(cc))]
+        return [(text, self.TITLE_COLUMN_X, 1 + i * self.TITLE_ROW_H, fade(rgb)) for i, (text, rgb) in enumerate(self.TITLE_SHORT)]
+
+    def _paint_pumpkin(self, cx, cy, r):
+        if r < self.R:
+            # An ear: it leans out from the head, with its ribs running along the lean.
+            ax, ay = self.cx - cx, self.cy - cy
+            n = math.hypot(ax, ay)
+            axis, grooves = (ax / n, ay / n), (-0.7, 0.0, 0.7)
+        else:
+            axis, grooves = (0.0, 1.0), (-1.0, -0.45, 0.45, 1.0)
+        for y in range(int(cy - r) - 1, int(cy + r) + 2):
+            for x in range(int(cx - r) - 1, int(cx + r) + 2):
+                d = math.hypot(x - cx, y - cy)
+                if d > r:
+                    continue
+                if d > r - 1.2:
+                    self.shell[(x, y)] = self.OUTLINE
+                else:
+                    self.shell[(x, y)] = self._shade(cx, cy, r, x, y, axis, grooves)
+
+    def _paint_stem(self):
+        s = self.R / 18
+        top = self.cy - self.R
+        for i in range(max(4, round(6 * s))):
+            y = int(top) - i
+            x = int(self.cx - 1 + i * 0.3)
+            for dx in range(max(3, round(4 * s))):
+                self.shell[(x + dx - 1, y)] = self.STEM if 0 < dx < 3 else (40, 85, 28)
+
+    def _mouth(self, u, v):
+        if abs(u) > 0.6:
+            return False
+        m = 1 - (u / 0.6) ** 2
+        return 0.36 * m <= v <= 0.82 * math.sqrt(m)
+
+    def _is_tongue(self, x, y):
+        u, v = (x - self.cx) / self.R, (y - self.cy) / self.R
+        return self._mouth(u, v) and abs(u) < 0.36 and v >= 0.56 + 0.12 * (u / 0.3) ** 2
+
+    def _is_carved(self, x, y):
+        """Mickey's pie-cut eyes, oval nose and open smile (tongue included), head-relative."""
+        u, v = (x - self.cx) / self.R, (y - self.cy) / self.R
+        for ex in self.EYES:
+            if ((u - ex) / self.EYE_HW) ** 2 + ((v - self.EYE_V) / self.EYE_HH) ** 2 <= 1:
+                # The pie cut: a rounded bump of pumpkin rising into the inner bottom of the eye.
+                nx = ex - 0.06 * (1 if ex > 0 else -1)
+                if ((u - nx) / 0.08) ** 2 + ((v - (self.EYE_V + 0.2)) / 0.15) ** 2 <= 1:
+                    return False
+                return True
+        if (u / 0.26) ** 2 + ((v - 0.1) / 0.12) ** 2 <= 1:
+            return True
+        return self._mouth(u, v)
+
+    def _winking(self, t):
+        """How closed the winking eye is, 0 open to 1 shut."""
+        if self.motion != "wink":
+            return 0.0
+        p = (t % LANDMARK_S - self.WINK_AT) / self.WINK_S
+        return math.sin(math.pi * p) ** 0.5 if 0 < p < 1 else 0.0
+
+    def _wink(self, pumpkin, shut, lit):
+        """Lower a lid over the right-hand eye; shut tight, it's a happy upturned arc."""
+        ecx, ecy = self.cx + self.EYES[1] * self.R, self.cy + self.EYE_V * self.R
+        hh, hw = self.EYE_HH * self.R, self.EYE_HW * self.R
+        glow = max((pumpkin[p] for p, e in self.eye_of.items() if e == 1), key=sum)
+        lid = ecy - hh + 2 * hh * shut
+        open_px = {(x, y) for (x, y), e in self.eye_of.items() if e == 1 and y > lid and shut < 0.8}
+        skin_k = 0.3 + 0.52 * lit
+        for p, rgb in self.eye_skin.items():
+            if p in open_px:
+                continue
+            near_open = any((p[0] + dx, p[1] + dy) in open_px for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            pumpkin[p] = self.CUT_RIM if near_open else tuple(int(c * skin_k) for c in rgb)
+        if shut >= 0.8:
+            for i in range(-round(hw), round(hw) + 1):
+                x = round(ecx + i)
+                y = round(ecy + hh * 0.45 - 2 * (1 - (i / hw) ** 2))
+                pumpkin[(x, y)] = glow
+                pumpkin[(x, y + 1)] = self.CUT_RIM
+
+    def _hop(self, t):
+        """Rows the pumpkin is lifted: one hop as the candle catches and a smaller rebound."""
+        if self.motion != "bounce":
+            return 0
+        p = (t % LANDMARK_S - self.HOP_AT) / self.HOP_S
+        if 0 < p < 1:
+            return round(self.R * 0.24 * math.sin(math.pi * p))
+        if 1 <= p < 1.6:
+            return round(self.R * 0.08 * math.sin(math.pi * (p - 1) / 0.6))
+        return 0
+
+    def _draw_pumpkin(self, out, t):
+        pumpkin = {}
+        super()._draw_pumpkin(pumpkin, t)
+        lit = self._lit(t)
+        for x, y in self.tongue:
+            pumpkin[(x, y)] = tuple(int(d + (c - d) * lit) for c, d in zip(self.TONGUE, self.TONGUE_DARK))
+        shut = self._winking(t)
+        if shut:
+            self._wink(pumpkin, shut, lit)
+        lift = self._hop(t)
+        for (x, y), rgb in pumpkin.items():
+            self.put(out, x, y - lift, rgb)
+
+
 LANDMARKS = {
     "magic kingdom": CastleLandmark,
     "epcot": SpaceshipEarthLandmark,
@@ -415,5 +758,15 @@ def landmark_screen(landmark):
     def draw(canvas, t):
         for (x, y), (r, g, b) in landmark.frame(t).items():
             canvas.SetPixel(x, y, r, g, b)
+        lines = landmark.title(t)
+        if lines:
+            font = loaded_fonts["title"]
+            shadow = graphics.Color(*TITLE_SHADOW_RGB)
+            for text, center_x, top, rgb in lines:
+                x = round(center_x - get_text_width(font, text) / 2)
+                y = top + font.baseline
+                # A one-pixel drop shadow keeps the letters off the sky, the mist and the pumpkin.
+                graphics.DrawText(canvas, font, x + 1, y + 1, shadow, text)
+                graphics.DrawText(canvas, font, x, y, graphics.Color(*rgb), text)
         return True
     return draw

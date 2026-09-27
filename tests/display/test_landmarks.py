@@ -6,7 +6,9 @@ import pytest
 import display.landmarks as landmarks
 
 ALL = [landmarks.CastleLandmark, landmarks.SpaceshipEarthLandmark,
-       landmarks.TowerOfTerrorLandmark, landmarks.TreeOfLifeLandmark]
+       landmarks.TowerOfTerrorLandmark, landmarks.TreeOfLifeLandmark, landmarks.ScaryJackOLanternLandmark,
+       type("WinkingPumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": "wink"}),
+       type("BouncingPumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": "bounce"})]
 
 
 @pytest.mark.parametrize("name, cls", [
@@ -99,6 +101,135 @@ def test_tower_tilts_up_from_the_trees_to_the_dome_on_64x32():
     assert settled[(31, 0)] == tower.COLORS["spire"], "and stops with the dome's spire at the top"
     tall = landmarks.TowerOfTerrorLandmark(64, 64, random.Random(3))
     assert not tall.pans and tall.frame(0)[(31, 0)] == tall.COLORS["spire"], "64x64 shows it all at once"
+
+
+def _distance(a, b):
+    return sum(abs(x - y) for x, y in zip(a, b))
+
+
+def test_scary_jack_o_lantern_starts_dark_then_its_face_lights_up():
+    pumpkin = landmarks.ScaryJackOLanternLandmark(64, 64, random.Random(6))
+    before = pumpkin.frame(pumpkin.IGNITE_AT - 0.1)
+    after = pumpkin.frame(pumpkin.IGNITE_AT + pumpkin.IGNITE_S + 0.5)
+    face = pumpkin.carved
+    assert face, "the face is carved"
+    assert all(sum(before[p]) < 100 for p in face), "unlit carving is dark"
+    assert all(sum(after[p]) > 400 for p in face), "lit carving glows"
+
+
+def test_scary_jack_o_lantern_face_stands_out_from_its_shell():
+    pumpkin = landmarks.ScaryJackOLanternLandmark(64, 64, random.Random(7))
+    lit = pumpkin.frame(2.2)
+    glow = [lit[p] for p in pumpkin.carved]
+    shell = [lit[p] for p in pumpkin.shell]
+    brightest_shell = max(shell, key=sum)
+    assert min(_distance(g, brightest_shell) for g in glow) > 150
+
+
+def test_scary_jack_o_lantern_face_sits_inside_the_head_below_the_ears():
+    pumpkin = landmarks.ScaryJackOLanternLandmark(64, 64, random.Random(8))
+    for x, y in pumpkin.carved:
+        assert (x - pumpkin.cx) ** 2 + (y - pumpkin.cy) ** 2 < pumpkin.R ** 2
+        assert y > pumpkin.cy - pumpkin.R
+
+
+def test_friendly_jack_o_lantern_has_a_pink_tongue_at_the_bottom_of_its_smile():
+    pumpkin = landmarks.FriendlyJackOLanternLandmark(64, 64, random.Random(9))
+    lit = pumpkin.frame(1.5)
+    assert pumpkin.tongue
+    assert min(y for _, y in pumpkin.tongue) > max(y for _, y in pumpkin.eye_of)
+    smile = [p for p in pumpkin.carved if p not in pumpkin.eye_of]
+    assert max(y for _, y in pumpkin.tongue) >= max(y for _, y in smile)
+    tongue_rgb = lit[pumpkin.tongue[0]]
+    assert tongue_rgb[0] > tongue_rgb[1] + 100, "pink-red, not orange or yellow"
+    assert min(_distance(tongue_rgb, lit[p]) for p in smile) > 150
+
+
+def test_friendly_jack_o_lantern_eyes_keep_a_gap_between_them():
+    pumpkin = landmarks.FriendlyJackOLanternLandmark(64, 64, random.Random(10))
+    left = max(x for (x, _), e in pumpkin.eye_of.items() if e == 0)
+    right = min(x for (x, _), e in pumpkin.eye_of.items() if e == 1)
+    assert right - left >= 3
+
+
+def _pinned(motion):
+    return type(f"{motion}Pumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": motion})
+
+
+def test_friendly_jack_o_lantern_picks_wink_or_bounce_at_random():
+    seen = {landmarks.FriendlyJackOLanternLandmark(64, 64, random.Random(seed)).motion for seed in range(20)}
+    assert seen == {"wink", "bounce"}
+
+
+def test_friendly_jack_o_lantern_winks_one_eye_then_reopens():
+    pumpkin = _pinned("wink")(64, 64, random.Random(11))
+
+    def lit_eye(frame, eye):
+        return sum(1 for p, e in pumpkin.eye_of.items() if e == eye and sum(frame[p]) > 400)
+
+    before = pumpkin.frame(pumpkin.WINK_AT - 0.1)
+    shut = pumpkin.frame(pumpkin.WINK_AT + pumpkin.WINK_S / 2)
+    after = pumpkin.frame(pumpkin.WINK_AT + pumpkin.WINK_S + 0.05)
+    assert lit_eye(shut, 1) < lit_eye(before, 1) / 2, "the winking eye closes"
+    assert lit_eye(shut, 0) == lit_eye(before, 0), "the other eye stays open"
+    assert lit_eye(after, 1) == lit_eye(before, 1), "and it opens again"
+
+
+def test_bouncing_jack_o_lantern_hops_then_lands():
+    pumpkin = _pinned("bounce")(64, 64, random.Random(12))
+    lifts = [pumpkin._hop(f / 30) for f in range(int(landmarks.LANDMARK_S * 30))]
+    assert max(lifts) >= 3
+    assert lifts[0] == 0 and lifts[-1] == 0
+    assert _pinned("wink")(64, 64, random.Random(12))._hop(1.4) == 0, "winker stays put"
+
+
+TITLE_CHAR_W, TITLE_H = 4, 6  # the 4x6 title font both boards use
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_friendly_jack_o_lantern_title_lights_up_with_the_candle(height):
+    pumpkin = _pinned("wink")(64, height, random.Random(13))
+    assert pumpkin.title(pumpkin.IGNITE_AT - 0.1) == [], "dark pumpkin, no title yet"
+    lit = pumpkin.title(2.0)
+    assert " ".join(text for text, *_ in lit).replace("- ", "-") == "MICKEY'S NOT-SO-SCARY HALLOWEEN PARTY"
+    half = pumpkin.title(pumpkin.IGNITE_AT + pumpkin.IGNITE_S / 2)
+    assert all(sum(h[3]) < sum(f[3]) for h, f in zip(half, lit)), "fades in with the candle"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_friendly_jack_o_lantern_title_fits_the_board_and_clears_the_pumpkin(height):
+    pumpkin = _pinned("wink")(64, height, random.Random(14))
+    for text, center_x, top, _ in pumpkin.title(2.0):
+        w = len(text) * TITLE_CHAR_W
+        left = round(center_x - w / 2)
+        assert left >= 0 and left + w <= 64, text
+        assert top >= 0 and top + TITLE_H <= height, text
+        box = {(x, y) for x in range(left, left + w + 1) for y in range(top, top + TITLE_H + 1)}
+        assert not box & set(pumpkin.shell), f"{text} overlaps the pumpkin"
+
+
+def test_landmark_screen_draws_the_title_with_a_shadow(monkeypatch):
+    class Font:
+        baseline = 5
+
+        def CharacterWidth(self, ch):
+            return TITLE_CHAR_W
+
+    class Canvas:
+        def SetPixel(self, *a):
+            pass
+
+    calls = []
+    monkeypatch.setitem(landmarks.loaded_fonts, "title", Font())
+    monkeypatch.setattr(landmarks.graphics, "Color", lambda *rgb: rgb, raising=False)
+    monkeypatch.setattr(landmarks.graphics, "DrawText",
+                        lambda canvas, font, x, y, color, text: calls.append((x, y, color, text)), raising=False)
+    pumpkin = _pinned("wink")(64, 64, random.Random(15))
+    landmarks.landmark_screen(pumpkin)(Canvas(), 2.0)
+    drawn = [c for c in calls if c[2] != landmarks.TITLE_SHADOW_RGB]
+    shadows = [c for c in calls if c[2] == landmarks.TITLE_SHADOW_RGB]
+    assert [c[3] for c in drawn] == [text for text, *_ in pumpkin.title(2.0)]
+    assert [(x - 1, y - 1, text) for x, y, _, text in shadows] == [(x, y, text) for x, y, _, text in drawn]
 
 
 def test_landmark_screen_draws_every_pixel_and_keeps_animating():
