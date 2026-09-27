@@ -209,3 +209,90 @@ The pattern: the characters that landed are the ones with a simple, strong silho
 and one well-executed motion. The ones that fell short tried for detail and lost the
 shape. Slinky is the clearest case of the other lesson — decide the one pose that
 sells the character, then size him to hold it.
+
+## Landmarks and scenes: what worked
+
+Notes from the Tower of Terror redraw and the Halloween party work (the two jack-o'-lanterns
+in `landmarks.py`, the Halloween castle fireworks). Both landed faster and better than the
+early characters above, and mostly for process reasons. Read this before redoing a landmark.
+
+### The process
+
+1. **Start from the user's reference image.** The tower was drawn from a photo; the friendly
+   pumpkin from a colouring page. A reference settles the questions a description can't
+   (what the eyes look like, where the stem sits, which details are the identity), and it
+   gives both of you something to compare renders against. Ask for one first.
+2. **Ask every open question in one batch, before drawing.** Guessing cost the early Slinky
+   many redraws. Offer choices with a recommended default. The answers that most changed the
+   result were ones nobody would have guessed: "a wink *and* a bounce", "put the name on
+   the screen", "Mickey pumpkins, drop the plain ones". If the answer is "show me both",
+   build both as a pinned variant (`MOTION`) and let production pick at random.
+3. **Mock up text layouts with the real BDF fonts first.** Rendering the party name in the
+   board's 4x6/5x8 fonts over the scene settled the layout in one round, before any code.
+4. **Render to a PNG sheet, several moments, both board sizes, and look.** Every round found
+   a real problem that reading the code never would. Crop and zoom in on the detail you're
+   changing (the wink was only fixable at 20px per LED).
+5. **Then put it on live emulator previews** so the user sees it move: one port per board
+   size or variant (9000, 9001, 9002), each run from its own folder whose
+   `emulator_config.json` sets the port, driven through `landmark_screen` so fonts and
+   titles are real. Restart them after every change; they've imported the old code.
+6. **Pin what broke in a test**, as relationships and colour distances, not pixels (below).
+
+### What the renders caught, and the fix that generalised
+
+- **A lit feature blended into what it sits on.** The pumpkin's glowing face read as the same
+  orange as its shell. Fix: keep the surroundings darker than the feature at its dimmest,
+  and add a **dark rim** around it, like the cut edge of a carving. The same rim fixed the
+  filled Mickey-pumpkin firework's face.
+- **Flicker dimmed a feature to its neighbour's colour.** Flicker by moving a hot spot or
+  varying a small range around a high floor, never by fading the whole feature.
+- **Colour against the background, not just neighbours.** Purple bursts vanished on the
+  purple sky; brighter purples fixed it. Check every colour against the sky it flies over.
+- **Foreground hid the subject.** The castle spire covered the pumpkin burst's face; the
+  tower's cloud had to sit where the bolt could leave it. Place the subject clear of
+  whatever draws in front of it, and test that it's clear.
+- **A held effect changed an unrelated one.** Holding shape sparks bright also held their
+  white-hot flash for a second. When you stretch one phase, check the others.
+- **A closing eye left its outline behind.** Anything that disappears must take its outline
+  and rim with it (the wink restores the shell under the eye and its cut rim).
+
+### Design lessons
+
+- **64x32 wants its own composition, not a shrunken 64x64.** The tower tilts the camera up
+  from the trees to the dome; the pumpkin moves beside the text instead of under it.
+  Decide both layouts up front, and put them behind a hook like `_layout()`.
+- **Budget the screen time.** The sweep and wipe take 1.2s of every landmark's `SCREEN_S`,
+  so a 3s landmark has 1.8s of scene. The tower's strike, doors and drop needed 3.5s; say
+  so with `SCREEN_S` instead of rushing the story.
+- **One story beat, then hold.** Tower: strike, doors, drop. Pumpkin: dark, candle catches,
+  one wink or hop. Both read because each beat has room.
+- **Keep layers separate** so a motion moves only the subject: the pumpkin hops but the mist
+  and sky stay put (`_draw_pumpkin` vs `_draw_mist`).
+- **Procedural shapes scale; keep proportions relative to the board** (radius from height),
+  then tune the one or two numbers that look wrong on each size.
+- **Check the live API before designing a trigger.** The party's name was only in entity
+  names, not the schedule; show names mix curly and straight apostrophes; Happily Ever After
+  is closed on party nights. Each of those shaped the design, and each came from one curl.
+
+### Tests that paid off
+
+- Colour distance between a feature and what surrounds it (glow vs shell, tongue vs glow).
+- The subject clears the foreground and the text (face above the castle, title boxes off
+  the pumpkin), on both board sizes.
+- The story happens inside the screen: the tower's strike, doors and drop all fall within
+  `SCREEN_S`, once, in order.
+- Variants and random picks: both motions get picked; only the intended burst shapes appear.
+
+### Before redoing Spaceship Earth
+
+The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders
+as mottled noise, not the triangles that make the sphere recognisable, and nothing but a
+glint happens. Questions to settle first, with a reference photo:
+
+- Day or night? At night the sphere is lit in changing colours ("Beacons of Magic"), which
+  could be the motion and would stand out far more than grey.
+- What identifies it at this size: a bold triangle pattern (fewer, larger facets), the
+  tripod legs, the EPCOT entrance sign or fountain, or the silhouette alone?
+- One story beat for the screen: the lights coming on, a colour wave around the sphere,
+  fireworks behind it, a monorail passing in front?
+- 64x32 composition: shrink, crop, or tilt up like the tower?

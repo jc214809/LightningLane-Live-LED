@@ -112,6 +112,19 @@ def test_each_landmark_is_held_for_its_own_screen_length(monkeypatch, screens):
     assert screens[0]["hold"] == 3.5, "the tower needs longer for its tilt, strike and drop"
 
 
+def test_party_night_swaps_the_castle_for_the_partys_landmark(monkeypatch, screens):
+    monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
+    shown = []
+    real_landmark_screen = disney.landmark_screen
+    monkeypatch.setattr(disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene))
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    party_night = {"name": "Magic Kingdom", "seasonalEvent": "halloween",
+                   "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}]}
+    disney.initialize_park_information_screen(FakeMatrix(), party_night)
+    disney.initialize_park_information_screen(FakeMatrix(), dict(party_night, schedule=[]))
+    assert [cls.__name__ for cls in shown] == ["FriendlyJackOLanternLandmark", "CastleLandmark"]
+
+
 def test_parks_without_a_landmark_go_straight_to_the_title(monkeypatch, screens):
     monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
     disney.initialize_park_information_screen(FakeMatrix(), {"name": "Cedar Point"})
@@ -359,7 +372,7 @@ HEA_PARKS = [{"name": "Magic Kingdom", "attractions": [
 def fireworks_played(monkeypatch):
     played = []
     monkeypatch.setattr(disney, "render_castle_fireworks",
-                        lambda matrix, duration, title=True: played.append((duration, title)))
+                        lambda matrix, duration, title=True, theme=None: played.append((duration, title, theme)))
     monkeypatch.setattr(disney, "_shows_played", set())
     return played
 
@@ -367,7 +380,7 @@ def fireworks_played(monkeypatch):
 def test_fireworks_play_without_the_title_once_per_performance(fireworks_played):
     now = HEA_START + timedelta(seconds=8)
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
-    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 8, False)], "until the window ends, no title"
+    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 8, False, None)], "until the window ends, no title"
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now + timedelta(seconds=40)) is False
     assert len(fireworks_played) == 1, "the same performance never plays twice"
 
@@ -379,6 +392,33 @@ def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played
     epcot = [{"name": "EPCOT", "attractions": [{"name": "Spaceship Earth", "status": "OPERATING", "waitTime": 15}]}]
     assert not disney.play_fireworks_show_if_due(FakeMatrix(), epcot, now=HEA_START + timedelta(seconds=5))
     assert fireworks_played == []
+
+
+SPOOKY_START = HEA_START + timedelta(hours=1)  # 10:30pm in Orlando on Sep 26
+
+
+def _mk_tonight(party_date, seasonal="halloween"):
+    """Magic Kingdom listing both nightly shows at 10:30pm, on a night that may be a party night."""
+    # The API's name after the party suffix is stripped, with its curly apostrophe.
+    return [{"name": "Magic Kingdom", "timezone": "America/New_York", "seasonalEvent": seasonal,
+             "schedule": [{"type": "TICKETED_EVENT", "date": party_date, "description": "Special Ticketed Event"}],
+             "attractions": [
+                 {"name": "Disney\u2019s Not-So-Spooky Spectacular", "status": "OPERATING", "waitTime": None,
+                  "showtimes": [SPOOKY_START]},
+                 {"name": "Happily Ever After", "status": "OPERATING", "waitTime": None, "showtimes": [SPOOKY_START]}]}]
+
+
+def test_party_night_plays_the_partys_show_in_its_theme(fireworks_played):
+    parks = _mk_tonight("2026-09-26")
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), parks, now=SPOOKY_START + timedelta(seconds=2)) is True
+    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 2, False, "halloween")], "only the party's show"
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), parks, now=SPOOKY_START + timedelta(seconds=60)) is False
+
+
+def test_ordinary_night_plays_happily_ever_after_not_the_party_show(fireworks_played):
+    parks = _mk_tonight("2026-09-27")  # the party is tomorrow
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), parks, now=SPOOKY_START + timedelta(seconds=2)) is True
+    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 2, False, None)]
 
 
 def test_ride_loop_checks_for_the_show_before_each_screen(monkeypatch, screens):

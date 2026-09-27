@@ -1,5 +1,7 @@
 # tests/display/park/test_park_details.py
 
+import pytest
+from datetime import datetime, timezone
 from display.park import park_details
 from display.park.park_details import (
     render_special_ticketed_events,
@@ -30,6 +32,7 @@ def fake_wrap_text(font, text, board_width, pad):
 # Dummy color dictionary.
 dummy_color_dict = {
     "gold": "#FFD700",
+    "halloween_orange": "#FF8214",
     "disney_blue": "#0033A0",
     "white": "#FFFFFF",
     "mickey_mouse_red": "#E41A1C"
@@ -75,6 +78,7 @@ class TextRecorder:
 
 text_recorder = TextRecorder()
 # Patch the graphics.DrawText function.
+park_details.graphics.Color = lambda *rgb: rgb
 park_details.graphics.DrawText = lambda matrix, font, x, y, color, text: text_recorder.record(matrix, font, x, y, color, text)
 
 # --- Tests ---
@@ -126,8 +130,10 @@ def test_draw_single_line_park_name_text():
 def test_render_special_ticketed_events():
     fake_matrix = FakeMatrix(width=200, height=64)
     text_recorder.calls = []
-    render_special_ticketed_events(50, fake_matrix, "9AM-10PM")
-    assert any("*" in call["text"] for call in text_recorder.calls)
+    render_special_ticketed_events(50, fake_matrix, "9AM-10PM", (255, 130, 20))
+    stars = [call for call in text_recorder.calls if call["text"] == "*"]
+    assert [call["color"] for call in stars] == [(255, 130, 20)]
+
 
 def test_render_park_hours():
     fake_matrix = FakeMatrix(width=200, height=64)
@@ -135,10 +141,25 @@ def test_render_park_hours():
     park_obj = {
         "openingTime": "2025-03-17T09:00:00-04:00",
         "closingTime": "2025-03-17T22:00:00-04:00",
-        "specialTicketedEvent": False
     }
     render_park_hours(60, 10, fake_matrix, park_obj)
     assert any("-" in call["text"] for call in text_recorder.calls)
+    assert not any(call["text"] == "*" for call in text_recorder.calls), "no special event, no star"
+
+
+@pytest.mark.parametrize("event, color", [("halloween", (255, 130, 20)), (None, (255, 215, 0))])
+def test_park_hours_star_takes_the_partys_color(event, color):
+    fake_matrix = FakeMatrix(width=200, height=64)
+    text_recorder.calls = []
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")  # no park timezone: UTC
+    park_obj = {
+        "openingTime": f"{today}T09:00:00-04:00",
+        "closingTime": f"{today}T23:00:00-04:00",
+        "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}],
+        "seasonalEvent": event,
+    }
+    render_park_hours(60, 1, fake_matrix, park_obj)
+    assert [call["color"] for call in text_recorder.calls if call["text"] == "*"] == [color]
 
 def test_render_weather_icon_success(monkeypatch):
     # Create a dummy response for requests.get.

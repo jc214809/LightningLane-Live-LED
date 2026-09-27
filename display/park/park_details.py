@@ -8,6 +8,7 @@ from PIL import Image
 from display.display import get_text_width, wrap_text, color_dict, loaded_fonts
 from driver import graphics
 from utils import debug
+from utils.special_events import DEFAULT_STAR_RGB, star_rgb
 
 ICON_TIMEOUT_S = 5
 ICON_RETRY_S = 300
@@ -42,8 +43,8 @@ def render_park_information_screen(matrix, park_obj):
         render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(loaded_fonts["info"], llmp_price), matrix, llmp_price)
         render_park_hours(baseline_y, 1, matrix, park_obj)
 
-def render_special_ticketed_events(vertical_start, matrix, hours_text):
-    graphics.DrawText(matrix, loaded_fonts["info"], 1 + get_text_width(loaded_fonts["info"], hours_text), vertical_start, color_dict["gold"], "*")
+def render_special_ticketed_events(vertical_start, matrix, hours_text, rgb=DEFAULT_STAR_RGB):
+    graphics.DrawText(matrix, loaded_fonts["info"], 1 + get_text_width(loaded_fonts["info"], hours_text), vertical_start, graphics.Color(*rgb), "*")
 
 def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
@@ -57,8 +58,9 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
     closing_time = park_obj.get("closingTime", "")
     if opening_time and closing_time:
         hours_text = f"{format_iso_time(opening_time)}-{format_iso_time(closing_time)}"
-        if park_obj.get("specialTicketedEvent", False):
-            render_special_ticketed_events(vertical_start, matrix, hours_text)
+        star = star_rgb(park_obj)
+        if star:
+            render_special_ticketed_events(vertical_start, matrix, hours_text, star)
     else:
         hours_text = "??-??"
     graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], hours_text)

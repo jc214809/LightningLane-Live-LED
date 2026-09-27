@@ -8,6 +8,7 @@ import certifi
 import requests
 
 from api.weather import fetch_weather_data
+from utils.special_events import seasonal_event
 from utils import debug
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
@@ -232,7 +233,8 @@ def fetch_parks_and_attractions(disney_park_list):
             "name": park_name,
             "destination_id": park_info.get("destination_id"),
             "attractions": attractions,
-            "specialTicketedEvent": is_special_event(schedule),
+            "schedule": schedule,
+            "seasonalEvent": seasonal_event(park_data.get("children", [])),
             "closingTime": operating_event.get("closingTime", ""),
             "openingTime": operating_event.get("openingTime", ""),
             "llmpPrice": determine_llmp_price(operating_event),
@@ -251,15 +253,6 @@ def clean_park_name(raw_name):
 def get_attraction_name(item):
     return item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", "").replace(" at Mickey's Not-So-Scary Halloween Party", "")
 
-
-def is_special_event(schedule):
-    return any(
-        event.get("type") == "TICKETED_EVENT" and (
-            "special ticketed event" in event.get("description", "").lower() or
-            "extended evening" in event.get("description", "").lower()
-        )
-        for event in schedule
-    )
 
 def determine_llmp_price(operating_event):
     lightning_lane_multi_pass_price = ""
@@ -342,6 +335,11 @@ def parse_showtimes(raw_showtimes):
     return starts
 
 
+def _plain_name(name):
+    """A show name compared loosely: the API mixes curly and straight apostrophes."""
+    return (name or "").lower().replace("\u2019", "'").strip()
+
+
 def show_start_due(parks, show_name, window_s, now=None):
     """
     The start time of a performance of `show_name` that began within the last
@@ -349,9 +347,10 @@ def show_start_due(parks, show_name, window_s, now=None):
     "in progress" means "started less than window_s ago".
     """
     now = now or datetime.now(timezone.utc)
+    wanted = _plain_name(show_name)
     for park in parks:
         for attr in park.get("attractions", []):
-            if attr.get("name") != show_name:
+            if _plain_name(attr.get("name")) != wanted:
                 continue
             for start in attr.get("showtimes") or []:
                 if start <= now < start + timedelta(seconds=window_s):
@@ -527,7 +526,6 @@ def handle_park_schedule_update(park):
     # Update park schedule details
     operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
     park["llmpPrice"] = determine_llmp_price(operating_event)
-    park["specialTicketedEvent"] = is_special_event(schedule)
     park["closingTime"] = operating_event.get("closingTime", "")
     park["openingTime"] = operating_event.get("openingTime", "")
     park["schedule_date"] = operating_event.get("date", "")
@@ -552,6 +550,7 @@ def refresh_park_attractions(park):
         debug.error(f"Failed to refresh attractions for {park_name}: {e}")
         return
 
+    park["seasonalEvent"] = seasonal_event(children)
     fresh = {
         item["id"]: item
         for item in children
