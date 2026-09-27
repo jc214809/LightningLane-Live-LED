@@ -205,6 +205,19 @@ What worked and what didn't, so we don't repeat it:
   earlier versions took more rounds than any other character; the rewrite landed in
   three renders because it started from the pose, not the path.
 
+- **Green Army Men** — landed on the second pass. The first read as green gingerbread
+  men: one dim green for helmet, body and rifle, rigging drawn as two dots that read as
+  eyes, three canopies merging into one band, and a chute that "collapsed" into a blob in
+  mid-air. The redraw: bright toy-plastic green with a light/mid/dark shade, a dark
+  helmet brim, the molded base, a rifle that pokes out past him at both ends, real
+  rigging that swings like a pendulum, smaller canopies, a chute that slumps to the
+  ground downwind, and a hop-off on their bases instead of a slide.
+- **Millennium Falcon** — strong. Traced from the user's photo for the outline, then
+  only the bold features painted back (see below). The arrival first had nothing on
+  screen for its opening beat; making it the jump in reverse (a streak snapping into the
+  ship) fixed it, and brightening her toward white as she stretches stopped the jump
+  reading as a long grey brick.
+
 The pattern: the characters that landed are the ones with a simple, strong silhouette
 and one well-executed motion. The ones that fell short tried for detail and lost the
 shape. Slinky is the clearest case of the other lesson — decide the one pose that
@@ -296,3 +309,59 @@ glint happens. Questions to settle first, with a reference photo:
 - One story beat for the screen: the lights coming on, a colour wave around the sphere,
   fireworks behind it, a monorail passing in front?
 - 64x32 composition: shrink, crop, or tilt up like the tower?
+
+## Army Men and the Falcon: what worked
+
+The process above held; these are the lessons that were new.
+
+### Drawing
+
+- **Trace a reference photo, then keep only the bold features.** Turn the photo to the
+  sprite's heading, crop to the subject, and downscale it to board size: that gives an
+  accurate silhouette and where each feature sits. The photo's detail comes out as grey
+  noise (the Spaceship Earth problem), so throw it away and paint back a handful of bold
+  shapes on flat colour. For the Falcon: the gap between the mandibles, the turret ring,
+  docking arms, a few red patches, the cockpit tube and the engine band.
+- **Generate geometric shapes, don't hand-type them.** The canopy star failed four times
+  in hand-drawn ASCII (it kept reading as a face) and was right first time rasterized from
+  a real five-point polygon at 8x and scaled down. Same for domes and discs.
+- **Any pair of lone dots reads as eyes.** The Army Men's rigging, drawn as two white
+  points under each canopy, looked like faces floating in the sky. Draw rigging as lines.
+- **A thin prop has to break the silhouette.** A rifle held across a body is invisible at
+  this size until it pokes out past him at both ends; then it reads instantly.
+- **Move a character the way its source moves.** Toy army men can't walk, their feet are
+  molded to a base, so they hop, as in the films. It read far better than sliding.
+- **Something that turns into light should turn into light.** A stretched hull stays a
+  grey brick; blend it toward the streak colour as it stretches.
+- **Deflating isn't shrinking.** A chute scaled down in place became a blob hanging in
+  mid-air. Things lose their shape and fall: it blows downwind, sinks, flattens, fades.
+  When you squash art, check which rows the scaling picks (the star smeared into a white
+  bar) and swap features out of it.
+
+### Timing and size
+
+- **Time by distance, not seconds.** 64x64 is twice the drop of 64x32, so the same
+  `FALL_S` made the Army Men plummet there. Give the tall board its own time
+  (`FALL_S_TALL`) and test the speed, not the duration.
+- **Check clearance at 2x.** The Falcon doubled on 64x64 fills the board well, but her
+  cruise ran her mandibles off the right edge until her stop point was clamped so her
+  nose stays on the board.
+
+### Screens and pixels
+
+- **A transition that takes the old screen must paint every pixel of it, black
+  included.** `show_screen` draws the new screen first and the transition paints over
+  it, so drawing only the old screen's lit pixels lets the new ride show through its
+  dark areas. The Army Men shipped with that bug; Ralph still has it (ROADMAP #8).
+- **Test with fake screens that have dark pixels.** The Army Men's tests used an old
+  screen lit edge to edge, which is exactly why they missed the bleed-through.
+  `test_new_screen_never_shows_through_the_old_screens_dark_pixels` goes through the real
+  `show_screen` with a half-lit screen; add each new screen-taking transition to it.
+- **Blend soft effects against pixels you captured, not the canvas.** Dust, glow and
+  fades need what's underneath. A real Pi canvas can't be read back (`canvas.px` doesn't
+  exist there, so it blends against black), but a transition holding `prev_px`/`new_px`
+  knows exactly what's on the board. The Falcon keeps the frame it drew in `_base` so
+  its glow blends over the stretched old screen, not the original.
+- **Draw whole frames cheaply.** Stretching the old screen per pixel into streaks would
+  be hundreds of thousands of `SetPixel` calls a frame; mapping each output pixel back to
+  a source pixel (`(x - shift) / stretch`) is one call per LED and reads the same.
