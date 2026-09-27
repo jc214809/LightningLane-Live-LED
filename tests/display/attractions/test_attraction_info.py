@@ -237,12 +237,41 @@ def test_down_ride_pulses_red_and_keeps_animating(frame_recorder):
     colors = []
     for t in (0.0, attraction_mod.PULSE_PERIOD_S / 2):
         frame_recorder["text"].clear()
-        assert attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, t) is True
-        colors.append(next(c for text, c in frame_recorder["text"] if "Down" in text))
+        frame_recorder["lines"].clear()
+        assert attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, t, expected=45) is True
+        text_color = next(c for text, c in frame_recorder["text"] if "Down" in text)
+        bar, tick = frame_recorder["lines"]
+        assert bar[:4] == (0, 31, 63, 31), "full width along the bottom"
+        assert tick[:4] == (31, 30, 31, 31), "the forecast tick stays"
+        assert bar[4] == tick[4] == text_color, "bar and tick blink in sync with the Down text"
+        colors.append(text_color)
     bright, dim = colors
     assert bright == attraction_mod.DOWN_RGB
     assert dim[0] < bright[0] and dim[1:] == (0, 0)
-    assert frame_recorder["lines"] == [], "no wait bar for a DOWN ride"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_down_ride_text_stays_centered_on_the_whole_board(frame_recorder, monkeypatch, height):
+    ride = {"name": "Space Mountain", "waitTime": "Down 12:41"}
+    centered = _baselines(monkeypatch, lambda: attraction_mod.render_attraction_info(RecordingCanvas(64, height), ride))
+    framed = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, height), ride, 0))
+    assert framed == centered, "same spot as before the red line was added"
+
+
+def test_a_long_down_name_moves_up_rather_than_run_into_the_bar(frame_recorder, monkeypatch):
+    # 4 lines + gap centered on 32 rows ends at row 30, into the 3 rows kept for the bar.
+    ride = {"name": "Test Track Presented by Chevrolet", "waitTime": "Down"}
+    canvas = RecordingCanvas(64, 32)
+    reserve, gap = attraction_mod.bar_layout(canvas, ride)
+    assert reserve and not attraction_mod.centered_clears_bar(canvas, ride, reserve, gap)
+    above = _baselines(monkeypatch, lambda: attraction_mod.render_attraction_info(canvas, ride, reserve_bottom=reserve, gap=gap))
+    framed = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(canvas, ride, 0))
+    assert framed == above
+
+
+def test_down_bar_is_two_rows_on_64_row_boards(frame_recorder):
+    attraction_mod.draw_attraction_frame(RecordingCanvas(64, 64), {"name": "Big Thunder", "waitTime": "Down"}, 0)
+    assert [l[:4] for l in frame_recorder["lines"]] == [(0, 63, 63, 63), (0, 62, 63, 62)], "no tick without a forecast"
 
 
 def test_boarding_group_ride_is_static(frame_recorder):
@@ -292,6 +321,31 @@ def test_roomy_names_keep_normal_spacing(frame_recorder):
     assert gap == attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT
 
 
+def _baselines(monkeypatch, draw):
+    ys = []
+    monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: ys.append(y)))
+    draw()
+    return sorted(set(ys))  # draw_text draws word by word
+
+
+def test_spare_rows_drop_the_wait_but_leave_the_name(frame_recorder, monkeypatch):
+    ride = {"name": "Space Mountain", "waitTime": 35}
+    reserve = attraction_mod.bar_reserve_rows(32)
+    # 2 lines of 6px + gap 2 above a 3-row reserve leave 15 spare rows: 7 above the
+    # name as before, and the wait drops half of the 8 below it.
+    name_y, wait_y = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0))
+    assert name_y == 5 + 7, "the name sits where plain centering puts it"
+    assert wait_y == name_y + 6 + attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT + 4
+    assert wait_y + 1 <= 32 - reserve, "still clear of the bar"
+
+
+def test_a_full_board_does_not_drop_the_wait(frame_recorder, monkeypatch):
+    # Tight layout: no spare rows, so name and wait sit exactly as they did.
+    ride = {"name": "Meet Beloved Disney Pals at Mickey and Friends", "waitTime": 35}
+    ys = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0))
+    assert [b - a for a, b in zip(ys, ys[1:])] == [6] * 4
+
+
 def test_names_too_long_even_when_tightened_drop_the_bar(frame_recorder):
     # 6 name lines can't fit however the spacing is squeezed; the text wins.
     huge = {"name": " ".join(["Halloween"] * 9), "waitTime": 35}
@@ -309,7 +363,7 @@ def test_short_names_keep_the_bar_and_move_up_to_clear_it(frame_recorder, monkey
         ys = []
         monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: ys.append(y)))
         attraction_mod.render_attraction_info(RecordingCanvas(64, 32), ride, reserve_bottom=reserve)
-        baselines[reserve] = max(ys)
+        baselines[reserve] = min(ys)  # the name line; the wait may drop into spare rows
     assert baselines[attraction_mod.bar_reserve_rows(32)] < baselines[0]
     attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0, expected=40)
     assert len(frame_recorder["lines"]) == 2, "bar and tick"
