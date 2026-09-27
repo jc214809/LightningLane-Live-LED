@@ -18,7 +18,7 @@ from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, forecast_wait_now, resolve_parks_from_config, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen
-from utils.special_events import active_party
+from utils.special_events import SPECIAL_EVENTS, active_party
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
@@ -55,6 +55,12 @@ SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01}
 forced_surprise = None
 FIREWORKS_SHOW = "Happily Ever After"
 FIREWORKS_SHOW_S = 5 * 60
+# (show name, fireworks theme) for every show that plays the castle fireworks: the nightly show,
+# plus each party's own show in its own colours (utils/special_events.py).
+FIREWORKS_SHOWS = [(FIREWORKS_SHOW, None)] + [
+    (event["fireworks_show"], event.get("fireworks_theme"))
+    for event in SPECIAL_EVENTS.values() if event.get("fireworks_show")
+]
 _shows_played = set()
 
 def main():
@@ -205,20 +211,22 @@ def initialize_park_information_screen(matrix, park):
 
 def play_fireworks_show_if_due(matrix, parks, now=None):
     """
-    If Happily Ever After started in the last FIREWORKS_SHOW_S seconds in one of the
-    board's parks, play the castle fireworks without the title until that window ends.
-    Each performance plays once. Returns True if it played.
+    If one of FIREWORKS_SHOWS started in the last FIREWORKS_SHOW_S seconds in one of the
+    board's parks, play the castle fireworks in that show's theme, without the title, until
+    that window ends. Each performance plays once. Returns True if it played.
     """
-    start = show_start_due(parks, FIREWORKS_SHOW, FIREWORKS_SHOW_S, now)
-    if start is None or start in _shows_played:
-        return False
-    _shows_played.add(start)
     now = now or datetime.now(timezone.utc)
-    remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
-    debug.info(f"{FIREWORKS_SHOW} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
-    render_castle_fireworks(matrix, duration=remaining, title=False)
-    forget_screen(matrix)
-    return True
+    for show, theme in FIREWORKS_SHOWS:
+        start = show_start_due(parks, show, FIREWORKS_SHOW_S, now)
+        if start is None or (show, start) in _shows_played:
+            continue
+        _shows_played.add((show, start))
+        remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
+        debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
+        render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
+        forget_screen(matrix)
+        return True
+    return False
 
 def set_forced_surprise(name):
     """Validate config.json's force_surprise; an unknown name is ignored, not fatal."""

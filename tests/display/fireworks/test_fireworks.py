@@ -51,8 +51,9 @@ def test_castle_sits_on_bottom_and_is_centered(width, height):
 
 
 @pytest.mark.parametrize("width, height", [(64, 32), (64, 64)])
-def test_frames_stay_in_bounds_with_valid_colors(width, height):
-    show = FireworksShow(width, height, random.Random(3))
+@pytest.mark.parametrize("theme", [None, "halloween"])
+def test_frames_stay_in_bounds_with_valid_colors(width, height, theme):
+    show = FireworksShow(width, height, random.Random(3), theme)
     for _ in range(300):
         show.step()
         for (x, y), rgb in show.frame_pixels().items():
@@ -286,3 +287,79 @@ def test_render_can_leave_the_title_off(monkeypatch):
     render_castle_fireworks(matrix, duration=3.0, fps=10, rng=random.Random(1), title=False)
     assert drawn == [], "no title text at all"
     assert matrix.swaps == 30 and matrix.last_frame, "the castle and fireworks still play"
+
+
+def test_halloween_show_has_a_purple_sky_flickering_orange_windows_and_party_bursts():
+    show = FireworksShow(64, 64, random.Random(8), "halloween")
+    theme = fireworks.THEMES["halloween"]
+    frame = show.frame_pixels()
+    r, g, b = frame[(40, 2)]
+    assert b > r > g, "purple sky"
+    windows = [(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels if kind == "Y"]
+    assert windows and all(frame[p][0] > 150 and frame[p][0] > frame[p][1] > frame[p][2] for p in windows), "orange"
+    later = FireworksShow(64, 64, random.Random(8), "halloween")
+    _run(later, 3)
+    assert any(later.frame_pixels()[p] != frame[p] for p in windows), "they flicker"
+    _run(show, 400)
+    allowed = set(theme["palette"]) | {fireworks.PUMPKIN_RGB, fireworks.PUMPKIN_FILL_RGB,
+                                        fireworks.STEM_RGB, fireworks.FACE_RGB}
+    assert {s.color for s in show.sparks} <= allowed, "bursts use only the party's colours"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_halloween_moon_sits_clear_of_the_castle(height):
+    show = FireworksShow(64, height, random.Random(9), "halloween")
+    castle = {(show.castle_x + dx, show.castle_y + dy) for dx, dy, _ in show.castle_pixels}
+    assert show.moon and not set(show.moon) & castle
+    assert all(0 <= x < 64 and 0 <= y < height for x, y in show.moon)
+
+
+def test_a_bat_flaps_across_the_sky():
+    show = FireworksShow(64, 64, random.Random(10), "halloween")
+    assert show.bats, "one bat starts on its way across the moon"
+    xs, poses = [], set()
+    for _ in range(40):
+        show.step()
+        bat = show.bats[0]
+        xs.append(bat[0])
+        pixels = show._bat_pixels(bat)
+        poses.add(tuple((x - pixels[0][0], y - pixels[0][1]) for x, y in pixels))
+        assert all(show.frame_pixels().get(p) == fireworks.BAT_RGB for p in pixels if 0 <= p[0] < 64 and 0 <= p[1] < 64)
+    assert xs == sorted(xs) and xs[-1] > xs[0] + 10, "it flies across"
+    assert len(poses) >= 2, "its wings flap"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_mickey_pumpkin_bursts_have_an_orange_outline_green_stem_and_a_face(height, monkeypatch):
+    shape = "mickey_pumpkin"
+    show = FireworksShow(64, height, random.Random(11), "halloween")
+    monkeypatch.setattr(show, "_pick_shape", lambda: shape)
+    show.rockets = []
+    show.launch()
+    rocket = show.rockets[0]
+    assert rocket.shape == shape and not rocket.mickey
+    reach = fireworks._MICKEY_HALF_WIDTH * show.shape_radius
+    assert reach <= rocket.x <= 64 - reach and rocket.burst_y - fireworks._MICKEY_TOP * show.shape_radius >= 0
+    assert rocket.burst_y + show.shape_radius <= show.castle_y + 3, "the face clears the castle"
+    show.sparks = []
+    show._explode(rocket)
+    colors = [s.color for s in show.sparks]
+    assert colors.count(fireworks.PUMPKIN_RGB) > colors.count(fireworks.FACE_RGB) > colors.count(fireworks.STEM_RGB) > 0
+    assert colors.count(fireworks.PUMPKIN_FILL_RGB) > 0, "filled in"
+    assert len({s.life for s in show.sparks}) == 1, "the shape holds together"
+    stem = [s for s in show.sparks if s.color == fireworks.STEM_RGB]
+    face = [s for s in show.sparks if s.color == fireworks.FACE_RGB]
+    assert max(s.vy for s in stem) < min(s.vy for s in face), "stem on top, face below it"
+
+
+def test_halloween_bursts_are_mickey_pumpkins_among_regular_fireworks():
+    show = FireworksShow(64, 64, random.Random(12), "halloween")
+    shapes = [show._pick_shape() for _ in range(2000)]
+    assert set(shapes) == {"mickey_pumpkin", None}, "no plain pumpkins or plain Mickeys"
+    assert 200 < shapes.count("mickey_pumpkin") < 400, "about as often as the everyday show's Mickeys"
+
+
+def test_everyday_show_is_unchanged_on_black():
+    show = FireworksShow(64, 32, random.Random(8))
+    assert show.palette is fireworks._PALETTE and show.castle_colors == fireworks._CASTLE_COLORS
+    assert len(show.frame_pixels()) < 64 * 32, "no sky fill"

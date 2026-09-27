@@ -372,7 +372,7 @@ HEA_PARKS = [{"name": "Magic Kingdom", "attractions": [
 def fireworks_played(monkeypatch):
     played = []
     monkeypatch.setattr(disney, "render_castle_fireworks",
-                        lambda matrix, duration, title=True: played.append((duration, title)))
+                        lambda matrix, duration, title=True, theme=None: played.append((duration, title, theme)))
     monkeypatch.setattr(disney, "_shows_played", set())
     return played
 
@@ -380,7 +380,7 @@ def fireworks_played(monkeypatch):
 def test_fireworks_play_without_the_title_once_per_performance(fireworks_played):
     now = HEA_START + timedelta(seconds=8)
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
-    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 8, False)], "until the window ends, no title"
+    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 8, False, None)], "until the window ends, no title"
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now + timedelta(seconds=40)) is False
     assert len(fireworks_played) == 1, "the same performance never plays twice"
 
@@ -392,6 +392,23 @@ def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played
     epcot = [{"name": "EPCOT", "attractions": [{"name": "Spaceship Earth", "status": "OPERATING", "waitTime": 15}]}]
     assert not disney.play_fireworks_show_if_due(FakeMatrix(), epcot, now=HEA_START + timedelta(seconds=5))
     assert fireworks_played == []
+
+
+def test_party_fireworks_play_in_the_partys_theme(fireworks_played):
+    # The API's name after the party suffix is stripped, with its curly apostrophe.
+    spooky_start = HEA_START + timedelta(hours=1)
+    parks = [{"name": "Magic Kingdom", "attractions": [
+        {"name": "Disney\u2019s Not-So-Spooky Spectacular", "status": "OPERATING", "waitTime": None,
+         "showtimes": [spooky_start]}]}]
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), parks, now=spooky_start + timedelta(seconds=2)) is True
+    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 2, False, "halloween")]
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), parks, now=spooky_start + timedelta(seconds=60)) is False
+
+
+def test_every_fireworks_theme_exists():
+    from display.fireworks.fireworks import THEMES
+    for show, theme in disney.FIREWORKS_SHOWS:
+        assert theme is None or theme in THEMES, show
 
 
 def test_ride_loop_checks_for_the_show_before_each_screen(monkeypatch, screens):

@@ -335,6 +335,11 @@ def parse_showtimes(raw_showtimes):
     return starts
 
 
+def _plain_name(name):
+    """A show name compared loosely: the API mixes curly and straight apostrophes."""
+    return (name or "").lower().replace("\u2019", "'").strip()
+
+
 def show_start_due(parks, show_name, window_s, now=None):
     """
     The start time of a performance of `show_name` that began within the last
@@ -342,9 +347,10 @@ def show_start_due(parks, show_name, window_s, now=None):
     "in progress" means "started less than window_s ago".
     """
     now = now or datetime.now(timezone.utc)
+    wanted = _plain_name(show_name)
     for park in parks:
         for attr in park.get("attractions", []):
-            if attr.get("name") != show_name:
+            if _plain_name(attr.get("name")) != wanted:
                 continue
             for start in attr.get("showtimes") or []:
                 if start <= now < start + timedelta(seconds=window_s):
