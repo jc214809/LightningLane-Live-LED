@@ -8,8 +8,8 @@ below lists the questions still to ask.
 ## 1. Characters to create
 
 Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey, Slinky,
-Baymax, Genie, and WALL-E (the side-view baler `walle_side` plays; the three-quarter view
-`walle` is kept, out of the rotation).
+Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
+`walle` is kept, out of the rotation), and the Green Army Men (`army_men`).
 
 | # | Character | Park / ride | Signature motion | Mechanic |
 |---|---|---|---|---|
@@ -26,9 +26,23 @@ Baymax, Genie, and WALL-E (the side-view baler `walle_side` plays; the three-qua
 | 11 | Steamboat Willie Mickey | MK | whistling at the wheel | TBD |
 | 12 | Monorail | all of Walt Disney World | glides across as a band of color | Fly-by |
 | 13 | Pixar Ball | DHS: Pixar Place, Toy Story Land | bounces across in 3-4 hops, uncovering the next ride | Fly-by (bounce) |
-| 14 | Green Army Men | DHS: Toy Story Land | parachute in, land, chutes collapse, march off in step | New: top-down drop reveal |
+| ~~14~~ | ~~Green Army Men~~ Done | DHS: Toy Story Land | parachute in, land, chutes slump, hop off in step on their bases | New: top-down drop reveal |
 | 15 | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, "Ka-chow" stop, peels out leaving speed streaks | Fly-by (drive-by) |
 | 16 | Rex | DHS: Toy Story Land | stomps in, tail-swipes the old screen off the board, looks sheepish and runs | Wreck (`wants_prev`) |
+| 17 | Goofy | MK: The Barnstormer | flies his biplane across the board | Fly-by |
+| 18 | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
+| 19 | R2-D2 | DHS: Galaxy's Edge | rolls across on his treads, dome swivelling, light blinking | Fly-by |
+| 20 | Millennium Falcon | DHS: Smugglers Run | stars stretch into hyperspace streaks, the Falcon jumps; the streaks are the wipe | Standalone |
+| 21 | Baby Groot | EPCOT: Guardians: Cosmic Rewind | sprouts from the bottom edge, grows like Baymax inflates, then dances | Peek (procedural, not fixed art) |
+| 22 | Ray the firefly | MK: Tiana's Bayou Adventure | glowing firefly wanders across, leaving a light trail | Fly-by |
+| 23 | Tigger | MK: Many Adventures of Winnie the Pooh | bounces across on his tail | Fly-by (bounce) |
+| 24 | Jungle Cruise hippo | MK: Jungle Cruise | eyes and ears surface from the bottom, wiggles its ears, sinks back down | Peek |
+| 25 | Donald Duck | EPCOT: Gran Fiesta Tour | tantrum knocks the old screen to pieces, feathers flying | Wreck (`wants_prev`) |
+| 26 | Yeti | AK: Expedition Everest | huge dark silhouette looms up behind the screen, eyes glowing | Peek |
+| 27 | Simba on Pride Rock | AK | held up against an orange sunrise gradient | Landmark/scene, not a ride transition |
+| 28 | Madame Leota | MK: Haunted Mansion | green glowing head appears in a crystal ball | Peek; pairs with #5 for Halloween |
+| 29 | Cinderella's pumpkin coach | MK | a pumpkin bursts into sparkles and becomes the coach | Assemble |
+| 30 | Chip 'n' Dale | MK / DHS (various) | two heads peek up side by side | Peek |
 
 ### Notes per character
 
@@ -87,21 +101,32 @@ Options:
 Questions: bounce-by alone or with Luxo; regular chance or Pixar rides only; 1x on both
 boards or 2x on 64x64; reference image.
 
-**14. Green Army Men.** The parachutes are what make them work: on their own the soldiers
-would be tiny green figures that are hard to make out, but a canopy is a big, simple shape
-that reads instantly. Bright toy green reads well on black; each soldier needs only about
-5x8 LEDs (helmet, body, the classic wide-legged stance). Canopies are a pale half-dome
-about 9-11 wide with lines down to the soldier; three at staggered heights and sizes give
-depth. Motion: a parachute drop from the top edge, canopies swaying gently side to side,
-like Dumbo's ear flaps. As a transition it's a new mechanic nobody else uses, a top-down
-reveal: the next ride is uncovered behind them from the top as they descend. They land, the
-chutes collapse, and they march off the edge in step (the Toy Story films have them
-parachute in on a mission). Pairs with the Pixar Ball: both are Toy Story Land, giving its
-rides (Toy Story Mania!, Slinky Dog Dash, Alien Swirling Saucers) two characters; the Green
-Army Drum Corps performs there too.
+**~~14. Green Army Men.~~ Done** (`ArmyMenReveal`, `"army_men"` in `SURPRISES` at 0.015,
+`display/animation.py`). The parachutes are what make them work: a canopy is a big, simple
+shape that reads instantly, and the soldier underneath only needs a wide-brimmed helmet, a
+rifle slung diagonally, and the classic wide-planted stance to read as a toy soldier. Built
+from the user's reference image: a camo dome (olive/gold patches) with a white five-point
+star badge, not the plain white/tan first assumed -- the star only read once it was
+rasterized as a real polygon instead of approximated in ASCII (see CHARACTERS.md's "render
+it and look" lesson; the first four attempts came out as a face with two eyes).
 
-Questions: how many soldiers; march off, or salute and stay; chute color (plain white or the
-film's); 1x on both boards; reference image.
+Three soldiers parachute in at staggered delays (each falls for its own `FALL_S`, so they
+land one after another, not together) and sway side to side on the way down. The next
+screen is uncovered top-down as a curtain that tracks the lead soldier's own descent --
+the new mechanic nobody else uses, and the first reveal to need both `wants_prev` (the old
+screen, visible under the drop) and `wants_new` (the new screen, revealed as they fall).
+Each hangs on rigging lines that swing like a pendulum and meet above his helmet; each lands
+with a puff of dust off his base, and his chute deflates, drops its star and slumps to the
+ground downwind behind him. Once everyone's down they hold, then hop off the right edge in
+step on their bases, the way the toys move in the films.
+
+Settled: three soldiers, staggered; chutes collapse then they march off; camo canopies
+(matching the reference, not the plain white first assumed); 1x on both boards -- three
+soldiers at 2x collided and clipped the edges of 64x64, confirmed by rendering both.
+
+Open: pairing with the Pixar Ball (#13) as a two-character Toy Story Land moment; a chance
+boost on Toy Story Mania!, Slinky Dog Dash and Alien Swirling Saucers (see #3); checking it
+on a real board (`force_surprise: "army_men"`).
 
 **15. Lightning McQueen.** A natural fit for a board called LightningLane.
 - Park tie-in: Hollywood Studios had Lightning McQueen's Racing Academy, and a Cars-themed
@@ -151,6 +176,139 @@ Still open:
   once it's drawn.
 - Chance in `SURPRISES`, and whether he gets a boosted chance on Toy Story Land rides (#3
   below).
+
+**17. Goofy.** Flies his biplane across the board, a nod to The Barnstormer, his coaster in
+Magic Kingdom's Storybook Circus. The plane is a bold, simple shape that carries the fly-by,
+and Goofy's silhouette (green hat, long floppy ears, buck teeth) sits on top of it. This is
+a separate character from the Santa Goofy idea in #7, which stays as it is.
+
+Decided:
+- Motion: a biplane fly-by (`FlyByReveal`), revealing the next ride in its wake.
+- Framing: his head turned toward the viewer, not pure profile. His long snout collapses
+  in profile the way Slinky's dog head did (see CHARACTERS.md).
+- Frequency: the regular `SURPRISES` rotation only, with no boost on The Barnstormer's
+  screen.
+
+Still open:
+- Full body in the plane: the framing chosen was full body, but a cockpit hides his legs.
+  Choices are standing up in the cockpit, sitting on the wing, or just his upper body with
+  long ears flapping in the wind.
+- Flight path and extras: straight across, a wobble, or a loop; a smoke trail or a banner
+  as the wipe line; the Goofy holler as he goes by.
+- Ears and hat: his black ears need a lifted charcoal to show on black (the Sorcerer Mickey
+  fix). The green hat and the plane's colours must differ from each other.
+- Size on 64x64, and whether the plane stays 1x like Genie's lamp.
+- Reference image, and his chance in `SURPRISES`.
+
+**18. Little Green Men (Aliens).** A new mechanic: "the claw" descends from the top edge,
+grabs the old screen bodily and hauls it back up out of frame, while three identical
+squeaky-clean-green aliens (antennae, three eyes, folded hands) look up and go "Ooooh."
+Simple shape, saturated color, and the claw itself is just a few lines and a grabber — easy
+to draw and instantly recognizable from the ride/film. Distinct from Ralph/Rex/Donald's
+wreck mechanic since nothing shatters; the screen is lifted whole.
+
+Questions: one alien or three; does the claw stay on screen after grabbing, or exit with
+the old screen; reference image; chance in `SURPRISES`.
+
+**19. R2-D2.** A dome on a tin-can body, rolling on his treads: about as simple a silhouette
+as a droid gets, and blue-and-white on black reads clean. His dome swivel and a blinking
+blue light are enough motion on their own.
+
+Questions: pure fly-by, or does he stop mid-board to swivel his dome and beep; size on
+64x64; reference image.
+
+**20. Millennium Falcon.** Stars stretch into hyperspace streaks that double as the wipe
+line, then the Falcon (a simple wedge-with-mandibles silhouette) jumps across. High
+contrast, and the hyperspace-streak wipe is a strong reused-idea for other space content.
+
+Questions: is the Falcon itself drawn in full, or is the hyperspace jump (streaks + flash)
+the whole beat; reference image; chance in `SURPRISES`.
+
+**21. Baby Groot.** Sprouts up from the bottom edge and grows the way Baymax inflates —
+procedural, not fixed sprite art, keyed off one growth factor — then does his headphones
+dance. Small size is in-character (unlike Figment's "purple blob" problem, tiny actually
+reads as baby), and the growth-then-dance beat gives him two story moments in one peek.
+
+Questions: does he dance in place or wander a little while dancing; how tall at full growth;
+reference image; chance in `SURPRISES`.
+
+**22. Ray the firefly.** A single glowing dot with a light trail wandering across the board
+— exactly the kind of thing LEDs render better than anything else. Very cheap to draw
+(a bright core, a soft glow, a fading trail) and reads at any size.
+
+Questions: a wandering/looping path or a straight fly-by; trail color (warm yellow-white,
+or Ray's Cajun-firefly green); does he carry a tiny lantern; reference image.
+
+**23. Tigger.** The bounce is the whole character — his tail is a spring, same idea as
+Slinky's coils but applied to a single hop-across instead of a stretch. Bold orange and
+black stripes are unmistakable on black.
+
+Questions: how many bounces to cross the board; does he say anything ("T-I-double-Guh-er");
+1x or 2x on 64x64; reference image.
+
+**24. Jungle Cruise hippo.** Just eyes, ears and nostrils surfacing from the bottom edge —
+the classic "hippo submerged in water" gag, and it needs almost no detail to read, similar
+to Mike Wazowski's one-eye simplicity. Pairs naturally with a wavy blue foreground band.
+
+Questions: does it yawn/roar before sinking, or just wiggle its ears; add a water-ripple
+foreground band across every screen it peeks over, or keep the board plain; reference image.
+
+**25. Donald Duck.** A tantrum wreck, like Ralph and Rex but with his own signature: he
+stomps in place, and the old screen's pixels fly apart with a scatter of white feathers.
+Bright blue-and-white with an orange bill separates cleanly from the other wreck
+characters' palettes (Ralph's reds, Rex's greens).
+
+Questions: does he quack (a speech-bubble squiggle) mid-tantrum; feather color/count; how
+his tantrum differs physically from Ralph's punch and Rex's tail swipe so the three don't
+feel like reskins of one animation; reference image.
+
+**26. Yeti.** A huge dark silhouette looming up behind the screen with two glowing eyes —
+scale and darkness are the whole effect, like a horror-movie reveal. Catch: a dark
+character on a dark board risks vanishing, the same problem Sorcerer Mickey's ears had;
+needs the charcoal-lift fix (a body color a few steps above pure black) so the silhouette
+reads as a shape and not a hole.
+
+Questions: does he swipe a paw at the screen (edges toward a wreck mechanic) or just loom
+and recede (peek); eye color (icy blue, red); reference image.
+
+**27. Simba on Pride Rock.** Gorgeous as a scene — Simba held up against an orange sunrise
+gradient — but it's a tableau, not a transition with a start/middle/end like the other
+entries here. Best suited to a park-title landmark (like the Tower of Terror or Spaceship
+Earth entries) rather than a `SURPRISES` ride-screen character. Filed here as a landmark
+candidate, not a character to build against the `FlyByReveal`/`PeekReveal`/wreck/assemble
+mechanics.
+
+Questions: build as a landmark for Animal Kingdom's park title screen instead of a ride
+surprise; reference image; whether it needs its own scene the way the pumpkin and tower do.
+
+**28. Madame Leota.** A green glowing head materializing inside a floating crystal ball —
+high contrast (bright green on black) and an easy peek: rises, eyes open, maybe speaks a
+line of her verse, fades. Pairs with the Hitchhiking Ghosts (#5) as a matched set for
+Halloween party nights, the way the two jack-o'-lanterns pair today.
+
+Questions: build alongside the Ghosts as one Halloween-season release, or independently;
+does the crystal ball float/bob on its own; any text (a line of her rhyme in the landmark
+font); reference image.
+
+**29. Cinderella's pumpkin coach.** A pumpkin assembles/transforms into the coach in a
+sparkle burst — reuses the Assemble mechanic (`MickeyReveal`'s `wants_new`) the way Sorcerer
+Mickey does. Caveat: transformation-in-sparkles is close in feel to the Halloween pumpkin
+landmark and to Sorcerer Mickey's materialize effect; risks feeling like a reskin unless the
+transformation reads differently (pumpkin unfolding into a coach shape, not just fading in).
+
+Questions: is the coach the end state that then rolls off, or does it just sparkle and hold;
+how to make the transformation read as a distinct trick from Mickey's materialize; reference
+image.
+
+**30. Chip 'n' Dale.** Two small heads peeking up side by side. Caveat: CHARACTERS.md's
+lesson from every character here is that a small or split silhouette is the hardest thing
+to read at this resolution — two half-size heads competing for the same peek is a bigger
+risk than any single-character entry on this list. Would need a reference image and a
+render early to confirm it reads at all before investing further.
+
+Questions: worth attempting given the two-small-heads risk, or drop; if attempted, which
+one leads/reacts (Chip's black nose vs. Dale's red nose and buck teeth are the only real
+differentiator at this size); reference image.
 
 ### Ideas for using them
 
@@ -229,3 +387,31 @@ Questions to settle first, with a reference photo:
 - 64x32 composition: the full tree squashed, a crop on the trunk and lower canopy, or a tilt
   up like the Tower of Terror?
 
+
+## 7. Redraw Stitch
+
+`StitchReveal` (the peek) doesn't read as Stitch. Rendered on both boards at full rise:
+- The ears are two tall purple spikes pointing straight up, which reads as a rabbit or a
+  bat. His real ears are huge and swept out sideways (often drooping), blue with pink
+  inside, and the notch isn't visible.
+- The head is narrow and tall. His real head is very wide and flat, wider than it is tall,
+  and that width is half his silhouette.
+- The eyes come out as one dark band with two white dots, like sunglasses. His big dark
+  eyes are the identity, but they need to be separate shapes that differ from the fur and
+  the outline (see "Eyes" in CHARACTERS.md).
+- The nose is dark navy on mid-blue fur and gets lost.
+- The grin is cut off by the bottom edge: at full rise (`rise_frac` 0.88) only a sliver of
+  mouth and teeth shows on either board, so his face never finishes.
+- The look left and right is just the white glint moving a pixel; it barely registers.
+
+Questions to settle first, with a reference image:
+- Framing: a wide head-only close-up (ears out to the sides), or head plus shoulders and
+  his little arms gripping the bottom edge?
+- Ears: straight out to the sides, drooped, or one of each? Keep the notch?
+- Expression: the big mischievous grin, the tongue out, or a neutral face that breaks into
+  a grin?
+- Motion: keep the peek with a stronger look around (whole head turns, ears swivel), or
+  something more Stitch, like an ear flick, a lick, or a sneaky pop-up that ducks when
+  spotted?
+- Size: 1x or 2x on 64x64 (the ears' width decides it), and whether he joins the
+  `SURPRISES` rotation once redrawn (he's built but not in it today).

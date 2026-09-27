@@ -49,7 +49,7 @@ PARK_REVEALS = ("tink", "buzz")
 # three-quarter view, "walle", is kept for force_surprise but isn't in the rotation).
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
-SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01, "walle_side": 0.018}
+SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01, "walle_side": 0.018, "army_men": 0.015}
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
