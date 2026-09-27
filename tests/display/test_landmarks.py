@@ -26,6 +26,18 @@ def test_landmark_for_matches_park_names_loosely(name, cls):
     assert landmarks.landmark_for(name) is cls
 
 
+def test_a_party_swaps_in_its_own_landmark():
+    assert landmarks.landmark_for("Magic Kingdom", "halloween") is landmarks.FriendlyJackOLanternLandmark
+    assert landmarks.landmark_for("Magic Kingdom", None) is landmarks.CastleLandmark
+    assert landmarks.landmark_for("Magic Kingdom", "not-a-party") is landmarks.CastleLandmark
+
+
+def test_every_special_events_landmark_exists():
+    for key, event in landmarks.SPECIAL_EVENTS.items():
+        cls = landmarks.landmark_for("Anywhere", key)
+        assert isinstance(cls, type) and issubclass(cls, landmarks.Landmark), key
+
+
 @pytest.mark.parametrize("cls", ALL)
 @pytest.mark.parametrize("height", [32, 64])
 def test_every_frame_stays_on_the_board_with_valid_colors(cls, height):

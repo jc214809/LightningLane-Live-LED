@@ -14,6 +14,7 @@ SPECIAL_EVENTS = {
     "halloween": {
         "match": "not-so-scary halloween party",  # found in a lower-cased entity name
         "star_rgb": (255, 130, 20),  # the "*" after the park hours
+        "landmark": "FriendlyJackOLanternLandmark",  # replaces the park's landmark (display/landmarks.py)
     },
 }
 

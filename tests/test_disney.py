@@ -112,6 +112,19 @@ def test_each_landmark_is_held_for_its_own_screen_length(monkeypatch, screens):
     assert screens[0]["hold"] == 3.5, "the tower needs longer for its tilt, strike and drop"
 
 
+def test_party_night_swaps_the_castle_for_the_partys_landmark(monkeypatch, screens):
+    monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
+    shown = []
+    real_landmark_screen = disney.landmark_screen
+    monkeypatch.setattr(disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene))
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    party_night = {"name": "Magic Kingdom", "seasonalEvent": "halloween",
+                   "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}]}
+    disney.initialize_park_information_screen(FakeMatrix(), party_night)
+    disney.initialize_park_information_screen(FakeMatrix(), dict(party_night, schedule=[]))
+    assert [cls.__name__ for cls in shown] == ["FriendlyJackOLanternLandmark", "CastleLandmark"]
+
+
 def test_parks_without_a_landmark_go_straight_to_the_title(monkeypatch, screens):
     monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
     disney.initialize_park_information_screen(FakeMatrix(), {"name": "Cedar Point"})

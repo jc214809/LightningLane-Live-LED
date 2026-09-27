@@ -6,6 +6,7 @@ import random
 from driver import graphics
 from display.display import get_text_width, loaded_fonts
 from display.fireworks.fireworks import castle_sprite, _CASTLE_COLORS
+from utils.special_events import SPECIAL_EVENTS
 
 LANDMARK_S = 3.0
 SKY_RGB = (4, 6, 22)
@@ -744,8 +745,11 @@ LANDMARKS = {
 }
 
 
-def landmark_for(park_name):
-    """The landmark scene class for a park, matched loosely on its name, or None."""
+def landmark_for(park_name, party=None):
+    """The landmark scene class for a park, matched loosely on its name, or None. A party
+    (a SPECIAL_EVENTS key the park is holding today) swaps in that party's own landmark."""
+    if party in SPECIAL_EVENTS:
+        return globals()[SPECIAL_EVENTS[party]["landmark"]]
     name = (park_name or "").lower()
     for key, cls in LANDMARKS.items():
         if key in name:

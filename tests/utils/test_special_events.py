@@ -93,3 +93,4 @@ def test_every_event_is_fully_described():
     for key, event in SPECIAL_EVENTS.items():
         assert event["match"] == event["match"].lower(), key
         assert len(event["star_rgb"]) == 3 and all(0 <= c <= 255 for c in event["star_rgb"]), key
+        assert event["landmark"], key
