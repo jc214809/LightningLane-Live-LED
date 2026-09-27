@@ -16,7 +16,7 @@ from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from utils.utils import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, forecast_wait_now, resolve_parks_from_config, show_start_due
-from display.animation import forget_screen, show_screen
+from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import LANDMARK_S, landmark_for, landmark_screen
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
@@ -49,6 +49,9 @@ PARK_REVEALS = ("tink", "buzz")
 SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01}
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
+# config.json "force_surprise": plays that visitor on every ride screen. For checking a
+# character on a real board; leave it unset otherwise.
+forced_surprise = None
 FIREWORKS_SHOW = "Happily Ever After"
 FIREWORKS_SHOW_S = 5 * 60
 _shows_played = set()
@@ -56,6 +59,7 @@ _shows_played = set()
 def main():
     # Load configuration
     config = load_config('config.json')
+    set_forced_surprise(config.get("force_surprise"))
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
@@ -214,6 +218,19 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
     forget_screen(matrix)
     return True
 
+def set_forced_surprise(name):
+    """Validate config.json's force_surprise; an unknown name is ignored, not fatal."""
+    global forced_surprise
+    forced_surprise = None
+    if not name:
+        return
+    if name not in TRANSITIONS or name == "wipe":
+        debug.warning(f"force_surprise {name!r} isn't a character transition; ignoring it. "
+                      f"Choose from: {', '.join(t for t in TRANSITIONS if t != 'wipe')}")
+        return
+    forced_surprise = name
+    debug.warning(f"force_surprise is set: {name} plays on every ride screen. Remove it from config.json when done testing.")
+
 def loop_through_attractions(matrix, park, parks=()):
     for attraction_info in park.get("attractions", []):
         # Checked between screens, so the fireworks cut in at most one screen late.
@@ -226,7 +243,7 @@ def loop_through_attractions(matrix, park, parks=()):
             debug.info(
                 f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
                 f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']}")
-            surprise = _surprise(random.random())
+            surprise = forced_surprise or _surprise(random.random())
             if surprise != "wipe":
                 debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)

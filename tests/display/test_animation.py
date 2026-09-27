@@ -88,6 +88,27 @@ def test_run_frames_stops_redrawing_once_static_and_sleeps_out_the_rest(clock):
     assert clock.now == pytest.approx(8)
 
 
+def test_run_frames_reports_frames_drawn_and_time_spent_animating(clock):
+    calls = []
+    drawn, spent = animation.run_frames(FakeMatrix(), lambda canvas, t: calls.append(t) or len(calls) < 30, duration_s=8)
+    assert drawn == 30 and drawn / spent == pytest.approx(animation.FPS), "a board that keeps up reports 30 fps"
+
+    def slow(canvas, t):
+        clock.now += 0.1
+        return True
+
+    drawn, spent = animation.run_frames(FakeMatrix(), slow, duration_s=2)
+    assert drawn / spent == pytest.approx(10, rel=0.1), "a board three times too slow reports ~10 fps"
+
+
+def test_character_transitions_log_their_frame_rate(clock, monkeypatch):
+    logged = []
+    monkeypatch.setattr(animation.debug, "info", logged.append)
+    animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 1.0, transition="baymax", rng=random.Random(0))
+    animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 1.0, transition="wipe")
+    assert len(logged) == 1 and logged[0].startswith("baymax: 30 fps"), "only characters log, not every wipe"
+
+
 def test_slow_frames_do_not_stretch_the_screen(clock):
     matrix = FakeMatrix()
 
@@ -956,3 +977,29 @@ def test_surprises_let_the_screen_underneath_keep_animating():
         return seen
     assert max(times("baymax")) > 0.3, "under a surprise the ride screen plays on"
     assert max(times("wipe")) == 0, "a reveal still holds it at its first frame"
+
+
+def test_genie_smoke_sets_each_pixel_once_however_many_puffs_overlap():
+    """Drawing puff by puff was thousands of SetPixel calls a frame: too slow on a Pi."""
+    genie = animation.GenieReveal(64, 64, random.Random(0))
+    rgb = animation.GenieReveal.SMOKE_COLORS[0]
+    genie.puffs = [[30.0, 30.0, 0, 0, 18, rgb, 1.5] for _ in range(50)]
+
+    class Counting(FakeCanvas):
+        def __init__(self):
+            super().__init__(64, 64)
+            self.writes = {}
+
+        def SetPixel(self, x, y, r, g, b):
+            self.writes[(x, y)] = self.writes.get((x, y), 0) + 1
+            super().SetPixel(x, y, r, g, b)
+
+    canvas = Counting()
+    genie._draw_puffs(canvas)
+    assert canvas.writes and max(canvas.writes.values()) == 1
+    lone = Counting()
+    genie.puffs = genie.puffs[:1]
+    genie._draw_puffs(lone)
+    assert canvas.px == lone.px, "stacked identical puffs look like one, not a white blob"
+    centre, edge = lone.px[(30, 30)], lone.px[(31, 30)]
+    assert sum(centre) > sum(edge) > 0, "brightest at the centre, fading out"

@@ -12,5 +12,6 @@
     "apikey": "<API_KEY_HERE>"
   },
   "websocket_only": false,
+  "force_surprise": "",
   "debug": false
 }
