@@ -50,6 +50,11 @@ PARK_REVEALS = ("tink", "buzz")
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
 SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01, "walle_side": 0.018, "army_men": 0.015}
+# Visitors who only turn up on their own rides, and how often on those rides. Matched by
+# a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge.
+RIDE_VISITORS = {
+    "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
+}
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
@@ -250,10 +255,18 @@ def loop_through_attractions(matrix, park, parks=()):
             debug.info(
                 f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
                 f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']}")
-            surprise = forced_surprise or _surprise(random.random())
+            surprise = forced_surprise or _ride_visitor(ride.get("name", "")) or _surprise(random.random())
             if surprise != "wipe":
                 debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
+
+def _ride_visitor(ride_name):
+    """A visitor who belongs to this ride, if one rolls in; None otherwise (and no roll is spent)."""
+    name = ride_name.lower()
+    for visitor, spec in RIDE_VISITORS.items():
+        if any(part in name for part in spec["rides"]) and random.random() < spec["chance"]:
+            return visitor
+    return None
 
 def _surprise(roll):
     # Each visitor owns a slice of the roll as wide as their chance, so order doesn't change the odds.
