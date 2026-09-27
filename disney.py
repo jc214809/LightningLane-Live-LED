@@ -198,7 +198,8 @@ def initialize_park_information_screen(matrix, park):
     landmark = landmark_for(park.get("name"), party)
     if landmark:
         debug.info(f"Rendering {park['name']} landmark{f' for the {party} party' if party else ''}.")
-        show_screen(matrix, landmark_screen(landmark(matrix.width, matrix.height)), landmark.SCREEN_S)
+        scene = landmark(matrix.width, matrix.height, park=park)
+        show_screen(matrix, landmark_screen(scene), scene.SCREEN_S)
     debug.info(f"Rendering {park['name']} Title Screen.")
     show_screen(matrix, _static(render_park_information_screen, park), 8, transition=random.choice(PARK_REVEALS))
 

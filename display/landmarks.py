@@ -1,12 +1,13 @@
 """Short animated landmark scenes shown before each park's title screen."""
 
+from datetime import datetime
 import math
 import random
 
 from driver import graphics
 from display.display import get_text_width, loaded_fonts
 from display.fireworks.fireworks import castle_sprite, _CASTLE_COLORS
-from utils.special_events import SPECIAL_EVENTS
+from utils.special_events import SPECIAL_EVENTS, special_event_now
 
 LANDMARK_S = 3.0
 SKY_RGB = (4, 6, 22)
@@ -17,14 +18,16 @@ class Landmark:
     """Precomputes a static scene once; frame(t) returns {(x, y): rgb} for time t."""
 
     SCREEN_S = LANDMARK_S  # how long the landmark's screen is held, sweep and wipe included
+    STAR_SPACING = 4  # one twinkling star per this many columns
 
-    def __init__(self, width, height, rng=None):
+    def __init__(self, width, height, rng=None, park=None):
         self.width, self.height = width, height
         self.rng = rng or random.Random()
+        self.park = park or {}  # the park it's shown for, for scenes that use its data
         self.scale = 2 if height >= 64 else 1
         self.base = {}
         self.stars = [(self.rng.randrange(width), self.rng.randrange(height), self.rng.uniform(0, 2 * math.pi))
-                      for _ in range(width // 4)]
+                      for _ in range(width // self.STAR_SPACING)]
         self.build()
 
     def build(self):
@@ -172,12 +175,12 @@ class TowerOfTerrorLandmark(Landmark):
               (5, 25, ((-3, 0, 3), (2, -1, 3), (6, 0, 2))),
               (58, 21, ((-4, 0, 2), (0, -1, 3), (4, 0, 2))))
 
-    def __init__(self, width, height, rng=None):
+    def __init__(self, width, height, rng=None, park=None):
         self.view_h = height
         self.pans = height < 64
         self.STRIKE_AT, self.DOORS_AT, self.DROP_AT, self.LAND_AT = self.BEATS[self.pans]
         # The scene is always built 64 tall; frame() shows a window of it on a short board.
-        super().__init__(width, 64, rng)
+        super().__init__(width, 64, rng, park)
 
     def build(self):
         c, rect = self.COLORS, self._rect
@@ -405,9 +408,10 @@ class ScaryJackOLanternLandmark(Landmark):
     """A scary Mickey-shaped jack-o'-lantern (triangle eyes, toothy grin) under a purple Halloween sky: it sits dark, then its
     candle catches and the carved face flickers, over a drifting green ground mist."""
 
-    # The sweep and wipe take 1.2s of the screen, leaving 3.8s of scene: dark, the candle catches
-    # (0.4-0.9s), the wink or hop, then a hold on the lit face long enough to read the name.
-    SCREEN_S = 5.0
+    # The sweep and wipe take 1.2s of the screen, leaving 4.3s of scene: dark, the candle catches
+    # (0.4-0.9s), the wink or hop, then the party's hours fade in and hold long enough to read.
+    SCREEN_S = 5.5
+    STAR_SPACING = 2  # twice the other landmarks' stars: a clear Halloween night
     IGNITE_AT, IGNITE_S = 0.4, 0.5
     OUTLINE = (70, 24, 4)
     STEM = (60, 120, 40)
@@ -571,23 +575,43 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
     MOTIONS = ("wink", "bounce")
     MOTION = None
     GOLD, GHOST, ORANGE = (255, 200, 60), (175, 255, 170), (255, 130, 20)
-    # The party's name: two lines over the pumpkin and one under it on 64x64, and a narrow
-    # column beside it on 64x32.
+    # The party's name: three lines over the pumpkin on 64x64, and a narrow column beside it
+    # on 64x32.
     TITLE_TALL = (("MICKEY'S", GOLD), ("NOT-SO-SCARY", GHOST), ("HALLOWEEN PARTY", ORANGE))
     TITLE_SHORT = (("MICKEY'S", GOLD), ("NOT-SO-", GHOST), ("SCARY", GHOST), ("HALLOWEEN", ORANGE), ("PARTY", ORANGE))
     TITLE_ROW_H = 6
     TITLE_COLUMN_X = 18  # centre of the 64x32 text column: HALLOWEEN, the widest line, starts at x=0
+    # The party's hours on 64x64: down in the mist either side of the pumpkin's base ("7PM" left,
+    # "12AM" right), fading in slowly from the moment the wink or hop starts. (64x32: see JUMP_AT.)
+    MIST_HOURS_FADE_S = 1.2
+    HOURS_RGB = ORANGE
     GROOVE = (150, 52, 4)
-    TONGUE = (230, 55, 110)
+    TONGUE = (225, 40, 110)
     TONGUE_DARK = (30, 6, 10)
     EYES = (-0.25, 0.25)
     EYE_V, EYE_HW, EYE_HH = -0.38, 0.15, 0.31
     WINK_AT, WINK_S = 1.4, 0.6
     HOP_AT, HOP_S = 1.1, 0.45
+    # 64x32 tells its own story on a longer screen (4.8s of scene): the title holds to be read,
+    # then the pumpkin jumps left in an arc and its ear shoves the title off the board, landing in
+    # its place; "TONIGHT / 7PM TO / 12AM" fades in where the pumpkin was, and it winks once landed.
+    SHORT_SCREEN_S = 6.0
+    JUMP_AT, JUMP_S = 2.0, 0.8
+    SHORT_WINK_AT = 3.0
+    TONIGHT_AT, TONIGHT_FADE_S = 2.6, 0.8  # from the moment the pumpkin clears the right half
+    TITLE_COLUMN_RIGHT = 37  # the text column's right edge: HALLOWEEN, its widest line, ends here
 
     def build(self):
         self.motion = self.MOTION or self.rng.choice(self.MOTIONS)
+        self.short = self.height < 64
+        if self.short:
+            # The jump is its move; it winks after landing.
+            self.motion, self.SCREEN_S = "wink", self.SHORT_SCREEN_S
+        self.wink_at = self.SHORT_WINK_AT if self.short else self.WINK_AT
+        self.hours = self._party_hours()
         super().build()
+        # Where the jump lands: in the title's spot, its left ear just inside the board's edge.
+        self.land_cx = self.R * self.EAR_REACH + 0.5
         tongue = set(p for p in self.carved if self._is_tongue(*p))
         self.tongue = sorted(tongue)
         self.carved = [p for p in self.carved if p not in tongue]
@@ -617,25 +641,77 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
             base = (250, 115, 10)
         return tuple(min(255, int(c * light)) for c in base)
 
+    EAR_REACH = 0.95 + 0.56  # head radii from the centre to the outside of an ear
+
     def _layout(self):
-        """Shrunk to leave room for the title: between its lines on 64x64, to its right on 64x32."""
+        """Shrunk to leave room for the title: under its three lines on 64x64, sitting on the bottom
+        edge; to its right on 64x32, until it jumps into the title's spot."""
         if self.height >= 64:
-            r = 15.0
-            return r, self.width / 2 - 0.5, self.height - 7.5 - r
-        r = 9.5
-        return r, self.width - 15.5, self.height - 1.5 - r
+            r = 14.5
+            return r, self.width / 2 - 0.5, self.height - 1.5 - r
+        r = 8.5
+        return r, self.width - 14.0, self.height - 1.0 - r
+
+    def _motion_start(self):
+        """When the wink or hop begins, in scene seconds."""
+        return self.WINK_AT if self.motion == "wink" else self.HOP_AT
+
+    def _head_half_width(self, y):
+        """Half the head's width at row y (0 above or below it)."""
+        dy = abs(y - self.cy)
+        return math.sqrt(self.R ** 2 - dy ** 2) if dy < self.R else 0.0
+
+    def _party_hours(self):
+        """The special event's (start, end) like ("7PM", "12AM"), from the park's schedule, or None."""
+        event = special_event_now(self.park) if self.park else None
+        times = []
+        for key in ("openingTime", "closingTime"):
+            try:
+                times.append(datetime.fromisoformat(event[key]).strftime("%I%p").lstrip("0"))
+            except (TypeError, KeyError, ValueError):
+                return None
+        return tuple(times)
 
     def title(self, t):
         lit = self._lit(t)
         if not lit:
             return []
-        fade = lambda rgb: tuple(int(c * lit) for c in rgb)
-        if self.height >= 64:
-            (a, ca), (b, cb), (c, cc) = self.TITLE_TALL
-            mid = self.width / 2
-            return [(a, mid, 1, fade(ca)), (b, mid, 1 + self.TITLE_ROW_H + 1, fade(cb)),
-                    (c, mid, self.height - self.TITLE_ROW_H - 1, fade(cc))]
-        return [(text, self.TITLE_COLUMN_X, 1 + i * self.TITLE_ROW_H, fade(rgb)) for i, (text, rgb) in enumerate(self.TITLE_SHORT)]
+        fade = lambda rgb, k=lit: tuple(int(c * k) for c in rgb)
+        if self.short:
+            return self._short_title(t, fade)
+        lines = [(text, self.width / 2, 1 + i * (self.TITLE_ROW_H + 1), fade(rgb))
+                 for i, (text, rgb) in enumerate(self.TITLE_TALL)]
+        shown = min(1.0, max(0.0, (t - self._motion_start()) / self.MIST_HOURS_FADE_S))
+        if self.hours and shown:
+            # In the mist on the bottom rows, centred in the gaps beside the pumpkin's base.
+            start, end = self.hours
+            rgb = fade(self.HOURS_RGB, shown)
+            top = self.height - 1 - self.TITLE_ROW_H
+            half = self._head_half_width(top)
+            left_gap, right_gap = self.cx - half - 1, self.cx + half + 1
+            lines += [(start, left_gap / 2, top, rgb), (end, (right_gap + self.width) / 2, top, rgb)]
+        return lines
+
+    def _short_title(self, t, fade):
+        """64x32: the title column, shoved left off the board by the jumping pumpkin, then the hours
+        fading in on the right where the pumpkin stood."""
+        dx, _ = self._jump(t)
+        ear_left = self.cx + dx - self.R * self.EAR_REACH
+        # Only once it's moving: at rest its ear may sit right up against the column.
+        shove = min(0.0, ear_left - 1 - self.TITLE_COLUMN_RIGHT) if dx < 0 else 0.0
+        lines = []
+        for i, (text, rgb) in enumerate(self.TITLE_SHORT):
+            x = self.TITLE_COLUMN_X + shove
+            if x + len(text) * 2 > 0:  # still partly on the board
+                lines.append((text, x, 1 + i * self.TITLE_ROW_H, fade(rgb)))
+        shown = min(1.0, max(0.0, (t - self.TONIGHT_AT) / self.TONIGHT_FADE_S))
+        if self.hours and shown:
+            start, end = self.hours
+            rows = (("TONIGHT", self.GOLD), (f"{start} TO", self.HOURS_RGB), (end, self.HOURS_RGB))
+            top = (self.height - len(rows) * self.TITLE_ROW_H) // 2 + 1
+            lines += [(text, self.width - 16, top + i * self.TITLE_ROW_H, fade(rgb, shown * self._lit(t)))
+                      for i, (text, rgb) in enumerate(rows)]
+        return lines
 
     def _paint_pumpkin(self, cx, cy, r):
         if r < self.R:
@@ -658,11 +734,16 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
     def _paint_stem(self):
         s = self.R / 18
         top = self.cy - self.R
+        # Centred on the head: an even width when its centre falls between two columns, odd when
+        # it's on one, so the base sits square in the middle; the top leans a little to the right.
+        w = max(3, round(4 * s))
+        if (w % 2 == 0) != (self.cx % 1 == 0.5):
+            w += 1
         for i in range(max(4, round(6 * s))):
             y = int(top) - i
-            x = int(self.cx - 1 + i * 0.3)
-            for dx in range(max(3, round(4 * s))):
-                self.shell[(x + dx - 1, y)] = self.STEM if 0 < dx < 3 else (40, 85, 28)
+            left = round(self.cx - (w - 1) / 2 + i * 0.3)
+            for dx in range(w):
+                self.shell[(left + dx, y)] = (40, 85, 28) if dx in (0, w - 1) else self.STEM
 
     def _mouth(self, u, v):
         if abs(u) > 0.6:
@@ -692,7 +773,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
         """How closed the winking eye is, 0 open to 1 shut."""
         if self.motion != "wink":
             return 0.0
-        p = (t - self.WINK_AT) / self.WINK_S
+        p = (t - self.wink_at) / self.WINK_S
         return math.sin(math.pi * p) ** 0.5 if 0 < p < 1 else 0.0
 
     def _wink(self, pumpkin, shut, lit):
@@ -726,6 +807,14 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
             return round(self.R * 0.08 * math.sin(math.pi * (p - 1) / 0.6))
         return 0
 
+    def _jump(self, t):
+        """64x32's leap into the title's spot: (columns moved left, rows lifted) at time t."""
+        if not self.short:
+            return 0.0, 0
+        p = min(1.0, max(0.0, (t - self.JUMP_AT) / self.JUMP_S))
+        ease = p * p * (3 - 2 * p)
+        return (self.land_cx - self.cx) * ease, round(self.R * 0.5 * math.sin(math.pi * p))
+
     def _draw_pumpkin(self, out, t):
         pumpkin = {}
         super()._draw_pumpkin(pumpkin, t)
@@ -735,9 +824,10 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
         shut = self._winking(t)
         if shut:
             self._wink(pumpkin, shut, lit)
-        lift = self._hop(t)
+        dx, jump_lift = self._jump(t)
+        shift, lift = round(dx), self._hop(t) + jump_lift
         for (x, y), rgb in pumpkin.items():
-            self.put(out, x, y - lift, rgb)
+            self.put(out, x + shift, y - lift, rgb)
 
 
 LANDMARKS = {
@@ -767,7 +857,7 @@ def landmark_screen(landmark):
             canvas.SetPixel(x, y, r, g, b)
         lines = landmark.title(t)
         if lines:
-            font = loaded_fonts["title"]
+            font = loaded_fonts["landmark_title"]
             shadow = graphics.Color(*TITLE_SHADOW_RGB)
             for text, center_x, top, rgb in lines:
                 x = round(center_x - get_text_width(font, text) / 2)
