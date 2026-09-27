@@ -34,8 +34,15 @@ def test_a_party_swaps_in_its_own_landmark():
 
 def test_every_special_events_landmark_exists():
     for key, event in landmarks.SPECIAL_EVENTS.items():
+        if not event.get("landmark"):
+            continue
         cls = landmarks.landmark_for("Anywhere", key)
         assert isinstance(cls, type) and issubclass(cls, landmarks.Landmark), key
+
+
+def test_an_event_without_a_landmark_keeps_the_parks_own():
+    assert landmarks.landmark_for("Magic Kingdom", "christmas") is landmarks.CastleLandmark
+    assert landmarks.landmark_for("EPCOT", "extended_evening") is landmarks.SpaceshipEarthLandmark
 
 
 @pytest.mark.parametrize("cls", ALL)

@@ -43,8 +43,19 @@ def render_park_information_screen(matrix, park_obj):
         render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(loaded_fonts["info"], llmp_price), matrix, llmp_price)
         render_park_hours(baseline_y, 1, matrix, park_obj)
 
+# The dots of the "info" font's "*" (4x6-legacy on both boards), as (x, y) from the left edge and
+# the baseline, in the order a multicoloured star lists its colours.
+STAR_DOTS = [(0, -5), (2, -5), (1, -4), (0, -3), (2, -3)]
+
+
 def render_special_ticketed_events(vertical_start, matrix, hours_text, rgb=DEFAULT_STAR_RGB):
-    graphics.DrawText(matrix, loaded_fonts["info"], 1 + get_text_width(loaded_fonts["info"], hours_text), vertical_start, graphics.Color(*rgb), "*")
+    x = 1 + get_text_width(loaded_fonts["info"], hours_text)
+    if isinstance(rgb[0], tuple):
+        # A multicoloured star can't go through DrawText: set its dots one by one.
+        for (dx, dy), dot in zip(STAR_DOTS, rgb):
+            matrix.SetPixel(x + dx, vertical_start + dy, *dot)
+        return
+    graphics.DrawText(matrix, loaded_fonts["info"], x, vertical_start, graphics.Color(*rgb), "*")
 
 def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):

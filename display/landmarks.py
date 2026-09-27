@@ -747,8 +747,8 @@ LANDMARKS = {
 
 def landmark_for(park_name, party=None):
     """The landmark scene class for a park, matched loosely on its name, or None. A party
-    (a SPECIAL_EVENTS key the park is holding today) swaps in that party's own landmark."""
-    if party in SPECIAL_EVENTS:
+    (a SPECIAL_EVENTS key the park is holding today) swaps in that party's own landmark, if it has one."""
+    if SPECIAL_EVENTS.get(party, {}).get("landmark"):
         return globals()[SPECIAL_EVENTS[party]["landmark"]]
     name = (park_name or "").lower()
     for key, cls in LANDMARKS.items():

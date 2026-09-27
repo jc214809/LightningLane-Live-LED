@@ -161,6 +161,58 @@ def test_park_hours_star_takes_the_partys_color(event, color):
     render_park_hours(60, 1, fake_matrix, park_obj)
     assert [call["color"] for call in text_recorder.calls if call["text"] == "*"] == [color]
 
+class PixelMatrix(FakeMatrix):
+    def __init__(self, width, height):
+        super().__init__(width, height)
+        self.pixels = {}
+    def SetPixel(self, x, y, r, g, b):
+        self.pixels[(x, y)] = (r, g, b)
+
+
+def test_holiday_star_colours_each_dot():
+    from utils.special_events import HOLIDAY_STAR
+    matrix = PixelMatrix(width=200, height=64)
+    text_recorder.calls = []
+    render_special_ticketed_events(50, matrix, "9AM-10PM", HOLIDAY_STAR)
+    x = 1 + len("9AM-10PM") * 5
+    green, red, white = (40, 200, 60), (230, 30, 30), (255, 255, 255)
+    assert matrix.pixels == {(x, 45): green, (x + 2, 45): red, (x + 1, 46): white,
+                             (x, 47): red, (x + 2, 47): green}
+    assert not any(call["text"] == "*" for call in text_recorder.calls), "drawn dot by dot, not as text"
+
+
+def test_park_hours_on_a_christmas_party_night_get_the_holiday_star():
+    matrix = PixelMatrix(width=200, height=64)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")  # no park timezone: UTC
+    render_park_hours(60, 1, matrix, {
+        "openingTime": f"{today}T09:00:00-04:00",
+        "closingTime": f"{today}T23:00:00-04:00",
+        "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}],
+        "seasonalEvent": "christmas",
+    })
+    assert set(matrix.pixels.values()) == {(40, 200, 60), (230, 30, 30), (255, 255, 255)}
+
+
+def _bdf_glyph_dots(path, encoding):
+    """(x, y-from-baseline) of each set pixel of one BDF glyph."""
+    lines = open(path).read().splitlines()
+    start = lines.index(f"ENCODING {encoding}")
+    bbx = next(l for l in lines[start:] if l.startswith("BBX")).split()
+    w, h, xoff, yoff = map(int, bbx[1:])
+    rows = lines[lines.index("BITMAP", start) + 1:][:h]
+    return {(xoff + col, -(yoff + h) + r) for r, row in enumerate(rows)
+            for col in range(w) if int(row, 16) >> (len(row) * 4 - 1 - col) & 1}
+
+
+def test_star_dots_match_the_info_fonts_asterisk():
+    import os
+    from display.display import fonts
+    repo = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+    for height in (32, 64):
+        path = fonts()[height]["info"]
+        assert _bdf_glyph_dots(os.path.join(repo, path), 42) == set(park_details.STAR_DOTS), path
+
+
 def test_render_weather_icon_success(monkeypatch):
     # Create a dummy response for requests.get.
     class DummyResponse:
