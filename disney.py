@@ -6,6 +6,7 @@ import threading
 import json
 import random
 import traceback
+from datetime import datetime, timezone
 
 import driver
 from driver import RGBMatrix, __version__
@@ -14,7 +15,7 @@ from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from utils.utils import args, led_matrix_options
-from api.disney_api import fetch_list_of_disney_world_parks, forecast_wait_now, resolve_parks_from_config
+from api.disney_api import fetch_list_of_disney_world_parks, forecast_wait_now, resolve_parks_from_config, show_start_due
 from display.animation import forget_screen, show_screen
 from display.landmarks import LANDMARK_S, landmark_for, landmark_screen
 from display.attractions.attraction_info import draw_attraction_frame
@@ -46,6 +47,11 @@ PARK_REVEALS = ("tink", "buzz")
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
 SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01}
+# When Magic Kingdom's fireworks start, the board drops everything and plays its own
+# castle fireworks (no title) until this long after the show's start time.
+FIREWORKS_SHOW = "Happily Ever After"
+FIREWORKS_SHOW_S = 5 * 60
+_shows_played = set()
 
 def main():
     # Load configuration
@@ -107,6 +113,7 @@ def main():
     last_trip_shown = None
     try:
         while True:
+            play_fireworks_show_if_due(matrix, parks_data)
             render_logo(matrix)
             last_trip_shown = play_trip_countdown(matrix, config, last_trip_shown)
             if parks_data:
@@ -114,8 +121,9 @@ def main():
                     if not park.get("operating"):
                         logging.info(f"Skipping {park['name']} because no attractions are operating.")
                         continue
+                    play_fireworks_show_if_due(matrix, parks_data)
                     initialize_park_information_screen(matrix, park)
-                    loop_through_attractions(matrix, park)
+                    loop_through_attractions(matrix, park, parks_data)
             else:
                 debug.info("No parks data yet, waiting...")
                 time.sleep(5)
@@ -189,8 +197,27 @@ def initialize_park_information_screen(matrix, park):
     debug.info(f"Rendering {park['name']} Title Screen.")
     show_screen(matrix, _static(render_park_information_screen, park), 8, transition=random.choice(PARK_REVEALS))
 
-def loop_through_attractions(matrix, park):
+def play_fireworks_show_if_due(matrix, parks, now=None):
+    """
+    If Happily Ever After started in the last FIREWORKS_SHOW_S seconds in one of the
+    board's parks, play the castle fireworks without the title until that window ends.
+    Each performance plays once. Returns True if it played.
+    """
+    start = show_start_due(parks, FIREWORKS_SHOW, FIREWORKS_SHOW_S, now)
+    if start is None or start in _shows_played:
+        return False
+    _shows_played.add(start)
+    now = now or datetime.now(timezone.utc)
+    remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
+    debug.info(f"{FIREWORKS_SHOW} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
+    render_castle_fireworks(matrix, duration=remaining, title=False)
+    forget_screen(matrix)
+    return True
+
+def loop_through_attractions(matrix, park, parks=()):
     for attraction_info in park.get("attractions", []):
+        # Checked between screens, so the fireworks cut in at most one screen late.
+        play_fireworks_show_if_due(matrix, parks)
         if (attraction_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
                 and attraction_info.get("waitTime") not in [None, '']):
             # Snapshot the dict: the updater threads mutate it in place mid-animation.

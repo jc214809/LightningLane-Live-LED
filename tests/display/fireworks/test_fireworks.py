@@ -272,3 +272,17 @@ def test_title_outline_is_drawn_before_the_text(monkeypatch):
     calls.clear()
     fireworks.draw_title(None, FakeFont(4, 6, 5), [(10, 5, "Hi")], 0)
     assert calls == [], "nothing is drawn before the fade starts"
+
+
+def test_render_can_leave_the_title_off(monkeypatch):
+    drawn = []
+    monkeypatch.setattr(fireworks.time, "sleep", lambda s: None)
+    monkeypatch.setattr(fireworks, "loaded_fonts", {"title": FakeFont(4, 6, 5)})
+    monkeypatch.setattr(fireworks, "graphics", type("G", (), {
+        "Color": FakeColor,
+        "DrawText": staticmethod(lambda canvas, font, x, y, color, text: drawn.append(text)),
+    }))
+    matrix = FakeMatrix(64, 32)
+    render_castle_fireworks(matrix, duration=3.0, fps=10, rng=random.Random(1), title=False)
+    assert drawn == [], "no title text at all"
+    assert matrix.swaps == 30 and matrix.last_frame, "the castle and fireworks still play"

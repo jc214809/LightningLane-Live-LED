@@ -22,6 +22,8 @@ from api.disney_api import (
     build_live_updates,
     parse_forecast,
     forecast_wait_now,
+    parse_showtimes,
+    show_start_due,
     park_has_operating_attraction,
     update_parks_operating_status,
     handle_park_schedule_update,
@@ -1080,3 +1082,55 @@ def test_build_live_updates_includes_forecast_only_when_present():
     with_fc, without_fc = build_live_updates(entries)
     assert with_fc["forecast"] == parse_forecast(FORECAST)
     assert "forecast" not in without_fc
+
+
+# --- showtimes ---
+
+HEA_RAW = [{"type": "Performance Time", "startTime": "2026-09-26T21:30:00-04:00", "endTime": "2026-09-26T21:30:00-04:00"}]
+HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+
+
+def test_parse_showtimes_keeps_valid_starts_and_drops_malformed():
+    raw = HEA_RAW + [{"startTime": "not a time"}, {"endTime": "2026-09-26T22:00:00-04:00"},
+                     {"startTime": "2026-09-26T23:00:00"}, "junk", {"startTime": None}]
+    assert parse_showtimes(raw) == [HEA_START], "naive times are dropped: no way to compare to now"
+    assert parse_showtimes(None) == [] and parse_showtimes([]) == []
+
+
+def test_build_live_updates_carries_showtimes_including_an_empty_list():
+    entries = [
+        {"id": "hea", "entityType": "SHOW", "status": "OPERATING", "lastUpdated": "x", "showtimes": HEA_RAW},
+        {"id": "done", "entityType": "SHOW", "status": "OPERATING", "lastUpdated": "x", "showtimes": []},
+        {"id": "ride", "entityType": "ATTRACTION", "status": "OPERATING", "lastUpdated": "x"},
+    ]
+    hea, done, ride = build_live_updates(entries)
+    assert hea["showtimes"] == [HEA_START]
+    assert done["showtimes"] == [], "an empty list clears yesterday's showtimes"
+    assert "showtimes" not in ride
+
+
+def _parks_with_show(name="Happily Ever After", starts=(HEA_START,)):
+    return [{"name": "Magic Kingdom", "attractions": [
+        {"id": "ride", "name": "Space Mountain"},
+        {"id": "hea", "name": name, "showtimes": list(starts)},
+    ]}]
+
+
+def test_show_start_due_only_inside_the_window_after_a_start():
+    parks = _parks_with_show()
+    at = lambda **kw: HEA_START + timedelta(**kw)
+    assert show_start_due(parks, "Happily Ever After", 300, now=at(seconds=-1)) is None, "not before it starts"
+    assert show_start_due(parks, "Happily Ever After", 300, now=at(seconds=0)) == HEA_START
+    assert show_start_due(parks, "Happily Ever After", 300, now=at(seconds=299)) == HEA_START
+    assert show_start_due(parks, "Happily Ever After", 300, now=at(seconds=300)) is None, "not after the window"
+
+
+def test_show_start_due_ignores_other_shows_and_parks_without_showtimes():
+    now = HEA_START + timedelta(seconds=10)
+    assert show_start_due(_parks_with_show(name="Luminous"), "Happily Ever After", 300, now=now) is None
+    assert show_start_due([{"name": "EPCOT", "attractions": [{"name": "Happily Ever After"}]}],
+                          "Happily Ever After", 300, now=now) is None
+    assert show_start_due([], "Happily Ever After", 300, now=now) is None
+    later = HEA_START + timedelta(hours=2)
+    two = _parks_with_show(starts=(HEA_START, later))
+    assert show_start_due(two, "Happily Ever After", 300, now=later + timedelta(seconds=5)) == later
