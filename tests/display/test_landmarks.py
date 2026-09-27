@@ -173,8 +173,10 @@ def test_scary_jack_o_lantern_face_sits_inside_the_head_below_the_ears():
 
 
 def test_friendly_jack_o_lantern_has_a_pink_tongue_at_the_bottom_of_its_smile():
-    pumpkin = landmarks.FriendlyJackOLanternLandmark(64, 64, random.Random(9))
-    lit = pumpkin.frame(1.5)
+    pumpkin = _pinned("wink")(64, 64, random.Random(9))  # a hop would move the tongue off its resting pixels
+    # The pumpkin's own colours: on 64x64 it sits on the bottom edge, where the mist rolls over its smile.
+    lit = {}
+    pumpkin._draw_pumpkin(lit, 1.5)
     assert pumpkin.tongue
     assert min(y for _, y in pumpkin.tongue) > max(y for _, y in pumpkin.eye_of)
     smile = [p for p in pumpkin.carved if p not in pumpkin.eye_of]
@@ -222,7 +224,44 @@ def test_bouncing_jack_o_lantern_hops_then_lands():
     assert _pinned("wink")(64, 64, random.Random(12))._hop(1.4) == 0, "winker stays put"
 
 
-TITLE_CHAR_W, TITLE_H = 4, 6  # the 4x6 title font both boards use
+TITLE_CHAR_W, TITLE_H = 4, 6  # the 4x6 landmark font both boards use
+
+
+def _text_w(text):
+    """Width of text in the landmark font: 4 columns a letter, 5 for its wider N."""
+    return sum(5 if ch == "N" else TITLE_CHAR_W for ch in text)
+
+
+def _bdf_glyphs(path):
+    """{char: (DWIDTH, BBX, bitmap rows)} from a BDF font."""
+    glyphs, cur = {}, None
+    for line in open(path):
+        key, _, rest = line.strip().partition(" ")
+        if key == "ENCODING":
+            cur = {"code": int(rest), "rows": []}
+        elif cur is not None and key == "DWIDTH":
+            cur["dwidth"] = rest
+        elif cur is not None and key == "BBX":
+            cur["bbx"] = rest
+        elif cur is not None and key == "ENDCHAR":
+            glyphs[chr(cur["code"])] = (cur["dwidth"], cur["bbx"], tuple(cur["rows"]))
+            cur = None
+        elif cur is not None and key not in ("SWIDTH", "BITMAP", "STARTCHAR") and line.strip():
+            cur["rows"].append(line.strip())
+    return glyphs
+
+
+def test_landmark_font_is_the_title_font_with_a_readable_n():
+    import display.display as display
+    for height in (32, 64):
+        assert display.fonts()[height]["landmark_title"].endswith("4x6-landmark.bdf")
+    legacy = _bdf_glyphs("assets/fonts/patched/4x6-legacy.bdf")
+    landmark = _bdf_glyphs("assets/fonts/patched/4x6-landmark.bdf")
+    assert {ch for ch in legacy if legacy[ch] != landmark[ch]} == {"N"}, "only N changes"
+    dwidth, bbx, rows = landmark["N"]
+    assert dwidth.split()[0] == "5" and bbx.split()[0] == "4", "4 pixels wide, with a gap after it"
+    bits = [format(int(r, 16) >> 4, "04b") for r in rows]
+    assert bits[1] == "1101" and bits[2] == "1011", "a diagonal from top left to bottom right"
 
 
 @pytest.mark.parametrize("height", [32, 64])
@@ -239,12 +278,132 @@ def test_friendly_jack_o_lantern_title_lights_up_with_the_candle(height):
 def test_friendly_jack_o_lantern_title_fits_the_board_and_clears_the_pumpkin(height):
     pumpkin = _pinned("wink")(64, height, random.Random(14))
     for text, center_x, top, _ in pumpkin.title(2.0):
-        w = len(text) * TITLE_CHAR_W
+        w = _text_w(text)
         left = round(center_x - w / 2)
         assert left >= 0 and left + w <= 64, text
         assert top >= 0 and top + TITLE_H <= height, text
         box = {(x, y) for x in range(left, left + w + 1) for y in range(top, top + TITLE_H + 1)}
         assert not box & set(pumpkin.shell), f"{text} overlaps the pumpkin"
+
+
+def _party_park():
+    """Magic Kingdom on a party night, 7pm to midnight, dated the park's today."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    today = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    return {"name": "Magic Kingdom", "timezone": "America/New_York", "seasonalEvent": "halloween",
+            "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event",
+                          "openingTime": f"{today}T19:00:00-04:00", "closingTime": f"{today}T23:59:00-04:00"}]}
+
+
+@pytest.mark.parametrize("motion", ["wink", "bounce"])
+def test_party_hours_fade_into_the_mist_on_cue_and_fit_clear_of_the_pumpkin(motion):
+    height, expected = 64, ["7PM", "11PM"]
+    pumpkin = _pinned(motion)(64, height, random.Random(17), park=_party_park())
+    assert pumpkin.hours == ("7PM", "11PM")
+    # Down in the mist, fading in slowly from the moment the wink or hop starts.
+    begin, fade_s = pumpkin._motion_start(), pumpkin.MIST_HOURS_FADE_S
+    assert fade_s >= 1.0, "a slow fade"
+    names = {text for text, *_ in pumpkin.title(begin - 0.05)}
+    assert not names & set(expected), "not before their cue"
+    end = _scene_s(landmarks.FriendlyJackOLanternLandmark) - 0.05
+    hours = [line for line in pumpkin.title(end) if line[0] in expected]
+    assert [line[0] for line in hours] == expected
+    half = [line for line in pumpkin.title(begin + fade_s / 2) if line[0] in expected]
+    assert sum(half[0][3]) < sum(hours[0][3]), "they fade in"
+    assert end - (begin + fade_s) >= 1.2, "and stay long enough to read"
+    assert all(top + TITLE_H >= 63 for text, _, top, _ in hours), "on the bottom rows, in the mist"
+    for text, center_x, top, _ in pumpkin.title(end):
+        w = _text_w(text)
+        left = round(center_x - w / 2)
+        assert left >= 0 and left + w <= 64 and 0 <= top and top + TITLE_H <= height, text
+        box = {(x, y) for x in range(left, left + w + 1) for y in range(top, top + TITLE_H + 1)}
+        assert not box & set(pumpkin.shell), f"{text} overlaps the pumpkin"
+
+
+def _short_scene_s(pumpkin):
+    import display.animation as animation
+    return pumpkin.SCREEN_S - animation.COVER_S - animation.TRANSITIONS["wipe"].duration
+
+
+def _box(text, center_x, top):
+    w = _text_w(text)
+    left = round(center_x - w / 2)
+    return left, left + w, top, top + TITLE_H
+
+
+def test_short_board_pumpkin_gets_a_longer_screen():
+    assert landmarks.FriendlyJackOLanternLandmark(64, 32, random.Random(21)).SCREEN_S == 6.0
+    assert landmarks.FriendlyJackOLanternLandmark(64, 64, random.Random(21)).SCREEN_S == 5.5
+
+
+def test_short_board_pumpkin_jumps_into_the_titles_spot_and_shoves_it_off():
+    pumpkin = landmarks.FriendlyJackOLanternLandmark(64, 32, random.Random(22), park=_party_park())
+    title = [text for text, _ in pumpkin.TITLE_SHORT]
+    before = pumpkin.title(pumpkin.JUMP_AT - 0.05)
+    assert [line[0] for line in before] == title, "the whole title holds to be read first"
+    assert all(x == pumpkin.TITLE_COLUMN_X for _, x, _, _ in before), "not nudged before the jump"
+    assert pumpkin._jump(pumpkin.JUMP_AT - 0.05) == (0.0, 0)
+    for f in range(int(pumpkin.JUMP_S * 30) + 1):
+        t = pumpkin.JUMP_AT + f / 30
+        dx, lift = pumpkin._jump(t)
+        ear_left = pumpkin.cx + dx - pumpkin.R * pumpkin.EAR_REACH
+        for text, center_x, top, _ in pumpkin.title(t):
+            if text in title:
+                assert _box(text, center_x, top)[1] <= ear_left + 1, f"{text} stays ahead of the ear at {t:.2f}"
+    landed = pumpkin.JUMP_AT + pumpkin.JUMP_S
+    assert not {line[0] for line in pumpkin.title(landed)} & set(title), "shoved clean off"
+    dx, lift = pumpkin._jump(landed)
+    assert lift == 0 and 0 <= pumpkin.cx + dx - pumpkin.R * pumpkin.EAR_REACH < 2, "lands at the left edge"
+    assert pumpkin._jump(pumpkin.JUMP_AT + pumpkin.JUMP_S / 2)[1] > 0, "an arc, not a slide"
+
+
+def test_short_board_hours_fade_in_where_the_pumpkin_was_then_it_winks():
+    pumpkin = _pinned("bounce")(64, 32, random.Random(23), park=_party_park())
+    assert pumpkin.motion == "wink", "the jump is its move on 64x32; it winks after landing"
+    end = _short_scene_s(pumpkin) - 0.05
+    hours = ["TONIGHT", "7PM TO", "11PM"]
+    assert not {line[0] for line in pumpkin.title(pumpkin.TONIGHT_AT - 0.05)} & set(hours)
+    lines = [line for line in pumpkin.title(end) if line[0] in hours]
+    assert [line[0] for line in lines] == hours
+    first_left = min(_box(*line[:3])[0] for line in lines)
+    for f in range(int((end - pumpkin.TONIGHT_AT) * 30)):
+        t = pumpkin.TONIGHT_AT + f / 30
+        dx, _ = pumpkin._jump(t)
+        assert pumpkin.cx + dx + pumpkin.R * pumpkin.EAR_REACH < first_left, "the pumpkin has cleared their spot"
+    for text, center_x, top, _ in lines:
+        left, right, y0, y1 = _box(text, center_x, top)
+        assert 0 <= left and right <= 64 and 0 <= y0 and y1 <= 32, text
+    assert end - (pumpkin.TONIGHT_AT + pumpkin.TONIGHT_FADE_S) >= 1.2, "long enough to read"
+    winking = [f / 30 for f in range(int(end * 30)) if pumpkin._winking(f / 30)]
+    assert winking and winking[0] >= pumpkin.JUMP_AT + pumpkin.JUMP_S, "winks after it lands"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_friendly_pumpkin_stem_sits_centred_on_the_head(height):
+    pumpkin = _pinned("wink")(64, height, random.Random(20))
+    stem = [p for p, rgb in pumpkin.shell.items() if rgb in (pumpkin.STEM, (40, 85, 28))]
+    base_y = max(y for _, y in stem)
+    base = [x for x, y in stem if y == base_y]
+    assert (min(base) + max(base)) / 2 == pumpkin.cx, "the base is square in the middle"
+
+
+def test_pumpkin_sky_has_twice_the_stars():
+    castle = landmarks.CastleLandmark(64, 64, random.Random(19))
+    pumpkin = _pinned("wink")(64, 64, random.Random(19))
+    assert len(pumpkin.stars) == 2 * len(castle.stars)
+    lit = pumpkin.frame(3.0)
+    visible = [s for s in pumpkin.stars if (s[0], s[1]) not in pumpkin.shell]
+    assert all(sum(lit[(x, y)]) > 100 for x, y, _ in visible), "they show over the sky"
+
+
+def test_no_party_hours_without_a_special_event_in_the_schedule():
+    assert _pinned("wink")(64, 64, random.Random(18)).hours is None, "no park"
+    park = dict(_party_park(), schedule=[])
+    assert _pinned("wink")(64, 64, random.Random(18), park=park).hours is None
+    park = _party_park()
+    del park["schedule"][0]["closingTime"]
+    assert _pinned("wink")(64, 64, random.Random(18), park=park).hours is None, "a missing time shows nothing"
 
 
 def test_landmark_screen_draws_the_title_with_a_shadow(monkeypatch):
@@ -259,7 +418,7 @@ def test_landmark_screen_draws_the_title_with_a_shadow(monkeypatch):
             pass
 
     calls = []
-    monkeypatch.setitem(landmarks.loaded_fonts, "title", Font())
+    monkeypatch.setitem(landmarks.loaded_fonts, "landmark_title", Font())
     monkeypatch.setattr(landmarks.graphics, "Color", lambda *rgb: rgb, raising=False)
     monkeypatch.setattr(landmarks.graphics, "DrawText",
                         lambda canvas, font, x, y, color, text: calls.append((x, y, color, text)), raising=False)

@@ -17,7 +17,9 @@ def fonts():
             "countdown_number": "assets/fonts/patched/7x13B.bdf",
             "countdown_label": "assets/fonts/patched/4x6-legacy.bdf",
             "countdown_message": "assets/fonts/patched/5x8.bdf",
-            "title": "assets/fonts/patched/4x6-legacy.bdf"
+            "title": "assets/fonts/patched/4x6-legacy.bdf",
+            # The same font with a 4-pixel N, for text over the park landmarks.
+            "landmark_title": "assets/fonts/patched/4x6-landmark.bdf"
         },
         64: {
             "park": "assets/fonts/patched/6x13.bdf",
@@ -27,7 +29,9 @@ def fonts():
             "countdown_number": "assets/fonts/patched/10x20.bdf",
             "countdown_label": "assets/fonts/patched/5x8.bdf",
             "countdown_message": "assets/fonts/patched/6x13.bdf",
-            "title": "assets/fonts/patched/4x6-legacy.bdf"
+            "title": "assets/fonts/patched/4x6-legacy.bdf",
+            # The same font with a 4-pixel N, for text over the park landmarks.
+            "landmark_title": "assets/fonts/patched/4x6-landmark.bdf"
         }
     }
 
