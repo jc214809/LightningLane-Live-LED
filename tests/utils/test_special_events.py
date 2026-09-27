@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import pytest
 
 from utils.special_events import (
-    DEFAULT_STAR_RGB, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, fireworks_show, is_special, seasonal_event,
+    DEFAULT_STAR_RGB, HOLIDAY_STAR, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, fireworks_show, is_special, seasonal_event,
     special_event_now, star_rgb,
 )
 
@@ -38,6 +38,13 @@ def test_is_special_matches_ticketed_parties_and_extended_evenings():
     (["Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
     (["Stitch’s Masquerade Mashup at Mickey’s Not-So-Scary Halloween Party"], "halloween"),
     (["Space Mountain", "Haunted Mansion"], None),
+    (["Meet Santa at Mickey's Very Merry Christmas Party"], "christmas"),
+    (["Holiday Show at Disney Jollywood Nights"], "jollywood"),
+    (["Disney Enchantment at Disney After Hours at Magic Kingdom"], "after_hours"),
+    # Magic Kingdom's list today: an After Hours show alongside the Halloween party's.
+    (["Disney Enchantment at Disney After Hours at Magic Kingdom",
+      "Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
+    (["Extended Evening Hours"], None),
     ([{}], None),
     ([], None),
 ])
@@ -107,6 +114,35 @@ def test_every_fireworks_theme_exists():
 
 def test_every_event_is_fully_described():
     for key, event in SPECIAL_EVENTS.items():
-        assert event["match"] == event["match"].lower(), key
-        assert len(event["star_rgb"]) == 3 and all(0 <= c <= 255 for c in event["star_rgb"]), key
-        assert event["landmark"], key
+        named_by = [event[k] for k in ("match", "schedule") if k in event]
+        assert len(named_by) == 1 and named_by[0] == named_by[0].lower(), key
+        star = event["star_rgb"]
+        dots = star if isinstance(star[0], tuple) else [star]
+        assert len(dots) in (1, 5), key  # one colour, or one per dot of the "*"
+        assert all(len(rgb) == 3 and all(0 <= c <= 255 for c in rgb) for rgb in dots), key
+
+
+def test_single_colour_stars_are_all_different():
+    colours = [e["star_rgb"] for e in SPECIAL_EVENTS.values() if not isinstance(e["star_rgb"][0], tuple)]
+    colours.append(DEFAULT_STAR_RGB)
+    assert len(set(colours)) == len(colours)
+
+
+def test_holiday_parties_get_the_green_red_and_white_star():
+    assert SPECIAL_EVENTS["christmas"]["star_rgb"] == SPECIAL_EVENTS["jollywood"]["star_rgb"] == HOLIDAY_STAR
+    assert set(HOLIDAY_STAR) == {(40, 200, 60), (230, 30, 30), (255, 255, 255)}
+    assert HOLIDAY_STAR[2] == (255, 255, 255), "white centre"
+
+
+def test_extended_evening_is_named_by_the_schedule_not_the_party_season():
+    now = et("2026-09-27 21:30")
+    eeh = party("2026-09-27", opens="21:00", closes="23:00", description="Extended Evening")
+    assert active_party(mk(eeh), now) == "extended_evening", "even in a park holding a party season"
+    assert star_rgb(mk(eeh, seasonal=None), now) == SPECIAL_EVENTS["extended_evening"]["star_rgb"]
+    assert fireworks_show(mk(eeh), now) == NIGHTLY_FIREWORKS
+
+
+def test_a_party_named_after_hours_colours_the_star():
+    now = et("2026-09-27 20:00")
+    assert star_rgb(mk(party("2026-09-27"), seasonal="after_hours"), now) == SPECIAL_EVENTS["after_hours"]["star_rgb"]
+    assert fireworks_show(mk(party("2026-09-27"), seasonal="christmas"), now) == NIGHTLY_FIREWORKS

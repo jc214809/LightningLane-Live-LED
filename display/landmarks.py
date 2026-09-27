@@ -405,7 +405,10 @@ class ScaryJackOLanternLandmark(Landmark):
     """A scary Mickey-shaped jack-o'-lantern (triangle eyes, toothy grin) under a purple Halloween sky: it sits dark, then its
     candle catches and the carved face flickers, over a drifting green ground mist."""
 
-    IGNITE_AT, IGNITE_S = 0.5, 0.6
+    # The sweep and wipe take 1.2s of the screen, leaving 3.8s of scene: dark, the candle catches
+    # (0.4-0.9s), the wink or hop, then a hold on the lit face long enough to read the name.
+    SCREEN_S = 5.0
+    IGNITE_AT, IGNITE_S = 0.4, 0.5
     OUTLINE = (70, 24, 4)
     STEM = (60, 120, 40)
     GLOW_HOT, GLOW_EDGE = (255, 245, 170), (255, 205, 60)
@@ -509,7 +512,7 @@ class ScaryJackOLanternLandmark(Landmark):
 
     def _lit(self, t):
         """0 while the pumpkin sits dark, easing to 1 as the candle catches."""
-        p = (t % LANDMARK_S - self.IGNITE_AT) / self.IGNITE_S
+        p = (t - self.IGNITE_AT) / self.IGNITE_S
         return 0.0 if p <= 0 else 1.0 if p >= 1 else p * p * (3 - 2 * p)
 
     def animate(self, out, t):
@@ -579,8 +582,8 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
     TONGUE_DARK = (30, 6, 10)
     EYES = (-0.25, 0.25)
     EYE_V, EYE_HW, EYE_HH = -0.38, 0.15, 0.31
-    WINK_AT, WINK_S = 1.75, 0.5
-    HOP_AT, HOP_S = 1.2, 0.45
+    WINK_AT, WINK_S = 1.4, 0.6
+    HOP_AT, HOP_S = 1.1, 0.45
 
     def build(self):
         self.motion = self.MOTION or self.rng.choice(self.MOTIONS)
@@ -689,7 +692,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
         """How closed the winking eye is, 0 open to 1 shut."""
         if self.motion != "wink":
             return 0.0
-        p = (t % LANDMARK_S - self.WINK_AT) / self.WINK_S
+        p = (t - self.WINK_AT) / self.WINK_S
         return math.sin(math.pi * p) ** 0.5 if 0 < p < 1 else 0.0
 
     def _wink(self, pumpkin, shut, lit):
@@ -716,7 +719,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
         """Rows the pumpkin is lifted: one hop as the candle catches and a smaller rebound."""
         if self.motion != "bounce":
             return 0
-        p = (t % LANDMARK_S - self.HOP_AT) / self.HOP_S
+        p = (t - self.HOP_AT) / self.HOP_S
         if 0 < p < 1:
             return round(self.R * 0.24 * math.sin(math.pi * p))
         if 1 <= p < 1.6:
@@ -747,8 +750,8 @@ LANDMARKS = {
 
 def landmark_for(park_name, party=None):
     """The landmark scene class for a park, matched loosely on its name, or None. A party
-    (a SPECIAL_EVENTS key the park is holding today) swaps in that party's own landmark."""
-    if party in SPECIAL_EVENTS:
+    (a SPECIAL_EVENTS key the park is holding today) swaps in that party's own landmark, if it has one."""
+    if SPECIAL_EVENTS.get(party, {}).get("landmark"):
         return globals()[SPECIAL_EVENTS[party]["landmark"]]
     name = (park_name or "").lower()
     for key, cls in LANDMARKS.items():

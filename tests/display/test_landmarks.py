@@ -34,8 +34,15 @@ def test_a_party_swaps_in_its_own_landmark():
 
 def test_every_special_events_landmark_exists():
     for key, event in landmarks.SPECIAL_EVENTS.items():
+        if not event.get("landmark"):
+            continue
         cls = landmarks.landmark_for("Anywhere", key)
         assert isinstance(cls, type) and issubclass(cls, landmarks.Landmark), key
+
+
+def test_an_event_without_a_landmark_keeps_the_parks_own():
+    assert landmarks.landmark_for("Magic Kingdom", "christmas") is landmarks.CastleLandmark
+    assert landmarks.landmark_for("EPCOT", "extended_evening") is landmarks.SpaceshipEarthLandmark
 
 
 @pytest.mark.parametrize("cls", ALL)
@@ -77,6 +84,26 @@ def test_tower_story_plays_out_inside_its_screen(height):
     assert tower.LAND_AT <= _tower_scene_s() - 0.2, "the car lands with a beat to spare"
     if tower.pans:
         assert tower.PAN_S < tower.STRIKE_AT, "the tilt finishes before anything happens"
+
+
+def _scene_s(cls):
+    """Scene time a landmark gets: its screen minus the sweep and the wipe in front of it."""
+    import display.animation as animation
+    return cls.SCREEN_S - animation.COVER_S - animation.TRANSITIONS["wipe"].duration
+
+
+@pytest.mark.parametrize("motion", ["wink", "bounce"])
+def test_pumpkin_story_plays_out_inside_its_screen_with_time_to_read_the_name(motion):
+    cls = type("P", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": motion})
+    pumpkin = cls(64, 64, random.Random(16))
+    scene_s = _scene_s(cls)
+    frames = [i / 30 for i in range(int(scene_s * 30))]
+    lit_at = pumpkin.IGNITE_AT + pumpkin.IGNITE_S
+    moving = [t for t in frames if (pumpkin._winking(t) if motion == "wink" else pumpkin._hop(t))]
+    assert moving, "the motion happens on screen"
+    assert lit_at <= moving[0], "the candle is lit before it moves"
+    assert moving[-1] <= scene_s - 1.5, "then it holds on the lit face long enough to read the name"
+    assert pumpkin._lit(scene_s - 0.05) == 1.0 and pumpkin.title(scene_s - 0.05), "still lit at the end, no loop"
 
 
 @pytest.mark.parametrize("height", [32, 64])
