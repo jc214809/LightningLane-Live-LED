@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -340,3 +340,49 @@ def test_surprise_slices_match_their_chances_and_stay_rare():
             "a visitor's odds are its own chance, not shifted by where it sits in the map"
     assert disney._surprise(sum(chances.values())) == "wipe"
     assert disney._surprise(0.999) == "wipe"
+
+
+# ---- Happily Ever After fireworks ----
+
+HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+HEA_PARKS = [{"name": "Magic Kingdom", "attractions": [
+    {"name": "Happily Ever After", "status": "OPERATING", "waitTime": None, "showtimes": [HEA_START]}]}]
+
+
+@pytest.fixture
+def fireworks_played(monkeypatch):
+    played = []
+    monkeypatch.setattr(disney, "render_castle_fireworks",
+                        lambda matrix, duration, title=True: played.append((duration, title)))
+    monkeypatch.setattr(disney, "_shows_played", set())
+    return played
+
+
+def test_fireworks_play_without_the_title_once_per_performance(fireworks_played):
+    now = HEA_START + timedelta(seconds=8)
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
+    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 8, False)], "until the window ends, no title"
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now + timedelta(seconds=40)) is False
+    assert len(fireworks_played) == 1, "the same performance never plays twice"
+
+
+def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played):
+    assert not disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START - timedelta(minutes=1))
+    assert not disney.play_fireworks_show_if_due(
+        FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=disney.FIREWORKS_SHOW_S))
+    epcot = [{"name": "EPCOT", "attractions": [{"name": "Spaceship Earth", "status": "OPERATING", "waitTime": 15}]}]
+    assert not disney.play_fireworks_show_if_due(FakeMatrix(), epcot, now=HEA_START + timedelta(seconds=5))
+    assert fireworks_played == []
+
+
+def test_ride_loop_checks_for_the_show_before_each_screen(monkeypatch, screens):
+    order = []
+    monkeypatch.setattr(disney, "play_fireworks_show_if_due", lambda matrix, parks: order.append("check"))
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: order.append("ride"))
+    monkeypatch.setattr(disney.random, "random", lambda: 1.0)
+    park = {"name": "MK", "attractions": [
+        {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
+        {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
+    ]}
+    disney.loop_through_attractions(FakeMatrix(), park, HEA_PARKS)
+    assert order == ["check", "ride", "check", "ride"]

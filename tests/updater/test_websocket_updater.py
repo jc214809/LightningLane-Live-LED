@@ -494,6 +494,17 @@ def test_ws_update_stores_forecast_and_keeps_it_when_absent():
     assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
 
 
+
+def test_ws_update_stores_showtimes_and_keeps_them_when_absent():
+    from datetime import datetime, timezone
+    parks = _parks_with_attr()
+    raw = [{"type": "Performance Time", "startTime": "2026-09-26T21:30:00-04:00"}, {"startTime": "bad"}]
+    _apply_live_update(_make_livedata_msg(data={"status": "OPERATING", "showtimes": raw}), parks)
+    attr = parks[0]["attractions"][0]
+    assert attr["showtimes"] == [datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)]
+    _apply_live_update(_make_livedata_msg(), parks)
+    assert attr["showtimes"] == [datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)]
+
 # --- network badge flag ---
 
 def _run_ws_loop_once(session_factory):

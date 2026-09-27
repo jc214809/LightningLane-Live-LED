@@ -299,14 +299,14 @@ def draw_title(canvas, font, layout, alpha):
         graphics.DrawText(canvas, font, x, y, color, text)
 
 
-def render_castle_fireworks(matrix, duration=12.0, fps=30, rng=None):
-    """Animate the castle fireworks scene on the matrix for `duration` seconds."""
+def render_castle_fireworks(matrix, duration=12.0, fps=30, rng=None, title=True):
+    """Animate the castle fireworks scene on the matrix for `duration` seconds, with or without the app's title."""
     show = FireworksShow(matrix.width, matrix.height, rng)
     canvas = frame_canvas(matrix)
     frame_time = 1.0 / fps
     frames = int(duration * fps)
     font = loaded_fonts.get("title")
-    layout = title_layout(font, matrix.width, matrix.height) if font else []
+    layout = title_layout(font, matrix.width, matrix.height) if font and title else []
     debug.info(f"Rendering castle fireworks for {duration}s ({frames} frames).")
     # Pre-roll so the sky isn't empty on the first frame.
     for _ in range(20):

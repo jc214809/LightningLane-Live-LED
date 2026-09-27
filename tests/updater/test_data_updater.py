@@ -665,6 +665,17 @@ def test_merge_live_data_copies_forecast_and_keeps_it_when_an_update_has_none():
     assert existing[0]["forecast"] == forecast
 
 
+
+def test_merge_live_data_copies_showtimes_and_an_empty_list_clears_them():
+    start = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+    existing = [{"id": "hea", "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]
+    merge_live_data(existing, [{"id": "hea", "status": "OPERATING", "lastUpdatedTs": "a", "showtimes": [start]}])
+    assert existing[0]["showtimes"] == [start]
+    merge_live_data(existing, [{"id": "hea", "status": "OPERATING", "lastUpdatedTs": "b"}])
+    assert existing[0]["showtimes"] == [start], "an update without showtimes keeps them"
+    merge_live_data(existing, [{"id": "hea", "status": "OPERATING", "lastUpdatedTs": "c", "showtimes": []}])
+    assert existing[0]["showtimes"] == []
+
 # --- network badge flag ---
 
 TWO_PARKS = [

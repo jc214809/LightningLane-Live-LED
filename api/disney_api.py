@@ -328,6 +328,37 @@ def forecast_wait_now(forecast, now=None):
     return None
 
 
+def parse_showtimes(raw_showtimes):
+    """Start times (aware datetimes) of a show's performances, dropping malformed entries."""
+    starts = []
+    for show in raw_showtimes or []:
+        when = show.get("startTime") if isinstance(show, dict) else None
+        try:
+            start = datetime.fromisoformat(when.replace("Z", "+00:00"))
+        except (ValueError, AttributeError, TypeError):
+            continue
+        if start.tzinfo is not None:
+            starts.append(start)
+    return starts
+
+
+def show_start_due(parks, show_name, window_s, now=None):
+    """
+    The start time of a performance of `show_name` that began within the last
+    `window_s` seconds, in any of `parks`, or None. The API gives no end time, so
+    "in progress" means "started less than window_s ago".
+    """
+    now = now or datetime.now(timezone.utc)
+    for park in parks:
+        for attr in park.get("attractions", []):
+            if attr.get("name") != show_name:
+                continue
+            for start in attr.get("showtimes") or []:
+                if start <= now < start + timedelta(seconds=window_s):
+                    return start
+    return None
+
+
 def build_live_updates(live_entries):
     """
     Convert raw liveData entries into the minimal update dicts merge_live_data
@@ -351,6 +382,8 @@ def build_live_updates(live_entries):
             update["waitTime"] = parse_queue_wait(entry.get("queue") or {})
         if entry.get("forecast"):
             update["forecast"] = parse_forecast(entry["forecast"])
+        if "showtimes" in entry:
+            update["showtimes"] = parse_showtimes(entry["showtimes"])
         updates.append(update)
     return updates
 
