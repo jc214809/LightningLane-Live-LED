@@ -3,6 +3,7 @@ import random
 import time
 
 from driver import graphics
+from utils import debug
 
 from display.network import draw_if_offline
 
@@ -43,25 +44,38 @@ def ease_out(p):
 
 
 def run_frames(matrix, draw_frame, duration_s, fps=FPS):
-    """Call draw_frame(canvas, t) each frame for duration_s; once it returns False the image is static and we sleep out the rest."""
+    """
+    Call draw_frame(canvas, t) each frame for duration_s; once it returns False the image
+    is static and we sleep out the rest. Returns (frames drawn, seconds spent animating)
+    so callers can see how close a board gets to `fps`.
+    """
     frame_time = 1.0 / fps
     frames = int(duration_s * fps)
     canvas = frame_canvas(matrix)
     began = time.monotonic()
+    drawn = 0
+
+    def animated_s():
+        # A board that keeps up spends a whole frame slot on its last frame too.
+        return max(time.monotonic() - began, drawn * frame_time)
+
     for i in range(frames):
         start = time.monotonic()
         # A slow board drops frames rather than stretching the screen past duration_s.
         if start - began >= duration_s:
-            return
+            return drawn, animated_s()
         canvas.Clear()
         animating = draw_frame(canvas, i / fps)
         canvas = present(matrix, canvas)
+        drawn += 1
         if not animating:
+            spent = animated_s()
             time.sleep(max(0.0, duration_s - (time.monotonic() - began)))
-            return
+            return drawn, spent
         remaining = frame_time - (time.monotonic() - start)
         if remaining > 0:
             time.sleep(remaining)
+    return drawn, animated_s()
 
 
 def _blackout(canvas, x0, x1, height):
@@ -1705,5 +1719,8 @@ def show_screen(matrix, draw_screen, hold_s, transition="wipe", rng=None):
         revealing = reveal.overlay(canvas, t_reveal)
         return bool(moving or revealing)
 
-    run_frames(matrix, frame, hold_s)
+    drawn, spent = run_frames(matrix, frame, hold_s)
     _last_screen[id(matrix)] = (draw_screen, last_t[0])
+    if transition != "wipe" and spent > 0:
+        # A readout for checking characters on real boards: journalctl shows how close each gets.
+        debug.info(f"{transition}: {drawn / spent:.0f} fps over {spent:.1f}s of animation (target {FPS})")

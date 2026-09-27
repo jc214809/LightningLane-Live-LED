@@ -386,3 +386,28 @@ def test_ride_loop_checks_for_the_show_before_each_screen(monkeypatch, screens):
     ]}
     disney.loop_through_attractions(FakeMatrix(), park, HEA_PARKS)
     assert order == ["check", "ride", "check", "ride"]
+
+
+# ---- force_surprise ----
+
+def test_force_surprise_plays_that_visitor_on_every_ride_screen(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.99)
+    park = {"name": "MK", "attractions": [{"name": n, "waitTime": 30, "status": "OPERATING"} for n in ("A", "B", "C")]}
+    disney.set_forced_surprise("genie")
+    try:
+        disney.loop_through_attractions(FakeMatrix(), park)
+    finally:
+        disney.set_forced_surprise(None)
+    assert [s["transition"] for s in screens] == ["genie"] * 3
+
+
+def test_force_surprise_ignores_names_that_are_not_characters(monkeypatch):
+    warnings = []
+    monkeypatch.setattr(disney.debug, "warning", warnings.append)
+    for bad in ("gennie", "wipe"):
+        disney.set_forced_surprise(bad)
+        assert disney.forced_surprise is None
+    assert len(warnings) == 2 and "slinky_wrap" in warnings[0], "the warning lists the valid choices"
+    disney.set_forced_surprise("")
+    assert disney.forced_surprise is None and len(warnings) == 2, "unset is silent"

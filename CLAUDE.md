@@ -78,6 +78,7 @@ Before each park title screen, `display/landmarks.py` plays a 3s animated landma
 - `trip_countdown.trip_dates` — list of trips, each an ISO date string (`YYYY-MM-DD`) or `{"start", "end", "name"}` (end and name optional); `utils/trips.py:active_trip()` shows only one — a trip under way (or ended within 2 days, "Welcome Home"; open-ended trips hold for 7 days after start), else the nearest upcoming. A name replaces "DISNEY" under the day count when it fits on one line (~10 chars on 32-row, ~12 on 64-row)
 - `trip_countdown.trip_date` — legacy single-date fallback
 - `weather.apikey` — OpenWeatherMap API key
+- `force_surprise` — a transition name (e.g. `"genie"`, `"slinky_wrap"`) to play on every ride screen, for checking a character on a real board; empty/unset in normal use. Every character transition logs its achieved fps (`genie: 18 fps over 3.8s of animation (target 30)`), so `journalctl -u LightningLane-Live-LED.service -f` shows a board's real speed
 - `debug` — enables verbose logging
 
 ### Testing

@@ -88,6 +88,27 @@ def test_run_frames_stops_redrawing_once_static_and_sleeps_out_the_rest(clock):
     assert clock.now == pytest.approx(8)
 
 
+def test_run_frames_reports_frames_drawn_and_time_spent_animating(clock):
+    calls = []
+    drawn, spent = animation.run_frames(FakeMatrix(), lambda canvas, t: calls.append(t) or len(calls) < 30, duration_s=8)
+    assert drawn == 30 and drawn / spent == pytest.approx(animation.FPS), "a board that keeps up reports 30 fps"
+
+    def slow(canvas, t):
+        clock.now += 0.1
+        return True
+
+    drawn, spent = animation.run_frames(FakeMatrix(), slow, duration_s=2)
+    assert drawn / spent == pytest.approx(10, rel=0.1), "a board three times too slow reports ~10 fps"
+
+
+def test_character_transitions_log_their_frame_rate(clock, monkeypatch):
+    logged = []
+    monkeypatch.setattr(animation.debug, "info", logged.append)
+    animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 1.0, transition="baymax", rng=random.Random(0))
+    animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 1.0, transition="wipe")
+    assert len(logged) == 1 and logged[0].startswith("baymax: 30 fps"), "only characters log, not every wipe"
+
+
 def test_slow_frames_do_not_stretch_the_screen(clock):
     matrix = FakeMatrix()
 
