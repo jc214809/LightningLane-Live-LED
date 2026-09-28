@@ -352,6 +352,20 @@ def test_mickey_pumpkin_bursts_have_an_orange_outline_green_stem_and_a_face(heig
     assert max(s.vy for s in stem) < min(s.vy for s in face), "stem on top, face below it"
 
 
+@pytest.mark.parametrize("radius", [5, 9])  # the pumpkin's size on 64x32 and on 64x64
+def test_mickey_pumpkin_head_is_filled_in_around_its_face_on_both_boards(radius):
+    # The dark gap round the carved face once joined up on the small pumpkin and left its head
+    # an outline and a face (8% filled); the old "any fill at all" check passed on the ears alone.
+    points = fireworks._mickey_pumpkin_points(radius)
+    led = lambda x, y: (round(x * radius), round(y * radius))
+    fill = {led(x, y) for x, y, c in points if c == fireworks.PUMPKIN_FILL_RGB}
+    face = {led(x, y) for x, y, c in points if c == fireworks.FACE_RGB}
+    head = [(x, y) for x in range(-radius, radius + 1) for y in range(-radius, radius + 1)
+            if x * x + y * y <= (radius - 1.5) ** 2 and (x, y) not in face]
+    filled = sum(1 for p in head if p in fill) / len(head)
+    assert filled > 0.45, f"only {filled:.0%} of the head round the face is filled"
+
+
 def test_halloween_bursts_are_mickey_pumpkins_among_regular_fireworks():
     show = FireworksShow(64, 64, random.Random(12), "halloween")
     shapes = [show._pick_shape() for _ in range(2000)]
