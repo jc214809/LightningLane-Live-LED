@@ -179,17 +179,25 @@ class FlyByReveal:
 
 
 class TinkReveal(FlyByReveal):
-    """Tinker Bell bobs across leaving a drifting trail of pixie dust."""
+    """
+    Tinker Bell bobs across leaving a drifting trail of pixie dust. Spaceship Earth's
+    landmark borrows her too (at 1x on both boards), so there's one Tink.
+    """
 
-    # '.' empty, W wing, Y glow, G dress.
+    # Wings either side, her yellow bun, a face, the green dress and legs; 9x8 on 64x32 and
+    # doubled on 64x64 like the other fly-bys. It replaced a 5x5 Tink that read as a
+    # glowing glyph rather than a fairy. '.' empty, W wing, Y hair/glow, S skin, G dress.
     art = [
-        "WW.WW",
-        "WWYWW",
-        "..Y..",
-        ".GGG.",
-        "..G..",
+        "....Y....",
+        "WW.YYY.WW",
+        "WWWYSYWWW",
+        "WWW.S.WWW",
+        ".WWGGGWW.",
+        "...GGG...",
+        "..GGGGG..",
+        "...S.S...",
     ]
-    colors = {"W": (170, 220, 255), "Y": (255, 245, 170), "G": (60, 220, 90)}
+    colors = {"W": (170, 220, 255), "Y": (255, 230, 110), "S": (255, 205, 170), "G": (60, 220, 90)}
     dust_colors = [(255, 235, 140), (255, 255, 255), (255, 200, 90)]
 
     def position(self, t):
