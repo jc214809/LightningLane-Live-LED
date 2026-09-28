@@ -232,6 +232,17 @@ def test_flyby_crosses_the_whole_board_and_stays_vertically_on_it(reveal_cls, he
         assert 0 <= y and y + reveal.sprite_h <= height
 
 
+def test_tink_is_a_fairy_not_a_glyph_and_doubles_on_64x64():
+    art = animation.TinkReveal.art
+    assert (len(art[0]), len(art)) == (9, 8)
+    cells = "".join(art)
+    assert {"W", "Y", "S", "G"} <= set(cells), "wings, her bun, a face and the green dress"
+    assert art[0].strip(".") == "Y", "her bun on top"
+    for height, size in ((32, (9, 8)), (64, (18, 16))):
+        tink = animation.TinkReveal(64, height, random.Random(1))
+        assert (tink.sprite_w, tink.sprite_h) == size
+
+
 def test_buzz_climbs_and_trails_rocket_flame_behind_him():
     buzz = animation.BuzzReveal(64, 64, random.Random(4))
     _, y_start = buzz.position(0)
