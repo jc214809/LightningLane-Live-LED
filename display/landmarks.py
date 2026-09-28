@@ -218,7 +218,9 @@ class SpaceshipEarthLandmark(Landmark):
     def _palette(self, h):
         h %= 1.0
         n = len(self.PALETTE)
-        i, f = int(h * n), (h * n) % 1
+        # Wrap the index too: a hair below zero, h % 1.0 is exactly 1.0 (the facet dead centre
+        # of the sphere does that on some platforms), which would index past the palette.
+        i, f = int(h * n) % n, (h * n) % 1
         a, b = self.PALETTE[i], self.PALETTE[(i + 1) % n]
         return tuple(int(x + (y - x) * f) for x, y in zip(a, b))
 

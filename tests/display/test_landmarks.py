@@ -603,3 +603,10 @@ def test_spaceship_earth_tink_lands_on_its_shoulder_inside_the_board(height):
     assert earth.tink_w / 2 <= x <= earth.width - earth.tink_w / 2
     assert earth.tink_h / 2 - 1 <= y <= earth.height - earth.tink_h / 2
     assert x > earth.cx and y < earth.cy, "on its upper right shoulder"
+
+
+def test_spaceship_earth_palette_wraps_a_hair_below_zero():
+    # -1e-18 % 1.0 == 1.0 in Python: it indexed past the palette on CI for the centre facet.
+    earth = _earth(32)
+    assert earth._palette(-1e-18) == earth._palette(0.0) == earth.PALETTE[0]
+    assert earth._palette(1.0) == earth.PALETTE[0]
