@@ -120,14 +120,18 @@ def _mickey_pumpkin_points(radius):
     face = _pumpkin_face(radius)
     # Fill: one spark per LED at full size, inside the shape, clear of the outline, with a dark
     # gap round the face like the edge of a carved hole, so the glow stands out from the orange.
+    # On a small pumpkin the face's sparks sit an LED or so apart, so a 1.6-LED gap round each
+    # would join up and empty the whole head (64x32's pumpkins had just an outline and a face):
+    # there, only clear the LEDs the face itself lands on.
     step = 1 / radius
+    gap = 1.6 if radius >= 6 else 0.6
     n = int(1.6 / step) + 1
     for j in range(-n, n + 1):
         for i in range(-n, n + 1):
             x, y = i * step, j * step
             if not any((x - cx) ** 2 + (y - cy) ** 2 <= (r - 1.2 * step) ** 2 for cx, cy, r in _MICKEY_CIRCLES):
                 continue
-            if any((x - fx) ** 2 + (y - fy) ** 2 < (1.6 * step) ** 2 for fx, fy, _ in face):
+            if any((x - fx) ** 2 + (y - fy) ** 2 < (gap * step) ** 2 for fx, fy, _ in face):
                 continue
             points.append((x, y, PUMPKIN_FILL_RGB))
     # A stubby stem, about 3 sparks wide on a 64-row board, leaning a little to the right at the top.
