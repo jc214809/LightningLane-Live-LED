@@ -702,6 +702,11 @@ def test_update_parks_operating_status_no_refresh_when_already_operating(monkeyp
     }
     monkeypatch.setattr("api.disney_api.fetch_park_schedule",
                         lambda park_id: (_ for _ in ()).throw(AssertionError("schedule fetched")))
+    # Midday, outside the 3am-9am daily refresh window: with no timezone the park falls back
+    # to UTC, so run for real between 11pm and 5am Eastern this test saw the legitimate daily
+    # refresh fire and failed.
+    monkeypatch.setattr("api.disney_api._park_local_now",
+                        lambda p: datetime(2026, 9, 27, 12, 0, tzinfo=timezone.utc))
     refreshed = []
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
     updated = update_parks_operating_status([park])
