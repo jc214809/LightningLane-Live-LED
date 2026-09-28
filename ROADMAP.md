@@ -357,22 +357,16 @@ while the wipe is still uncovering them, and the scene gets back the 0.65s the w
 eat, as a longer hold on the party's hours at the end. Other landmarks can opt in the same way
 if it suits them.
 
-## 5. Fix the EPCOT ball (Spaceship Earth landmark)
+## ~~5. Fix the EPCOT ball (Spaceship Earth landmark)~~ Done
 
-`SpaceshipEarthLandmark` reads as a grey ball on legs. Rendered on both boards:
-- The facet pattern comes out as uniform grey noise, not the triangles that make the sphere
-  recognisable; fewer, larger, bolder facets would read better.
-- The only motion is a glint sweeping across the panels: nothing happens.
-- On 64x32 it shrinks to a small ball with stubby legs in the middle of an empty board.
-
-Questions to settle first, with a reference photo (also in CHARACTERS.md):
-- Day or night? At night the sphere is lit in changing colors ("Beacons of Magic"), which
-  could be the motion and would stand out far more than grey.
-- What identifies it at this size: a bold triangle pattern, the tripod legs, the EPCOT
-  entrance sign or fountain, or the silhouette alone?
-- One story beat: the lights coming on, a color wave around the sphere, fireworks behind it,
-  a monorail passing in front (ties in with #12 in the character list)?
-- 64x32 composition: shrink, crop, or tilt up like the Tower of Terror?
+It read as a grey ball on legs: stripes that rendered as noise, and a glint for motion.
+Redrawn from the user's photo, at night under the Beacons of Magic: a triangle lattice
+wrapped onto the sphere (facets shrink toward the rim, alternating lit and shaded faces) in
+EPCOT's purples, blues, teals and pinks, on slab legs drawn behind it so it stays a perfect
+sphere. It's big and low on both boards (the legs just peek out; tall legs read as a water
+tower). The story is Tinker Bell's: she spirals up the dark sphere in three even laps,
+hidden behind it and in front, and each facet lights as her pixie dust passes, then she lands
+on its shoulder while the colours roll around it. 4.5s, playing under the wipe.
 
 ## 6. Fix the Tree of Life landmark
 
