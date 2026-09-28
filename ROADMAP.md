@@ -11,38 +11,40 @@ Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey,
 Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
 `walle` is kept, out of the rotation), and the Green Army Men (`army_men`).
 
-| # | Character | Park / ride | Signature motion | Mechanic |
-|---|---|---|---|---|
-| 1 | TRON light cycle | MK: TRON Lightcycle Run | races across; its light trail is the wipe | Fly-by |
-| 2 | Olaf | EPCOT: Frozen Ever After | snowballs stack into Olaf, or he belly-slides across | Assemble / standalone |
-| 3 | Mike Wazowski | DHS: Monsters, Inc. | pops up from the bottom and blinks his one eye | Peek |
-| 4 | Luxo Jr. lamp | DHS: Pixar Place | hops in with a squash and stretch; its light cone reveals (could pair with #13) | Standalone |
-| 5 | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
-| 6 | Jack Skellington | Halloween party nights | white skull close-up peeks up | Peek |
-| 7 | Santa Goofy / Santa-hat Mickey | Christmas party, Jollywood Nights | red-and-white holiday cameo | TBD |
-| 8 | Remy | EPCOT: Remy's Ratatouille Adventure | scurries along the bottom | Fly-by |
-| 9 | Na'vi banshee | AK: Avatar Flight of Passage | glowing blue and purple swoop | Fly-by |
-| 10 | Nemo and a school of fish | EPCOT: The Seas with Nemo & Friends | a school of fish swims across as the wipe | Fly-by |
-| 11 | Steamboat Willie Mickey | MK | whistling at the wheel | TBD |
-| 12 | Monorail | all of Walt Disney World | glides across as a band of color | Fly-by |
-| 13 | Pixar Ball | DHS: Pixar Place, Toy Story Land | bounces across in 3-4 hops, uncovering the next ride | Fly-by (bounce) |
-| ~~14~~ | ~~Green Army Men~~ Done | DHS: Toy Story Land | parachute in, land, chutes slump, hop off in step on their bases | New: top-down drop reveal |
-| 15 | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, "Ka-chow" stop, peels out leaving speed streaks | Fly-by (drive-by) |
-| 16 | Rex | DHS: Toy Story Land | stomps in, tail-swipes the old screen off the board, looks sheepish and runs | Wreck (`wants_prev`) |
-| 17 | Goofy | MK: The Barnstormer | flies his biplane across the board | Fly-by |
-| 18 | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
-| 19 | R2-D2 | DHS: Galaxy's Edge | rolls across on his treads, dome swivelling, light blinking | Fly-by |
-| ~~20~~ | ~~Millennium Falcon~~ Done | DHS: Smugglers Run | stars stretch into hyperspace streaks, the Falcon jumps; the streaks are the wipe | Standalone |
-| 21 | Baby Groot | EPCOT: Guardians: Cosmic Rewind | sprouts from the bottom edge, grows like Baymax inflates, then dances | Peek (procedural, not fixed art) |
-| 22 | Ray the firefly | MK: Tiana's Bayou Adventure | glowing firefly wanders across, leaving a light trail | Fly-by |
-| 23 | Tigger | MK: Many Adventures of Winnie the Pooh | bounces across on his tail | Fly-by (bounce) |
-| 24 | Jungle Cruise hippo | MK: Jungle Cruise | eyes and ears surface from the bottom, wiggles its ears, sinks back down | Peek |
-| 25 | Donald Duck | EPCOT: Gran Fiesta Tour | tantrum knocks the old screen to pieces, feathers flying | Wreck (`wants_prev`) |
-| 26 | Yeti | AK: Expedition Everest | huge dark silhouette looms up behind the screen, eyes glowing | Peek |
-| 27 | Simba on Pride Rock | AK | held up against an orange sunrise gradient | Landmark/scene, not a ride transition |
-| 28 | Madame Leota | MK: Haunted Mansion | green glowing head appears in a crystal ball | Peek; pairs with #5 for Halloween |
-| 29 | Cinderella's pumpkin coach | MK | a pumpkin bursts into sparkles and becomes the coach | Assemble |
-| 30 | Chip 'n' Dale | MK / DHS (various) | two heads peek up side by side | Peek |
+Put a ✅ in the Done column when a character ships.
+
+| # | Done | Character | Park / ride | Signature motion | Mechanic |
+|---|---|---|---|---|---|
+| 1 | | TRON light cycle | MK: TRON Lightcycle Run | races across; its light trail is the wipe | Fly-by |
+| 2 | | Olaf | EPCOT: Frozen Ever After | snowballs stack into Olaf, or he belly-slides across | Assemble / standalone |
+| 3 | | Mike Wazowski | DHS: Monsters, Inc. | pops up from the bottom and blinks his one eye | Peek |
+| 4 | | Luxo Jr. lamp | DHS: Pixar Place | hops in with a squash and stretch; its light cone reveals (could pair with #13) | Standalone |
+| 5 | | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
+| 6 | | Jack Skellington | Halloween party nights | white skull close-up peeks up | Peek |
+| 7 | | Santa Goofy / Santa-hat Mickey | Christmas party, Jollywood Nights | red-and-white holiday cameo | TBD |
+| 8 | | Remy | EPCOT: Remy's Ratatouille Adventure | scurries along the bottom | Fly-by |
+| 9 | | Na'vi banshee | AK: Avatar Flight of Passage | glowing blue and purple swoop | Fly-by |
+| 10 | | Nemo and a school of fish | EPCOT: The Seas with Nemo & Friends | a school of fish swims across as the wipe | Fly-by |
+| 11 | | Steamboat Willie Mickey | MK | whistling at the wheel | TBD |
+| 12 | | Monorail | all of Walt Disney World | glides across as a band of color | Fly-by |
+| 13 | | Pixar Ball | DHS: Pixar Place, Toy Story Land | bounces across in 3-4 hops, uncovering the next ride | Fly-by (bounce) |
+| 14 | ✅ | Green Army Men | DHS: Toy Story Land | parachute in, land, chutes slump, hop off in step on their bases | New: top-down drop reveal |
+| 15 | | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, "Ka-chow" stop, peels out leaving speed streaks | Fly-by (drive-by) |
+| 16 | | Rex | DHS: Toy Story Land | stomps in, tail-swipes the old screen off the board, looks sheepish and runs | Wreck (`wants_prev`) |
+| 17 | | Goofy | MK: The Barnstormer | flies his biplane across the board | Fly-by |
+| 18 | | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
+| 19 | | R2-D2 | DHS: Galaxy's Edge | rolls across on his treads, dome swivelling, light blinking | Fly-by |
+| 20 | ✅ | Millennium Falcon | DHS: Smugglers Run, Rise of the Resistance | drops out of hyperspace, cruises, then jumps to lightspeed; the old screen streaks away and a flash fades to the new ride | Standalone (`wants_prev` + `wants_new`) |
+| 21 | | Baby Groot | EPCOT: Guardians: Cosmic Rewind | sprouts from the bottom edge, grows like Baymax inflates, then dances | Peek (procedural, not fixed art) |
+| 22 | | Ray the firefly | MK: Tiana's Bayou Adventure | glowing firefly wanders across, leaving a light trail | Fly-by |
+| 23 | | Tigger | MK: Many Adventures of Winnie the Pooh | bounces across on his tail | Fly-by (bounce) |
+| 24 | | Jungle Cruise hippo | MK: Jungle Cruise | eyes and ears surface from the bottom, wiggles its ears, sinks back down | Peek |
+| 25 | | Donald Duck | EPCOT: Gran Fiesta Tour | tantrum knocks the old screen to pieces, feathers flying | Wreck (`wants_prev`) |
+| 26 | | Yeti | AK: Expedition Everest | huge dark silhouette looms up behind the screen, eyes glowing | Peek |
+| 27 | | Simba on Pride Rock | AK | held up against an orange sunrise gradient | Landmark/scene, not a ride transition |
+| 28 | | Madame Leota | MK: Haunted Mansion | green glowing head appears in a crystal ball | Peek; pairs with #5 for Halloween |
+| 29 | | Cinderella's pumpkin coach | MK | a pumpkin bursts into sparkles and becomes the coach | Assemble |
+| 30 | | Chip 'n' Dale | MK / DHS (various) | two heads peek up side by side | Peek |
 
 ### Notes per character
 
