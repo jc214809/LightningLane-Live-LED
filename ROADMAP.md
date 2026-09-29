@@ -82,6 +82,20 @@ Notes on the mockup at this resolution:
 drawn procedurally, the way Baymax is (the best-performing character so far). Either
 snowballs roll in and stack into Olaf, who waves, or he slides across on his belly.
 
+Decided (from the user's references: the BRIK pixel-art Olaf, a Frozen still and a line
+drawing):
+- Motion: snowballs stack into Olaf over the finished ride screen. The bottom ball rolls in
+  from the left and pops up onto his two little feet, the middle one rolls in from the
+  right and hops up onto it, and the head drops in from the top; then his face, twig arms
+  and hair pop on, he waves, and he walks off the right edge, feet stepping.
+- Snow falls over the whole board while he's there and stops once he walks off. (A little
+  snow cloud over his head came first; on 64x32 there was no room for it.)
+- His head is hand-drawn: 64x64 has the BRIK pixel-art head cell for cell, 64x32 a redraw
+  of it shrunk to fit, both turned three-quarters with the mouth a tall dark D down the
+  left side and his big tooth white under the lip. Drawing the head in code put the eyes,
+  carrot and mouth in the wrong places at this size.
+- Where: the `SURPRISES` rotation only, at 0.005.
+
 **3. Mike Wazowski.** A green circle with one huge eye: the simplest face there is, and
 unmistakable. Pops up from the bottom edge and blinks, like Stitch's peek.
 
