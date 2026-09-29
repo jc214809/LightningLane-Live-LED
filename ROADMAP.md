@@ -9,14 +9,15 @@ below lists the questions still to ask.
 
 Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey, Slinky,
 Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
-`walle` is kept, out of the rotation), and the Green Army Men (`army_men`).
+`walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
+Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`) and Olaf (`olaf`).
 
 Put a ✅ in the Done column when a character ships.
 
 | # | Done | Character | Park / ride | Signature motion | Mechanic |
 |---|---|---|---|---|---|
-| 1 | | TRON light cycle | MK: TRON Lightcycle Run | a blue and a red cycle race across, top and bottom; their light trails are the wipe | Fly-by |
-| 2 | | Olaf | EPCOT: Frozen Ever After | snowballs stack into Olaf, or he belly-slides across | Assemble / standalone |
+| 1 | ✅ | TRON light cycle | MK: TRON Lightcycle Run | a blue and a red cycle race across, top and bottom; their light trails are the wipe | Fly-by |
+| 2 | ✅ | Olaf | EPCOT: Frozen Ever After | stacks himself out of snowballs while it snows, waves, and walks off | Standalone, drawn in code with a hand-drawn head |
 | 3 | ✅ | Mike Wazowski | MK: Monsters, Inc. Laugh Floor | pops up, blinks, looks around, grins, then scares | Peek, drawn in code like Baymax |
 | 4 | | Luxo Jr. lamp | DHS: Pixar Place | hops in with a squash and stretch; its light cone reveals (could pair with #13) | Standalone |
 | 5 | | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
