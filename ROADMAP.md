@@ -15,7 +15,7 @@ Put a ✅ in the Done column when a character ships.
 
 | # | Done | Character | Park / ride | Signature motion | Mechanic |
 |---|---|---|---|---|---|
-| 1 | | TRON light cycle | MK: TRON Lightcycle Run | races across; its light trail is the wipe | Fly-by |
+| 1 | | TRON light cycle | MK: TRON Lightcycle Run | a blue and a red cycle race across, top and bottom; their light trails are the wipe | Fly-by |
 | 2 | | Olaf | EPCOT: Frozen Ever After | snowballs stack into Olaf, or he belly-slides across | Assemble / standalone |
 | 3 | ✅ | Mike Wazowski | MK: Monsters, Inc. Laugh Floor | pops up, blinks, looks around, grins, then scares | Peek, drawn in code like Baymax |
 | 4 | | Luxo Jr. lamp | DHS: Pixar Place | hops in with a squash and stretch; its light cone reveals (could pair with #13) | Standalone |
@@ -51,6 +51,32 @@ Put a ✅ in the Done column when a character ships.
 **1. TRON light cycle.** The best match for an LED board: neon blue on black, and a light
 cycle is just a wedge with a glowing trail. The trail becomes the wipe line; it could leave
 the trail as a glowing border for a beat before it fades.
+
+Decided:
+- Two bikes race every time: blue (cyan) across the top, red along the bottom, red starting
+  a length behind and level by the far edge. (First decided as one bike, red 1 in 200 of its
+  visits; the race replaced that.)
+- Reference: the user's pixel-art mockup (side profile, cyan-rimmed wheels, dark body with
+  cyan edge lines, a thick solid cyan trail out the back, over a perspective grid floor).
+- Direction: left to right, like the other fly-bys (the mockup mirrored).
+- The trails: a glowing band at each bike's wheel height; behind the trailing bike, top to
+  bottom, is already the new ride (a `FlyByReveal`). They hold a beat, then de-rez pixel by
+  pixel (dimming would darken the screen under them; a Pi canvas can't be read back).
+- Size: 1x on both boards (2x filled half of 64x64).
+- No grid floor, and no rider: just the bike.
+- Where: the `SURPRISES` rotation only, no boost on TRON Lightcycle Run. Chance not yet
+  0.008, like Mike.
+
+Notes on the mockup at this resolution:
+- It's about 100 pixels across with the bike about 48x20; on 64x32 it has to be roughly
+  half that, so keep only the bold parts: the two cyan wheel rings, the cyan line along the
+  body, the trail.
+- LEDs show black as off, so the black outline and the dark-grey body and rider vanish on
+  the board. The bike will read as its glowing lines; the body needs a lifted charcoal (the
+  Sorcerer Mickey fix) if it's to show as a shape at all.
+- The trail is the strongest thing in it and maps straight onto the wipe.
+- The grid floor is very TRON, but over a ride screen it would cover the text.
+
 
 **2. Olaf.** White stacked circles, a carrot nose and twig arms: simple shapes that can be
 drawn procedurally, the way Baymax is (the best-performing character so far). Either
