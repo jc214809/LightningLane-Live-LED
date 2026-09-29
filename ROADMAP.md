@@ -17,7 +17,7 @@ Put a ✅ in the Done column when a character ships.
 |---|---|---|---|---|---|
 | 1 | | TRON light cycle | MK: TRON Lightcycle Run | races across; its light trail is the wipe | Fly-by |
 | 2 | | Olaf | EPCOT: Frozen Ever After | snowballs stack into Olaf, or he belly-slides across | Assemble / standalone |
-| 3 | | Mike Wazowski | DHS: Monsters, Inc. | pops up from the bottom and blinks his one eye | Peek |
+| 3 | ✅ | Mike Wazowski | MK: Monsters, Inc. Laugh Floor | pops up, blinks, looks around, grins, then scares | Peek, drawn in code like Baymax |
 | 4 | | Luxo Jr. lamp | DHS: Pixar Place | hops in with a squash and stretch; its light cone reveals (could pair with #13) | Standalone |
 | 5 | | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
 | 6 | | Jack Skellington | Halloween party nights | white skull close-up peeks up | Peek |
@@ -58,6 +58,12 @@ snowballs roll in and stack into Olaf, who waves, or he slides across on his bel
 
 **3. Mike Wazowski.** A green circle with one huge eye: the simplest face there is, and
 unmistakable. Pops up from the bottom edge and blinks, like Stitch's peek.
+
+Built (`MikeReveal`, `mike`): his whole egg-shaped body rises over the finished ride
+screen, blinks, looks left then right, grins wider, then jumps with his arms up and his
+mouth wide (teeth top and bottom) and ducks away, 3.3s. Drawn in code like Baymax, body
+half-width 8 on 64x32 and 12 on 64x64. In the rotation at 0.008 and a ride visitor on
+the Laugh Floor, 1 in 10.
 
 **4. Luxo Jr.** Lamp and ball are simple geometry, and the lamp's light cone is built for
 LEDs. Hops in with a squash and stretch; its light cone reveals the next screen. Could be
@@ -335,6 +341,7 @@ beats, and a 0.8s hold after the car lands on both boards.
 First cut built for the Falcon: `disney.RIDE_VISITORS` maps a visitor to pieces of ride
 names and a chance, rolled before the general `SURPRISES`. Extending it to the characters
 below is now just entries in that map (plus settling a boost versus only-on-their-ride).
+Mike is the first to be in both: the rotation, and 1 in 10 on the Laugh Floor.
 
 A character-to-ride map next to `SURPRISES` in `disney.py`, with a boosted chance when the
 ride on screen matches. For example: Buzz on Buzz Lightyear's Space Ranger Spin, Dumbo on

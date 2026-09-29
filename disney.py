@@ -46,14 +46,18 @@ PARK_REVEALS = ("tink", "buzz")
 # lamp and sweeps the next ride in; Baymax peeks over it so the wait stays readable;
 # Slinky walks off the right edge and his spring wraps round the back of the board;
 # WALL-E, in profile, bales the old ride into a cube and drives off with it (his
-# three-quarter view, "walle", is kept for force_surprise but isn't in the rotation).
+# three-quarter view, "walle", is kept for force_surprise but isn't in the rotation);
+# Mike Wazowski pops up, looks around and scares (and visits the Laugh Floor more often).
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
-SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01, "walle_side": 0.018, "army_men": 0.015}
+SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01, "walle_side": 0.018, "army_men": 0.015,
+             "mike": 0.008}
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
-# a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge.
+# a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge; Mike is
+# in the rotation too, but drops in on his own Laugh Floor far more often.
 RIDE_VISITORS = {
     "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
+    "mike": {"rides": ("laugh floor",), "chance": 0.10},
 }
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.

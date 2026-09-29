@@ -349,10 +349,24 @@ def test_each_surprise_visitor_turns_up_on_their_own_roll(monkeypatch, screens, 
     assert visitor in disney_animation.TRANSITIONS
 
 
-def test_ride_visitors_are_characters_and_stay_out_of_the_random_rotation():
+def test_ride_visitors_are_characters():
     for name in disney.RIDE_VISITORS:
         assert name in disney_animation.TRANSITIONS
-        assert name not in disney.SURPRISES, "they only turn up on their own rides"
+
+
+def test_the_falcon_stays_out_of_the_random_rotation():
+    assert "falcon" not in disney.SURPRISES, "it only turns up on its own rides"
+
+
+def test_mike_visits_the_laugh_floor_one_time_in_ten(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Monsters, Inc. Laugh Floor", "waitTime": 10,
+                                           "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.09)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.11)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert [s["transition"] for s in screens[-2:]] == ["mike", "wipe"]
 
 
 @pytest.mark.parametrize("ride", ["Millennium Falcon: Smugglers Run", "Star Wars: Rise of the Resistance"])
@@ -383,7 +397,10 @@ def test_surprise_slices_match_their_chances_and_stay_rare():
     for name, chance in chances.items():
         assert seen.count(name) / len(samples) == pytest.approx(chance, abs=1e-4), \
             "a visitor's odds are its own chance, not shifted by where it sits in the map"
-    assert disney._surprise(sum(chances.values())) == "wipe"
+    edge = 0.0
+    for chance in chances.values():
+        edge += chance  # added up like _surprise does; sum() rounds differently since Python 3.12
+    assert disney._surprise(edge) == "wipe"
     assert disney._surprise(0.999) == "wipe"
 
 
