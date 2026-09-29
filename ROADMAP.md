@@ -9,14 +9,15 @@ below lists the questions still to ask.
 
 Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey, Slinky,
 Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
-`walle` is kept, out of the rotation), and the Green Army Men (`army_men`).
+`walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
+Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`) and Olaf (`olaf`).
 
 Put a ✅ in the Done column when a character ships.
 
 | # | Done | Character | Park / ride | Signature motion | Mechanic |
 |---|---|---|---|---|---|
-| 1 | | TRON light cycle | MK: TRON Lightcycle Run | races across; its light trail is the wipe | Fly-by |
-| 2 | | Olaf | EPCOT: Frozen Ever After | snowballs stack into Olaf, or he belly-slides across | Assemble / standalone |
+| 1 | ✅ | TRON light cycle | MK: TRON Lightcycle Run | a blue and a red cycle race across, top and bottom; their light trails are the wipe | Fly-by |
+| 2 | ✅ | Olaf | EPCOT: Frozen Ever After | stacks himself out of snowballs while it snows, waves, and walks off | Standalone, drawn in code with a hand-drawn head |
 | 3 | ✅ | Mike Wazowski | MK: Monsters, Inc. Laugh Floor | pops up, blinks, looks around, grins, then scares | Peek, drawn in code like Baymax |
 | 4 | | Luxo Jr. lamp | DHS: Pixar Place | hops in with a squash and stretch; its light cone reveals (could pair with #13) | Standalone |
 | 5 | | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
@@ -52,9 +53,49 @@ Put a ✅ in the Done column when a character ships.
 cycle is just a wedge with a glowing trail. The trail becomes the wipe line; it could leave
 the trail as a glowing border for a beat before it fades.
 
+Decided:
+- Two bikes race every time: blue (cyan) across the top, red along the bottom, red starting
+  a length behind and level by the far edge. (First decided as one bike, red 1 in 200 of its
+  visits; the race replaced that.)
+- Reference: the user's pixel-art mockup (side profile, cyan-rimmed wheels, dark body with
+  cyan edge lines, a thick solid cyan trail out the back, over a perspective grid floor).
+- Direction: left to right, like the other fly-bys (the mockup mirrored).
+- The trails: a glowing band at each bike's wheel height; behind the trailing bike, top to
+  bottom, is already the new ride (a `FlyByReveal`). They hold a beat, then de-rez pixel by
+  pixel (dimming would darken the screen under them; a Pi canvas can't be read back).
+- Size: 1x on both boards (2x filled half of 64x64).
+- No grid floor, and no rider: just the bike.
+- Where: the `SURPRISES` rotation only, no boost on TRON Lightcycle Run. Chance not yet
+  0.008, like Mike.
+
+Notes on the mockup at this resolution:
+- It's about 100 pixels across with the bike about 48x20; on 64x32 it has to be roughly
+  half that, so keep only the bold parts: the two cyan wheel rings, the cyan line along the
+  body, the trail.
+- LEDs show black as off, so the black outline and the dark-grey body and rider vanish on
+  the board. The bike will read as its glowing lines; the body needs a lifted charcoal (the
+  Sorcerer Mickey fix) if it's to show as a shape at all.
+- The trail is the strongest thing in it and maps straight onto the wipe.
+- The grid floor is very TRON, but over a ride screen it would cover the text.
+
+
 **2. Olaf.** White stacked circles, a carrot nose and twig arms: simple shapes that can be
 drawn procedurally, the way Baymax is (the best-performing character so far). Either
 snowballs roll in and stack into Olaf, who waves, or he slides across on his belly.
+
+Decided (from the user's references: the BRIK pixel-art Olaf, a Frozen still and a line
+drawing):
+- Motion: snowballs stack into Olaf over the finished ride screen. The bottom ball rolls in
+  from the left and pops up onto his two little feet, the middle one rolls in from the
+  right and hops up onto it, and the head drops in from the top; then his face, twig arms
+  and hair pop on, he waves, and he walks off the right edge, feet stepping.
+- Snow falls over the whole board while he's there and stops once he walks off. (A little
+  snow cloud over his head came first; on 64x32 there was no room for it.)
+- His head is hand-drawn: 64x64 has the BRIK pixel-art head cell for cell, 64x32 a redraw
+  of it shrunk to fit, both turned three-quarters with the mouth a tall dark D down the
+  left side and his big tooth white under the lip. Drawing the head in code put the eyes,
+  carrot and mouth in the wrong places at this size.
+- Where: the `SURPRISES` rotation only, at 0.005.
 
 **3. Mike Wazowski.** A green circle with one huge eye: the simplest face there is, and
 unmistakable. Pops up from the bottom edge and blinks, like Stitch's peek.

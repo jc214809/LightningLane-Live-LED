@@ -647,6 +647,136 @@ def test_baymax_is_registered_and_is_not_a_flyby():
     assert not getattr(animation.BaymaxReveal, "wants_prev", False)
 
 
+def test_tron_is_a_registered_flyby():
+    assert animation.TRANSITIONS["tron"] is animation.TronReveal
+    assert issubclass(animation.TronReveal, animation.FlyByReveal)
+
+
+def _tron_frame(tron, height, t, new=(0, 140, 0)):
+    canvas = FakeCanvas(64, height)
+    for x in range(64):
+        for y in range(height):
+            canvas.SetPixel(x, y, *new)
+    more = tron.overlay(canvas, t)
+    return canvas.px, more
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_tron_races_blue_on_top_and_red_along_the_bottom(height):
+    tron = animation.TronReveal(64, height, random.Random(1))
+    (blue, bx, by), (red, rx, ry) = tron.bikes(tron.CROSS_S / 2)
+    assert (blue, red) == ("blue", "red")
+    assert by == 0 and ry == height - tron.sprite_h, "blue across the top, red along the bottom"
+    assert rx < bx, "red is behind mid-race"
+    assert tron.bikes(0)[0][1] - tron.bikes(0)[1][1] == tron.RED_LAG
+    assert tron.bikes(tron.CROSS_S)[1][1] == tron.bikes(tron.CROSS_S)[0][1] >= 64, "level and gone by the end"
+    px, _ = _tron_frame(tron, height, tron.CROSS_S / 2)
+    colors = set(px.values())
+    assert tron.BLUE["C"] in colors and tron.RED["C"] in colors, "both bikes drawn"
+    assert tron.TRAILS["blue"][0] in colors and tron.TRAILS["red"][0] in colors, "and both trails"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_tron_uncovers_the_new_screen_behind_the_bikes_and_the_trails_derez(height):
+    tron = animation.TronReveal(64, height, random.Random(1))
+    new = (0, 140, 0)
+    trails = {rgb for pair in tron.TRAILS.values() for rgb in pair}
+    px, _ = _tron_frame(tron, height, tron.CROSS_S / 2)
+    assert px[(0, height // 2)] == new, "behind the bikes, the new ride"
+    assert px[(63, height // 2)] == (0, 0, 0), "ahead of them, not yet"
+
+    px, _ = _tron_frame(tron, height, tron.CROSS_S + tron.HOLD_S / 2)
+    held = [rgb for rgb in px.values() if rgb != new]
+    assert held and set(held) <= trails, "the bikes are gone, the trails hold"
+    px, _ = _tron_frame(tron, height, tron.CROSS_S + tron.HOLD_S + tron.FADE_S / 2)
+    left = [rgb for rgb in px.values() if rgb != new]
+    assert 0 < len(left) < len(held), "the trails drop out pixel by pixel"
+    assert set(left) <= trails, "whole pixels, never dimmed over the screen"
+    px, more = _tron_frame(tron, height, tron.duration)
+    assert not more and set(px.values()) == {new}, "all gone at the end"
+
+
+def test_olaf_is_a_registered_visitor_over_the_finished_screen():
+    cls = animation.TRANSITIONS["olaf"]
+    assert cls is animation.OlafReveal and cls.over_screen
+    assert not getattr(cls, "wants_prev", False) and not getattr(cls, "wants_new", False)
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_olaf_stays_on_the_board_and_walks_off_by_the_end(height):
+    olaf = animation.OlafReveal(64, height, random.Random(1))
+    for f in range(int(olaf.duration * animation.FPS)):
+        canvas = FakeCanvas(64, height)
+        assert olaf.overlay(canvas, f / animation.FPS) is True
+        assert all(0 <= x < 64 and 0 <= y < height for x, y in canvas.px)
+    assert not any(rgb == olaf.WHITE for rgb in olaf.pixels(olaf.duration - 0.01).values()), "walked off"
+    assert olaf.overlay(FakeCanvas(64, height), olaf.duration) is False
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_olaf_stacks_bottom_from_the_left_middle_from_the_right_head_from_the_top(height):
+    olaf = animation.OlafReveal(64, height, random.Random(2))
+    first = {name: x for name, x, _ in olaf.parts(olaf.BOTTOM[0] + 0.01)}
+    assert list(first) == ["bottom"] and first["bottom"] < 0, "the bottom ball rolls in from off the left"
+    early = {name: x for name, x, _ in olaf.parts(olaf.MIDDLE[0] + 0.01)}
+    assert early["middle"] > 63, "the middle one from off the right"
+    head_y = {name: y for name, _, y in olaf.parts(olaf.HEAD[0] + 0.01)}["head"]
+    assert head_y + olaf.head[1] <= 0.5, "the head drops in from above the board"
+    stacked = olaf.parts(olaf.FACE_S)
+    assert [name for name, _, _ in stacked] == ["bottom", "middle", "head"]
+    assert all(abs(x - olaf.cx) < 0.5 for _, x, _ in stacked), "stacked up in one column"
+    ys = [y for _, _, y in stacked]
+    assert ys == sorted(ys, reverse=True), "bottom, then middle on it, then the head on top"
+
+
+def test_olafs_face_arms_and_hair_pop_on_once_hes_stacked():
+    olaf = animation.OlafReveal(64, 64, random.Random(3))
+    before = set(olaf.pixels(olaf.FACE_S - 0.05).values())
+    after = set(olaf.pixels(olaf.HAIR_S + 0.05).values())
+    for part in (olaf.CARROT, olaf.MOUTH, olaf.COAL, olaf.TWIG):
+        assert part not in before and part in after
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_snow_falls_over_the_whole_board_and_stops_once_he_walks_off(height):
+    olaf = animation.OlafReveal(64, height, random.Random(4))
+    flakes = set()
+    for f in range(int(olaf.WALK[0] * 10)):
+        flakes |= set(olaf.snow(f / 10))
+    xs, ys = [x for x, _ in flakes], [y for _, y in flakes]
+    assert max(xs) - min(xs) > 48 and max(ys) - min(ys) > height * 0.75, "all over the board"
+    assert olaf.FLAKE in olaf.pixels(1.0).values()
+    during = len(olaf.snow(olaf.WALK[0] - 0.05))
+    assert during > 0 and len(olaf.snow(olaf.duration - 0.01)) < during, "no new flakes once he goes"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_olaf_pops_up_onto_his_feet_and_walks_off_stepping(height):
+    olaf = animation.OlafReveal(64, height, random.Random(6))
+    assert olaf.feet(olaf.FEET[0] - 0.01) == [], "no feet while the bottom ball rolls in"
+    rolling = {n: y for n, _, y in olaf.parts(olaf.BOTTOM[1] - 0.01)}["bottom"]
+    standing = {n: y for n, _, y in olaf.parts(olaf.FEET[1])}["bottom"]
+    assert standing < rolling, "the bottom ball rises onto its feet"
+    (lx, ly), (rx, ry) = olaf.feet(olaf.FEET[1])
+    assert lx < olaf.cx < rx and ly == ry and ly + olaf.foot[1] <= height + 0.5, "two feet on the ground"
+    # Walking: the feet take turns lifting, and he ends up off the right edge.
+    lifts = []
+    for i in range(1, 20):
+        t = olaf.WALK[0] + i * (olaf.WALK[1] - olaf.WALK[0]) / 20
+        (_, ly), (_, ry) = olaf.feet(t)
+        lifts.append(("left" if ly < ry else "right") if ly != ry else None)
+    assert {"left", "right"} <= set(lifts), "each foot steps"
+    assert olaf.walk(olaf.WALK[0] - 0.01)[0] == 0.0
+    assert olaf.walk(olaf.duration)[0] + olaf.cx - olaf.bottom[0] > 64, "walked off the right edge"
+
+
+def test_olaf_waves_only_while_he_holds():
+    olaf = animation.OlafReveal(64, 64, random.Random(5))
+    waves = [olaf.waving(olaf.WAVE[0] + i / 100) for i in range(int((olaf.WAVE[1] - olaf.WAVE[0]) * 100))]
+    assert max(waves) > 0.9 and min(waves) < -0.9
+    assert olaf.waving(olaf.WAVE[0] - 0.01) == 0.0 and olaf.waving(olaf.WALK[0]) == 0.0
+
+
 def test_mike_is_a_registered_peek_over_the_finished_screen():
     cls = animation.TRANSITIONS["mike"]
     assert cls is animation.MikeReveal and cls.over_screen
