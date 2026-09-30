@@ -11,6 +11,8 @@ from display.animation.characters.figment import FigmentReveal
 from display.animation.characters.genie import GenieReveal
 from display.animation.characters.goofy import GoofyReveal
 from display.animation.characters.luxo_ball import LuxoBallReveal
+from display.animation.characters.mater import MaterReveal
+from display.animation.characters.mcqueen import McQueenReveal
 from display.animation.characters.mickey import MickeyReveal
 from display.animation.characters.mike import MikeReveal
 from display.animation.characters.olaf import OlafReveal
@@ -39,4 +41,6 @@ TRANSITIONS = {
     "olaf": OlafReveal,
     "goofy": GoofyReveal,
     "luxo_ball": LuxoBallReveal,
+    "mcqueen": McQueenReveal,
+    "mater": MaterReveal,
 }
