@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Embed every character sprite and its palette from display/animation.py into
+Embed every character sprite and its palette from display/animation/ (every class in TRANSITIONS) into
 tools/sprite_editor.html, so the editor always opens on the art the board draws.
 
 Run from anywhere after changing character art:  python3 tools/build_sprite_editor.py
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_animation():
-    # animation.py only touches driver.graphics while drawing. Stubbing it keeps the real
+    # display.animation only touches driver.graphics while drawing. Stubbing it keeps the real
     # driver, which parses argv and probes for hardware, out of a build step.
     if ROOT not in sys.path:
         sys.path.insert(0, ROOT)

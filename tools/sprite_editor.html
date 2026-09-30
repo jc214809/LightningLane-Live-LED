@@ -39,11 +39,11 @@ textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospac
 </style>
 </head>
 <body>
-<header><h1>LED Sprite Editor</h1><p>Edit the character sprites from <code>display/animation.py</code>, one color key per LED. Export and paste back into the class. Everything stays in this file.</p></header>
+<header><h1>LED Sprite Editor</h1><p>Edit the character sprites from <code>display/animation/characters/</code>, one color key per LED. Export and paste back into the class. Everything stays in this file.</p></header>
 <main>
   <section class="panel" aria-label="Sprite canvas">
     <div class="toolbar">
-      <select id="sprites" title="Sprite from animation.py" aria-label="Sprite"></select>
+      <select id="sprites" title="Sprite from display/animation/characters/" aria-label="Sprite"></select>
       <button id="load" title="Reload this sprite from the embedded art">Load</button>
       <button id="new">New blank</button>
       <span style="flex:1"></span>
@@ -131,7 +131,7 @@ textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospac
       <div class="toolbar"><select id="format" aria-label="Export format"><option value="both">Python art + colors</option><option value="art">Python art</option><option value="colors">Python colors</option><option value="json">JSON</option></select><button id="export">Export</button><button id="copy">Copy</button><button id="download">Download</button></div>
       <textarea id="text" spellcheck="false" aria-label="Sprite text" placeholder='Paste a class attribute like FRONT_ART = [...] and/or COLORS = {...}, JSON, or bare rows of keys, then Import.'></textarea>
       <div class="toolbar" style="margin-top:8px"><button id="import">Import pasted sprite</button></div>
-      <p class="hint">Paste the export over the attribute in <code>display/animation.py</code>, then run <code>python3 tools/build_sprite_editor.py</code> so the editor picks it up.</p>
+      <p class="hint">Paste the export over the attribute in the character's file under <code>display/animation/characters/</code>, then run <code>python3 tools/build_sprite_editor.py</code> so the editor picks it up.</p>
     </section>
   </aside>
 </main>
