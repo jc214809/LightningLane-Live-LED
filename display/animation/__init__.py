@@ -86,6 +86,14 @@ from display.animation.characters.luxo_ball import (  # noqa: F401
     LuxoBallReveal,
 )
 
+from display.animation.characters.mater import (  # noqa: F401
+    MaterReveal,
+)
+
+from display.animation.characters.mcqueen import (  # noqa: F401
+    McQueenReveal,
+)
+
 from display.animation.characters.mickey import (  # noqa: F401
     MickeyReveal,
 )

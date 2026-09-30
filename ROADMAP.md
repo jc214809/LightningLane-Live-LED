@@ -11,7 +11,8 @@ Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey,
 Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
 `walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
 Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
-Goofy (`goofy`) and the Pixar Ball with Luxo Jr. (`luxo_ball`).
+Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`)
+and Mater (`mater`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -31,7 +32,7 @@ Put a ✅ in the Done column when a character ships.
 | 12 | | Monorail | all of Walt Disney World | glides across as a band of color | Fly-by |
 | 13 | ✅ | Pixar Ball | DHS: Pixar Place, Toy Story Land | bounces in with Luxo (#4), one of three stories | Standalone (`luxo_ball`) |
 | 14 | ✅ | Green Army Men | DHS: Toy Story Land | parachute in, land, chutes slump, hop off in step on their bases | New: top-down drop reveal |
-| 15 | | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, "Ka-chow" stop, peels out leaving speed streaks | Fly-by (drive-by) |
+| 15 | ✅ | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, skids to a stop, peels out leaving speed streaks | Drive-by (`mcqueen`) |
 | 16 | | Rex | DHS: Toy Story Land | stomps in, tail-swipes the old screen off the board, looks sheepish and runs | Wreck (`wants_prev`) |
 | 17 | ✅ | Goofy | MK: The Barnstormer | flies his biplane through a loop-the-loop, towing a YAHOOEY! banner | Fly-by (loop) |
 | 18 | | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
@@ -48,6 +49,7 @@ Put a ✅ in the Done column when a character ships.
 | 29 | | Cinderella's pumpkin coach | MK | a pumpkin bursts into sparkles and becomes the coach | Assemble |
 | 30 | | Chip 'n' Dale | MK / DHS (various) | two heads peek up side by side | Peek |
 | 31 | | Max and Roxanne (A Goofy Movie) | TBD | TBD | TBD |
+| 32 | ✅ | Mater | Cars (with McQueen, #15) | drives across backwards, grinning | Drive-by (`mater`) |
 
 ### Notes per character
 
@@ -215,8 +217,14 @@ on a real board (`force_surprise: "army_men"`).
   the rides with the longest waits or Lightning Lane prices, zooming past the line (see #3
   below).
 
-Questions: confirm Cars at Walt Disney World first; eyes in profile or slight 3/4; stop
-mid-board or blast straight through; when he shows up; reference image.
+Built (`McQueenReveal`, `mcqueen`), from the user's side-on pixel-art McQueen: he zooms in
+from the left, skids to a stop mid-board, holds a beat and peels out off the right edge,
+trailing orange-and-yellow speed streaks as long as he's fast; the new ride is uncovered
+behind him. The source's "95" was a scramble at this size, so a clean 3x5 "95" is drawn on
+his bolt. A four-point "Ka-chow" sparkle was tried and dropped: at this size it read as a
+"+". 1x on both boards; in the rotation at 0.005 (WALL-E and Baymax were trimmed to 0.012
+to keep surprises under 10% with him and Mater in). Built as a separate surprise from
+Mater (#32).
 
 **16. Rex.** A strong silhouette for the board: a big head with an open jaw, tiny arms, a
 long tail, and a bright yellow-green body that stands out on black. He's the second
@@ -386,6 +394,13 @@ render early to confirm it reads at all before investing further.
 Questions: worth attempting given the two-small-heads risk, or drop; if attempted, which
 one leads/reacts (Chip's black nose vs. Dale's red nose and buck teeth are the only real
 differentiator at this size); reference image.
+
+**32. Mater.** Built (`MaterReveal`, `mater`) from the user's three-quarter pixel-art Mater:
+he drives across backwards, his favourite way, facing right with his buck-toothed grin while
+he rolls right to left, tow hook first, bobbing on his springs; the new ride is uncovered on
+the side he's passed. 1x on both boards, in the rotation at 0.005. A separate surprise from
+McQueen (#15), by the user's choice over a shared scene. Ideas not taken: towing the old ride
+away with his hook, or popping up to grin.
 
 **31. Max and Roxanne (A Goofy Movie).** Saved for later by the user, with a pixel-art
 reference: [docs/references/max-and-roxanne.png](docs/references/max-and-roxanne.png) (Max in
