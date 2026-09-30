@@ -44,6 +44,54 @@ def ease_out(p):
     return 1 - (1 - p) ** 3
 
 
+def progress(t, start, end):
+    """How far t is through start..end, 0 before it and 1 after."""
+    return max(0.0, min(1.0, (t - start) / (end - start)))
+
+
+def art_pixels(art, x0, y0, colors, scale=1):
+    """
+    ((x, y), rgb) for every lit cell of pixel art ('.' is empty) with its top-left at
+    (x0, y0), each cell drawn scale x scale. Pair with paint(), or px.update() to add a
+    sprite to a scene's pixels.
+    """
+    for row, line in enumerate(art):
+        for col, kind in enumerate(line):
+            if kind == ".":
+                continue
+            rgb = colors[kind]
+            for sy in range(scale):
+                for sx in range(scale):
+                    yield (x0 + col * scale + sx, y0 + row * scale + sy), rgb
+
+
+def paint(canvas, pixels, width, height):
+    """Set each ((x, y), rgb) that lands on the board; pixels is a {(x, y): rgb} dict or pairs."""
+    if isinstance(pixels, dict):
+        pixels = pixels.items()
+    for (x, y), rgb in pixels:
+        if 0 <= x < width and 0 <= y < height:
+            canvas.SetPixel(x, y, *rgb)
+
+
+class CapturesScreens:
+    """
+    For reveals that need a screen's pixels (wants_prev / wants_new): show_screen hands them
+    over through these, recorded off a Capture canvas (a Pi's own canvas can't be read back).
+    """
+
+    prev_px = {}
+    new_px = {}
+
+    def capture_prev(self, prev_draw, prev_t):
+        """The outgoing screen's pixels."""
+        self.prev_px = capture_screen(prev_draw, prev_t, self.width, self.height)
+
+    def capture_new(self, draw_new, new_t):
+        """The incoming screen's pixels."""
+        self.new_px = capture_screen(draw_new, new_t, self.width, self.height)
+
+
 def run_frames(matrix, draw_frame, duration_s, fps=FPS):
     """
     Call draw_frame(canvas, t) each frame for duration_s; once it returns False the image
@@ -166,16 +214,8 @@ class FlyByReveal:
 
     def _draw_sprite(self, canvas, t):
         x0, y0 = self.position(t)
-        x0, y0 = int(round(x0)), int(round(y0))
-        for row, line in enumerate(self.art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.scale):
-                    for sx in range(self.scale):
-                        px, py = x0 + col * self.scale + sx, y0 + row * self.scale + sy
-                        if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *self.colors[kind])
+        paint(canvas, art_pixels(self.art, int(round(x0)), int(round(y0)), self.colors, self.scale),
+              self.width, self.height)
 
 
 class TinkReveal(FlyByReveal):
@@ -491,16 +531,8 @@ class DumboReveal(FlyByReveal):
         """Same as the base draw, but picks the flap pose for this moment."""
         art = self.poses[self.flap_frame(t)]
         x0, y0 = self.position(t)
-        x0, y0 = int(round(x0)), int(round(y0))
-        for row, line in enumerate(art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.scale):
-                    for sx in range(self.scale):
-                        px, py = x0 + col * self.scale + sx, y0 + row * self.scale + sy
-                        if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *self.colors[kind])
+        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.colors, self.scale),
+              self.width, self.height)
 
 
 class TronReveal(FlyByReveal):
@@ -588,15 +620,7 @@ class TronReveal(FlyByReveal):
         return True
 
     def _draw_bike(self, canvas, x0, y0, colors):
-        for row, line in enumerate(self.art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.scale):
-                    for sx in range(self.scale):
-                        px, py = x0 + col * self.scale + sx, y0 + row * self.scale + sy
-                        if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *colors[kind])
+        paint(canvas, art_pixels(self.art, x0, y0, colors, self.scale), self.width, self.height)
 
 
 def _rotate_art(art, quarters):
@@ -761,16 +785,8 @@ class GoofyReveal:
         x, y, _ = self.point(d)
         art = self.pose(t)
         x0, y0 = int(round(x - len(art[0]) * s / 2)), int(round(y - len(art) * s / 2))
-        for row, line in enumerate(art):
-            for c, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(s):
-                    for sx in range(s):
-                        px[(x0 + c * s + sx, y0 + row * s + sy)] = self.colors[kind]
-        for (x, y), rgb in px.items():
-            if 0 <= x < self.width and 0 <= y < self.height:
-                canvas.SetPixel(x, y, *rgb)
+        px.update(art_pixels(art, x0, y0, self.colors, s))
+        paint(canvas, px, self.width, self.height)
         return True
 
 
@@ -819,16 +835,7 @@ class PeekReveal:
         y0 = self.height - rise * self.rise_frac * self.sprite_h
         x0 = int(self.cx - self.sprite_w / 2)
         art = self.art[self.look_frame(t)] if isinstance(self.art[0], list) else self.art
-        for row, line in enumerate(art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.scale):
-                    for sx in range(self.scale):
-                        px = x0 + col * self.scale + sx
-                        py = int(round(y0 + row * self.scale + sy))
-                        if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *self.colors[kind])
+        paint(canvas, art_pixels(art, x0, int(round(y0)), self.colors, self.scale), self.width, self.height)
         return True
 
 
@@ -911,7 +918,7 @@ class StitchReveal(PeekReveal):
 _Capture = Capture  # the recording canvas; see display/capture.py
 
 
-class RalphReveal:
+class RalphReveal(CapturesScreens):
     """
     Wreck-It Ralph rises at the bottom, swings a fist, and the old screen shatters
     into falling pixels, leaving the new one behind. Needs the previous screen's
@@ -971,10 +978,6 @@ class RalphReveal:
         self._frames_stepped = 0
         self.prev_px = {}
 
-    def capture_prev(self, prev_draw, prev_t):
-        """Redraw the old screen in memory; those pixels become the debris."""
-        self.prev_px = capture_screen(prev_draw, prev_t, self.width, self.height)
-
     def _shatter(self):
         """Turn the captured screen into debris, thrown outward from the impact point."""
         self.shattered = True
@@ -1008,8 +1011,7 @@ class RalphReveal:
             self._shatter()
         if t < impact_at:
             # Old screen still whole, with Ralph rising in front of it.
-            for (x, y), rgb in self.prev_px.items():
-                canvas.SetPixel(x, y, *rgb)
+            paint(canvas, self.prev_px, self.width, self.height)
         else:
             self._step_debris(t - impact_at)
             for x, y, _, _, rgb in self.debris:
@@ -1032,19 +1034,10 @@ class RalphReveal:
     def _draw_ralph(self, canvas, t):
         y0 = self.ralph_y(t)
         x0 = int(self.width / 2 - self.sprite_w / 2)
-        for row, line in enumerate(self.ART):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.scale):
-                    for sx in range(self.scale):
-                        px = x0 + col * self.scale + sx
-                        py = int(round(y0 + row * self.scale + sy))
-                        if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *self.COLORS[kind])
+        paint(canvas, art_pixels(self.ART, x0, int(round(y0)), self.COLORS, self.scale), self.width, self.height)
 
 
-class MickeyReveal:
+class MickeyReveal(CapturesScreens):
     """
     TODO (art): the face needs work — the muzzle/eyes read as a flat mask rather than
     Mickey's features. Everything else (hat, ears, robe, wand sweep) is good.
@@ -1119,8 +1112,8 @@ class MickeyReveal:
         self._last_frame = -1
 
     def capture_new(self, draw_new, new_t):
-        """Draw the incoming screen in memory; those pixels are what materializes."""
-        self.new_px = capture_screen(draw_new, new_t, self.width, self.height)
+        """The incoming screen's pixels are what materializes."""
+        super().capture_new(draw_new, new_t)
         self._build_motes()
 
     def _build_motes(self):
@@ -1223,16 +1216,7 @@ class MickeyReveal:
 
     def _draw_mickey(self, canvas, t):
         y0 = self.mickey_y(t)
-        for row, line in enumerate(self.ART):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.scale):
-                    for sx in range(self.scale):
-                        px = col * self.scale + sx
-                        py = int(round(y0 + row * self.scale + sy))
-                        if 0 <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *self.COLORS[kind])
+        paint(canvas, art_pixels(self.ART, 0, int(round(y0)), self.COLORS, self.scale), self.width, self.height)
 
 
 class BaymaxReveal:
@@ -1373,9 +1357,7 @@ class BaymaxReveal:
             # the head ellipse, whose lower half is buried in the shoulders.
             self._face(px, (head_cy - head_ry + body_cy - body_ry) / 2, head_rx, self.eye_open(t))
 
-        for (x, y), rgb in px.items():
-            if 0 <= x < self.width and 0 <= y < self.height:
-                canvas.SetPixel(x, y, *rgb)
+        paint(canvas, px, self.width, self.height)
         return True
 
 
@@ -1448,8 +1430,7 @@ class MikeReveal:
 
     def grin(self, t):
         """0 his everyday grin, 1 at its widest."""
-        a, b = self.GRIN
-        return max(0.0, min(1.0, (t - a) / (b - a)))
+        return progress(t, *self.GRIN)
 
     def scaring(self, t):
         return self.SCARE[0] <= t < self.SCARE[1]
@@ -1622,8 +1603,7 @@ class MikeReveal:
     def overlay(self, canvas, t):
         if t >= self.duration:
             return False
-        for (x, y), rgb in self.pixels(t).items():
-            canvas.SetPixel(x, y, *rgb)
+        paint(canvas, self.pixels(t), self.width, self.height)
         return True
 
 
@@ -1749,8 +1729,7 @@ class OlafReveal:
                        for _ in range(16 * s)]
 
     def _phase(self, t, span):
-        a, b = span
-        return max(0.0, min(1.0, (t - a) / (b - a)))
+        return progress(t, *span)
 
     def walk(self, t):
         """(dx, bob, stride): how far he's walked, his body's bob, and the step's angle."""
@@ -1911,14 +1890,13 @@ class OlafReveal:
     def overlay(self, canvas, t):
         if t >= self.duration:
             return False
-        for (x, y), rgb in self.pixels(t).items():
-            canvas.SetPixel(x, y, *rgb)
+        paint(canvas, self.pixels(t), self.width, self.height)
         return True
 
 
 def _hops(t, t0, t1, x0, x1, count, height):
     """(x, lift, hops done) for something hopping from x0 to x1 in `count` equal hops over t0..t1."""
-    p = max(0.0, min(1.0, (t - t0) / (t1 - t0)))
+    p = progress(t, t0, t1)
     phase = p * count
     return x0 + (x1 - x0) * p, math.sin((phase % 1.0) * math.pi) * height if p < 1 else 0.0, int(phase)
 
@@ -2133,7 +2111,7 @@ class LuxoBallReveal:
         tilt = max(-self.MAX_TILT, min(self.MAX_TILT, aim - self.AIM))
         aim = self.AIM + tilt
         bx, by = self._turn(self.BULB, tilt)
-        half = 0.3 + (math.pi + 0.2) * max(0.0, min(1.0, (t - self.WIDEN) / 1.1)) ** 1.5
+        half = 0.3 + (math.pi + 0.2) * progress(t, self.WIDEN, self.WIDEN + 1.1) ** 1.5
         return left + bx, y + by, aim, half
 
     def head_tilt(self, t):
@@ -2214,17 +2192,14 @@ class LuxoBallReveal:
         return out
 
     def _stamp(self, out, art, x0, y0, only=None):
-        for row, line in enumerate(art):
-            for col, kind in enumerate(line):
-                x, y = x0 + col, y0 + row
-                if kind != "." and 0 <= x < self.width and 0 <= y < self.height and (only is None or (x, y) in only):
-                    out[(x, y)] = self.colors[kind]
+        """Add art to the scene's pixels, keeping to the board (and to `only`, if given)."""
+        out.update(((x, y), rgb) for (x, y), rgb in art_pixels(art, x0, y0, self.colors)
+                   if 0 <= x < self.width and 0 <= y < self.height and (only is None or (x, y) in only))
 
     def overlay(self, canvas, t):
         if t >= self.duration:
             return False
-        for (x, y), rgb in self.pixels(t).items():
-            canvas.SetPixel(x, y, *rgb)
+        paint(canvas, self.pixels(t), self.width, self.height)
         return True
 
 
@@ -2473,17 +2448,8 @@ class GenieReveal:
         return t < self.duration or bool(self.puffs)
 
     def _draw_art(self, canvas, art, x0, y0, clip_x=0):
-        x0, y0 = int(round(x0)), int(round(y0))
-        for row, line in enumerate(art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(self.LAMP_SCALE):
-                    for sx in range(self.LAMP_SCALE):
-                        px = x0 + col * self.LAMP_SCALE + sx
-                        py = y0 + row * self.LAMP_SCALE + sy
-                        if clip_x <= px < self.width and 0 <= py < self.height:
-                            canvas.SetPixel(px, py, *self.COLORS[kind])
+        cells = art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.LAMP_SCALE)
+        paint(canvas, ((p, rgb) for p, rgb in cells if p[0] >= clip_x), self.width, self.height)
 
     def _full_pixels(self):
         """(dx, dy, rgb) for every lit pixel of Genie at full size, worked out once."""
@@ -2675,15 +2641,8 @@ class SlinkyReveal:
             canvas.SetPixel(x, y, *rgb)
 
     def _draw(self, canvas, art, x0, y0):
-        x0, y0 = int(round(x0)), int(round(y0))
-        s = self.scale
-        for row, line in enumerate(art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for dy in range(s):
-                    for dx in range(s):
-                        self._px(canvas, x0 + col * s + dx, y0 + row * s + dy, self.COLORS[kind])
+        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale),
+              self.width, self.height)
 
 
 class SlinkyWrapReveal:
@@ -2888,17 +2847,11 @@ class SlinkyWrapReveal:
             canvas.SetPixel(x, y, *rgb)
 
     def _draw(self, canvas, art, x0, y0):
-        x0, y0, s = int(round(x0)), int(round(y0)), self.scale
-        for row, line in enumerate(art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for dy in range(s):
-                    for dx in range(s):
-                        self._px(canvas, x0 + col * s + dx, y0 + row * s + dy, self.COLORS[kind])
+        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale),
+              self.width, self.height)
 
 
-class WallEReveal:
+class WallEReveal(CapturesScreens):
     """
     WALL-E rolls in along the bottom over the old screen, stops in a puff of dust, tilts
     his head and blinks at us, then opens his compactor hatch and vacuums the old screen
@@ -2984,8 +2937,8 @@ class WallEReveal:
         self._dusted = set()
 
     def capture_prev(self, prev_draw, prev_t):
-        """Redraw the old screen in memory: those pixels get vacuumed up."""
-        self.prev_px = capture_screen(prev_draw, prev_t, self.width, self.height)
+        """The old screen's pixels get vacuumed up."""
+        super().capture_prev(prev_draw, prev_t)
         ix, iy = self.intake()
         # Nearest first: each pixel lifts off when the sweep front reaches it.
         self.flights = sorted(
@@ -3410,7 +3363,7 @@ class WallESideReveal(WallEReveal):
                 self._px(canvas, left + col, top + row, self.PLANT_RGB[part])
 
 
-class ArmyMenReveal:
+class ArmyMenReveal(CapturesScreens):
     """
     Three green army men parachute in, the way Andy's toys drop in on a mission. Each
     hangs under a camo canopy on rigging lines that swing like a pendulum as he falls, and
@@ -3520,14 +3473,6 @@ class ArmyMenReveal:
         # Each soldier swings on his own phase so the three never sway in lockstep.
         self.sway_phase = [self.rng.uniform(0, 2 * math.pi) for _ in self.UNITS]
 
-    def capture_prev(self, prev_draw, prev_t):
-        """The old screen, still showing below the curtain."""
-        self.prev_px = capture_screen(prev_draw, prev_t, self.width, self.height)
-
-    def capture_new(self, draw_new, new_t):
-        """The incoming screen, uncovered top-down above the curtain."""
-        self.new_px = capture_screen(draw_new, new_t, self.width, self.height)
-
     # --- timing -------------------------------------------------------------------
 
     def _unit_land_time(self, delay):
@@ -3536,7 +3481,7 @@ class ArmyMenReveal:
 
     def _fall(self, delay, t):
         """0 before he starts falling, 1 at touchdown."""
-        return max(0.0, min(1.0, (t - delay) / self.FALL_S))
+        return progress(t, delay, delay + self.FALL_S)
 
     def _soldier_top(self, delay, t):
         """
@@ -3717,14 +3662,7 @@ class ArmyMenReveal:
                 y0 += sy
 
     def _blit(self, canvas, art, x0, y0):
-        s = self.scale
-        for row, line in enumerate(art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(s):
-                    for sx in range(s):
-                        self._px(canvas, x0 + col * s + sx, y0 + row * s + sy, self.COLORS[kind])
+        paint(canvas, art_pixels(art, x0, y0, self.COLORS, self.scale), self.width, self.height)
 
     def _blit_scaled(self, canvas, art, x0, y0, target_w, target_h, alpha=1.0):
         """Nearest-neighbour scale of art into a target_w x target_h box, faded to alpha."""
@@ -3741,7 +3679,7 @@ class ArmyMenReveal:
             canvas.SetPixel(x, y, *rgb)
 
 
-class FalconReveal:
+class FalconReveal(CapturesScreens):
     """
     The Millennium Falcon, top-down with her nose to the right, drawn from a reference photo.
     She drops out of hyperspace over the old ride screen (the stars' streaks snap back into
@@ -3815,12 +3753,6 @@ class FalconReveal:
         # The rows her engine band sits on, for her arrival trail and the glow outside it.
         self.engine_rows = [r for r, row in enumerate(self.ART) if "E" in row]
         self.stars = [(self.rng.randrange(width), self.rng.randrange(height)) for _ in range(self.STARS)]
-
-    def capture_prev(self, prev_draw, prev_t):
-        self.prev_px = capture_screen(prev_draw, prev_t, self.width, self.height)
-
-    def capture_new(self, draw_new, new_t):
-        self.new_px = capture_screen(draw_new, new_t, self.width, self.height)
 
     def phase(self, t):
         """(name, 0..1 through it) for the part of the visit at t."""

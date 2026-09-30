@@ -897,6 +897,23 @@ def test_luxo_searches_the_dark_with_his_light_finds_the_ball_then_lights_the_ri
     assert dark(widen + 1.15) == 0, "until the whole ride is lit"
 
 
+def test_art_pixels_scales_each_lit_cell_and_skips_empty_ones():
+    got = dict(animation.art_pixels(["A.", ".B"], 10, 20, {"A": (1, 1, 1), "B": (2, 2, 2)}, scale=2))
+    assert got == {(10, 20): (1, 1, 1), (11, 20): (1, 1, 1), (10, 21): (1, 1, 1), (11, 21): (1, 1, 1),
+                   (12, 22): (2, 2, 2), (13, 22): (2, 2, 2), (12, 23): (2, 2, 2), (13, 23): (2, 2, 2)}
+
+
+def test_paint_sets_only_pixels_on_the_board_from_a_dict_or_pairs():
+    canvas = FakeCanvas(4, 3)
+    animation.paint(canvas, {(0, 0): (9, 9, 9), (4, 0): (1, 1, 1), (-1, 2): (1, 1, 1)}, 4, 3)
+    animation.paint(canvas, [((3, 2), (5, 5, 5)), ((3, 3), (1, 1, 1))], 4, 3)
+    assert canvas.px == {(0, 0): (9, 9, 9), (3, 2): (5, 5, 5)}
+
+
+def test_progress_runs_zero_to_one_across_its_span():
+    assert [animation.progress(t, 1.0, 3.0) for t in (0.0, 1.0, 2.0, 3.0, 9.0)] == [0.0, 0.0, 0.5, 1.0, 1.0]
+
+
 def test_mike_is_a_registered_peek_over_the_finished_screen():
     cls = animation.TRANSITIONS["mike"]
     assert cls is animation.MikeReveal and cls.over_screen
