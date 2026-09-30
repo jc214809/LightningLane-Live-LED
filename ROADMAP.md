@@ -47,6 +47,7 @@ Put a ✅ in the Done column when a character ships.
 | 28 | | Madame Leota | MK: Haunted Mansion | green glowing head appears in a crystal ball | Peek; pairs with #5 for Halloween |
 | 29 | | Cinderella's pumpkin coach | MK | a pumpkin bursts into sparkles and becomes the coach | Assemble |
 | 30 | | Chip 'n' Dale | MK / DHS (various) | two heads peek up side by side | Peek |
+| 31 | | Max and Roxanne (A Goofy Movie) | TBD | TBD | TBD |
 
 ### Notes per character
 
@@ -368,6 +369,13 @@ render early to confirm it reads at all before investing further.
 Questions: worth attempting given the two-small-heads risk, or drop; if attempted, which
 one leads/reacts (Chip's black nose vs. Dale's red nose and buck teeth are the only real
 differentiator at this size); reference image.
+
+**31. Max and Roxanne (A Goofy Movie).** Saved for later by the user, with a pixel-art
+reference: [docs/references/max-and-roxanne.png](docs/references/max-and-roxanne.png) (Max in
+his red hoodie, Roxanne with her long red hair, holding hands). Natural partner to Goofy (#17).
+
+Questions: what they do (walk across hand in hand, a peek, a nod to "Stand Out"/Powerline);
+one or both; where they show up; size on each board.
 
 ### Ideas for using them
 
