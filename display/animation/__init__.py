@@ -125,6 +125,8 @@ from display.animation.characters.walle import (  # noqa: F401
     WallESideReveal,
 )
 
+# time and debug are the shared modules the player uses; tests patch their attributes through
+# here (animation.time.sleep, animation.debug.info), which reaches every file. graphics is left
+# out on purpose: patching it here wouldn't reach drawing.py, so patch animation.drawing.graphics.
 import time  # noqa: F401,E402
 from utils import debug  # noqa: F401,E402
-from display.animation.drawing import graphics  # noqa: F401,E402
