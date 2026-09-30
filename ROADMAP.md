@@ -10,7 +10,8 @@ below lists the questions still to ask.
 Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey, Slinky,
 Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
 `walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
-Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`) and Olaf (`olaf`).
+Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`)
+and Goofy (`goofy`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -32,7 +33,7 @@ Put a ✅ in the Done column when a character ships.
 | 14 | ✅ | Green Army Men | DHS: Toy Story Land | parachute in, land, chutes slump, hop off in step on their bases | New: top-down drop reveal |
 | 15 | | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, "Ka-chow" stop, peels out leaving speed streaks | Fly-by (drive-by) |
 | 16 | | Rex | DHS: Toy Story Land | stomps in, tail-swipes the old screen off the board, looks sheepish and runs | Wreck (`wants_prev`) |
-| 17 | | Goofy | MK: The Barnstormer | flies his biplane across the board | Fly-by |
+| 17 | ✅ | Goofy | MK: The Barnstormer | flies his biplane through a loop-the-loop, towing a YAHOOEY! banner | Fly-by (loop) |
 | 18 | | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
 | 19 | | R2-D2 | DHS: Galaxy's Edge | rolls across on his treads, dome swivelling, light blinking | Fly-by |
 | 20 | ✅ | Millennium Falcon | DHS: Smugglers Run, Rise of the Resistance | drops out of hyperspace, cruises, then jumps to lightspeed; the old screen streaks away and a flash fades to the new ride | Standalone (`wants_prev` + `wants_new`) |
@@ -238,16 +239,21 @@ Decided:
 - Frequency: the regular `SURPRISES` rotation only, with no boost on The Barnstormer's
   screen.
 
-Still open:
-- Full body in the plane: the framing chosen was full body, but a cockpit hides his legs.
-  Choices are standing up in the cockpit, sitting on the wing, or just his upper body with
-  long ears flapping in the wind.
-- Flight path and extras: straight across, a wobble, or a loop; a smoke trail or a banner
-  as the wipe line; the Goofy holler as he goes by.
-- Ears and hat: his black ears need a lifted charcoal to show on black (the Sorcerer Mickey
-  fix). The green hat and the plane's colours must differ from each other.
-- Size on 64x64, and whether the plane stays 1x like Genie's lamp.
-- Reference image, and his chance in `SURPRISES`.
+Decided with the user (2026-09-29):
+- In the plane: his upper body sitting up tall in the cockpit, from the user's pin.
+- Face: transcribed from a pixel-art Goofy the user shared, then touched up by the user in
+  the sprite editor: green hat with a blue band, both eyes, the peach muzzle with his nose
+  and tongue, ear swept back. Code-drawn faces read as a generic dog (a lesson: copy a
+  real pixel artist's version of a face this detailed, as with Olaf). His black head and
+  outline are a lifted charcoal, since LEDs draw black as off.
+- Flight: a loop-the-loop. On 64x64 the whole loop fits; on 64x32 he loops out the top of
+  the board and comes back in before flying off to the right. The plane turns in exact
+  quarter steps (level, climbing, upside down, diving).
+- The wipe: he tows a "YAHOOEY!" banner that bends round the loop like cloth; the new ride
+  is uncovered behind the banner's tail, never covered back up while he loops back.
+- Plane: the pin's biplane, repainted red and yellow like the Great Goofini's at The
+  Barnstormer. 1x on both boards (2x ran the loop off a 64x64 board).
+- Chance in `SURPRISES`: 0.008.
 
 **18. Little Green Men (Aliens).** A new mechanic: "the claw" descends from the top edge,
 grabs the old screen bodily and hauls it back up out of frame, while three identical
