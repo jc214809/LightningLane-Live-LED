@@ -2,6 +2,7 @@ import random
 
 from display.animation.mechanics import CapturesScreens
 from display.animation.motion import ease_out
+from display.pixels import blend, set_pixel
 
 
 class FalconReveal(CapturesScreens):
@@ -215,9 +216,7 @@ class FalconReveal(CapturesScreens):
     def _blend(self, canvas, x, y, rgb, alpha):
         """Soft light over the (possibly stretched) old screen, never a black hole in it."""
         if 0 <= x < self.width and 0 <= y < self.height and alpha > 0:
-            under = self._base.get((x, y), (0, 0, 0))
-            canvas.SetPixel(x, y, *(int(u + (c - u) * alpha) for c, u in zip(rgb, under)))
+            canvas.SetPixel(x, y, *blend(rgb, self._base.get((x, y), (0, 0, 0)), alpha))
 
     def _px(self, canvas, x, y, rgb):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            canvas.SetPixel(x, y, *rgb)
+        set_pixel(canvas, x, y, rgb, self.width, self.height)

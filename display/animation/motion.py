@@ -1,24 +1,15 @@
 """
-Time for the animations: the frame rate, the standard lengths, and easing.
+Time for the transitions: the frame rate and standard lengths (easing is display.motion's).
 """
 
 import math
 
+from display.motion import ease_out, progress  # noqa: F401  (re-exported: animation.ease_out, .progress)
 
 FPS = 30
 COVER_S = 0.55
 WIPE_S = 0.65
 FLYBY_S = 1.2
-
-
-def ease_out(p):
-    p = min(1.0, max(0.0, p))
-    return 1 - (1 - p) ** 3
-
-
-def progress(t, start, end):
-    """How far t is through start..end, 0 before it and 1 after."""
-    return max(0.0, min(1.0, (t - start) / (end - start)))
 
 
 def _hops(t, t0, t1, x0, x1, count, height):

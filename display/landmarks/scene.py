@@ -5,6 +5,7 @@ returning its pixels at time t; plus the shared sky colours and texture noise.
 
 import math
 import random
+from display.pixels import noise, put
 
 
 LANDMARK_S = 3.0
@@ -39,8 +40,7 @@ class Landmark:
         raise NotImplementedError
 
     def put(self, out, x, y, rgb):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            out[(x, y)] = rgb
+        put(out, x, y, rgb, self.width, self.height)
 
     def draw_stars(self, out, t):
         for x, y, phase in self.stars:
@@ -62,6 +62,4 @@ class Landmark:
         return []
 
 
-def _noise(x, y):
-    """Deterministic 0..1 value per cell, for leafy and carved textures."""
-    return (((x * 73856093) ^ (y * 19349663)) & 1023) / 1023
+_noise = noise  # the landmarks' name for it

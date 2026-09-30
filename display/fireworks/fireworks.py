@@ -6,6 +6,7 @@ from driver import graphics
 from display.animation import frame_canvas, present
 from display.display import get_text_width, loaded_fonts
 from utils import debug
+from display.motion import smooth
 
 # The full name is too wide for one line on a 64-px board, even in 4x6.
 TITLE_LINES = ("Lightning Lane", "LED")
@@ -453,9 +454,7 @@ class FireworksShow:
 
 def title_alpha(elapsed_s):
     """Title opacity 0..1: hidden for TITLE_DELAY_S, then a smoothstep fade-in over TITLE_FADE_S."""
-    t = (elapsed_s - TITLE_DELAY_S) / TITLE_FADE_S
-    t = min(1.0, max(0.0, t))
-    return t * t * (3 - 2 * t)
+    return smooth((elapsed_s - TITLE_DELAY_S) / TITLE_FADE_S)
 
 
 def title_layout(font, width, board_height):

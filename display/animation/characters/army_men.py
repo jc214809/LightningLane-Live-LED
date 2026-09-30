@@ -4,6 +4,8 @@ import random
 from display.animation.drawing import art_pixels, paint
 from display.animation.mechanics import CapturesScreens
 from display.animation.motion import ease_out, progress
+from display.motion import smooth
+from display.pixels import blend, set_pixel
 
 
 class ArmyMenReveal(CapturesScreens):
@@ -171,7 +173,7 @@ class ArmyMenReveal(CapturesScreens):
         if k >= self.HOPS:
             return self.march_dist, 0
         step = self.march_dist / self.HOPS
-        eased = p * p * (3 - 2 * p)
+        eased = smooth(p)
         lift = 4 * p * (1 - p) * 4 * self.scale
         return int((k + eased) * step), int(round(lift))
 
@@ -285,8 +287,7 @@ class ArmyMenReveal(CapturesScreens):
     def _px_blend(self, canvas, x, y, rgb, alpha):
         """Draw rgb at alpha over the screen beneath: soft things mustn't punch black holes."""
         if 0 <= x < self.width and 0 <= y < self.height:
-            under = self._under(x, y)
-            canvas.SetPixel(x, y, *(int(u + (c - u) * alpha) for c, u in zip(rgb, under)))
+            canvas.SetPixel(x, y, *blend(rgb, self._under(x, y), alpha))
 
     def _line(self, canvas, x0, y0, x1, y1, rgb):
         dx, dy = abs(x1 - x0), -abs(y1 - y0)
@@ -318,5 +319,4 @@ class ArmyMenReveal(CapturesScreens):
                     self._px_blend(canvas, x0 + px, y0 + py, self.COLORS[kind], alpha)
 
     def _px(self, canvas, x, y, rgb):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            canvas.SetPixel(x, y, *rgb)
+        set_pixel(canvas, x, y, rgb, self.width, self.height)
