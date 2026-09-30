@@ -4,6 +4,7 @@ import random
 from display.animation.drawing import _blackout, art_pixels, paint
 from display.animation.mechanics import CapturesScreens
 from display.animation.motion import FPS, ease_out
+from display.motion import ramp
 
 
 class MickeyReveal(CapturesScreens):
@@ -102,7 +103,7 @@ class MickeyReveal(CapturesScreens):
     def _sweep_t(self, x):
         """0..1 — how far into the cast this column is reached by the sweep."""
         span = max(1.0, self.width - self.wand_home_x())
-        return min(1.0, max(0.0, (x - self.wand_home_x()) / span))
+        return ramp(x, self.wand_home_x(), span)
 
     def wand_home_x(self):
         """The wand tip's resting x: Mickey stands at the left edge."""

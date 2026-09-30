@@ -1,7 +1,7 @@
 import math
 from datetime import date
 
-from display.animation import ease_out
+from display.motion import ease_out
 from display.display import draw_text, get_text_width, loaded_fonts, color_dict
 from display.fireworks.fireworks import castle_sprite, _CASTLE_COLORS
 

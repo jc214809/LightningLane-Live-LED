@@ -9,6 +9,7 @@ import math
 from utils.special_events import special_event_now
 
 from display.landmarks.scene import Landmark
+from display.motion import ramp, smooth
 
 
 class ScaryJackOLanternLandmark(Landmark):
@@ -126,8 +127,7 @@ class ScaryJackOLanternLandmark(Landmark):
 
     def _lit(self, t):
         """0 while the pumpkin sits dark, easing to 1 as the candle catches."""
-        p = (t - self.IGNITE_AT) / self.IGNITE_S
-        return 0.0 if p <= 0 else 1.0 if p >= 1 else p * p * (3 - 2 * p)
+        return smooth((t - self.IGNITE_AT) / self.IGNITE_S)
 
     def animate(self, out, t):
         self._draw_pumpkin(out, t)
@@ -292,7 +292,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
             return self._short_title(t, fade)
         lines = [(text, self.width / 2, 1 + i * (self.TITLE_ROW_H + 1), fade(rgb))
                  for i, (text, rgb) in enumerate(self.TITLE_TALL)]
-        shown = min(1.0, max(0.0, (t - self._motion_start()) / self.MIST_HOURS_FADE_S))
+        shown = ramp(t, self._motion_start(), self.MIST_HOURS_FADE_S)
         if self.hours and shown:
             # In the mist on the bottom rows, centred in the gaps beside the pumpkin's base.
             start, end = self.hours
@@ -315,7 +315,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
             x = self.TITLE_COLUMN_X + shove
             if x + len(text) * 2 > 0:  # still partly on the board
                 lines.append((text, x, 1 + i * self.TITLE_ROW_H, fade(rgb)))
-        shown = min(1.0, max(0.0, (t - self.TONIGHT_AT) / self.TONIGHT_FADE_S))
+        shown = ramp(t, self.TONIGHT_AT, self.TONIGHT_FADE_S)
         if self.hours and shown:
             start, end = self.hours
             rows = (("TONIGHT", self.GOLD), (f"{start} TO", self.HOURS_RGB), (end, self.HOURS_RGB))
@@ -422,8 +422,8 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
         """64x32's leap into the title's spot: (columns moved left, rows lifted) at time t."""
         if not self.short:
             return 0.0, 0
-        p = min(1.0, max(0.0, (t - self.JUMP_AT) / self.JUMP_S))
-        ease = p * p * (3 - 2 * p)
+        p = ramp(t, self.JUMP_AT, self.JUMP_S)
+        ease = smooth(p)
         return (self.land_cx - self.cx) * ease, round(self.R * 0.5 * math.sin(math.pi * p))
 
     def _draw_pumpkin(self, out, t):

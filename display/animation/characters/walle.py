@@ -4,6 +4,7 @@ import random
 from display.animation.drawing import _blackout
 from display.animation.mechanics import CapturesScreens
 from display.animation.motion import ease_out
+from display.pixels import set_pixel
 
 
 class WallEReveal(CapturesScreens):
@@ -266,8 +267,7 @@ class WallEReveal(CapturesScreens):
                 self._px(canvas, x0 + col, self.y0 + row, self.PLANT_RGB[part])
 
     def _px(self, canvas, x, y, rgb):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            canvas.SetPixel(x, y, *rgb)
+        set_pixel(canvas, x, y, rgb, self.width, self.height)
 
 
 class WallESideReveal(WallEReveal):

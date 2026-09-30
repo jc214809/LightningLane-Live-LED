@@ -3,6 +3,7 @@ import random
 
 from display.animation.drawing import _blackout, art_pixels, paint
 from display.animation.motion import ease_out
+from display.pixels import set_pixel
 
 
 class SlinkyReveal:
@@ -143,9 +144,7 @@ class SlinkyReveal:
                     self._px(canvas, x, self.spring_y + math.sin(a) * ry, colour)
 
     def _px(self, canvas, x, y, rgb):
-        x, y = int(round(x)), int(round(y))
-        if 0 <= x < self.width and 0 <= y < self.height:
-            canvas.SetPixel(x, y, *rgb)
+        set_pixel(canvas, int(round(x)), int(round(y)), rgb, self.width, self.height)
 
     def _draw(self, canvas, art, x0, y0):
         paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale),
@@ -349,9 +348,7 @@ class SlinkyWrapReveal:
                     self._px(canvas, x, cy + math.sin(ang) * ry, colour)
 
     def _px(self, canvas, x, y, rgb):
-        x, y = int(round(x)), int(round(y))
-        if 0 <= x < self.width and 0 <= y < self.height:
-            canvas.SetPixel(x, y, *rgb)
+        set_pixel(canvas, int(round(x)), int(round(y)), rgb, self.width, self.height)
 
     def _draw(self, canvas, art, x0, y0):
         paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale),

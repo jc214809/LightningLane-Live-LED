@@ -1,6 +1,8 @@
 import math
 
 from display.landmarks.scene import Landmark
+from display.motion import ramp
+from display.pixels import art_pixels, blend
 
 
 class SpaceshipEarthLandmark(Landmark):
@@ -161,7 +163,7 @@ class SpaceshipEarthLandmark(Landmark):
     def facet_rgb(self, facet, t):
         """A facet's colour at t: dark until her dust reaches it, then its place in the colour wave."""
         cells, up, around, rise, shade, lit_at = facet
-        on = max(0.0, min(1.0, (t - lit_at) / self.FADE_S))
+        on = ramp(t, lit_at, self.FADE_S)
         colour = self._palette(around + t * self.WAVE_HZ)
         k = shade * (1.0 if up else 0.38)  # lit and shaded pyramid faces, as in the photo
         lit = tuple(int(c * k) for c in colour)
@@ -203,19 +205,11 @@ class SpaceshipEarthLandmark(Landmark):
                         self.dust_colors[i % len(self.dust_colors)], 1 - landed / 0.5)
 
     def _draw_tink(self, out, cx, cy, front):
-        s = self.tink_scale
         x0, y0 = int(round(cx - self.tink_w / 2)), int(round(cy - self.tink_h / 2))
-        for row, line in enumerate(self.tink_art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                for sy in range(s):
-                    for sx in range(s):
-                        x, y = x0 + col * s + sx, y0 + row * s + sy
-                        if front or not self._on_sphere(x, y):  # hidden while she's behind it
-                            self.put(out, x, y, self.tink_colors[kind])
+        for (x, y), rgb in art_pixels(self.tink_art, x0, y0, self.tink_colors, self.tink_scale):
+            if front or not self._on_sphere(x, y):  # hidden while she's behind it
+                self.put(out, x, y, rgb)
 
     def _blend(self, out, x, y, rgb, alpha):
         if 0 <= x < self.width and 0 <= y < self.height and alpha > 0:
-            under = out.get((x, y), (0, 0, 0))
-            out[(x, y)] = tuple(int(u + (c - u) * alpha) for c, u in zip(rgb, under))
+            out[(x, y)] = blend(rgb, out.get((x, y), (0, 0, 0)), alpha)
