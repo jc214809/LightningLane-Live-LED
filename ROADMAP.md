@@ -170,7 +170,7 @@ Decided with the user (2026-09-29):
 - Luxo: the user's pixel-art reference, cell for cell, 1x on both boards.
 
 **~~14. Green Army Men.~~ Done** (`ArmyMenReveal`, `"army_men"` in `SURPRISES` at 0.015,
-`display/animation.py`). The parachutes are what make them work: a canopy is a big, simple
+`display/animation/characters/army_men.py`). The parachutes are what make them work: a canopy is a big, simple
 shape that reads instantly, and the soldier underneath only needs a wide-brimmed helmet, a
 rifle slung diagonally, and the classic wide-planted stance to read as a toy soldier. Built
 from the user's reference image: a camo dome (olive/gold patches) with a white five-point

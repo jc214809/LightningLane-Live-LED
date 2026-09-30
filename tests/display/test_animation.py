@@ -48,7 +48,7 @@ def _draw_line(canvas, x0, y0, x1, y1, color):
 
 @pytest.fixture(autouse=True)
 def fake_graphics(monkeypatch):
-    monkeypatch.setattr(animation, "graphics", type("G", (), {"Color": FakeColor, "DrawLine": staticmethod(_draw_line)}))
+    monkeypatch.setattr(animation.drawing, "graphics", type("G", (), {"Color": FakeColor, "DrawLine": staticmethod(_draw_line)}))
     monkeypatch.setattr(animation.time, "sleep", lambda s: None)
     animation._canvases.clear()
     animation._last_screen.clear()

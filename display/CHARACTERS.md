@@ -1,6 +1,6 @@
 # Drawing characters for the LED board
 
-Notes from building the eleven transitions in `display/animation.py`. Most of these
+Notes from building the eleven transitions in `display/animation/` (one file per character under `characters/`). Most of these
 were learned the hard way — by rendering something, looking at it, and finding it
 unrecognizable. Read this before adding a character.
 
