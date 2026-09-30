@@ -51,11 +51,13 @@ PARK_REVEALS = ("tink", "buzz")
 # Two TRON light cycles race across, blue on top and red below, their trails the wipe.
 # Olaf stacks himself up out of snowballs while it snows, waves, and walks off.
 # Goofy flies his biplane through a loop-the-loop, towing a YAHOOEY! banner.
+# The Pixar Ball bounces in with Luxo Jr., in one of three little stories.
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
 SURPRISES = {"genie": 0.005, "baymax": 0.015, "slinky_wrap": 0.01, "walle_side": 0.018, "army_men": 0.015,
              "mike": 0.008, "tron": 0.008,
-             "olaf": 0.005, "goofy": 0.008}
+             "olaf": 0.005, "goofy": 0.008,
+             "luxo_ball": 0.005}
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge; Mike is
 # in the rotation too, but drops in on his own Laugh Floor far more often.

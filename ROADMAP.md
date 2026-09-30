@@ -10,8 +10,8 @@ below lists the questions still to ask.
 Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey, Slinky,
 Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
 `walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
-Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`)
-and Goofy (`goofy`).
+Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
+Goofy (`goofy`) and the Pixar Ball with Luxo Jr. (`luxo_ball`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -20,7 +20,7 @@ Put a ✅ in the Done column when a character ships.
 | 1 | ✅ | TRON light cycle | MK: TRON Lightcycle Run | a blue and a red cycle race across, top and bottom; their light trails are the wipe | Fly-by |
 | 2 | ✅ | Olaf | EPCOT: Frozen Ever After | stacks himself out of snowballs while it snows, waves, and walks off | Standalone, drawn in code with a hand-drawn head |
 | 3 | ✅ | Mike Wazowski | MK: Monsters, Inc. Laugh Floor | pops up, blinks, looks around, grins, then scares | Peek, drawn in code like Baymax |
-| 4 | | Luxo Jr. lamp | DHS: Pixar Place | hops in with a squash and stretch; its light cone reveals (could pair with #13) | Standalone |
+| 4 | ✅ | Luxo Jr. lamp | DHS: Pixar Place | with the Pixar Ball (#13): bats it, chases it, or searches for it with his light | Standalone (`luxo_ball`) |
 | 5 | | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
 | 6 | | Jack Skellington | Halloween party nights | white skull close-up peeks up | Peek |
 | 7 | | Santa Goofy / Santa-hat Mickey | Christmas party, Jollywood Nights | red-and-white holiday cameo | TBD |
@@ -29,7 +29,7 @@ Put a ✅ in the Done column when a character ships.
 | 10 | | Nemo and a school of fish | EPCOT: The Seas with Nemo & Friends | a school of fish swims across as the wipe | Fly-by |
 | 11 | | Steamboat Willie Mickey | MK | whistling at the wheel | TBD |
 | 12 | | Monorail | all of Walt Disney World | glides across as a band of color | Fly-by |
-| 13 | | Pixar Ball | DHS: Pixar Place, Toy Story Land | bounces across in 3-4 hops, uncovering the next ride | Fly-by (bounce) |
+| 13 | ✅ | Pixar Ball | DHS: Pixar Place, Toy Story Land | bounces in with Luxo (#4), one of three stories | Standalone (`luxo_ball`) |
 | 14 | ✅ | Green Army Men | DHS: Toy Story Land | parachute in, land, chutes slump, hop off in step on their bases | New: top-down drop reveal |
 | 15 | | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, "Ka-chow" stop, peels out leaving speed streaks | Fly-by (drive-by) |
 | 16 | | Rex | DHS: Toy Story Land | stomps in, tail-swipes the old screen off the board, looks sheepish and runs | Wreck (`wants_prev`) |
@@ -112,6 +112,10 @@ the Laugh Floor, 1 in 10.
 LEDs. Hops in with a squash and stretch; its light cone reveals the next screen. Could be
 folded into the Pixar Ball (#13) as one scene: the lamp hops in and bats the ball.
 
+Decided: he's being built with the Pixar Ball as one scene; see #13 for the plan. His
+reference is a pixel-art Luxo the user shared (shade with the yellow bulb, spring arm,
+base), transcribed cell for cell.
+
 **5. Hitchhiking Ghosts.** Three ghostly silhouettes drawn see-through (additively, like
 Genie's smoke) over the screen, floating across with a faint bob. Fits the Halloween party
 season.
@@ -149,8 +153,21 @@ Options:
 - Squash-reveal: drops in, squashes flat across the bottom, springs off the top (more
   abstract).
 
-Questions: bounce-by alone or with Luxo; regular chance or Pixar rides only; 1x on both
-boards or 2x on 64x64; reference image.
+Decided with the user (2026-09-29):
+- With Luxo (#4) as one scene. Build three stories and pick after watching them (or keep
+  them all, one at random per showing, like the pumpkin's wink or hop): the ball bounces
+  in and Luxo hops in and bats it off (his lunge is placed from the pixels so his shade
+  visibly meets the ball); Luxo chases the ball across; and a searchlight: the board is
+  dark, Luxo hops in, switches his light on and sweeps it looking for the ball, his head
+  tilting with the beam, the ball showing only where the beam touches it; he finds it, it
+  hops, and the beam widens over the ride. (The first "light" story was the bat played in
+  the dark, too like the first.) Friendly: no Pixar-intro squash gag. All three kept, one
+  at random per showing.
+- The ball spins a quarter turn each hop, like it's rolling (exact pixel turns).
+- The ball is the user's 21x21 pixel-art reference, cell for cell, on both boards.
+- Where: the `SURPRISES` rotation only, at 0.005 (0.008 would have pushed surprises to
+  10% of ride screens).
+- Luxo: the user's pixel-art reference, cell for cell, 1x on both boards.
 
 **~~14. Green Army Men.~~ Done** (`ArmyMenReveal`, `"army_men"` in `SURPRISES` at 0.015,
 `display/animation.py`). The parachutes are what make them work: a canopy is a big, simple
