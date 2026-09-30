@@ -20,7 +20,7 @@ SPECIAL_EVENTS = {
     "halloween": {
         "match": "not-so-scary halloween party",  # found in a lower-cased entity name
         "star_rgb": (255, 130, 20),  # the "*" after the park hours: one colour, or one per dot
-        "landmark": "FriendlyJackOLanternLandmark",  # replaces the park's landmark (display/landmarks.py)
+        "landmark": "FriendlyJackOLanternLandmark",  # replaces the park's landmark (display/landmarks/pumpkins.py)
         "fireworks_show": "Disney's Not-So-Spooky Spectacular",  # plays the castle fireworks when it starts
         "fireworks_theme": "halloween",  # display/fireworks/fireworks.py THEMES
     },

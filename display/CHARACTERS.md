@@ -226,7 +226,7 @@ sells the character, then size him to hold it.
 ## Landmarks and scenes: what worked
 
 Notes from the Tower of Terror redraw and the Halloween party work (the two jack-o'-lanterns
-in `landmarks.py`, the Halloween castle fireworks). Both landed faster and better than the
+in `display/landmarks/`, the Halloween castle fireworks). Both landed faster and better than the
 early characters above, and mostly for process reasons. Read this before redoing a landmark.
 
 ### The process
