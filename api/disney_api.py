@@ -82,7 +82,8 @@ def fetch_park_schedule(park_id):
             event for event in schedule_data if event.get("date") in (today_str, yesterday_str)
         ]
 
-        debug.log(f"Schedule Data for park ID {park_id}: {schedule_data}")
+        debug.log(f"Schedule for park ID {park_id}: {len(schedule_data)} events, "
+                  f"{len(schedule_filtered)} today or yesterday")
         return schedule_filtered
     except requests.RequestException as e:
         debug.error(f"Failed to fetch schedule for park ID {park_id}: {e}")
@@ -119,7 +120,8 @@ def fetch_parks_from_destination(destination_id):
             schedule_filtered = [
                 event for event in schedule if event.get("date") in (today_str, yesterday_str)
             ]
-            debug.log(f"Schedule Filter: {schedule_filtered}")
+            debug.log(f"{park.get('name')} schedule, today and yesterday: "
+                      + (", ".join(f"{e.get('date')} {e.get('type')}" for e in schedule_filtered) or "none"))
             location, park_timezone = get_park_entity_info(park.get("id"))
             filtered_parks.append({
                 "name": clean_park_name(park_name) if is_disney else park_name,
@@ -208,7 +210,7 @@ def fetch_parks_and_attractions(disney_park_list):
             response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
             park_data = response.json()
-            debug.log(f"{park_name} Park Data: {park_data}")
+            debug.log(f"{park_name}: {len(park_data.get('children', []))} entities from the API")
         except requests.RequestException as e:
             debug.error(f"Failed to fetch attractions for park {park_name}: {e}")
             continue
@@ -225,7 +227,6 @@ def fetch_parks_and_attractions(disney_park_list):
                     "status": '',        # Placeholder for status
                     "lastUpdatedTs": ''  # Placeholder for timestamp
                 }
-                debug.log(f"Attraction found: {attraction}")
                 attractions.append(attraction)
         debug.info(f"{len(attractions)} were found in {park_name}")
         park_obj = {
@@ -469,14 +470,9 @@ def park_has_operating_attraction(park):
     """
     now = datetime.now(timezone.utc)
 
-    debug.log(f"Searching for open attractions in {park['name']}")
     for attraction in park.get("attractions", []):
         wait_time = attraction.get("waitTime")
         status = attraction.get("status")
-        debug.log(
-            f"Attraction: {attraction['name']} (Park: {park['name']}) | "
-            f"Wait Time: {wait_time} | Status: {status}"
-        )
         if status and status.upper() == "OPERATING" and wait_time not in (None, ''):
             if _attraction_is_fresh(attraction, now):
                 debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")

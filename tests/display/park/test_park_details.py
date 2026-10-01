@@ -233,6 +233,8 @@ def test_render_weather_icon_success(monkeypatch):
             self.width = size[0]
             return self
     monkeypatch.setattr(park_details, "Image", type("PILImage", (), {"open": lambda f: FakeImage()}))
+    logged = []
+    monkeypatch.setattr(park_details.debug, "log", logged.append)
     park_details.icon_cache.clear()
     img = render_weather_icon("01d")
     assert img is not None
@@ -240,6 +242,7 @@ def test_render_weather_icon_success(monkeypatch):
     cached = render_weather_icon("01d")
     assert cached is img
     assert timeouts == [park_details.ICON_TIMEOUT_S], "one download, with a timeout"
+    assert logged == ["Downloaded weather icon 01d"], "the download is logged once; the cache hit isn't"
 
 def test_render_weather_icon_failure(monkeypatch):
     # Dummy get that simulates a network failure.
@@ -437,3 +440,27 @@ def test_render_park_information_screen_high_res(monkeypatch):
     assert calls["display_weather"] == (park_obj["weather"], info_font_height)
     assert calls["render_llmp"] == (baseline, expected_horizontal, "15")
     assert calls["render_hours"] == (baseline, 1)
+
+
+@pytest.mark.parametrize("icon", ["cached", "missing"])
+def test_drawing_the_weather_every_frame_logs_nothing(monkeypatch, icon):
+    # The park screen redraws every animation frame; a cache hit, or an icon that couldn't be
+    # fetched (already logged once, when the fetch failed), mustn't log on each one.
+    from utils import debug
+    logged = []
+    for level in ("log", "info", "warning", "error"):
+        monkeypatch.setattr(debug, level, lambda *a, _l=level, **k: logged.append(_l))
+
+    class FakeImage:
+        width = height = 15
+
+        def convert(self, mode):
+            return self
+
+    monkeypatch.setitem(park_details.icon_cache, "01d", FakeImage())
+    weather_info = {"temperature": "75°F", "icon": "01d" if icon == "cached" else "zz", "short_description": "Sunny"}
+    if icon == "missing":
+        monkeypatch.setitem(park_details.icon_failures, "zz", __import__("time").monotonic())
+    for _ in range(10):
+        display_weather_icon_and_description(FakeMatrix(width=64, height=32), weather_info, font_height=10, show_icon=True)
+    assert logged == []

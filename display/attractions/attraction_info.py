@@ -3,7 +3,6 @@ import math
 from display.animation import ease_out
 from display.display import DOWN_RGB, draw_text, plain_text, wrap_text, get_text_width, color_dict, loaded_fonts
 from driver import graphics
-from utils import debug
 
 COUNT_UP_S = 0.8
 PULSE_PERIOD_S = 1.6
@@ -198,7 +197,6 @@ def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0,
     overrides the space between the ride name and the wait time. Above a bar, the
     wait also drops halfway into any spare rows beneath it; the name doesn't move.
     """
-    debug.log(f"Rendering ride info: {ride_info}")
     gap_px = GAP_BETWEEN_RIDE_AND_WAIT if gap is None else gap
     wait_drop = 0
     combined_lines, wrapped_ride_name, wrapped_wait_time, total_lines_height, line_heights = _layout(matrix, ride_info)
