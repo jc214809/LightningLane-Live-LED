@@ -11,8 +11,8 @@ Built so far: Tinker Bell, Buzz, Figment, Dumbo, Stitch, Ralph, Sorcerer Mickey,
 Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter view
 `walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
 Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
-Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`)
-and Mater (`mater`).
+Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
+Mater (`mater`), Chip 'n' Dale (`chip_dale`) and Tigger (`tigger`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -40,14 +40,14 @@ Put a ✅ in the Done column when a character ships.
 | 20 | ✅ | Millennium Falcon | DHS: Smugglers Run, Rise of the Resistance | drops out of hyperspace, cruises, then jumps to lightspeed; the old screen streaks away and a flash fades to the new ride | Standalone (`wants_prev` + `wants_new`) |
 | 21 | | Baby Groot | EPCOT: Guardians: Cosmic Rewind | sprouts from the bottom edge, grows like Baymax inflates, then dances | Peek (procedural, not fixed art) |
 | 22 | | Ray the firefly | MK: Tiana's Bayou Adventure | glowing firefly wanders across, leaving a light trail | Fly-by |
-| 23 | | Tigger | MK: Many Adventures of Winnie the Pooh | bounces across on his tail | Fly-by (bounce) |
+| 23 | ✅ | Tigger | MK: Many Adventures of Winnie the Pooh | 64x64: bounces across on his tail; 64x32: walks in low, wiggles his tail, pounces off | Fly-by (bounce / stalk) |
 | 24 | | Jungle Cruise hippo | MK: Jungle Cruise | eyes and ears surface from the bottom, wiggles its ears, sinks back down | Peek |
 | 25 | | Donald Duck | EPCOT: Gran Fiesta Tour | tantrum knocks the old screen to pieces, feathers flying | Wreck (`wants_prev`) |
 | 26 | | Yeti | AK: Expedition Everest | huge dark silhouette looms up behind the screen, eyes glowing | Peek |
 | 27 | | Simba on Pride Rock | AK | held up against an orange sunrise gradient | Landmark/scene, not a ride transition |
 | 28 | | Madame Leota | MK: Haunted Mansion | green glowing head appears in a crystal ball | Peek; pairs with #5 for Halloween |
 | 29 | | Cinderella's pumpkin coach | MK | a pumpkin bursts into sparkles and becomes the coach | Assemble |
-| 30 | | Chip 'n' Dale | MK / DHS (various) | two heads peek up side by side | Peek |
+| 30 | ✅ | Chip 'n' Dale | MK / DHS (various) | run in from opposite sides, meet nose to nose, scurry back off | Run-in from both edges |
 | 31 | | Max and Roxanne (A Goofy Movie) | TBD | TBD | TBD |
 | 32 | ✅ | Mater | Cars (with McQueen, #15) | drives across backwards, grinning | Drive-by (`mater`) |
 
@@ -328,8 +328,15 @@ or Ray's Cajun-firefly green); does he carry a tiny lantern; reference image.
 Slinky's coils but applied to a single hop-across instead of a stretch. Bold orange and
 black stripes are unmistakable on black.
 
-Questions: how many bounces to cross the board; does he say anything ("T-I-double-Guh-er");
-1x or 2x on 64x64; reference image.
+Built (`TiggerReveal`, `tigger`), a different pose per board, both copied cell for cell from
+the user's pixel-art grids and 1x. On 64x64 the cute sitting Tigger (pink nose, tail hanging
+below; the pattern's hearts left out) bounces across on his tail four times, the tail
+squashing two rows on each landing. On 64x32, where only the lying-down Tigger fits (exactly
+32 rows once the tip of his tail lost a row of outline), he walks in low on all fours, his
+paws stepping (`drawing.walking_pixels`), stops and wiggles his tail, then pounces off the
+right in a little arc. A first version drawn by hand after PixelJoint's bouncing Tigger was
+dropped: "a cat impersonating Tigger". Surprises were allowed up to 12% of ride screens to
+fit him in at 0.005.
 
 **24. Jungle Cruise hippo.** Just eyes, ears and nostrils surfacing from the bottom edge —
 the classic "hippo submerged in water" gag, and it needs almost no detail to read, similar
@@ -391,9 +398,14 @@ to read at this resolution — two half-size heads competing for the same peek i
 risk than any single-character entry on this list. Would need a reference image and a
 render early to confirm it reads at all before investing further.
 
-Questions: worth attempting given the two-small-heads risk, or drop; if attempted, which
-one leads/reacts (Chip's black nose vs. Dale's red nose and buck teeth are the only real
-differentiator at this size); reference image.
+Built (`ChipDaleReveal`, `chip_dale`) as whole bodies, not heads, from the user's Rescue
+Rangers pixel art (Chip's fedora and bomber jacket, Dale's red nose and Hawaiian shirt), 1x on
+both boards: Chip runs in from the left and Dale from the right, feet stepping and bobbing
+(`drawing.walking_pixels`), each uncovering the ride behind him; they meet nose to nose for
+half a second, turn round and scurry back off their own sides (about 1.7s). Tried and dropped:
+gliding across with no feet moving, and turning their heads to look out at us (front-facing
+heads drawn after BRIK's read as different chipmunks, even redrawn with their white faces).
+In the rotation at 0.005; the Army Men went to 0.010 to make room.
 
 **32. Mater.** Built (`MaterReveal`, `mater`) from the user's three-quarter pixel-art Mater:
 he drives across backwards, his favourite way, facing right with his buck-toothed grin while

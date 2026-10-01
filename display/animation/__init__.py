@@ -130,6 +130,9 @@ from display.animation.characters.tink import (  # noqa: F401
     TinkReveal,
 )
 
+from display.animation.characters.tigger import (  # noqa: F401
+    TiggerReveal,
+)
 
 from display.animation.characters.tron import (  # noqa: F401
     TronReveal,

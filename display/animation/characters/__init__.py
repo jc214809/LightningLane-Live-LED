@@ -21,6 +21,7 @@ from display.animation.characters.ralph import RalphReveal
 from display.animation.characters.slinky import SlinkyReveal, SlinkyWrapReveal
 from display.animation.characters.stitch import StitchReveal
 from display.animation.characters.tink import TinkReveal
+from display.animation.characters.tigger import TiggerReveal
 from display.animation.characters.tron import TronReveal
 from display.animation.characters.walle import WallEReveal, WallESideReveal
 from display.animation.mechanics import Wipe
@@ -45,4 +46,5 @@ TRANSITIONS = {
     "mcqueen": McQueenReveal,
     "mater": MaterReveal,
     "chip_dale": ChipDaleReveal,
+    "tigger": TiggerReveal,
 }

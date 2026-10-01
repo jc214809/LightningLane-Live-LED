@@ -122,6 +122,16 @@ instead. Everything that holds a fixed size is easier as ASCII art.
 *upward*, and he's wide-and-flat when deflated, round when full. Those two details do
 more than the scaling itself.
 
+**Feet that move.** A character crossing the board with still feet glides, and it shows
+(Chip 'n' Dale did, at first). `drawing.walking_pixels` cuts the feet out of side-on art by
+row and column and steps them through `WALK_CYCLE` (apart, back foot up, passing, front foot
+up), a pixel at a time; bob the body a row while a foot is up for a run. It reads even at
+1px, and it works on all fours (Tigger's back and far front paws step together).
+
+**Side-on art stays side-on.** Turning Chip 'n' Dale's heads to face us, with front heads
+drawn to match their side ones, read as two other chipmunks, even after a redraw. A
+character drawn in profile should act in profile.
+
 ## Blending
 
 Particles and smoke must be drawn *additively* over what's already on the canvas.
@@ -133,6 +143,9 @@ the background. Soft, semi-transparent things need to let the screen show throug
 Give the eye time. Roughly:
 - 1.2-2.3s for a fly-by crossing.
 - 2-4s for anything with phases (rise, hold, act, leave).
+- Preview with the real hold: ride screens hold 8s on the board, and a character's time
+  comes out of that. A 4s preview hold made a 2.8s character look like it left the wait
+  time no time at all.
 - Hold at the extremes. A pause at the top of Stitch's peek, or at Baymax's full
   inflation, reads far better than constant motion.
 - Ease, don't move linearly. `ease_out` on entrances; a decaying overshoot for
