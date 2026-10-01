@@ -1123,3 +1123,31 @@ def test_show_start_due_ignores_other_shows_and_parks_without_showtimes():
     later = HEA_START + timedelta(hours=2)
     two = _parks_with_show(starts=(HEA_START, later))
     assert show_start_due(two, "Happily Ever After", 300, now=later + timedelta(seconds=5)) == later
+
+
+def test_startup_fetches_log_summaries_not_whole_payloads(monkeypatch):
+    # The API returns tens of KB per park; the debug log gets a count, not the payload.
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    children = [{"id": f"attr-{i}", "name": f"Ride {i} " + "x" * 40, "entityType": "ATTRACTION"} for i in range(200)]
+    schedule = [{"date": today_str, "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00",
+                 "description": "y" * 200} for _ in range(30)]
+
+    def fake_get(url, **kwargs):
+        if "children" in url:
+            return DummyResponse({"children": children}, 200)
+        if "schedule" in url:
+            return DummyResponse({"schedule": schedule}, 200)
+        return DummyResponse({"location": {"latitude": 28.3759, "longitude": -81.5494}}, 200)
+
+    monkeypatch.setattr(requests, "get", fake_get)
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {"temp": "dummy"})
+    logged = []
+    for level in ("log", "info"):
+        monkeypatch.setattr(disney_api.debug, level, lambda msg, *a, **k: logged.append(str(msg)))
+    parks = [{"id": "dummy-id", "name": "Magic Kingdom", "schedule": schedule, "weather": [],
+              "location": {"latitude": 28.3759, "longitude": -81.5494}}]
+    fetch_park_schedule("dummy-id")
+    result = fetch_parks_and_attractions(parks)
+    assert len(result[0]["attractions"]) == 200
+    assert logged and max(len(m) for m in logged) < 300, "summaries, not the whole response"
+    assert len(logged) < 20, "not a line per attraction"

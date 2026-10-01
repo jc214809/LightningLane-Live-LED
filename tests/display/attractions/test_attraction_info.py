@@ -430,3 +430,15 @@ def test_ride_name_is_white_and_wait_is_cyan(frame_recorder, monkeypatch):
     attraction_mod.render_attraction_info(RecordingCanvas(64, 32), {"name": "Big Thunder", "waitTime": "Down 100"})
     colors = dict(frame_recorder["text"])
     assert colors["Big"] == "WHITE" and colors["Down"] == colors["100"] == "RED"
+
+
+def test_drawing_ride_frames_logs_nothing(frame_recorder, monkeypatch):
+    # Drawn 30 times a second while a screen is up; disney.py logs each screen once instead.
+    from utils import debug
+    logged = []
+    for level in ("log", "info", "warning", "error"):
+        monkeypatch.setattr(debug, level, lambda *a, _l=level, **k: logged.append(_l))
+    ride = {"name": "Space Mountain", "waitTime": 45, "status": "OPERATING"}
+    for i in range(10):
+        attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, i / 30, expected=40)
+    assert logged == []

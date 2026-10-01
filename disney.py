@@ -219,7 +219,7 @@ def initialize_park_information_screen(matrix, park):
         debug.info(f"Rendering {park['name']} landmark{f' for the {party} party' if party else ''}.")
         scene = landmark(matrix.width, matrix.height, park=park)
         show_screen(matrix, landmark_screen(scene), scene.SCREEN_S)
-    debug.info(f"Rendering {park['name']} Title Screen.")
+    debug.info(f"Rendering {park['name']} Title Screen. | Weather: {park.get('weather')}")
     show_screen(matrix, _static(render_park_information_screen, park), 8, transition=random.choice(PARK_REVEALS))
 
 def play_fireworks_show_if_due(matrix, parks, now=None):

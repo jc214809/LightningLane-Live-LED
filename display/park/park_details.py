@@ -79,9 +79,8 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
 def render_weather_icon(icon_code):
     # Construct the URL for the weather icon
     # Check if the icon is already cached
-    debug.log(f"Fetching cache: {icon_cache}")
+    # Called every animation frame: no logging on this path (a cache hit is the normal case).
     if icon_code in icon_cache:
-        debug.log(f"Fetching icon from cache for code: {icon_code}")
         return icon_cache[icon_code]
     # The park screen is redrawn every animation frame; don't re-download a failing icon each time.
     failed_at = icon_failures.get(icon_code)
@@ -98,6 +97,7 @@ def render_weather_icon(icon_code):
         img = img.resize((15, 15))  # Resize the image to a smaller display size for the matrix
         icon_cache[icon_code] = img
         icon_failures.pop(icon_code, None)
+        debug.log(f"Downloaded weather icon {icon_code}")  # once per new icon, not per frame
 
         return img
     except requests.RequestException as e:
@@ -109,7 +109,6 @@ def render_weather_icon(icon_code):
 
 def display_weather_icon_and_description(matrix, weather_info, font_height,show_icon=True):
     """Display the weather icon and its description in the top right corner."""
-    debug.log(f"Weather Info: {weather_info}")
 
     temp = weather_info.get("temperature", "?")
 
@@ -129,8 +128,7 @@ def display_weather_icon_and_description(matrix, weather_info, font_height,show_
                 vertical_point = int(matrix.height - (loaded_fonts["info"].height * 2.5))
                 matrix.SetImage(img.convert("RGB"), horizontal_point, vertical_point - img.height)
                 graphics.DrawText(matrix, loaded_fonts["info"], horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text)
-        else:
-            debug.warning("Icon could not be rendered, only displaying text.")
+        # No icon: the fetch already logged why, once per retry window; this runs every frame.
 
 def format_iso_time(iso_str):
     """
