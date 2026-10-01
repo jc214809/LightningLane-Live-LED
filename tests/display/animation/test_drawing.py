@@ -22,3 +22,25 @@ def test_paint_sets_only_pixels_on_the_board_from_a_dict_or_pairs():
     animation.paint(canvas, {(0, 0): (9, 9, 9), (4, 0): (1, 1, 1), (-1, 2): (1, 1, 1)}, 4, 3)
     animation.paint(canvas, [((3, 2), (5, 5, 5)), ((3, 3), (1, 1, 1))], 4, 3)
     assert canvas.px == {(0, 0): (9, 9, 9), (3, 2): (5, 5, 5)}
+
+
+def test_walking_pixels_steps_the_feet_and_leaves_the_body():
+    art = ["BBBB", "BBBB", "F..G"]
+    colors = {"B": (1, 1, 1), "F": (2, 2, 2), "G": (3, 3, 3)}
+    feet = (2, range(0, 2), range(2, 4))
+    standing = dict(animation.walking_pixels(art, 0, 0, colors, feet, None))
+    assert standing == dict(animation.art_pixels(art, 0, 0, colors))
+    apart = dict(animation.walking_pixels(art, 0, 0, colors, feet, 0))
+    assert apart[(-1, 2)] == (2, 2, 2) and apart[(4, 2)] == (3, 3, 3), "striding apart"
+    lifted = dict(animation.walking_pixels(art, 0, 0, colors, feet, 1))
+    assert lifted[(0, 1)] == (2, 2, 2) and (0, 2) not in lifted, "back foot up, over the leg"
+    assert lifted[(3, 2)] == (3, 3, 3), "front foot planted"
+    assert dict(animation.walking_pixels(art, 0, 0, colors, feet, 5)) == lifted, "the cycle repeats"
+
+
+def test_walking_pixels_steps_the_other_way_facing_left():
+    art = ["BBBB", "G..F"]
+    colors = {"B": (1, 1, 1), "F": (2, 2, 2), "G": (3, 3, 3)}
+    feet = (1, range(2, 4), range(0, 2))  # facing left, the foot behind is on the right
+    apart = dict(animation.walking_pixels(art, 0, 0, colors, feet, 0, facing=-1))
+    assert apart[(4, 1)] == (2, 2, 2) and apart[(-1, 1)] == (3, 3, 3)
