@@ -25,8 +25,10 @@ from display.animation.drawing import (  # noqa: F401
     _edge,
     _letters,
     _rotate_art,
+    WALK_CYCLE,
     art_pixels,
     paint,
+    walking_pixels,
 )
 
 from display.animation.mechanics import (  # noqa: F401
@@ -60,6 +62,10 @@ from display.animation.characters.baymax import (  # noqa: F401
 
 from display.animation.characters.buzz import (  # noqa: F401
     BuzzReveal,
+)
+
+from display.animation.characters.chip_dale import (  # noqa: F401
+    ChipDaleReveal,
 )
 
 from display.animation.characters.dumbo import (  # noqa: F401
@@ -123,6 +129,7 @@ from display.animation.characters.stitch import (  # noqa: F401
 from display.animation.characters.tink import (  # noqa: F401
     TinkReveal,
 )
+
 
 from display.animation.characters.tron import (  # noqa: F401
     TronReveal,

@@ -5,6 +5,7 @@ Every transition by name. disney.py picks from these.
 from display.animation.characters.army_men import ArmyMenReveal
 from display.animation.characters.baymax import BaymaxReveal
 from display.animation.characters.buzz import BuzzReveal
+from display.animation.characters.chip_dale import ChipDaleReveal
 from display.animation.characters.dumbo import DumboReveal
 from display.animation.characters.falcon import FalconReveal
 from display.animation.characters.figment import FigmentReveal
@@ -43,4 +44,5 @@ TRANSITIONS = {
     "luxo_ball": LuxoBallReveal,
     "mcqueen": McQueenReveal,
     "mater": MaterReveal,
+    "chip_dale": ChipDaleReveal,
 }
