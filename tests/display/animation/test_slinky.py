@@ -2,6 +2,8 @@
 
 import random
 
+import pytest
+
 import display.animation as animation
 
 from tests.display.animation.support import FakeCanvas, FakeMatrix, fill
@@ -42,13 +44,23 @@ def test_slinky_walks_out_then_the_rear_catches_up_and_both_leave():
     assert dog.rear_x(dog.duration) >= 64, "and the whole dog has left the board"
 
 
-def test_slinky_tail_is_a_spring():
-    art, colors = animation.SlinkyReveal.REAR_ART, animation.SlinkyReveal.COLORS
+@pytest.mark.parametrize("attr", ["REAR_ART", "BIG_REAR_ART"])
+def test_slinky_tail_is_a_grey_spring_with_a_red_tip(attr):
+    art = getattr(animation.SlinkyReveal, attr)
     body_top = next(i for i, row in enumerate(art) if "B" in row)
-    tail = [(r, c) for r, row in enumerate(art) for c, ch in enumerate(row) if ch in "SW"]
-    assert tail and all(r < body_top for r, _ in tail), "the tail rises above his rump"
-    assert {art[r][c] for r, c in tail} == {"S", "W"}, "banded bright and dark like a coil"
-    assert sum(abs(a - b) for a, b in zip(colors["S"], colors["W"])) > 150
+    tail = [(r, ch) for r, row in enumerate(art[:body_top]) for ch in row if ch in "NCG"]
+    assert tail, "the tail rises above his rump"
+    tip = min(r for r, ch in tail if ch == "N")
+    assert tip < min(r for r, ch in tail if ch == "C"), "red at the tip, grey spring below it"
+
+
+@pytest.mark.parametrize("height, prefix", [(32, ""), (64, "BIG_")])
+def test_each_board_gets_its_own_size_of_slinky(height, prefix):
+    for cls in (animation.SlinkyReveal, animation.SlinkyWrapReveal):
+        dog = cls(64, height)
+        assert dog.front_art is getattr(cls, prefix + "FRONT_ART")
+        assert dog.rear_art is getattr(cls, prefix + "REAR_ART")
+        assert dog.front_h <= height // 2 + 15 and dog.front_w + dog.rear_w <= 48, "room for the spring"
 
 
 def test_slinky_spring_spreads_as_he_stretches():
@@ -145,26 +157,28 @@ def test_slinky_wrap_spring_goes_round_the_back_of_the_board():
     assert not [x for x in xs if fx + dog.front_w <= x < dog.rear_home], "nothing across the middle"
 
 
-def test_slinky_wrap_looks_down_at_his_rear_and_wags():
-    dog = _wrap(32)
+@pytest.mark.parametrize("height", [32, 64])
+def test_slinky_wrap_looks_down_at_his_rear_and_wags(height):
+    dog = _wrap(height)
     t = _at(dog, "look", 0.5)
-    canvas = FakeCanvas(64, 32)
+    canvas = FakeCanvas(64, height)
     dog.overlay(canvas, t)
     fx, fg = dog.pose(t)["front"]
-    pupil = dog.COLORS["P"]
-    for r, (normal, looking) in enumerate(zip(dog.FRONT_ART, dog.FRONT_LOOK_ART)):
+    pupil = dog.COLORS["J"]
+    assert dog.front_look_art != dog.front_art
+    for r, (normal, looking) in enumerate(zip(dog.front_art, dog.front_look_art)):
         for c, (a, b) in enumerate(zip(normal, looking)):
             px = canvas.px.get((int(fx) + c, fg - dog.front_h + r))
-            if b == "P":
+            if b == "J":
                 assert px == pupil, "pupils drop to look down"
-            elif a == "P":
+            elif a == "J":
                 assert px != pupil
     tails = set()
     rx, rg = dog.pose(t)["rear"]
     for frac in (0.1, 0.3, 0.5, 0.7, 0.9):
-        c = FakeCanvas(64, 32)
+        c = FakeCanvas(64, height)
         dog.overlay(c, _at(dog, "look", frac))
-        tails.add(frozenset(p for p, rgb in c.px.items() if rgb in (dog.COLORS["S"], dog.COLORS["W"])
+        tails.add(frozenset(p for p, rgb in c.px.items() if rgb in (dog.COLORS["N"], dog.COLORS["C"])
                             and p[1] < rg - dog.rear_h + 3 and p[0] < rx + dog.rear_w))
     assert len(tails) >= 2, "the tail swings between poses"
 
