@@ -43,22 +43,23 @@ def _letters(text, font):
 WALK_CYCLE = (((-1, 0), (1, 0)), ((0, -1), (0, 0)), ((1, 0), (-1, 0)), ((0, 0), (0, -1)))
 
 
-def walking_pixels(art, x0, y0, colors, feet, pose, facing=1):
+def walking_pixels(art, x0, y0, colors, feet, pose, facing=1, scale=1):
     """
     ((x, y), rgb) for art (see art_pixels) with its feet stepping through WALK_CYCLE[pose % 4]
     (None stands still). feet is (first foot row, columns of the foot behind, columns of the
     foot ahead); either set may hold more than one paw. facing is 1 for art facing right, -1
-    for art facing left (its steps go the other way). Feet are drawn over the body, so a
+    for art facing left (its steps go the other way). scale draws each cell scale x scale,
+    feet rows, columns and steps counted in cells. Feet are drawn over the body, so a
     lifted foot covers the leg above it rather than leaving a hole.
     """
     top, behind, ahead = feet
     offsets = WALK_CYCLE[pose % 4] if pose is not None else ((0, 0), (0, 0))
     body, stepping = [], []
-    for (x, y), rgb in art_pixels(art, x0, y0, colors):
-        row, col = y - y0, x - x0
+    for (x, y), rgb in art_pixels(art, x0, y0, colors, scale):
+        row, col = (y - y0) // scale, (x - x0) // scale
         for cols, (dx, dy) in zip((behind, ahead), offsets):
             if row >= top and col in cols:
-                stepping.append(((x + dx * facing, y + dy), rgb))
+                stepping.append(((x + dx * facing * scale, y + dy * scale), rgb))
                 break
         else:
             body.append(((x, y), rgb))

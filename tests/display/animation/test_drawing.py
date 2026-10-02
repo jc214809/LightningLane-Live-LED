@@ -44,3 +44,12 @@ def test_walking_pixels_steps_the_other_way_facing_left():
     feet = (1, range(2, 4), range(0, 2))  # facing left, the foot behind is on the right
     apart = dict(animation.walking_pixels(art, 0, 0, colors, feet, 0, facing=-1))
     assert apart[(4, 1)] == (2, 2, 2) and apart[(-1, 1)] == (3, 3, 3)
+
+
+def test_walking_pixels_steps_whole_cells_at_scale():
+    art = ["BB", "FG"]
+    colors = {"B": (1, 1, 1), "F": (2, 2, 2), "G": (3, 3, 3)}
+    feet = (1, range(0, 1), range(1, 2))
+    lifted = dict(animation.walking_pixels(art, 0, 0, colors, feet, 1, scale=2))
+    assert lifted[(0, 0)] == (2, 2, 2) and lifted[(1, 1)] == (2, 2, 2), "back foot up a whole cell"
+    assert lifted[(2, 2)] == (3, 3, 3) and lifted[(3, 3)] == (3, 3, 3), "front foot planted"
