@@ -1,4 +1,29 @@
-class UnauthorizedError(Exception):
+# Mirrors pyowm.commons.exceptions' hierarchy, which api/weather.py branches on.
+class PyOWMError(Exception):
+    pass
+
+class APIRequestError(PyOWMError):
+    pass
+
+class BadGatewayError(APIRequestError):
+    pass
+
+class TimeoutError(APIRequestError):
+    pass
+
+class InvalidSSLCertificateError(APIRequestError):
+    pass
+
+class APIResponseError(PyOWMError):
+    pass
+
+class NotFoundError(APIResponseError):
+    pass
+
+class UnauthorizedError(APIResponseError):
+    pass
+
+class ParseAPIResponseError(PyOWMError):
     pass
 
 class Weather:
@@ -29,4 +54,12 @@ class OWM:
 
 class commons:
     class exceptions:
+        PyOWMError = PyOWMError
+        APIRequestError = APIRequestError
+        BadGatewayError = BadGatewayError
+        TimeoutError = TimeoutError
+        InvalidSSLCertificateError = InvalidSSLCertificateError
+        APIResponseError = APIResponseError
+        NotFoundError = NotFoundError
         UnauthorizedError = UnauthorizedError
+        ParseAPIResponseError = ParseAPIResponseError
