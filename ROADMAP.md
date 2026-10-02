@@ -350,9 +350,14 @@ stomps in place, and the old screen's pixels fly apart with a scatter of white f
 Bright blue-and-white with an orange bill separates cleanly from the other wreck
 characters' palettes (Ralph's reds, Rex's greens).
 
-Questions: does he quack (a speech-bubble squiggle) mid-tantrum; feather color/count; how
-his tantrum differs physically from Ralph's punch and Rex's tail swipe so the three don't
-feel like reskins of one animation; reference image.
+Built but **not in the rotation; needs work** (`DonaldReveal`, `donald`, playable with
+`force_surprise`), from the user's Dodocraft pixel-art Donald copied cell for cell, 1x on 64x32
+and 2x on 64x64, facing left. He boils over: walks in over the old ride, his face fills red
+from the neck up while he trembles harder and steam puffs off his hat; a flash, and the old
+screen blasts outward from him with feathers; he hops on one foot with his fists pumping
+(`TANTRUM_ART`, drawn from the source art), cools back to white and storms off left. No quack.
+A first version (stomp, jump, the screen collapsing like Ralph's) was dropped as boring.
+Open: what's still missing; the user wasn't happy with this one yet.
 
 **26. Yeti.** A huge dark silhouette looming up behind the screen with two glowing eyes —
 scale and darkness are the whole effect, like a horror-movie reveal. Catch: a dark

@@ -6,6 +6,19 @@ from display.animation.motion import ease_out
 from display.pixels import set_pixel
 
 
+def _fit(slinky, height):
+    """Give a Slinky his halves and spring for the board: the BIG_ ones on 64x64."""
+    big = "BIG_" if height >= 64 else ""
+    slinky.front_art, slinky.rear_art = getattr(slinky, big + "FRONT_ART"), getattr(slinky, big + "REAR_ART")
+    slinky.front_look_art = getattr(slinky, big + "FRONT_LOOK_ART", slinky.front_art)
+    slinky.rear_wag_art = getattr(slinky, big + "REAR_WAG_ART", slinky.rear_art)
+    s = slinky.scale
+    slinky.front_w, slinky.front_h = len(slinky.front_art[0]) * s, len(slinky.front_art) * s
+    slinky.rear_w, slinky.rear_h = len(slinky.rear_art[0]) * s, len(slinky.rear_art) * s
+    coil_h, rise, front_at, rear_back = slinky.BIG_SPRING if big else slinky.SPRING
+    slinky.coil_h, slinky.rise, slinky.front_at, slinky.rear_back = coil_h * s, rise * s, front_at * s, rear_back * s
+
+
 class SlinkyReveal:
     """
     Slinky Dog stretched from one side of the board to the other: his rear sits on the
@@ -19,51 +32,124 @@ class SlinkyReveal:
     STRETCH_S, HOLD_S, SNAP_S, EXIT_S = 1.3, 0.5, 0.35, 0.55
     duration = STRETCH_S + HOLD_S + SNAP_S + EXIT_S
 
-    # Front half facing right: long dark ear down the back of his head, big eye,
-    # tan muzzle out front ending in a black nose, chest and two front legs.
+    # From the user's pixel-art Slinky, mirrored to face right: orange coat, floppy dark ears,
+    # big eyes, a long tan muzzle with a black nose, green collar with a red tag; his rear with
+    # the spring's grey rings on it and his spring tail, red at the tip. The BIG_ halves are
+    # copied cell for cell, for 64x64; on 64x32 they'd fill the board and leave the spring no
+    # room, so FRONT_ART and REAR_ART are smaller ones drawn after them. 1x on both boards.
+    # '.' empty, A outline, N ear, D dark brown, B orange, F shading, H red-orange, E tan,
+    # G white, J black, K collar, L collar shade, C spring grey.
     FRONT_ART = [
-        "....KKKKKK......",
-        "...KBBBBBBK.....",
-        "..KBBBBBBBBK....",
-        ".KDKBEEBEEBBK...",
-        "KDDKBEPBEPBBBKK.",
-        "KDDKBEPBEPBTTTTK",
-        "KDDKBBBBBBTTTTNK",
-        "KDDDKBBBBTTTTTNK",
-        "KDDDKBBBTTTTMMK.",
-        ".KDDKKBBTTTTTK..",
-        ".KDDK.KBBBBBK...",
-        "..KK..KBBBBBK...",
-        "....KKBTTTBBBK..",
-        "...KBBTTTTBBBK..",
-        "...KBBBTTBBBBK..",
-        "...KBBBBBBBBBK..",
-        "...KBBKKKKBBBK..",
-        "...KBBK..KBBK...",
-        "...KTTK..KTTK...",
-        "...KKKK..KKKK...",
+        "......DDDDDD.AA...",
+        "....AADBBBBBDANNA.",
+        "...ANNABFFBBBFANNA",
+        "...ANABGJGBGJGBANA",
+        "..AANABGJGBGJGBANA",
+        "..ANNABGGGBGGGBANA",
+        "..ANNABFFFFFFFFANA",
+        "..ANABFEEEEEEEEEAA",
+        ".AANABFEEEEEEJJJEA",
+        ".ANNAAFEEFEEEJJJEA",
+        ".ANAHLAAEEFFEEEEEA",
+        ".ANAHLKKAAEEEEEDA.",
+        ".AANHLKKKNAADDDA..",
+        "..AAHLKKKNKLBA....",
+        "....ABLKKKLBBA....",
+        "...AABBLLLBBBAA...",
+        "...AFABBBBBBAFA...",
+        "...AFADDDDDDAFA...",
+        "..AAAAA....AAAAA..",
+        "..DEFED....DEFED..",
     ]
-    # Rear half: round rump, two back legs, and a coiled spring tail curling up.
     REAR_ART = [
-        "SWS.........",
-        ".SWS........",
-        "..SWS.......",
-        "...KKKKKKK..",
-        "..KBBBBBBBK.",
-        ".KBBBBBBBBBK",
-        ".KBBBBBBBBBK",
-        ".KBBBBBBBBBK",
-        ".KBBBBBBBBBK",
-        ".KBBKKKKBBBK",
-        ".KBBK..KBBK.",
-        ".KTTK..KTTK.",
-        ".KKKK..KKKK.",
+        "..NN........",
+        "..NN........",
+        ".CCN........",
+        "CGC.........",
+        "CC...DDDDD..",
+        ".CDABBFHCHD.",
+        "..DBBBFHCHCD",
+        "..DBBBFHCHCD",
+        "..DBBBFHCHCD",
+        ".ABDBBFHCHCA",
+        "..DBDBFHHHDA",
+        "..AFADDDDFA.",
+        "..AFA...AFA.",
+        ".AAAAA.AAAAA",
+        ".DEFED.DEFED",
+    ]
+    BIG_FRONT_ART = [
+        "..............DDDDDDD.AAA.....",
+        "............DABBBBBBBDANNA....",
+        "........AAADBBBBBBBBBBBANNA...",
+        ".......ANNABBFFFFBBBFFFBANA...",
+        "......AAANABFBBBBFBFBBBFANNA..",
+        "......ANNABFBBFFFFBFFFFFBANA..",
+        "......ANNABFFFGJJGBGJJGBBANA..",
+        ".....AANNABBBBGJJGBGJJGBBBANA.",
+        ".....ANNNABBBBBGGGBGGGBBBBANA.",
+        ".....ANANABBBBBBBFFFFFFFBBANA.",
+        ".....AANABBBBFFFFEEEEEEEFANNA.",
+        ".....ANNABBBFEEEEEEEEEEEEAANA.",
+        "....AANNAABBFEEEEEEEJJJJJEANNA",
+        "....ANNNAHABFEEFEEEEJJJJJEANNA",
+        "....ANNAHLKAAAEEFFEEEEEEEEANNA",
+        "...AANNAHLKKKNAAEEFFEEEFFEANNA",
+        "...ANNNAHLKKAANNAAEEFFFEEDANNA",
+        "...ANANAHLKKNNNALBDDEEEED..AA.",
+        "...AANABBLKKKNNKLBA.DDDD......",
+        "....AABBBBLKKKKLBBD...........",
+        ".....DBBBBBLLLLBBBD...........",
+        "....AABBBBBBBBBBBBD...........",
+        "...AFFABBBBBBFBBBADA..........",
+        "...AFFABBBBBBFBBBAFA..........",
+        "...AFFADBBBBBBBAAFFA..........",
+        "..AFFFA.DDDDDDDAFFA...........",
+        "..AFFA.........AFFA...........",
+        ".AAAAAA........AAAAA..........",
+        "DEFEEFED......DEFEEFD.........",
+        "DEFEEFED......DEFEEFED........",
+        "DDDDDDDD......DDDDDDDD........",
+    ]
+    BIG_REAR_ART = [
+        "...NNN..........",
+        "...NNN..........",
+        "...NNN..........",
+        "..CCN...........",
+        ".CGC............",
+        ".CCC............",
+        "CCC.............",
+        "CCC.............",
+        "CGC.............",
+        ".CCC..DDDDD.....",
+        ".CCGDABFHHHD....",
+        "..CDBBBFHCCHD...",
+        "..DBBBFHCHHC....",
+        "..DBBBFHCHHCD...",
+        "..DBBBFHCHHCD...",
+        "..DBBBFHCHHCD...",
+        "..DBBBFHCHHCD...",
+        "..DDBBFHCHHCD...",
+        ".ABBDBFHHCHCA...",
+        ".DBBDBBFHCCHD...",
+        "..DBBDBFHHHDA...",
+        "..AFFADDDDDFA...",
+        "..AFFA...AFFA...",
+        ".AAAAA...AAAAA..",
+        "DEFEFED..AEFEFD.",
+        "DEFEFED..DEFEFED",
+        "DDDDDDD..DDDDDDD",
     ]
     COLORS = {
-        "K": (70, 40, 18), "B": (176, 108, 48), "D": (100, 58, 26), "T": (238, 200, 140),
-        "N": (18, 14, 14), "E": (248, 246, 240), "P": (30, 22, 20), "M": (160, 50, 45),
-        "S": (215, 220, 230), "W": (120, 128, 142),
+        "A": (104, 10, 3), "N": (135, 0, 3), "D": (142, 38, 5), "B": (247, 127, 6), "F": (179, 69, 6),
+        "H": (226, 71, 3), "E": (251, 217, 103), "G": (245, 246, 247), "J": (12, 12, 14),
+        "K": (39, 137, 39), "L": (1, 77, 1), "C": (128, 128, 128),
     }
+    # Where the spring runs for each size of halves: (coil height, its middle's height above
+    # the ground, how far into the front half it starts, how far in from the rear's back it
+    # ends), in pixels.
+    SPRING = (7, 7, 5, 2)
+    BIG_SPRING = (9, 10, 6, 4)
     COIL_FRONT, COIL_BACK = (215, 220, 230), (110, 118, 132)
     COILS = 11
     # 1x on both boards: doubled, the two halves eat the 64x64 board and the spring can't stretch.
@@ -73,11 +159,9 @@ class SlinkyReveal:
         self.width, self.height = width, height
         self.scale = self.SCALE
         s = self.scale
-        self.front_w, self.front_h = len(self.FRONT_ART[0]) * s, len(self.FRONT_ART) * s
-        self.rear_w, self.rear_h = len(self.REAR_ART[0]) * s, len(self.REAR_ART) * s
+        _fit(self, height)
         self.ground = height  # feet stand on the bottom row
-        self.spring_y = self.ground - 7 * s  # the coil runs through both bodies
-        self.coil_h = 7 * s
+        self.spring_y = self.ground - self.rise  # the coil runs through both bodies
         self.home_rear = 0
         self.min_gap = 3 * s  # a squashed spring between the halves
         self.far_front = width - self.front_w
@@ -115,9 +199,9 @@ class SlinkyReveal:
             return False
         fx, rx = self.front_x(t), self.rear_x(t)
         _blackout(canvas, int(fx + self.front_w * 0.5), self.width, self.height)
-        self._draw_spring(canvas, rx + self.rear_w - 2 * self.scale, fx + 4 * self.scale)
-        self._draw(canvas, self.REAR_ART, rx, self.ground - self.rear_h)
-        self._draw(canvas, self.FRONT_ART, fx, self.ground - self.front_h + self.bob(t))
+        self._draw_spring(canvas, rx + self.rear_w - self.rear_back, fx + self.front_at)
+        self._draw(canvas, self.rear_art, rx, self.ground - self.rear_h)
+        self._draw(canvas, self.front_art, fx, self.ground - self.front_h + self.bob(t))
         return True
 
     def _draw_spring(self, canvas, x0, x1):
@@ -173,50 +257,115 @@ class SlinkyWrapReveal:
     # inside the 8s ride screen.
     duration = WALK_IN_S + WALK_OFF_S + PEEK_S + LOOK_S + CROSS_S + FOLLOW_S + EXIT_S + PAUSE_S[1]
 
-    FRONT_ART = SlinkyReveal.FRONT_ART
-    REAR_ART = SlinkyReveal.REAR_ART
+    FRONT_ART, REAR_ART = SlinkyReveal.FRONT_ART, SlinkyReveal.REAR_ART
+    BIG_FRONT_ART, BIG_REAR_ART = SlinkyReveal.BIG_FRONT_ART, SlinkyReveal.BIG_REAR_ART
     COLORS = SlinkyReveal.COLORS
+    SPRING, BIG_SPRING = SlinkyReveal.SPRING, SlinkyReveal.BIG_SPRING
     COIL_FRONT, COIL_BACK = SlinkyReveal.COIL_FRONT, SlinkyReveal.COIL_BACK
     # His front half with the pupils dropped to the bottom-right of each eye: looking
     # down at his rear in the opposite corner.
     FRONT_LOOK_ART = [
-        "....KKKKKK......",
-        "...KBBBBBBK.....",
-        "..KBBBBBBBBK....",
-        ".KDKBEEBEEBBK...",
-        "KDDKBEEBEEBBBKK.",
-        "KDDKBEPBEPBTTTTK",
-        "KDDKBBBBBBTTTTNK",
-        "KDDDKBBBBTTTTTNK",
-        "KDDDKBBBTTTTMMK.",
-        ".KDDKKBBTTTTTK..",
-        ".KDDK.KBBBBBK...",
-        "..KK..KBBBBBK...",
-        "....KKBTTTBBBK..",
-        "...KBBTTTTBBBK..",
-        "...KBBBTTBBBBK..",
-        "...KBBBBBBBBBK..",
-        "...KBBKKKKBBBK..",
-        "...KBBK..KBBK...",
-        "...KTTK..KTTK...",
-        "...KKKK..KKKK...",
+        "......DDDDDD.AA...",
+        "....AADBBBBBDANNA.",
+        "...ANNABFFBBBFANNA",
+        "...ANABGGGBGGGBANA",
+        "..AANABGGJBGGJBANA",
+        "..ANNABGGJBGGJBANA",
+        "..ANNABFFFFFFFFANA",
+        "..ANABFEEEEEEEEEAA",
+        ".AANABFEEEEEEJJJEA",
+        ".ANNAAFEEFEEEJJJEA",
+        ".ANAHLAAEEFFEEEEEA",
+        ".ANAHLKKAAEEEEEDA.",
+        ".AANHLKKKNAADDDA..",
+        "..AAHLKKKNKLBA....",
+        "....ABLKKKLBBA....",
+        "...AABBLLLBBBAA...",
+        "...AFABBBBBBAFA...",
+        "...AFADDDDDDAFA...",
+        "..AAAAA....AAAAA..",
+        "..DEFED....DEFED..",
     ]
-    # His rear with the spring tail swung forward over his back: alternated with
-    # REAR_ART it wags.
+    BIG_FRONT_LOOK_ART = [
+        "..............DDDDDDD.AAA.....",
+        "............DABBBBBBBDANNA....",
+        "........AAADBBBBBBBBBBBANNA...",
+        ".......ANNABBFFFFBBBFFFBANA...",
+        "......AAANABFBBBBFBFBBBFANNA..",
+        "......ANNABFBBFFFFBFFFFFBANA..",
+        "......ANNABFFFGGGGBGGGGBBANA..",
+        ".....AANNABBBBGGJJBGGJJBBBANA.",
+        ".....ANNNABBBBBGJJBGGJBBBBANA.",
+        ".....ANANABBBBBBBFFFFFFFBBANA.",
+        ".....AANABBBBFFFFEEEEEEEFANNA.",
+        ".....ANNABBBFEEEEEEEEEEEEAANA.",
+        "....AANNAABBFEEEEEEEJJJJJEANNA",
+        "....ANNNAHABFEEFEEEEJJJJJEANNA",
+        "....ANNAHLKAAAEEFFEEEEEEEEANNA",
+        "...AANNAHLKKKNAAEEFFEEEFFEANNA",
+        "...ANNNAHLKKAANNAAEEFFFEEDANNA",
+        "...ANANAHLKKNNNALBDDEEEED..AA.",
+        "...AANABBLKKKNNKLBA.DDDD......",
+        "....AABBBBLKKKKLBBD...........",
+        ".....DBBBBBLLLLBBBD...........",
+        "....AABBBBBBBBBBBBD...........",
+        "...AFFABBBBBBFBBBADA..........",
+        "...AFFABBBBBBFBBBAFA..........",
+        "...AFFADBBBBBBBAAFFA..........",
+        "..AFFFA.DDDDDDDAFFA...........",
+        "..AFFA.........AFFA...........",
+        ".AAAAAA........AAAAA..........",
+        "DEFEEFED......DEFEEFD.........",
+        "DEFEEFED......DEFEEFED........",
+        "DDDDDDDD......DDDDDDDD........",
+    ]
+    # His rear with the spring tail leaning forward over his back: alternated with REAR_ART
+    # it wags.
     REAR_WAG_ART = [
-        ".....SWS....",
-        "....SWS.....",
-        "...SWS......",
-        "...KKKKKKK..",
-        "..KBBBBBBBK.",
-        ".KBBBBBBBBBK",
-        ".KBBBBBBBBBK",
-        ".KBBBBBBBBBK",
-        ".KBBBBBBBBBK",
-        ".KBBKKKKBBBK",
-        ".KBBK..KBBK.",
-        ".KTTK..KTTK.",
-        ".KKKK..KKKK.",
+        ".....NN.....",
+        "....NN......",
+        "...CCN......",
+        ".CGC........",
+        ".CC..DDDDD..",
+        ".CDABBFHCHD.",
+        "..DBBBFHCHCD",
+        "..DBBBFHCHCD",
+        "..DBBBFHCHCD",
+        ".ABDBBFHCHCA",
+        "..DBDBFHHHDA",
+        "..AFADDDDFA.",
+        "..AFA...AFA.",
+        ".AAAAA.AAAAA",
+        ".DEFED.DEFED",
+    ]
+    BIG_REAR_WAG_ART = [
+        ".........NNN....",
+        "........NNN.....",
+        "........NNN.....",
+        "......CCN.......",
+        ".....CGC........",
+        "....CCC.........",
+        "...CCC..........",
+        "..CCC...........",
+        "..CGC...........",
+        "..CCC.DDDDD.....",
+        "..CCDABFHHHD....",
+        "..CDBBBFHCCHD...",
+        "..DBBBFHCHHC....",
+        "..DBBBFHCHHCD...",
+        "..DBBBFHCHHCD...",
+        "..DBBBFHCHHCD...",
+        "..DBBBFHCHHCD...",
+        "..DDBBFHCHHCD...",
+        ".ABBDBFHHCHCA...",
+        ".DBBDBBFHCCHD...",
+        "..DBBDBFHHHDA...",
+        "..AFFADDDDDFA...",
+        "..AFFA...AFFA...",
+        ".AAAAA...AAAAA..",
+        "DEFEFED..AEFEFD.",
+        "DEFEFED..DEFEFED",
+        "DDDDDDD..DDDDDDD",
     ]
     SCALE = 1
     COILS = 11
@@ -226,11 +375,9 @@ class SlinkyWrapReveal:
         self.width, self.height = width, height
         rng = rng or random.Random()
         s = self.scale = self.SCALE
-        self.front_w, self.front_h = len(self.FRONT_ART[0]) * s, len(self.FRONT_ART) * s
-        self.rear_w, self.rear_h = len(self.REAR_ART[0]) * s, len(self.REAR_ART) * s
+        _fit(self, height)
         self.gap = 3 * s
         self.coil_step = 3 * s  # ring spacing on the stubs that run off an edge
-        self.coil_h = 7 * s
         self.bottom = height  # ground lines: feet on the bottom row, or under the top-left peek
         self.top = self.front_h
         self.rear_home = width - self.rear_w - self.STUB_COILS * self.coil_step
@@ -302,10 +449,10 @@ class SlinkyWrapReveal:
         name, _ = self.phase(t)
         pose, s = self.pose(t), self.scale
         rx, rg = pose["rear"]
-        rear_art = self.REAR_WAG_ART if name == "look" and int(t * 8) % 2 else self.REAR_ART
+        rear_art = self.rear_wag_art if name == "look" and int(t * 8) % 2 else self.rear_art
         walking = name in ("walk_in", "walk_off", "cross", "follow", "exit")
         bob = -round(abs(math.sin(t * math.pi * 6)) * s) if walking else 0
-        rear_attach = (rx + self.rear_w - 2 * s, rg - 7 * s)
+        rear_attach = (rx + self.rear_w - self.rear_back, rg - self.rise)
         # Split while the rear is still on the bottom: until it re-enters at the top-left.
         split = name in ("pause", "peek", "look", "cross") or (name == "follow" and rg == self.bottom)
         if split:
@@ -314,16 +461,17 @@ class SlinkyWrapReveal:
             self._spring(canvas, rear_attach, (self.width + self.coil_step, rear_attach[1]), self.coil_step)
             if pose["front"]:
                 fx, fg = pose["front"]
-                self._spring(canvas, (-self.coil_step, fg - 7 * s), (fx + 4 * s, fg - 7 * s), self.coil_step)
+                self._spring(canvas, (-self.coil_step, fg - self.rise), (fx + self.front_at, fg - self.rise),
+                             self.coil_step)
         elif pose["front"]:
             fx, fg = pose["front"]
-            span = max(1.0, fx + 4 * s - rear_attach[0])
-            self._spring(canvas, rear_attach, (fx + 4 * s, fg - 7 * s),
+            span = max(1.0, fx + self.front_at - rear_attach[0])
+            self._spring(canvas, rear_attach, (fx + self.front_at, fg - self.rise),
                          max(1.5 * s, min(span / self.COILS, 3.5 * s)))
         self._draw(canvas, rear_art, rx, rg - self.rear_h)
         if pose["front"]:
             fx, fg = pose["front"]
-            art = self.FRONT_LOOK_ART if name == "look" else self.FRONT_ART
+            art = self.front_look_art if name == "look" else self.front_art
             self._draw(canvas, art, fx, fg - self.front_h + bob)
         return True
 

@@ -134,6 +134,10 @@ from display.animation.characters.tigger import (  # noqa: F401
     TiggerReveal,
 )
 
+from display.animation.characters.donald import (  # noqa: F401
+    DonaldReveal,
+)
+
 from display.animation.characters.tron import (  # noqa: F401
     TronReveal,
 )
