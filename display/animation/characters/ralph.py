@@ -7,69 +7,185 @@ from display.animation.motion import FPS, ease_out
 
 class RalphReveal(CapturesScreens):
     """
-    Wreck-It Ralph rises at the bottom, swings a fist, and the old screen shatters
-    into falling pixels, leaving the new one behind. Needs the previous screen's
-    pixels, so it opts in via wants_prev.
+    Wreck-It Ralph stomps in from the left over the old ride, raises both fists and slams
+    them down: the old screen shatters into falling pixels, leaving the new one behind, and
+    he stomps off the right. Needs the previous screen's pixels, so it opts in via wants_prev.
     """
 
     wants_prev = True
-    RISE_S, WIND_S, FALL_S = 0.45, 0.35, 1.25
-    duration = RISE_S + WIND_S + FALL_S
-    GRAVITY = 0.055
+    WALK_S, WIND_S, POST_S, EXIT_S = 1.1, 0.55, 0.6, 0.9
+    duration = WALK_S + WIND_S + POST_S + EXIT_S
+    SHAKE_S = 0.15     # he judders from the slam
+    CLEAR_S = 0.4      # on 64x64, after he's gone, for the last pieces to fall off the taller board
+    STEPS_PER_S = 7
+    GRAVITY = 0.055    # per frame, on 64x32; scaled with the board's height, so pieces clear a 64x64 board in time too
 
-    # Ralph mid-swing: spiky dark-red hair, big pink fists, red shirt, overalls.
-    # '.' empty, H hair, F face/skin, E eye, A teeth, M mouth, S shirt, O overalls,
-    # B buckle, K outline.
-    ART = [
-        ".......KHKHKHKHK.......",
-        ".......KHHHHHHHK.......",
-        "KKKKKK.KHHHHHHHK.KKKKKK",
-        "KFFFFK.KHFFFFFHK.KFFFFK",
-        "KFFFFK.KFFEFEFFK.KFFFFK",
-        "KFFFFK.KFFFFFFFK.KFFFFK",
-        ".KFFFK.KFFAAAFFK.KFFFK.",
-        "..KFFK.KKFFFFFKK.KFFK..",
-        "..KFFKKKKSSSSSK..KFFK..",
-        "..KFFFFFSSSSSSSFFFFFK..",
-        "...KFFFFSSSSSSSFFFFK...",
-        "....KSSSSSSSSSSSSSK....",
-        "....KSSSSOBBBOSSSSK....",
-        ".....KSSOOBBBOOSSK.....",
-        ".....KOOOOOOOOOOOK.....",
-        ".....KOOOOOOOOOOOK.....",
-        ".....KOOOOKKKOOOOK.....",
-        ".....KFFFK...KFFFK.....",
-        ".....KFFK.....KFFK.....",
-        ".....KKKK.....KKKK.....",
+    # From the user's pattern (docs/references/Ralph.jpg), copied cell for cell: facing us,
+    # spiky brown hair, a big grin, red shirt with the grey strap, dark overalls, bare feet,
+    # his huge fists hanging at his sides. 1x on both boards: on 64x32 he's two rows taller
+    # than the board, so the tip of his hair and the outline under his feet hang off it.
+    # UP_ART (64x64) has both fists raised over his head for the slam; SHOULDER_ART (64x32,
+    # with no room overhead) has them up beside his face. Their arms are drawn as thick
+    # outlined lines from the shoulder, the rest of him is the pattern.
+    # '.' empty, K outline, H hair, S skin, P cheeks, W eyes and teeth, R shirt, G strap,
+    # D overalls.
+    STAND_ART = [
+        ".........KK..............",
+        "........KHK.KK.KK........",
+        "......KKKHKKHKKHK........",
+        ".....KHHHHHHHHHHHKK......",
+        "....KHHHHHHHHHHHHHKKK....",
+        "....KHHHHHHHHHHHHHHHK....",
+        "...KHHHHHHHHHHHHHHHK.....",
+        "...KKHHSSSHSHSHSSSHKK....",
+        "....KHHSSSSSSSSSSSHHK....",
+        "...KKHHSHHHSSSHHHSHK.....",
+        "...KHHHSWKWSSSWKWSHSK....",
+        "....KSHSSSPPPPPSSSHKK....",
+        ".....KKSSSPPPPPSSSSK.....",
+        ".....KSSSSSSSSSSWSK......",
+        ".....KSSSSWWWWWWSSK......",
+        ".....KSSSSSSSSSSSSK......",
+        "......KSSSSSSSSSSK.......",
+        ".....KKKKKKKKKKKKKKK.....",
+        "....KRRDDRRGGGRRRRRRK....",
+        "...KRRRDDRRRGRRRRRRRRK...",
+        "..KRRRRDDRRRRRRRRRRRRRK..",
+        ".KRRRRKGGRRRRRRRRRKRRRRK.",
+        ".KRRRRKDDGGRRRRRRRKRRRRK.",
+        ".KSSSSKDDGGGRRRRRRKSSSSK.",
+        ".KSSSSKDDDGGGGRRRRKSSSSK.",
+        "KSSSSSKDDDDGGGGGGGKSSSSSK",
+        "KSSSSSSKDDDDDGGGGKSSSSSSK",
+        "KSSSSSSKDDDDDDDDDKSSSSSSK",
+        "KSSSSSSKDDDDDDDDDKSSSSSSK",
+        "KSSSSSSKDDDDKDDDDKSSSSSSK",
+        "KKKKKKKKDDDK.KDDDKKKKKKKK",
+        ".....KSSSSSK.KSSSSSK.....",
+        "....KSSSSSSK.KSSSSSSK....",
+        "....KKKKKKKK.KKKKKKKK....",
     ]
+    UP_ART = [
+        ".KKKKKK.................KKKKKK.",
+        "KSSSSSSK...............KSSSSSSK",
+        "KSSSSSSK...............KSSSSSSK",
+        "KSSSSSSK...............KSSSSSSK",
+        "KSSSSSSK....KK.........KSSSSSSK",
+        "KSSSSSSK...KHK.KK.KK...KSSSSSSK",
+        ".KSSSSKK.KKKHKKHKKHK...KKSSSSK.",
+        ".KSSSSSKKHHHHHHHHHHHKK.KSSSSSK.",
+        "..KSSSSKHHHHHHHHHHHHHKKKSSSSK..",
+        "..KSSSSKHHHHHHHHHHHHHHHKSSSSK..",
+        "..KSSSSSHHHHHHHHHHHHHHKSSSSSK..",
+        "..KSSSSSHHSSSHSHSHSSSHKSSSSSK..",
+        "...KSSSSHHSSSSSSSSSSSHHSSSSK...",
+        "...KSSSSHHSHHHSSSHHHSHKSSSSK...",
+        "...KSSSSSHSWKWSSSWKWSHSSSSSK...",
+        "...KSSSSSHSSSPPPPPSSSHSSSSSK...",
+        "...KSSSSSKSSSPPPPPSSSSSSSSSK...",
+        "....KSSSSSSSSSSSSSSWSKSSSSK....",
+        "....KSSSSSSSSWWWWWWSSKSSSSK....",
+        "....KSRRRRSSSSSSSSSSSRRRRSK....",
+        "....KRRRRRSSSSSSSSSSKRRRRRK....",
+        ".....KRRRRKKKKKKKKKKKRRRRK.....",
+        ".....KRRRRDDRRGGGRRRRRRRRK.....",
+        ".....KRRRRRDRRRGRRRRRRRRRK.....",
+        ".....KRRRRRDRRRRRRRRRRRRRK.....",
+        ".....KKRRRGGRRRRRRRRRRRRKK.....",
+        "......KKRKDDGGRRRRRRRKRKK......",
+        ".......KKKDDGGGRRRRRRKKK.......",
+        ".........KDDDGGGGRRRRK.........",
+        ".........KDDDDGGGGGGGK.........",
+        "..........KDDDDDGGGGK..........",
+        "..........KDDDDDDDDDK..........",
+        "..........KDDDDDDDDDK..........",
+        "...............KDDDDK..........",
+        "..........KDDDK.KDDDK..........",
+        "........KSSSSSK.KSSSSSK........",
+        ".......KSSSSSSK.KSSSSSSK.......",
+        ".......KKKKKKKK.KKKKKKKK.......",
+    ]
+    SHOULDER_ART = [
+        "..............KK...................",
+        ".............KHK.KK.KK.............",
+        "...........KKKHKKHKKHK.............",
+        "..........KHHHHHHHHHHHKK...........",
+        ".........KHHHHHHHHHHHHHKKK.........",
+        ".........KHHHHHHHHHHHHHHHK.........",
+        "........KHHHHHHHHHHHHHHHK..........",
+        "........KKHHSSSHSHSHSSSHKK.........",
+        ".KKKKKK..KHHSSSSSSSSSSSHHK..KKKKKK.",
+        "KSSSSSSKKKHHSHHHSSSHHHSHK..KSSSSSSK",
+        "KSSSSSSKKHHHSWKWSSSWKWSHSK.KSSSSSSK",
+        "KSSSSSSK.KSHSSSPPPPPSSSHKK.KSSSSSSK",
+        "KSSSSSSK..KKSSSPPPPPSSSSK..KSSSSSSK",
+        "KSSSSSSK..KSSSSSSSSSSWSK...KSSSSSSK",
+        ".KSSSSKSK.KSSSSWWWWWWSSK..KSKSSSSK.",
+        ".KKSSSSSSKKSSSSSSSSSSSSK.KSSSSSSKK.",
+        "..KSSSSSSSKKSSSSSSSSSSK.KSSSSSSSK..",
+        "...KSSSSSSRKKKKKKKKKKKKKRSSSSSSK...",
+        "....KSSSSRRRDDRRGGGRRRRRRRSSSSK....",
+        ".....KSSRRRRDDRRRGRRRRRRRRRSSK.....",
+        "......KRRRRRRDRRRRRRRRRRRRRRK......",
+        ".......KRRRRGGRRRRRRRRRRRRRK.......",
+        "........KKRKDDGGRRRRRRRKRKK........",
+        ".........KKKDDGGGRRRRRRKKK.........",
+        "...........KDDDGGGGRRRRK...........",
+        "...........KDDDDGGGGGGGK...........",
+        "............KDDDDDGGGGK............",
+        "............KDDDDDDDDDK............",
+        "............KDDDDDDDDDK............",
+        ".................KDDDDK............",
+        "............KDDDK.KDDDK............",
+        "..........KSSSSSK.KSSSSSK..........",
+        ".........KSSSSSSK.KSSSSSSK.........",
+        ".........KKKKKKKK.KKKKKKKK.........",
+    ]
+    SCALE = 1
     COLORS = {
-        "H": (140, 25, 30),
-        "F": (240, 180, 160),
-        "E": (20, 20, 25),
-        "M": (90, 30, 35),
-        "S": (200, 40, 45),
-        "O": (255, 220, 170),
-        "B": (190, 120, 50),
-        "K": (25, 15, 20),
-        "A": (250, 250, 250),
+        "K": (40, 30, 32), "H": (125, 80, 52), "S": (232, 184, 162), "P": (248, 152, 120),
+        "W": (248, 248, 248), "R": (216, 92, 56), "G": (160, 144, 144), "D": (125, 48, 48),
     }
+    FEET_ROW = 31      # the first row of his feet in STAND_ART
+    MID_COL = 12       # the gap between his feet
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height
         self.rng = rng or random.Random()
-        self.scale = 2 if height >= 64 else 1
-        self.sprite_w = len(self.ART[0]) * self.scale
-        self.sprite_h = len(self.ART) * self.scale
+        self.tall = height >= 64
+        self.duration = type(self).duration + (self.CLEAR_S if self.tall else 0)
+        self.raised = self.UP_ART if self.tall else self.SHOULDER_ART
+        self.art_w, self.art_h = len(self.STAND_ART[0]), len(self.STAND_ART)
+        # His feet on the bottom row; on 64x32 the outline under them hangs off the board.
+        self.ground = self.height - self.art_h + (0 if self.tall else 1)
         self.debris = []
         self.shattered = False
         self._frames_stepped = 0
         self.prev_px = {}
 
+    @property
+    def impact_at(self):
+        return self.WALK_S + self.WIND_S
+
+    def ralph_x(self, t):
+        """The left edge of STAND_ART: walks in from off the left, stops mid-board, walks off the right."""
+        mid = (self.width - self.art_w) // 2
+        if t < self.WALK_S:
+            return int(round(-self.art_w + ease_out(t / self.WALK_S) * (mid + self.art_w)))
+        leave = self.impact_at + self.POST_S
+        if t < leave:
+            return mid
+        p = min(1.0, (t - leave) / self.EXIT_S)
+        return int(round(mid + p * p * (self.width - mid + 1)))
+
+    def walking(self, t):
+        return t < self.WALK_S or t >= self.impact_at + self.POST_S
+
     def _shatter(self):
-        """Turn the captured screen into debris, thrown outward from the impact point."""
+        """Turn the captured screen into debris, thrown outward from where his fists land."""
         self.shattered = True
-        # The fists land centre-bottom; everything is flung away from that point.
-        impact_x, impact_y = self.width / 2, self.height - self.sprite_h * 0.55
+        impact_x = self.width / 2
+        impact_y = self.ground + 26  # his fists, at his sides
         for (x, y), rgb in self.prev_px.items():
             dx, dy = x - impact_x, y - impact_y
             dist = max(2.0, (dx * dx + dy * dy) ** 0.5)
@@ -81,26 +197,19 @@ class RalphReveal(CapturesScreens):
                 rgb,
             ])
 
-    def ralph_y(self, t):
-        """His top edge: rises into frame, holds through the swing, then drops away."""
-        if t < self.RISE_S:
-            return self.height - ease_out(t / self.RISE_S) * self.sprite_h
-        if t < self.RISE_S + self.WIND_S:
-            return self.height - self.sprite_h
-        gone = (t - self.RISE_S - self.WIND_S) / self.FALL_S
-        return self.height - self.sprite_h + ease_out(gone) * self.sprite_h
-
     def overlay(self, canvas, t):
         if t >= self.duration:
             return False
-        impact_at = self.RISE_S + self.WIND_S
-        if not self.shattered and t >= impact_at:
+        if not self.shattered and t >= self.impact_at:
             self._shatter()
-        if t < impact_at:
-            # Old screen still whole, with Ralph rising in front of it.
-            paint(canvas, self.prev_px, self.width, self.height)
+        if t < self.impact_at:
+            # The old screen whole, every pixel of it, black included: show_screen has
+            # already drawn the new screen underneath.
+            frame = {(x, y): (0, 0, 0) for x in range(self.width) for y in range(self.height)}
+            frame.update(self.prev_px)
+            paint(canvas, frame, self.width, self.height)
         else:
-            self._step_debris(t - impact_at)
+            self._step_debris(t - self.impact_at)
             for x, y, _, _, rgb in self.debris:
                 px, py = int(round(x)), int(round(y))
                 if 0 <= px < self.width and 0 <= py < self.height:
@@ -116,9 +225,27 @@ class RalphReveal(CapturesScreens):
             for d in self.debris:
                 d[0] += d[2]
                 d[1] += d[3]
-                d[3] += self.GRAVITY
+                d[3] += self.GRAVITY * self.height / 32
 
     def _draw_ralph(self, canvas, t):
-        y0 = self.ralph_y(t)
-        x0 = int(self.width / 2 - self.sprite_w / 2)
-        paint(canvas, art_pixels(self.ART, x0, int(round(y0)), self.COLORS, self.scale), self.width, self.height)
+        x0 = self.ralph_x(t)
+        if self.WALK_S <= t < self.impact_at:
+            # Fists up: the raised pose is wider (and on 64x64 taller), centred on him.
+            art = self.raised
+            ax = x0 - (len(art[0]) - self.art_w) // 2
+            ay = self.ground - (len(art) - self.art_h)
+            paint(canvas, art_pixels(art, ax, ay, self.COLORS), self.width, self.height)
+            return
+        shake = 0
+        if self.impact_at <= t < self.impact_at + self.SHAKE_S:
+            shake = 1 if int((t - self.impact_at) * FPS) % 2 == 0 else -1
+        lifted = None
+        if self.walking(t):
+            lifted = int(t * self.STEPS_PER_S) % 2  # 0: his left foot up, 1: his right
+        px = {}
+        for (x, y), rgb in art_pixels(self.STAND_ART, x0 + shake, self.ground, self.COLORS):
+            row, col = y - self.ground, x - x0 - shake
+            if lifted is not None and row >= self.FEET_ROW - 1 and (col < self.MID_COL) == (lifted == 0):
+                y -= 1  # this foot's off the ground
+            px[(x, y)] = rgb
+        paint(canvas, px, self.width, self.height)

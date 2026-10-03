@@ -231,6 +231,13 @@ What worked and what didn't, so we don't repeat it:
   ship) fixed it, and brightening her toward white as she stretches stopped the jump
   reading as a long grey brick.
 
+- **Ralph** — redrawn from the user's pattern, cell for cell, with a double-fist slam. His
+  raised arms were drawn as thick outlined lines from the shoulder (generated, not typed),
+  and the first ones were far too long: fists nine rows over his head read as poles; four
+  rows read as a wind-up. A pattern's size includes its outline, and black outline is
+  invisible on the board, so he fits 64x32 with his outline rows hanging off it. Debris
+  thrown with 64x32's gravity was still a third in the air when he finished on 64x64;
+  scaling gravity with the board's height and a short tail let it clear.
 - **Stitch** — two scenes from the user's profile pixel art were built and scrapped (a
   pop-up chomp, and eating the old ride letter by letter), but they taught two things.
   The art's eye was solid black like its outline, and on the board it read as a hole through
@@ -379,7 +386,7 @@ The process above held; these are the lessons that were new.
 - **A transition that takes the old screen must paint every pixel of it, black
   included.** `show_screen` draws the new screen first and the transition paints over
   it, so drawing only the old screen's lit pixels lets the new ride show through its
-  dark areas. The Army Men shipped with that bug; Ralph still has it (ROADMAP #8).
+  dark areas. The Army Men and Ralph both shipped with that bug.
 - **Test with fake screens that have dark pixels.** The Army Men's tests used an old
   screen lit edge to edge, which is exactly why they missed the bleed-through.
   `test_new_screen_never_shows_through_the_old_screens_dark_pixels` goes through the real

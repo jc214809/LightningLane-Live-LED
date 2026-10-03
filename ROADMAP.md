@@ -708,13 +708,17 @@ old ride away. On 64x32 he sits on the board, from
 Two other scenes from the user's profile pixel art were built and scrapped: popping up to chomp
 twice, and eating the old ride letter by letter.
 
-## 8. Fix Ralph showing the new screen through the old one
+## ~~8. Fix Ralph showing the new screen through the old one~~ Done
 
-`RalphReveal` paints only the old screen's lit pixels while he rises, but `show_screen` has
-already drawn the new screen underneath, so the new ride shows through wherever the old
-screen was dark until he smashes it. The Army Men and Falcon paint every pixel of the old
-screen for this reason; Ralph needs the same (`test_new_screen_never_shows_through_the_old_screens_dark_pixels`
-can take him as another case).
+`RalphReveal` painted only the old screen's lit pixels while he rose, and `show_screen` has
+already drawn the new screen underneath, so the new ride showed through wherever the old
+screen was dark until he smashed it. He now paints every pixel of it, black included, until
+the punch, like the Army Men and the Falcon, and he's a case in
+`test_new_screen_never_shows_through_the_old_screens_dark_pixels`.
 
-If he's redrawn while this is fixed: [Ralph.jpg](docs/references/Ralph.jpg) is a pattern of
-him, 25x34. Two rows too tall for 64x32 as is; fits 64x64.
+Redrawn from [Ralph.jpg](docs/references/Ralph.jpg), copied cell for cell at 1x on both boards
+(25x34 with its outline; on 64x32 the outline rows under his feet and at the tip of his hair hang
+off the board). He now stomps in from the left over the old ride, raises both fists (over his
+head on 64x64, beside his face on 64x32, where there's no room overhead) and slams them down;
+the ride shatters and falls as before, and he stomps off the right. Built but still not in
+the rotation.
