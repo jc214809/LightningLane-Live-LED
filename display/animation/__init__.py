@@ -122,8 +122,7 @@ from display.animation.characters.slinky import (  # noqa: F401
 )
 
 from display.animation.characters.stitch import (  # noqa: F401
-    StitchReveal,
-    _pupils_at,
+    StitchSurfReveal,
 )
 
 from display.animation.characters.tink import (  # noqa: F401

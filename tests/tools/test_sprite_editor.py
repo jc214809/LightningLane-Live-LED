@@ -36,9 +36,23 @@ def test_fixed_size_sprites_carry_their_scale(sprites):
     assert sprites["genie/ART"]["scale"] is None, "Genie himself doubles on 64-row boards"
 
 
+class _Generated:
+    """A character with one named pose, one built at import time, and a placeholder key in its base art."""
+    _BASE = ["K##K", "KKKK"]
+    POSE_ART = ["KWPK", "KKKK"]
+    art = [POSE_ART, ["KPWK", "KKKK"]]
+    colors = {"K": (0, 0, 0), "W": (255, 255, 255), "P": (60, 60, 90)}
+
+
+def _generated_sprites():
+    return builder.collect_sprites(type("Animation", (), {"TRANSITIONS": {"gen": _Generated}}))
+
+
 def test_aliases_appear_once_and_animation_frames_are_split(sprites):
     assert "dumbo/EARS_UP" in sprites and "dumbo/art" not in sprites, "art = EARS_UP is one sprite"
-    assert {"stitch/art[0]", "stitch/art[1]"} <= set(sprites), "each look direction is editable"
+    generated = _generated_sprites()
+    assert "gen/POSE_ART" in generated and "gen/art[0]" not in generated, "a named pose in art appears once, by name"
+    assert "gen/art[1]" in generated, "an unnamed frame is editable too"
     assert {s["character"] for s in sprites.values()} >= {"tink", "buzz", "genie", "mickey", "ralph", "dumbo"}
 
 
@@ -46,8 +60,9 @@ def test_every_key_has_a_color_and_placeholders_are_flagged(sprites):
     for sid, s in sprites.items():
         used = {ch for row in s["rows"] for ch in row} - {"."}
         assert used <= set(s["colors"]), sid
-    assert sprites["stitch/_BASE"]["unmapped"] == ["#"], "his eye slots are filled at draw time"
-    assert sprites["stitch/_BASE"]["colors"]["#"] == builder.UNMAPPED_RGB
+    base = _generated_sprites()["gen/_BASE"]
+    assert base["unmapped"] == ["#"], "a slot filled at draw time is flagged"
+    assert base["colors"]["#"] == builder.UNMAPPED_RGB
 
 
 def test_checked_in_editor_matches_the_current_art(sprites):

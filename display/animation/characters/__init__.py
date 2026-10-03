@@ -20,7 +20,7 @@ from display.animation.characters.mike import MikeReveal
 from display.animation.characters.olaf import OlafReveal
 from display.animation.characters.ralph import RalphReveal
 from display.animation.characters.slinky import SlinkyReveal, SlinkyWrapReveal
-from display.animation.characters.stitch import StitchReveal
+from display.animation.characters.stitch import StitchSurfReveal
 from display.animation.characters.tink import TinkReveal
 from display.animation.characters.tigger import TiggerReveal
 from display.animation.characters.tron import TronReveal
@@ -30,7 +30,7 @@ from display.animation.mechanics import Wipe
 
 TRANSITIONS = {
     "wipe": Wipe, "tink": TinkReveal, "buzz": BuzzReveal,
-    "figment": FigmentReveal, "stitch": StitchReveal, "ralph": RalphReveal,
+    "figment": FigmentReveal, "ralph": RalphReveal,
     "mickey": MickeyReveal, "slinky": SlinkyReveal, "baymax": BaymaxReveal,
     "dumbo": DumboReveal,
     "genie": GenieReveal,
@@ -49,4 +49,5 @@ TRANSITIONS = {
     "chip_dale": ChipDaleReveal,
     "tigger": TiggerReveal,
     "donald": DonaldReveal,
+    "stitch_surf": StitchSurfReveal,
 }
