@@ -1,5 +1,4 @@
 import sys
-import os
 import time
 import logging
 import threading
@@ -40,7 +39,6 @@ if load_config('config.json')['debug']:
 else:
     logger.setLevel(logging.INFO)
 
-use_image_logo = False
 PARK_REVEALS = ("tink", "buzz")
 # Rare visitors on ride screens, and each one's chance per screen. Genie erupts from his
 # lamp and sweeps the next ride in; Baymax peeks over it so the wait stays readable;
@@ -194,18 +192,10 @@ def _describe_trip(trip):
     return f"{trip.name} ({span})" if trip.name else span
 
 def render_logo(matrix):
+    """The start-up intro: the castle under fireworks, with the title."""
     matrix.Clear()
-    logo_path = os.path.abspath("./assets/MK.png")
-    if os.path.exists(logo_path) and use_image_logo:
-        debug.info("Logo found. Displaying...")
-        from PIL import Image
-        logo = Image.open(logo_path)
-        matrix.SetImage(logo.convert("RGB"))
-        time.sleep(8)
-        logo.close()
-    else:
-        debug.info("Rendering castle fireworks intro...")
-        render_castle_fireworks(matrix)
+    debug.info("Rendering castle fireworks intro...")
+    render_castle_fireworks(matrix)
     forget_screen(matrix)
 
 
