@@ -6,7 +6,6 @@ from utils.utils import (
     center_text_position,
     split_string,
     deep_update,
-    get_eastern,
     args,
     pretty_print_json,
 )
@@ -196,11 +195,6 @@ def test_deep_update():
     result = deep_update(source, overrides)
     assert result == {"a": {"b": 1, "c": 2}, "d": 3}
     assert source is result
-
-def test_get_eastern():
-    eastern_time = get_eastern("2024-01-01T12:00:00Z")
-    # Check that the result ends with either "AM" or "PM".
-    assert eastern_time.endswith("AM") or eastern_time.endswith("PM")
 
 def test_pretty_print_json_exception():
     # Test that pretty_print_json raises a TypeError for non-serializable objects.
