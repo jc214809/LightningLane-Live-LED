@@ -238,7 +238,7 @@ What worked and what didn't, so we don't repeat it:
   closed mouth just removed the jaw's tip, which read as part of his face vanishing; it read
   as shut once the jaw swung up against the teeth as a solid wedge. What's left is surfing,
   from two bead patterns, copied cell for cell: standing on 64x64
-  ([stich.jpg](../docs/references/stich.jpg)) and sitting on 64x32
+  ([stitch.jpg](../docs/references/stitch.jpg)) and sitting on 64x32
   ([sitting_stitch.jpg](../docs/references/sitting_stitch.jpg)), where the standing one is
   too tall. On the back of the wave he looked like he was sledding down a ramp; a surfer
   rides the face, ahead of the crest, with the wave chasing him.
