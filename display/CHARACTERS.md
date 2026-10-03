@@ -2,7 +2,8 @@
 
 Notes from building the characters in `display/animation/` (one file per character under
 `characters/`). Most of these were learned the hard way — by rendering something, looking at it, and finding it
-unrecognizable. Read this before adding a character.
+unrecognizable. Read this before adding a character. What each one does on screen is in its
+class's docstring.
 
 ## The one rule that matters most: render it and look at it
 
