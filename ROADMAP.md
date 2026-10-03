@@ -14,8 +14,8 @@ Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter
 `walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
 Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
-Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), and Jack, Sally and Zero
-(`jack_sally`).
+Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
+(`jack_sally`), and the Seven Dwarfs Mine Train with Snow White (`mine_train`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -57,7 +57,7 @@ Put a ✅ in the Done column when a character ships.
 | 34 | | Lumiere, Cogsworth, Mrs. Potts and Chip | MK: Enchanted Tales with Belle, Be Our Guest | the enchanted objects parade across, "Be Our Guest" | Fly-by (parade) |
 | 35 | | Boo | MK: Monsters, Inc. Laugh Floor | runs in giggling in her monster costume | TBD; pairs with Mike (#3) and Sulley (#48) |
 | 36 | | Dug | AK (Up; no ride) | runs in, stops dead, head snaps round ("Squirrel!"), dashes off | Run-in |
-| 37 | | The Seven Dwarfs | MK: Seven Dwarfs Mine Train | march across in a line, picks on their shoulders | Fly-by (parade) |
+| 37 | ✅ | The Seven Dwarfs | MK: Seven Dwarfs Mine Train | a short mine train rolls across: a few dwarfs, one per car, then a gem car | Fly-by (train) |
 | 38 | | The Evil Queen | MK; Halloween party nights | holds out the poisoned apple, or the old screen fades into her magic mirror | TBD |
 | 39 | | Forky | DHS: Toy Story Land | waddles in, spots the old screen ("Trash!") and dives into it | Wreck (`wants_prev`) |
 | 40 | | Hamm | DHS: Toy Story Land | trots across, coins clinking out of his slot | Fly-by |
@@ -507,11 +507,9 @@ story beat.
 
 Questions: does a squirrel actually appear; where he shows up (no Up ride at WDW).
 
-**37. The Seven Dwarfs.** Reference: [dwarfs.jpg](docs/references/dwarfs.jpg), all seven on
-one sheet, about 30x28 each: fit both boards, but seven in a row is far wider than the
-board, so they'd march through it.
-
-Questions: all seven, or a few; marching, or a peek over the Mine Train's screen; whistling.
+**37. The Seven Dwarfs.** Built: `mine_train`, on the Mine Train's screen only. A few random
+dwarfs ride in their cars one screen in ten; at a wait of 15 or less all seven come every time,
+and at 5 or less (or a posted 7) Snow White rides the lead car too. Lessons in CHARACTERS.md.
 
 **38. The Evil Queen.** Reference: [Evil Queen.jpg](<docs/references/Evil Queen.jpg>), 31x38:
 too tall for 64x32 as is; fits 64x64.

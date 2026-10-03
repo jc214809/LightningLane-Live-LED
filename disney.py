@@ -68,11 +68,14 @@ SURPRISES = {"genie": 0.005, "baymax": 0.012, "slinky_wrap": 0.01, "walle_side":
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge; Mike is
 # in the rotation too, but drops in on his own Laugh Floor far more often. Jack, Sally and
 # Zero turn up on their own meet, which is only listed on Halloween party nights ("jack
-# skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too).
+# skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too). The Mine Train
+# brings a few dwarfs in their cars now and then; at a short wait the whole train comes every
+# time (see _mine_train_for_wait).
 RIDE_VISITORS = {
     "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
     "mike": {"rides": ("laugh floor",), "chance": 0.10},
     "jack_sally": {"rides": ("meet jack skellington",), "chance": 0.5},
+    "mine_train": {"rides": ("seven dwarfs mine train",), "chance": 0.10},
 }
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
@@ -266,17 +269,36 @@ def loop_through_attractions(matrix, park, parks=()):
             debug.info(
                 f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
                 f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']}")
-            surprise = forced_surprise or _ride_visitor(ride.get("name", "")) or _surprise(random.random())
+            surprise = (forced_surprise or _ride_visitor(ride.get("name", ""), ride.get("waitTime"))
+                        or _surprise(random.random()))
             if surprise != "wipe":
                 debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
 
-def _ride_visitor(ride_name):
+def _ride_visitor(ride_name, wait=None):
     """A visitor who belongs to this ride, if one rolls in; None otherwise (and no roll is spent)."""
     name = ride_name.lower()
+    if any(part in name for part in RIDE_VISITORS["mine_train"]["rides"]):
+        full_train = _mine_train_for_wait(wait)
+        if full_train:
+            return full_train
     for visitor, spec in RIDE_VISITORS.items():
         if any(part in name for part in spec["rides"]) and random.random() < spec["chance"]:
             return visitor
+    return None
+
+def _mine_train_for_wait(wait):
+    """
+    The whole Mine Train turns up every time its wait is short: all seven dwarfs at 15 minutes or
+    less, and Snow White with them at 5 or less, or at a posted 7. None for a longer wait, or a
+    wait that isn't minutes (a boarding group, "Down").
+    """
+    if not isinstance(wait, int) or isinstance(wait, bool):
+        return None
+    if wait <= 5 or wait == 7:
+        return "mine_train_snow"
+    if wait <= 15:
+        return "mine_train_all"
     return None
 
 def _surprise(roll):

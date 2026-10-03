@@ -261,6 +261,31 @@ sells the character, then size him to hold it.
   (too wide to share the board), a moon-backed pair, the user's bead photos and a downscaled
   screenshot before a single combined pattern of the two of them fit. Shortened to 32 rows,
   split by colour, they walk in from opposite sides and kiss.
+- **The Seven Dwarfs Mine Train** (`mine_train`) — the dwarfs copied cell for cell from one sheet;
+  the motion changed twice. A side view for a walk-in (a hand-drawn Doc profile) was dropped for
+  a mine train, so they face us the whole ride. The car and the gem car took a few renders;
+  Snow White was redrawn at car size from a photo of stitching over six rounds of small fixes.
+
+## The Mine Train: what worked
+
+- **Measure a sheet's real grid from its lines, not its printed labels.** `dwarfs.jpg` is
+  labelled 140x60, but its grid is 80x81, so every dwarf was about 20x40, not the 30x28 the
+  references table said. That decided which boards he fits.
+- **A photo of finished stitching transcribes well.** Fit the stitch pitch with a frequency fit
+  over a flat area (the skirt), sample each stitch's centre, then redraw by hand at the size
+  you need. A plain shrink lost Snow White's smile and swamped her eyes.
+- **Centre a rider on the middle of his body, not his outline.** A raised arm or a hand on the
+  hip pulls the outline sideways; each dwarf is centred on his belt buckle (`BUCKLE`).
+- **Black outlines vanish on the board.** The gem heap read as tiny specks until it was drawn as
+  packed colour with dark facets, and the couplings only showed once they were grey metal.
+- **A one-pixel nose right above a V smile closes it into a diamond** that reads as a kiss.
+  Keep a row of skin between them.
+- **Ask how big a feature should be in the user's terms.** "One pixel wider than the dwarf" and
+  "shoulders up" settled sizes that guesses kept missing.
+- **A long reveal can ask for a longer screen.** The full train is about 9s; `hold_after_s`
+  keeps the ride screen up after it, without changing anyone else's timing.
+- **Draw only what's on the board.** Nine cars is too many pixels a frame for a Pi Zero; only
+  the two or three on the board are drawn, from pixel lists worked out once (`_cells`).
 
 ## Jack, Sally and Zero: what worked
 

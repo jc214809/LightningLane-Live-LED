@@ -17,6 +17,7 @@ from display.animation.characters.luxo_ball import LuxoBallReveal
 from display.animation.characters.mater import MaterReveal
 from display.animation.characters.mcqueen import McQueenReveal
 from display.animation.characters.mickey import MickeyReveal
+from display.animation.characters.mine_train import MineTrainAllReveal, MineTrainReveal, MineTrainSnowReveal
 from display.animation.characters.mike import MikeReveal
 from display.animation.characters.olaf import OlafReveal
 from display.animation.characters.ralph import RalphReveal
@@ -52,4 +53,7 @@ TRANSITIONS = {
     "donald": DonaldReveal,
     "stitch_surf": StitchSurfReveal,
     "jack_sally": JackSallyReveal,
+    "mine_train": MineTrainReveal,
+    "mine_train_all": MineTrainAllReveal,
+    "mine_train_snow": MineTrainSnowReveal,
 }

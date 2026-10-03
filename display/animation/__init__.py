@@ -112,6 +112,12 @@ from display.animation.characters.mike import (  # noqa: F401
     MikeReveal,
 )
 
+from display.animation.characters.mine_train import (  # noqa: F401
+    MineTrainAllReveal,
+    MineTrainReveal,
+    MineTrainSnowReveal,
+)
+
 from display.animation.characters.olaf import (  # noqa: F401
     OlafReveal,
 )

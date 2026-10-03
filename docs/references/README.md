@@ -24,7 +24,7 @@ height, or within a row or two of it, so there's no room for anything under him.
 | [Dug.jpg](Dug.jpg) | Dug | 22 x 27 | Yes | Yes (2x too) | |
 | [Bullseye.jpg](Bullseye.jpg) | Toy Story, a sheet: Woody, Buzz, Mr. and Mrs. Potato Head, Slinky, Rex, Hamm, Bo Peep and her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Bullseye, Stinky Pete and more | up to about 26 x 28 each (Bullseye 26 x 28) | Yes | Yes (2x too) | |
 | [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | |
-| [dwarfs.jpg](dwarfs.jpg) | The seven dwarfs, a sheet | about 30 x 28 each | Yes | Yes (2x too) | |
+| [dwarfs.jpg](dwarfs.jpg) | The seven dwarfs, a sheet | about 20 x 40 each | No (hat to beard, in the mine car) | Yes | Built: `mine_train`, cell for cell, shoulders up on 64x64 |
 | [Tink.jpg](Tink.jpg) | Tinker Bell | 26 x 31 | Tight | Yes (2x too) | Built: `tink` |
 | [Hamm.jpg](Hamm.jpg) | Hamm | 41 x 31 | Tight | Yes | |
 | [Baby_Yoda.jpg](Baby_Yoda.jpg) | Grogu | 38 x 32 | Tight | Yes | |
@@ -54,6 +54,7 @@ height, or within a row or two of it, so there's no room for anything under him.
 | [Tigger and Pooh.jpg](<Tigger and Pooh.jpg>) | Tigger and Pooh, one piece | 67 x 60 | No | No (3 columns too wide) | |
 | [zero2.jpg](zero2.jpg) | Zero, flying (photo of embroidery) | about 68 x 72 | No | No | |
 | [Tiana.jpg](Tiana.jpg) | Tiana kissing the frog | 74 x 86 | No | No | |
+| [snow_white_stitched.png](snow_white_stitched.png) | Snow White (photo of finished stitching) | 53 x 103 | No | No | Redrawn at 21 wide: `mine_train`'s Snow White |
 | [Pooh and gang.jpg](<Pooh and gang.jpg>) | Eeyore, Tigger, Pooh and Piglet, overlapping as one piece | 53 x 125 | No | No | |
 | [RC-NotPixels.webp](RC-NotPixels.webp) | RC, from Toy Story (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes, like the Falcon |
 | [princesses.png](princesses.png) | (none: the image is completely transparent) | | | | |
