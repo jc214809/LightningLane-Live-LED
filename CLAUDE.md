@@ -49,7 +49,7 @@ The application is a continuous display loop that fetches Disney World attractio
 ### WebSocket resilience
 
 `updater/websocket_updater.py` maintains the live connection with several layered defenses (see git history on `feature/websocket` and its stack for the incident that motivated each):
-- `ws_connect(..., heartbeat=30, receive_timeout=120)` detects a dead socket and forces a reconnect within ~2 minutes.
+- `ws_connect(..., heartbeat=30, timeout=ClientWSTimeout(ws_receive=120, ws_close=10))` detects a dead socket and forces a reconnect within ~2 minutes. (The float `receive_timeout=` is deprecated in aiohttp 3.14; give `ws_close` explicitly, or the 10s close default is dropped.)
 - A per-connection `_watchdog` task force-reconnects if zero messages arrive in a 5-minute window while any park is `operating` — catches a connection that's alive at the protocol level but has stopped streaming data.
 - Reconnect backoff (`_next_delay`) only resets to 5s after a connection stays up 60s+; otherwise it doubles (capped at 60s), so a connect-then-die loop can't hammer the server.
 - `attr["lastUpdatedTs"]`/`down_since` are stamped from the event's own `lastUpdated`, not receive time — confirmed present on all ATTRACTION/SHOW entries from the live API.
