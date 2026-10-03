@@ -86,7 +86,8 @@ def test_build_rewrites_only_the_sprite_block(tmp_path):
 def _run_core(body):
     with open(builder.EDITOR, encoding="utf-8") as f:
         core = re.search(r'<script id="core">(.*?)</script>', f.read(), re.S).group(1)
-    out = subprocess.run([NODE, "-e", core + "\n" + body], capture_output=True, text=True, timeout=30)
+    # The script goes in on stdin: with every sprite embedded it's past Linux's limit for one argument.
+    out = subprocess.run([NODE], input=core + "\n" + body, capture_output=True, text=True, timeout=30)
     assert out.returncode == 0, out.stderr
     return json.loads(out.stdout)
 
