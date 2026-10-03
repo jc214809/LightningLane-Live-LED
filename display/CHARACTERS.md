@@ -231,6 +231,18 @@ What worked and what didn't, so we don't repeat it:
   ship) fixed it, and brightening her toward white as she stretches stopped the jump
   reading as a long grey brick.
 
+- **Stitch** — two scenes from the user's profile pixel art were built and scrapped (a
+  pop-up chomp, and eating the old ride letter by letter), but they taught two things.
+  The art's eye was solid black like its outline, and on the board it read as a hole through
+  his head; filling it indigo inside the black ring, glint kept, made it an eye. And his first
+  closed mouth just removed the jaw's tip, which read as part of his face vanishing; it read
+  as shut once the jaw swung up against the teeth as a solid wedge. What's left is surfing,
+  from two bead patterns, copied cell for cell: standing on 64x64
+  ([stich.jpg](../docs/references/stich.jpg)) and sitting on 64x32
+  ([sitting_stitch.jpg](../docs/references/sitting_stitch.jpg)), where the standing one is
+  too tall. On the back of the wave he looked like he was sledding down a ramp; a surfer
+  rides the face, ahead of the crest, with the wave chasing him.
+
 The pattern: the characters that landed are the ones with a simple, strong silhouette
 and one well-executed motion. The ones that fell short tried for detail and lost the
 shape. Slinky is the clearest case of the other lesson — decide the one pose that
@@ -247,7 +259,9 @@ early characters above, and mostly for process reasons. Read this before redoing
 1. **Start from the user's reference image.** The tower was drawn from a photo; the friendly
    pumpkin from a colouring page. A reference settles the questions a description can't
    (what the eyes look like, where the stem sits, which details are the identity), and it
-   gives both of you something to compare renders against. Ask for one first.
+   gives both of you something to compare renders against. Ask for one first. Patterns
+   collected so far are in [docs/references/](../docs/references/README.md), each labelled with
+   whether it fits each board cell for cell.
 2. **Ask every open question in one batch, before drawing.** Guessing cost the early Slinky
    many redraws. Offer choices with a recommended default. The answers that most changed the
    result were ones nobody would have guessed: "a wink *and* a bounce", "put the name on

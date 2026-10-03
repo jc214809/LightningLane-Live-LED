@@ -503,33 +503,16 @@ Questions to settle first, with a reference photo:
   up like the Tower of Terror?
 
 
-## 7. Redraw Stitch
+## 7. Redraw Stitch (done; not in the rotation yet)
 
-`StitchReveal` (the peek) doesn't read as Stitch. Rendered on both boards at full rise:
-- The ears are two tall purple spikes pointing straight up, which reads as a rabbit or a
-  bat. His real ears are huge and swept out sideways (often drooping), blue with pink
-  inside, and the notch isn't visible.
-- The head is narrow and tall. His real head is very wide and flat, wider than it is tall,
-  and that width is half his silhouette.
-- The eyes come out as one dark band with two white dots, like sunglasses. His big dark
-  eyes are the identity, but they need to be separate shapes that differ from the fur and
-  the outline (see "Eyes" in CHARACTERS.md).
-- The nose is dark navy on mid-blue fur and gets lost.
-- The grin is cut off by the bottom edge: at full rise (`rise_frac` 0.88) only a sliver of
-  mouth and teeth shows on either board, so his face never finishes.
-- The look left and right is just the white glint moving a pixel; it barely registers.
+The old peek was replaced by `stitch_surf`, playable with `force_surprise`: from the bead
+pattern in `docs/references/stich.jpg`, standing, facing us, he surfs a red board down the face
+of a teal wave whose crest washes the old ride away. On 64x32, where the standing one is too
+tall, he sits on the board (from `docs/references/sitting_stitch.jpg`).
+Two other scenes from the user's profile pixel art were built and scrapped: popping up to chomp
+twice, and eating the old ride letter by letter.
 
-Questions to settle first, with a reference image:
-- Framing: a wide head-only close-up (ears out to the sides), or head plus shoulders and
-  his little arms gripping the bottom edge?
-- Ears: straight out to the sides, drooped, or one of each? Keep the notch?
-- Expression: the big mischievous grin, the tongue out, or a neutral face that breaks into
-  a grin?
-- Motion: keep the peek with a stronger look around (whole head turns, ears swivel), or
-  something more Stitch, like an ear flick, a lick, or a sneaky pop-up that ducks when
-  spotted?
-- Size: 1x or 2x on 64x64 (the ears' width decides it), and whether he joins the
-  `SURPRISES` rotation once redrawn (he's built but not in it today).
+Open: whether `stitch_surf` goes into `SURPRISES`.
 
 ## 8. Fix Ralph showing the new screen through the old one
 
