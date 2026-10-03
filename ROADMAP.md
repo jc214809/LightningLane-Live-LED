@@ -52,6 +52,29 @@ Put a ✅ in the Done column when a character ships.
 | 30 | ✅ | Chip 'n' Dale | MK / DHS (various) | run in from opposite sides, meet nose to nose, scurry back off | Run-in from both edges |
 | 31 | | Max and Roxanne (A Goofy Movie) | TBD | TBD | TBD |
 | 32 | ✅ | Mater | Cars (with McQueen, #15) | drives across backwards, grinning | Drive-by (`mater`) |
+| 33 | | Grogu | DHS: Star Wars: Galaxy's Edge | floats across in his hover pram, ears twitching; or raises a hand and Force-lifts the old screen away | Fly-by, or Wreck (`wants_prev`) |
+| 34 | | Lumiere, Cogsworth, Mrs. Potts and Chip | MK: Enchanted Tales with Belle, Be Our Guest | the enchanted objects parade across, "Be Our Guest" | Fly-by (parade) |
+| 35 | | Boo | MK: Monsters, Inc. Laugh Floor | runs in giggling in her monster costume | TBD; pairs with Mike (#3) and Sulley (#48) |
+| 36 | | Dug | AK (Up; no ride) | runs in, stops dead, head snaps round ("Squirrel!"), dashes off | Run-in |
+| 37 | | The Seven Dwarfs | MK: Seven Dwarfs Mine Train | march across in a line, picks on their shoulders | Fly-by (parade) |
+| 38 | | The Evil Queen | MK; Halloween party nights | holds out the poisoned apple, or the old screen fades into her magic mirror | TBD |
+| 39 | | Forky | DHS: Toy Story Land | waddles in, spots the old screen ("Trash!") and dives into it | Wreck (`wants_prev`) |
+| 40 | | Hamm | DHS: Toy Story Land | trots across, coins clinking out of his slot | Fly-by |
+| 41 | | Heihei | EPCOT: Journey of Water, Inspired by Moana | wanders across, pecking at nothing, and walks off the edge | Run-in |
+| 42 | | Maleficent | MK; Halloween party nights | green flames rise from the bottom and she appears in them | Peek |
+| 43 | | Pooh and his balloon | MK: Many Adventures of Winnie the Pooh | floats up from the bottom on his red balloon and drifts off the top | Peek (rises off the top) |
+| 44 | | Mr. and Mrs. Potato Head | DHS: Toy Story Mania! | their pieces pop off and fly back on | TBD |
+| 45 | | Princesses (and villains) | MK | one princess at random walks across; a villain instead on Halloween nights | Fly-by |
+| 46 | | Pua | EPCOT: Journey of Water, Inspired by Moana | trots across, with Heihei (#41) | Run-in |
+| 47 | | Sally | Halloween party nights | her face peeks up; pairs with Jack (#6) | Peek |
+| 48 | | Sulley | MK: Monsters, Inc. Laugh Floor | rises up behind the screen and roars | Peek; pairs with Mike (#3) and Boo (#35) |
+| 49 | | Tiana | MK: Tiana's Bayou Adventure | kisses the frog, a burst of sparkle | TBD; pairs with Ray (#22) |
+| 50 | | Oogie Boogie | Halloween party nights | looms up, bugs spilling out of him over the screen | Peek |
+| 51 | | Woody | DHS: Toy Story Land | rides Bullseye (#54) across, waving his hat | Fly-by |
+| 52 | | Jessie | DHS: Toy Story Land | runs in, swings her lasso, yodels | TBD |
+| 53 | | Zero | Halloween party nights | floats across, his glowing nose lighting the way | Fly-by; pairs with Jack (#6) |
+| 54 | | Bullseye | DHS: Toy Story Land | gallops across, Woody (#51) riding | Fly-by |
+| 55 | | RC | DHS: Toy Story Land | races across, wheels spinning | Drive-by |
 
 ### Notes per character
 
@@ -448,6 +471,155 @@ his red hoodie, Roxanne with her long red hair, holding hands), about 30x53 each
 
 Questions: what they do (walk across hand in hand, a peek, a nod to "Stand Out"/Powerline);
 one or both; where they show up; size on each board.
+
+**33. Grogu.** Reference: [Baby_Yoda.jpg](docs/references/Baby_Yoda.jpg), 38x32: tight on
+64x32 (fills the height), fits 64x64. Big ears and eyes are the whole silhouette, and green
+on black reads well.
+
+Questions: float across in his pram, or a Force-lift of the old screen; pram or no pram (the
+pattern is him standing in his robe); reference for the pram.
+
+**34. Lumiere, Cogsworth, Mrs. Potts and Chip.** Reference:
+[Beauty and the Beast.jpg](<docs/references/Beauty and the Beast.jpg>), a photo of beads with
+Gaston, Belle and the Beast too, about 12x20 each: fits both boards (2x on 64x64 too).
+Small enough that several fit on the board at once, which suits a parade.
+
+Questions: which characters (objects only, or Belle and the Beast); a parade, or Lumiere's
+candle flames lighting the next ride; tied to Be Our Guest's screen.
+
+**35. Boo.** Reference: [Boo.jpg](docs/references/Boo.jpg), in her purple monster costume,
+28x44: too tall for 64x32 as is; fits 64x64.
+
+Questions: her own scene, or with Mike and Sulley (one Laugh Floor visit with all three);
+64x32 needs a redraw or a crop.
+
+**36. Dug.** Reference: [Dug.jpg](docs/references/Dug.jpg), 22x27: fits both boards (2x on
+64x64 too). His open-mouthed grin is the face; the "Squirrel!" head snap is a ready-made
+story beat.
+
+Questions: does a squirrel actually appear; where he shows up (no Up ride at WDW).
+
+**37. The Seven Dwarfs.** Reference: [dwarfs.jpg](docs/references/dwarfs.jpg), all seven on
+one sheet, about 30x28 each: fit both boards, but seven in a row is far wider than the
+board, so they'd march through it.
+
+Questions: all seven, or a few; marching, or a peek over the Mine Train's screen; whistling.
+
+**38. The Evil Queen.** Reference: [Evil Queen.jpg](<docs/references/Evil Queen.jpg>), 31x38:
+too tall for 64x32 as is; fits 64x64.
+
+Questions: the apple or the mirror; a Halloween-night villain only, alongside Maleficent
+(#42) and Oogie Boogie (#50), or the Mine Train too.
+
+**39. Forky.** Reference: [Forky.jpg](docs/references/Forky.jpg), 23x28: fits both boards (2x
+on 64x64 too). White on black with red arms reads cleanly; his diving into "trash" is his joke
+from the film, and the old screen is the trash.
+
+Questions: does he dive into the old screen (a wreck), or just waddle across; googly eyes
+that wobble.
+
+**40. Hamm.** References: [Hamm.jpg](docs/references/Hamm.jpg), 41x31: tight on 64x32, fits
+64x64; and a small Hamm on [Bullseye.jpg](docs/references/Bullseye.jpg) (fits both).
+
+Questions: which reference; coins, or just a trot; with the other Toy Story toys (#14, #16,
+#51-55).
+
+**41. Heihei.** Reference: [hei-hei.jpg](docs/references/hei-hei.jpg), 20x42: too tall for
+64x32 as is; fits 64x64. His blank stare and walking off the edge are the gag.
+
+Questions: alone or with Pua (#46); 64x32 needs a redraw.
+
+**42. Maleficent.** Reference: [Maleficent.jpg](docs/references/Maleficent.jpg), 29x40: too
+tall for 64x32 as is; fits 64x64. Black horns on black need the lifted charcoal (the Sorcerer
+Mickey fix); her green fire is the LED-friendly part.
+
+Questions: green flames, or her staff's orb glowing; Halloween nights only.
+
+**43. Pooh and his balloon.** Reference: [Pooh and Balloon.jpg](<docs/references/Pooh and Balloon.jpg>),
+20x64 with the balloon: too tall for 64x32 as is; tight on 64x64 (exactly its height).
+Floating up and off the top suits the tall, thin shape.
+
+Questions: 64x32 shows only part of him at a time as he floats, or a redraw; pairs with
+Tigger (#23) on the Pooh ride.
+
+**44. Mr. and Mrs. Potato Head.** Reference: [Potato heads.jpg](<docs/references/Potato heads.jpg>),
+the two heads, 65x40 together, about 32x40 each: neither board fits both as is; one at a time
+fits 64x64. Small full-body ones are on [Bullseye.jpg](docs/references/Bullseye.jpg) (fit
+both boards).
+
+Questions: heads (big pattern) or full bodies (sheet); one or both; pieces popping off and
+back on.
+
+**45. Princesses (and villains).** References:
+[princesses_and_Princes.jpg](docs/references/princesses_and_Princes.jpg), princesses with
+their princes, about 16x22 each: fit both boards (2x on 64x64 too); and
+[Princesses_and_Evil_Ladies.jpg](docs/references/Princesses_and_Evil_Ladies.jpg), princesses
+and villains, about 25x35 each: too tall for 64x32 as is, fit 64x64. (`princesses.png` is a
+blank image.)
+
+Questions: one at random per showing, or a parade; tied to their own rides and restaurants;
+villains on Halloween nights only.
+
+**46. Pua.** Reference: [pua.jpg](docs/references/pua.jpg), 36x39: too tall for 64x32 as is;
+fits 64x64.
+
+Questions: alone or with Heihei (#41); 64x32 needs a redraw.
+
+**47. Sally.** References: [Sally.jpg](docs/references/Sally.jpg), her face, 42x47: too tall
+for 64x32 as is, fits 64x64; and [Jack and sally.jpg](<docs/references/Jack and sally.jpg>)
+with Jack (see #6).
+
+Questions: alone or with Jack (one Halloween-night scene); face or full body.
+
+**48. Sulley.** Reference: [Sulley.jpg](docs/references/Sulley.jpg), 26x33: one row too tall
+for 64x32 as is (a one-row trim would fit); fits 64x64.
+
+Questions: a roar over the screen, or with Mike (#3) and Boo (#35); his purple spots need to
+stay distinct from his blue at this size.
+
+**49. Tiana.** Reference: [Tiana.jpg](docs/references/Tiana.jpg), kissing the frog, 74x86:
+fits neither board as is; it would need a redraw at about half size.
+
+Questions: the kiss, or Tiana alone; with Ray (#22) on Tiana's Bayou Adventure.
+
+**50. Oogie Boogie.** Reference: [Oogie Boogie.jpg](<docs/references/Oogie Boogie.jpg>), 44x50:
+too tall for 64x32 as is; fits 64x64.
+
+Questions: bugs spilling out, or a looming peek; Halloween nights only, with Jack (#6).
+
+**51. Woody.** References: [woody.jpg](docs/references/woody.jpg), 32x50: too tall for 64x32
+as is, fits 64x64; and a small Woody on [Bullseye.jpg](docs/references/Bullseye.jpg) (fits
+both).
+
+Questions: riding Bullseye (#54) or on his own; which reference.
+
+**52. Jessie.** References: [jessie.jpg](docs/references/jessie.jpg), 31x51: too tall for
+64x32 as is, fits 64x64; and a small Jessie on [Bullseye.jpg](docs/references/Bullseye.jpg)
+(fits both).
+
+Questions: lasso, or riding Bullseye too; which reference.
+
+**53. Zero.** References: [Zero.jpg](docs/references/Zero.jpg), 38x34: too tall for 64x32 as
+is, fits 64x64; and [zero2.jpg](docs/references/zero2.jpg), a photo of embroidery, flying,
+about 68x72: fits neither board as is. A white ghost dog with a glowing nose is made for LEDs.
+
+Questions: which pose; a fly-by with a ghostly trail; Halloween nights only, with Jack (#6).
+
+**54. Bullseye.** Reference: [Bullseye.jpg](docs/references/Bullseye.jpg), a sheet of about
+twenty Toy Story characters (Woody, Buzz, the Potato Heads, Slinky, Rex, Hamm, Bo Peep and
+her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Stinky Pete and more); Bullseye is
+26x28, and all of them fit both boards (2x on 64x64 too).
+
+Questions: alone, or with Woody (#51) riding; whether this sheet becomes the source for the
+other Toy Story entries.
+
+**55. RC.** References: [RC-NotPixels.webp](docs/references/RC-NotPixels.webp), a photo of an
+enamel pin, not pixel art, so it needs tracing (keep the bold shapes: the lime body, blue
+flames, red hubs, big black tyres, as with the Falcon); and a small RC on
+[Bullseye.jpg](docs/references/Bullseye.jpg) (fits both boards).
+
+Questions: traced from the pin, or the sheet's; does anyone ride him; a drive-by like
+McQueen (#15).
 
 ### Ideas for using them
 
