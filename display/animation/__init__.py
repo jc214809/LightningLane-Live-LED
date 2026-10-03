@@ -88,6 +88,10 @@ from display.animation.characters.goofy import (  # noqa: F401
     GoofyReveal,
 )
 
+from display.animation.characters.jack_sally import (  # noqa: F401
+    JackSallyReveal,
+)
+
 from display.animation.characters.luxo_ball import (  # noqa: F401
     LuxoBallReveal,
 )

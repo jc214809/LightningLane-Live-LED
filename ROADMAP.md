@@ -14,7 +14,8 @@ Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter
 `walle` is kept, out of the rotation), the Green Army Men (`army_men`), the Millennium
 Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
-Mater (`mater`), Chip 'n' Dale (`chip_dale`) and Tigger (`tigger`).
+Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), and Jack, Sally and Zero
+(`jack_sally`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -25,7 +26,7 @@ Put a ✅ in the Done column when a character ships.
 | 3 | ✅ | Mike Wazowski | MK: Monsters, Inc. Laugh Floor | pops up, blinks, looks around, grins, then scares | Peek, drawn in code like Baymax |
 | 4 | ✅ | Luxo Jr. lamp | DHS: Pixar Place | with the Pixar Ball (#13): bats it, chases it, or searches for it with his light | Standalone (`luxo_ball`) |
 | 5 | | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
-| 6 | | Jack Skellington | Halloween party nights | white skull close-up peeks up | Peek |
+| 6 | ✅ | Jack Skellington | Halloween party nights: his meet | walks in, kisses Sally (#47) after Zero (#53) floats across | Standalone (`jack_sally`) |
 | 7 | | Santa Goofy / Santa-hat Mickey | Christmas party, Jollywood Nights | red-and-white holiday cameo | TBD |
 | 8 | | Remy | EPCOT: Remy's Ratatouille Adventure | scurries along the bottom | Fly-by |
 | 9 | | Na'vi banshee | AK: Avatar Flight of Passage | glowing blue and purple swoop | Fly-by |
@@ -66,13 +67,13 @@ Put a ✅ in the Done column when a character ships.
 | 44 | | Mr. and Mrs. Potato Head | DHS: Toy Story Mania! | their pieces pop off and fly back on | TBD |
 | 45 | | Princesses (and villains) | MK | one princess at random walks across; a villain instead on Halloween nights | Fly-by |
 | 46 | | Pua | EPCOT: Journey of Water, Inspired by Moana | trots across, with Heihei (#41) | Run-in |
-| 47 | | Sally | Halloween party nights | her face peeks up; pairs with Jack (#6) | Peek |
+| 47 | ✅ | Sally | Halloween party nights: her meet | walks in and kisses Jack (#6) | Standalone (`jack_sally`) |
 | 48 | | Sulley | MK: Monsters, Inc. Laugh Floor | rises up behind the screen and roars | Peek; pairs with Mike (#3) and Boo (#35) |
 | 49 | | Tiana | MK: Tiana's Bayou Adventure | kisses the frog, a burst of sparkle | TBD; pairs with Ray (#22) |
 | 50 | | Oogie Boogie | Halloween party nights | looms up, bugs spilling out of him over the screen | Peek |
 | 51 | | Woody | DHS: Toy Story Land | rides Bullseye (#54) across, waving his hat | Fly-by |
 | 52 | | Jessie | DHS: Toy Story Land | runs in, swings her lasso, yodels | TBD |
-| 53 | | Zero | Halloween party nights | floats across, his glowing nose lighting the way | Fly-by; pairs with Jack (#6) |
+| 53 | ✅ | Zero | Halloween party nights: the Jack and Sally meet | floats across as the wipe, his nose glowing | Standalone (`jack_sally`) |
 | 54 | | Bullseye | DHS: Toy Story Land | gallops across, Woody (#51) riding | Fly-by |
 | 55 | | RC | DHS: Toy Story Land | races across, wheels spinning | Drive-by |
 
@@ -150,10 +151,20 @@ base), transcribed cell for cell.
 Genie's smoke) over the screen, floating across with a faint bob. Fits the Halloween party
 season.
 
-**6. Jack Skellington (Halloween party nights).** A white skull close-up with black eyes and
-a stitched grin: a high-contrast face that reads at any size. Peek mechanic.
+**6. Jack Skellington (Halloween party nights).** Built with Sally (#47) and Zero (#53) as one
+scene, `jack_sally`. It plays only on the meet's own screen ("Meet Jack Skellington and Sally at
+Mickey's Not-So-Scary Halloween Party", listed only on party nights), half the time, through
+`RIDE_VISITORS`. Zero floats across as the wipe, his nose pulsing; then Sally walks in from the
+left and Jack from the right, they lean in and kiss, a heart floats up, and they walk back off.
+Zero is from [Zero.jpg](docs/references/Zero.jpg) (his outline rows hang off 64x32). The pair is
+the user's pattern [Sally and Jack pair.png](<docs/references/Sally and Jack pair.png>), shortened
+from 39 rows to 32 (rows out of their clothes and legs, hair and hands kept whole) so it fits
+64x32; 1x on both boards, split into Sally and Jack by colour for the walk. Dropped on the way:
+a parade of all three ([Sally Jack Zero.png](<docs/references/Sally Jack Zero.png>)), Brik's pair
+with a moon ([Sally Jack moon.png](<docs/references/Sally Jack moon.png>)), and the user's bead
+pieces ([Nightmare beads.png](<docs/references/Nightmare beads.png>)).
 
-References:
+Other references, unused:
 - [Jack Skellington.jpg](<docs/references/Jack Skellington.jpg>): his head, 42x46. Too tall for
   64x32 as is; fits 64x64.
 - [Jack and sally.jpg](<docs/references/Jack and sally.jpg>): a photo of beads, Jack with
@@ -565,11 +576,10 @@ fits 64x64.
 
 Questions: alone or with Heihei (#41); 64x32 needs a redraw.
 
-**47. Sally.** References: [Sally.jpg](docs/references/Sally.jpg), her face, 42x47: too tall
+**47. Sally.** Built with Jack; see #6. Other references: [Sally.jpg](docs/references/Sally.jpg), her face, 42x47: too tall
 for 64x32 as is, fits 64x64; and [Jack and sally.jpg](<docs/references/Jack and sally.jpg>)
 with Jack (see #6).
 
-Questions: alone or with Jack (one Halloween-night scene); face or full body.
 
 **48. Sulley.** Reference: [Sulley.jpg](docs/references/Sulley.jpg), 26x33: one row too tall
 for 64x32 as is (a one-row trim would fit); fits 64x64.
@@ -582,7 +592,8 @@ fits neither board as is; it would need a redraw at about half size.
 
 Questions: the kiss, or Tiana alone; with Ray (#22) on Tiana's Bayou Adventure.
 
-**50. Oogie Boogie.** Reference: [Oogie Boogie.jpg](<docs/references/Oogie Boogie.jpg>), 44x50:
+**50. Oogie Boogie.** Also in [Nightmare beads.png](<docs/references/Nightmare beads.png>), a bead
+piece about Jack's size (not yet read). Reference: [Oogie Boogie.jpg](<docs/references/Oogie Boogie.jpg>), 44x50:
 too tall for 64x32 as is; fits 64x64.
 
 Questions: bugs spilling out, or a looming peek; Halloween nights only, with Jack (#6).
@@ -599,11 +610,10 @@ Questions: riding Bullseye (#54) or on his own; which reference.
 
 Questions: lasso, or riding Bullseye too; which reference.
 
-**53. Zero.** References: [Zero.jpg](docs/references/Zero.jpg), 38x34: too tall for 64x32 as
+**53. Zero.** Built with Jack; see #6. Other references: [Zero.jpg](docs/references/Zero.jpg), 38x34: too tall for 64x32 as
 is, fits 64x64; and [zero2.jpg](docs/references/zero2.jpg), a photo of embroidery, flying,
 about 68x72: fits neither board as is. A white ghost dog with a glowing nose is made for LEDs.
 
-Questions: which pose; a fly-by with a ghostly trail; Halloween nights only, with Jack (#6).
 
 **54. Bullseye.** Reference: [Bullseye.jpg](docs/references/Bullseye.jpg), a sheet of about
 twenty Toy Story characters (Woody, Buzz, the Potato Heads, Slinky, Rex, Hamm, Bo Peep and
@@ -626,7 +636,7 @@ McQueen (#15).
 - **A character per park** for the park title reveal (today `PARK_REVEALS` plays Tinker Bell
   or Buzz for every park): Magic Kingdom TRON / Ghosts, EPCOT Olaf / Figment, Hollywood
   Studios WALL-E / Mike / Luxo / Pixar Ball / Army Men, Animal Kingdom banshee / Dumbo.
-- **Special-event tie-ins:** Jack Skellington on Halloween party nights, Santa Goofy or a
+- **Special-event tie-ins:** Jack, Sally and Zero on their party-night meet (built), Santa Goofy or a
   Santa-hat Mickey on Christmas party and Jollywood nights (`utils/special_events.py`).
 
 ## ~~2. Tower of Terror: a longer landmark scene, especially on 64x32~~ Done

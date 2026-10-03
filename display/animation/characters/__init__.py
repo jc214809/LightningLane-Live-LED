@@ -11,6 +11,7 @@ from display.animation.characters.dumbo import DumboReveal
 from display.animation.characters.falcon import FalconReveal
 from display.animation.characters.figment import FigmentReveal
 from display.animation.characters.genie import GenieReveal
+from display.animation.characters.jack_sally import JackSallyReveal
 from display.animation.characters.goofy import GoofyReveal
 from display.animation.characters.luxo_ball import LuxoBallReveal
 from display.animation.characters.mater import MaterReveal
@@ -50,4 +51,5 @@ TRANSITIONS = {
     "tigger": TiggerReveal,
     "donald": DonaldReveal,
     "stitch_surf": StitchSurfReveal,
+    "jack_sally": JackSallyReveal,
 }

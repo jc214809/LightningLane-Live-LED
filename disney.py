@@ -66,10 +66,13 @@ SURPRISES = {"genie": 0.005, "baymax": 0.012, "slinky_wrap": 0.01, "walle_side":
              "ralph": 0.005}
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge; Mike is
-# in the rotation too, but drops in on his own Laugh Floor far more often.
+# in the rotation too, but drops in on his own Laugh Floor far more often. Jack, Sally and
+# Zero turn up on their own meet, which is only listed on Halloween party nights ("jack
+# skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too).
 RIDE_VISITORS = {
     "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
     "mike": {"rides": ("laugh floor",), "chance": 0.10},
+    "jack_sally": {"rides": ("meet jack skellington",), "chance": 0.5},
 }
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.

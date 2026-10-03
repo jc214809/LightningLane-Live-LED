@@ -345,6 +345,30 @@ def test_the_falcon_never_visits_other_rides(monkeypatch, screens):
     assert screens[-1]["transition"] != "falcon"
 
 
+PARTY_MEET = "Meet Jack Skellington and Sally at Mickey's Not-So-Scary Halloween Party"
+
+
+def test_jack_sally_and_zero_visit_their_meet_half_the_time(monkeypatch, screens):
+    assert "jack_sally" not in disney.SURPRISES, "only on their own meet, which only party nights list"
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Magic Kingdom", "attractions": [{"name": PARTY_MEET, "waitTime": 25, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.49)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.51)  # past the visitor and every surprise
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert [s["transition"] for s in screens[-2:]] == ["jack_sally", "wipe"]
+
+
+@pytest.mark.parametrize("ride", ["Captain Jack’s Buccaneer Bash at Mickey’s Not-So-Scary Halloween Party",
+                                  "Space Mountain"])
+def test_jack_sally_and_zero_keep_to_their_own_meet(monkeypatch, screens, ride):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Magic Kingdom", "attractions": [{"name": ride, "waitTime": 15, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] != "jack_sally"
+
+
 def test_surprise_slices_match_their_chances_and_stay_rare():
     chances = disney.SURPRISES
     assert all(0 < c < 0.05 for c in chances.values()), "each kept rare on purpose"
