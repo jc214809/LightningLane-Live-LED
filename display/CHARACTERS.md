@@ -379,7 +379,7 @@ The process above held; these are the lessons that were new.
 - **A transition that takes the old screen must paint every pixel of it, black
   included.** `show_screen` draws the new screen first and the transition paints over
   it, so drawing only the old screen's lit pixels lets the new ride show through its
-  dark areas. The Army Men shipped with that bug; Ralph still has it (ROADMAP #8).
+  dark areas. The Army Men and Ralph both shipped with that bug.
 - **Test with fake screens that have dark pixels.** The Army Men's tests used an old
   screen lit edge to edge, which is exactly why they missed the bleed-through.
   `test_new_screen_never_shows_through_the_old_screens_dark_pixels` goes through the real

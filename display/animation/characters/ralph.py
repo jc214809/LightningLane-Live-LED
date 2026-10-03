@@ -97,8 +97,11 @@ class RalphReveal(CapturesScreens):
         if not self.shattered and t >= impact_at:
             self._shatter()
         if t < impact_at:
-            # Old screen still whole, with Ralph rising in front of it.
-            paint(canvas, self.prev_px, self.width, self.height)
+            # Old screen still whole, with Ralph rising in front of it. Every pixel of it,
+            # black included: show_screen has already drawn the new screen underneath.
+            frame = {(x, y): (0, 0, 0) for x in range(self.width) for y in range(self.height)}
+            frame.update(self.prev_px)
+            paint(canvas, frame, self.width, self.height)
         else:
             self._step_debris(t - impact_at)
             for x, y, _, _, rgb in self.debris:
