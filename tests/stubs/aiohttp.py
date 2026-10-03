@@ -12,6 +12,11 @@ class FakeResponse:
     async def __aexit__(self, exc_type, exc, tb):
         pass
 
+class ClientWSTimeout:
+    def __init__(self, ws_receive=None, ws_close=None):
+        self.ws_receive = ws_receive
+        self.ws_close = ws_close
+
 class ClientSession:
     async def __aenter__(self):
         return self

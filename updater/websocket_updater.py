@@ -19,6 +19,7 @@ _RECONNECT_DELAY_INITIAL = 5
 _RECONNECT_DELAY_MAX = 60
 _WS_HEARTBEAT_SECS = 30
 _WS_RECEIVE_TIMEOUT_SECS = 120
+_WS_CLOSE_TIMEOUT_SECS = 10  # aiohttp's own default, which a ClientWSTimeout given only ws_receive drops
 _STABLE_CONNECTION_SECS = 60
 
 
@@ -145,7 +146,9 @@ async def _ws_loop(api_key, parks_data):
                     headers=headers,
                     ssl=ssl_ctx,
                     heartbeat=_WS_HEARTBEAT_SECS,
-                    receive_timeout=_WS_RECEIVE_TIMEOUT_SECS,
+                    # receive_timeout= is deprecated (aiohttp 3.14 warns); this is its replacement.
+                    timeout=aiohttp.ClientWSTimeout(
+                        ws_receive=_WS_RECEIVE_TIMEOUT_SECS, ws_close=_WS_CLOSE_TIMEOUT_SECS),
                 ) as ws:
                     connected_at = time.monotonic()
                     if is_reconnect:

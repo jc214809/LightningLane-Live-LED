@@ -23,8 +23,16 @@ pytest tests/api/test_disney_api.py::test_function_name
 # Check version
 python3 version.py
 
-# Update requirements (after adding/changing dependencies)
-pipreqs . --force
+# Install for development (the app plus the test tools), on Python 3.11 like the boards
+uv venv --python 3.11 .venv && uv pip install --python .venv -r requirements-dev.txt
+
+# Python: 3.11 is the target everywhere (.python-version, pyproject's requires-python, CI)
+# because it's Raspberry Pi OS Bookworm's. CI also runs 3.13, the next OS's (Trixie). When the
+# boards move, raise all three together.
+
+# Update requirements: edit requirements.txt (what the boards need) and pyproject.toml's
+# dependencies by hand and keep them in sync; test tools go in requirements-dev.txt. Don't run
+# pipreqs: it rewrites requirements.txt from imports and drops the caps and comments.
 
 # Rebuild the sprite editor after changing any character art (a test fails until you do)
 python3 tools/build_sprite_editor.py
@@ -49,7 +57,7 @@ The application is a continuous display loop that fetches Disney World attractio
 ### WebSocket resilience
 
 `updater/websocket_updater.py` maintains the live connection with several layered defenses (see git history on `feature/websocket` and its stack for the incident that motivated each):
-- `ws_connect(..., heartbeat=30, receive_timeout=120)` detects a dead socket and forces a reconnect within ~2 minutes.
+- `ws_connect(..., heartbeat=30, timeout=ClientWSTimeout(ws_receive=120, ws_close=10))` detects a dead socket and forces a reconnect within ~2 minutes. (The float `receive_timeout=` is deprecated in aiohttp 3.14; give `ws_close` explicitly, or the 10s close default is dropped.)
 - A per-connection `_watchdog` task force-reconnects if zero messages arrive in a 5-minute window while any park is `operating` — catches a connection that's alive at the protocol level but has stopped streaming data.
 - Reconnect backoff (`_next_delay`) only resets to 5s after a connection stays up 60s+; otherwise it doubles (capped at 60s), so a connect-then-die loop can't hammer the server.
 - `attr["lastUpdatedTs"]`/`down_since` are stamped from the event's own `lastUpdated`, not receive time — confirmed present on all ATTRACTION/SHOW entries from the live API.
@@ -84,7 +92,7 @@ Before each park title screen, the `display/landmarks/` package (one file per la
 
 ### Testing
 
-Tests use `pytest`. The animation tests mirror the package: `tests/display/animation/` has one file per module or character (`test_player.py`, `test_olaf.py`, …), shared fakes in `support.py` (`FakeCanvas`, `FakeMatrix`, `fill`, …) and fixtures in its `conftest.py`, which stubs `graphics` by patching `animation.drawing`. The landmark tests do the same in `tests/display/landmarks/` (`test_spaceship_earth.py`, `test_pumpkins.py`, `test_screen.py`, …; shared helpers in `support.py`). The `tests/stubs/conftest.py` patches `builtins.open` to intercept `config.json` reads (returns a dummy config) and stubs out the `driver` module entirely so tests run without hardware or the `rgbmatrix` binary. Stub modules for `aiohttp`, `requests`, `pyowm`, and `pytz` live in `tests/stubs/`.
+Tests use `pytest`. The animation tests mirror the package: `tests/display/animation/` has one file per module or character (`test_player.py`, `test_olaf.py`, …), shared fakes in `support.py` (`FakeCanvas`, `FakeMatrix`, `fill`, …) and fixtures in its `conftest.py`, which stubs `graphics` by patching `animation.drawing`. The landmark tests do the same in `tests/display/landmarks/` (`test_spaceship_earth.py`, `test_pumpkins.py`, `test_screen.py`, …; shared helpers in `support.py`). The `tests/stubs/conftest.py` patches `builtins.open` to intercept `config.json` reads (returns a dummy config) and stubs out the `driver` module entirely so tests run without hardware or the `rgbmatrix` binary. Stub modules for `aiohttp`, `requests` and `pyowm` live in `tests/stubs/`.
 
 The `operating` field on a park dict is set by `update_parks_operating_status()` — a park is considered operating only if at least one attraction has a non-null wait time, `OPERATING` status, and a `lastUpdatedTs` within `_ATTRACTION_FRESHNESS_MINUTES` (20 min). `closingTime` is not a gate on `operating` — a live, fresh ticketed/extended-hours event past the regular closing time still counts, so the freshness check alone protects against a stuck-open park once WS/REST both stop updating an attraction. The main loop skips parks where `operating` is falsy. Its `fetch_schedules` flag controls whether a schedule fetch happens immediately (blocking HTTP) or only sets `schedule_refresh_needed`; the WebSocket thread always passes `fetch_schedules=False` (never block the asyncio event loop) and the REST thread services the flag on its next 5-minute cycle. Two independent triggers set `schedule_refresh_needed`: a closed→open transition, and a once-daily proactive refresh starting at 3am in the park's own local timezone (`park["timezone"]`, captured at startup from the ThemeParks Wiki `/entity/{id}` endpoint) — the daily refresh retries every 30 minutes if the API hasn't published the new day's `OPERATING` event yet (checked via `schedule_date` vs. today's local date), giving up at 9am local per attempt-day to avoid hammering the API indefinitely when a schedule never arrives.
 
@@ -96,4 +104,5 @@ Mutations of the shared `parks_data` structure (WS thread and REST thread) must 
 - The emulator's browser adapter binds port 8888 (`emulator_config.json`); a second instance fails with `[Errno 48] Address already in use`.
 - The ThemeParks.wiki WS server closes duplicate/rate-limited connections with close code 4029; `ws.close_code` is logged when the receive loop ends.
 - On a Pi, rgbmatrix's `graphics.DrawText`/`DrawLine` only accept rgbmatrix's own canvas, and it can't be read back. Anything that needs a screen's pixels (WALL-E, Ralph, Mickey) must go through `display/capture.py:capture_screen()`, which swaps in Python text/line drawing from the BDF files (fonts register their path in `initialize_fonts`) while it draws onto a recording canvas. The emulator accepts any canvas, so tests and previews won't catch a direct capture — this crashed the board once.
+- `LLL-install.sh` installs with `pip install --upgrade --prefer-binary`. The upgrade keeps the boards in step (plain `pip install -r` never moves a package that already meets its floor, so each Pi had frozen at whatever was current when it was set up); `--prefer-binary` matters on the 32-bit boards (`armhf`: PlutoPi, ZeroPi), which get compiled packages from piwheels, which lags PyPI. Without it pip would compile a newer numpy (an emulator dependency) on a Pi Zero, which takes hours or runs out of memory. Disneypi is `arm64` and gets PyPI's builds. The caps in `requirements.txt` keep the upgrade within compatible releases.
 - macOS has no GNU `timeout`; use `perl -e 'alarm N; exec "python3", @ARGV' disney.py ...` for time-boxed runs.

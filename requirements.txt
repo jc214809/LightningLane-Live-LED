@@ -1,13 +1,12 @@
-# Requirements for the Disney Ride Wait Time Display application
-aiohttp>=3.11.13
+# What the app needs on a board (installed by LLL-install.sh). Test tools are in
+# requirements-dev.txt. Keep in sync with pyproject.toml's dependencies.
+# Upper caps keep LLL-install.sh's --upgrade within compatible releases.
+aiohttp>=3.11.13,<4
 certifi>=2024.0.0
-requests>=2.32.3
-Pillow>=10.0.1
-RGBMatrixEmulator>=0.13.3
-pyowm==3.3.0
-setuptools; python_version >= "3.12"
-pytz>=2023.3
-pytest>=7.2.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.1.0
-coverage>=6.5.0
+requests>=2.32.3,<3
+Pillow>=10.0.1,<13
+# The emulator, for previews on a dev machine; the Pis use the real rgbmatrix driver and keep
+# it only as a fallback. Capped at what's been tested here (0.15.x).
+RGBMatrixEmulator>=0.13.3,<0.16
+# 3.4.0 pointed the current-weather call at an API version that doesn't exist; 3.5.0 fixed it.
+pyowm>=3.5.0,<4

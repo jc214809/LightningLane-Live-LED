@@ -7,6 +7,7 @@ import pytest
 from updater.websocket_updater import (
     _RECONNECT_DELAY_INITIAL,
     _RECONNECT_DELAY_MAX,
+    _WS_CLOSE_TIMEOUT_SECS,
     _WS_HEARTBEAT_SECS,
     _WS_RECEIVE_TIMEOUT_SECS,
     _WsStats,
@@ -458,6 +459,8 @@ class _FakeSession:
 
 
 def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
+    # The receive timeout goes through ClientWSTimeout (the float receive_timeout= is deprecated),
+    # with the close timeout set too, since leaving it out would drop aiohttp's 10s default.
     captured = {}
     parks = [{"id": "park-1", "name": "MK", "destination_id": "dest-1", "attractions": []}]
 
@@ -470,7 +473,9 @@ def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
             asyncio.run(_ws_loop("dummy-key", parks))
 
     assert captured["heartbeat"] == _WS_HEARTBEAT_SECS
-    assert captured["receive_timeout"] == _WS_RECEIVE_TIMEOUT_SECS
+    assert "receive_timeout" not in captured
+    assert captured["timeout"].ws_receive == _WS_RECEIVE_TIMEOUT_SECS
+    assert captured["timeout"].ws_close == _WS_CLOSE_TIMEOUT_SECS == 10
 
 
 # --- no match ---
