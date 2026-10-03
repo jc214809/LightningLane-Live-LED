@@ -12,24 +12,6 @@ import display.animation as disney_animation
 
 # ---- Helper/Fake Classes ----
 
-class FakeImage:
-    def __init__(self):
-        self.closed = False
-    def convert(self, mode):
-        return "converted_image"
-    def close(self):
-        self.closed = True
-
-class FakeMatrix2:
-    def __init__(self):
-        self.clear_count = 0
-        self.image_set = None
-    def Clear(self):
-        self.clear_count += 1
-    def SetImage(self, img):
-        self.image_set = img
-
-
 class FakeMatrix:
     def __init__(self):
         self.width, self.height = 64, 32
@@ -65,9 +47,8 @@ def disable_sleep(monkeypatch):
     # Override time.sleep globally to avoid delays during tests
     monkeypatch.setattr(__import__("time"), "sleep", lambda x: None)
 
-def test_render_logo_without_image_plays_castle_fireworks(monkeypatch):
+def test_the_startup_intro_is_the_castle_fireworks(monkeypatch):
     fake_matrix = FakeMatrix()
-    monkeypatch.setattr(os.path, "exists", lambda path: False)
     played = []
     monkeypatch.setattr(disney, "render_castle_fireworks", lambda matrix: played.append(matrix))
     disney.render_logo(fake_matrix)
@@ -300,30 +281,6 @@ def test_load_config_nonexistent(tmp_path):
     non_existent = tmp_path / "nonexistent_config.json"
     with pytest.raises(FileNotFoundError):
         disney.load_config(str(non_existent))
-
-
-def test_render_logo_with_image(monkeypatch):
-    """
-    Test the branch in render_logo that loads and displays an image.
-    We set use_image_logo to True, force os.path.exists to return True, and
-    monkey-patch PIL.Image.open to return a FakeImage instance.
-    Then, we verify that FakeMatrix2.SetImage is called with the
-    "converted_image" value.
-    """
-    fake_matrix = FakeMatrix2()
-    disney.use_image_logo = True
-    # Force os.path.exists to return True regardless of the path
-    monkeypatch.setattr(os.path, "exists", lambda path: True)
-    # Monkey-patch PIL.Image.open to return a FakeImage instance
-    monkeyatch_target = "PIL.Image.open"
-    monkeypatch.setattr(monkeyatch_target, lambda path: FakeImage())
-    # Override time.sleep to avoid delay (if not already patched by a global fixture)
-    monkeypatch.setattr(disney, "time", type("t", (), {"sleep": lambda x: None}))
-
-    disney.render_logo(fake_matrix)
-
-    # Check that SetImage was called and it received "converted_image"
-    assert fake_matrix.image_set == "converted_image"
 
 
 # Note: Testing main() is more challenging because it runs an infinite loop.
