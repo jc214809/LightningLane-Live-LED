@@ -16,7 +16,7 @@ class StitchSurfReveal(CapturesScreens):
     wants_prev = True
     duration = 2.6
 
-    # From the user's bead patterns, copied cell for cell. STAND_ART (docs/references/stich.jpg),
+    # From the user's bead patterns, copied cell for cell. STAND_ART (docs/references/stitch.jpg),
     # for 64x64: standing, facing us, ears up with pink insides, arms out. SIT_ART
     # (docs/references/sitting_stitch.jpg), for 64x32, where the standing one is taller than the
     # board: sitting on the board, facing right, his ear swept back. Its black outline is lifted
