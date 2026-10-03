@@ -83,6 +83,10 @@ def show_screen(matrix, draw_screen, hold_s, transition="wipe", rng=None):
     reveal = TRANSITIONS[transition](matrix.width, matrix.height, rng)
     cover_s = COVER_S if prev else 0.0
     last_t = [0.0]
+    # A reveal longer than the screen (the full Mine Train) asks for the screen to stay up this long after it.
+    after_s = getattr(reveal, "hold_after_s", None)
+    if after_s is not None:
+        hold_s = max(hold_s, cover_s + reveal.duration + after_s)
 
     # A reveal that shatters the old screen needs its pixels; hand it the previous
     # draw function and let it keep the sweep from running.

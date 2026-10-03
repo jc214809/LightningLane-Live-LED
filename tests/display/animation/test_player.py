@@ -171,3 +171,13 @@ def test_a_screen_can_ask_to_keep_playing_while_the_wipe_uncovers_it(plays_under
         assert during_wipe, "its clock runs from the start of the wipe"
     else:
         assert not during_wipe, "held at its first frame until it's uncovered"
+
+
+def test_a_reveal_longer_than_the_screen_keeps_the_screen_up_after_it(monkeypatch):
+    holds = []
+    monkeypatch.setattr(animation.player, "run_frames", lambda matrix, frame, hold_s: holds.append(hold_s) or (0, 0))
+    animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 8, transition="mine_train_snow", rng=random.Random(0))
+    train = animation.MineTrainSnowReveal(64, 32, random.Random(0))
+    assert holds[-1] >= train.duration + train.hold_after_s
+    animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 8, transition="mater")
+    assert holds[-1] == 8, "a reveal that doesn't ask keeps the usual hold"

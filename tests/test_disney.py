@@ -482,3 +482,42 @@ def test_force_surprise_ignores_names_that_are_not_characters(monkeypatch):
     assert len(warnings) == 2 and "slinky_wrap" in warnings[0], "the warning lists the valid choices"
     disney.set_forced_surprise("")
     assert disney.forced_surprise is None and len(warnings) == 2, "unset is silent"
+
+
+@pytest.mark.parametrize("wait, train", [
+    (0, "mine_train_snow"), (5, "mine_train_snow"), (7, "mine_train_snow"),
+    (6, "mine_train_all"), (10, "mine_train_all"), (15, "mine_train_all"),
+    (16, None), (45, None), ("Down", None), ("Groups 1-5", None), (None, None), (True, None),
+])
+def test_the_mine_train_wait_decides_who_rides(wait, train):
+    assert disney._mine_train_for_wait(wait) == train
+
+
+@pytest.mark.parametrize("wait, train", [(10, "mine_train_all"), (7, "mine_train_snow"), (5, "mine_train_snow")])
+def test_the_whole_mine_train_comes_every_time_at_a_short_wait(monkeypatch, screens, wait, train):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.99)  # no roll would bring a visitor
+    park = {"name": "MK", "attractions": [{"name": "Seven Dwarfs Mine Train", "waitTime": wait,
+                                           "status": "OPERATING"}]}
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == train
+
+
+def test_a_few_dwarfs_ride_the_mine_train_one_time_in_ten_at_a_longer_wait(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Seven Dwarfs Mine Train", "waitTime": 45,
+                                           "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.09)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.12)  # past the visitor and, under the cap, every surprise
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert [s["transition"] for s in screens[-2:]] == ["mine_train", "wipe"]
+
+
+def test_the_mine_train_stays_on_its_own_ride(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.99)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 5, "status": "OPERATING"}]}
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "wipe"
+    assert not any(name.startswith("mine_train") for name in disney.SURPRISES)
