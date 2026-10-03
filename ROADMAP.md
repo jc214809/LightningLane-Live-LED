@@ -529,7 +529,7 @@ Questions to settle first, with a reference photo:
 ## 7. Redraw Stitch (done; not in the rotation yet)
 
 The old peek was replaced by `stitch_surf`, playable with `force_surprise`: from the bead
-pattern [stich.jpg](docs/references/stich.jpg) (35x41: fits 64x64 as is, too tall for 64x32),
+pattern [stitch.jpg](docs/references/stitch.jpg) (35x41: fits 64x64 as is, too tall for 64x32),
 standing, facing us, he surfs a red board down the face of a teal wave whose crest washes the
 old ride away. On 64x32 he sits on the board, from
 [sitting_stitch.jpg](docs/references/sitting_stitch.jpg) (26x25: fits both boards as is).

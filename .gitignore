@@ -11,3 +11,4 @@ logs/
 .DS_Store
 README.md
 .claude/settings.json
+!docs/references/README.md
