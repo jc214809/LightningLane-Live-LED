@@ -87,10 +87,10 @@ def draw_attraction_frame(canvas, ride_info, t, expected=None):
     reserve, gap = bar_layout(canvas, ride_info) if has_bar else (0, GAP_BETWEEN_RIDE_AND_WAIT)
     overflow = overflow_rows(canvas, ride_info)
     scroll = scroll_offset(t, overflow) if overflow > 0 else None
-    # A DOWN ride stays centered on the whole board, as before it had a bar, unless that would run into the bar.
-    text_reserve = 0 if down and reserve and centered_clears_bar(canvas, ride_info, reserve, gap) else reserve
+    # A DOWN ride's name stays centered on the whole board, as before it had a bar, unless that would run into the bar.
+    centered = bool(down and reserve and centered_clears_bar(canvas, ride_info, reserve, gap))
     render_attraction_info(canvas, {**ride_info, "waitTime": shown}, down_color=down_color,
-                           reserve_bottom=text_reserve, scroll_px=scroll, gap=gap)
+                           reserve_bottom=reserve, scroll_px=scroll, gap=gap, centered=centered)
     if reserve and down:
         # Pulses with the "Down" text: both use this frame's down_color.
         draw_down_bar(canvas, down_color, expected)
@@ -187,7 +187,7 @@ def text_fits_above_bar(matrix, ride_info):
     return bar_layout(matrix, ride_info)[0] > 0
 
 
-def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0, scroll_px=None, gap=None):
+def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0, scroll_px=None, gap=None, centered=False):
     """
     Renders ride name at the top and wait time at the bottom in a single draw call.
     The combined text block is drawn from the center of the screen.
@@ -196,6 +196,8 @@ def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0,
     reserve_bottom keeps that many rows clear at the bottom (for the wait bar); gap
     overrides the space between the ride name and the wait time. Above a bar, the
     wait also drops halfway into any spare rows beneath it; the name doesn't move.
+    centered keeps the block centered on the whole board, not just the rows above
+    the bar (a DOWN ride's spot), with the same drop below it.
     """
     gap_px = GAP_BETWEEN_RIDE_AND_WAIT if gap is None else gap
     wait_drop = 0
@@ -207,11 +209,11 @@ def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0,
         # The taller 64-row font sits a row higher than its line height suggests.
         y_position = (1 if matrix.height >= 64 else 0) - scroll_px
     elif reserve_bottom:
-        # Center the whole block, gap included, in the rows above the bar...
         spare = matrix.height - reserve_bottom - total_lines_height - gap_px
-        y_position = spare // 2
+        # Center the block on the whole board, or, gap included, in the rows above the bar...
+        y_position = calculate_y_position(matrix, total_lines_height) if centered else spare // 2
         # ...then drop the wait halfway into the rows left below it, leaving the name where it is.
-        wait_drop = (spare - y_position) // 2
+        wait_drop = max(0, spare - y_position) // 2
     else:
         y_position = calculate_y_position(matrix, total_lines_height)
 

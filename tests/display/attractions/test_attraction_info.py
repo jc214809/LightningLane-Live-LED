@@ -251,11 +251,16 @@ def test_down_ride_pulses_red_and_keeps_animating(frame_recorder):
 
 
 @pytest.mark.parametrize("height", [32, 64])
-def test_down_ride_text_stays_centered_on_the_whole_board(frame_recorder, monkeypatch, height):
-    ride = {"name": "Space Mountain", "waitTime": "Down 12:41"}
-    centered = _baselines(monkeypatch, lambda: attraction_mod.render_attraction_info(RecordingCanvas(64, height), ride))
-    framed = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, height), ride, 0))
-    assert framed == centered, "same spot as before the red line was added"
+def test_down_ride_name_stays_centered_and_its_wait_drops(frame_recorder, monkeypatch, height):
+    # The down text used to sit just the gap under the name; it gets the same drop as a normal wait.
+    ride = {"name": "Space Mountain", "waitTime": "Down 15"}
+    canvas = RecordingCanvas(64, height)
+    reserve, _ = attraction_mod.bar_layout(canvas, ride)
+    centered = _baselines(monkeypatch, lambda: attraction_mod.render_attraction_info(canvas, ride))
+    framed = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(canvas, ride, 0))
+    assert framed[0] == centered[0], "the name stays where it was before the red line was added"
+    assert framed[-1] > centered[-1], "the down text drops into the spare rows"
+    assert framed[-1] + 1 <= height - reserve, "still clear of the bar"
 
 
 def test_a_long_down_name_moves_up_rather_than_run_into_the_bar(frame_recorder, monkeypatch):
