@@ -146,9 +146,9 @@ fi
 PYTHON=$(which python3)
 
 if [ "$NO_SUDO" = false ]; then
-    sudo "$PYTHON" -m pip install -r requirements.txt
+    sudo "$PYTHON" -m pip install --upgrade --prefer-binary -r requirements.txt
 else
-    "$PYTHON" -m pip install -r requirements.txt
+    "$PYTHON" -m pip install --upgrade --prefer-binary -r requirements.txt
 fi
 
 if [ "$SKIP_MATRIX" = false ]; then

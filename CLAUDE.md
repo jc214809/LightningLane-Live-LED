@@ -23,8 +23,12 @@ pytest tests/api/test_disney_api.py::test_function_name
 # Check version
 python3 version.py
 
-# Update requirements (after adding/changing dependencies)
-pipreqs . --force
+# Install for development (the app plus the test tools)
+pip install -r requirements-dev.txt
+
+# Update requirements: edit requirements.txt (what the boards need) and pyproject.toml's
+# dependencies by hand and keep them in sync; test tools go in requirements-dev.txt. Don't run
+# pipreqs: it rewrites requirements.txt from imports and drops the caps and comments.
 
 # Rebuild the sprite editor after changing any character art (a test fails until you do)
 python3 tools/build_sprite_editor.py
@@ -96,4 +100,5 @@ Mutations of the shared `parks_data` structure (WS thread and REST thread) must 
 - The emulator's browser adapter binds port 8888 (`emulator_config.json`); a second instance fails with `[Errno 48] Address already in use`.
 - The ThemeParks.wiki WS server closes duplicate/rate-limited connections with close code 4029; `ws.close_code` is logged when the receive loop ends.
 - On a Pi, rgbmatrix's `graphics.DrawText`/`DrawLine` only accept rgbmatrix's own canvas, and it can't be read back. Anything that needs a screen's pixels (WALL-E, Ralph, Mickey) must go through `display/capture.py:capture_screen()`, which swaps in Python text/line drawing from the BDF files (fonts register their path in `initialize_fonts`) while it draws onto a recording canvas. The emulator accepts any canvas, so tests and previews won't catch a direct capture — this crashed the board once.
+- `LLL-install.sh` installs with `pip install --upgrade --prefer-binary`. The upgrade keeps the boards in step (plain `pip install -r` never moves a package that already meets its floor, so each Pi had frozen at whatever was current when it was set up); `--prefer-binary` matters on the 32-bit boards (`armhf`: PlutoPi, ZeroPi), which get compiled packages from piwheels, which lags PyPI. Without it pip would compile a newer numpy (an emulator dependency) on a Pi Zero, which takes hours or runs out of memory. Disneypi is `arm64` and gets PyPI's builds. The caps in `requirements.txt` keep the upgrade within compatible releases.
 - macOS has no GNU `timeout`; use `perl -e 'alarm N; exec "python3", @ARGV' disney.py ...` for time-boxed runs.

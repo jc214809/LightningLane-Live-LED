@@ -6,15 +6,14 @@ build-backend = "setuptools.build_meta"
 name = "lightninglane-live-led"
 version = "2.0.0"
 description = "Disney World attraction wait times on an RGB LED matrix"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
-    "aiohttp>=3.11.13",
+    "aiohttp>=3.11.13,<4",
     "certifi>=2024.0.0",
-    "requests>=2.32.3",
-    "Pillow>=10.0.1",
-    "RGBMatrixEmulator>=0.13.3",
-    "pyowm>=3.3.0",
-    "pytz>=2023.3",
+    "requests>=2.32.3,<3",
+    "Pillow>=10.0.1,<13",
+    "RGBMatrixEmulator>=0.13.3,<0.16",
+    "pyowm>=3.5.0,<4",
 ]
 
 [tool.setuptools.packages.find]

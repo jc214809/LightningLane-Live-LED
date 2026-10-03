@@ -1,0 +1,6 @@
+# Everything the app needs, plus the test tools (for a dev machine and CI, not the boards).
+-r requirements.txt
+pytest>=7.2.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+coverage>=6.5.0
