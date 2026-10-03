@@ -716,5 +716,9 @@ screen was dark until he smashed it. He now paints every pixel of it, black incl
 the punch, like the Army Men and the Falcon, and he's a case in
 `test_new_screen_never_shows_through_the_old_screens_dark_pixels`.
 
-If he's redrawn: [Ralph.jpg](docs/references/Ralph.jpg) is a pattern of him, 25x34. Two rows
-too tall for 64x32 as is; fits 64x64.
+Redrawn from [Ralph.jpg](docs/references/Ralph.jpg), copied cell for cell at 1x on both boards
+(25x34 with its outline; on 64x32 the outline rows under his feet and at the tip of his hair hang
+off the board). He now stomps in from the left over the old ride, raises both fists (over his
+head on 64x64, beside his face on 64x32, where there's no room overhead) and slams them down;
+the ride shatters and falls as before, and he stomps off the right. Built but still not in
+the rotation.
