@@ -256,6 +256,36 @@ and one well-executed motion. The ones that fell short tried for detail and lost
 shape. Slinky is the clearest case of the other lesson — decide the one pose that
 sells the character, then size him to hold it.
 
+- **Jack, Sally and Zero** — landed on the fifth try at the art, and the motion took one. Zero
+  from a clean pattern was right first time. Jack and Sally went through a parade of all three
+  (too wide to share the board), a moon-backed pair, the user's bead photos and a downscaled
+  screenshot before a single combined pattern of the two of them fit. Shortened to 32 rows,
+  split by colour, they walk in from opposite sides and kiss.
+
+## Jack, Sally and Zero: what worked
+
+- **Ask for a grid pattern.** A pattern with one cell per bead copies in minutes. A photo of
+  beads needed the bead pitch found from the holes, rotation fitted, colours clustered and then
+  checked by eye; a downscaled screenshot needed its grid recovered per figure. Both took far
+  longer, and the user noticed. Say so before starting, or ask for a pattern.
+- **Mock one still before building motion.** "Stand next to each other" was built as a parade
+  that wasn't wanted. One render of the pose would have caught it.
+- **Several figures side by side need a combined piece.** Three figures about 34 wide can't
+  share 64 columns, and doubled pairs crowd 64x64. The answer was a pattern drawn as a pair: the
+  overlap is part of the art.
+- **Shortening art to fit: cut by column, not by row.** Removing rows straight across took off
+  Jack's coat tails and would have cut three hands in half. Remove the rows the user marks where
+  the art repeats (clothes, legs), and under anything sticking out (hands, coat tails, a hair
+  flare) remove empty rows below it instead. Every column loses the same number, so everything
+  above moves down together and nothing tears.
+- **Split a combined piece by colour.** Each coloured cell goes to its owner; black outline
+  cells go to the nearest owner by flood fill. Colours both share need a rule: Sally's white
+  shoes are hers, every other white is Jack's.
+- **Fill dark gaps beside a figure.** Black is off on the board, so gaps between Sally's hair and
+  her body read as holes. Running her hair down around her body fixed it.
+- **64x32 has no room above a full-height piece.** The heart that floats up from the kiss stops
+  at the top edge there instead of leaving the board.
+
 ## Landmarks and scenes: what worked
 
 Notes from the Tower of Terror redraw and the Halloween party work (the two jack-o'-lanterns
