@@ -4,7 +4,9 @@
 aiohttp>=3.11.13,<4
 certifi>=2024.0.0
 requests>=2.32.3,<3
-Pillow>=10.0.1,<13
+# rgbmatrix's SetImage reads ImagingCore.unsafe_ptrs, which Pillow 12 removed: a board crashes
+# on the first image it draws (the weather icon). Raise once the boards' rgbmatrix is fixed.
+Pillow>=10.0.1,<12
 # The emulator, for previews on a dev machine; the Pis use the real rgbmatrix driver and keep
 # it only as a fallback. Capped at what's been tested here (0.15.x).
 RGBMatrixEmulator>=0.13.3,<0.16
