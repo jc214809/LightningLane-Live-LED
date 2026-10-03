@@ -10,4 +10,3 @@ Pillow>=10.0.1,<13
 RGBMatrixEmulator>=0.13.3,<0.16
 # 3.4.0 pointed the current-weather call at an API version that doesn't exist; 3.5.0 fixed it.
 pyowm>=3.5.0,<4
-setuptools; python_version >= "3.12"

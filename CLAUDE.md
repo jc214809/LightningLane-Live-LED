@@ -23,8 +23,12 @@ pytest tests/api/test_disney_api.py::test_function_name
 # Check version
 python3 version.py
 
-# Install for development (the app plus the test tools)
-pip install -r requirements-dev.txt
+# Install for development (the app plus the test tools), on Python 3.11 like the boards
+uv venv --python 3.11 .venv && uv pip install --python .venv -r requirements-dev.txt
+
+# Python: 3.11 is the target everywhere (.python-version, pyproject's requires-python, CI)
+# because it's Raspberry Pi OS Bookworm's. CI also runs 3.13, the next OS's (Trixie). When the
+# boards move, raise all three together.
 
 # Update requirements: edit requirements.txt (what the boards need) and pyproject.toml's
 # dependencies by hand and keep them in sync; test tools go in requirements-dev.txt. Don't run

@@ -10,6 +10,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # 3.11 is what the boards run (Raspberry Pi OS Bookworm); 3.13 is the next OS's (Trixie).
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
 
     steps:
       - name: Checkout repository
@@ -18,7 +23,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
@@ -34,6 +39,7 @@ jobs:
             --cov-report=term-missing
 
       - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}   # 🔑 add this line
