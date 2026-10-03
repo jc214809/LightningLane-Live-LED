@@ -79,7 +79,6 @@ class JackSallyReveal:
     # sockets and suit, W white, D his dark grey; R Sally's hair and H its darker strands, S her
     # skin, V her eyelid, and her patchwork dress: T teal, E dark teal, Y yellow, Q magenta,
     # U purple, A amber.
-    PAIR_SCALE = 1
     PAIR_ART = [
         "........HHHHHH.HHH........KKKKKKKKK........",
         "......HHRRRRRRHRRRHH....KKWWWWWWWWWKK......",

@@ -159,10 +159,7 @@ left and Jack from the right, they lean in and kiss, a heart floats up, and they
 Zero is from [Zero.jpg](docs/references/Zero.jpg) (his outline rows hang off 64x32). The pair is
 the user's pattern [Sally and Jack pair.png](<docs/references/Sally and Jack pair.png>), shortened
 from 39 rows to 32 (rows out of their clothes and legs, hair and hands kept whole) so it fits
-64x32; 1x on both boards, split into Sally and Jack by colour for the walk. Dropped on the way:
-a parade of all three ([Sally Jack Zero.png](<docs/references/Sally Jack Zero.png>)), Brik's pair
-with a moon ([Sally Jack moon.png](<docs/references/Sally Jack moon.png>)), and the user's bead
-pieces ([Nightmare beads.png](<docs/references/Nightmare beads.png>)).
+64x32; 1x on both boards, split into Sally and Jack by colour for the walk.
 
 Other references, unused:
 - [Jack Skellington.jpg](<docs/references/Jack Skellington.jpg>): his head, 42x46. Too tall for
@@ -592,8 +589,7 @@ fits neither board as is; it would need a redraw at about half size.
 
 Questions: the kiss, or Tiana alone; with Ray (#22) on Tiana's Bayou Adventure.
 
-**50. Oogie Boogie.** Also in [Nightmare beads.png](<docs/references/Nightmare beads.png>), a bead
-piece about Jack's size (not yet read). Reference: [Oogie Boogie.jpg](<docs/references/Oogie Boogie.jpg>), 44x50:
+**50. Oogie Boogie.** Reference: [Oogie Boogie.jpg](<docs/references/Oogie Boogie.jpg>), 44x50:
 too tall for 64x32 as is; fits 64x64.
 
 Questions: bugs spilling out, or a looming peek; Halloween nights only, with Jack (#6).

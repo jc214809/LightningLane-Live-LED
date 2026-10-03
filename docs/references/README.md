@@ -32,8 +32,6 @@ height, or within a row or two of it, so there's no room for anything under him.
 | [Sulley.jpg](Sulley.jpg) | Sulley | 26 x 33 | No (1 row over) | Yes | |
 | [Ralph.jpg](Ralph.jpg) | Wreck-It Ralph | 25 x 34 | No (2 rows over, both outline) | Yes | `ralph`, from this pattern ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
 | [Sally and Jack pair.png](<Sally and Jack pair.png>) | Sally leaning on Jack, one piece | 43 x 39 | No (shortened to 32 rows on the board) | Yes | `jack_sally`: the walk-in and kiss |
-| [Nightmare beads.png](<Nightmare beads.png>) | Jack, Sally, Zero and Oogie Boogie, photos of bead pieces | Jack 15 x 23, Sally 15 x 22 (read from the photo) | Yes | Yes (2x side by side) | |
-| [Sally Jack moon.png](<Sally Jack moon.png>) | Jack and Sally cheek to cheek in front of a full moon (Brik), cut off at their collars | 36 x 29 | Yes | Yes | |
 | [Zero.jpg](Zero.jpg) | Zero | 38 x 34 | No (2 rows over, both outline) | Yes | `jack_sally`, floating across |
 | [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Princesses and villains, a sheet | about 25 x 35 each | No | Yes | |
 | [Green alien.jpg](<Green alien.jpg>) | Toy Story alien | 40 x 37 | No | Yes | |
@@ -46,7 +44,6 @@ height, or within a row or two of it, so there's no room for anything under him.
 | [Buzz.jpg](Buzz.jpg) | Buzz Lightyear | 40 x 46 | No | Yes | Built: `buzz` |
 | [Jack Skellington.jpg](<Jack Skellington.jpg>) | Jack Skellington, head | 42 x 46 | No | Yes | |
 | [Sally.jpg](Sally.jpg) | Sally, head | 42 x 47 | No | Yes | |
-| [Sally Jack Zero.png](<Sally Jack Zero.png>) | Sally, Jack and Zero together, overlapping | 76 x 48 (apart: 32 x 33, 34 x 38, 34 x 39) | No | No (too wide together; each fits) | |
 | [Oogie Boogie.jpg](<Oogie Boogie.jpg>) | Oogie Boogie | 44 x 50 | No | Yes | |
 | [woody.jpg](woody.jpg) | Woody | 32 x 50 | No | Yes | |
 | [jessie.jpg](jessie.jpg) | Jessie | 31 x 51 | No | Yes | |
