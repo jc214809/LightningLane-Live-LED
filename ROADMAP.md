@@ -3,7 +3,9 @@
 Ideas and planned work for the board, in no fixed order. Nothing here is built yet unless it
 says so. Before drawing any character or landmark, read [display/CHARACTERS.md](display/CHARACTERS.md)
 and settle the open design questions first (ideally from a reference image): every entry
-below lists the questions still to ask.
+below lists the questions still to ask. Reference patterns are in
+[docs/references/](docs/references/README.md), each labelled with whether it fits each board
+as is (copied cell for cell, one cell per LED); entries below link theirs.
 
 ## 1. Characters to create
 
@@ -110,6 +112,9 @@ mouth wide (teeth top and bottom) and ducks away, 3.3s. Drawn in code like Bayma
 half-width 8 on 64x32 and 12 on 64x64. In the rotation at 0.008 and a ride visitor on
 the Laugh Floor, 1 in 10.
 
+Reference: [mike.jpg](docs/references/mike.jpg), 35x30: tight on 64x32 (fills the height),
+fits 64x64 as is.
+
 **4. Luxo Jr.** Lamp and ball are simple geometry, and the lamp's light cone is built for
 LEDs. Hops in with a squash and stretch; its light cone reveals the next screen. Could be
 folded into the Pixar Ball (#13) as one scene: the lamp hops in and bats the ball.
@@ -124,6 +129,12 @@ season.
 
 **6. Jack Skellington (Halloween party nights).** A white skull close-up with black eyes and
 a stitched grin: a high-contrast face that reads at any size. Peek mechanic.
+
+References:
+- [Jack Skellington.jpg](<docs/references/Jack Skellington.jpg>): his head, 42x46. Too tall for
+  64x32 as is; fits 64x64.
+- [Jack and sally.jpg](<docs/references/Jack and sally.jpg>): a photo of beads, Jack with
+  Sally and two pumpkins, about 43x39 for the pair. Too tall for 64x32 as is; fits 64x64.
 
 **7. Santa Goofy / Mickey in a Santa hat (Christmas party, Jollywood Nights).** The hat's red
 and white would echo the green/red/white holiday star on the park-hours screen.
@@ -243,8 +254,11 @@ Decided:
   CHARACTERS.md). Roughly 30x24 cells.
 - Frequency: joins the regular `SURPRISES` rotation.
 
+Reference: [Rex.jpg](docs/references/Rex.jpg), 61x51. Too tall for 64x32 as is, so 64x32
+needs a redraw; on 64x64 it fits, but at 61 of 64 columns it leaves his tail swing no room
+(the planned 30x24 would need a redraw on both boards).
+
 Still open:
-- Reference image: the user is sharing one. Don't draw until it's in.
 - Size on 64x64: render 1x and 2x and pick from the renders. 2x likely fills the board and
   leaves the swing no room.
 - Colour: his green must stay distinct from the Army Men's (#14) if both appear.
@@ -288,8 +302,11 @@ Simple shape, saturated color, and the claw itself is just a few lines and a gra
 to draw and instantly recognizable from the ride/film. Distinct from Ralph/Rex/Donald's
 wreck mechanic since nothing shatters; the screen is lifted whole.
 
+Reference: [Green alien.jpg](<docs/references/Green alien.jpg>), one alien, 40x37. Too tall
+for 64x32 as is; fits 64x64, though only one fits at that size, not three.
+
 Questions: one alien or three; does the claw stay on screen after grabbing, or exit with
-the old screen; reference image; chance in `SURPRISES`.
+the old screen; chance in `SURPRISES`.
 
 **19. R2-D2.** A dome on a tin-can body, rolling on his treads: about as simple a silhouette
 as a droid gets, and blue-and-white on black reads clean. His dome swivel and a blinking
@@ -337,6 +354,11 @@ paws stepping (`drawing.walking_pixels`), stops and wiggles his tail, then pounc
 right in a little arc. A first version drawn by hand after PixelJoint's bouncing Tigger was
 dropped: "a cat impersonating Tigger". Surprises were allowed up to 12% of ride screens to
 fit him in at 0.005.
+
+More references, not used: [Tigger and Pooh.jpg](<docs/references/Tigger and Pooh.jpg>)
+(the two as one piece, 67x60: too wide for either board as is) and
+[Pooh and gang.jpg](<docs/references/Pooh and gang.jpg>) (Eeyore, Tigger, Pooh and Piglet
+overlapping as one piece, 53x125: fits neither board).
 
 **24. Jungle Cruise hippo.** Just eyes, ears and nostrils surfacing from the bottom edge —
 the classic "hippo submerged in water" gag, and it needs almost no detail to read, similar
@@ -421,7 +443,8 @@ away with his hook, or popping up to grin.
 
 **31. Max and Roxanne (A Goofy Movie).** Saved for later by the user, with a pixel-art
 reference: [docs/references/max-and-roxanne.png](docs/references/max-and-roxanne.png) (Max in
-his red hoodie, Roxanne with her long red hair, holding hands). Natural partner to Goofy (#17).
+his red hoodie, Roxanne with her long red hair, holding hands), about 30x53 each. Too tall for
+64x32 as is; fits 64x64. Natural partner to Goofy (#17).
 
 Questions: what they do (walk across hand in hand, a peek, a nod to "Stand Out"/Powerline);
 one or both; where they show up; size on each board.
@@ -506,9 +529,10 @@ Questions to settle first, with a reference photo:
 ## 7. Redraw Stitch (done; not in the rotation yet)
 
 The old peek was replaced by `stitch_surf`, playable with `force_surprise`: from the bead
-pattern in `docs/references/stich.jpg`, standing, facing us, he surfs a red board down the face
-of a teal wave whose crest washes the old ride away. On 64x32, where the standing one is too
-tall, he sits on the board (from `docs/references/sitting_stitch.jpg`).
+pattern [stich.jpg](docs/references/stich.jpg) (35x41: fits 64x64 as is, too tall for 64x32),
+standing, facing us, he surfs a red board down the face of a teal wave whose crest washes the
+old ride away. On 64x32 he sits on the board, from
+[sitting_stitch.jpg](docs/references/sitting_stitch.jpg) (26x25: fits both boards as is).
 Two other scenes from the user's profile pixel art were built and scrapped: popping up to chomp
 twice, and eating the old ride letter by letter.
 
@@ -521,3 +545,6 @@ already drawn the new screen underneath, so the new ride shows through wherever 
 screen was dark until he smashes it. The Army Men and Falcon paint every pixel of the old
 screen for this reason; Ralph needs the same (`test_new_screen_never_shows_through_the_old_screens_dark_pixels`
 can take him as another case).
+
+If he's redrawn while this is fixed: [Ralph.jpg](docs/references/Ralph.jpg) is a pattern of
+him, 25x34. Two rows too tall for 64x32 as is; fits 64x64.
