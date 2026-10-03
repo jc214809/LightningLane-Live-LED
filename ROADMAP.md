@@ -460,7 +460,7 @@ Lightning Lane price.
 To settle first:
 - How big a boost (for example 25% on their own ride).
 - Whether characters that aren't in the random rotation today (Buzz, Tink, Figment, Dumbo,
-  Stitch, Mickey, Ralph) should appear only on their own rides.
+  Mickey, Ralph) should appear only on their own rides.
 - Which character goes with which ride where it isn't obvious.
 
 ## ~~4. Halloween pumpkin: start fading in during the wipe~~ Done
@@ -503,16 +503,14 @@ Questions to settle first, with a reference photo:
   up like the Tower of Terror?
 
 
-## 7. Redraw Stitch (done; not in the rotation yet)
+## ~~7. Redraw Stitch~~ Done
 
-The old peek was replaced by `stitch_surf`, playable with `force_surprise`: from the bead
+The old peek was replaced by `stitch_surf`, in the `SURPRISES` rotation at 0.005: from the bead
 pattern in `docs/references/stich.jpg`, standing, facing us, he surfs a red board down the face
 of a teal wave whose crest washes the old ride away. On 64x32, where the standing one is too
 tall, he sits on the board (from `docs/references/sitting_stitch.jpg`).
 Two other scenes from the user's profile pixel art were built and scrapped: popping up to chomp
 twice, and eating the old ride letter by letter.
-
-Open: whether `stitch_surf` goes into `SURPRISES`.
 
 ## 8. Fix Ralph showing the new screen through the old one
 
