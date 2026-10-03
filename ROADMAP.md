@@ -655,7 +655,7 @@ Lightning Lane price.
 To settle first:
 - How big a boost (for example 25% on their own ride).
 - Whether characters that aren't in the random rotation today (Buzz, Tink, Figment, Dumbo,
-  Mickey, Ralph) should appear only on their own rides.
+  Mickey) should appear only on their own rides.
 - Which character goes with which ride where it isn't obvious.
 
 ## ~~4. Halloween pumpkin: start fading in during the wipe~~ Done
