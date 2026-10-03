@@ -321,7 +321,7 @@ def test_mike_visits_the_laugh_floor_one_time_in_ten(monkeypatch, screens):
                                            "status": "OPERATING"}]}
     monkeypatch.setattr(disney.random, "random", lambda: 0.09)
     disney.loop_through_attractions(FakeMatrix(), park)
-    monkeypatch.setattr(disney.random, "random", lambda: 0.11)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.12)  # past the visitor and, under the cap, every surprise
     disney.loop_through_attractions(FakeMatrix(), park)
     assert [s["transition"] for s in screens[-2:]] == ["mike", "wipe"]
 
@@ -332,7 +332,7 @@ def test_the_falcon_visits_galaxys_edge_rides_one_time_in_ten(monkeypatch, scree
     park = {"name": "Hollywood Studios", "attractions": [{"name": ride, "waitTime": 45, "status": "OPERATING"}]}
     monkeypatch.setattr(disney.random, "random", lambda: 0.09)
     disney.loop_through_attractions(FakeMatrix(), park)
-    monkeypatch.setattr(disney.random, "random", lambda: 0.11)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.12)  # past the visitor and, under the cap, every surprise
     disney.loop_through_attractions(FakeMatrix(), park)
     assert [s["transition"] for s in screens[-2:]] == ["falcon", "wipe"]
 
@@ -349,6 +349,7 @@ def test_surprise_slices_match_their_chances_and_stay_rare():
     chances = disney.SURPRISES
     assert all(0 < c < 0.05 for c in chances.values()), "each kept rare on purpose"
     assert sum(chances.values()) < 0.12, "so the plain wipe is still the norm (the cap went from 10% to 12% for Tigger)"
+    assert sum(chances.values()) == pytest.approx(0.113), "11.3% since Ralph joined; change this with the map"
     samples = [i / 100000 for i in range(100000)]
     seen = [disney._surprise(r) for r in samples]
     for name, chance in chances.items():
