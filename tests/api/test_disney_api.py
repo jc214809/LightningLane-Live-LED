@@ -24,7 +24,7 @@ from api.disney_api import (
     parse_showtimes,
     show_start_due,
     actual_park_closing_time,
-    park_has_operating_attraction,
+    operating_and_why,
     update_parks_operating_status,
     handle_park_schedule_update,
     refresh_park_attractions,
@@ -611,10 +611,13 @@ async def test_fetch_park_live_data_missing_livedata_key(monkeypatch):
 ###########
 # Tests for Park Operating Status & Schedule Update
 ###########
+def _open(park, now=None):
+    return operating_and_why(park, now)[0]
+
 def _fresh_ts(minutes_ago=0):
     return (datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)).isoformat()
 
-def test_park_has_operating_attraction(monkeypatch):
+def test_operating_without_a_schedule(monkeypatch):
     park = {
         "name": "Test Park",
         "attractions": [
@@ -622,20 +625,20 @@ def test_park_has_operating_attraction(monkeypatch):
             {"name": "Ride B", "waitTime": "", "status": "CLOSED", "lastUpdatedTs": _fresh_ts()}
         ]
     }
-    assert park_has_operating_attraction(park) is True
+    assert _open(park) is True
     park["attractions"][0]["status"] = "CLOSED"
-    assert park_has_operating_attraction(park) is False
+    assert _open(park) is False
 
-def test_park_has_operating_attraction_stale_not_counted(monkeypatch):
+def test_operating_without_a_schedule_stale_not_counted(monkeypatch):
     park = {
         "name": "Test Park",
         "attractions": [
             {"name": "Ride A", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts(minutes_ago=30)},
         ]
     }
-    assert park_has_operating_attraction(park) is False
+    assert _open(park) is False
 
-def test_park_has_operating_attraction_freshness_boundary(monkeypatch):
+def test_operating_without_a_schedule_freshness_boundary(monkeypatch):
     """Pin the _ATTRACTION_FRESHNESS_MINUTES=20 cutoff: just inside counts as fresh,
     just outside doesn't. Guards against a silent off-by-one if the constant changes."""
     park_fresh = {
@@ -644,7 +647,7 @@ def test_park_has_operating_attraction_freshness_boundary(monkeypatch):
             {"name": "Ride A", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts(minutes_ago=19)},
         ]
     }
-    assert park_has_operating_attraction(park_fresh) is True
+    assert _open(park_fresh) is True
 
     park_stale = {
         "name": "Test Park",
@@ -652,11 +655,11 @@ def test_park_has_operating_attraction_freshness_boundary(monkeypatch):
             {"name": "Ride A", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts(minutes_ago=21)},
         ]
     }
-    assert park_has_operating_attraction(park_stale) is False
+    assert _open(park_stale) is False
 
-def test_park_has_operating_attraction_fresh_past_closing_time(monkeypatch):
-    """Extended/ticketed-hours case: closingTime has passed but a fresh OPERATING
-    attraction still counts — closingTime is no longer a hard gate."""
+def test_operating_without_a_schedule_fresh_past_closing_time(monkeypatch):
+    """Without a schedule, the stored regular closingTime isn't consulted: a fresh OPERATING
+    ride past it (extended hours) still opens the park."""
     past_closing = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
     park = {
         "name": "Test Park",
@@ -665,7 +668,7 @@ def test_park_has_operating_attraction_fresh_past_closing_time(monkeypatch):
             {"name": "After Hours Ride", "waitTime": "15", "status": "OPERATING", "lastUpdatedTs": _fresh_ts()},
         ]
     }
-    assert park_has_operating_attraction(park) is True
+    assert _open(park) is True
 
 # ---- Actual park closing time: the park day's last close, party included ----
 
@@ -727,36 +730,66 @@ def test_actual_park_closing_time_none_without_a_usable_schedule(schedule):
 
 def test_park_open_after_midnight_until_the_party_ends():
     park = _park(PARTY_NIGHT, last_updated="2026-10-05T00:25:00-04:00")
-    assert park_has_operating_attraction(park, _at("2026-10-05T00:30:00-04:00")) is True
+    assert _open(park, _at("2026-10-05T00:30:00-04:00")) is True
 
 
-def test_park_open_through_the_closing_grace():
-    park = _park(PARTY_NIGHT, last_updated="2026-10-05T01:10:00-04:00")
-    assert park_has_operating_attraction(park, _at("2026-10-05T01:29:00-04:00")) is True
+def test_park_closes_at_the_actual_closing_time():
+    park = _park(PARTY_NIGHT, last_updated="2026-10-05T00:58:00-04:00")
+    assert _open(park, _at("2026-10-05T00:59:00-04:00")) is True
+    assert _open(park, _at("2026-10-05T01:00:00-04:00")) is False
+
+
+def test_schedule_decides_whatever_the_rides_say():
+    """Within its hours a park is open with every ride CLOSED (the 6-7pm gap before a party),
+    and outside them closed with rides still OPERATING."""
+    park = _park(PARTY_NIGHT)
+    park["attractions"][0]["status"] = "CLOSED"
+    assert _open(park, _at("2026-10-04T18:30:00-04:00")) is True
+    park["attractions"][0].update(status="OPERATING", lastUpdatedTs="2026-10-05T01:30:00-04:00")
+    assert _open(park, _at("2026-10-05T01:31:00-04:00")) is False
+
+
+def test_early_entry_opens_the_park_day():
+    park = _park(NEXT_DAY, last_updated="2026-10-05T05:00:00-04:00")
+    assert _open(park, _at("2026-10-05T08:29:00-04:00")) is False
+    assert _open(park, _at("2026-10-05T08:30:00-04:00")) is True
+
+
+@pytest.mark.parametrize("schedule, now, expected", [
+    (PARTY_NIGHT, "2026-10-04T18:30:00-04:00", (True, "schedule: open until 01:00")),
+    (PARTY_NIGHT, "2026-10-05T02:00:00-04:00", (False, "schedule: closed at 01:00")),
+    (NEXT_DAY, "2026-10-05T06:00:00-04:00", (False, "schedule: not open yet")),
+    ([], "2026-10-04T18:31:00-04:00",
+     (True, "no usable schedule; a ride is operating with live data from the last 20 min")),
+    ([], "2026-10-04T19:00:00-04:00",
+     (False, "no usable schedule; no ride is operating with live data from the last 20 min")),
+])
+def test_operating_and_why_says_which_rule_decided(schedule, now, expected):
+    assert operating_and_why(_park(schedule), _at(now)) == expected
 
 
 def test_park_closed_after_the_actual_closing_time_even_with_fresh_operating_rides():
     """The stuck-open park: the feed still says OPERATING, updated a minute ago, after the party."""
     park = _park(PARTY_NIGHT, last_updated="2026-10-05T01:44:00-04:00")
-    assert park_has_operating_attraction(park, _at("2026-10-05T01:45:00-04:00")) is False
+    assert _open(park, _at("2026-10-05T01:45:00-04:00")) is False
 
 
 def test_park_open_between_regular_close_and_party_with_quiet_data():
-    """Within the schedule, a quiet half hour (no ride changed in 20 min) doesn't close the park."""
+    """Within the schedule, a quiet stretch (no ride changed in 20 min) doesn't close the park."""
     park = _park(PARTY_NIGHT, last_updated="2026-10-04T17:45:00-04:00")
-    assert park_has_operating_attraction(park, _at("2026-10-04T18:30:00-04:00")) is True
+    assert _open(park, _at("2026-10-04T18:30:00-04:00")) is True
 
 
 def test_park_closed_overnight_until_the_next_opening():
     park = _park(PARTY_NIGHT + NEXT_DAY, last_updated="2026-10-05T07:59:00-04:00")
-    assert park_has_operating_attraction(park, _at("2026-10-05T08:00:00-04:00")) is False
+    assert _open(park, _at("2026-10-05T08:00:00-04:00")) is False
     park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T08:44:00-04:00"
-    assert park_has_operating_attraction(park, _at("2026-10-05T08:45:00-04:00")) is True
+    assert _open(park, _at("2026-10-05T08:45:00-04:00")) is True
 
 
 def test_park_closed_before_the_first_opening():
     park = _park(NEXT_DAY, last_updated="2026-10-05T05:59:00-04:00")
-    assert park_has_operating_attraction(park, _at("2026-10-05T06:00:00-04:00")) is False
+    assert _open(park, _at("2026-10-05T06:00:00-04:00")) is False
 
 
 def test_stale_schedule_falls_back_to_freshness():
@@ -765,22 +798,22 @@ def test_stale_schedule_falls_back_to_freshness():
     park = _park(PARTY_NIGHT)
     now = _at("2026-10-05T10:00:00-04:00")
     park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T09:58:00-04:00"
-    assert park_has_operating_attraction(park, now) is True
+    assert _open(park, now) is True
     park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T09:00:00-04:00"
-    assert park_has_operating_attraction(park, now) is False
+    assert _open(park, now) is False
 
 
 def test_stale_schedule_trusted_for_a_few_hours_after_close():
     park = _park(PARTY_NIGHT, last_updated="2026-10-05T05:59:00-04:00")
-    assert park_has_operating_attraction(park, _at("2026-10-05T06:00:00-04:00")) is False
+    assert _open(park, _at("2026-10-05T06:00:00-04:00")) is False
 
 
 @pytest.mark.parametrize("last_updated", ["2026-10-04T18:29:00", "not a time", None, ""])
-def test_park_has_operating_attraction_unreadable_timestamp_is_stale(last_updated):
+def test_operating_without_a_schedule_unreadable_timestamp_is_stale(last_updated):
     """Without a schedule, freshness decides; a time it can't read (a naive one included,
     which used to raise comparing with an aware now) counts as stale."""
     park = _park([], last_updated=last_updated)
-    assert park_has_operating_attraction(park, _at("2026-10-04T18:30:00-04:00")) is False
+    assert _open(park, _at("2026-10-04T18:30:00-04:00")) is False
 
 
 def test_update_parks_operating_status_stores_actual_park_closing_time(monkeypatch):
@@ -789,6 +822,19 @@ def test_update_parks_operating_status_stores_actual_park_closing_time(monkeypat
     monkeypatch.setattr("api.disney_api.handle_park_schedule_update", lambda p: None)
     update_parks_operating_status([park])
     assert park["actualParkClosingTime"] == "2026-10-05T01:00:00-04:00"
+
+
+def test_update_parks_operating_status_logs_only_when_a_park_opens_or_closes(monkeypatch):
+    park = _park(PARTY_NIGHT)
+    park["schedule_date"] = datetime.now().strftime("%Y-%m-%d")
+    monkeypatch.setattr("api.disney_api.handle_park_schedule_update", lambda p: None)
+    monkeypatch.setattr("api.disney_api.operating_and_why", lambda p, now=None: (True, "schedule: open until 01:00"))
+    logged = []
+    monkeypatch.setattr("api.disney_api.debug.info", logged.append)
+    update_parks_operating_status([park])
+    update_parks_operating_status([park])
+    assert logged == ["Magic Kingdom: open (schedule: open until 01:00)"]
+    assert park["operatingReason"] == "schedule: open until 01:00"
 
 
 def test_update_parks_operating_status_actual_park_closing_time_empty_without_schedule(monkeypatch):

@@ -152,8 +152,12 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
                     total = len(attrs)
                     down = [a for a in attrs if a.get("status") == "DOWN"]
                     operating = [a for a in attrs if a.get("status") == "OPERATING"]
+                    # Shows, bands and walk-throughs report OPERATING with no wait; the board shows only rides with one.
+                    with_wait = [a for a in operating if a.get("waitTime") not in (None, "")]
                     debug.info(
-                        f"{'REST poll' if fetch_live else 'Live status'} [{park['name']}]: {len(operating)} operating, "
+                        f"{'REST poll' if fetch_live else 'Live status'} [{park['name']}]: "
+                        f"{'open' if park.get('operating') else 'closed'} ({park.get('operatingReason', 'not checked yet')}), "
+                        f"{len(with_wait)} with a wait (+{len(operating) - len(with_wait)} other operating), "
                         f"{len(down)} DOWN, {total} total"
                         + (f" | DOWN: {', '.join(a['name'] for a in down)}" if down else "")
                     )
