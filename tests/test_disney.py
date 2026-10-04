@@ -373,7 +373,7 @@ def test_surprise_slices_match_their_chances_and_stay_rare():
     chances = disney.SURPRISES
     assert all(0 < c < 0.05 for c in chances.values()), "each kept rare on purpose"
     assert sum(chances.values()) < 0.12, "so the plain wipe is still the norm (the cap went from 10% to 12% for Tigger)"
-    assert sum(chances.values()) == pytest.approx(0.113), "11.3% since Ralph joined; change this with the map"
+    assert sum(chances.values()) == pytest.approx(0.119), "11.9% since the Grannies and Keepy Uppy joined; change this with the map"
     samples = [i / 100000 for i in range(100000)]
     seen = [disney._surprise(r) for r in samples]
     for name, chance in chances.items():

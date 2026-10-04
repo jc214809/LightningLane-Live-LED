@@ -265,6 +265,32 @@ sells the character, then size him to hold it.
   the motion changed twice. A side view for a walk-in (a hand-drawn Doc profile) was dropped for
   a mine train, so they face us the whole ride. The car and the gem car took a few renders;
   Snow White was redrawn at car size from a photo of stitching over six rounds of small fixes.
+- **Bluey and Bingo** (`grannies`, `keepy_uppy`) — the Grannies from one grid pattern of the
+  pair, Keepy Uppy from a grid pattern of Bingo and a bead photo of Bluey; each board got its own
+  art. Both landed in a couple of rounds; the motion, not the art, needed the second look.
+
+## Bluey and Bingo: what worked
+
+- **"Slow" means slow for the character, not slower than the last one.** A pixel a frame is
+  half Chip 'n' Dale's pace and still read as far too fast for a granny. A character with a prop
+  should move with it: Bingo stands while her walker lifts and plants a step ahead, then shuffles
+  up to it, so the pair goes in steps (about 10 px/s). When that makes the crossing longer than
+  the ride screen, use `hold_after_s` rather than rushing it.
+- **A prop that moves away from a hand needs the arm to follow.** The walker leads Bingo by up
+  to a step, so her sleeve column repeats to fill the gap (`SLEEVE`) and her hand moves with the
+  handle; otherwise the hand floats free of the arm.
+- **Check the width before recommending a height.** Arms-out poses are wide: two characters at
+  44 rows were 69 columns together. Work out the pair's width on the board first.
+- **Each board can have its own art.** A pattern too tall for 64x32 can still go cell for cell on
+  64x64 (the Grannies' 40 rows), with a hand redraw only for the small board.
+- **Size props in the user's terms, and expect a round or two.** The balloon went from 4 wide to
+  three times that to 70% of it. Mock it in the scene beside the characters, not alone.
+- **Mirror the art, then find the hand on the mirrored art.** Bluey first batted with her far
+  hand because the hand's column was mirrored the wrong way. Give positions in the art as it's
+  drawn on the board at that moment.
+- **Grid sites block scripts.** Kandi Patterns and Kandi Pad refuse automated downloads; a free
+  32x32 sprite pack on itch.io came through but was too small and stiff once the size was decided.
+  Ask the user for a pattern image when the search comes up empty.
 
 ## The Mine Train: what worked
 

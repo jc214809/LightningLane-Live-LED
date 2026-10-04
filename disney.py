@@ -63,7 +63,8 @@ SURPRISES = {"genie": 0.005, "baymax": 0.012, "slinky_wrap": 0.01, "walle_side":
              "olaf": 0.005, "goofy": 0.008,
              "luxo_ball": 0.005, "mcqueen": 0.005, "mater": 0.005,
              "chip_dale": 0.005, "tigger": 0.005, "stitch_surf": 0.005,
-             "ralph": 0.005}
+             "ralph": 0.005, "grannies": 0.005,
+             "keepy_uppy": 0.001}
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge; Mike is
 # in the rotation too, but drops in on his own Laugh Floor far more often. Jack, Sally and
