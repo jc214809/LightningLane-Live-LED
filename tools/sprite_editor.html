@@ -143,10 +143,10 @@ textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospac
         <div class="toolbar">
           <label title="Where a cell boundary falls, in image pixels from the left">Offset X <input id="patOffX" type="number" step="0.25"></label>
           <label title="Where a cell boundary falls, in image pixels from the top">Y <input id="patOffY" type="number" step="0.25"></label>
-          <button id="patDetect" title="Find the grid again from the image, straightening a photo shot at a tilt">Detect grid</button>
+          <button id="patDetect" title="Find the cell size and offset again from the image. It straightens a photo shot at a tilt, unless you have set Turn yourself: then it keeps your turn">Detect grid</button>
         </div>
         <div class="toolbar">
-          <label title="Turns the image clockwise so the grid runs straight; negative turns it back. Detect grid finds it for a photo shot at a tilt">Turn <input id="patTurn" type="number" min="-45" max="45" step="0.1" value="0"> °</label>
+          <label title="Turns the image clockwise so the grid runs straight; negative turns it back. Detect grid finds it for a photo shot at a tilt and keeps one you type; clear it to let Detect grid find it again">Turn <input id="patTurn" type="number" min="-45" max="45" step="0.1" value="0"> °</label>
           <button id="patCalibrate" aria-pressed="false" title="Click the middle of a bead, then the middle of another in the same row or column: sets the turn and the cell size exactly">Calibrate</button>
           <label title="How many cells apart the two calibration clicks are; empty counts them from the cell size found">Cells apart <input id="patApart" type="number" min="1" step="1" placeholder="auto"></label>
         </div>
@@ -402,16 +402,29 @@ function gridTurn(data, W, H, range = 20) {
     return [profile(c, s, c * c, 2 * c * s, s * s), profile(-s, c, s * s, -2 * c * s, c * c)];
   };
   // Roughly: how strongly the profiles repeat (findGrid's score, near 0 with no grid in it), which a
-  // tilted grid's smear can't fake, a degree at a time.
-  const repeats = deg => profiles(deg).reduce((sum, p) => { const f = findGrid(p, 3); return sum + (f ? f.score : 0); }, 0);
+  // tilted grid's smear can't fake, a degree at a time, and the cell size found there.
+  const repeats = deg => profiles(deg).reduce((acc, p) => {
+    const f = findGrid(p, 3);
+    if (f) { acc.score += f.score; acc.period = Math.min(acc.period, f.period); }
+    return acc;
+  }, { score: 0, period: Infinity });
   // Finely: how tightly the edges stack into narrow peaks, which falls off fast either side of straight.
   const peaky = deg => profiles(deg).reduce((sum, p) => {
     let all = 0, sq = 0;
     for (let i = 1; i + 1 < p.length; i++) { const h = p[i] - (p[i - 1] + p[i + 1]) / 2; sq += h * h; all += p[i]; }
     return sum + (all ? sq / (all * all) : 0);
   }, 0);
+  // Round beads also line up along the grid's diagonals: about 18 degrees off, every third bead's row
+  // runs that way, a third of a cell apart (a quarter at 14), and repeats as strongly as the real rows.
+  // The real rows are the furthest apart, so a turn whose cell is under 0.4 of the widest one found among
+  // the turns that repeat well is a diagonal. Not 0.5: findGrid can read a chart's cell doubled.
+  const coarseTurns = [];
+  for (let d = -range; d <= range; d += 1) { const v = repeats(d); if (v.period < Infinity) coarseTurns.push({ d, ...v }); }
+  if (!coarseTurns.length) return 0;
+  const strongest = Math.max(...coarseTurns.map(v => v.score));
+  const widest = Math.max(...coarseTurns.filter(v => v.score >= strongest * .75).map(v => v.period));
   let best = 0, top = -1;
-  for (let d = -range; d <= range; d += 1) { const v = repeats(d); if (v > top) { top = v; best = d; } }
+  for (const v of coarseTurns) if (v.period >= widest * .4 && v.score > top) { top = v.score; best = v.d; }
   const coarse = best;
   top = -1;
   for (let d = coarse - 1.5; d <= coarse + 1.501; d += .1) { const v = peaky(d); if (v > top) { top = v; best = d; } }
@@ -1120,7 +1133,7 @@ function loadPatternSource() {
   cx.drawImage(sourceImage, 0, 0, W, H);
   // orig is the image as loaded; base is the part of it being read (cropPattern); canvas, data, W and H are
   // base turned straight (turnPattern), which the grid is read from.
-  patternSrc = { orig: { canvas, data: cx.getImageData(0, 0, W, H).data, W, H }, scale, score: 0, turn: 0 };
+  patternSrc = { orig: { canvas, data: cx.getImageData(0, 0, W, H).data, W, H }, scale, score: 0, turn: 0, turnSet: false };
   cropPattern(null);
 }
 
@@ -1155,8 +1168,9 @@ function turnPattern(deg) {
     map: (x, y) => r.map(x - x0, y - y0), unmap: (x, y) => { const [a, b] = r.unmap(x, y); return [a + x0, b + y0]; } });
 }
 
-// Fills the cell and offset fields, in the source image's pixels. With findTurn, first straightens a tilted photo.
-function detectGrid(findTurn = true) {
+// Fills the cell and offset fields, in the source image's pixels. With findTurn, first straightens a tilted photo;
+// a turn typed in or calibrated is kept, so the cells are read at it.
+function detectGrid(findTurn = !patternSrc.turnSet) {
   if (findTurn) { const b = patternSrc.base; turnPattern(gridTurn(b.data, b.W, b.H)); }
   const { data, W, H, scale } = patternSrc, prof = edgeProfiles(data, W, H);
   const fx = findGrid(prof.x), fy = findGrid(prof.y);
@@ -1238,7 +1252,13 @@ $("imgMode").addEventListener("input", () => {
 });
 ["patBg", "patEnclosed", "patLines", "patMerge", "patCellW", "patCellH", "patOffX", "patOffY"].forEach(id => $(id).addEventListener("input", previewPattern));
 $("patDetect").onclick = () => { if (patternSrc) { endCalibration(); detectGrid(); previewPattern(); } };
-$("patTurn").addEventListener("change", () => { if (patternSrc) { endCalibration(); turnPattern(+$("patTurn").value || 0); detectGrid(false); previewPattern(); } });
+$("patTurn").addEventListener("change", () => {
+  if (!patternSrc) return;
+  endCalibration();
+  patternSrc.turnSet = $("patTurn").value.trim() !== "";
+  if (patternSrc.turnSet) turnPattern(+$("patTurn").value || 0);
+  detectGrid(); previewPattern();
+});
 
 // Calibrate: click a bead's middle, then another's along the same row or column; a third click straight
 // across from the first sets the other side for cells that aren't square. Esc or Calibrate again stops.
@@ -1306,6 +1326,7 @@ $("patView").addEventListener("click", e => {
     const guess = (+$("patCellW").value || 0) * scale || 16;
     const line = calibrateLine(calib.a, pt, +$("patApart").value, guess), first = patternSrc.unmap(...calib.a);
     turnPattern(Math.round((patternSrc.turn + line.turn) * 10) / 10);
+    patternSrc.turnSet = true;
     const a = patternSrc.map(...first);
     set("patCellW", line.period); set("patCellH", line.period);
     set("patOffX", wrap(a[0] - line.period / 2, line.period)); set("patOffY", wrap(a[1] - line.period / 2, line.period));

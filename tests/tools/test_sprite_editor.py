@@ -351,6 +351,37 @@ def test_the_simba_brick_photo_is_straightened_and_read(tmp_path):
     assert {"Y", "O", "R"} <= names | {"N"} and ("R" in names or "N" in names), "his yellow, orange and dark red outline"
 
 
+TS_BEADS = os.path.join(ROOT, "docs", "references", "TS_beads.jpg")
+
+
+@needs_node
+@pytest.mark.parametrize("name, box, turn, size", [
+    ("Woody", (125, 15, 385, 330), (-1, 1), (9, 13)),
+    ("Alien", (90, 355, 355, 680), (-1, 1), (11, 14)),
+    ("Buzz", (405, 380, 665, 675), (2, 4), (10, 12)),
+])
+def test_ts_bead_photo_is_read_bead_for_bead_not_by_its_holes(tmp_path, name, box, turn, size):
+    """Six Toy Story characters in fused beads, about 22 pixels apart, each with a dark hole. Round beads
+    also line up along the grid's diagonals (a third of a bead apart about 18 degrees off), which once
+    turned each character that far and read its holes and rims as tiny cells."""
+    from PIL import Image
+    im = Image.open(TS_BEADS).convert("RGBA")
+    raw = tmp_path / "beads.rgba"
+    raw.write_bytes(im.tobytes())
+    result = _run_core(f"""
+        const full = new Uint8ClampedArray(require("fs").readFileSync({json.dumps(str(raw))}));
+        const c = cropImage(full, {im.width}, {im.height}, {json.dumps(list(box))});
+        const turn = gridTurn(c.data, c.W, c.H), r = rotateImage(c.data, c.W, c.H, turn);
+        const prof = edgeProfiles(r.data, r.W, r.H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+        const {{ offsetX, offsetY }} = alignGrid(r.data, r.W, r.H, fx.period, fy.period, fx.offset, fy.offset);
+        const out = buildPattern(sampleCells(r.data, r.W, r.H, gridCells(r.W, fx.period, offsetX), gridCells(r.H, fy.period, offsetY)));
+        console.log(JSON.stringify({{ turn, fx, fy, rows: out.rows }}));""")
+    assert turn[0] <= result["turn"] <= turn[1], "straight, or turned by the tilt the photo really has"
+    assert 21.5 < result["fx"]["period"] < 23.5 and 21.5 < result["fy"]["period"] < 23.5, "one bead per cell"
+    rows = result["rows"]
+    assert abs(len(rows[0]) - size[0]) <= 2 and abs(len(rows) - size[1]) <= 1
+
+
 # A chart drawn over a picture: sky, a white cloud band and a wooden floor behind the art, grid lines only
 # round the art's cells. The heart's B cell is the sky's exact blue, and the bottom row of the heart is navy
 # with lines that barely show, like a suit.
