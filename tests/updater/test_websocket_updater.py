@@ -995,3 +995,119 @@ def test_preview_loop_treats_silence_as_a_dead_connection():
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
     assert any("silent for 90s" in call.args[0] for call in warning.call_args_list)
+
+
+def test_preview_loop_resends_a_retryable_refusal_after_its_wait():
+    refusal = {"type": "error", "data": {"retryable": True, "reqId": "wdw:SHOW", "message": "busy"}}
+    captured, delays = {}, []
+    real_sleep = asyncio.sleep
+
+    async def fake_sleep(delay):
+        delays.append(delay)
+        if delay == _SUBSCRIBE_RETRY_SECS[0]:
+            return  # the retry's wait: let it send
+        raise asyncio.CancelledError  # the reconnect backoff ends the test
+
+    class _HoldingWS(_ScriptedWS):
+        async def __anext__(self):
+            if not self._frames:
+                await real_sleep(0)  # let the retry task run before the connection ends
+                await real_sleep(0)
+                raise StopAsyncIteration
+            return _text(self._frames.pop(0))
+
+    class _HoldingSession(_ScriptedSession):
+        def ws_connect(self, url, **kwargs):
+            frames, close_code = self._connections.pop(0)
+            return _HoldingWS(frames, close_code, self._captured.setdefault("sent", []))
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession",
+               lambda: _HoldingSession(captured, [([WELCOME, refusal], 1000)])), \
+         patch("updater.websocket_updater.asyncio.sleep", fake_sleep):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
+    assert [f["reqId"] for f in captured["sent"]] == ["wdw:ATTRACTION", "wdw:SHOW", "wdw:SHOW"]
+    assert _SUBSCRIBE_RETRY_SECS[0] in delays  # the watchdog sleeps too
+
+
+def test_preview_loop_skips_messages_that_are_not_json_objects():
+    parks = _preview_parks()
+
+    class _JunkWS(_ScriptedWS):
+        async def __anext__(self):
+            if not self._frames:
+                raise StopAsyncIteration
+            raw = self._frames.pop(0)
+            return aiohttp.WSMessage(aiohttp.WSMsgType.TEXT, raw, None)
+
+    class _JunkSession(_ScriptedSession):
+        def ws_connect(self, url, **kwargs):
+            frames, close_code = self._connections.pop(0)
+            return _JunkWS(frames, close_code, self._captured.setdefault("sent", []))
+
+    async def cancel_sleep(_delay):
+        raise asyncio.CancelledError
+
+    update = json.dumps({"type": "update", "data": _entry(wait=50)})
+    with patch("updater.websocket_updater.aiohttp.ClientSession",
+               lambda: _JunkSession({}, [(["not json", "[1, 2]", update], 1000)])), \
+         patch("updater.websocket_updater.asyncio.sleep", cancel_sleep), \
+         patch("updater.websocket_updater.update_parks_operating_status"):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_preview_ws_loop("real-key", parks))
+    assert parks[0]["attractions"][0]["waitTime"] == 50  # the good frame after the junk still applied
+
+
+def test_preview_loop_stops_reading_on_an_error_message():
+    class _ErrorWS(_ScriptedWS):
+        async def __anext__(self):
+            return aiohttp.WSMessage(aiohttp.WSMsgType.ERROR, None, None)
+
+    class _ErrorSession(_ScriptedSession):
+        def ws_connect(self, url, **kwargs):
+            return _ErrorWS([], 1006, [])
+
+    async def cancel_sleep(_delay):
+        raise asyncio.CancelledError
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession", lambda: _ErrorSession({}, [])), \
+         patch("updater.websocket_updater.asyncio.sleep", cancel_sleep), \
+         patch("updater.websocket_updater.debug.warning") as warning:
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
+    assert any("WebSocket error message" in call.args[0] for call in warning.call_args_list)
+
+
+@pytest.mark.parametrize("error, network_issue", [
+    (OSError("Temporary failure in name resolution"), True),  # no internet: the badge
+    (RuntimeError("handshake rejected"), False),              # the server said no: not the network
+])
+def test_preview_loop_connect_failure_flags_the_network_only_at_the_socket_level(error, network_issue):
+    async def cancel_sleep(_delay):
+        raise asyncio.CancelledError
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession", lambda: _RefusingSession(error)), \
+         patch("updater.websocket_updater.asyncio.sleep", cancel_sleep):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
+    assert shared.network_issues() is network_issue
+
+
+def test_preview_welcome_without_destinations_subscribes_to_nothing():
+    feed = _PreviewFeed([{"id": "mk", "name": "MK", "attractions": []}])
+    with patch("updater.websocket_updater.debug.warning") as warning:
+        assert feed.handle(WELCOME) == []
+    assert "No destination IDs" in warning.call_args[0][0]
+
+
+@pytest.mark.parametrize("protocol, loop_name", [("preview", "_preview_ws_loop"), ("legacy", "_ws_loop")])
+def test_websocket_live_updater_runs_the_configured_protocol(protocol, loop_name):
+    from updater import websocket_updater
+    ran = []
+
+    async def fake_loop(api_key, parks):
+        ran.append((loop_name, api_key))
+
+    with patch.object(websocket_updater, loop_name, fake_loop):
+        websocket_updater.websocket_live_updater("real-key", [{"id": "mk"}], protocol)
+    assert ran == [(loop_name, "real-key")]
