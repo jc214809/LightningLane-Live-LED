@@ -1,11 +1,22 @@
 import asyncio
 import time
 import traceback
-
-from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, get_down_time, update_parks_operating_status
+from api.disney_api import (fetch_parks_and_attractions, fetch_park_live_data, get_down_time, parse_timestamp,
+                            update_parks_operating_status)
 from api.weather import fetch_weather_data
-from updater.shared import note_network_result, parks_data_lock
+from updater.shared import live_feed_healthy, note_network_result, parks_data_lock, wait_for_live_feed
 from utils import debug
+
+# With the preview WebSocket healthy, REST checks every ride this often instead of every cycle.
+REST_INTERVAL_WITH_LIVE_FEED_SECS = 30 * 60
+# At startup the preview WebSocket's snapshot replaces REST's first fetch if it comes this fast.
+LIVE_FEED_STARTUP_WAIT_SECS = 15
+
+
+def _is_older(new_ts, existing_ts):
+    """True only when both are real timestamps and new_ts is before existing_ts."""
+    new, existing = parse_timestamp(new_ts), parse_timestamp(existing_ts)
+    return bool(new and existing and new < existing)
 
 
 def merge_live_data(existing_attractions, new_live_data):
@@ -23,9 +34,13 @@ def merge_live_data(existing_attractions, new_live_data):
         attr_id = new_attr.get("id")
 
         if attr_id in attraction_map:
+            existing = attraction_map[attr_id]
+            if _is_older(new_attr.get("lastUpdatedTs"), existing.get("lastUpdatedTs")):
+                # A replayed WS update, or a REST poll that landed after a newer WS one.
+                debug.log(f"Skipping older live data for {existing.get('name')}")
+                continue
             # Merge only the fields present in the update; a CLOSED/REFURBISHMENT
             # update omits waitTime so the last known value is preserved.
-            existing = attraction_map[attr_id]
             existing.update({
                 key: new_attr[key]
                 for key in ("waitTime", "status", "lastUpdatedTs", "updateSource", "forecast", "showtimes")
@@ -56,11 +71,11 @@ async def _fetch_all_live_data(parks):
     return list(zip(fetchable, results))
 
 
-def update_parks_live_data(parks):
-    """Fetch and merge live attraction data for every park via REST, then
-    refresh weather for operating parks. See CLAUDE.md for why this runs
-    continuously even when the WS thread is also active."""
-    results = asyncio.run(_fetch_all_live_data(parks))
+def update_parks_live_data(parks, fetch_live=True):
+    """Fetch and merge live attraction data for every park via REST (unless fetch_live is
+    False: the preview WebSocket is keeping it current), then refresh weather for operating
+    parks. See CLAUDE.md for why this runs continuously even when the WS thread is also active."""
+    results = asyncio.run(_fetch_all_live_data(parks)) if fetch_live else []
     if results:
         # One park getting through proves the connection; only all failing flags it.
         note_network_result(any(data is not None for _, data in results))
@@ -82,15 +97,31 @@ def update_parks_live_data(parks):
     return parks
 
 
-def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False):
+def rest_poll_due(last_fetch, now):
+    """With the preview WebSocket: poll REST when the feed isn't healthy, or every
+    REST_INTERVAL_WITH_LIVE_FEED_SECS as the backstop that catches anything it got wrong."""
+    return (not live_feed_healthy() or last_fetch is None
+            or now - last_fetch >= REST_INTERVAL_WITH_LIVE_FEED_SECS)
+
+
+def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False, ws_protocol="legacy"):
     """
     Background thread that updates live data for parks every 'update_interval' seconds.
-    use_websocket only controls the initial synchronous fetch below and the
-    schedule_refresh_needed handling further down — update_parks_live_data
-    itself always polls REST. See CLAUDE.md for the WS/REST design.
+    With the legacy WebSocket, use_websocket only adds the initial synchronous fetch below;
+    REST polls every cycle. With the preview one, its snapshot replaces that fetch and REST
+    polls only when rest_poll_due. Operating status, schedules and weather run every cycle
+    either way. See CLAUDE.md for the WS/REST design.
     """
     parks_data[:] = fetch_parks_and_attractions(disney_park_list)
-    if use_websocket:
+    preview = use_websocket and ws_protocol == "preview"
+    last_rest_fetch = None
+    if preview:
+        if wait_for_live_feed(LIVE_FEED_STARTUP_WAIT_SECS):
+            debug.info("WebSocket snapshot arrived; skipping the startup REST live fetch.")
+            last_rest_fetch = time.monotonic()
+        else:
+            debug.warning(f"No WebSocket snapshot within {LIVE_FEED_STARTUP_WAIT_SECS}s; fetching live data over REST.")
+    elif use_websocket:
         debug.info("WebSocket mode: performing initial REST live data fetch before WS takes over per-event updates.")
         initial_parks = update_parks_live_data(list(parks_data))
         initial_parks = update_parks_operating_status(initial_parks)
@@ -101,7 +132,12 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
     while True:
         try:
             if parks_data:
-                updated_parks = update_parks_live_data(parks_data)
+                fetch_live = not preview or rest_poll_due(last_rest_fetch, time.monotonic())
+                if preview and not fetch_live:
+                    debug.log("WebSocket healthy; skipping this cycle's REST live fetch.")
+                updated_parks = update_parks_live_data(parks_data, fetch_live=fetch_live)
+                if preview and fetch_live:
+                    last_rest_fetch = time.monotonic()
                 # Runs in websocket mode too: the WS thread defers schedule
                 # fetches (schedule_refresh_needed) to this thread.
                 updated_parks = update_parks_operating_status(updated_parks)
@@ -116,8 +152,12 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
                     total = len(attrs)
                     down = [a for a in attrs if a.get("status") == "DOWN"]
                     operating = [a for a in attrs if a.get("status") == "OPERATING"]
+                    # Shows, bands and walk-throughs report OPERATING with no wait; the board shows only rides with one.
+                    with_wait = [a for a in operating if a.get("waitTime") not in (None, "")]
                     debug.info(
-                        f"REST poll [{park['name']}]: {len(operating)} operating, "
+                        f"{'REST poll' if fetch_live else 'Live status'} [{park['name']}]: "
+                        f"{'open' if park.get('operating') else 'closed'} ({park.get('operatingReason', 'not checked yet')}), "
+                        f"{len(with_wait)} with a wait (+{len(operating) - len(with_wait)} other operating), "
                         f"{len(down)} DOWN, {total} total"
                         + (f" | DOWN: {', '.join(a['name'] for a in down)}" if down else "")
                     )

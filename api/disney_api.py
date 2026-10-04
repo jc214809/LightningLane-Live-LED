@@ -415,6 +415,9 @@ async def fetch_park_live_data(park):
     return updates
 
 _ATTRACTION_FRESHNESS_MINUTES = 20  # wider than the 5-min REST cycle and normal WS cadence
+# Past the actual closing time with no next opening in the schedule, it's probably yesterday's (a failed
+# refresh): trust it this long, then fall back to the freshness check.
+_SCHEDULE_TRUST_HOURS = 6
 _DAILY_REFRESH_HOUR = 3    # local time the new day's schedule becomes available to fetch
 _DAILY_REFRESH_RETRY_UNTIL_HOUR = 9  # give up retrying once the park would normally be open
 _DAILY_REFRESH_RETRY_MINUTES = 30
@@ -454,40 +457,105 @@ def _daily_schedule_refresh_due(park, local_now):
 
 
 def _attraction_is_fresh(attraction, now):
-    last_updated = attraction.get("lastUpdatedTs")
-    if not last_updated:
-        return False
+    ts = parse_timestamp(attraction.get("lastUpdatedTs"))
+    return ts is not None and (now - ts) <= timedelta(minutes=_ATTRACTION_FRESHNESS_MINUTES)
+
+
+def parse_timestamp(when):
+    """An ISO timestamp with a timezone ("Z" or an offset) as an aware datetime; None for
+    anything else, a naive time included (it can't be compared with the aware ones)."""
     try:
-        ts = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return False
-    return (now - ts) <= timedelta(minutes=_ATTRACTION_FRESHNESS_MINUTES)
+        parsed = datetime.fromisoformat(when.replace("Z", "+00:00"))
+    except (ValueError, AttributeError, TypeError):
+        return None
+    return parsed if parsed.tzinfo else None
 
 
-def park_has_operating_attraction(park):
+def _park_days(schedule):
+    """{date: (first opening, actual close)} over every timed entry of each park day: the
+    regular hours, Early Entry and any party. Entries without full timestamps are skipped."""
+    days = {}
+    for event in schedule or []:
+        date = event.get("date")
+        start, end = parse_timestamp(event.get("openingTime")), parse_timestamp(event.get("closingTime"))
+        if not (date and start and end):
+            continue
+        first, last = days.get(date, (start, end))
+        days[date] = (min(first, start), max(last, end))
+    return days
+
+
+def _day_in_progress_close(days, now):
+    started = [(date, span) for date, span in days.items() if span[0] <= now]
+    return max(started)[1][1] if started else None
+
+
+def actual_park_closing_time(park, now=None):
     """
-    True if the park has at least one OPERATING attraction with a non-empty
-    wait time and live data updated within _ATTRACTION_FRESHNESS_MINUTES.
-    Ignores closingTime, so a live extended-hours event still counts.
+    When the park day in progress really ends: the latest close of any of its entries, so a
+    party's close on a party night, the regular close otherwise. The day in progress is the
+    latest one that has opened; a party past midnight is dated the day it started, so at
+    12:30am it's still that day. None with no usable schedule, or before the first opening.
     """
-    now = datetime.now(timezone.utc)
+    return _day_in_progress_close(_park_days(park.get("schedule")), now or datetime.now(timezone.utc))
 
+
+_SCHEDULE_OPEN, _SCHEDULE_CLOSED = "open", "closed"
+
+
+def _schedule_window(park, now):
+    """
+    (window, actual close). The window is _SCHEDULE_OPEN while the schedule's park day runs
+    (from its first opening, Early Entry included, to its actual closing time), _SCHEDULE_CLOSED
+    once it's over or before it starts, None when the schedule can't say (no usable entries, or
+    past the close long enough that it's probably stale): then the live data decides.
+    """
+    days = _park_days(park.get("schedule"))
+    if not days:
+        return None, None
+    actual_close = _day_in_progress_close(days, now)
+    if actual_close is None:
+        return _SCHEDULE_CLOSED, None  # only future entries: the day hasn't started
+    if now < actual_close:
+        return _SCHEDULE_OPEN, actual_close
+    next_opening_known = any(start > now for start, _ in days.values())
+    if next_opening_known or now - actual_close <= timedelta(hours=_SCHEDULE_TRUST_HOURS):
+        return _SCHEDULE_CLOSED, actual_close
+    return None, actual_close
+
+
+def _has_fresh_operating_ride(park, now):
+    """A ride OPERATING with a wait and live data from the last _ATTRACTION_FRESHNESS_MINUTES:
+    how a park counts as open when there's no schedule to go by."""
     for attraction in park.get("attractions", []):
-        wait_time = attraction.get("waitTime")
         status = attraction.get("status")
-        if status and status.upper() == "OPERATING" and wait_time not in (None, ''):
+        if status and status.upper() == "OPERATING" and attraction.get("waitTime") not in (None, ''):
             if _attraction_is_fresh(attraction, now):
-                debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")
                 return True
             debug.log(f"{attraction['name']} ({park['name']}) is OPERATING but stale; not counted.")
-
-    debug.info(f"{park['name']}: no fresh OPERATING attractions found, marking non-operating.")
     return False
+
+
+def operating_and_why(park, now=None):
+    """
+    (operating, reason). With a usable schedule it alone decides: open from the park day's
+    first opening to actual_park_closing_time (a party's close on a party night), whatever
+    the rides say. Without one, a ride OPERATING with a wait and recent live data opens it.
+    """
+    now = now or datetime.now(timezone.utc)
+    window, close = _schedule_window(park, now)
+    if window == _SCHEDULE_OPEN:
+        return True, f"schedule: open until {close.strftime('%H:%M')}"
+    if window == _SCHEDULE_CLOSED:
+        return False, f"schedule: closed at {close.strftime('%H:%M')}" if close else "schedule: not open yet"
+    if _has_fresh_operating_ride(park, now):
+        return True, f"no usable schedule; a ride is operating with live data from the last {_ATTRACTION_FRESHNESS_MINUTES} min"
+    return False, f"no usable schedule; no ride is operating with live data from the last {_ATTRACTION_FRESHNESS_MINUTES} min"
 
 
 def update_parks_operating_status(parks, fetch_schedules=True):
     """
-    Sets each park's 'operating' key from park_has_operating_attraction, and
+    Sets each park's 'operating' key (and 'operatingReason') from operating_and_why, and
     flags 'schedule_refresh_needed' on a closed->open transition or the daily
     refresh window (see _daily_schedule_refresh_due). With fetch_schedules=False
     (the WS event loop) that flag is only set, never acted on — the REST thread
@@ -496,7 +564,12 @@ def update_parks_operating_status(parks, fetch_schedules=True):
     """
 
     for park in parks:
-        is_park_open = park_has_operating_attraction(park)  # Check if any attractions are operating
+        actual_close = actual_park_closing_time(park)
+        park["actualParkClosingTime"] = actual_close.isoformat() if actual_close else ""
+        is_park_open, reason = operating_and_why(park)
+        if park.get("operating") != is_park_open:
+            debug.info(f"{park.get('name')}: {'open' if is_park_open else 'closed'} ({reason})")
+        park["operatingReason"] = reason
         local_now = _park_local_now(park)
 
         if not park.get("operating") and is_park_open:

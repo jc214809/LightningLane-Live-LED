@@ -1,4 +1,5 @@
 import threading
+import time
 
 # Guards mutations of the shared parks_data structure by the WebSocket and REST
 # threads. Held only for in-memory writes (microseconds) — never across HTTP
@@ -27,3 +28,36 @@ def note_network_result(ok):
         debug.info("Network connection restored.")
     else:
         debug.warning("Network connection lost; showing the network badge.")
+
+
+# The preview WebSocket's health, for the REST thread to decide whether it still needs to poll.
+# Synced once a connection has delivered a snapshot or finished a resume; any frame keeps it
+# alive. Written only by the WS thread; plain assignments, read by the REST thread without a lock.
+LIVE_FEED_SILENCE_SECS = 90
+_live_feed_synced = threading.Event()
+_live_feed_last_frame = None
+
+
+def note_live_feed_frame():
+    global _live_feed_last_frame
+    _live_feed_last_frame = time.monotonic()
+
+
+def note_live_feed_synced():
+    note_live_feed_frame()
+    _live_feed_synced.set()
+
+
+def note_live_feed_down():
+    _live_feed_synced.clear()
+
+
+def live_feed_healthy():
+    """True while the preview WebSocket is synced and has sent something in the last 90s."""
+    return (_live_feed_synced.is_set() and _live_feed_last_frame is not None
+            and time.monotonic() - _live_feed_last_frame <= LIVE_FEED_SILENCE_SECS)
+
+
+def wait_for_live_feed(timeout_s):
+    """Block up to timeout_s for the WebSocket's first sync; True if it came."""
+    return _live_feed_synced.wait(timeout_s)

@@ -9,7 +9,7 @@ LightningLane-Live-LED is a Python application designed to fetch and display wai
 - **API Integration:**  
   Retrieves park data and attraction details for Walt Disney World, Cedar Point, Kings Island, and any other destination supported by the ThemeParks Wiki API. Parks are configured by name in `config.json`.
 - **Real-Time WebSocket Updates:**  
-  With a ThemeParks API key configured (see [below](#websocket-recommended)), live wait times arrive over a persistent WebSocket connection (`wss://api.themeparks.wiki/v1/live`) as attraction statuses change. The app performs an initial REST fetch at startup to populate all data, then the WebSocket delivers ongoing updates. The connection is self-healing: a dead or silently-stalled connection is detected and reconnected automatically (typically within 2 minutes), with a REST refresh triggered afterward to catch any changes missed during the outage.
+  With a ThemeParks API key configured (see [below](#websocket-recommended)), live wait times arrive over a persistent WebSocket connection (`wss://api.themeparks.wiki/v1/live`) as attraction statuses change. The app performs an initial REST fetch at startup to populate all data (or, with the [preview protocol](#preview-protocol-optional), takes it from the WebSocket), then the WebSocket delivers ongoing updates. The connection is self-healing: a dead or silently-stalled connection is detected and reconnected automatically (typically within 2 minutes), and anything missed during the outage is caught up afterward.
 - **REST Polling:**  
   The REST API is polled every 5 minutes, with or without a key. Without one, that's how wait times update; with one, it's the backstop if the WebSocket is down.
 - **Dynamic Display Rendering:**  
@@ -225,12 +225,34 @@ The app subscribes to each resort your parks belong to, once for attractions and
 
 A `config.json` from before this section, with a top-level `"themeparks_api_key"`, still works: the WebSocket uses that key until you move it into `websocket.api_key`.
 
+#### Preview protocol (optional)
+
+ThemeParks.wiki is testing a newer WebSocket protocol, "preview". Turn it on with `"protocol": "preview"` in the `websocket` section (the default is `"legacy"`):
+
+```json
+"websocket": {
+  "enabled": true,
+  "api_key": "your-api-key-here",
+  "protocol": "preview"
+}
+```
+
+With it:
+- The board gets every ride's current status from the WebSocket when it connects, instead of a REST fetch at startup.
+- After a dropped connection it picks up where it left off: the server replays the updates it missed. If it was gone too long, the server sends everything again.
+- "Down" times count from when the ride actually went down.
+- REST checks every ride every 30 minutes while the WebSocket is healthy (every 5 when it isn't), instead of every 5.
+
+Preview isn't covered by ThemeParks.wiki's uptime promise yet and may change. Set `"protocol": "legacy"` to go back.
+
+**One connection per board.** Each board (and each emulator run) holds one of your key's connections; the key's limit is in the log at startup (`key limits: {'maxConnections': ...}`). A board over the limit is refused (close code 4029); with preview it waits 10 minutes before trying again and runs on REST meanwhile. If you have more boards than connections, set `"enabled": false` on the extra one.
+
 #### WebSocket Connection Health
 
 The WebSocket connection is monitored and self-healing:
 - A dead connection (network drop, server-side timeout) is detected within about 2 minutes and reconnected automatically.
 - A connection that stays open but silently stops delivering updates is detected by a background watchdog and force-reconnected, as long as at least one configured park is currently operating.
-- Every reconnect (whether from an error or the watchdog) triggers a REST refresh so the display catches up on anything missed during the outage.
+- Every reconnect (whether from an error or the watchdog) catches up on anything missed during the outage: a REST refresh with the legacy protocol, the server's replay with preview.
 - Reconnect attempts back off (5s, 10s, 20s, ... up to 60s) if the connection keeps failing quickly, so a persistent outage doesn't hammer the API.
 
 You can watch this behavior in the logs (`logs/app.log`) — look for `WebSocket connected`, `WS heartbeat`, and `WebSocket disconnected; reconnecting in Ns` messages.

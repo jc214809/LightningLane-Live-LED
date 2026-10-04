@@ -605,7 +605,7 @@ def test_websocket_off_or_without_a_key_never_starts_the_websocket(monkeypatch, 
     monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
     disney.start_live_updaters(config, ["park"], 300, [])
     assert [t.target for t in _RecordingThread.started] == [disney.live_data_updater]
-    assert _RecordingThread.started[0].kwargs == {"use_websocket": False}
+    assert _RecordingThread.started[0].kwargs == {"use_websocket": False, "ws_protocol": "legacy"}
 
 
 def test_websocket_enabled_with_a_real_key_starts_rest_and_the_websocket(monkeypatch):
@@ -613,5 +613,14 @@ def test_websocket_enabled_with_a_real_key_starts_rest_and_the_websocket(monkeyp
     monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
     disney.start_live_updaters({"websocket": {"enabled": True, "api_key": "real-key"}}, ["park"], 300, [])
     assert [t.target for t in _RecordingThread.started] == [disney.live_data_updater, disney.websocket_live_updater]
-    assert _RecordingThread.started[0].kwargs == {"use_websocket": True}
-    assert _RecordingThread.started[1].args[0] == "real-key"
+    assert _RecordingThread.started[0].kwargs == {"use_websocket": True, "ws_protocol": "legacy"}
+    assert _RecordingThread.started[1].args == ("real-key", [], "legacy")
+
+
+def test_websocket_protocol_preview_reaches_both_threads(monkeypatch):
+    _RecordingThread.started = []
+    monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
+    config = {"websocket": {"enabled": True, "api_key": "real-key", "protocol": "preview"}}
+    disney.start_live_updaters(config, ["park"], 300, [])
+    assert _RecordingThread.started[0].kwargs == {"use_websocket": True, "ws_protocol": "preview"}
+    assert _RecordingThread.started[1].args[2] == "preview"
