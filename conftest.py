@@ -19,5 +19,7 @@ def _network_ok():
     # leave the badge drawn over every later test's frames.
     import updater.shared as shared
     shared._network_issues = False
+    shared.note_live_feed_down()
     yield
     shared._network_issues = False
+    shared.note_live_feed_down()

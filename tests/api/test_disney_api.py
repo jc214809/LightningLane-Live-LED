@@ -690,12 +690,11 @@ def _at(when):
     return datetime.fromisoformat(when)
 
 
-def _park(schedule, minutes_ago=0, status="OPERATING"):
-    """A park with one ride whose live data was last updated minutes_ago before 2026-10-04 18:30 EDT
-    (callers that need another reference time give an absolute lastUpdatedTs)."""
+def _park(schedule, last_updated="2026-10-04T18:30:00-04:00"):
+    """A park with one OPERATING ride whose live data last changed at last_updated."""
     return {"name": "Magic Kingdom", "schedule": schedule,
-            "attractions": [{"name": "Space Mountain", "waitTime": "40", "status": status,
-                             "lastUpdatedTs": (_at("2026-10-04T18:30:00-04:00") - timedelta(minutes=minutes_ago)).isoformat()}]}
+            "attractions": [{"name": "Space Mountain", "waitTime": "40", "status": "OPERATING",
+                             "lastUpdatedTs": last_updated}]}
 
 
 @pytest.mark.parametrize("now, expected", [
@@ -727,41 +726,36 @@ def test_actual_park_closing_time_none_without_a_usable_schedule(schedule):
 
 
 def test_park_open_after_midnight_until_the_party_ends():
-    park = _park(PARTY_NIGHT)
-    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T00:25:00-04:00"
+    park = _park(PARTY_NIGHT, last_updated="2026-10-05T00:25:00-04:00")
     assert park_has_operating_attraction(park, _at("2026-10-05T00:30:00-04:00")) is True
 
 
 def test_park_open_through_the_closing_grace():
-    park = _park(PARTY_NIGHT)
-    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T01:10:00-04:00"
+    park = _park(PARTY_NIGHT, last_updated="2026-10-05T01:10:00-04:00")
     assert park_has_operating_attraction(park, _at("2026-10-05T01:29:00-04:00")) is True
 
 
 def test_park_closed_after_the_actual_closing_time_even_with_fresh_operating_rides():
     """The stuck-open park: the feed still says OPERATING, updated a minute ago, after the party."""
-    park = _park(PARTY_NIGHT)
-    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T01:44:00-04:00"
+    park = _park(PARTY_NIGHT, last_updated="2026-10-05T01:44:00-04:00")
     assert park_has_operating_attraction(park, _at("2026-10-05T01:45:00-04:00")) is False
 
 
 def test_park_open_between_regular_close_and_party_with_quiet_data():
     """Within the schedule, a quiet half hour (no ride changed in 20 min) doesn't close the park."""
-    park = _park(PARTY_NIGHT, minutes_ago=45)
+    park = _park(PARTY_NIGHT, last_updated="2026-10-04T17:45:00-04:00")
     assert park_has_operating_attraction(park, _at("2026-10-04T18:30:00-04:00")) is True
 
 
 def test_park_closed_overnight_until_the_next_opening():
-    park = _park(PARTY_NIGHT + NEXT_DAY)
-    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T07:59:00-04:00"
+    park = _park(PARTY_NIGHT + NEXT_DAY, last_updated="2026-10-05T07:59:00-04:00")
     assert park_has_operating_attraction(park, _at("2026-10-05T08:00:00-04:00")) is False
     park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T08:44:00-04:00"
     assert park_has_operating_attraction(park, _at("2026-10-05T08:45:00-04:00")) is True
 
 
 def test_park_closed_before_the_first_opening():
-    park = _park(NEXT_DAY)
-    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T05:59:00-04:00"
+    park = _park(NEXT_DAY, last_updated="2026-10-05T05:59:00-04:00")
     assert park_has_operating_attraction(park, _at("2026-10-05T06:00:00-04:00")) is False
 
 
@@ -777,9 +771,16 @@ def test_stale_schedule_falls_back_to_freshness():
 
 
 def test_stale_schedule_trusted_for_a_few_hours_after_close():
-    park = _park(PARTY_NIGHT)
-    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T05:59:00-04:00"
+    park = _park(PARTY_NIGHT, last_updated="2026-10-05T05:59:00-04:00")
     assert park_has_operating_attraction(park, _at("2026-10-05T06:00:00-04:00")) is False
+
+
+@pytest.mark.parametrize("last_updated", ["2026-10-04T18:29:00", "not a time", None, ""])
+def test_park_has_operating_attraction_unreadable_timestamp_is_stale(last_updated):
+    """Without a schedule, freshness decides; a time it can't read (a naive one included,
+    which used to raise comparing with an aware now) counts as stale."""
+    park = _park([], last_updated=last_updated)
+    assert park_has_operating_attraction(park, _at("2026-10-04T18:30:00-04:00")) is False
 
 
 def test_update_parks_operating_status_stores_actual_park_closing_time(monkeypatch):

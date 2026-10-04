@@ -2,7 +2,8 @@
   "parks": ["Magic Kingdom", "EPCOT", "Hollywood Studios", "Animal Kingdom"],
   "websocket": {
     "enabled": true,
-    "api_key": "<THEMEPARKS_API_KEY_HERE>"
+    "api_key": "<THEMEPARKS_API_KEY_HERE>",
+    "protocol": "legacy"
   },
   "trip_countdown": {
     "enabled": true,

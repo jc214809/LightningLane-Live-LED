@@ -20,7 +20,7 @@ from display.landmarks import landmark_for, landmark_screen
 from utils.special_events import active_party, fireworks_show
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
-from updater.websocket_updater import websocket_live_updater, websocket_settings
+from updater.websocket_updater import websocket_live_updater, websocket_protocol, websocket_settings
 from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
@@ -98,11 +98,12 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
     section enables it with a real key: without one the server closes the connection,
     so it isn't opened at all."""
     use_websocket, api_key = websocket_settings(config)
+    protocol = websocket_protocol(config)
 
     update_thread = threading.Thread(
         target=live_data_updater,
         args=(disney_park_list, update_interval, parks_data),
-        kwargs={"use_websocket": use_websocket},
+        kwargs={"use_websocket": use_websocket, "ws_protocol": protocol},
         daemon=True
     )
     update_thread.start()
@@ -110,11 +111,14 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
     if use_websocket:
         ws_thread = threading.Thread(
             target=websocket_live_updater,
-            args=(api_key, parks_data),
+            args=(api_key, parks_data, protocol),
             daemon=True
         )
         ws_thread.start()
-        debug.info("WebSocket live updater started; REST keeps polling every 5 min as a backstop.")
+        if protocol == "preview":
+            debug.info("WebSocket live updater started (preview); REST checks every 30 min while it's healthy, every 5 when it isn't.")
+        else:
+            debug.info("WebSocket live updater started; REST keeps polling every 5 min as a backstop.")
     else:
         debug.info("WebSocket off; using REST polling only.")
 

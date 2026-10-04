@@ -3,8 +3,14 @@ import copy
 import threading
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
+from updater import shared
 from updater.data_updater import (
+    LIVE_FEED_STARTUP_WAIT_SECS,
+    REST_INTERVAL_WITH_LIVE_FEED_SECS,
     merge_live_data,
+    rest_poll_due,
     update_parks_live_data,
     live_data_updater
 )
@@ -722,3 +728,127 @@ def test_merge_live_data_marks_a_ride_last_written_by_rest():
         "lastUpdated": "rest-time", "queue": {"STANDBY": {"waitTime": 25}}}]))
     assert existing[0]["updateSource"] == "rest"
     assert existing[0]["lastUpdatedTs"] == "rest-time"
+
+
+# ---- Newer data wins (preview WebSocket replays, late REST polls) ----
+
+def _ride(ts, wait=20):
+    return {"id": "a1", "name": "Ride", "status": "OPERATING", "waitTime": wait, "lastUpdatedTs": ts, "down_since": ""}
+
+
+def test_merge_live_data_skips_an_update_older_than_what_the_ride_has():
+    rides = [_ride("2026-10-04T16:30:00Z", wait=60)]
+    merge_live_data(rides, [{"id": "a1", "status": "OPERATING", "waitTime": 45, "lastUpdatedTs": "2026-10-04T16:10:00Z"}])
+    assert rides[0]["waitTime"] == 60
+
+
+@pytest.mark.parametrize("existing_ts, new_ts", [
+    ("2026-10-04T16:30:00Z", "2026-10-04T16:30:00Z"),       # the same time: applied
+    ("2026-10-04T16:30:00Z", "2026-10-04T16:31:00+00:00"),  # newer
+    ("", "2026-10-04T16:10:00Z"),                           # nothing yet
+    ("old", "2026-10-04T16:10:00Z"),                        # unparseable existing
+    ("2026-10-04T16:30:00Z", None),                         # update without a time
+    ("2026-10-04T16:30:00", "2026-10-04T16:10:00Z"),        # naive vs aware: can't compare, applied
+])
+def test_merge_live_data_applies_updates_it_cant_prove_are_older(existing_ts, new_ts):
+    rides = [_ride(existing_ts, wait=60)]
+    merge_live_data(rides, [{"id": "a1", "status": "OPERATING", "waitTime": 45, "lastUpdatedTs": new_ts}])
+    assert rides[0]["waitTime"] == 45
+
+
+# ---- REST polling alongside the preview WebSocket ----
+
+
+@pytest.mark.parametrize("healthy, last_fetch, now, expected", [
+    (False, 100.0, 101.0, True),                                  # feed down: poll every cycle
+    (True, None, 101.0, True),                                    # never polled
+    (True, 100.0, 100.0 + REST_INTERVAL_WITH_LIVE_FEED_SECS - 1, False),
+    (True, 100.0, 100.0 + REST_INTERVAL_WITH_LIVE_FEED_SECS, True),  # the 30-minute backstop
+])
+def test_rest_poll_due(monkeypatch, healthy, last_fetch, now, expected):
+    monkeypatch.setattr("updater.data_updater.live_feed_healthy", lambda: healthy)
+    assert rest_poll_due(last_fetch, now) is expected
+
+
+def test_update_parks_live_data_without_fetch_live_makes_no_request(monkeypatch):
+    calls = []
+
+    async def fetch(park):
+        calls.append(park)
+        return []
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", fetch)
+    parks = copy.deepcopy(DUMMY_PARKS)
+    assert update_parks_live_data(parks, fetch_live=False) is parks
+    assert calls == []
+
+
+def _run_preview_updater(monkeypatch, snapshot_arrives, healthy):
+    """One preview-mode cycle of live_data_updater; returns (REST fetches, status checks, startup wait)."""
+    fetches, checks, waits = [], [], []
+
+    async def fetch(park):
+        fetches.append(park["id"])
+        return []
+
+    def wait(timeout_s):
+        waits.append(timeout_s)
+        return snapshot_arrives
+
+    def fake_sleep(duration):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", fetch)
+    monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
+    monkeypatch.setattr("updater.data_updater.update_parks_operating_status",
+                        lambda parks, fetch_schedules=True: checks.append(fetch_schedules) or parks)
+    monkeypatch.setattr("updater.data_updater.wait_for_live_feed", wait)
+    monkeypatch.setattr("updater.data_updater.live_feed_healthy", lambda: healthy)
+    monkeypatch.setattr("updater.data_updater.time.sleep", fake_sleep)
+    thread = threading.Thread(target=live_data_updater, args=([], 0, []),
+                              kwargs={"use_websocket": True, "ws_protocol": "preview"}, daemon=True)
+    thread.start()
+    thread.join(timeout=2)
+    return fetches, checks, waits
+
+
+def test_preview_snapshot_replaces_the_startup_rest_fetch(monkeypatch):
+    fetches, checks, waits = _run_preview_updater(monkeypatch, snapshot_arrives=True, healthy=True)
+    assert waits == [LIVE_FEED_STARTUP_WAIT_SECS]
+    assert fetches == []        # no startup fetch, and the first cycle skips too
+    assert checks == [True]     # operating status and schedules still run every cycle
+
+
+def test_preview_without_a_snapshot_falls_back_to_rest(monkeypatch):
+    fetches, checks, _ = _run_preview_updater(monkeypatch, snapshot_arrives=False, healthy=False)
+    assert fetches == [p["id"] for p in DUMMY_PARKS if p.get("attractions")]
+    assert checks == [True]
+
+
+def test_preview_polls_rest_when_the_feed_turns_unhealthy(monkeypatch):
+    fetches, _, _ = _run_preview_updater(monkeypatch, snapshot_arrives=True, healthy=False)
+    assert fetches == [p["id"] for p in DUMMY_PARKS if p.get("attractions")]
+
+
+# ---- Live feed health (updater/shared.py) ----
+
+def test_live_feed_healthy_needs_a_sync_and_a_recent_frame(monkeypatch):
+    clock = [1000.0]
+    monkeypatch.setattr("updater.shared.time.monotonic", lambda: clock[0])
+    assert shared.live_feed_healthy() is False
+    shared.note_live_feed_frame()
+    assert shared.live_feed_healthy() is False  # connected, not yet synced
+    shared.note_live_feed_synced()
+    assert shared.live_feed_healthy() is True
+    clock[0] += shared.LIVE_FEED_SILENCE_SECS + 1
+    assert shared.live_feed_healthy() is False  # silent too long
+    shared.note_live_feed_frame()
+    assert shared.live_feed_healthy() is True
+    shared.note_live_feed_down()
+    assert shared.live_feed_healthy() is False
+
+
+def test_wait_for_live_feed_returns_once_synced():
+    assert shared.wait_for_live_feed(0) is False
+    shared.note_live_feed_synced()
+    assert shared.wait_for_live_feed(0) is True
