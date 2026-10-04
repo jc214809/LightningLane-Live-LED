@@ -769,3 +769,24 @@ MLB-LED-Scoreboard (GPLv3), so first rewrite what came from it, then relicense:
 - Rewrite those parts from scratch (not edited copies).
 - Swap `LICENSE.md` for PolyForm Noncommercial and update the README's Licensing section.
   It's then "source-available", not open source.
+
+## 10. Luxo's searchlight story is too short on the board
+
+Seen on a real board: in `luxo_ball`'s "light" story (the dark board, Luxo searching for the
+ball with his beam), the ride screen ends before the wait time can be read, let alone before
+Luxo and the ball leave. On paper it fits: the ride screen holds 8s, the old screen's sweep
+takes 0.65s, and the story is 5.8s (`DURATIONS["light"]`; the beam widens over the ride at
+3.8s and they leave from 4.9s), so the ride should be readable for about 3.5s before the end.
+
+Likely cause: `run_frames` steps the scene by frame number (`t = i / fps`) but stops the
+screen by the clock, so a board that runs below `FPS` plays the scene in slow motion and the
+8s cut lands mid-scene. The "light" story is the longest and draws a full dark board plus the
+beam every frame, so it's probably the slowest of the three. Check the board's fps line for
+`luxo_ball` in `journalctl` first.
+
+To settle:
+- Set `hold_after_s` (like Rex and the Mine Train) so the ride stays up a few seconds after
+  they leave, whatever the board's speed?
+- Shorten the story (a quicker search, an earlier widen), or make the dark frames cheaper?
+- Should the scene follow the clock rather than the frame count, so a slow board drops frames
+  instead of running long? That would change every transition, not just Luxo's.
