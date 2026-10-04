@@ -131,6 +131,7 @@ textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospac
         <div class="toolbar">
           <label title="Cells this close to the color round the grid's edge become empty; 0 keeps them">Background <input id="patBg" type="range" min="0" max="200" value="60"></label><span id="patBgOut" class="hint">60</span>
           <label title="Background-colored cells walled in by the art (white eyes inside an outline) stay lit"><input id="patEnclosed" type="checkbox" checked> Keep enclosed</label>
+          <label title="The background is the cells without grid lines round them, whatever their color: for a chart drawn over a picture, where the art's cells are outlined and the backdrop isn't"><input id="patLines" type="checkbox"> Grid lines only</label>
         </div>
         <div class="toolbar">
           <label title="Cell colors this close share one key; raise it to merge shading, lower it to split close colors. Under 60 apart, touching colors blur together on the board anyway">Merge <input id="patMerge" type="range" min="0" max="150" value="60"></label><span id="patMergeOut" class="hint">60</span>
@@ -142,7 +143,16 @@ textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospac
         <div class="toolbar">
           <label title="Where a cell boundary falls, in image pixels from the left">Offset X <input id="patOffX" type="number" step="0.25"></label>
           <label title="Where a cell boundary falls, in image pixels from the top">Y <input id="patOffY" type="number" step="0.25"></label>
-          <button id="patDetect" title="Find the grid again from the image">Detect grid</button>
+          <button id="patDetect" title="Find the grid again from the image, straightening a photo shot at a tilt">Detect grid</button>
+        </div>
+        <div class="toolbar">
+          <label title="Turns the image clockwise so the grid runs straight; negative turns it back. Detect grid finds it for a photo shot at a tilt">Turn <input id="patTurn" type="number" min="-45" max="45" step="0.1" value="0"> °</label>
+          <button id="patCalibrate" aria-pressed="false" title="Click the middle of a bead, then the middle of another in the same row or column: sets the turn and the cell size exactly">Calibrate</button>
+          <label title="How many cells apart the two calibration clicks are; empty counts them from the cell size found">Cells apart <input id="patApart" type="number" min="1" step="1" placeholder="auto"></label>
+        </div>
+        <div class="toolbar">
+          <span class="hint">Drag a box on the image to read just that part: one character from a sheet, with a little backdrop all round him.</span>
+          <button id="patUncrop" disabled title="Read the whole image again">Whole image</button>
         </div>
         <canvas id="patView" aria-label="The image with the grid it found; dimmed cells are background"></canvas>
         <canvas id="patResult" aria-label="The cells as LEDs" style="margin-top:6px"></canvas>
@@ -362,6 +372,93 @@ function findGrid(profile, minP = 4, minCells = 4) {
   return { period: P, offset: (((lo + phase + 1) % P) + P) % P, score };
 }
 
+// How far to turn a photo, in degrees clockwise, so its grid runs straight: beads or bricks shot at a tilt.
+// Each pixel's color gradient is projected across a turned pair of axes and binned by where it falls along
+// them; the turn whose column and row profiles repeat most strongly (findGrid's score) wins, a degree at a
+// time over range, then a tenth. A straight grid stacks its boundaries into evenly spaced peaks; a tilted
+// one smears them. Under 0.3 degrees is left alone, so a straight chart is never resampled.
+function gridTurn(data, W, H, range = 20) {
+  const step = Math.max(1, Math.round(Math.max(W, H) / 400));
+  const X = [], Y = [], A = [], B = [], C = [];
+  for (let y = step; y < H - step; y += step) for (let x = step; x < W - step; x += step) {
+    const p = (y * W + x) * 4, l = p - 4 * step, r = p + 4 * step, u = p - 4 * W * step, d = p + 4 * W * step;
+    if (data[p + 3] < 128 || data[l + 3] < 128 || data[r + 3] < 128 || data[u + 3] < 128 || data[d + 3] < 128) continue;
+    let a = 0, b = 0, c = 0;
+    for (let k = 0; k < 3; k++) { const dx = data[r + k] - data[l + k], dy = data[d + k] - data[u + k]; a += dx * dx; b += dx * dy; c += dy * dy; }
+    if (a + c < 400) continue;  // flat: sensor noise
+    // From the middle, so every turn lands inside the bins.
+    X.push(x - W / 2); Y.push(y - H / 2); A.push(a); B.push(b); C.push(c);
+  }
+  const n = X.length, bins = Math.ceil(Math.hypot(W, H) / step) + 2, mid = bins >> 1;
+  if (n < 50) return 0;
+  // Binned at the sampling step: finer bins would leave every other one empty at 0 degrees.
+  const profile = (ux, uy, a, b, c) => {
+    const prof = new Array(bins).fill(0);
+    for (let i = 0; i < n; i++) prof[Math.round((X[i] * ux + Y[i] * uy) / step) + mid] += Math.sqrt(Math.max(0, a * A[i] + b * B[i] + c * C[i]));
+    return prof;
+  };
+  const profiles = deg => {
+    const t = deg * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+    return [profile(c, s, c * c, 2 * c * s, s * s), profile(-s, c, s * s, -2 * c * s, c * c)];
+  };
+  // Roughly: how strongly the profiles repeat (findGrid's score, near 0 with no grid in it), which a
+  // tilted grid's smear can't fake, a degree at a time.
+  const repeats = deg => profiles(deg).reduce((sum, p) => { const f = findGrid(p, 3); return sum + (f ? f.score : 0); }, 0);
+  // Finely: how tightly the edges stack into narrow peaks, which falls off fast either side of straight.
+  const peaky = deg => profiles(deg).reduce((sum, p) => {
+    let all = 0, sq = 0;
+    for (let i = 1; i + 1 < p.length; i++) { const h = p[i] - (p[i - 1] + p[i + 1]) / 2; sq += h * h; all += p[i]; }
+    return sum + (all ? sq / (all * all) : 0);
+  }, 0);
+  let best = 0, top = -1;
+  for (let d = -range; d <= range; d += 1) { const v = repeats(d); if (v > top) { top = v; best = d; } }
+  const coarse = best;
+  top = -1;
+  for (let d = coarse - 1.5; d <= coarse + 1.501; d += .1) { const v = peaky(d); if (v > top) { top = v; best = d; } }
+  return Math.abs(best) < .3 ? 0 : -Math.round(best * 10) / 10;
+}
+
+// The image turned by deg (positive is clockwise on screen) about its middle, on a canvas grown to hold all
+// of it.
+function rotateImage(data, W, H, deg) {
+  const t = deg * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+  const W2 = Math.ceil(Math.abs(W * c) + Math.abs(H * s)), H2 = Math.ceil(Math.abs(W * s) + Math.abs(H * c));
+  const out = new Uint8ClampedArray(W2 * H2 * 4);
+  const cx = W / 2, cy = H / 2, cx2 = W2 / 2, cy2 = H2 / 2;
+  // The corners the turn uncovers take the color most of the image's edge is (the paper or pegboard, each
+  // channel's median), so they read as more background: not a hole, nor streaks that look like a grid.
+  const edge = [[], [], [], []];
+  for (let i = 0; i < W; i++) for (const j of [0, H - 1]) for (let k = 0; k < 4; k++) edge[k].push(data[(j * W + i) * 4 + k]);
+  for (let j = 0; j < H; j++) for (const i of [0, W - 1]) for (let k = 0; k < 4; k++) edge[k].push(data[(j * W + i) * 4 + k]);
+  const fill = edge.map(v => v.sort((a, b) => a - b)[v.length >> 1]);
+  for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++) {
+    // Back to where this pixel was before turning, then a bilinear read.
+    const dx = x + .5 - cx2, dy = y + .5 - cy2, sx = dx * c + dy * s + cx - .5, sy = -dx * s + dy * c + cy - .5;
+    const o = (y * W2 + x) * 4;
+    if (sx < -.5 || sy < -.5 || sx > W - .5 || sy > H - .5) { out.set(fill, o); continue; }
+    const cxs = Math.max(0, Math.min(W - 1.001, sx)), cys = Math.max(0, Math.min(H - 1.001, sy));
+    const x0 = Math.floor(cxs), y0 = Math.floor(cys), fx = cxs - x0, fy = cys - y0;
+    const p = (y0 * W + x0) * 4, q = p + W * 4;
+    for (let k = 0; k < 4; k++)
+      out[o + k] = (data[p + k] * (1 - fx) + data[p + 4 + k] * fx) * (1 - fy) + (data[q + k] * (1 - fx) + data[q + 4 + k] * fx) * fy;
+  }
+  // Where a point in the original lands, and back.
+  const map = (x, y) => { const dx = x - cx, dy = y - cy; return [dx * c - dy * s + cx2, dx * s + dy * c + cy2]; };
+  const unmap = (x, y) => { const dx = x - cx2, dy = y - cy2; return [dx * c + dy * s + cx, -dx * s + dy * c + cy]; };
+  return { data: out, W: W2, H: H2, map, unmap };
+}
+
+// Calibrating from two clicks on bead middles along one row or one column, either way round: the extra
+// clockwise turn that levels the grid, and the cell size. apart is how many cells apart they are; 0 counts it
+// from guess, the cell size found so far.
+function calibrateLine([ax, ay], [bx, by], apart, guess) {
+  let deg = Math.atan2(by - ay, bx - ax) * 180 / Math.PI;
+  while (deg >= 45) deg -= 90;
+  while (deg < -45) deg += 90;
+  const dist = Math.hypot(bx - ax, by - ay), n = apart > 0 ? Math.round(apart) : Math.max(1, Math.round(dist / guess));
+  return { turn: -deg, period: dist / n, apart: n };
+}
+
 // How much of a ring round each cell's middle is its one main color, on average: highest when the
 // cells sit on the beads or chart squares rather than straddling two colors. The very middle is left
 // out: it's a bead's hole when the grid is right, and the line between two cells when it's half off.
@@ -467,6 +564,51 @@ function borderColor(cellRgb) {
   return edge.length > clear ? clusterColors(edge, 48)[0] : null;
 }
 
+// Which cells have a grid line round them: a chart drawn over a picture outlines the art's cells and not
+// the backdrop. A line differs from the pixels either side of it, where a color edge (a cloud's rim)
+// matches one side, so each side counts only where its middle differs from both neighbours. A cell needs
+// three lined sides: a backdrop cell next to the art shares just one.
+function gridLineCells(data, W, H, gx, gy, threshold = 20) {
+  const px = (x, y) => (Math.max(0, Math.min(H - 1, y)) * W + Math.max(0, Math.min(W - 1, x))) * 4;
+  const diff = (p, q) => Math.abs(data[p] - data[q]) + Math.abs(data[p + 1] - data[q + 1]) + Math.abs(data[p + 2] - data[q + 2]);
+  // Whether a line runs along x = b (vertical) or y = b, from..to the other way, near where the grid puts it.
+  const side = (vertical, b, from, to, period) => {
+    const q = Math.max(2, Math.round(period * .3)), reach = Math.max(1, Math.round(period * .08));
+    let top = 0;
+    for (let d = -reach; d <= reach; d++) {
+      let sum = 0, n = 0;
+      for (let t = Math.round(from); t < Math.round(to); t++) {
+        const at = (o) => vertical ? px(Math.round(b) + d + o, t) : px(t, Math.round(b) + d + o);
+        sum += Math.min(diff(at(0), at(-q)), diff(at(0), at(q))); n++;
+      }
+      if (n && sum / n > top) top = sum / n;
+    }
+    return top >= threshold;
+  };
+  const out = [];
+  for (let r = 0; r < gy.count; r++) {
+    const row = [], y0 = gy.start + r * gy.period, y1 = y0 + gy.period;
+    for (let c = 0; c < gx.count; c++) {
+      const x0 = gx.start + c * gx.period, x1 = x0 + gx.period;
+      const ix0 = x0 + gx.period * .25, ix1 = x1 - gx.period * .25, iy0 = y0 + gy.period * .25, iy1 = y1 - gy.period * .25;
+      const sides = side(true, x0, iy0, iy1, gx.period) + side(true, x1, iy0, iy1, gx.period) +
+        side(false, y0, ix0, ix1, gy.period) + side(false, y1, ix0, ix1, gy.period);
+      row.push(sides >= 3);
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+// Part of the image: [x0, y0, x1, y1] in its pixels, kept inside it.
+function cropImage(data, W, H, [x0, y0, x1, y1]) {
+  x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0));
+  x1 = Math.min(W, Math.ceil(x1)); y1 = Math.min(H, Math.ceil(y1));
+  const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0), out = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) out.set(data.subarray(((y0 + y) * W + x0) * 4, ((y0 + y) * W + x0 + w) * 4), y * w * 4);
+  return { data: out, W: w, H: h, x0, y0 };
+}
+
 // A key that says what the color is (K black, W white, R red...), falling back to the next free one.
 function colorKeyFor(rgb, taken) {
   const [hue, s, v] = rgbToHsv(rgb);
@@ -484,17 +626,22 @@ function colorKeyFor(rgb, taken) {
 // merge into color groups, each with a new key, and empty rows and columns around the art are trimmed.
 // With enclosed kept, only background reachable from the edge goes, like a magic wand: white eyes
 // inside an outline match the paper but stay lit. It spreads from cell to similar cell, so it follows
-// a photo's lighting across the board.
-function buildPattern(cellRgb, { background = 60, merge = 60, enclosed = true } = {}) {
-  const bg = background > 0 ? borderColor(cellRgb) : null;
-  const like = cellRgb.map(r => r.map(c => !c || (bg !== null && colorDistance(c, bg) <= background)));
+// a photo's lighting across the board. Given lined (gridLineCells), the background is the cells without
+// grid lines instead, whatever their color: a chart drawn over a picture, where the art can match the sky.
+function buildPattern(cellRgb, { background = 60, merge = 60, enclosed = true, lined = null } = {}) {
+  const bg = !lined && background > 0 ? borderColor(cellRgb) : null;
+  const like = cellRgb.map((r, y) => r.map((c, x) => !c || (lined ? !lined[y][x] : bg !== null && colorDistance(c, bg) <= background)));
   let dropped = like;
   if (enclosed) {
     dropped = like.map(r => r.map(() => false));
     const H = like.length, W = H ? like[0].length : 0, stack = [];
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (y === 0 || x === 0 || y === H - 1 || x === W - 1) stack.push([x, y]);
     // A cell goes if it matches the background, or is close to the colored neighbour that reached it.
-    const goes = (x, y, from) => like[y][x] || (from && cellRgb[y][x] && colorDistance(from, cellRgb[y][x]) <= background);
+    // Lined: the backdrop is unlined cells reached from the edge without a jump in color, since grid lines
+    // barely show on dark cells (a navy suit) and those are kept where the color jumps from the wall to them.
+    const goes = lined
+      ? (x, y, from) => !cellRgb[y][x] || (like[y][x] && (!from || colorDistance(from, cellRgb[y][x]) <= background))
+      : (x, y, from) => like[y][x] || (from && cellRgb[y][x] && colorDistance(from, cellRgb[y][x]) <= background);
     while (stack.length) {
       const [x, y, from] = stack.pop();
       if (x < 0 || y < 0 || x >= W || y >= H || dropped[y][x] || !goes(x, y, from)) continue;
@@ -957,7 +1104,7 @@ function previewImage() {
 
 // ---- Image to pixels: pattern mode ----
 // A grid chart or a bead photo: each cell is one LED, so the canvas takes the grid's size and a new palette.
-let patternSrc = null, patternResult = null;
+let patternSrc = null, patternResult = null, calib = null;
 const PATTERN_HINT = "Choose a grid pattern or a bead photo; each cell becomes one LED, with new color keys. Nothing is uploaded.";
 const SILHOUETTE_HINT = "Choose an image; it is resampled to the current canvas size. Nothing is uploaded.";
 function patternMode() { return $("imgMode").value === "pattern"; }
@@ -971,11 +1118,46 @@ function loadPatternSource() {
   const cx = canvas.getContext("2d", { willReadFrequently: true });
   cx.imageSmoothingEnabled = scale < 1; cx.imageSmoothingQuality = "high";
   cx.drawImage(sourceImage, 0, 0, W, H);
-  patternSrc = { canvas, data: cx.getImageData(0, 0, W, H).data, W, H, scale, score: 0 };
+  // orig is the image as loaded; base is the part of it being read (cropPattern); canvas, data, W and H are
+  // base turned straight (turnPattern), which the grid is read from.
+  patternSrc = { orig: { canvas, data: cx.getImageData(0, 0, W, H).data, W, H }, scale, score: 0, turn: 0 };
+  cropPattern(null);
 }
 
-// Fills the cell and offset fields, in the source image's pixels.
-function detectGrid() {
+function canvasOf(data, W, H) {
+  const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
+  canvas.getContext("2d").putImageData(new ImageData(data, W, H), 0, 0);
+  return canvas;
+}
+
+// Reads just box, [x0, y0, x1, y1] in the loaded image's pixels, or all of it for null; keeps the turn.
+function cropPattern(box) {
+  const { orig } = patternSrc;
+  if (box) {
+    const c = cropImage(orig.data, orig.W, orig.H, box);
+    patternSrc.base = { ...c, canvas: canvasOf(c.data, c.W, c.H) };
+  } else patternSrc.base = { ...orig, x0: 0, y0: 0 };
+  $("patUncrop").disabled = !box;
+  turnPattern(patternSrc.turn);
+}
+
+// Turns the working image deg clockwise. map and unmap convert points between it and the image as loaded.
+function turnPattern(deg) {
+  const { base } = patternSrc, { x0, y0 } = base;
+  patternSrc.turn = deg; $("patTurn").value = deg;
+  if (!deg) {
+    Object.assign(patternSrc, { canvas: base.canvas, data: base.data, W: base.W, H: base.H,
+      map: (x, y) => [x - x0, y - y0], unmap: (x, y) => [x + x0, y + y0] });
+    return;
+  }
+  const r = rotateImage(base.data, base.W, base.H, deg);
+  Object.assign(patternSrc, { canvas: canvasOf(r.data, r.W, r.H), data: r.data, W: r.W, H: r.H,
+    map: (x, y) => r.map(x - x0, y - y0), unmap: (x, y) => { const [a, b] = r.unmap(x, y); return [a + x0, b + y0]; } });
+}
+
+// Fills the cell and offset fields, in the source image's pixels. With findTurn, first straightens a tilted photo.
+function detectGrid(findTurn = true) {
+  if (findTurn) { const b = patternSrc.base; turnPattern(gridTurn(b.data, b.W, b.H)); }
   const { data, W, H, scale } = patternSrc, prof = edgeProfiles(data, W, H);
   const fx = findGrid(prof.x), fy = findGrid(prof.y);
   patternSrc.score = Math.min(fx ? fx.score : 0, fy ? fy.score : 0);
@@ -996,7 +1178,8 @@ function previewPattern() {
     status.className = "hint warning"; status.textContent = `Cells must be at least ${Math.ceil(2 / scale * 100) / 100} px across.`; return;
   }
   const gx = gridCells(W, pw, read("patOffX")), gy = gridCells(H, ph, read("patOffY"));
-  const result = buildPattern(sampleCells(data, W, H, gx, gy), { background: +$("patBg").value, merge: +$("patMerge").value, enclosed: $("patEnclosed").checked });
+  const result = buildPattern(sampleCells(data, W, H, gx, gy), { background: +$("patBg").value, merge: +$("patMerge").value, enclosed: $("patEnclosed").checked,
+    lined: $("patLines").checked ? gridLineCells(data, W, H, gx, gy) : null });
   const fullW = result.rows.length ? result.rows[0].length : 0, fullH = result.rows.length;
   // The canvas tops out at 64 x 64: keep the top-left of anything bigger.
   result.rows = result.rows.slice(0, 64).map(r => r.slice(0, 64));
@@ -1026,6 +1209,10 @@ function drawPatternView(gx, gy, result) {
   for (let c = 0; c <= gx.count; c++) { const x = (gx.start + c * gx.period) * fit; vx.moveTo(x, gy.start * fit); vx.lineTo(x, (gy.start + gy.count * gy.period) * fit); }
   for (let r = 0; r <= gy.count; r++) { const y = (gy.start + r * gy.period) * fit; vx.moveTo(gx.start * fit, y); vx.lineTo((gx.start + gx.count * gx.period) * fit, y); }
   vx.stroke();
+  if (calib && calib.a) {
+    vx.strokeStyle = "#ff4fd8"; vx.lineWidth = 2; vx.beginPath();
+    vx.arc(calib.a[0] * fit, calib.a[1] * fit, 6, 0, Math.PI * 2); vx.stroke();
+  }
   const out = $("patResult"), ox = out.getContext("2d"), rows = result.rows;
   const cols = rows.length ? rows[0].length : 0, pitch = Math.max(2, Math.min(10, Math.floor((out.parentElement.clientWidth - 4) / Math.max(1, cols))));
   out.width = Math.max(1, cols * pitch); out.height = Math.max(1, rows.length * pitch); out.hidden = !rows.length;
@@ -1043,20 +1230,105 @@ function showPattern() {
 
 $("imgMode").addEventListener("input", () => {
   const pattern = patternMode();
+  endCalibration();
   $("silhouetteControls").hidden = pattern; $("patternControls").hidden = !pattern;
   pending = null; renderGrid(); renderPreview();
   if (!sourceImage) { $("imgStatus").className = "hint"; $("imgStatus").textContent = pattern ? PATTERN_HINT : SILHOUETTE_HINT; return; }
   pattern ? showPattern() : previewImage();
 });
-["patBg", "patEnclosed", "patMerge", "patCellW", "patCellH", "patOffX", "patOffY"].forEach(id => $(id).addEventListener("input", previewPattern));
-$("patDetect").onclick = () => { if (patternSrc) { detectGrid(); previewPattern(); } };
+["patBg", "patEnclosed", "patLines", "patMerge", "patCellW", "patCellH", "patOffX", "patOffY"].forEach(id => $(id).addEventListener("input", previewPattern));
+$("patDetect").onclick = () => { if (patternSrc) { endCalibration(); detectGrid(); previewPattern(); } };
+$("patTurn").addEventListener("change", () => { if (patternSrc) { endCalibration(); turnPattern(+$("patTurn").value || 0); detectGrid(false); previewPattern(); } });
+
+// Calibrate: click a bead's middle, then another's along the same row or column; a third click straight
+// across from the first sets the other side for cells that aren't square. Esc or Calibrate again stops.
+const CALIB_STEPS = [
+  "Click the middle of a bead.",
+  "Now the middle of another bead in the same row or column, as far along as you can.",
+  "Turn and cell size set. For cells that aren't square, click a bead straight across from the first the other way; Esc or Calibrate finishes.",
+];
+function endCalibration() {
+  calib = null;
+  $("patCalibrate").setAttribute("aria-pressed", "false"); $("patView").style.cursor = "";
+}
+$("patCalibrate").onclick = () => {
+  if (!patternSrc) return;
+  if (calib) { endCalibration(); previewPattern(); return; }
+  calib = { step: 0 };
+  $("patCalibrate").setAttribute("aria-pressed", "true"); $("patView").style.cursor = "crosshair";
+  $("imgStatus").className = "hint"; $("imgStatus").textContent = CALIB_STEPS[0];
+};
+document.addEventListener("keydown", e => { if (e.key === "Escape" && calib) { endCalibration(); previewPattern(); } });
+// Where a pointer is on the working image, in its pixels.
+function viewPoint(e) {
+  const view = $("patView"), rect = view.getBoundingClientRect(), fit = view.width / patternSrc.W;
+  return [(e.clientX - rect.left) * view.width / rect.width / fit, (e.clientY - rect.top) * view.height / rect.height / fit];
+}
+
+// Drag a box (outside Calibrate) to read just that part: one character from a sheet of them, each with its
+// own cell size and background. The box is kept in the loaded image's pixels, so turning keeps it.
+let boxDrag = null;
+$("patView").addEventListener("pointerdown", e => {
+  if (calib || !patternSrc) return;
+  const view = $("patView");
+  boxDrag = { from: viewPoint(e), to: viewPoint(e), shot: view.getContext("2d").getImageData(0, 0, view.width, view.height) };
+  view.setPointerCapture(e.pointerId);
+});
+$("patView").addEventListener("pointermove", e => {
+  if (!boxDrag) return;
+  boxDrag.to = viewPoint(e);
+  const view = $("patView"), vx = view.getContext("2d"), fit = view.width / patternSrc.W, [a, b] = boxDrag.from, [c, d] = boxDrag.to;
+  vx.putImageData(boxDrag.shot, 0, 0);
+  vx.strokeStyle = "#ff4fd8"; vx.lineWidth = 2; vx.setLineDash([6, 4]);
+  vx.strokeRect(Math.min(a, c) * fit, Math.min(b, d) * fit, Math.abs(c - a) * fit, Math.abs(d - b) * fit);
+  vx.setLineDash([]);
+});
+$("patView").addEventListener("pointerup", () => {
+  if (!boxDrag) return;
+  const [a, b] = boxDrag.from, [c, d] = boxDrag.to, { shot } = boxDrag;
+  boxDrag = null;
+  // Too small to hold a character: a click, not a box.
+  if (Math.abs(c - a) < 12 || Math.abs(d - b) < 12) { $("patView").getContext("2d").putImageData(shot, 0, 0); return; }
+  const corners = [[a, b], [c, b], [a, d], [c, d]].map(p => patternSrc.unmap(...p)), xs = corners.map(p => p[0]), ys = corners.map(p => p[1]);
+  cropPattern([Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]);
+  detectGrid(); previewPattern();
+});
+$("patUncrop").onclick = () => { if (patternSrc) { endCalibration(); cropPattern(null); detectGrid(); previewPattern(); } };
+
+$("patView").addEventListener("click", e => {
+  if (!calib || !patternSrc) return;
+  const pt = viewPoint(e);
+  const { scale } = patternSrc, set = (id, v) => { $(id).value = Math.round(v / scale * 100) / 100; };
+  const wrap = (v, size) => ((v % size) + size) % size;  // an offset within one cell
+  if (calib.step === 0) {
+    calib = { step: 1, a: pt };
+  } else if (calib.step === 1) {
+    const guess = (+$("patCellW").value || 0) * scale || 16;
+    const line = calibrateLine(calib.a, pt, +$("patApart").value, guess), first = patternSrc.unmap(...calib.a);
+    turnPattern(Math.round((patternSrc.turn + line.turn) * 10) / 10);
+    const a = patternSrc.map(...first);
+    set("patCellW", line.period); set("patCellH", line.period);
+    set("patOffX", wrap(a[0] - line.period / 2, line.period)); set("patOffY", wrap(a[1] - line.period / 2, line.period));
+    patternSrc.score = 1;
+    calib = { step: 2, a, period: line.period };
+  } else {
+    // The other side: whichever way the third click is further from the first.
+    const dx = Math.abs(pt[0] - calib.a[0]), dy = Math.abs(pt[1] - calib.a[1]), along = Math.max(dx, dy);
+    const size = along / Math.max(1, Math.round(along / calib.period));
+    if (dy >= dx) { set("patCellH", size); set("patOffY", wrap(calib.a[1] - size / 2, size)); }
+    else { set("patCellW", size); set("patOffX", wrap(calib.a[0] - size / 2, size)); }
+    endCalibration(); previewPattern(); return;
+  }
+  previewPattern();
+  $("imgStatus").className = "hint"; $("imgStatus").textContent = CALIB_STEPS[calib.step] + " " + $("imgStatus").textContent;
+});
 
 $("file").onchange = e => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
   const url = URL.createObjectURL(f), img = new Image();
   img.onload = () => {
-    URL.revokeObjectURL(url); sourceImage = img; patternSrc = patternResult = null;
+    URL.revokeObjectURL(url); sourceImage = img; patternSrc = patternResult = null; endCalibration();
     if (patternMode()) { showPattern(); return; }
     $("imgInvert").checked = false;
     // A mostly-bright brightness image is a dark subject on a light background: start inverted.
@@ -1068,7 +1340,7 @@ $("file").onchange = e => {
     previewImage();
   };
   img.onerror = () => {
-    URL.revokeObjectURL(url); sourceImage = null; pending = null; patternSrc = patternResult = null;
+    URL.revokeObjectURL(url); sourceImage = null; pending = null; patternSrc = patternResult = null; endCalibration();
     $("imgStatus").className = "hint warning"; $("imgStatus").textContent = "Could not read that image file."; renderGrid();
   };
   img.src = url;
