@@ -157,6 +157,10 @@ from display.animation.characters.tigger import (  # noqa: F401
     TiggerReveal,
 )
 
+from display.animation.characters.pooh import (  # noqa: F401
+    PoohReveal,
+)
+
 from display.animation.characters.donald import (  # noqa: F401
     DonaldReveal,
 )

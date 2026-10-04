@@ -55,16 +55,18 @@ PARK_REVEALS = ("tink", "buzz")
 # Chip scampers across with Dale chasing (the Army Men were trimmed to make room).
 # Tigger bounces across on his tail. Stitch surfs the new ride in on a wave that washes
 # the old one away. Wreck-It Ralph stomps in and smashes the old ride into falling pixels.
+# Pooh floats up on his balloon, uncovering the ride below him (Baymax was trimmed to make
+# room; Pooh also visits his own ride more often).
 # Surprises may fill up to 12% of ride screens.
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
-SURPRISES = {"genie": 0.005, "baymax": 0.012, "slinky_wrap": 0.01, "walle_side": 0.012, "army_men": 0.010,
+SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side": 0.012, "army_men": 0.010,
              "mike": 0.008, "tron": 0.008,
              "olaf": 0.005, "goofy": 0.008,
              "luxo_ball": 0.005, "mcqueen": 0.005, "mater": 0.005,
              "chip_dale": 0.005, "tigger": 0.005, "stitch_surf": 0.005,
              "ralph": 0.005, "grannies": 0.005,
-             "keepy_uppy": 0.001}
+             "keepy_uppy": 0.001, "pooh": 0.005}
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge; Mike is
 # in the rotation too, but drops in on his own Laugh Floor far more often. Jack, Sally and
@@ -73,6 +75,7 @@ SURPRISES = {"genie": 0.005, "baymax": 0.012, "slinky_wrap": 0.01, "walle_side":
 # brings a few dwarfs in their cars now and then; at a short wait the whole train comes every
 # time (see _mine_train_for_wait). Rex stomps through Toy Story Land, and the claw chooses one of
 # the Aliens on their own rides; at a wait of 5 or less it's Buzz, every time, with Woody hanging on.
+# Pooh floats through his own ride's screens.
 RIDE_VISITORS = {
     "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
     "mike": {"rides": ("laugh floor",), "chance": 0.10},
@@ -80,6 +83,7 @@ RIDE_VISITORS = {
     "mine_train": {"rides": ("seven dwarfs mine train",), "chance": 0.10},
     "rex": {"rides": ("slinky dog dash", "toy story mania", "alien swirling saucers"), "chance": 0.10},
     "aliens": {"rides": ("toy story mania", "alien swirling saucers"), "chance": 0.10},
+    "pooh": {"rides": ("winnie the pooh",), "chance": 0.10},
 }
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
