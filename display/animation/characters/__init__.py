@@ -22,6 +22,7 @@ from display.animation.characters.mine_train import MineTrainAllReveal, MineTrai
 from display.animation.characters.mike import MikeReveal
 from display.animation.characters.olaf import OlafReveal
 from display.animation.characters.ralph import RalphReveal
+from display.animation.characters.rex import RexReveal
 from display.animation.characters.slinky import SlinkyReveal, SlinkyWrapReveal
 from display.animation.characters.stitch import StitchSurfReveal
 from display.animation.characters.tink import TinkReveal
@@ -59,4 +60,5 @@ TRANSITIONS = {
     "mine_train_snow": MineTrainSnowReveal,
     "grannies": GranniesReveal,
     "keepy_uppy": KeepyUppyReveal,
+    "rex": RexReveal,
 }
