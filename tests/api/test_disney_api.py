@@ -23,6 +23,7 @@ from api.disney_api import (
     forecast_wait_now,
     parse_showtimes,
     show_start_due,
+    actual_park_closing_time,
     park_has_operating_attraction,
     update_parks_operating_status,
     handle_park_schedule_update,
@@ -665,6 +666,136 @@ def test_park_has_operating_attraction_fresh_past_closing_time(monkeypatch):
         ]
     }
     assert park_has_operating_attraction(park) is True
+
+# ---- Actual park closing time: the park day's last close, party included ----
+
+def _entry(date, kind, opens, closes, description=""):
+    return {"date": date, "type": kind, "description": description,
+            "openingTime": opens, "closingTime": closes}
+
+# Magic Kingdom's real shape (2026-10-04), with the party running until 1am.
+PARTY_NIGHT = [
+    _entry("2026-10-04", "TICKETED_EVENT", "2026-10-04T07:30:00-04:00", "2026-10-04T08:00:00-04:00", "Early Entry"),
+    _entry("2026-10-04", "OPERATING", "2026-10-04T08:00:00-04:00", "2026-10-04T18:00:00-04:00"),
+    _entry("2026-10-04", "TICKETED_EVENT", "2026-10-04T19:00:00-04:00", "2026-10-05T01:00:00-04:00",
+           "Special Ticketed Event"),
+]
+NEXT_DAY = [
+    _entry("2026-10-05", "TICKETED_EVENT", "2026-10-05T08:30:00-04:00", "2026-10-05T09:00:00-04:00", "Early Entry"),
+    _entry("2026-10-05", "OPERATING", "2026-10-05T09:00:00-04:00", "2026-10-05T23:00:00-04:00"),
+]
+
+
+def _at(when):
+    return datetime.fromisoformat(when)
+
+
+def _park(schedule, minutes_ago=0, status="OPERATING"):
+    """A park with one ride whose live data was last updated minutes_ago before 2026-10-04 18:30 EDT
+    (callers that need another reference time give an absolute lastUpdatedTs)."""
+    return {"name": "Magic Kingdom", "schedule": schedule,
+            "attractions": [{"name": "Space Mountain", "waitTime": "40", "status": status,
+                             "lastUpdatedTs": (_at("2026-10-04T18:30:00-04:00") - timedelta(minutes=minutes_ago)).isoformat()}]}
+
+
+@pytest.mark.parametrize("now, expected", [
+    ("2026-10-04T12:00:00-04:00", "2026-10-05T01:00:00-04:00"),  # the party's close, not 6pm
+    ("2026-10-04T18:30:00-04:00", "2026-10-05T01:00:00-04:00"),  # between regular close and party
+    ("2026-10-05T00:30:00-04:00", "2026-10-05T01:00:00-04:00"),  # after midnight: still Oct 4's day
+    ("2026-10-05T03:00:00-04:00", "2026-10-05T01:00:00-04:00"),  # Oct 5 hasn't opened yet
+    ("2026-10-05T10:00:00-04:00", "2026-10-05T23:00:00-04:00"),  # Oct 5 is now the day in progress
+])
+def test_actual_park_closing_time_is_the_park_days_last_close(now, expected):
+    park = {"schedule": PARTY_NIGHT + NEXT_DAY}
+    assert actual_park_closing_time(park, _at(now)) == _at(expected)
+
+
+def test_actual_park_closing_time_normal_night_is_the_regular_close():
+    park = {"schedule": NEXT_DAY}
+    assert actual_park_closing_time(park, _at("2026-10-05T12:00:00-04:00")) == _at("2026-10-05T23:00:00-04:00")
+
+
+@pytest.mark.parametrize("schedule", [
+    [],
+    None,
+    [{"type": "OPERATING", "date": "2026-10-04", "openingTime": "09:00", "closingTime": "22:00"}],  # no dates
+    [{"type": "OPERATING", "date": "2026-10-04"}],  # no times at all
+    [_entry("2026-10-04", "OPERATING", "2026-10-04T09:00:00", "2026-10-04T22:00:00")],  # no timezone
+])
+def test_actual_park_closing_time_none_without_a_usable_schedule(schedule):
+    assert actual_park_closing_time({"schedule": schedule}, _at("2026-10-04T12:00:00-04:00")) is None
+
+
+def test_park_open_after_midnight_until_the_party_ends():
+    park = _park(PARTY_NIGHT)
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T00:25:00-04:00"
+    assert park_has_operating_attraction(park, _at("2026-10-05T00:30:00-04:00")) is True
+
+
+def test_park_open_through_the_closing_grace():
+    park = _park(PARTY_NIGHT)
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T01:10:00-04:00"
+    assert park_has_operating_attraction(park, _at("2026-10-05T01:29:00-04:00")) is True
+
+
+def test_park_closed_after_the_actual_closing_time_even_with_fresh_operating_rides():
+    """The stuck-open park: the feed still says OPERATING, updated a minute ago, after the party."""
+    park = _park(PARTY_NIGHT)
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T01:44:00-04:00"
+    assert park_has_operating_attraction(park, _at("2026-10-05T01:45:00-04:00")) is False
+
+
+def test_park_open_between_regular_close_and_party_with_quiet_data():
+    """Within the schedule, a quiet half hour (no ride changed in 20 min) doesn't close the park."""
+    park = _park(PARTY_NIGHT, minutes_ago=45)
+    assert park_has_operating_attraction(park, _at("2026-10-04T18:30:00-04:00")) is True
+
+
+def test_park_closed_overnight_until_the_next_opening():
+    park = _park(PARTY_NIGHT + NEXT_DAY)
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T07:59:00-04:00"
+    assert park_has_operating_attraction(park, _at("2026-10-05T08:00:00-04:00")) is False
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T08:44:00-04:00"
+    assert park_has_operating_attraction(park, _at("2026-10-05T08:45:00-04:00")) is True
+
+
+def test_park_closed_before_the_first_opening():
+    park = _park(NEXT_DAY)
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T05:59:00-04:00"
+    assert park_has_operating_attraction(park, _at("2026-10-05T06:00:00-04:00")) is False
+
+
+def test_stale_schedule_falls_back_to_freshness():
+    """Only yesterday's schedule (the refresh failed) and the park is open again today: the
+    schedule isn't trusted 9 hours after its close, so fresh live data decides."""
+    park = _park(PARTY_NIGHT)
+    now = _at("2026-10-05T10:00:00-04:00")
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T09:58:00-04:00"
+    assert park_has_operating_attraction(park, now) is True
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T09:00:00-04:00"
+    assert park_has_operating_attraction(park, now) is False
+
+
+def test_stale_schedule_trusted_for_a_few_hours_after_close():
+    park = _park(PARTY_NIGHT)
+    park["attractions"][0]["lastUpdatedTs"] = "2026-10-05T05:59:00-04:00"
+    assert park_has_operating_attraction(park, _at("2026-10-05T06:00:00-04:00")) is False
+
+
+def test_update_parks_operating_status_stores_actual_park_closing_time(monkeypatch):
+    park = _park(PARTY_NIGHT)
+    park["schedule_date"] = datetime.now().strftime("%Y-%m-%d")  # no daily refresh
+    monkeypatch.setattr("api.disney_api.handle_park_schedule_update", lambda p: None)
+    update_parks_operating_status([park])
+    assert park["actualParkClosingTime"] == "2026-10-05T01:00:00-04:00"
+
+
+def test_update_parks_operating_status_actual_park_closing_time_empty_without_schedule(monkeypatch):
+    park = _park([])
+    monkeypatch.setattr("api.disney_api.handle_park_schedule_update", lambda p: None)
+    update_parks_operating_status([park])
+    assert park["actualParkClosingTime"] == ""
+
 
 def test_handle_park_schedule_update(monkeypatch):
     park = {"name": "Test Park", "id": "dummy-id", "schedule": []}
