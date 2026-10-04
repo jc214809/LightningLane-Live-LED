@@ -15,7 +15,7 @@ Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter
 Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
 Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
-(`jack_sally`), and the Seven Dwarfs Mine Train with Snow White (`mine_train`).
+(`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), and Rex (`rex`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -36,7 +36,7 @@ Put a ✅ in the Done column when a character ships.
 | 13 | ✅ | Pixar Ball | DHS: Pixar Place, Toy Story Land | bounces in with Luxo (#4), one of three stories | Standalone (`luxo_ball`) |
 | 14 | ✅ | Green Army Men | DHS: Toy Story Land | parachute in, land, chutes slump, hop off in step on their bases | New: top-down drop reveal |
 | 15 | ✅ | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, skids to a stop, peels out leaving speed streaks | Drive-by (`mcqueen`) |
-| 16 | | Rex | DHS: Toy Story Land | stomps in, tail-swipes the old screen off the board, looks sheepish and runs | Wreck (`wants_prev`) |
+| 16 | ✅ | Rex | DHS: Toy Story Land | stomps in, stops mid-board and roars, jaw wide and the board shaking, then stomps off | Walk-in (`rex`, `wants_new` for the shake) |
 | 17 | ✅ | Goofy | MK: The Barnstormer | flies his biplane through a loop-the-loop, towing a YAHOOEY! banner | Fly-by (loop) |
 | 18 | | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
 | 19 | | R2-D2 | DHS: Galaxy's Edge | rolls across on his treads, dome swivelling, light blinking | Fly-by |
@@ -270,35 +270,17 @@ his bolt. A four-point "Ka-chow" sparkle was tried and dropped: at this size it 
 to keep surprises under 10% with him and Mater in). Built as a separate surprise from
 Mater (#32).
 
-**16. Rex.** A strong silhouette for the board: a big head with an open jaw, tiny arms, a
-long tail, and a bright yellow-green body that stands out on black. He's the second
-character to use the wreck mechanic (`wants_prev`, like Ralph), so on a Pi the old screen
-has to be captured through `capture_screen()`.
-
-Decided:
-- Motion: he stomps in from one edge over the old screen, stops mid-board and turns, and
-  one big tail swing clears the screen.
-- Pixels: the tail bats them off sideways, in the direction of the swing, and they tumble
-  off the edge under gravity. That keeps it distinct from Ralph's shatter-and-fall.
-- Personality: after the swipe he glances back at the mess, looks sheepish and scurries
-  off with his arms flailing.
-- Framing: full body in profile so the tail and tiny arms show, with the head turned
-  three-quarters so both eyes and the open mouth read (the face lesson from Slinky, see
-  CHARACTERS.md). Roughly 30x24 cells.
-- Frequency: joins the regular `SURPRISES` rotation.
-
-Reference: [Rex.jpg](docs/references/Rex.jpg), 61x51. Too tall for 64x32 as is, so 64x32
-needs a redraw; on 64x64 it fits, but at 61 of 64 columns it leaves his tail swing no room
-(the planned 30x24 would need a redraw on both boards).
-
-Still open:
-- Size on 64x64: render 1x and 2x and pick from the renders. 2x likely fills the board and
-  leaves the swing no room.
-- Colour: his green must stay distinct from the Army Men's (#14) if both appear.
-- Timing: with the entrance, swipe and sheepish exit it's probably 3-4s; time each beat
-  once it's drawn.
-- Chance in `SURPRISES`, and whether he gets a boosted chance on Toy Story Land rides (#3
-  below).
+**~~16. Rex.~~ Done** (`RexReveal`, `"rex"`, in `disney.RIDE_VISITORS`). From the user's art,
+cell for cell, one per board: 38x32 for 64x32 (the board's full height) and 61x51 for 64x64
+(the size of [Rex.jpg](docs/references/Rex.jpg)), both 1x. Decided with the user (2026-10-03),
+replacing the earlier tail-swipe wreck plan: he stomps in from the left (the art faces left,
+so he's mirrored), uncovering the new ride behind him, feet stepping (`walking_pixels`); stops mid-board, tips
+his head back, his jaw swings open and he roars while the whole board, ride included, shakes a pixel a frame;
+then shuts his mouth and stomps off the right. The open jaw is worked out from the art
+(`_open_jaw`: a shear about a hinge column, the gap filled with his mouth), so editing the
+art in the sprite editor keeps the roar working. About 5s, so the ride screen holds 3s after
+him. Only on Toy Story Land's rides (Slinky Dog Dash, Toy Story Mania!, Alien Swirling
+Saucers), 1 in 10 of their screens: `SURPRISES` was at 11.9% of its 12% cap.
 
 **17. Goofy.** Flies his biplane across the board, a nod to The Barnstormer, his coaster in
 Magic Kingdom's Storybook Circus. The plane is a bold, simple shape that carries the fly-by,
@@ -688,7 +670,8 @@ ride on screen matches. For example: Buzz on Buzz Lightyear's Space Ranger Spin,
 Dumbo the Flying Elephant, Figment on Journey Into Imagination with Figment, Slinky on
 Slinky Dog Dash, Genie on The Magic Carpets of Aladdin, Mickey on Mickey & Minnie's Runaway
 Railway, WALL-E on (to decide), and each new character on theirs (TRON, Olaf, Mike, Remy,
-the Ghosts, the banshee, Nemo, the Pixar Ball, Army Men and Rex on Toy Story Land rides).
+the Ghosts, the banshee, Nemo, the Pixar Ball and Army Men on Toy Story Land rides). Rex is
+built as a Toy Story Land visitor.
 
 Trigger idea: Lightning McQueen more likely on the rides with the longest waits or a
 Lightning Lane price.

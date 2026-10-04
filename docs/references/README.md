@@ -50,7 +50,7 @@ height, or within a row or two of it, so there's no room for anything under him.
 | [Oogie Boogie.jpg](<Oogie Boogie.jpg>) | Oogie Boogie | 44 x 50 | No | Yes | |
 | [woody.jpg](woody.jpg) | Woody | 32 x 50 | No | Yes | |
 | [jessie.jpg](jessie.jpg) | Jessie | 31 x 51 | No | Yes | |
-| [Rex.jpg](Rex.jpg) | Rex | 61 x 51 | No | Yes | |
+| [Rex.jpg](Rex.jpg) | Rex | 61 x 51 | No | Yes | `rex` on 64x64 |
 | [max-and-roxanne.png](max-and-roxanne.png) | Max and Roxanne | about 30 x 53 each | No | Yes | |
 | [Pooh and Balloon.jpg](<Pooh and Balloon.jpg>) | Pooh with his balloon | 20 x 64 | No | Tight | |
 | [Potato heads.jpg](<Potato heads.jpg>) | Mr. and Mrs. Potato Head | 65 x 40 together, about 32 x 40 each | No | One at a time | |

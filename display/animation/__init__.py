@@ -131,6 +131,10 @@ from display.animation.characters.ralph import (  # noqa: F401
     RalphReveal,
 )
 
+from display.animation.characters.rex import (  # noqa: F401
+    RexReveal,
+)
+
 from display.animation.characters.slinky import (  # noqa: F401
     SlinkyReveal,
     SlinkyWrapReveal,

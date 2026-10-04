@@ -345,6 +345,27 @@ def test_the_falcon_never_visits_other_rides(monkeypatch, screens):
     assert screens[-1]["transition"] != "falcon"
 
 
+@pytest.mark.parametrize("ride", ["Slinky Dog Dash", "Toy Story Mania!", "Alien Swirling Saucers"])
+def test_rex_stomps_through_toy_story_land_one_time_in_ten(monkeypatch, screens, ride):
+    assert "rex" not in disney.SURPRISES, "only on his own land's rides"
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": ride, "waitTime": 45, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.09)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.12)  # past the visitor and, under the cap, every surprise
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert [s["transition"] for s in screens[-2:]] == ["rex", "wipe"]
+
+
+def test_rex_never_visits_other_rides(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": "Tower of Terror", "waitTime": 30,
+                                                         "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] != "rex"
+
+
 PARTY_MEET = "Meet Jack Skellington and Sally at Mickey's Not-So-Scary Halloween Party"
 
 

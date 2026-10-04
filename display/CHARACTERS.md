@@ -268,6 +268,28 @@ sells the character, then size him to hold it.
 - **Bluey and Bingo** (`grannies`, `keepy_uppy`) — the Grannies from one grid pattern of the
   pair, Keepy Uppy from a grid pattern of Bingo and a bead photo of Bluey; each board got its own
   art. Both landed in a couple of rounds; the motion, not the art, needed the second look.
+- **Rex** (`rex`) — the user's art for each board went on cell for cell; only the roar needed
+  drawing. His first open jaw read as a stripe across his face; it read as a roar once it
+  swung wider at the front than the hinge and the teeth went with the lower jaw.
+
+## Rex: what worked
+
+- **Open a mouth by swinging the jaw, not by drawing a second head.** `_open_jaw` shears the
+  lower jaw down (and, where there's room above, the snout up) about a hinge column, more at
+  the front of the face, and fills the gap with his mouth, nearly off: the user asked why it
+  was red inside, and a dark gap between the teeth reads as a roar without a colour of its own. It's worked out from the art,
+  so a redraw in the sprite editor keeps the roar.
+- **A mouth wants a wedge and teeth on its edge.** Opened evenly, the mouth was a band across his
+  face that could have been a tongue or a scarf. Wider at the front, with teeth on both edges (the art's tooth row
+  on the lower jaw, and a matching tooth above each one on the upper jaw), it's a roar.
+- **Tip the head back by rotating it about the neck.** The user asked for his head back on the
+  roar: `_roar_pose` turns the head (jaw and mouth included) about his neck, snout up and crown
+  back, sampling each board cell from the art so no holes open. The head's back near the neck
+  stays drawn underneath, or the turn leaves a gap there. Where the board's top is in the way
+  (64x32), the head sinks into his neck the rows it needs instead of losing his crest.
+- **Shaking the board means repainting the ride.** The new screen is already drawn underneath,
+  so a knocked frame paints the captured ride (`wants_new`) at the offset, black included, or
+  the steady copy shows through at the edges.
 
 ## Bluey and Bingo: what worked
 

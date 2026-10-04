@@ -71,12 +71,13 @@ SURPRISES = {"genie": 0.005, "baymax": 0.012, "slinky_wrap": 0.01, "walle_side":
 # Zero turn up on their own meet, which is only listed on Halloween party nights ("jack
 # skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too). The Mine Train
 # brings a few dwarfs in their cars now and then; at a short wait the whole train comes every
-# time (see _mine_train_for_wait).
+# time (see _mine_train_for_wait). Rex stomps through Toy Story Land.
 RIDE_VISITORS = {
     "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
     "mike": {"rides": ("laugh floor",), "chance": 0.10},
     "jack_sally": {"rides": ("meet jack skellington",), "chance": 0.5},
     "mine_train": {"rides": ("seven dwarfs mine train",), "chance": 0.10},
+    "rex": {"rides": ("slinky dog dash", "toy story mania", "alien swirling saucers"), "chance": 0.10},
 }
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
