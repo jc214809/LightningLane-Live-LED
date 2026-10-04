@@ -76,6 +76,8 @@ Put a ✅ in the Done column when a character ships.
 | 53 | ✅ | Zero | Halloween party nights: the Jack and Sally meet | floats across as the wipe, his nose glowing | Standalone (`jack_sally`) |
 | 54 | | Bullseye | DHS: Toy Story Land | gallops across, Woody (#51) riding | Fly-by |
 | 55 | | RC | DHS: Toy Story Land | races across, wheels spinning | Drive-by |
+| 56 | ✅ | Bluey and Bingo as the Grannies | none (Bluey; a surprise anywhere) | shuffle slowly across side by side in their granny dressing gowns, Bingo lifting and planting her walker; the new screen appears behind them | Wipe (walk-across, `grannies`) |
+| 57 | ✅ | Bluey and Bingo, Keepy Uppy | none (Bluey; a surprise anywhere) | run in after a red balloon, face each other and take turns batting it up, then chase it off | Wipe (run-across, `keepy_uppy`) |
 
 ### Notes per character
 
@@ -624,6 +626,41 @@ flames, red hubs, big black tyres, as with the Falcon); and a small RC on
 
 Questions: traced from the pin, or the sheet's; does anyone ride him; a drive-by like
 McQueen (#15).
+
+**56. Bluey and Bingo as the Grannies (Janet and Rita).** Reference:
+[bluey_bingo_grannies.png](docs/references/bluey_bingo_grannies.png), a grid pattern: Bingo in
+the purple gown with curlers (with her walking frame) about 26x31, Bluey in the red gown about
+21x38. The pair is about 50 wide.
+
+Decided (2026-10-03):
+- A ride-screen surprise (`SURPRISES`).
+- They shuffle slowly left to right side by side with a little bob, and the new screen is
+  revealed behind them (a wipe).
+- One pattern about 24 rows tall, 1x on both boards (`SCALE = 1`), redrawn from the reference
+  (too tall to copy cell for cell on 64x32).
+
+**57. Bluey and Bingo, Keepy Uppy.** References: [bingo.png](docs/references/bingo.png), a
+grid pattern of Bingo waving, about 40x54; [bluey_beads.png](docs/references/bluey_beads.png),
+a photo of beads (no grid; slow to transcribe), about 30x36.
+
+Decided (2026-10-03):
+- A ride-screen surprise (`SURPRISES`).
+- The balloon floats in; they run in and take turns hitting it up a few times while moving
+  across, then chase it off the far edge. The new screen is revealed behind them (a wipe).
+- One pattern of each about 24 rows tall, 1x on both boards (`SCALE = 1`), redrawn from the
+  references.
+
+Built (2026-10-03), changed from the plan above while building:
+- **Grannies** (`grannies`, 0.005): 64x64 got the pattern cell for cell; only 64x32 is the
+  24-row redraw. Bluey is mirrored to face the way they walk. A steady pixel a frame was "way too
+  fast for granny": Bingo now goes a step at a time (the walker lifts and plants a step ahead,
+  her sleeve stretching after it, then she shuffles up), about 10 px/s, 10.4s to cross, with
+  `hold_after_s` keeping the ride up 3s after.
+- **Keepy Uppy** (`keepy_uppy`, 0.001, so nobody else was trimmed; `SURPRISES` is 11.9%): they
+  play in the middle rather than while crossing, facing each other, then turn and chase it off.
+  44 rows with arms out was 69 wide, so 64x64 has Bluey bead for bead from the photo (28x32) and
+  Bingo shrunk from her pattern (22x29); 64x32 has both redrawn about 20 rows. The balloon is red,
+  8x8 on 64x32 and 14x14 on 64x64 (tripled from the first mock, then 70% of that).
 
 ### Ideas for using them
 

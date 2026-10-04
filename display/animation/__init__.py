@@ -60,6 +60,11 @@ from display.animation.characters.baymax import (  # noqa: F401
     BaymaxReveal,
 )
 
+from display.animation.characters.bluey import (  # noqa: F401
+    GranniesReveal,
+    KeepyUppyReveal,
+)
+
 from display.animation.characters.buzz import (  # noqa: F401
     BuzzReveal,
 )
