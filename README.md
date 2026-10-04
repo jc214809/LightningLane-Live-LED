@@ -9,9 +9,9 @@ LightningLane-Live-LED is a Python application designed to fetch and display wai
 - **API Integration:**  
   Retrieves park data and attraction details for Walt Disney World, Cedar Point, Kings Island, and any other destination supported by the ThemeParks Wiki API. Parks are configured by name in `config.json`.
 - **Real-Time WebSocket Updates:**  
-  When a ThemeParks API key is configured (or `websocket_only` is enabled — see [below](#themeparks-api-key-recommended)), live wait times are delivered via a persistent WebSocket connection (`wss://ws.themeparks.wiki/v1/live`) for instant updates as attraction statuses change. The app performs an initial REST fetch at startup to populate all data, then hands off to the WebSocket for ongoing updates. The connection is self-healing: a dead or silently-stalled connection is detected and reconnected automatically (typically within 2 minutes), with a REST refresh triggered afterward to catch any changes missed during the outage.
-- **Polling Fallback:**  
-  Without an API key, the app falls back to polling the REST API every 5 minutes for live wait times.
+  With a ThemeParks API key configured (see [below](#websocket-recommended)), live wait times arrive over a persistent WebSocket connection (`wss://api.themeparks.wiki/v1/live`) as attraction statuses change. The app performs an initial REST fetch at startup to populate all data, then the WebSocket delivers ongoing updates. The connection is self-healing: a dead or silently-stalled connection is detected and reconnected automatically (typically within 2 minutes), with a REST refresh triggered afterward to catch any changes missed during the outage.
+- **REST Polling:**  
+  The REST API is polled every 5 minutes, with or without a key. Without one, that's how wait times update; with one, it's the backstop if the WebSocket is down.
 - **Dynamic Display Rendering:**  
   Renders park details, character meet and greets (w/ Wait Times) and ride information with dynamic text wrapping and spacing on an LED matrix.
 - **Trip Countdown:**  
@@ -25,7 +25,7 @@ LightningLane-Live-LED is a Python application designed to fetch and display wai
 
 ## Prerequisites
 
-- **Python 3.9+**
+- **Python 3.11+**
 - **Pip** package manager
 
 **Currently supported board configurations:**
@@ -66,28 +66,34 @@ This installation process will take about 10-15 minutes. Raspberry Pis aren't th
 This will create a Python Virtual Environment and install all of the required dependencies. The
 virtual environment will be located at `LightningLane-Live-LED/venv/`.
 
+The installer doesn't create your config. Copy the example and fill in your parks, keys and trip dates (see [WebSocket](#websocket-recommended), [Configuring Parks](#configuring-parks) and [Weather](#weather)):
+
+```bash
+cp config.json-example config.json
+```
+
 This will install the rgbmatrix binaries, which we get from [another open source library](https://github.com/hzeller/rpi-rgb-led-matrix/tree/master/bindings/python#building). It controls the actual rendering of the scoreboard onto the LEDs. If you're curious, you can read through their documentation on how all of the lower level stuff works.
 
 It will also install the following python libraries that are required for certain parts of the scoreboard to function.
 
 * [RGBMatrixEmulator](https://github.com/ty-porter/RGBMatrixEmulator): The emulation library for the matrix display. Useful for running on MacOS or Linux, or for development.
-
-Future Enhancements:
-* [pyowm](https://github.com/csparpa/pyowm): OpenWeatherMap API interactions. We use this to get the local weather for display on the offday screen. For more information on how to finish setting up the weather, visit the [weather section](#weather) of this README.
+* [pyowm](https://github.com/csparpa/pyowm): OpenWeatherMap API interactions. We use this to get the current weather at each park. For more information on how to finish setting up the weather, visit the [weather section](#weather) of this README.
 
 #### Customizing the Installation
 
 Additional flags are available for customizing your install:
 
 ```
--a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m).
--c, --skip-config       Skip updating JSON configuration files.
+-a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m -v).
+-c, --skip-config       Skip updating JSON configuration files. (Currently no effect: the installer never changes config.json.)
 -m, --skip-matrix       Skip building matrix driver dependency. Video display will default to emulator mode.
 -p, --skip-python       Skip Python 3 installation. Requires manual Python 3 setup if not already installed.
 
 -v, --no-venv           Do not create a virtual environment for the dependencies.
 -e, --emulator-only     Do not install dependencies under sudo. Skips building matrix dependencies (equivalent to -m)
--d, --driver            Specify a branch name or commit SHA for the rpi-rgb-led-matrix library. (Optional. Defaults may change.)
+-d, --driver            Specify a branch name or commit SHA for the rpi-rgb-led-matrix library. (Default: master)
+
+-f, --force             Try to skip most errors and force install. May be able to recover from previous installer errors.
 
 -h, --help              Display this help message
 ```
@@ -102,8 +108,8 @@ sh LLL-install.sh --emulator-only
 
 #### Updating
 * Run `git pull` in your LightningLane-Live-LED folder to fetch the latest changes. A lot of the time, this will be enough, but if something seems broken:
-    * **Re-run the install file**. Run `sudo ./LLL-install.sh` again. Any additional dependencies that were added with the update will be installed this way. If you are moving to a new major release version, answer "Y" to have it make you a new config file.
-    * **Check your custom layout/color files if you made any**. There's a good chance some new keys were added to the layout and color files. These changes should just merge right in with the customized .json file you have but you might want to look at the new .json.example files and see if there's anything new you want to customize.
+    * **Re-run the install file**. Run `sudo ./LLL-install.sh` again. Any additional dependencies that were added with the update will be installed this way.
+    * **Check your `config.json`**. The installer never changes it, so new options won't appear on their own. Compare it with `config.json-example` and copy over anything new you want to use.
 
 That should be it! Your latest version should now be working with whatever new fangled features were just added.
 
@@ -158,20 +164,19 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --led-brightness          Sets brightness level. Range: 1..100. (Default: 100)
 --led-gpio-mapping        Hardware Mapping: regular, adafruit-hat, adafruit-hat-pwm
 --led-scan-mode           Progressive or interlaced scan. 0 = Progressive, 1 = Interlaced. (Default: 1)
---led-pwm-lsb-nanosecond  Base time-unit for the on-time in the lowest significant bit in nanoseconds. (Default: 130)
+--led-pwm-lsb-nanoseconds Base time-unit for the on-time in the lowest significant bit in nanoseconds. (Default: 130)
 --led-show-refresh        Shows the current refresh rate of the LED panel.
 --led-slowdown-gpio       Slow down writing to GPIO. Range: 0..4. (Default: 1)
 --led-no-hardware-pulse   Don't use hardware pin-pulse generation.
 --led-rgb-sequence        Switch if your matrix has led colors swapped. (Default: RGB)
 --led-panel-type          Chipset initialization for panels that need it: FM6126A or FM6127. (Default: none)
 --led-pixel-mapper        Apply pixel mappers. e.g Rotate:90, U-mapper
---led-row-addr-type       0 = default; 1 = AB-addressed panels. (Default: 0)
+--led-row-addr-type       0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels. (Default: 0)
 --led-multiplexing        Multiplexing type: 0 = direct; 1 = strip; 2 = checker; 3 = spiral; 4 = Z-strip; 5 = ZnMirrorZStripe; 6 = coreman; 7 = Kaler2Scan; 8 = ZStripeUneven. (Default: 0)
 --led-limit-refresh       Limit refresh rate to this frequency in Hz. Useful to keep a constant refresh rate on loaded system. 0=no limit. Default: 0
 --led-pwm-dither-bits     Time dithering of lower bits (Default: 0)
---config                  Specify a configuration file name other, omitting json xtn (Default: config)
 --emulated                Force the scoreboard to run in software emulation mode.
---drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: true)
+--drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: false)
 ```
 
 ### Waveshare P5 64×32 panel
@@ -198,23 +203,27 @@ sudo ./disney.py \
 
 The panel also needs its own 5V power connection. `--led-panel-type` needs an rpi-rgb-led-matrix build that supports panel types; if startup logs "Your compiled RGB Matrix Library is out of date", rebuild the driver with `sudo ./LLL-install.sh -c -p -f`.
 
-### ThemeParks API Key (Recommended)
+### WebSocket (Recommended)
 
-To enable real-time WebSocket updates, add a ThemeParks API key to `config.json`:
+Real-time WebSocket updates need a ThemeParks API key.
 
-```json
-"themeparks_api_key": "your-api-key-here"
-```
-
-Without this key the app falls back to polling the REST API every 5 minutes. With it, attraction status changes appear on the display within seconds. You can request an API key from the [ThemeParks Wiki](https://api.themeparks.wiki).
-
-If you'd rather not use an API key, you can still enable WebSocket mode by setting `websocket_only` to `true` in `config.json`:
+**Getting a key:**
+1. Sign in at [ThemeParks.wiki](https://themeparks.wiki).
+2. Open your [profile](https://themeparks.wiki/profile) and generate an API key.
+3. Add it to the `websocket` section of `config.json`:
 
 ```json
-"websocket_only": true
+"websocket": {
+  "enabled": true,
+  "api_key": "your-api-key-here"
+}
 ```
 
-This connects to the same public WebSocket feed without sending an API key. Leave both `themeparks_api_key` unset (or set to the placeholder value) and `websocket_only: false` to use REST polling only.
+With it, attraction status changes appear on the display within seconds. Set `enabled` to `false` to turn the WebSocket off and keep the key. Without a key (unset, empty, or the `<...>` placeholder), the app polls the REST API every 5 minutes, which needs no key; the WebSocket server closes connections that don't send one.
+
+The app subscribes to each resort your parks belong to, once for attractions and once for shows, so restaurant updates never reach the board. Each resort uses two of the 15 subscriptions a key allows, so parks from up to seven resorts fit on one key.
+
+A `config.json` from before this section, with a top-level `"themeparks_api_key"`, still works: the WebSocket uses that key until you move it into `websocket.api_key`.
 
 #### WebSocket Connection Health
 
@@ -236,16 +245,18 @@ By default the app shows all four Walt Disney World theme parks. You can configu
 
 Leave the list empty to default to all Walt Disney World parks.
 
-### Weather (Future Enhancement)
- The weather API we use is from OpenWeatherMaps. OpenWeatherMaps API requires an API key to fetch this data so you will need to take a quick minute to sign up for an account and copy your own API key into your `config.json`.
+### Weather
+The current weather at each park comes from OpenWeatherMap, which requires an API key, so you will need to take a quick minute to sign up for an account and copy your own API key into your `config.json`.
 
-You can find the signup page for OpenWeatherMaps at [https://home.openweathermap.org/users/sign_up](https://home.openweathermap.org/users/sign_up). Once logged in, you'll find an `API keys` tab where you'll find a default key was already created for you. You can copy this key and paste it into the `config.json` under `"weather"`, `"apikey"`.
+You can find the signup page for OpenWeatherMap at [https://home.openweathermap.org/users/sign_up](https://home.openweathermap.org/users/sign_up). Once logged in, you'll find an `API keys` tab where you'll find a default key was already created for you. You can copy this key and paste it into the `config.json` under `"weather"`, `"apikey"`.
 
-You can change the location used by entering your city, state, and country code separated by commas. If you wish to use metric measurements, set the `"metric"` option to `true`.
+There's nothing else to set: each park's location comes from the ThemeParks Wiki data.
 
-## Sources
-This project relies on two libraries:
-[rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix) is the library used for making everything work with the LED board.
+## Sources and Credits
+This project relies on:
+* [ThemeParks.wiki](https://themeparks.wiki): every park, attraction, wait time, showtime and schedule on the board comes from its free API and live WebSocket feed. Huge thanks to the ThemeParks.wiki project for building and running it. If this board is useful to you, consider supporting them.
+* [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix), the library used for making everything work with the LED board.
+* [OpenWeatherMap](https://openweathermap.org), for the weather at each park.
 
 ### Accuracy Disclaimer
 The API uses realtime data but could change at any point.
@@ -255,20 +266,13 @@ If you run into any issues and have steps to reproduce, open an issue. If you ha
 
 ### Updating Dependencies
 
-Dependencies requirements are managed using `pipreqs`. If you are adding or making a change to a dependency (such as updating its version), make sure to update the requirements file with `pipreqs`:
-
-```sh
-# If not already installed
-pip3 install pipreqs
-
-pipreqs . --force
-```
+Edit `requirements.txt` (what the boards need) and the `dependencies` list in `pyproject.toml` by hand, and keep them in sync. Test tools go in `requirements-dev.txt`. Don't use `pipreqs`: it rewrites `requirements.txt` from imports and drops the version caps the boards rely on (such as `Pillow<12`).
 
 ### Running Tests
 
-Unit tests are written with `pytest`. After installing the project
-dependencies, you can run the entire test suite from the repository
-root directory with:
+Unit tests are written with `pytest`. Install the app plus the test
+tools (`pip install -r requirements-dev.txt`), then run the entire test
+suite from the repository root directory with:
 
 ```sh
 pytest
@@ -281,20 +285,3 @@ This project as of v0.1.0 uses the GNU Public License. If you intend to sell the
 The original version of this board
 
 Inspired by this board project MLB-LED-Scoreboard [here](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard),also check out the [NHL scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) 🏒
-
-
-
-Putty Command
-64x64
-sudo /home/admin/LED-LightningLane-Live/venv/bin/python disney.py --led-cols=64 --led-rows=64 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
-
-sudo ./disney.py --emulated --led-cols=64 --led-rows=32 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
-sudo ./disney.py --led-cols=64 --led-rows=32 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
-
-64x32
-sudo /home/admin/LED-LightningLane-Live/venv/bin/python disney.py --led-cols=64 --led-rows=32 --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2
-
-
-sudo ./disney.py  --emulated --led-cols=64 --led-rows=32
-
-sudo ./LLL-install.sh -p -c -m

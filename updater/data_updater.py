@@ -28,7 +28,7 @@ def merge_live_data(existing_attractions, new_live_data):
             existing = attraction_map[attr_id]
             existing.update({
                 key: new_attr[key]
-                for key in ("waitTime", "status", "lastUpdatedTs", "forecast", "showtimes")
+                for key in ("waitTime", "status", "lastUpdatedTs", "updateSource", "forecast", "showtimes")
                 if key in new_attr
             })
 

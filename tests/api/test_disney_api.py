@@ -484,6 +484,7 @@ def test_build_live_updates_operating_attraction():
         "id": "attr-1",
         "status": "OPERATING",
         "lastUpdatedTs": "2023-10-01T12:00:00Z",
+        "updateSource": "rest",
         "waitTime": 45,
     }]
 

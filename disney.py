@@ -20,7 +20,7 @@ from display.landmarks import landmark_for, landmark_screen
 from utils.special_events import active_party, fireworks_show
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
-from updater.websocket_updater import websocket_live_updater
+from updater.websocket_updater import websocket_live_updater, websocket_settings
 from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
@@ -93,6 +93,32 @@ forced_surprise = None
 FIREWORKS_SHOW_S = 5 * 60
 _shows_played = set()
 
+def start_live_updaters(config, disney_park_list, update_interval, parks_data):
+    """Start the REST thread, and the WebSocket thread only when config.json's "websocket"
+    section enables it with a real key: without one the server closes the connection,
+    so it isn't opened at all."""
+    use_websocket, api_key = websocket_settings(config)
+
+    update_thread = threading.Thread(
+        target=live_data_updater,
+        args=(disney_park_list, update_interval, parks_data),
+        kwargs={"use_websocket": use_websocket},
+        daemon=True
+    )
+    update_thread.start()
+
+    if use_websocket:
+        ws_thread = threading.Thread(
+            target=websocket_live_updater,
+            args=(api_key, parks_data),
+            daemon=True
+        )
+        ws_thread.start()
+        debug.info("WebSocket live updater started; REST keeps polling every 5 min as a backstop.")
+    else:
+        debug.info("WebSocket off; using REST polling only.")
+
+
 def main():
     # Load configuration
     config = load_config('config.json')
@@ -126,28 +152,7 @@ def main():
         debug.error("No parks found. Exiting.")
         return
 
-    api_key = config.get("themeparks_api_key")
-    websocket_only = config.get("websocket_only", False)
-    use_websocket = bool(api_key and not api_key.startswith("<")) or websocket_only
-
-    update_thread = threading.Thread(
-        target=live_data_updater,
-        args=(disney_park_list, update_interval, parks_data),
-        kwargs={"use_websocket": use_websocket},
-        daemon=True
-    )
-    update_thread.start()
-
-    if use_websocket:
-        ws_thread = threading.Thread(
-            target=websocket_live_updater,
-            args=(api_key, parks_data),
-            daemon=True
-        )
-        ws_thread.start()
-        debug.info("WebSocket live updater started — REST live data polling disabled.")
-    else:
-        debug.info("No ThemeParks API key configured; using polling only.")
+    start_live_updaters(config, disney_park_list, update_interval, parks_data)
 
     log_configured_trips(config)
 
@@ -276,7 +281,8 @@ def loop_through_attractions(matrix, park, parks=()):
             expected = forecast_wait_now(ride.get("forecast"))
             debug.info(
                 f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
-                f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']}")
+                f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']} | "
+                f"From: {ride.get('updateSource') or 'none yet'}")
             surprise = (forced_surprise or _ride_visitor(ride.get("name", ""), ride.get("waitTime"))
                         or _surprise(random.random()))
             if surprise != "wipe":

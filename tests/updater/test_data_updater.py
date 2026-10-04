@@ -711,3 +711,14 @@ def test_no_fetchable_parks_leaves_the_network_flag_alone(monkeypatch):
     _fetch_results(monkeypatch, {})
     update_parks_live_data([{"id": "park1", "name": "MK", "attractions": []}])
     assert network_issues() is True, "nothing was fetched, so nothing was learned"
+
+
+def test_merge_live_data_marks_a_ride_last_written_by_rest():
+    from api.disney_api import build_live_updates
+    existing = [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "",
+                 "lastUpdatedTs": "ws-time", "updateSource": "websocket"}]
+    merge_live_data(existing, build_live_updates([{
+        "id": "1", "entityType": "ATTRACTION", "status": "OPERATING",
+        "lastUpdated": "rest-time", "queue": {"STANDBY": {"waitTime": 25}}}]))
+    assert existing[0]["updateSource"] == "rest"
+    assert existing[0]["lastUpdatedTs"] == "rest-time"
