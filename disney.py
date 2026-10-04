@@ -71,13 +71,15 @@ SURPRISES = {"genie": 0.005, "baymax": 0.012, "slinky_wrap": 0.01, "walle_side":
 # Zero turn up on their own meet, which is only listed on Halloween party nights ("jack
 # skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too). The Mine Train
 # brings a few dwarfs in their cars now and then; at a short wait the whole train comes every
-# time (see _mine_train_for_wait). Rex stomps through Toy Story Land.
+# time (see _mine_train_for_wait). Rex stomps through Toy Story Land, and the claw chooses one of
+# the Aliens on their own rides; at a wait of 5 or less it's Buzz, every time, with Woody hanging on.
 RIDE_VISITORS = {
     "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
     "mike": {"rides": ("laugh floor",), "chance": 0.10},
     "jack_sally": {"rides": ("meet jack skellington",), "chance": 0.5},
     "mine_train": {"rides": ("seven dwarfs mine train",), "chance": 0.10},
     "rex": {"rides": ("slinky dog dash", "toy story mania", "alien swirling saucers"), "chance": 0.10},
+    "aliens": {"rides": ("toy story mania", "alien swirling saucers"), "chance": 0.10},
 }
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
@@ -284,10 +286,16 @@ def _ride_visitor(ride_name, wait=None):
         full_train = _mine_train_for_wait(wait)
         if full_train:
             return full_train
+    if any(part in name for part in RIDE_VISITORS["aliens"]["rides"]) and _short_wait(wait):
+        return "aliens_toys"
     for visitor, spec in RIDE_VISITORS.items():
         if any(part in name for part in spec["rides"]) and random.random() < spec["chance"]:
             return visitor
     return None
+
+def _short_wait(wait, minutes=5):
+    """Whether a posted wait is a number of minutes, at most `minutes` (not a boarding group or "Down")."""
+    return isinstance(wait, int) and not isinstance(wait, bool) and wait <= minutes
 
 def _mine_train_for_wait(wait):
     """

@@ -15,7 +15,8 @@ Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter
 Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
 Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
-(`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), and Rex (`rex`).
+(`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), Rex (`rex`), and the
+Aliens and the claw (`aliens`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -38,7 +39,7 @@ Put a ✅ in the Done column when a character ships.
 | 15 | ✅ | Lightning McQueen | DHS / MK Cars area (status to confirm) | zooms in, skids to a stop, peels out leaving speed streaks | Drive-by (`mcqueen`) |
 | 16 | ✅ | Rex | DHS: Toy Story Land | stomps in, stops mid-board and roars, jaw wide and the board shaking, then stomps off | Walk-in (`rex`, `wants_new` for the shake) |
 | 17 | ✅ | Goofy | MK: The Barnstormer | flies his biplane through a loop-the-loop, towing a YAHOOEY! banner | Fly-by (loop) |
-| 18 | | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | "the claw" descends from the top, grabs the old screen and hauls it away while three aliens go "Ooooh" | New: top-down grab (destroys old screen) |
+| 18 | ✅ | Little Green Men (Aliens) | DHS: Toy Story Mania!, Alien Swirling Saucers | a crowd shuffles in, the claw picks one at random and lifts him off: YOU'VE BEEN CHOSEN!; the rest shuffle off | Standalone (`aliens`) |
 | 19 | | R2-D2 | DHS: Galaxy's Edge | rolls across on his treads, dome swivelling, light blinking | Fly-by |
 | 20 | ✅ | Millennium Falcon | DHS: Smugglers Run, Rise of the Resistance | drops out of hyperspace, cruises, then jumps to lightspeed; the old screen streaks away and a flash fades to the new ride | Standalone (`wants_prev` + `wants_new`) |
 | 21 | | Baby Groot | EPCOT: Guardians: Cosmic Rewind | sprouts from the bottom edge, grows like Baymax inflates, then dances | Peek (procedural, not fixed art) |
@@ -310,18 +311,19 @@ Decided with the user (2026-09-29):
   Barnstormer. 1x on both boards (2x ran the loop off a 64x64 board).
 - Chance in `SURPRISES`: 0.008.
 
-**18. Little Green Men (Aliens).** A new mechanic: "the claw" descends from the top edge,
-grabs the old screen bodily and hauls it back up out of frame, while three identical
-squeaky-clean-green aliens (antennae, three eyes, folded hands) look up and go "Ooooh."
-Simple shape, saturated color, and the claw itself is just a few lines and a grabber — easy
-to draw and instantly recognizable from the ride/film. Distinct from Ralph/Rex/Donald's
-wreck mechanic since nothing shatters; the screen is lifted whole.
-
-Reference: [Green alien.jpg](<docs/references/Green alien.jpg>), one alien, 40x37. Too tall
-for 64x32 as is; fits 64x64, though only one fits at that size, not three.
-
-Questions: one alien or three; does the claw stay on screen after grabbing, or exit with
-the old screen; chance in `SURPRISES`.
+**~~18. Little Green Men (Aliens).~~ Done** (`AliensReveal`, `"aliens"`, in `disney.RIDE_VISITORS`).
+Decided with the user (2026-10-04), replacing the plan to haul the old screen away: a crowd of
+aliens shuffles in from both sides onto a dark board (64x32: a back row of heads over a front row;
+64x64: three rows), the claw comes down and they all look up, it shuts on one, picked at random
+each time, and lifts him off the top; YOU'VE BEEN CHOSEN! (5x8, a bigger CHOSEN! on 64x64, yellow
+with a black edge); then the rest shuffle off the sides and the ride shows between them. The alien
+is a 14x18 redraw of the one on [toy_story_4_sheet.png](docs/references/toy_story_4_sheet.png)
+(19x21 there), 1x on both boards so there's a crowd. About 6s, then the ride screen holds 3s.
+Only on Toy Story Mania! and Alien Swirling Saucers, 1 in 10 of their screens (after Rex's roll).
+At a wait of 5 or less it plays every time as the movie's scene (`AliensToysReveal`,
+`"aliens_toys"`): Buzz and Woody stand side by side in the crowd, alien-sized redraws from the
+same sheet; the claw takes Buzz, Woody jumps for his boot once it's in reach and hangs on, and
+both are hauled off the top. THE CLAW CHOOSES.
 
 **19. R2-D2.** A dome on a tin-can body, rolling on his treads: about as simple a silhouette
 as a droid gets, and blue-and-white on black reads clean. His dome swivel and a blinking
