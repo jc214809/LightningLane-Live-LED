@@ -32,7 +32,7 @@ A continuous display loop that fetches Disney World wait times and renders them 
 
 - **Main thread** (`disney.py`): castle fireworks intro (`display/fireworks/fireworks.py`) → optional trip countdown → per operating park: landmark → park title → ride screens, forever. Before every screen, `play_fireworks_show_if_due` cuts in with the castle fireworks (no title, themed) for `FIREWORKS_SHOW_S` after tonight's show starts (`utils/special_events.py:fireworks_show()`, showtimes from live data via `parse_showtimes`), once per performance.
 - **REST thread** (`updater/data_updater.py:live_data_updater`): fetches live data every 5 min and updates the shared `parks_data` list in place. Always runs, even in WebSocket mode, as the backstop that corrects WS-sourced status; it also refreshes weather and services deferred schedule fetches.
-- **WebSocket thread** (`updater/websocket_updater.py:websocket_live_updater`): only when `config.json`'s `themeparks_api_key` is set or `websocket_only: true`. Real-time updates from `wss://ws.themeparks.wiki/v1/live`.
+- **WebSocket thread** (`updater/websocket_updater.py:websocket_live_updater`): only when `config.json`'s `websocket` section has `enabled` (default true) and a real `api_key` (`websocket_settings`; `has_api_key` rejects empty and `<...>` placeholders). A config without the section falls back to the old top-level `themeparks_api_key`, because the installer doesn't migrate boards' configs. The server requires one: it accepts a keyless handshake, then closes with 3000 "Authentication timeout". Connects to `wss://api.themeparks.wiki/v1/live` (the only supported host) with the `legacy` subprotocol, which keeps the `{"event": ...}` frames we parse after the server's default moves to `preview`. Subscribes each destination once per `WS_ENTITY_TYPES` (`ATTRACTION`, `SHOW`): `entityTypeFilter` takes one type (a list or `"A,B"` gets `Invalid entityTypeFilter`), and unfiltered, restaurants were two thirds of the traffic. A key gets 15 subscriptions; server `error` frames are logged as warnings.
 
 ### Data flow
 
@@ -54,7 +54,8 @@ Layered defenses in `updater/websocket_updater.py`; each one fixed a real incide
 - `ws_connect(..., heartbeat=30, timeout=ClientWSTimeout(ws_receive=120, ws_close=10))` forces a reconnect on a dead socket within ~2 min. The float `receive_timeout=` is deprecated in aiohttp 3.14; give `ws_close` explicitly, or the 10s close default is dropped.
 - `_watchdog` force-reconnects if no messages arrive for 5 min while any park is operating (alive at the protocol level but not streaming).
 - Backoff (`_next_delay`) resets to 5s only after a connection stays up 60s; otherwise it doubles to 60s, so a connect-then-die loop can't hammer the server.
-- `lastUpdatedTs`/`down_since` come from the event's own `lastUpdated`, not receive time.
+- Each ride's `updateSource` is `"rest"` or `"websocket"`: whichever path wrote it last (`build_live_updates` / `_apply_live_update`'s `livedata` branch); the "Displaying ride" log shows it.
+- WS messages carry no `lastUpdated` (REST's do), so `lastUpdatedTs` is the receive time and `down_since` the receive time of the first DOWN message. The REST poll writes the real `lastUpdated` back every 5 min.
 
 ### Display layer
 
@@ -81,7 +82,7 @@ Display rules:
 
 ### Configuration
 
-`config.json` (gitignored; copy from `config.json-example`): `trip_countdown` (`enabled`, `trip_dates` as ISO dates or `{"start", "end", "name"}`, legacy `trip_date`; `utils/trips.py:active_trip()` picks the one to show), `weather.apikey`, `themeparks_api_key`/`websocket_only`, `force_surprise`, `debug`.
+`config.json` (gitignored; copy from `config.json-example`): `trip_countdown` (`enabled`, `trip_dates` as ISO dates or `{"start", "end", "name"}`, legacy `trip_date`; `utils/trips.py:active_trip()` picks the one to show), `weather.apikey`, `websocket` (`enabled`, `api_key`; old configs' top-level `themeparks_api_key` still read, `websocket_only` ignored), `force_surprise`, `debug`.
 
 ### Testing
 

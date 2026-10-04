@@ -15,7 +15,12 @@ from updater.websocket_updater import (
     _next_delay,
     _should_force_reconnect,
     _watchdog,
+    WS_SUBPROTOCOLS,
+    WS_ENTITY_TYPES,
+    WS_URL,
     _ws_loop,
+    has_api_key,
+    websocket_settings,
 )
 
 DUMMY_ATTRACTION = {
@@ -241,31 +246,32 @@ def test_apply_live_update_skips_lock_for_non_livedata_events():
 
 # --- event timestamps ---
 
-def test_event_timestamp_used_when_present():
+def test_receive_time_stamps_the_update():
+    # The feed sends no lastUpdated, so the receive time is the update's timestamp.
+    from datetime import datetime, timezone
     parks = _parks_with_attr()
-    msg = _make_livedata_msg(data={
-        "status": "OPERATING",
-        "lastUpdated": "2026-07-19T18:00:00Z",
-        "queue": {"STANDBY": {"waitTime": 10}},
-    })
+    msg = _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 10}}})
+    before = datetime.now(timezone.utc).replace(microsecond=0)
     with patch("updater.websocket_updater.update_parks_operating_status"):
         _apply_live_update(msg, parks)
-    assert parks[0]["attractions"][0]["lastUpdatedTs"] == "2026-07-19T18:00:00Z"
+    stamped = datetime.strptime(parks[0]["attractions"][0]["lastUpdatedTs"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    assert 0 <= (stamped - before).total_seconds() <= 2
 
 
-def test_down_since_uses_event_timestamp():
-    """A DOWN event replayed after a reconnect carries the real outage start —
-    the display should show 'Down 30', not 'Down 0'."""
+def test_down_since_is_the_first_down_message_and_later_ones_keep_it():
     from datetime import datetime, timezone, timedelta
     went_down = (datetime.now(timezone.utc) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
     parks = _parks_with_attr({"status": "OPERATING", "down_since": ""})
-    msg = _make_livedata_msg(data={"status": "DOWN", "lastUpdated": went_down})
     with patch("updater.websocket_updater.update_parks_operating_status"):
-        _apply_live_update(msg, parks)
-    attr = parks[0]["attractions"][0]
+        _apply_live_update(_make_livedata_msg(data={"status": "DOWN"}), parks)
+        attr = parks[0]["attractions"][0]
+        assert attr["down_since"] == attr["lastUpdatedTs"]  # the first DOWN's receive time
+        assert attr["waitTime"] == "Down 0"
+
+        attr["down_since"] = went_down  # as if that first DOWN came 30 minutes ago
+        _apply_live_update(_make_livedata_msg(data={"status": "DOWN"}), parks)
     assert attr["down_since"] == went_down
-    minutes = int(attr["waitTime"].split(" ")[1])
-    assert 28 <= minutes <= 32
+    assert 28 <= int(attr["waitTime"].split(" ")[1]) <= 32
 
 
 # --- watchdog ---
@@ -436,8 +442,11 @@ class _FakeWS:
     async def __anext__(self):
         raise StopAsyncIteration
 
+    sent_frames = None  # ws_connect hands it the captured list
+
     async def send_json(self, payload):
-        pass
+        if self.sent_frames is not None:
+            self.sent_frames.append(payload)
 
     def exception(self):
         return None
@@ -455,7 +464,9 @@ class _FakeSession:
 
     def ws_connect(self, url, **kwargs):
         self._captured.update(kwargs, url=url)
-        return _FakeWS()
+        ws = _FakeWS()
+        ws.sent_frames = self._captured.setdefault("sent", [])
+        return ws
 
 
 def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
@@ -476,6 +487,84 @@ def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
     assert "receive_timeout" not in captured
     assert captured["timeout"].ws_receive == _WS_RECEIVE_TIMEOUT_SECS
     assert captured["timeout"].ws_close == _WS_CLOSE_TIMEOUT_SECS == 10
+
+
+@pytest.mark.parametrize("api_key", [None, "", "   ", "<THEMEPARKS_API_KEY>", 123])
+def test_has_api_key_is_false_without_a_real_key(api_key):
+    # The server closes keyless connections (3000 "Authentication timeout"), so these poll REST instead.
+    assert not has_api_key(api_key)
+
+
+def test_has_api_key_is_true_for_a_real_key():
+    assert has_api_key("real-key")
+
+
+@pytest.mark.parametrize("config, expected", [
+    ({"websocket": {"enabled": True, "api_key": "real-key"}}, (True, "real-key")),
+    ({"websocket": {"api_key": "real-key"}}, (True, "real-key")),  # enabled defaults to true
+    ({"websocket": {"enabled": False, "api_key": "real-key"}}, (False, "real-key")),
+    ({"websocket": {"enabled": True, "api_key": "<THEMEPARKS_API_KEY_HERE>"}}, (False, "<THEMEPARKS_API_KEY_HERE>")),
+    ({"websocket": {"enabled": True}}, (False, None)),
+    ({"websocket": {"enabled": "false", "api_key": "real-key"}}, (False, "real-key")),  # not a bool: off
+    ({"websocket": "real-key"}, (False, None)),
+    # Boards' configs from before the section keep working off the top-level key.
+    ({"themeparks_api_key": "real-key"}, (True, "real-key")),
+    ({"themeparks_api_key": "<KEY>", "websocket_only": True}, (False, "<KEY>")),
+    ({}, (False, None)),
+    # The section wins over a leftover top-level key.
+    ({"themeparks_api_key": "old-key", "websocket": {"enabled": False, "api_key": "new-key"}}, (False, "new-key")),
+])
+def test_websocket_settings(config, expected):
+    assert websocket_settings(config) == expected
+
+
+def test_ws_loop_subscribes_each_destination_once_per_displayed_entity_type():
+    # One filter per subscription (the server rejects a list), so restaurants never arrive.
+    captured = {}
+    parks = [{"id": "p1", "name": "MK", "destination_id": "wdw", "attractions": []},
+             {"id": "p2", "name": "EPCOT", "destination_id": "wdw", "attractions": []},
+             {"id": "p3", "name": "Cedar Point", "destination_id": "cp", "attractions": []}]
+
+    async def cancel_sleep(_delay):
+        raise asyncio.CancelledError
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession", lambda: _FakeSession(captured)), \
+         patch("updater.websocket_updater.asyncio.sleep", cancel_sleep):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_ws_loop("real-key", parks))
+
+    assert WS_ENTITY_TYPES == ("ATTRACTION", "SHOW")
+    assert sorted((m["entityId"], m["entityTypeFilter"]) for m in captured["sent"]) == [
+        ("cp", "ATTRACTION"), ("cp", "SHOW"), ("wdw", "ATTRACTION"), ("wdw", "SHOW")]
+    assert all(m["event"] == "subscribe" for m in captured["sent"])
+
+
+def test_server_error_frames_are_logged_as_warnings():
+    parks = _parks_with_attr()
+    with patch("updater.websocket_updater.debug.warning") as warning:
+        _apply_live_update({"event": "error", "message": "Invalid entityTypeFilter"}, parks)
+    warning.assert_called_once()
+    assert "Invalid entityTypeFilter" in warning.call_args[0][0]
+    assert parks[0]["attractions"][0]["waitTime"] == 20
+
+
+def test_ws_loop_uses_the_documented_url_legacy_subprotocol_and_key():
+    # api.themeparks.wiki is the only supported host; "legacy" keeps the {"event": ...}
+    # frames _apply_live_update parses after the server's default moves to "preview".
+    captured = {}
+    parks = [{"id": "park-1", "name": "MK", "destination_id": "dest-1", "attractions": []}]
+
+    async def cancel_sleep(_delay):
+        raise asyncio.CancelledError
+
+    with patch("updater.websocket_updater.aiohttp.ClientSession", lambda: _FakeSession(captured)), \
+         patch("updater.websocket_updater.asyncio.sleep", cancel_sleep):
+        with pytest.raises(asyncio.CancelledError):
+            asyncio.run(_ws_loop(" real-key ", parks))
+
+    assert captured["url"] == WS_URL == "wss://api.themeparks.wiki/v1/live"
+    assert captured["protocols"] == WS_SUBPROTOCOLS == ("legacy",)
+    assert captured["headers"] == {"X-API-Key": "real-key"}
 
 
 # --- no match ---
@@ -565,3 +654,12 @@ def test_ws_message_arriving_clears_the_network_issue():
 
     _run_ws_loop_once(lambda: _OneMessageSession({}))
     assert network_issues() is False
+
+
+def test_livedata_marks_the_ride_as_last_written_by_the_websocket():
+    parks = _parks_with_attr({"updateSource": "rest"})
+    with patch("updater.websocket_updater.update_parks_operating_status"):
+        _apply_live_update({"event": "subscribed", "entityId": "attr-1"}, parks)
+        assert parks[0]["attractions"][0]["updateSource"] == "rest"  # only livedata writes rides
+        _apply_live_update(_make_livedata_msg(), parks)
+    assert parks[0]["attractions"][0]["updateSource"] == "websocket"

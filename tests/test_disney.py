@@ -582,3 +582,36 @@ def test_the_mine_train_stays_on_its_own_ride(monkeypatch, screens):
     disney.loop_through_attractions(FakeMatrix(), park)
     assert screens[-1]["transition"] == "wipe"
     assert not any(name.startswith("mine_train") for name in disney.SURPRISES)
+
+
+# ---- Live updater threads ----
+
+class _RecordingThread:
+    started = []
+
+    def __init__(self, target, args=(), kwargs=None, daemon=None):
+        self.target, self.args, self.kwargs = target, args, kwargs or {}
+
+    def start(self):
+        _RecordingThread.started.append(self)
+
+
+@pytest.mark.parametrize("config", [{}, {"websocket": {"enabled": True, "api_key": ""}},
+                                    {"websocket": {"enabled": True, "api_key": "<KEY>"}},
+                                    {"websocket": {"enabled": False, "api_key": "real-key"}},
+                                    {"themeparks_api_key": None, "websocket_only": True}])
+def test_websocket_off_or_without_a_key_never_starts_the_websocket(monkeypatch, config):
+    _RecordingThread.started = []
+    monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
+    disney.start_live_updaters(config, ["park"], 300, [])
+    assert [t.target for t in _RecordingThread.started] == [disney.live_data_updater]
+    assert _RecordingThread.started[0].kwargs == {"use_websocket": False}
+
+
+def test_websocket_enabled_with_a_real_key_starts_rest_and_the_websocket(monkeypatch):
+    _RecordingThread.started = []
+    monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
+    disney.start_live_updaters({"websocket": {"enabled": True, "api_key": "real-key"}}, ["park"], 300, [])
+    assert [t.target for t in _RecordingThread.started] == [disney.live_data_updater, disney.websocket_live_updater]
+    assert _RecordingThread.started[0].kwargs == {"use_websocket": True}
+    assert _RecordingThread.started[1].args[0] == "real-key"

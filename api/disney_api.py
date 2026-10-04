@@ -225,7 +225,8 @@ def fetch_parks_and_attractions(disney_park_list):
                     "parkId": park_id,
                     "waitTime": '',      # Placeholder for wait time
                     "status": '',        # Placeholder for status
-                    "lastUpdatedTs": ''  # Placeholder for timestamp
+                    "lastUpdatedTs": '',  # Placeholder for timestamp
+                    "updateSource": ''    # "rest" or "websocket": which path wrote it last
                 }
                 attractions.append(attraction)
         debug.info(f"{len(attractions)} were found in {park_name}")
@@ -375,6 +376,7 @@ def build_live_updates(live_entries):
             "id": entry.get("id"),
             "status": status,
             "lastUpdatedTs": entry.get("lastUpdated"),
+            "updateSource": "rest",
         }
         if status == "DOWN":
             pass  # waitTime is derived from down_since once merged; see merge_live_data
@@ -570,6 +572,7 @@ def refresh_park_attractions(park):
                 "waitTime": "",
                 "status": "",
                 "lastUpdatedTs": "",
+                "updateSource": "",
                 "down_since": ""
             })
             debug.info(f"New attraction added to {park_name}: {get_attraction_name(item)}")

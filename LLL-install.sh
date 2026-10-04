@@ -66,7 +66,7 @@ while [ $# -gt 0 ]; do
         shift
         ;;
     -d | --driver)
-        DRIVER="$2"
+        DRIVER_SHA="$2"
         shift 2
         ;;
     -f | --force)

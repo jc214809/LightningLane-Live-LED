@@ -757,3 +757,15 @@ off the board). He now stomps in from the left over the old ride, raises both fi
 head on 64x64, beside his face on 64x32, where there's no room overhead) and slams them down;
 the ride shatters and falls as before, and he stomps off the right. Built but still not in
 the rotation.
+
+## 9. Switch to a no-selling license
+
+Today the project is GPLv3 (`LICENSE.md`): anyone may sell it, but must share the source under
+GPLv3 too. Joel wants a license that forbids selling (PolyForm Noncommercial 1.0.0 is the
+software one). The GPL won't allow adding that restriction to code inherited from
+MLB-LED-Scoreboard (GPLv3), so first rewrite what came from it, then relicense:
+- Audit what's still inherited: `LLL-install.sh`, the CLI flags in `utils/utils.py:args()`,
+  the README's install/flags sections, anything else from the 2025-03-14 import (`36625d7`).
+- Rewrite those parts from scratch (not edited copies).
+- Swap `LICENSE.md` for PolyForm Noncommercial and update the README's Licensing section.
+  It's then "source-available", not open source.

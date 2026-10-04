@@ -14,7 +14,16 @@ from updater.data_updater import merge_live_data
 from updater.shared import note_network_result, parks_data_lock
 from utils import debug
 
-WS_URL = "wss://ws.themeparks.wiki/v1/live"
+# The only address ThemeParks.wiki supports (ws. is a hosting hostname).
+WS_URL = "wss://api.themeparks.wiki/v1/live"
+# The frame shape _apply_live_update parses ({"event": ...}). No subprotocol gets it today, but the
+# default is moving to "preview", and "legacy" stays selected after it does.
+WS_SUBPROTOCOLS = ("legacy",)
+# The entity types we display. A destination subscription takes one entityTypeFilter
+# (a list or "A,B" is rejected), so each destination gets one subscription per type.
+# Unfiltered, restaurants were two thirds of the messages. Each uses one of the
+# key's 15 subscriptions (the welcome frame's subscriptionsLimit).
+WS_ENTITY_TYPES = ("ATTRACTION", "SHOW")
 _RECONNECT_DELAY_INITIAL = 5
 _RECONNECT_DELAY_MAX = 60
 _WS_HEARTBEAT_SECS = 30
@@ -77,7 +86,12 @@ def _apply_live_update(data, parks_data):
     debug.log(f"WS message: {data}")
 
     if event == "subscribed":
-        debug.info(f"WebSocket subscribed to: {data.get('name') or data.get('entityId')}")
+        debug.info(f"WebSocket subscribed to: {data.get('name') or data.get('entityId')}"
+                   f" ({data.get('entityTypeFilter', 'all')})")
+        return
+
+    if event == "error":
+        debug.warning(f"WebSocket server error: {data.get('message') or data}")
         return
 
     if event != "livedata":
@@ -90,9 +104,9 @@ def _apply_live_update(data, parks_data):
     entity_id = data.get("entityId")
     live = data.get("data") or {}
     status = live.get("status")
-    # Prefer the server's event timestamp; fall back to receive time only for a
-    # malformed message (down_since and staleness math depend on this).
-    last_updated = live.get("lastUpdated") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # The feed sends no lastUpdated (REST does), so the receive time stamps the update:
+    # it's seconds behind the change. down_since takes it from the first DOWN message.
+    last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     with parks_data_lock:
         for park in parks_data:
@@ -103,6 +117,7 @@ def _apply_live_update(data, parks_data):
                 prev_status = attr.get("status")
                 attr["status"] = status
                 attr["lastUpdatedTs"] = last_updated
+                attr["updateSource"] = "websocket"  # only "livedata" events get here
                 if live.get("forecast"):
                     attr["forecast"] = parse_forecast(live["forecast"])
                 if "showtimes" in live:
@@ -131,6 +146,39 @@ def _apply_live_update(data, parks_data):
                 return
 
 
+def has_api_key(api_key):
+    """True for a real ThemeParks key. The WebSocket needs one: without it the
+    server accepts the handshake, then closes with 3000 "Authentication timeout"."""
+    return isinstance(api_key, str) and bool(api_key.strip()) and not api_key.startswith("<")
+
+
+def websocket_settings(config):
+    """(use_websocket, api_key) from config.json's "websocket" section:
+    {"enabled": true, "api_key": "..."}. Runs only when enabled with a real key.
+    A config without the section falls back to the old top-level themeparks_api_key."""
+    section = config.get("websocket")
+    if section is None:
+        api_key = config.get("themeparks_api_key")
+        if has_api_key(api_key):
+            debug.info('Using the top-level "themeparks_api_key"; move it to "websocket": {"api_key": ...} in config.json.')
+        return has_api_key(api_key), api_key
+    if not isinstance(section, dict):
+        debug.warning('config.json "websocket" should be {"enabled": true, "api_key": "..."}; using REST polling only.')
+        return False, None
+
+    enabled = section.get("enabled", True)
+    api_key = section.get("api_key")
+    if not isinstance(enabled, bool):
+        debug.warning(f'config.json "websocket.enabled" should be true or false, not {enabled!r}; using REST polling only.')
+        return False, api_key
+    if not enabled:
+        return False, api_key
+    if not has_api_key(api_key):
+        debug.warning('config.json "websocket.enabled" is true but "websocket.api_key" is not set; using REST polling only.')
+        return False, api_key
+    return True, api_key
+
+
 async def _ws_loop(api_key, parks_data):
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     delay = _RECONNECT_DELAY_INITIAL
@@ -139,10 +187,11 @@ async def _ws_loop(api_key, parks_data):
     while True:
         connected_at = None
         try:
-            headers = {"X-API-Key": api_key}
+            headers = {"X-API-Key": api_key.strip()}
             async with aiohttp.ClientSession() as session:
                 async with session.ws_connect(
                     WS_URL,
+                    protocols=WS_SUBPROTOCOLS,
                     headers=headers,
                     ssl=ssl_ctx,
                     heartbeat=_WS_HEARTBEAT_SECS,
@@ -181,10 +230,12 @@ async def _ws_loop(api_key, parks_data):
                         break
 
                     for dest_id in destination_ids:
-                        await ws.send_json({
-                            "event": "subscribe",
-                            "entityId": dest_id,
-                        })
+                        for entity_type in WS_ENTITY_TYPES:
+                            await ws.send_json({
+                                "event": "subscribe",
+                                "entityId": dest_id,
+                                "entityTypeFilter": entity_type,
+                            })
                     debug.info(f"Subscribed to destinations: {destination_ids}")
 
                     stats = _WsStats()
