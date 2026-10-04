@@ -14,7 +14,7 @@ main{display:grid;grid-template-columns:minmax(360px,1fr) 360px;gap:18px;padding
 button,select,input,textarea{background:#11151b;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:7px 9px;font:inherit}
 button{cursor:pointer}button:hover,button.active{border-color:var(--accent);background:#17283d}button.danger:hover{border-color:#ef5665}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-label{display:flex;align-items:center;gap:6px;color:var(--muted)}input[type=number]{width:62px}
+label{display:flex;align-items:center;gap:6px;color:var(--muted)}input[type=number]{width:62px}#patternControls input[type=number]{width:78px}
 #gridWrap{overflow:auto;display:flex;justify-content:center;align-items:center;min-height:560px;background:#090b0e;border-radius:9px;border:1px solid #292f38}
 #grid{touch-action:none;display:block;cursor:crosshair}
 main>.panel{align-self:start;position:sticky;top:12px}
@@ -33,7 +33,7 @@ textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospac
 #hex{width:100%}#led{display:block;background:#000;border-radius:8px;border:1px solid var(--line)}
 .chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 10px}.chip{width:18px;height:18px;padding:0;border-radius:50%;background:var(--c);border:1px solid #0009}
 .chip:hover{outline:2px solid var(--accent)}
-#preview{display:block;background:#000;border:1px solid var(--line);border-radius:6px;max-width:100%}
+#preview,#patView,#patResult{display:block;background:#000;border:1px solid var(--line);border-radius:6px;max-width:100%}
 #checks{margin:0;padding-left:18px;display:grid;gap:4px;font-size:12px;line-height:1.4}
 @media(max-width:900px){main{grid-template-columns:1fr}main>.panel{position:static}#gridWrap{min-height:420px}}
 </style>
@@ -102,26 +102,52 @@ textarea{width:100%;height:170px;resize:vertical;font:12px ui-monospace,monospac
 
     <section class="panel section">
       <h2>Canvas size</h2>
-      <div class="toolbar"><label>Width <input id="width" type="number" min="1" max="64"></label><label>Height <input id="height" type="number" min="1" max="64"></label></div>
-      <div class="toolbar"><select id="resizeMode" aria-label="Resize mode"><option value="crop">Keep top-left / crop</option><option value="scale">Scale artwork to fit</option></select><button id="resize">Resize</button></div>
+      <div class="toolbar"><label>Width <input id="width" type="number" min="1" max="64"></label><label>Height <input id="height" type="number" min="1" max="64"></label><label title="Typing one side fills in the other from the canvas's current shape"><input id="keepRatio" type="checkbox" checked> Keep ratio</label></div>
+      <div class="toolbar"><select id="resizeMode" aria-label="Resize mode"><option value="crop">Keep top-left / crop</option><option value="scale">Scale artwork to fit</option></select><button id="resize">Resize</button><button id="fitBoard" title="Shrink the art, keeping its shape, to the largest size that fits the board chosen in Board preview">Fit to board</button></div>
+      <p id="fitNote" class="hint"></p>
     </section>
 
     <section class="panel section">
       <h2>Image to pixels</h2>
-      <div class="toolbar"><input id="file" type="file" accept="image/*" aria-label="Image file"></div>
       <div class="toolbar">
-        <label>Fit <select id="imgFit"><option value="contain">Contain</option><option value="cover">Cover / crop</option><option value="stretch">Stretch</option></select></label>
-        <label>Color <select id="imgColor"><option value="match">Match palette</option><option value="current">Selected key</option></select></label>
+        <label>Mode <select id="imgMode"><option value="silhouette">Silhouette</option><option value="pattern">Pattern / beads</option></select></label>
+        <input id="file" type="file" accept="image/*" aria-label="Image file">
       </div>
-      <div class="toolbar">
-        <label>Source <select id="imgSource"><option value="alpha">Alpha then luma</option><option value="luma">Brightness</option></select></label>
-        <label>Threshold <input id="imgThreshold" type="range" min="1" max="99" value="50"></label><span id="imgThresholdOut" class="hint">50%</span>
+      <div id="silhouetteControls">
+        <div class="toolbar">
+          <label>Fit <select id="imgFit"><option value="contain">Contain</option><option value="cover">Cover / crop</option><option value="stretch">Stretch</option></select></label>
+          <label>Color <select id="imgColor"><option value="match">Match palette</option><option value="current">Selected key</option></select></label>
+        </div>
+        <div class="toolbar">
+          <label>Source <select id="imgSource"><option value="alpha">Alpha then luma</option><option value="luma">Brightness</option></select></label>
+          <label>Threshold <input id="imgThreshold" type="range" min="1" max="99" value="50"></label><span id="imgThresholdOut" class="hint">50%</span>
+        </div>
+        <div class="toolbar">
+          <label><input id="imgInvert" type="checkbox"> Invert</label>
+          <label><input id="imgDither" type="checkbox"> Dither</label>
+        </div>
       </div>
-      <div class="toolbar">
-        <label><input id="imgInvert" type="checkbox"> Invert</label>
-        <label><input id="imgDither" type="checkbox"> Dither</label>
-        <button id="imgApply">Apply to canvas</button>
+      <div id="patternControls" hidden>
+        <div class="toolbar">
+          <label title="Cells this close to the color round the grid's edge become empty; 0 keeps them">Background <input id="patBg" type="range" min="0" max="200" value="60"></label><span id="patBgOut" class="hint">60</span>
+          <label title="Background-colored cells walled in by the art (white eyes inside an outline) stay lit"><input id="patEnclosed" type="checkbox" checked> Keep enclosed</label>
+        </div>
+        <div class="toolbar">
+          <label title="Cell colors this close share one key; raise it to merge shading, lower it to split close colors. Under 60 apart, touching colors blur together on the board anyway">Merge <input id="patMerge" type="range" min="0" max="150" value="60"></label><span id="patMergeOut" class="hint">60</span>
+        </div>
+        <div class="toolbar">
+          <label title="Cell width in image pixels">Cell W <input id="patCellW" type="number" min="1" step="0.01"></label>
+          <label title="Cell height in image pixels">H <input id="patCellH" type="number" min="1" step="0.01"></label>
+        </div>
+        <div class="toolbar">
+          <label title="Where a cell boundary falls, in image pixels from the left">Offset X <input id="patOffX" type="number" step="0.25"></label>
+          <label title="Where a cell boundary falls, in image pixels from the top">Y <input id="patOffY" type="number" step="0.25"></label>
+          <button id="patDetect" title="Find the grid again from the image">Detect grid</button>
+        </div>
+        <canvas id="patView" aria-label="The image with the grid it found; dimmed cells are background"></canvas>
+        <canvas id="patResult" aria-label="The cells as LEDs" style="margin-top:6px"></canvas>
       </div>
+      <div class="toolbar" style="margin-top:8px"><button id="imgApply">Apply to canvas</button></div>
       <p id="imgStatus" class="hint">Choose an image; it is resampled to the current canvas size. Nothing is uploaded.</p>
     </section>
 
@@ -235,6 +261,264 @@ function nearestKey(rgb, colors) {
   let best = null, bestD = Infinity;
   for (const [k, c] of Object.entries(colors)) { const d = colorDistance(rgb, c); if (d < bestD) { best = k; bestD = d; } }
   return best;
+}
+
+// The other side of a resize that keeps a w x h canvas's shape, when one side is typed. Neither side
+// passes 64: if the other would, it stops there and the typed side shrinks to match.
+function ratioSize(w, h, value, side, max = 64) {
+  let nw = side === "width" ? value : Math.round(value * w / h), nh = side === "width" ? Math.round(value * h / w) : value;
+  if (nw > max) { nw = max; nh = Math.round(max * h / w); }
+  if (nh > max) { nh = max; nw = Math.round(max * w / h); }
+  return [Math.max(1, Math.min(max, nw)), Math.max(1, Math.min(max, nh))];
+}
+
+// The largest w x h with the same shape that fits in maxW x maxH. Never grows art that already fits.
+function fitSize(w, h, maxW, maxH) {
+  const s = Math.min(1, maxW / w, maxH / h);
+  return [Math.max(1, Math.min(maxW, Math.round(w * s))), Math.max(1, Math.min(maxH, Math.round(h * s)))];
+}
+
+const KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+// ---- Pattern mode: a grid chart or a bead photo, one cell per LED ----
+
+// How much the color changes across each column boundary (x) and row boundary (y). Grid lines and
+// bead edges repeat every cell, so they pile up into evenly spaced peaks.
+function edgeProfiles(data, W, H) {
+  const x = new Array(W).fill(0), y = new Array(H).fill(0);
+  const diff = (p, q) => Math.abs(data[p] - data[q]) + Math.abs(data[p + 1] - data[q + 1]) + Math.abs(data[p + 2] - data[q + 2]);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const p = (j * W + i) * 4;
+    if (i + 1 < W) x[i] += diff(p, p + 4);
+    if (j + 1 < H) y[j] += diff(p, p + W * 4);
+  }
+  return { x, y };
+}
+
+// The cell size and where a cell boundary falls, from one edge profile. The period comes from the
+// profile's autocorrelation, which counts everything that repeats every cell (a chart's lines, a bead's
+// rim and hole, an empty peg), and every multiple of it scores about as well, so the smallest strong
+// one wins. The boundary is the comb of teeth that lands on the most edge. Periods are fractional: a
+// resized chart rarely has whole-pixel cells. score is the autocorrelation there: near 0 is no grid.
+function findGrid(profile, minP = 4, minCells = 4) {
+  // Take off the noise floor (sensor noise, bead texture), then even out the lines with a square root:
+  // one along white paper outshines one between two colors.
+  const floor = [...profile].sort((a, b) => a - b)[Math.floor(profile.length / 2)] || 0;
+  const root = profile.map(v => Math.sqrt(Math.max(0, v - floor))), n = root.length;
+  const s = root.map((v, i) => (root[i - 1] || 0) + 2 * v + (root[i + 1] || 0));
+  // Only where the edges are: a blank margin round a chart would water everything down.
+  const peak = Math.max(...s);
+  if (!(peak > 0)) return null;
+  const lo = s.findIndex(v => v > peak * .15), hi = n - 1 - [...s].reverse().findIndex(v => v > peak * .15);
+  const span = s.slice(lo, hi + 1), m = span.length, maxL = Math.floor((m - 1) / (minCells - 1));
+  if (maxL < minP) return null;
+  const mean = span.reduce((x, y) => x + y, 0) / m, dev = span.map(v => v - mean);
+  const v0 = dev.reduce((x, y) => x + y * y, 0) / m || 1, r = [1];
+  for (let L = 1; L <= Math.floor(m * .6); L++) {
+    let sum = 0;
+    for (let i = 0; i + L < m; i++) sum += dev[i] * dev[i + L];
+    r.push(sum / (m - L) / v0);
+  }
+  // Skip the blur round lag 0, then take the smallest peak nearly as strong as the strongest.
+  let L0 = 1;
+  while (L0 + 1 < r.length && (r[L0 + 1] < r[L0] || L0 < minP - 1)) L0++;
+  const peaks = [];
+  for (let L = L0 + 1; L <= maxL && L + 1 < r.length; L++) if (r[L] >= r[L - 1] && r[L] >= r[L + 1] && r[L] > 0) peaks.push(L);
+  if (!peaks.length) return null;
+  const best = Math.max(...peaks.map(L => r[L])), L1 = peaks.find(L => r[L] >= best * .8), score = r[L1];
+  // The peak at k periods pins the period k times as finely.
+  const vertex = j => { const a = r[j - 1], b = r[j], c = r[j + 1], d = a - 2 * b + c; return j + (d ? (a - c) / (2 * d) : 0); };
+  let P = vertex(L1);
+  for (let k = Math.floor((r.length - 2) / L1); k > 1; k--) {
+    const at = Math.round(k * P), reach = Math.max(1, Math.round(P / 4));
+    let j = at;
+    for (let x = Math.max(1, at - reach); x <= Math.min(r.length - 2, at + reach); x++) if (r[x] > r[j]) j = x;
+    if (j > 0 && j < r.length - 1 && r[j] >= score * .5 && r[j] >= r[j - 1] && r[j] >= r[j + 1]) { P = vertex(j) / k; break; }
+  }
+  // Teeth fall between pixels, so they read the profile in between: rounding misses a thin line on an 11.5px grid.
+  let top = -Infinity, phase = 0;
+  for (let ph = 0; ph < P; ph += .25) {
+    let sum = 0, k = 0;
+    for (let pos = ph; pos < m - 1; pos += P) { const i = Math.floor(pos), f = pos - i; sum += span[i] * (1 - f) + span[i + 1] * f; k++; }
+    if (sum / k > top) { top = sum / k; phase = ph; }
+  }
+  // Then fit a line through the real peak near each tooth, to a fraction of a pixel, so a 64-cell
+  // grid doesn't drift off by its far edge. Strong peaks count for more; a missing line is skipped.
+  const pts = [];
+  for (let k = 0, pos = phase; pos < m - 1; k++, pos += P) {
+    let j = -1;
+    for (let x = Math.max(1, Math.ceil(pos - P / 4)); x <= Math.min(m - 2, Math.floor(pos + P / 4)); x++) if (j < 0 || span[x] > span[j]) j = x;
+    if (j < 0 || span[j] <= mean) continue;
+    const a = span[j - 1], b = span[j], c = span[j + 1], d = a - 2 * b + c;
+    pts.push([k, j + (d ? (a - c) / (2 * d) : 0), b]);
+  }
+  if (pts.length >= 3) {
+    let sw = 0, sk = 0, sx = 0, skk = 0, skx = 0;
+    for (const [k, x, wt] of pts) { sw += wt; sk += wt * k; sx += wt * x; skk += wt * k * k; skx += wt * k * x; }
+    const den = sw * skk - sk * sk, fitP = den ? (sw * skx - sk * sx) / den : 0;
+    if (Math.abs(fitP - P) < P * .05) { P = fitP; phase = (sx - fitP * sk) / sw; }
+  }
+  // An edge at index i sits between pixels i and i+1.
+  return { period: P, offset: (((lo + phase + 1) % P) + P) % P, score };
+}
+
+// How much of a ring round each cell's middle is its one main color, on average: highest when the
+// cells sit on the beads or chart squares rather than straddling two colors. The very middle is left
+// out: it's a bead's hole when the grid is right, and the line between two cells when it's half off.
+// Every other pixel is plenty to judge by.
+function cellPurity(data, W, H, gx, gy, inset = .15, hole = .22) {
+  const counts = new Uint32Array(512);
+  let total = 0, cells = 0;
+  for (let r = 0; r < gy.count; r++) for (let c = 0; c < gx.count; c++) {
+    const x0 = gx.start + c * gx.period, y0 = gy.start + r * gy.period;
+    const ax = Math.max(0, Math.round(x0 + gx.period * inset)), bx = Math.min(W, Math.round(x0 + gx.period * (1 - inset)));
+    const ay = Math.max(0, Math.round(y0 + gy.period * inset)), by = Math.min(H, Math.round(y0 + gy.period * (1 - inset)));
+    counts.fill(0);
+    let n = 0, top = 0;
+    const cx = x0 + gx.period / 2, cy = y0 + gy.period / 2;
+    for (let y = ay; y < by; y += 2) for (let x = ax; x < bx; x += 2) {
+      if (((x - cx) / gx.period) ** 2 + ((y - cy) / gy.period) ** 2 < hole * hole) continue;
+      const p = (y * W + x) * 4, key = (data[p] >> 5) << 6 | (data[p + 1] >> 5) << 3 | data[p + 2] >> 5;
+      n++; if (++counts[key] > top) top = counts[key];
+    }
+    if (n) { total += top / n; cells++; }
+  }
+  return cells ? total / cells : 0;
+}
+
+// The edges say where boundaries are, but a bead's hole has edges too: of the offsets an eighth of a
+// cell apart, keep the one whose cells are the most uniform inside. One axis at a time.
+function alignGrid(data, W, H, px, py, ox, oy) {
+  const best = (fixed, axis) => {
+    let top = -1, pick = axis === "x" ? ox : oy;
+    for (let j = 0; j < 8; j++) {
+      const o = (axis === "x" ? ox : oy) + j * (axis === "x" ? px : py) / 8;
+      const gx = axis === "x" ? gridCells(W, px, o) : gridCells(W, px, fixed), gy = axis === "x" ? gridCells(H, py, fixed) : gridCells(H, py, o);
+      const purity = cellPurity(data, W, H, gx, gy);
+      if (purity > top + 1e-9) { top = purity; pick = o; }
+    }
+    return pick % (axis === "x" ? px : py);
+  };
+  const x = best(oy, "x");
+  return { offsetX: x, offsetY: best(x, "y") };
+}
+
+// Where the cells sit along one axis. A sliver before the first boundary is dropped, but a nearly
+// whole cell there (the image was cropped through it) is kept.
+function gridCells(n, period, offset) {
+  const o = ((offset % period) + period) % period, start = o >= period * .7 ? o - period : o;
+  return { start, period, count: Math.max(0, Math.floor((n - start) / period + .3)) };
+}
+
+// The color most of a region is, ignoring grid lines, bead holes and glare. null if it's transparent.
+function dominantColor(data, W, x0, y0, x1, y1) {
+  const bins = new Map();
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const p = (y * W + x) * 4;
+    if (data[p + 3] < 128) continue;
+    const key = (data[p] >> 5) << 6 | (data[p + 1] >> 5) << 3 | data[p + 2] >> 5;
+    const b = bins.get(key) || [0, 0, 0, 0];
+    b[0] += data[p]; b[1] += data[p + 1]; b[2] += data[p + 2]; b[3]++;
+    bins.set(key, b);
+  }
+  let top = null;
+  for (const b of bins.values()) if (!top || b[3] > top[3]) top = b;
+  return top ? [0, 1, 2].map(i => Math.round(top[i] / top[3])) : null;
+}
+
+// One color per cell, from its middle so the grid lines between cells stay out of it.
+function sampleCells(data, W, H, gx, gy, inset = .2) {
+  const out = [];
+  for (let r = 0; r < gy.count; r++) {
+    const row = [], y0 = gy.start + r * gy.period;
+    for (let c = 0; c < gx.count; c++) {
+      const x0 = gx.start + c * gx.period;
+      const clamp = (v, n) => Math.max(0, Math.min(n, Math.round(v)));
+      const ax = clamp(x0 + gx.period * inset, W), bx = clamp(x0 + gx.period * (1 - inset), W);
+      const ay = clamp(y0 + gy.period * inset, H), by = clamp(y0 + gy.period * (1 - inset), H);
+      row.push(dominantColor(data, W, ax, ay, Math.max(bx, ax + 1), Math.max(by, ay + 1)));
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+// Greedy color groups, most common colors first so each group is centred on a real color, not a blend.
+function clusterColors(colors, tol) {
+  const freq = new Map(), bin = c => c.map(v => v >> 4).join(",");
+  for (const c of colors) freq.set(bin(c), (freq.get(bin(c)) || 0) + 1);
+  const groups = [];
+  for (const c of [...colors].sort((a, b) => freq.get(bin(b)) - freq.get(bin(a)))) {
+    let g = null, d = Infinity;
+    for (const x of groups) { const e = colorDistance(c, x.mean); if (e < d) { g = x; d = e; } }
+    if (!g || d > tol) groups.push(g = { sum: [0, 0, 0], n: 0, mean: c });
+    g.sum = g.sum.map((v, i) => v + c[i]); g.n++; g.mean = g.sum.map(v => Math.round(v / g.n));
+  }
+  return groups.sort((a, b) => b.n - a.n).map(g => g.mean);
+}
+
+// The most common color around the edge of the grid: the chart's paper or the pegboard. null when
+// the edge is mostly transparent: then that's the background, and the art may touch the edge.
+function borderColor(cellRgb) {
+  const H = cellRgb.length, W = H ? cellRgb[0].length : 0, edge = [];
+  let clear = 0;
+  for (let r = 0; r < H; r++) for (let c = 0; c < W; c++)
+    if (r === 0 || c === 0 || r === H - 1 || c === W - 1) cellRgb[r][c] ? edge.push(cellRgb[r][c]) : clear++;
+  return edge.length > clear ? clusterColors(edge, 48)[0] : null;
+}
+
+// A key that says what the color is (K black, W white, R red...), falling back to the next free one.
+function colorKeyFor(rgb, taken) {
+  const [hue, s, v] = rgbToHsv(rgb);
+  let k;
+  if (v < .2) k = "K";
+  else if (s < .18) k = v > .85 ? "W" : "S";
+  else if (hue >= 15 && hue < 45 && v < .6) k = "N";
+  else if (hue < 15 || hue >= 345) k = s < .5 && v > .7 ? "I" : "R";
+  else k = hue < 45 ? "O" : hue < 70 ? "Y" : hue < 165 ? "G" : hue < 200 ? "C" : hue < 255 ? "B" : hue < 300 ? "P" : "I";
+  for (const c of [k, k.toLowerCase(), ...KEYS]) if (!taken.has(c)) return c;
+  return null;
+}
+
+// Cell colors to sprite rows: cells close to the border color become empty (0 keeps them), the rest
+// merge into color groups, each with a new key, and empty rows and columns around the art are trimmed.
+// With enclosed kept, only background reachable from the edge goes, like a magic wand: white eyes
+// inside an outline match the paper but stay lit. It spreads from cell to similar cell, so it follows
+// a photo's lighting across the board.
+function buildPattern(cellRgb, { background = 60, merge = 60, enclosed = true } = {}) {
+  const bg = background > 0 ? borderColor(cellRgb) : null;
+  const like = cellRgb.map(r => r.map(c => !c || (bg !== null && colorDistance(c, bg) <= background)));
+  let dropped = like;
+  if (enclosed) {
+    dropped = like.map(r => r.map(() => false));
+    const H = like.length, W = H ? like[0].length : 0, stack = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (y === 0 || x === 0 || y === H - 1 || x === W - 1) stack.push([x, y]);
+    // A cell goes if it matches the background, or is close to the colored neighbour that reached it.
+    const goes = (x, y, from) => like[y][x] || (from && cellRgb[y][x] && colorDistance(from, cellRgb[y][x]) <= background);
+    while (stack.length) {
+      const [x, y, from] = stack.pop();
+      if (x < 0 || y < 0 || x >= W || y >= H || dropped[y][x] || !goes(x, y, from)) continue;
+      dropped[y][x] = true;
+      const c = cellRgb[y][x];
+      stack.push([x + 1, y, c], [x - 1, y, c], [x, y + 1, c], [x, y - 1, c]);
+    }
+  }
+  const keep = cellRgb.map((r, y) => r.map((c, x) => dropped[y][x] ? null : c));
+  const used = (r, c) => keep[r] && keep[r][c] !== null;
+  const rowsUsed = keep.map((r, y) => r.some((_, x) => used(y, x)));
+  const colsUsed = (keep[0] || []).map((_, x) => keep.some((_, y) => used(y, x)));
+  const y0 = rowsUsed.indexOf(true), y1 = rowsUsed.lastIndexOf(true), x0 = colsUsed.indexOf(true), x1 = colsUsed.lastIndexOf(true);
+  if (y0 < 0) return { rows: [], colors: {}, background: bg, dropped, extraColors: 0 };
+  const groups = clusterColors(keep.flat().filter(Boolean), merge), extraColors = Math.max(0, groups.length - KEYS.length);
+  const kept = groups.slice(0, KEYS.length), taken = new Set(), colors = {};
+  for (const g of kept) { const k = colorKeyFor(g, taken); taken.add(k); colors[k] = g; }
+  const rows = [];
+  for (let y = y0; y <= y1; y++) {
+    let row = "";
+    for (let x = x0; x <= x1; x++) row += keep[y][x] ? nearestKey(keep[y][x], colors) : EMPTY;
+    rows.push(row);
+  }
+  return { rows, colors, background: bg, dropped, extraColors };
 }
 </script>
 
@@ -439,21 +723,42 @@ $("new").onclick = () => {
   save(); spriteId = null; attrName = "NEW_ART"; cells = blank(16, 16); w = h = 16; pending = null; syncFields(); renderAll();
 };
 
-$("resize").onclick = () => {
-  const nw = Math.min(64, +$("width").value), nh = Math.min(64, +$("height").value);
-  if (!nw || !nh) return;
+["width", "height"].forEach(side => $(side).addEventListener("input", () => {
+  const value = Math.round(+$(side).value);
+  if (!$("keepRatio").checked || !(value >= 1)) return;
+  const [nw, nh] = ratioSize(w, h, value, side);
+  // Only fill in the other side, so a typed 80 isn't rewritten mid-keystroke; Resize caps it at 64.
+  if (side === "width") $("height").value = nh; else $("width").value = nw;
+}));
+$("keepRatio").addEventListener("input", () => { if ($("keepRatio").checked) $("width").dispatchEvent(new Event("input")); });
+
+function resizeTo(nw, nh, scale) {
   save();
-  const old = cells, ow = w, oh = h, scale = $("resizeMode").value === "scale", next = blank(nw, nh);
+  const old = cells, ow = w, oh = h, next = blank(nw, nh);
   for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
     const sx = scale ? Math.min(ow - 1, Math.floor(x * ow / nw)) : x, sy = scale ? Math.min(oh - 1, Math.floor(y * oh / nh)) : y;
     if (sx < ow && sy < oh) next[y][x] = old[sy][sx];
   }
   w = nw; h = nh; cells = next; syncFields(); renderAll(); if (sourceImage) previewImage();
+}
+$("resize").onclick = () => {
+  const nw = Math.min(64, +$("width").value), nh = Math.min(64, +$("height").value);
+  if (nw && nh) resizeTo(nw, nh, $("resizeMode").value === "scale");
+};
+// The art's room on the board: sprites double on 64-row boards unless they declare a fixed SCALE.
+$("fitBoard").onclick = () => {
+  const boardH = +$("board").value, scale = SPRITES[spriteId]?.scale || (boardH >= 64 ? 2 : 1);
+  const maxW = Math.floor(64 / scale), maxH = Math.floor(boardH / scale), [nw, nh] = fitSize(w, h, maxW, maxH);
+  const room = `${maxW} × ${maxH}` + (scale > 1 ? ` (drawn ${scale}× on the 64×${boardH} board)` : "");
+  $("fitNote").className = "hint ok";
+  if (nw === w && nh === h) { $("fitNote").textContent = `Already fits in ${room}.`; return; }
+  resizeTo(nw, nh, true);
+  $("fitNote").textContent = `Scaled to ${nw} × ${nh} to fit ${room}. Undo restores it.`;
 };
 
 // ---- Palette keys ----
 function nextFreeKey() {
-  for (const k of "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") if (!palette[k]) return k;
+  for (const k of KEYS) if (!palette[k]) return k;
   return null;
 }
 $("addKey").onclick = () => {
@@ -634,6 +939,7 @@ function onOff(level) {
 }
 
 function previewImage() {
+  if (patternMode()) return;
   $("imgThresholdOut").textContent = $("imgThreshold").value + "%";
   const sample = sampleImage();
   if (!sample) return;
@@ -649,12 +955,110 @@ function previewImage() {
   renderGrid(); renderPreview();
 }
 
+// ---- Image to pixels: pattern mode ----
+// A grid chart or a bead photo: each cell is one LED, so the canvas takes the grid's size and a new palette.
+let patternSrc = null, patternResult = null;
+const PATTERN_HINT = "Choose a grid pattern or a bead photo; each cell becomes one LED, with new color keys. Nothing is uploaded.";
+const SILHOUETTE_HINT = "Choose an image; it is resampled to the current canvas size. Nothing is uploaded.";
+function patternMode() { return $("imgMode").value === "pattern"; }
+
+function loadPatternSource() {
+  const iw = sourceImage.naturalWidth, ih = sourceImage.naturalHeight, big = Math.max(iw, ih);
+  // Work where cells are a few pixels wide: blow small pixel-art charts up crisply, shrink big photos.
+  const scale = big < 400 ? Math.ceil(400 / big) : Math.min(1, 1200 / big);
+  const W = Math.max(1, Math.round(iw * scale)), H = Math.max(1, Math.round(ih * scale));
+  const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
+  const cx = canvas.getContext("2d", { willReadFrequently: true });
+  cx.imageSmoothingEnabled = scale < 1; cx.imageSmoothingQuality = "high";
+  cx.drawImage(sourceImage, 0, 0, W, H);
+  patternSrc = { canvas, data: cx.getImageData(0, 0, W, H).data, W, H, scale, score: 0 };
+}
+
+// Fills the cell and offset fields, in the source image's pixels.
+function detectGrid() {
+  const { data, W, H, scale } = patternSrc, prof = edgeProfiles(data, W, H);
+  const fx = findGrid(prof.x), fy = findGrid(prof.y);
+  patternSrc.score = Math.min(fx ? fx.score : 0, fy ? fy.score : 0);
+  const fallback = n => ({ period: Math.max(4, n / 16), offset: 0 });
+  const gx = fx || fallback(W), gy = fy || fallback(H), round = v => Math.round(v / scale * 100) / 100;
+  const { offsetX, offsetY } = alignGrid(data, W, H, gx.period, gy.period, gx.offset, gy.offset);
+  $("patCellW").value = round(gx.period); $("patCellH").value = round(gy.period);
+  $("patOffX").value = round(offsetX); $("patOffY").value = round(offsetY);
+}
+
+function previewPattern() {
+  $("patBgOut").textContent = $("patBg").value; $("patMergeOut").textContent = $("patMerge").value;
+  if (!patternSrc) return;
+  const { data, W, H, scale } = patternSrc, read = id => +$(id).value * scale, status = $("imgStatus");
+  const pw = read("patCellW"), ph = read("patCellH");
+  patternResult = null;
+  if (!(pw >= 2 && ph >= 2)) {
+    status.className = "hint warning"; status.textContent = `Cells must be at least ${Math.ceil(2 / scale * 100) / 100} px across.`; return;
+  }
+  const gx = gridCells(W, pw, read("patOffX")), gy = gridCells(H, ph, read("patOffY"));
+  const result = buildPattern(sampleCells(data, W, H, gx, gy), { background: +$("patBg").value, merge: +$("patMerge").value, enclosed: $("patEnclosed").checked });
+  const fullW = result.rows.length ? result.rows[0].length : 0, fullH = result.rows.length;
+  // The canvas tops out at 64 x 64: keep the top-left of anything bigger.
+  result.rows = result.rows.slice(0, 64).map(r => r.slice(0, 64));
+  patternResult = result;
+  drawPatternView(gx, gy, result);
+  const notes = [];
+  if (patternSrc.score < .45) notes.push("The grid is faint: check the lines sit on the cell edges, and set Cell and Offset by hand if not.");
+  if (fullW > 64 || fullH > 64) notes.push(`That's ${fullW} × ${fullH}, over the 64 × 64 limit: only the top-left 64 × 64 is kept.`);
+  if (result.extraColors) notes.push(`${result.extraColors} more colors than there are keys went to their nearest key: raise Merge.`);
+  if (!fullH) notes.push("Every cell matched the background: lower Background, or set it to 0 to keep it.");
+  status.className = "hint " + (notes.length ? "warning" : "ok");
+  status.textContent = (fullH ? `${gx.count} × ${gy.count} cells → ${Math.min(64, fullW)} × ${Math.min(64, fullH)} sprite with ` +
+    `${Object.keys(result.colors).length} new keys. Apply replaces the canvas and palette. ` : "") + notes.join(" ");
+}
+
+function drawPatternView(gx, gy, result) {
+  const view = $("patView"), vx = view.getContext("2d"), { canvas, W, H } = patternSrc;
+  const fit = Math.min(1, (view.parentElement.clientWidth - 4) / W);
+  view.width = Math.round(W * fit); view.height = Math.round(H * fit);
+  vx.drawImage(canvas, 0, 0, view.width, view.height);
+  // Dim the cells read as background so the art stands out, then draw the grid over everything.
+  vx.fillStyle = "rgba(0,0,0,.6)";
+  result.dropped.forEach((row, r) => row.forEach((d, c) => {
+    if (d) vx.fillRect((gx.start + c * gx.period) * fit, (gy.start + r * gy.period) * fit, gx.period * fit, gy.period * fit);
+  }));
+  vx.strokeStyle = "rgba(39,140,255,.85)"; vx.lineWidth = 1; vx.beginPath();
+  for (let c = 0; c <= gx.count; c++) { const x = (gx.start + c * gx.period) * fit; vx.moveTo(x, gy.start * fit); vx.lineTo(x, (gy.start + gy.count * gy.period) * fit); }
+  for (let r = 0; r <= gy.count; r++) { const y = (gy.start + r * gy.period) * fit; vx.moveTo(gx.start * fit, y); vx.lineTo((gx.start + gx.count * gx.period) * fit, y); }
+  vx.stroke();
+  const out = $("patResult"), ox = out.getContext("2d"), rows = result.rows;
+  const cols = rows.length ? rows[0].length : 0, pitch = Math.max(2, Math.min(10, Math.floor((out.parentElement.clientWidth - 4) / Math.max(1, cols))));
+  out.width = Math.max(1, cols * pitch); out.height = Math.max(1, rows.length * pitch); out.hidden = !rows.length;
+  ox.fillStyle = "#000"; ox.fillRect(0, 0, out.width, out.height);
+  rows.forEach((row, y) => [...row].forEach((k, x) => {
+    ox.beginPath(); ox.arc(x * pitch + pitch / 2, y * pitch + pitch / 2, pitch * .42, 0, Math.PI * 2);
+    ox.fillStyle = k === EMPTY ? "#0d0f12" : css(result.colors[k]); ox.fill();
+  }));
+}
+
+function showPattern() {
+  if (!patternSrc) { loadPatternSource(); detectGrid(); }
+  previewPattern();
+}
+
+$("imgMode").addEventListener("input", () => {
+  const pattern = patternMode();
+  $("silhouetteControls").hidden = pattern; $("patternControls").hidden = !pattern;
+  pending = null; renderGrid(); renderPreview();
+  if (!sourceImage) { $("imgStatus").className = "hint"; $("imgStatus").textContent = pattern ? PATTERN_HINT : SILHOUETTE_HINT; return; }
+  pattern ? showPattern() : previewImage();
+});
+["patBg", "patEnclosed", "patMerge", "patCellW", "patCellH", "patOffX", "patOffY"].forEach(id => $(id).addEventListener("input", previewPattern));
+$("patDetect").onclick = () => { if (patternSrc) { detectGrid(); previewPattern(); } };
+
 $("file").onchange = e => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
   const url = URL.createObjectURL(f), img = new Image();
   img.onload = () => {
-    URL.revokeObjectURL(url); sourceImage = img; $("imgInvert").checked = false;
+    URL.revokeObjectURL(url); sourceImage = img; patternSrc = patternResult = null;
+    if (patternMode()) { showPattern(); return; }
+    $("imgInvert").checked = false;
     // A mostly-bright brightness image is a dark subject on a light background: start inverted.
     const sample = sampleImage();
     if (sample && !usedAlpha) {
@@ -664,13 +1068,25 @@ $("file").onchange = e => {
     previewImage();
   };
   img.onerror = () => {
-    URL.revokeObjectURL(url); sourceImage = null; pending = null;
+    URL.revokeObjectURL(url); sourceImage = null; pending = null; patternSrc = patternResult = null;
     $("imgStatus").className = "hint warning"; $("imgStatus").textContent = "Could not read that image file."; renderGrid();
   };
   img.src = url;
 };
 ["imgFit", "imgSource", "imgThreshold", "imgInvert", "imgDither", "imgColor"].forEach(id => $(id).addEventListener("input", previewImage));
 $("imgApply").onclick = () => {
+  if (patternMode()) {
+    if (!patternResult || !patternResult.rows.length) {
+      $("imgStatus").className = "hint warning"; $("imgStatus").textContent = sourceImage ? "No cells to apply: see above." : "Load an image first."; return;
+    }
+    save(); setCells(patternResult.rows, patternResult.colors);
+    const counts = usage();
+    current = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || EMPTY;
+    syncFields(); renderAll(); if (palette[current]) setWheel(palette[current]);
+    $("imgStatus").className = "hint ok";
+    $("imgStatus").textContent = `Applied: ${w} × ${h} with ${Object.keys(palette).length} keys. Undo restores the previous artwork and palette.`;
+    return;
+  }
   if (!pending) { $("imgStatus").className = "hint warning"; $("imgStatus").textContent = "Load an image first."; return; }
   const next = pending.map(r => r.slice());
   save(); cells = next; pending = null; renderAll();
@@ -725,7 +1141,7 @@ for (const [character, list] of Object.entries(groups)) {
 chips($("presets"), PRESETS.map(rgb => [rgb, `(${rgb.join(", ")})`]));
 chips($("projectColors"), projectColors());
 $("board").onchange = renderPreview;
-window.addEventListener("resize", () => { renderGrid(); renderPreview(); });
+window.addEventListener("resize", () => { renderGrid(); renderPreview(); if (patternMode()) previewPattern(); });
 
 const start = decodeURIComponent(location.hash.slice(1));
 const first = SPRITES[start] ? start : SPRITES["slinky/FRONT_ART"] ? "slinky/FRONT_ART" : Object.keys(SPRITES)[0];
