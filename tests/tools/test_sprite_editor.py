@@ -272,6 +272,162 @@ def test_pattern_mode_stays_on_a_big_grid_to_its_far_edge():
     assert result["rows"] == _PATTERN
 
 
+# A tilted photo: read() after straightening it the way Detect grid does.
+_TILTED_JS = _PATTERN_JS + """
+function tilted(img, deg) { const r = rotateImage(img.data, img.W, img.H, deg); return { data: r.data, W: r.W, H: r.H }; }
+function straightened(img) {
+  const turn = gridTurn(img.data, img.W, img.H), r = rotateImage(img.data, img.W, img.H, turn);
+  return { turn, ...read({ data: r.data, W: r.W, H: r.H }) };
+}
+"""
+
+
+@needs_node
+@pytest.mark.parametrize("deg", [-12, -6.5, 4, 9])
+def test_a_tilted_bead_photo_is_straightened_and_read(deg):
+    result = _run_core(_TILTED_JS + f"console.log(JSON.stringify(straightened(tilted(beads(14, 3, 9, 8), {deg}))));")
+    assert abs(result["turn"] + deg) <= .5, "turned back by the tilt, to half a degree"
+    assert abs(result["fx"]["period"] - 14) < .5 and abs(result["fy"]["period"] - 14) < .5
+    assert result["rows"] == _PATTERN
+
+
+@needs_node
+def test_a_straight_chart_or_photo_is_not_turned():
+    result = _run_core(_TILTED_JS + """
+        console.log(JSON.stringify([chart(11.5, 6, 9, 8), beads(14, 3, 9, 8), chart(18.3, 20, 64, 64)]
+          .map(i => gridTurn(i.data, i.W, i.H))));""")
+    assert result == [0, 0, 0], "no resampling, so crisp charts stay crisp"
+
+
+@needs_node
+def test_turning_maps_points_there_and_back():
+    result = _run_core("""
+        const r = rotateImage(new Uint8ClampedArray(40 * 30 * 4), 40, 30, 9.5);
+        const there = r.map(5, 7), back = r.unmap(...there), mid = r.map(20, 15);
+        console.log(JSON.stringify({ back, mid, size: [r.W, r.H] }));""")
+    assert result["back"] == pytest.approx([5, 7])
+    assert result["mid"] == pytest.approx([result["size"][0] / 2, result["size"][1] / 2]), "it turns about the middle"
+
+
+@needs_node
+def test_calibration_levels_a_row_or_column_clicked_either_way_round():
+    result = _run_core("""
+        const t = 8 * Math.PI / 180, P = 20, along = (n, ux, uy) => [100 + n * P * ux, 100 + n * P * uy];
+        const row = along(6, Math.cos(t), Math.sin(t)), col = along(5, -Math.sin(t), Math.cos(t));
+        console.log(JSON.stringify([
+          calibrateLine([100, 100], row, 0, 19), calibrateLine(row, [100, 100], 0, 19),
+          calibrateLine([100, 100], col, 0, 22), calibrateLine([100, 100], row, 4, 19),
+        ]));""")
+    for line in result[:3]:
+        assert line["turn"] == pytest.approx(-8), "turned back by the row's (or column's) tilt"
+        assert line["period"] == pytest.approx(20)
+    assert result[0]["apart"] == 6 and result[2]["apart"] == 5, "counted from the cell size found so far"
+    assert result[3]["apart"] == 4 and result[3]["period"] == pytest.approx(30), "Cells apart wins when it's filled in"
+
+
+SIMBA = os.path.join(ROOT, "docs", "references", "simba_bricks.png")
+
+
+@needs_node
+def test_the_simba_brick_photo_is_straightened_and_read(tmp_path):
+    """A real photo: studded bricks shot about 9 degrees off, on wavy paper, with a watermark."""
+    from PIL import Image
+    im = Image.open(SIMBA).convert("RGBA")
+    raw = tmp_path / "simba.rgba"
+    raw.write_bytes(im.tobytes())
+    result = _run_core(f"""
+        const data = new Uint8ClampedArray(require("fs").readFileSync({json.dumps(str(raw))}));
+        const turn = gridTurn(data, {im.width}, {im.height}), r = rotateImage(data, {im.width}, {im.height}, turn);
+        const prof = edgeProfiles(r.data, r.W, r.H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+        const {{ offsetX, offsetY }} = alignGrid(r.data, r.W, r.H, fx.period, fy.period, fx.offset, fy.offset);
+        const out = buildPattern(sampleCells(r.data, r.W, r.H, gridCells(r.W, fx.period, offsetX), gridCells(r.H, fy.period, offsetY)));
+        console.log(JSON.stringify({{ turn, fx, fy, rows: out.rows, colors: out.colors }}));""")
+    assert 8 <= result["turn"] <= 10.5, "turned clockwise by its tilt"
+    # One stud per cell, about 23 pixels apart in the photo.
+    assert 22 < result["fx"]["period"] < 24.5 and 21.5 < result["fy"]["period"] < 24.5
+    lit = [(r, c) for r, row in enumerate(result["rows"]) for c, k in enumerate(row) if k != "."]
+    assert len(lit) > 400, "Simba, not the paper: the background is dropped and he's mostly there"
+    names = {k[0].upper() for k in result["colors"]}
+    assert {"Y", "O", "R"} <= names | {"N"} and ("R" in names or "N" in names), "his yellow, orange and dark red outline"
+
+
+# A chart drawn over a picture: sky, a white cloud band and a wooden floor behind the art, grid lines only
+# round the art's cells. The heart's B cell is the sky's exact blue, and the bottom row of the heart is navy
+# with lines that barely show, like a suit.
+_OVER_PICTURE_JS = _PATTERN_JS + """
+const SKY = [30, 60, 220];
+function overPicture(P, cols, rows) {
+  const W = Math.ceil(cols * P), H = Math.ceil(rows * P);
+  const data = image(W, H, (x, y) => {
+    const cx = x / P, cy = y / P, row = Math.floor(cy) - 1, k = (PATTERN[row] || "")[Math.floor(cx) - 1];
+    const back = cy > rows - 1.5 ? [180, 120, 60] : cy > rows - 3 ? [245, 245, 245] : SKY;
+    if (!INK[k]) return back;
+    const ink = row === PATTERN.length - 1 ? [20, 25, 70] : INK[k];
+    const onLine = Math.abs(cx - Math.round(cx)) * P < .6 || Math.abs(cy - Math.round(cy)) * P < .6;
+    return onLine ? (row === PATTERN.length - 1 ? [32, 36, 80] : [90, 90, 90]) : ink;
+  });
+  return { data, W, H };
+}
+function readLined(img) {
+  const { data, W, H } = img, prof = edgeProfiles(data, W, H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+  const { offsetX, offsetY } = alignGrid(data, W, H, fx.period, fy.period, fx.offset, fy.offset);
+  const gx = gridCells(W, fx.period, offsetX), gy = gridCells(H, fy.period, offsetY), cells = sampleCells(data, W, H, gx, gy);
+  return { lined: buildPattern(cells, { lined: gridLineCells(data, W, H, gx, gy) }).rows, byColor: buildPattern(cells).rows };
+}
+"""
+
+
+@needs_node
+def test_grid_lines_only_keeps_art_that_matches_the_sky_and_drops_a_busy_backdrop():
+    result = _run_core(_OVER_PICTURE_JS + "console.log(JSON.stringify(readLined(overPicture(12, 9, 11))));")
+    shape = lambda rows: ["".join("." if k == "." else "#" for k in row) for row in rows]
+    assert shape(result["lined"]) == shape(_PATTERN), "sky, cloud and floor go; the sky-blue cell and the dark bottom stay"
+    assert result["lined"][2][3] == "B" and result["lined"][-1][3] not in "R.", "the sky-blue middle, and the navy tip as its own key"
+    assert result["byColor"] != _PATTERN, "by color alone the sky-blue cell would go with the sky"
+
+
+@needs_node
+def test_crop_image_keeps_the_box_inside_the_image():
+    result = _run_core("""
+        const data = new Uint8ClampedArray(6 * 4 * 4).map((_, i) => i);
+        const c = cropImage(data, 6, 4, [4.5, -3, 9, 2.2]);
+        console.log(JSON.stringify({ W: c.W, H: c.H, x0: c.x0, y0: c.y0, first: [...c.data.slice(0, 4)] }));""")
+    assert (result["W"], result["H"], result["x0"], result["y0"]) == (2, 3, 4, 0)
+    assert result["first"] == [16, 17, 18, 19], "starts at pixel (4, 0)"
+
+
+SHEET = os.path.join(ROOT, "docs", "references", "toy_story_4_sheet.png")
+
+
+@needs_node
+@pytest.mark.parametrize("name, box, size, cell", [
+    ("Bunny", (15, 25, 190, 285), (15, 23), 10.9),
+    ("Woody", (435, 275, 665, 590), (19, 27), 11.6),
+])
+def test_one_character_is_read_from_a_box_on_a_sheet(tmp_path, name, box, size, cell):
+    """The Toy Story 4 sheet: eleven characters, each scaled its own way, over sky, clouds, wall and floor."""
+    from PIL import Image
+    im = Image.open(SHEET).convert("RGBA")
+    raw = tmp_path / "sheet.rgba"
+    raw.write_bytes(im.tobytes())
+    result = _run_core(f"""
+        const full = new Uint8ClampedArray(require("fs").readFileSync({json.dumps(str(raw))}));
+        const {{ data, W, H }} = cropImage(full, {im.width}, {im.height}, {json.dumps(list(box))});
+        const prof = edgeProfiles(data, W, H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+        const {{ offsetX, offsetY }} = alignGrid(data, W, H, fx.period, fy.period, fx.offset, fy.offset);
+        const gx = gridCells(W, fx.period, offsetX), gy = gridCells(H, fy.period, offsetY);
+        const out = buildPattern(sampleCells(data, W, H, gx, gy), {{ lined: gridLineCells(data, W, H, gx, gy) }});
+        console.log(JSON.stringify({{ turn: gridTurn(data, W, H), fx, rows: out.rows }}));""")
+    assert result["turn"] == 0, "a drawn chart isn't turned"
+    assert abs(result["fx"]["period"] - cell) < .3, "its own cell size, not the sheet's average"
+    rows = result["rows"]
+    assert abs(len(rows[0]) - size[0]) <= 1 and abs(len(rows) - size[1]) <= 1
+    lit = sum(k != "." for row in rows for k in row)
+    assert lit > .55 * size[0] * size[1], "the character, with the backdrop dropped round it"
+    corners = [rows[0][0], rows[0][-1], rows[-1][0], rows[-1][-1]]
+    assert corners.count(".") >= 2, "the sky round him is gone"
+
+
 @needs_node
 def test_find_grid_gives_up_on_an_image_too_small_for_four_cells():
     assert _run_core("console.log(JSON.stringify(findGrid([1, 5, 1, 5, 1, 5, 1, 5, 1, 5])));") is None
