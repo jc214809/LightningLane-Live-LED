@@ -275,6 +275,11 @@ sells the character, then size him to hold it.
   mock packed the rows so tight they read as a green pattern; a crowd reads when each figure has
   its own outline: on 64x32 a back row of heads over a front row, on 64x64 rows clear of each other.
 
+- **Pooh and his balloon** (`pooh`) — a clean grid pattern, cell for cell on both boards, right in
+  one round. Splitting the art at the string, and drawing the string as a line, lets the balloon
+  sway with Pooh swinging a beat behind it for no extra art. A floater wants ease in *and* out
+  (`smooth`): a cubic ease shoots off the edge at three times its average speed.
+
 ## The Aliens: what worked
 
 - **A crowd is small figures that don't overlap much.** Rows overlapping by half a figure merged

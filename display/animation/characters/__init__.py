@@ -22,6 +22,7 @@ from display.animation.characters.mickey import MickeyReveal
 from display.animation.characters.mine_train import MineTrainAllReveal, MineTrainReveal, MineTrainSnowReveal
 from display.animation.characters.mike import MikeReveal
 from display.animation.characters.olaf import OlafReveal
+from display.animation.characters.pooh import PoohReveal
 from display.animation.characters.ralph import RalphReveal
 from display.animation.characters.rex import RexReveal
 from display.animation.characters.slinky import SlinkyReveal, SlinkyWrapReveal
@@ -53,6 +54,7 @@ TRANSITIONS = {
     "mater": MaterReveal,
     "chip_dale": ChipDaleReveal,
     "tigger": TiggerReveal,
+    "pooh": PoohReveal,
     "donald": DonaldReveal,
     "stitch_surf": StitchSurfReveal,
     "jack_sally": JackSallyReveal,

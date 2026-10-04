@@ -64,7 +64,7 @@ Put a ✅ in the Done column when a character ships.
 | 40 | | Hamm | DHS: Toy Story Land | trots across, coins clinking out of his slot | Fly-by |
 | 41 | | Heihei | EPCOT: Journey of Water, Inspired by Moana | wanders across, pecking at nothing, and walks off the edge | Run-in |
 | 42 | | Maleficent | MK; Halloween party nights | green flames rise from the bottom and she appears in them | Peek |
-| 43 | | Pooh and his balloon | MK: Many Adventures of Winnie the Pooh | floats up from the bottom on his red balloon and drifts off the top | Peek (rises off the top) |
+| 43 | ✅ | Pooh and his balloon | MK: Many Adventures of Winnie the Pooh (and a surprise anywhere) | floats up from the bottom on his red balloon, hovers, and drifts off the top, uncovering the ride below him | Wipe (rising, `wants_prev`) |
 | 44 | | Mr. and Mrs. Potato Head | DHS: Toy Story Mania! | their pieces pop off and fly back on | TBD |
 | 45 | | Princesses (and villains) | MK | one princess at random walks across; a villain instead on Halloween nights | Fly-by |
 | 46 | | Pua | EPCOT: Journey of Water, Inspired by Moana | trots across, with Heihei (#41) | Run-in |
@@ -531,8 +531,17 @@ Questions: green flames, or her staff's orb glowing; Halloween nights only.
 20x64 with the balloon: too tall for 64x32 as is; tight on 64x64 (exactly its height).
 Floating up and off the top suits the tall, thin shape.
 
-Questions: 64x32 shows only part of him at a time as he floats, or a redraw; pairs with
-Tigger (#23) on the Pooh ride.
+Decided: the pattern cell for cell on both boards (64x32 shows part of him at a time); rise,
+hover and drift off with a sway; the old ride stays above his feet and the new one is uncovered
+below them; 10% of his own ride's screens and a 0.5% surprise anywhere (Baymax trimmed from 1.2%
+to 0.7% to stay under the 12% cap).
+
+Built (2026-10-04): `pooh`, from the pattern in one round. The string is drawn as a line between
+the balloon and his hand, so Pooh swings a beat behind the balloon and it bends. Rise and leave
+are timed by distance (30 rows a second on average) and eased in and out (`smooth`): a cubic
+ease-in on the way out barely moved for the first 40% and then shot off the top at 3 rows a
+frame. The gold edge runs `GAP` (4) rows under his feet; right under them it sat on top of him.
+The outline is a dark brown, like Tigger's. About 5.4s on 64x64, 4.3s on 64x32.
 
 **44. Mr. and Mrs. Potato Head.** Reference: [Potato heads.jpg](<docs/references/Potato heads.jpg>),
 the two heads, 65x40 together, about 32x40 each: neither board fits both as is; one at a time

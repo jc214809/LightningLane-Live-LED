@@ -357,6 +357,17 @@ def test_rex_stomps_through_toy_story_land_one_time_in_ten(monkeypatch, screens,
     assert [s["transition"] for s in screens[-2:]] == ["rex", "wipe"]
 
 
+def test_pooh_floats_through_his_own_ride_one_time_in_ten(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "The Many Adventures of Winnie the Pooh", "waitTime": 20,
+                                           "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.09)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.12)  # past the visitor and, under the cap, every surprise
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert [s["transition"] for s in screens[-2:]] == ["pooh", "wipe"]
+
+
 @pytest.mark.parametrize("ride", ["Toy Story Mania!", "Alien Swirling Saucers"])
 def test_the_claw_chooses_an_alien_on_their_rides_one_time_in_ten(monkeypatch, screens, ride):
     assert "aliens" not in disney.SURPRISES, "only on their own rides"
