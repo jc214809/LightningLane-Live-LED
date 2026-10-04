@@ -52,6 +52,11 @@ from display.animation.characters import (  # noqa: F401
     TRANSITIONS,
 )
 
+from display.animation.characters.aliens import (  # noqa: F401
+    AliensReveal,
+    AliensToysReveal,
+)
+
 from display.animation.characters.army_men import (  # noqa: F401
     ArmyMenReveal,
 )

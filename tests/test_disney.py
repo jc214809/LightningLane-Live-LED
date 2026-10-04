@@ -357,6 +357,35 @@ def test_rex_stomps_through_toy_story_land_one_time_in_ten(monkeypatch, screens,
     assert [s["transition"] for s in screens[-2:]] == ["rex", "wipe"]
 
 
+@pytest.mark.parametrize("ride", ["Toy Story Mania!", "Alien Swirling Saucers"])
+def test_the_claw_chooses_an_alien_on_their_rides_one_time_in_ten(monkeypatch, screens, ride):
+    assert "aliens" not in disney.SURPRISES, "only on their own rides"
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": ride, "waitTime": 30, "status": "OPERATING"}]}
+    rolls = iter([0.5, 0.09, 0.5])  # Rex passes, the Aliens come in
+    monkeypatch.setattr(disney.random, "random", lambda: next(rolls))
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "aliens"
+
+
+@pytest.mark.parametrize("wait, expected", [(5, "aliens_toys"), (3, "aliens_toys"), (0, "aliens_toys"), (6, "wipe"), ("Down", "wipe"), (True, "wipe")])
+def test_buzz_and_woody_are_in_the_claw_scene_every_time_at_a_short_wait(monkeypatch, screens, wait, expected):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": "Alien Swirling Saucers", "waitTime": wait, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.99)  # no roll would bring anyone
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == expected
+
+
+def test_the_aliens_stay_off_slinky_dog_dash(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": "Slinky Dog Dash", "waitTime": 30, "status": "OPERATING"}]}
+    rolls = iter([0.5, 0.0, 0.5])
+    monkeypatch.setattr(disney.random, "random", lambda: next(rolls))
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] != "aliens"
+
+
 def test_rex_never_visits_other_rides(monkeypatch, screens):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
     park = {"name": "Hollywood Studios", "attractions": [{"name": "Tower of Terror", "waitTime": 30,

@@ -271,6 +271,25 @@ sells the character, then size him to hold it.
 - **Rex** (`rex`) — the user's art for each board went on cell for cell; only the roar needed
   drawing. His first open jaw read as a stripe across his face; it read as a roar once it
   swung wider at the front than the hinge and the teeth went with the lower jaw.
+- **The Aliens** (`aliens`) — one alien redrawn small from a sheet, repeated into a crowd. The first
+  mock packed the rows so tight they read as a green pattern; a crowd reads when each figure has
+  its own outline: on 64x32 a back row of heads over a front row, on 64x64 rows clear of each other.
+
+## The Aliens: what worked
+
+- **A crowd is small figures that don't overlap much.** Rows overlapping by half a figure merged
+  into wallpaper. Keep each one's outline whole, and only let a back row peek over a front one.
+- **Random picks need limits.** The claw first chose an alien on 64x32's back row, so high that
+  the claw was barely on the board when it grabbed. Pick only from the ones it can reach in sight.
+- **A grab from below waits for its moment.** Woody first leapt for Buzz's boot the instant the
+  lift began, but on 64x32 Buzz fills the board's height, so the boot was off the bottom and Woody
+  jumped down and vanished. He now stands until the boot rises within his reach, then jumps up for
+  it, which is also how the movie plays it.
+- **Text in a scene: bake it from the BDF.** `capture._glyphs` reads the board's fonts in Python,
+  so YOU'VE BEEN CHOSEN! is pixels worked out once, drawn the same on a Pi and in the emulator,
+  with a black edge so it reads over the crowd.
+- **The Pattern tool reads grid charts, not every bead photo.** On `TS_beads.jpg` it locked onto
+  the bead holes (half the bead pitch) and a false 13 degree turn; the sheet's alien read cleanly.
 
 ## Rex: what worked
 
