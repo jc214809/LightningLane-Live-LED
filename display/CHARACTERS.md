@@ -147,6 +147,9 @@ Give the eye time. Roughly:
 - Preview with the real hold: ride screens hold 8s on the board, and a character's time
   comes out of that. A 4s preview hold made a 2.8s character look like it left the wait
   time no time at all.
+- A board below 30 fps plays a scene in slow motion (`t` is the frame number over `FPS`). Luxo's
+  searchlight, the costliest frame, ran so long on a board that the 8s cut came while it was still
+  dark. A long or heavy scene sets `hold_after_s`, which also guarantees it plays in full.
 - Hold at the extremes. A pause at the top of Stitch's peek, or at Baymax's full
   inflation, reads far better than constant motion.
 - Ease, don't move linearly. `ease_out` on entrances; a decaying overshoot for

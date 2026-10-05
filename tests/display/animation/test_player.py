@@ -49,6 +49,19 @@ def test_slow_frames_do_not_stretch_the_screen(clock):
     assert clock.now == pytest.approx(8, abs=0.11)
 
 
+def test_a_slow_board_plays_the_reveal_in_full_then_gets_the_rest_of_the_screen(clock):
+    seen = []
+
+    def slow(canvas, t):
+        seen.append(t)
+        clock.now += 0.1  # each frame takes 3x its budget
+        return True
+
+    animation.run_frames(FakeMatrix(), slow, duration_s=8, play_s=6)
+    assert max(seen) >= 6, "the whole reveal played, though it took three times as long"
+    assert clock.now == pytest.approx(3 * 6 + 2, abs=0.11), "then the 2s after it, by the clock"
+
+
 def test_canvas_is_created_once_and_reused_across_screens():
     matrix = FakeMatrix()
     for _ in range(3):
@@ -175,7 +188,7 @@ def test_a_screen_can_ask_to_keep_playing_while_the_wipe_uncovers_it(plays_under
 
 def test_a_reveal_longer_than_the_screen_keeps_the_screen_up_after_it(monkeypatch):
     holds = []
-    monkeypatch.setattr(animation.player, "run_frames", lambda matrix, frame, hold_s: holds.append(hold_s) or (0, 0))
+    monkeypatch.setattr(animation.player, "run_frames", lambda matrix, frame, hold_s, play_s: holds.append(hold_s) or (0, 0))
     animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 8, transition="mine_train_snow", rng=random.Random(0))
     train = animation.MineTrainSnowReveal(64, 32, random.Random(0))
     assert holds[-1] >= train.duration + train.hold_after_s
