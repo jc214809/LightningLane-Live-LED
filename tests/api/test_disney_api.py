@@ -1304,6 +1304,15 @@ def test_show_start_due_ignores_other_shows_and_parks_without_showtimes():
     assert show_start_due(two, "Happily Ever After", 300, now=later + timedelta(seconds=5)) == later
 
 
+def test_show_start_due_matches_a_show_named_with_the_event_it_runs_at():
+    now = HEA_START + timedelta(seconds=10)
+    spooky = "Disney\u2019s Not-So-Spooky Spectacular at Mickey\u2019s Not-So-Scary Halloween Party"
+    assert show_start_due(_parks_with_show(name=spooky), "Disney's Not-So-Spooky Spectacular",
+                          300, now=now) == HEA_START, "live data appends the party's name"
+    assert show_start_due(_parks_with_show(name="Happily Ever After Dessert Party"),
+                          "Happily Ever After", 300, now=now) is None, "a longer name isn't the show"
+
+
 def test_startup_fetches_log_summaries_not_whole_payloads(monkeypatch):
     # The API returns tens of KB per park; the debug log gets a count, not the payload.
     today_str = datetime.now().strftime('%Y-%m-%d')
