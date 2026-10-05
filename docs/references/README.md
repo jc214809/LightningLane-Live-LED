@@ -86,3 +86,11 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Runaway_Railway_mickey.jpeg](Runaway_Railway_mickey.jpeg) | Mickey pointing from a Runaway Railway car (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes |
 | [Runaway_Railway_goofy.jpeg](Runaway_Railway_goofy.jpeg) | Goofy driving the Runaway Railway engine (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes |
 | [Runaway_Railway_pluto.jpeg](Runaway_Railway_pluto.jpeg) | Pluto in a Runaway Railway car (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes |
+| [Buzz - New.jpg](<Buzz - New.jpg>) | Buzz Lightyear, a chibi (3D render of cubes over a sky and floor) | 15 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round him |
+| [Woody - New.jpg](<Woody - New.jpg>) | Woody, a chibi (a chart with a colour count under it) | 19 x 26 | Yes | Yes (2x too) | Pattern mode: drag a box round him, above the colour count |
+| [Vanellope Von - Car.jpg](<Vanellope Von - Car.jpg>) | Vanellope von Schweetz in her kart (pixel art, no grid lines) | 28 x 31 | Tight | Yes (2x too) | Pattern mode reads it |
+| [Gamora.jpg](Gamora.jpg) | Gamora, a chibi | 19 x 28 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Groot.jpg](Groot.jpg) | Baby Groot, over a purple starry sky | about 25 x 39 | No (7 rows over) | Yes | Pattern mode reads it |
+| [Rocket.jpg](Rocket.jpg) | Rocket, a chibi | 23 x 29 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Starlod.jpg](Starlod.jpg) | Star-Lord in his mask, a chibi | 19 x 29 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Thor.jpg](Thor.jpg) | Thor in his helmet with his hammer, a chibi | 24 x 26 | Yes | Yes (2x too) | Pattern mode reads it |
