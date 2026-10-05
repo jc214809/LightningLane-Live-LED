@@ -12,6 +12,7 @@ from display.animation.characters.donald import DonaldReveal
 from display.animation.characters.dumbo import DumboReveal
 from display.animation.characters.falcon import FalconReveal
 from display.animation.characters.figment import FigmentReveal
+from display.animation.characters.forky import ForkyReveal
 from display.animation.characters.genie import GenieReveal
 from display.animation.characters.jack_sally import JackSallyReveal
 from display.animation.characters.goofy import GoofyReveal
@@ -66,4 +67,5 @@ TRANSITIONS = {
     "rex": RexReveal,
     "aliens": AliensReveal,
     "aliens_toys": AliensToysReveal,
+    "forky": ForkyReveal,
 }

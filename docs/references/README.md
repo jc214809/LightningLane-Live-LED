@@ -23,7 +23,7 @@ height, or within a row or two of it, so there's no room for anything under him.
 | [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Gaston, Belle, Beast, Chip, Mrs. Potts, Lumiere, Cogsworth (photo of beads) | about 12 x 20 each | Yes | Yes (2x too) | |
 | [Dug.jpg](Dug.jpg) | Dug | 22 x 27 | Yes | Yes (2x too) | |
 | [Bullseye.jpg](Bullseye.jpg) | Toy Story, a sheet: Woody, Buzz, Mr. and Mrs. Potato Head, Slinky, Rex, Hamm, Bo Peep and her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Bullseye, Stinky Pete and more | up to about 26 x 28 each (Bullseye 26 x 28) | Yes | Yes (2x too) | |
-| [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | |
+| [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | Built: `forky`, cell for cell, 1x on 64x32 and 2x on 64x64 |
 | [dwarfs.jpg](dwarfs.jpg) | The seven dwarfs, a sheet | about 20 x 40 each | No (hat to beard, in the mine car) | Yes | Built: `mine_train`, cell for cell, shoulders up on 64x64 |
 | [Tink.jpg](Tink.jpg) | Tinker Bell | 26 x 31 | Tight | Yes (2x too) | Built: `tink` |
 | [Hamm.jpg](Hamm.jpg) | Hamm | 41 x 31 | Tight | Yes | |

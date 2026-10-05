@@ -16,7 +16,7 @@ Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf 
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
 Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
 (`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), Rex (`rex`), and the
-Aliens and the claw (`aliens`).
+Aliens and the claw (`aliens`), and Forky (`forky`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -60,7 +60,7 @@ Put a ✅ in the Done column when a character ships.
 | 36 | | Dug | AK (Up; no ride) | runs in, stops dead, head snaps round ("Squirrel!"), dashes off | Run-in |
 | 37 | ✅ | The Seven Dwarfs | MK: Seven Dwarfs Mine Train | a short mine train rolls across: a few dwarfs, one per car, then a gem car | Fly-by (train) |
 | 38 | | The Evil Queen | MK; Halloween party nights | holds out the poisoned apple, or the old screen fades into her magic mirror | TBD |
-| 39 | | Forky | DHS: Toy Story Land | waddles in, spots the old screen ("Trash!") and dives into it | Wreck (`wants_prev`) |
+| 39 | ✅ | Forky | a surprise anywhere | waddles in, spots the old ride (TRASH!), dives head first through the bottom and the old screen goes down the hole after him | Wreck (`wants_prev`, `forky`) |
 | 40 | | Hamm | DHS: Toy Story Land | trots across, coins clinking out of his slot | Fly-by |
 | 41 | | Heihei | EPCOT: Journey of Water, Inspired by Moana | wanders across, pecking at nothing, and walks off the edge | Run-in |
 | 42 | | Maleficent | MK; Halloween party nights | green flames rise from the bottom and she appears in them | Peek |
@@ -503,12 +503,12 @@ too tall for 64x32 as is; fits 64x64.
 Questions: the apple or the mirror; a Halloween-night villain only, alongside Maleficent
 (#42) and Oogie Boogie (#50), or the Mine Train too.
 
-**39. Forky.** Reference: [Forky.jpg](docs/references/Forky.jpg), 23x28: fits both boards (2x
-on 64x64 too). White on black with red arms reads cleanly; his diving into "trash" is his joke
-from the film, and the old screen is the trash.
-
-Questions: does he dive into the old screen (a wreck), or just waddle across; googly eyes
-that wobble.
+**39. Forky.** Built: `forky`, from [Forky.jpg](docs/references/Forky.jpg) cell for cell, 1x on
+64x32 and 2x on 64x64, with a black ring round him so he stands off the old ride. His eye holes
+are googly eyes (a grey ring, a black pupil that rolls as he waddles and settles looking down at
+the old ride). He waddles in, TRASH! pops up (over him on 64x64, beside him on 64x32), his arms
+flap, he hops, flips and dives head first through the bottom; the old screen is pulled into the
+hole, nearest first, while his feet kick out of it, then they slip in.
 
 **40. Hamm.** References: [Hamm.jpg](docs/references/Hamm.jpg), 41x31: tight on 64x32, fits
 64x64; and a small Hamm on [Bullseye.jpg](docs/references/Bullseye.jpg) (fits both).
@@ -784,3 +784,39 @@ that sets `hold_after_s` always plays in full, and a board that fell behind duri
 time back after it, so Rex, the Mine Train, the Grannies and the Aliens can't be cut short either.
 Not done: making the light story's frames cheaper, or making every scene follow the clock
 (a slow board would drop frames instead of running in slow motion).
+
+## 11. Move the surprise maps out of `disney.py`
+
+`disney.py` carries who appears where (`PARK_REVEALS`, `SURPRISES`, `RIDE_VISITORS`, the long
+comment describing each visitor, `_mine_train_for_wait`), and it grows with every character.
+Move them into their own module (for example `display/animation/visitors.py`), so adding a
+character touches that file and `TRANSITIONS`, not the main loop.
+
+To settle first:
+- What moves: just the three maps and their comment, or the picking too (`_surprise`,
+  `_ride_visitor`, `_mine_train_for_wait`, `forced_surprise`), so `disney.py` only asks "who's
+  next?".
+- Where it lives: next to `TRANSITIONS` under `display/animation/`, or at the top level.
+- Keep the tests that hold it (the cap, each visitor's slice, who keeps to their own rides)
+  passing unchanged apart from imports; the cap test is the guard that matters.
+
+## 12. Analyse new reference images automatically
+
+Every image dropped into `docs/references/` should get a row in its README table (size in
+cells, whether it fits each board as is, what it shows), and new lessons in CHARACTERS.md when
+one is built. Today that's done by hand when someone remembers.
+
+Plan:
+- **A test that catches a new image:** fail when a file in `docs/references/` has no row in the
+  README table (like the sprite editor's test that fails until it's rebuilt), naming the file.
+- **A tool that measures it:** `tools/analyze_reference.py <image>` finds the grid pitch from
+  its lines (what was done by hand for Forky.jpg: 13 px cells), counts the character's lit
+  cells, and prints a draft README row: size, fits 64x32 / 64x64 / 2x, and its colours. Photos
+  of beads and stitching (no grid lines) fall back to the sprite editor's Pattern mode, and
+  the row says so.
+- **Claude picks it up:** a SessionStart hook in the project's `.claude/settings.json` lists
+  reference images with no README row, so a new session analyses them first.
+
+Questions: should the tool also cut out the character as ASCII art ready to paste (the step
+every cell-for-cell character starts with), and should a sheet of several characters get one
+row or one per character?
