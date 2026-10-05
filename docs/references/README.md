@@ -94,3 +94,22 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Rocket.jpg](Rocket.jpg) | Rocket, a chibi | 23 x 29 | Yes | Yes (2x too) | Pattern mode reads it |
 | [Starlod.jpg](Starlod.jpg) | Star-Lord in his mask, a chibi | 19 x 29 | Yes | Yes (2x too) | Pattern mode reads it |
 | [Thor.jpg](Thor.jpg) | Thor in his helmet with his hammer, a chibi | 24 x 26 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Darth Mal.jpg](<Darth Mal.jpg>) | Darth Maul, a chibi, his double lightsaber held diagonally across the whole chart | 36 x 35 with the saber (about 21 x 24 without) | No (3 rows over) | Yes | Pattern mode reads it |
+| [Darth Vader.jpg](<Darth Vader.jpg>) | Darth Vader, a chibi with his lightsaber (soft, blurred pixel art, no grid lines) | 39 x 34 | No (2 rows over) | Yes | Pattern mode reads it; merge the blur's in-between shades |
+| [Darth-Vader-2.jpg](Darth-Vader-2.jpg) | Darth Vader, a chibi with his lightsaber (pixel art, no grid lines) | 25 x 20 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Yoda-saber.jpg](Yoda-saber.jpg) | Yoda with his lightsaber (pixel art, no grid lines) | 32 x 21 | Yes | Yes (2x too) | Pattern mode reads it |
+| [hans- solo.jpg](<hans- solo.jpg>) | Obi-Wan Kenobi with his lightsaber, despite the file name (pixel art, no grid lines) | 31 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
+| [skywalker-saber.jpg](skywalker-saber.jpg) | Luke Skywalker with his lightsaber (pixel art, no grid lines) | 24 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
+| [many Starwars .jpg](<many Starwars .jpg>) | BB-8 (one of thirteen Star Wars bead charts on one grid, 11 px beads) | 14 x 18 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | R2-D2 | 18 x 21 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Princess Leia, head only, tiny | 11 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Yoda, head only, tiny | 11 x 8 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | A stormtrooper's helmet with a pink bow | 15 x 17 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Darth Maul's head | 13 x 19 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Darth Vader with his lightsaber | 21 x 21 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Kylo Ren with his crossguard lightsaber | 20 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Luke Skywalker, head only, tiny | 9 x 8 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Han Solo, head only, tiny | 11 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | An Ewok, head only, tiny | 9 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | R2-D2, tiny | 9 x 6 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Starwars .jpg](<many Starwars .jpg>) | Chewbacca | 17 x 27 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
