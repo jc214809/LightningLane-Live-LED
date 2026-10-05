@@ -12,7 +12,8 @@ class LuxoBallReveal:
     the ball bounces across and Luxo hops after it; "light", a searchlight: the board is dark
     with the ball somewhere in it, Luxo hops in, switches his light on and sweeps a narrow
     beam looking for it, his head turning with it (the ball shows only where the beam
-    touches it), finds it, the ball hops happily, and the beam widens over the ride. The ball turns a quarter each hop, like
+    touches it), finds it, the ball hops happily, and the beam widens over the ride, whose wait counts
+    up once they've left. The ball turns a quarter each hop, like
     it's rolling (exact pixel turns: other rotations smear pixel art). Both are 1x on both
     boards, transcribed cell for cell from pixel art the user shared.
     """
@@ -85,6 +86,9 @@ class LuxoBallReveal:
     colors = {"Y": (240, 195, 65), "R": (190, 50, 30), "B": (45, 100, 180),
               "K": (20, 20, 22), "W": (250, 250, 250), "L": (170, 169, 165), "D": (98, 95, 90)}
     BULB = (4.5, 8.0)  # the bulb's centre in LUXO_ART (col, row), where his light comes from
+    # Story "light": the bulb is dark until he switches on, then bright pale yellow, so it never matches
+    # the ball's yellow or his white shade, and the light can't look on from the start.
+    BULB_OFF, BULB_ON = (70, 62, 45), (255, 240, 140)
     # His head is the shade: every row down to 11, and on the rows it shares with the arm, the
     # columns up to these. It tilts about the joint where it meets the arm (PIVOT), sampled
     # nearest-neighbour, which reads cleanly up to about 30 degrees either way.
@@ -98,6 +102,11 @@ class LuxoBallReveal:
         self.rng = rng or random.Random()
         self.story = self.STORY or self.rng.choice(self.STORIES)
         self.duration = self.DURATIONS[self.story]
+        if self.story == "light":
+            # The ride is dark until the beam widens, so its wait counts up after they've left,
+            # and the screen stays up to read it, however slowly a board plays the search.
+            self.over_screen = False
+            self.hold_after_s = 3.0
         self.ball_size = len(self.BALL_ART)
         self.luxo_w, self.luxo_h = len(self.LUXO_ART[0]), len(self.LUXO_ART)
         self.hop = 5 if height < 64 else 9  # how high the ball bounces
@@ -288,11 +297,14 @@ class LuxoBallReveal:
         if lux:
             x, y, facing_left = lux
             x0, y0 = int(round(x - self.luxo_w / 2)), int(round(y))
+            colors = self.colors
+            if self.story == "light":
+                colors = {**colors, "Y": self.BULB_ON if t >= self.LIGHT_ON else self.BULB_OFF}
             for (c, r), kind in self.luxo_pose(self.head_tilt(t) if facing_left else 0.0).items():
                 if not facing_left:
                     c = self.luxo_w - 1 - c
                 if 0 <= x0 + c < self.width and 0 <= y0 + r < self.height:
-                    out[(x0 + c, y0 + r)] = self.colors[kind]
+                    out[(x0 + c, y0 + r)] = colors[kind]
         return out
 
     def _stamp(self, out, art, x0, y0, only=None):

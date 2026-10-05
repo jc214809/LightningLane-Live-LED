@@ -6,7 +6,7 @@ import pytest
 
 import display.animation as animation
 
-from tests.display.animation.support import FakeCanvas
+from tests.display.animation.support import FakeCanvas, FakeMatrix
 
 
 def test_luxo_ball_is_registered_and_picks_one_of_three_stories():
@@ -86,3 +86,38 @@ def test_luxo_searches_the_dark_with_his_light_finds_the_ball_then_lights_the_ri
     widen = scene.WIDEN
     assert dark(widen - 0.1) > dark(widen + 0.5) > dark(widen + 0.8) > 0, "then the beam widens"
     assert dark(widen + 1.15) == 0, "until the whole ride is lit"
+
+
+@pytest.mark.parametrize("story", ["bat", "chase", "light"])
+def test_the_searchlight_waits_for_them_to_leave_before_the_wait_counts_up(clock, monkeypatch, story):
+    # Seen on a board: the ride screen ended before its wait could be read in the dark story.
+    monkeypatch.setattr(animation.LuxoBallReveal, "STORY", story)
+    scene = animation.LuxoBallReveal(64, 32, random.Random(0))
+    seen = []
+    animation.show_screen(FakeMatrix(), lambda canvas, t: seen.append(t) or True, 8,
+                          transition="luxo_ball", rng=random.Random(0))
+    during = seen[:int(scene.duration * animation.FPS)]
+    if story == "light":
+        assert set(during) == {0.0}, "the ride holds its first frame until they've left"
+        assert clock.now == pytest.approx(scene.duration + scene.hold_after_s, abs=0.04), "then stays up to read the wait"
+    else:
+        assert max(during) > 0, "the short stories play over a ride that keeps animating"
+        assert clock.now == pytest.approx(8, abs=0.04)
+
+
+def test_the_bulb_is_dark_until_he_switches_his_light_on(monkeypatch):
+    # The bulb was the ball's yellow, so the light looked on from the start.
+    monkeypatch.setattr(animation.LuxoBallReveal, "STORY", "light")
+    scene = animation.LuxoBallReveal(64, 32, random.Random(0))
+
+    def distance(a, b):
+        return sum(abs(x - y) for x, y in zip(a, b))
+
+    def bulb(t):
+        return {rgb for rgb in scene.pixels(t).values() if rgb in (scene.BULB_OFF, scene.BULB_ON)}
+
+    assert bulb(scene.LIGHT_ON - 0.1) == {scene.BULB_OFF}
+    assert bulb(scene.LIGHT_ON + 0.1) == {scene.BULB_ON}
+    assert distance(scene.BULB_ON, scene.colors["Y"]) > 100, "lit, it doesn't match the ball"
+    assert distance(scene.BULB_ON, scene.colors["W"]) > 100, "or the white shade around it"
+    assert distance(scene.BULB_OFF, scene.colors["K"]) > 100, "dark, it still shows against his outline"

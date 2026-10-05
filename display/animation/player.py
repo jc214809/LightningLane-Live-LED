@@ -38,34 +38,39 @@ def forget_screen(matrix):
     _last_screen.pop(id(matrix), None)
 
 
-def run_frames(matrix, draw_frame, duration_s, fps=FPS):
+def run_frames(matrix, draw_frame, duration_s, fps=FPS, play_s=0.0):
     """
     Call draw_frame(canvas, t) each frame for duration_s; once it returns False the image
-    is static and we sleep out the rest. Returns (frames drawn, seconds spent animating)
-    so callers can see how close a board gets to `fps`.
+    is static and we sleep out the rest. The first play_s seconds of t always play in full:
+    a board too slow to keep up with them gets the time it lost added on after them. Returns
+    (frames drawn, seconds spent animating) so callers can see how close a board gets to `fps`.
     """
     frame_time = 1.0 / fps
-    frames = int(duration_s * fps)
     canvas = frame_canvas(matrix)
     began = time.monotonic()
     drawn = 0
+    behind = 0.0  # how far a slow board fell behind during play_s
 
     def animated_s():
         # A board that keeps up spends a whole frame slot on its last frame too.
         return max(time.monotonic() - began, drawn * frame_time)
 
-    for i in range(frames):
+    i = 0
+    while i < int((duration_s + behind) * fps):
         start = time.monotonic()
+        if i / fps < play_s:
+            behind = max(behind, start - began - i / fps)
         # A slow board drops frames rather than stretching the screen past duration_s.
-        if start - began >= duration_s:
+        elif start - began >= duration_s + behind:
             return drawn, animated_s()
         canvas.Clear()
         animating = draw_frame(canvas, i / fps)
         canvas = present(matrix, canvas)
         drawn += 1
+        i += 1
         if not animating:
             spent = animated_s()
-            time.sleep(max(0.0, duration_s - (time.monotonic() - began)))
+            time.sleep(max(0.0, duration_s + behind - (time.monotonic() - began)))
             return drawn, spent
         remaining = frame_time - (time.monotonic() - start)
         if remaining > 0:
@@ -119,7 +124,9 @@ def show_screen(matrix, draw_screen, hold_s, transition="wipe", rng=None):
         revealing = reveal.overlay(canvas, t_reveal)
         return bool(moving or revealing)
 
-    drawn, spent = run_frames(matrix, frame, hold_s)
+    # A slow board plays frames in slow motion; one that asks for the screen after it is never cut short.
+    play_s = cover_s + reveal.duration if after_s is not None else 0.0
+    drawn, spent = run_frames(matrix, frame, hold_s, play_s=play_s)
     _last_screen[id(matrix)] = (draw_screen, last_t[0])
     if transition != "wipe" and spent > 0:
         # A readout for checking characters on real boards: journalctl shows how close each gets.
