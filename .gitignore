@@ -10,5 +10,5 @@ __pycache__/
 logs/
 .DS_Store
 README.md
-.claude/settings.json
+.claude/settings.local.json
 !docs/references/README.md

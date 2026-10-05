@@ -800,23 +800,26 @@ To settle first:
 - Keep the tests that hold it (the cap, each visitor's slice, who keeps to their own rides)
   passing unchanged apart from imports; the cap test is the guard that matters.
 
-## 12. Analyse new reference images automatically
+## ~~12. Analyse new reference images automatically~~ Done
 
-Every image dropped into `docs/references/` should get a row in its README table (size in
-cells, whether it fits each board as is, what it shows), and new lessons in CHARACTERS.md when
-one is built. Today that's done by hand when someone remembers.
+Every image dropped into `docs/references/` needs a row in its README table; until now that was
+done by hand when someone remembered (eight images had none).
 
-Plan:
-- **A test that catches a new image:** fail when a file in `docs/references/` has no row in the
-  README table (like the sprite editor's test that fails until it's rebuilt), naming the file.
-- **A tool that measures it:** `tools/analyze_reference.py <image>` finds the grid pitch from
-  its lines (what was done by hand for Forky.jpg: 13 px cells), counts the character's lit
-  cells, and prints a draft README row: size, fits 64x32 / 64x64 / 2x, and its colours. Photos
-  of beads and stitching (no grid lines) fall back to the sprite editor's Pattern mode, and
-  the row says so.
-- **Claude picks it up:** a SessionStart hook in the project's `.claude/settings.json` lists
-  reference images with no README row, so a new session analyses them first.
+Done:
+- `tests/tools/test_analyze_reference.py` fails, naming the file, while any image there has no
+  row (and while a row links an image that's gone).
+- `tools/analyze_reference.py <image>` runs the sprite editor's Pattern-mode core under Node (one
+  detection for both), and prints a draft row: size, fits 64x32 / 64x64 / 2x, how the editor reads
+  it, and its colours. `--art` adds the sprite rows and palette to paste (decided with the user,
+  2026-10-04); `--box` measures one character on a sheet, `--lines` is Grid lines only. With no
+  believable grid (no repeat, or cells more than 15% off square, which is how a whole sheet of
+  charts or a pin photo reads) the row says Needs tracing.
+- A sheet gets **one row per character**, each measured with `--box` (decided with the user,
+  2026-10-04): starwars.jpg has nine.
+- `.claude/settings.json` (now checked in; personal permissions moved to the ignored
+  `settings.local.json`) has a SessionStart hook that runs `--missing`, so a new session lists
+  images with no row and measures them first.
 
-Questions: should the tool also cut out the character as ASCII art ready to paste (the step
-every cell-for-cell character starts with), and should a sheet of several characters get one
-row or one per character?
+Not done: the sheets added before the one-row-per-character rule (Bullseye.jpg, the princess
+sheets, Beauty and the Beast.jpg, toy_story_4_sheet.png, TS_beads.jpg, dwarfs.jpg) still have one
+row each. Split them when one is next used. Lessons for CHARACTERS.md still come from building.
