@@ -15,6 +15,12 @@ cell. A scene that adds a prop under him (a board, a base, ground) needs those r
 surfboard and wave take about 7 rows on 64x32. **Tight** means the character fills the board's
 height, or within a row or two of it, so there's no room for anything under him.
 
+**Adding an image:** every image here needs a row, and a test fails, naming the file, until it has
+one. `python3 tools/analyze_reference.py <image>` finds the grid the way the sprite editor's
+Pattern mode does and prints a draft row (size, fits, colours) to finish with who it shows; `--art`
+also prints the sprite to paste. A sheet gets one row per character: measure each with
+`--box x0,y0,x1,y1` (pixels of the image), adding `--lines` for art drawn over a picture.
+
 | Reference | Character | Size (cells, w x h) | 64x32 as is | 64x64 as is | On the board |
 |---|---|---|---|---|---|
 | [sitting_stitch.jpg](sitting_stitch.jpg) | Stitch, sitting | 26 x 25 | Yes | Yes (2x too) | `stitch_surf` on 64x32 ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
@@ -64,3 +70,19 @@ height, or within a row or two of it, so there's no room for anything under him.
 | [simba_bricks.png](simba_bricks.png) | Young Simba, the Lion King logo pose (photo of a studded-brick build, about 8.5 degrees off straight, with a watermark) | about 27 x 25 | Yes | Yes (2x too) | Pattern mode reads it: Detect grid straightens it (`gridTurn`); a test holds it |
 | [TS_beads.jpg](TS_beads.jpg) | Toy Story in fused beads: Woody, Jessie, an Alien, Buzz, Mrs. and Mr. Potato Head (photo, each piece on its own grid, Buzz about 3 degrees off) | about 9 x 13 to 11 x 14 each | Yes | Yes (2x too) | Pattern mode: drag a box round one; Detect grid reads it bead for bead, and a test holds Woody, the Alien and Buzz |
 | [toy_story_4_sheet.png](toy_story_4_sheet.png) | Toy Story 4, a sheet: Bunny, Ducky, Forky, Duke Caboom, Bo Peep in two outfits, an Alien, Buzz, Woody, Gabby Gabby and Benson, each scaled its own way, over a sky, wall and floor | about 15 x 23 to 21 x 27 each (Bunny 15 x 23, Woody 19 x 27) | Yes | Yes | Pattern mode: drag a box round one, tick Grid lines only; a test reads Bunny and Woody |
+| [aladin.jpg](aladin.jpg) | Aladdin holding the lamp | 26 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
+| [genie.jpg](genie.jpg) | Genie rising from his lamp | 21 x 39 | No (7 rows over) | Yes | Pattern mode reads it |
+| [lion king bead.jpeg](<lion king bead.jpeg>) | Young Simba in the Lion King logo pose (photo of a studded-brick build, the same as simba_bricks.png, about 9 degrees off straight, with a watermark) | about 27 x 29 | Yes | Yes (2x too) | Pattern mode: drag a box above the watermark; Detect grid straightens it |
+| [mickey_minnie_kiss.jpg](mickey_minnie_kiss.jpg) | Mickey and Minnie kissing, one piece (with the artist's initials at the bottom) | 50 x 34 | No (2 rows over) | Yes | Pattern mode reads it |
+| [starwars.jpg](starwars.jpg) | R2-D2 (one of nine Star Wars charts on a sheet, each on its own grid) | 22 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | Yoda | 26 x 28 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | Princess Leia | 26 x 27 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | BB-8 | 19 x 27 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | A stormtrooper's helmet | 24 x 24 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | A Jedi in brown robes | 15 x 23 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | An Ewok | 13 x 18 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | Darth Maul's head | 25 x 29 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [starwars.jpg](starwars.jpg) | Darth Vader's helmet | 27 x 24 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [Runaway_Railway_mickey.jpeg](Runaway_Railway_mickey.jpeg) | Mickey pointing from a Runaway Railway car (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes |
+| [Runaway_Railway_goofy.jpeg](Runaway_Railway_goofy.jpeg) | Goofy driving the Runaway Railway engine (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes |
+| [Runaway_Railway_pluto.jpeg](Runaway_Railway_pluto.jpeg) | Pluto in a Runaway Railway car (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes |

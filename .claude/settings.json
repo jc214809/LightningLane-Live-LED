@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/analyze_reference.py\" --missing",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
