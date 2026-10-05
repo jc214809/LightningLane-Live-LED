@@ -342,6 +342,14 @@ def _plain_name(name):
     return (name or "").lower().replace("\u2019", "'").strip()
 
 
+def _is_show(name, wanted):
+    """`name` is the show `wanted` (already plain), on its own or with the event it runs at
+    appended: party nights list "Disney's Not-So-Spooky Spectacular at Mickey's Not-So-Scary
+    Halloween Party". Not a bare prefix, so "Happily Ever After Dessert Party" isn't the show."""
+    name = _plain_name(name)
+    return name == wanted or name.startswith(wanted + " at ")
+
+
 def show_start_due(parks, show_name, window_s, now=None):
     """
     The start time of a performance of `show_name` that began within the last
@@ -352,7 +360,7 @@ def show_start_due(parks, show_name, window_s, now=None):
     wanted = _plain_name(show_name)
     for park in parks:
         for attr in park.get("attractions", []):
-            if _plain_name(attr.get("name")) != wanted:
+            if not _is_show(attr.get("name"), wanted):
                 continue
             for start in attr.get("showtimes") or []:
                 if start <= now < start + timedelta(seconds=window_s):
