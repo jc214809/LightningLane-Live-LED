@@ -78,6 +78,10 @@ from display.animation.characters.chip_dale import (  # noqa: F401
     ChipDaleReveal,
 )
 
+from display.animation.characters.forky import (  # noqa: F401
+    ForkyReveal,
+)
+
 from display.animation.characters.dumbo import (  # noqa: F401
     DumboReveal,
 )

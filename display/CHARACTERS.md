@@ -282,6 +282,13 @@ sells the character, then size him to hold it.
   one round. Splitting the art at the string, and drawing the string as a line, lets the balloon
   sway with Pooh swinging a beat behind it for no extra art. A floater wants ease in *and* out
   (`smooth`): a cubic ease shoots off the edge at three times its average speed.
+- **Forky** (`forky`) — a clean grid pattern, cell for cell (1x on 64x32, 2x on 64x64), right in
+  one round. His eye holes were empty in the pattern; on a white head they're filled as googly
+  eyes, a grey ring round a black pupil that rolls as he waddles (a white eye would vanish into
+  him, a dark one reads as a hole). A white sprite over the ride's white text needs a black ring
+  round it. 64x32 has no room over a full-height figure, so TRASH! goes beside him there. The old
+  screen going down the hole nearest first reads at once; test it by how much is left near the
+  hole and far from it, not single pixels, which the pixels falling in pass over.
 
 ## The Aliens: what worked
 
