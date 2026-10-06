@@ -144,6 +144,19 @@ from display.animation.characters.rex import (  # noqa: F401
     RexReveal,
 )
 
+from display.animation.characters.saber import (  # noqa: F401
+    SaberClashReveal,
+)
+
+from display.animation.characters.saber_duel import (  # noqa: F401
+    DUELS,
+    KyloReyDuelReveal,
+    ObiWanDuelReveal,
+    SaberDuelReveal,
+    YodaDuelReveal,
+    random_saber_duel,
+)
+
 from display.animation.characters.slinky import (  # noqa: F401
     SlinkyReveal,
     SlinkyWrapReveal,
