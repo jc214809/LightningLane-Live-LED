@@ -26,6 +26,9 @@ from display.animation.characters.olaf import OlafReveal
 from display.animation.characters.pooh import PoohReveal
 from display.animation.characters.ralph import RalphReveal
 from display.animation.characters.rex import RexReveal
+from display.animation.characters.saber import SaberClashReveal
+from display.animation.characters.saber_duel import (KyloReyDuelReveal, ObiWanDuelReveal, SaberDuelReveal, YodaDuelReveal,
+                                                     random_saber_duel)
 from display.animation.characters.slinky import SlinkyReveal, SlinkyWrapReveal
 from display.animation.characters.stitch import StitchSurfReveal
 from display.animation.characters.tink import TinkReveal
@@ -68,4 +71,10 @@ TRANSITIONS = {
     "aliens": AliensReveal,
     "aliens_toys": AliensToysReveal,
     "forky": ForkyReveal,
+    "saber_clash": SaberClashReveal,
+    "saber_duel": random_saber_duel,  # one of the duels below, at random
+    "saber_duel_luke": SaberDuelReveal,
+    "saber_duel_obiwan": ObiWanDuelReveal,
+    "saber_duel_yoda": YodaDuelReveal,
+    "saber_duel_kylo": KyloReyDuelReveal,
 }

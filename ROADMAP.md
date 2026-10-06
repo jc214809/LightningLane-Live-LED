@@ -16,7 +16,7 @@ Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf 
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
 Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
 (`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), Rex (`rex`), and the
-Aliens and the claw (`aliens`), and Forky (`forky`).
+Aliens and the claw (`aliens`), Forky (`forky`), the lightsaber clash (`saber_clash`), and the lightsaber duels (`saber_duel`: Luke, Obi-Wan or Yoda against Vader, or Rey against Kylo Ren).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -79,6 +79,11 @@ Put a ✅ in the Done column when a character ships.
 | 55 | | RC | DHS: Toy Story Land | races across, wheels spinning | Drive-by |
 | 56 | ✅ | Bluey and Bingo as the Grannies | none (Bluey; a surprise anywhere) | shuffle slowly across side by side in their granny dressing gowns, Bingo lifting and planting her walker; the new screen appears behind them | Wipe (walk-across, `grannies`) |
 | 57 | ✅ | Bluey and Bingo, Keepy Uppy | none (Bluey; a surprise anywhere) | run in after a red balloon, face each other and take turns batting it up, then chase it off | Wipe (run-across, `keepy_uppy`) |
+| 58 | ✅ | Lightsaber clash (blades only) | DHS: Galaxy's Edge, Star Tours | a red and a blue blade swing in, lock in an X with sparks, then go upright and sweep apart; the new ride opens between them | Wipe over the old screen (`saber_clash`, `wants_prev`) |
+| 59 | ✅ | Luke vs Darth Vader | DHS: Galaxy's Edge, Star Tours | walk in, trade three blows with sparks, lock blades, and are thrown apart to the edges as the new ride opens between them | Wipe over the old screen (`saber_duel`, `wants_prev`) |
+| 60 | ✅ | Obi-Wan vs Darth Vader | DHS: Galaxy's Edge, Star Tours | Luke's fight, with Obi-Wan | Wipe over the old screen (`saber_duel_obiwan`, picked by `saber_duel`) |
+| 61 | ✅ | Yoda vs Darth Vader | DHS: Galaxy's Edge, Star Tours | Yoda stays small, hops in and leaps into each of his attacks | Wipe over the old screen (`saber_duel_yoda`, picked by `saber_duel`) |
+| 62 | ✅ | Rey vs Kylo Ren | DHS: Galaxy's Edge, Star Tours | the same fight; Kylo's crossguard blade crackles | Wipe over the old screen (`saber_duel_kylo`, picked by `saber_duel`) |
 
 ### Notes per character
 
@@ -654,6 +659,65 @@ Built (2026-10-03), changed from the plan above while building:
   44 rows with arms out was 69 wide, so 64x64 has Bluey bead for bead from the photo (28x32) and
   Bingo shrunk from her pattern (22x29); 64x32 has both redrawn about 20 rows. The balloon is red,
   8x8 on 64x32 and 14x14 on 64x64 (tripled from the first mock, then 70% of that).
+
+**58. Lightsaber clash.** Built (2026-10-05): `saber_clash`, blades only, no hilts or wielders.
+- A `RIDE_VISITORS` entry, 1 in 10 on Rise of the Resistance, Smugglers Run and Star Tours;
+  never in `SURPRISES`. On the Galaxy's Edge rides the Falcon rolls first, so between them
+  about 1 screen in 5 gets a Star Wars visitor there.
+- Red swings in from the bottom-left and blue from the bottom-right, each pivoting just off
+  its corner, and they lock in an X at the centre of the old ride. They shiver there while two
+  bursts of white and yellow sparks fly from the crossing, then swing upright side by side and
+  sweep apart, red left and blue right, with the new ride between them (like TRON's trails).
+- Solid blades with no white core, 2px on 64x32 and 3px on 64x64, humming between two shades.
+- Takes the old screen (`wants_prev`), so the clash plays over the old ride, not over black.
+
+**59. Luke vs Darth Vader.** Built (2026-10-05): `saber_duel`, from
+[skywalker-saber.jpg](docs/references/skywalker-saber.jpg) and
+[Darth-Vader-2.jpg](docs/references/Darth-Vader-2.jpg) cell for cell, 1x on both boards
+(doubled, the pair is wider than 64x64).
+- Its own `RIDE_VISITORS` roll, 1 in 10 on the same three rides as the clash (#58), so with
+  the Falcon about a quarter of those screens on Galaxy's Edge get a Star Wars visitor.
+- The blades are taken out of the art and drawn from each hilt so they can swing; Vader's greys
+  are lifted so he doesn't vanish into the black of the board. Nothing else changed from the art.
+- They walk in, trade three blows (Luke, Vader, Luke) with a spark where each lands, lock blades
+  with sparks pouring off, and are thrown apart, blades upright, as the new ride opens between them.
+- Then (2026-10-05, "move the hands to make it more lifelike"): the fists and hilts came out of
+  the art too. Each front arm is drawn from the shoulder (a 2px sleeve, outlined, Luke's skin fist,
+  Vader's glove with its highlight) and swings with the blade: fist up by the head on the raise,
+  out in front and low on the cut. The attacker leans a pixel into the blow, the defender is
+  knocked back a pixel when it lands, and Vader's cape swings out and back. The longer reach
+  meant standing them further apart and lowering the guard so the blades still cross.
+- Luke then got his second arm back (2026-10-06), as a free arm rather than a second hand on the
+  hilt (two-handed was tried; the user didn't want it): held out behind him for balance, like a
+  fencer, tucked lower as he raises his blade and flung back as he cuts.
+- Vader stretched to Luke's 24 rows (two helmet rows, two body rows and a helmet column each side
+  doubled). Luke's tunic was tidied: the arms' outlines had been cutting black lines into it, so
+  they're only drawn off the body now, and his old left sleeve and the hands' leftovers came out,
+  with his cream trousers showing above the boots as in the reference.
+
+**60-62. More duels** (2026-10-06). The duel roll (`saber_duel`, still one 1 in 10 roll) now
+picks a matchup at random from `saber_duel.DUELS`; each is also its own transition for
+`force_surprise` (`saber_duel_luke`, `_obiwan`, `_yoda`). Matched to Luke and Vader's size, as asked.
+- **Obi-Wan** (`ObiWanDuelReveal`): from `hans- solo.jpg` cell for cell, already 24 rows. Both his
+  arms and the blade over his head came out; the blade hid the top of his head, so three rows of
+  hair are filled in.
+- **Yoda** (`YodaDuelReveal`): from `Yoda-saber.jpg`, arms and blade out.
+  Kept small (21 rows), as asked; he hops in and leaps into each of his attacks. Green blade.
+  First built mirrored (to put his saber arm on Vader's side), which turned his head away from
+  Vader; the user caught it, along with a far ear too small to see. Now unmirrored (his head is
+  turned toward Vader in the reference, and the arms are drawn in code anyway), far ear lengthened,
+  both pupils toward Vader, and the reference's white background cleared from round his head.
+- **Rey vs Kylo Ren** (`KyloReyDuelReveal`): both from KidKinobi on DeviantArt
+  ([rey-saber.jpg](docs/references/rey-saber.jpg), picked by the user from two candidates, and
+  [kylo-saber.jpg](docs/references/kylo-saber.jpg), the same artist, used instead of the bead
+  sheet's big-headed Kylo so the two match), both 24 rows. Rey keeps her yellow blade (the user's
+  choice) and her other arm as drawn; Kylo is mirrored, his greys lifted, his red blade with a
+  crossguard and crackling edges.
+- **Next, from the Megamalgamation sheet** (Chris Bringhurst, the user's image; not saved yet): the
+  same Mega Man style as Luke and Obi-Wan, about 24 cells tall but 2 px a cell in a blurry JPEG, so
+  each needs cleaning up. Suggested: Obi-Wan vs Darth Maul (double-bladed), Anakin vs Obi-Wan
+  (Mustafar), Mace Windu vs Palpatine (purple blade); General Grievous (four blades) or Yoda vs
+  Count Dooku as options. Waiting for the user's pick.
 
 ### Ideas for using them
 

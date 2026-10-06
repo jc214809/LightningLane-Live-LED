@@ -151,7 +151,10 @@ def _half_lit_screen(canvas, t):
     return False
 
 
-@pytest.mark.parametrize("transition,t", [("army_men", 0.3), ("falcon", 1.2), ("ralph", 0.3), ("pooh", 1.0), ("forky", 1.0)])
+@pytest.mark.parametrize("transition,t", [("army_men", 0.3), ("falcon", 1.2), ("ralph", 0.3), ("pooh", 1.0), ("forky", 1.0),
+                                          ("saber_clash", 1.0), ("saber_duel", 2.0),
+                                          ("saber_duel_obiwan", 2.0), ("saber_duel_yoda", 2.0),
+                                          ("saber_duel_kylo", 2.0)])
 def test_new_screen_never_shows_through_the_old_screens_dark_pixels(transition, t):
     # show_screen draws the new screen first and the transition paints over it, so a
     # transition that draws only the old screen's lit pixels lets the new one bleed through.

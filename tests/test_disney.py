@@ -345,6 +345,41 @@ def test_the_falcon_never_visits_other_rides(monkeypatch, screens):
     assert screens[-1]["transition"] != "falcon"
 
 
+@pytest.mark.parametrize("ride, rolls", [("Star Wars: Rise of the Resistance", [0.5, 0.09]),
+                                         ("Millennium Falcon: Smugglers Run", [0.5, 0.09]),
+                                         ("Star Tours – The Adventures Continue", [0.09])])
+def test_the_lightsabers_clash_on_the_star_wars_rides_one_time_in_ten(monkeypatch, screens, ride, rolls):
+    assert "saber_clash" not in disney.SURPRISES, "only on the Star Wars rides"
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": ride, "waitTime": 45, "status": "OPERATING"}]}
+    rolls = iter(rolls)  # on Galaxy's Edge the Falcon rolls first and passes
+    monkeypatch.setattr(disney.random, "random", lambda: next(rolls))
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "saber_clash"
+
+
+@pytest.mark.parametrize("ride, rolls", [("Star Wars: Rise of the Resistance", [0.5, 0.5, 0.09]),
+                                         ("Millennium Falcon: Smugglers Run", [0.5, 0.5, 0.09]),
+                                         ("Star Tours – The Adventures Continue", [0.5, 0.09])])
+def test_luke_and_vader_duel_on_the_star_wars_rides_one_time_in_ten(monkeypatch, screens, ride, rolls):
+    assert "saber_duel" not in disney.SURPRISES, "only on the Star Wars rides"
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "Hollywood Studios", "attractions": [{"name": ride, "waitTime": 45, "status": "OPERATING"}]}
+    rolls = iter(rolls)  # the Falcon (on Galaxy's Edge) and the blades-only clash roll first and pass
+    monkeypatch.setattr(disney.random, "random", lambda: next(rolls))
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "saber_duel"
+
+
+@pytest.mark.parametrize("visitor", ["saber_clash", "saber_duel"])
+def test_the_lightsabers_never_come_out_on_other_rides(monkeypatch, screens, visitor):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] != visitor
+
+
 @pytest.mark.parametrize("ride", ["Slinky Dog Dash", "Toy Story Mania!", "Alien Swirling Saucers"])
 def test_rex_stomps_through_toy_story_land_one_time_in_ten(monkeypatch, screens, ride):
     assert "rex" not in disney.SURPRISES, "only on his own land's rides"

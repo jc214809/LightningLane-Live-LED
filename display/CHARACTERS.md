@@ -234,6 +234,33 @@ What worked and what didn't, so we don't repeat it:
   screen for its opening beat; making it the jump in reverse (a streak snapping into the
   ship) fixed it, and brightening her toward white as she stretches stopped the jump
   reading as a long grey brick.
+- **Lightsaber clash** — no art at all: two solid lines drawn in code, each a line through
+  a point at an angle, filled `blade_w` thick across whichever axis it runs less of (the
+  64x32 board's diagonal is shallower than 45°). In the first render the two blades, upright
+  at the centre, landed on the same columns and blue hid red; they stand side by side now.
+- **Luke vs Vader** — two references that already held their sabers pointing at each other made
+  the pairing easy. A saber that has to swing comes out of the art and is drawn from the hilt;
+  fill the robe back in where the blade crossed it. Where they meet is solved from the two
+  blades each frame, so a spark always lands on the actual crossing.
+  Moving the arms (asked for as "more lifelike") changed the reach: with the fists out front the
+  hilts nearly touched, so they stand further apart and the cut and guard were re-solved until
+  every blow crosses. An arm drawn in code over a body of the same colour needs its outline, or
+  it disappears into the robe. A second arm from a shoulder at the same height just doubles the
+  first into a thick stripe. Luke's back arm reads best free, held out behind him like a fencer's
+  and swinging against the saber arm; two hands on the hilt wasn't wanted.
+  Outline a drawn limb only where it's out past the body: over the body the outline cut black
+  lines into Luke's tunic. And when a reference's arm is taken out, take out what it left behind
+  (his old sleeve, the outline of his hands), or the clothes look off.
+- **Obi-Wan and Yoda (more duels)** — a matchup is data: art, anchor, shoulders, arm length, waist,
+  sleeve and fist colours, blade colour. Put the anchor 3.5 px behind and below the front shoulder,
+  as on Luke, and the existing cut and guard angles cross for every pair without retuning. A white
+  background inside a pattern (Obi-Wan's arm against his head) reads as white pixels; clear it.
+  Before mirroring a reference, check where the head and eyes face, not just the weapon: Yoda's
+  saber pointed left but his head was turned right, so mirroring him made him look away from Vader.
+  With the arms drawn in code, the weapon's side in the art no longer matters. A small far ear in a
+  three-quarter view is two pixels on the board; lengthen it or it reads as missing.
+  For a pair, one artist for both beats two sources: Kylo from the bead sheet was a big helmet on a
+  tiny body next to Rey; the same artist's Kylo matched her.
 
 - **Ralph** — redrawn from the user's pattern, cell for cell, with a double-fist slam. His
   raised arms were drawn as thick outlined lines from the shoulder (generated, not typed),

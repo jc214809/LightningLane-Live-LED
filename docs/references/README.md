@@ -100,6 +100,8 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Yoda-saber.jpg](Yoda-saber.jpg) | Yoda with his lightsaber (pixel art, no grid lines) | 32 x 21 | Yes | Yes (2x too) | Pattern mode reads it |
 | [hans- solo.jpg](<hans- solo.jpg>) | Obi-Wan Kenobi with his lightsaber, despite the file name (pixel art, no grid lines) | 31 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
 | [skywalker-saber.jpg](skywalker-saber.jpg) | Luke Skywalker with his lightsaber (pixel art, no grid lines) | 24 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
+| [rey-saber.jpg](rey-saber.jpg) | Rey with her yellow lightsaber, by KidKinobi on DeviantArt (pixel art, no grid lines) | 23 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
+| [kylo-saber.jpg](kylo-saber.jpg) | Kylo Ren with his crossguard lightsaber, by KidKinobi on DeviantArt (pixel art, no grid lines) | 25 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
 | [many Starwars .jpg](<many Starwars .jpg>) | BB-8 (one of thirteen Star Wars bead charts on one grid, 11 px beads) | 14 x 18 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
 | [many Starwars .jpg](<many Starwars .jpg>) | R2-D2 | 18 x 21 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
 | [many Starwars .jpg](<many Starwars .jpg>) | Princess Leia, head only, tiny | 11 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |

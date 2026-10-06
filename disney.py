@@ -70,7 +70,9 @@ SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side":
              "ralph": 0.005, "grannies": 0.005,
              "keepy_uppy": 0.001, "pooh": 0.005, "forky": 0.005}
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
-# a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge; Mike is
+# a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge, and a red and
+# a blue lightsaber clash over its rides and Star Tours, then sweep apart to the next; on the
+# same rides Luke and Vader fight a duel, lock blades and are thrown apart to the edges. Mike is
 # in the rotation too, but drops in on his own Laugh Floor far more often. Jack, Sally and
 # Zero turn up on their own meet, which is only listed on Halloween party nights ("jack
 # skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too). The Mine Train
@@ -80,6 +82,8 @@ SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side":
 # Pooh floats through his own ride's screens.
 RIDE_VISITORS = {
     "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
+    "saber_clash": {"rides": ("smugglers run", "rise of the resistance", "star tours"), "chance": 0.10},
+    "saber_duel": {"rides": ("smugglers run", "rise of the resistance", "star tours"), "chance": 0.10},
     "mike": {"rides": ("laugh floor",), "chance": 0.10},
     "jack_sally": {"rides": ("meet jack skellington",), "chance": 0.5},
     "mine_train": {"rides": ("seven dwarfs mine train",), "chance": 0.10},
