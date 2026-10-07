@@ -16,7 +16,7 @@ Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf 
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
 Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
 (`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), Rex (`rex`), and the
-Aliens and the claw (`aliens`), Forky (`forky`), the lightsaber clash (`saber_clash`), and the lightsaber duels (`saber_duel`: Luke, Obi-Wan or Yoda against Vader, or Rey against Kylo Ren).
+Aliens and the claw (`aliens`), Forky (`forky`), the lightsaber clash (`saber_clash`), the lightsaber duels (`saber_duel`: Luke, Obi-Wan or Yoda against Vader, or Rey against Kylo Ren), and Kevin with Dug and his balloons (`kevin`).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -57,7 +57,7 @@ Put a ✅ in the Done column when a character ships.
 | 33 | | Grogu | DHS: Star Wars: Galaxy's Edge | floats across in his hover pram, ears twitching; or raises a hand and Force-lifts the old screen away | Fly-by, or Wreck (`wants_prev`) |
 | 34 | | Lumiere, Cogsworth, Mrs. Potts and Chip | MK: Enchanted Tales with Belle, Be Our Guest | the enchanted objects parade across, "Be Our Guest" | Fly-by (parade) |
 | 35 | | Boo | MK: Monsters, Inc. Laugh Floor | runs in giggling in her monster costume | TBD; pairs with Mike (#3) and Sulley (#48) |
-| 36 | | Dug | AK (Up; no ride) | runs in, stops dead, head snaps round ("Squirrel!"), dashes off | Run-in |
+| 36 | | Dug | AK (Up; no ride) | runs in, stops dead, head snaps round ("Squirrel!"), dashes off | Run-in; he's in `kevin` (#63), front-facing, so this needs a side view |
 | 37 | ✅ | The Seven Dwarfs | MK: Seven Dwarfs Mine Train | a short mine train rolls across: a few dwarfs, one per car, then a gem car | Fly-by (train) |
 | 38 | | The Evil Queen | MK; Halloween party nights | holds out the poisoned apple, or the old screen fades into her magic mirror | TBD |
 | 39 | ✅ | Forky | a surprise anywhere | waddles in, spots the old ride (TRASH!), dives head first through the bottom and the old screen goes down the hole after him | Wreck (`wants_prev`, `forky`) |
@@ -84,6 +84,7 @@ Put a ✅ in the Done column when a character ships.
 | 60 | ✅ | Obi-Wan vs Darth Vader | DHS: Galaxy's Edge, Star Tours | Luke's fight, with Obi-Wan | Wipe over the old screen (`saber_duel_obiwan`, picked by `saber_duel`) |
 | 61 | ✅ | Yoda vs Darth Vader | DHS: Galaxy's Edge, Star Tours | Yoda stays small, hops in and leaps into each of his attacks | Wipe over the old screen (`saber_duel_yoda`, picked by `saber_duel`) |
 | 62 | ✅ | Rey vs Kylo Ren | DHS: Galaxy's Edge, Star Tours | the same fight; Kylo's crossguard blade crackles | Wipe over the old screen (`saber_duel_kylo`, picked by `saber_duel`) |
+| 63 | ✅ | Kevin and Dug (Up) | a surprise anywhere | Kevin struts across with Dug chasing behind her; his balloons lift him slowly higher as he goes, and he floats off the right edge up high while she stays on the ground | Over the finished screen (`kevin`, `over_screen`) |
 
 ### Notes per character
 

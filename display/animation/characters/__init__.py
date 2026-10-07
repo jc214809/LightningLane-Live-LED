@@ -16,6 +16,7 @@ from display.animation.characters.forky import ForkyReveal
 from display.animation.characters.genie import GenieReveal
 from display.animation.characters.jack_sally import JackSallyReveal
 from display.animation.characters.goofy import GoofyReveal
+from display.animation.characters.kevin import KevinReveal
 from display.animation.characters.luxo_ball import LuxoBallReveal
 from display.animation.characters.mater import MaterReveal
 from display.animation.characters.mcqueen import McQueenReveal
@@ -72,6 +73,7 @@ TRANSITIONS = {
     "aliens": AliensReveal,
     "aliens_toys": AliensToysReveal,
     "forky": ForkyReveal,
+    "kevin": KevinReveal,
     "saber_clash": SaberClashReveal,
     "saber_duel": random_saber_duel,  # one of the duels below, at random
     "saber_duel_luke": SaberDuelReveal,

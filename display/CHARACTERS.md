@@ -323,6 +323,16 @@ sells the character, then size him to hold it.
   round it. 64x32 has no room over a full-height figure, so TRASH! goes beside him there. The old
   screen going down the hole nearest first reads at once; test it by how much is left near the
   hole and far from it, not single pixels, which the pixels falling in pass over.
+- **Kevin and Dug** (`kevin`) — Kevin cell for cell from a grid pattern, Dug redrawn small from
+  his, balloons in code; the mock was right first time. A pattern's light-grey drop shadow isn't
+  part of the character: drop it, but keep a pale part of the art (her plume). Kevin is 38 rows,
+  mostly neck, so 64x32 cuts the neck (first and last neck rows kept, so it still tapers) and
+  nothing else. A front-facing sitting Dug can't trot, so he bobs a row as he follows; the
+  balloons sell the scene, not his legs. The first version stopped them mid-board for the lift and
+  had Kevin stretch her neck after him; the user wanted no stop: Dug chasing her, lifted a little
+  more with every step (height from the share of the way across, squared, so he leaves the
+  ground gently), off the right edge up high while she stays on the ground.
+  A bunch of small 3x3 balloons (bottom corners off, a shine pixel) reads as Up's cluster.
 
 ## The Aliens: what worked
 
