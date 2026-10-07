@@ -27,9 +27,10 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [stitch.jpg](stitch.jpg) | Stitch, standing | 35 x 41 | No | Yes | `stitch_surf` on 64x64 ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
 | [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Princesses and princes, a sheet | about 16 x 22 each | Yes | Yes (2x too) | |
 | [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Gaston, Belle, Beast, Chip, Mrs. Potts, Lumiere, Cogsworth (photo of beads) | about 12 x 20 each | Yes | Yes (2x too) | |
-| [Dug.jpg](Dug.jpg) | Dug | 22 x 27 | Yes | Yes (2x too) | |
+| [Dug.jpg](Dug.jpg) | Dug | 22 x 27 | Yes | Yes (2x too) | `kevin`, redrawn at 14 x 17 under his balloons |
 | [Bullseye.jpg](Bullseye.jpg) | Toy Story, a sheet: Woody, Buzz, Mr. and Mrs. Potato Head, Slinky, Rex, Hamm, Bo Peep and her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Bullseye, Stinky Pete and more | up to about 26 x 28 each (Bullseye 26 x 28) | Yes | Yes (2x too) | |
 | [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | Built: `forky`, cell for cell, 1x on 64x32 and 2x on 64x64 |
+| [hie-hie-small.jpg](hie-hie-small.jpg) | Heihei, small (brick pattern), with a leaf | 16 x 29 | Yes | Yes (2x too) | |
 | [dwarfs.jpg](dwarfs.jpg) | The seven dwarfs, a sheet | about 20 x 40 each | No (hat to beard, in the mine car) | Yes | Built: `mine_train`, cell for cell, shoulders up on 64x64 |
 | [Tink.jpg](Tink.jpg) | Tinker Bell | 26 x 31 | Tight | Yes (2x too) | Built: `tink` |
 | [Hamm.jpg](Hamm.jpg) | Hamm | 41 x 31 | Tight | Yes | |
@@ -43,11 +44,13 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Green alien.jpg](<Green alien.jpg>) | Toy Story alien | 40 x 37 | No | Yes | |
 | [bluey_beads.png](bluey_beads.png) | Bluey, arms out (photo of beads) | about 30 x 36 | No | Yes | Built: `keepy_uppy`, bead for bead on 64x64, redrawn 22 rows on 64x32 |
 | [Evil Queen.jpg](<Evil Queen.jpg>) | The Evil Queen | 31 x 38 | No | Yes | |
+| [Kevin.jpg](Kevin.jpg) | Kevin, the bird from Up, standing | 18 x 38 | No (6 rows over) | Yes | Built: `kevin`, cell for cell, her neck 6 rows shorter on 64x32 |
 | [bluey_bingo_grannies.png](bluey_bingo_grannies.png) | Bluey and Bingo as the Grannies, a pair (Bingo 26 x 31, Bluey 21 x 38) | about 50 x 38 | No | Yes | Built: `grannies`, cell for cell on 64x64, redrawn 24 rows on 64x32 |
 | [pua.jpg](pua.jpg) | Pua | 36 x 39 | No | Yes | |
 | [bingo.png](bingo.png) | Bingo, waving | about 40 x 54 | No | Yes (fills it) | Built: `keepy_uppy`, shrunk to 29 rows on 64x64, 20 on 64x32 |
 | [Jack and sally.jpg](<Jack and sally.jpg>) | Jack and Sally with two pumpkins (photo of beads) | about 43 x 39 for the pair | No | Yes | |
 | [Maleficent.jpg](Maleficent.jpg) | Maleficent | 29 x 40 | No | Yes | |
+| [Brave.jpg](Brave.jpg) | Merida with her bow | 26 x 41 | No (9 rows over) | Yes | |
 | [hei-hei.jpg](hei-hei.jpg) | Heihei | 20 x 42 | No | Yes | |
 | [Boo.jpg](Boo.jpg) | Boo | 28 x 44 | No | Yes | |
 | [Buzz.jpg](Buzz.jpg) | Buzz Lightyear | 40 x 46 | No | Yes | Built: `buzz` |

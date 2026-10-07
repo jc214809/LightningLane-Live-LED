@@ -468,8 +468,8 @@ def test_jack_sally_and_zero_keep_to_their_own_meet(monkeypatch, screens, ride):
 def test_surprise_slices_match_their_chances_and_stay_rare():
     chances = disney.SURPRISES
     assert all(0 < c < 0.05 for c in chances.values()), "each kept rare on purpose"
-    assert sum(chances.values()) < 0.13, "so the plain wipe is still the norm (the cap went from 10% to 12% for Tigger, 13% for Forky)"
-    assert sum(chances.values()) == pytest.approx(0.124), "12.4% since Forky joined; change this with the map"
+    assert sum(chances.values()) < 0.13, "so the plain wipe is still the norm (the cap went from 10% to 12% for Tigger, 13% for Forky; Kevin takes it to 12.9%)"
+    assert sum(chances.values()) == pytest.approx(0.129), "12.9% since Kevin joined; change this with the map"
     samples = [i / 100000 for i in range(100000)]
     seen = [disney._surprise(r) for r in samples]
     for name, chance in chances.items():

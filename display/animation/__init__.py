@@ -107,6 +107,10 @@ from display.animation.characters.jack_sally import (  # noqa: F401
     JackSallyReveal,
 )
 
+from display.animation.characters.kevin import (  # noqa: F401
+    KevinReveal,
+)
+
 from display.animation.characters.luxo_ball import (  # noqa: F401
     LuxoBallReveal,
 )

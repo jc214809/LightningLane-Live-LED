@@ -60,6 +60,7 @@ PARK_REVEALS = ("tink", "buzz")
 # room; Pooh also visits his own ride more often).
 # Forky waddles in, spots the old ride (TRASH!) and dives through the bottom of the board,
 # taking it down the hole after him.
+# Kevin struts across with Dug chasing her, his balloons lifting him higher as he goes.
 # Surprises may fill up to 13% of ride screens.
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
@@ -69,7 +70,8 @@ SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side":
              "luxo_ball": 0.005, "mcqueen": 0.005, "mater": 0.005,
              "chip_dale": 0.005, "tigger": 0.005, "stitch_surf": 0.005,
              "ralph": 0.005, "grannies": 0.005,
-             "keepy_uppy": 0.001, "pooh": 0.005, "forky": 0.005}
+             "keepy_uppy": 0.001, "pooh": 0.005, "forky": 0.005,
+             "kevin": 0.005}
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge, and a red and
 # a blue lightsaber clash over its rides and Star Tours, then sweep apart to the next; on the
