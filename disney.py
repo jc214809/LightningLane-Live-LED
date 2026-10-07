@@ -52,7 +52,8 @@ PARK_REVEALS = ("tink", "buzz")
 # The Pixar Ball bounces in with Luxo Jr., in one of three little stories.
 # Lightning McQueen zooms in, skids, Ka-chows and peels out; Mater drives across backwards.
 # (WALL-E and Baymax were trimmed to make room for the Cars pair under 10% in all.)
-# Chip scampers across with Dale chasing (the Army Men were trimmed to make room).
+# Chip 'n' Dale run in and meet nose to nose, or swing in on ropes, Dale bonking into Chip
+# (the Army Men were trimmed to make room).
 # Tigger bounces across on his tail. Stitch surfs the new ride in on a wave that washes
 # the old one away. Wreck-It Ralph stomps in and smashes the old ride into falling pixels.
 # Pooh floats up on his balloon, uncovering the ride below him (Baymax was trimmed to make

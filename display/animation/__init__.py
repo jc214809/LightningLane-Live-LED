@@ -76,6 +76,7 @@ from display.animation.characters.buzz import (  # noqa: F401
 
 from display.animation.characters.chip_dale import (  # noqa: F401
     ChipDaleReveal,
+    ChipDaleSwingReveal,
 )
 
 from display.animation.characters.forky import (  # noqa: F401
