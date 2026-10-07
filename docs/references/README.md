@@ -31,6 +31,8 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Bullseye.jpg](Bullseye.jpg) | Toy Story, a sheet: Woody, Buzz, Mr. and Mrs. Potato Head, Slinky, Rex, Hamm, Bo Peep and her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Bullseye, Stinky Pete and more | up to about 26 x 28 each (Bullseye 26 x 28) | Yes | Yes (2x too) | |
 | [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | Built: `forky`, cell for cell, 1x on 64x32 and 2x on 64x64 |
 | [hie-hie-small.jpg](hie-hie-small.jpg) | Heihei, small (brick pattern), with a leaf | 16 x 29 | Yes | Yes (2x too) | |
+| [Mickey.jpg](Mickey.jpg) | Mickey Mouse, standing (chibi) | 23 x 29 | Yes | Yes (2x too) | |
+| [Pluto.jpg](Pluto.jpg) | Pluto, crouching, side-on, tail up | 22 x 29 | Yes | Yes (2x too) | |
 | [dwarfs.jpg](dwarfs.jpg) | The seven dwarfs, a sheet | about 20 x 40 each | No (hat to beard, in the mine car) | Yes | Built: `mine_train`, cell for cell, shoulders up on 64x64 |
 | [Tink.jpg](Tink.jpg) | Tinker Bell | 26 x 31 | Tight | Yes (2x too) | Built: `tink` |
 | [Hamm.jpg](Hamm.jpg) | Hamm | 41 x 31 | Tight | Yes | |
@@ -43,6 +45,7 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Princesses and villains, a sheet | about 25 x 35 each | No | Yes | |
 | [Green alien.jpg](<Green alien.jpg>) | Toy Story alien | 40 x 37 | No | Yes | |
 | [bluey_beads.png](bluey_beads.png) | Bluey, arms out (photo of beads) | about 30 x 36 | No | Yes | Built: `keepy_uppy`, bead for bead on 64x64, redrawn 22 rows on 64x32 |
+| [Pluto_sitting.jpg](Pluto_sitting.jpg) | Pluto, sitting, facing us | 27 x 36 | No (4 rows over) | Yes | |
 | [Evil Queen.jpg](<Evil Queen.jpg>) | The Evil Queen | 31 x 38 | No | Yes | |
 | [Kevin.jpg](Kevin.jpg) | Kevin, the bird from Up, standing | 18 x 38 | No (6 rows over) | Yes | Built: `kevin`, cell for cell, her neck 6 rows shorter on 64x32 |
 | [bluey_bingo_grannies.png](bluey_bingo_grannies.png) | Bluey and Bingo as the Grannies, a pair (Bingo 26 x 31, Bluey 21 x 38) | about 50 x 38 | No | Yes | Built: `grannies`, cell for cell on 64x64, redrawn 24 rows on 64x32 |
@@ -61,6 +64,7 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [jessie.jpg](jessie.jpg) | Jessie | 31 x 51 | No | Yes | |
 | [Rex.jpg](Rex.jpg) | Rex | 61 x 51 | No | Yes | `rex` on 64x64 |
 | [max-and-roxanne.png](max-and-roxanne.png) | Max and Roxanne | about 30 x 53 each | No | Yes | |
+| [Goofy_small.jpg](Goofy_small.jpg) | Goofy, standing (chibi) | 30 x 53 | No | Yes | |
 | [Pooh and Balloon.jpg](<Pooh and Balloon.jpg>) | Pooh with his balloon | 20 x 64 | No (passes through, part at a time) | Tight | `pooh`, from this pattern on both boards ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
 | [Potato heads.jpg](<Potato heads.jpg>) | Mr. and Mrs. Potato Head | 65 x 40 together, about 32 x 40 each | No | One at a time | |
 | [Tigger and Pooh.jpg](<Tigger and Pooh.jpg>) | Tigger and Pooh, one piece | 67 x 60 | No | No (3 columns too wide) | |
