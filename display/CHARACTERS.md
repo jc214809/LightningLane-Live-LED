@@ -133,6 +133,13 @@ up), a pixel at a time; bob the body a row while a foot is up for a run. It read
 drawn to match their side ones, read as two other chipmunks, even after a redraw. A
 character drawn in profile should act in profile.
 
+**A new pose keeps the arm's real length.** For Chip 'n' Dale's rope swing, the first try
+lifted the back arm the full height of the sprite to a hand above the head, and left Dale's
+old back sleeve in place, so he had two arms; it read as wrong at a glance. What worked: the
+arm only as long as it was hanging down (about six rows from the shoulder), the hand beside
+the head at brim level, and everything of the old arm removed (sleeve and hand), the rest of
+the art untouched. Mock the pose on a board frame with its prop (the rope) before building.
+
 ## Blending
 
 Particles and smoke must be drawn *additively* over what's already on the canvas.

@@ -51,7 +51,7 @@ Put a ✅ in the Done column when a character ships.
 | 27 | | Simba on Pride Rock | AK | held up against an orange sunrise gradient | Landmark/scene, not a ride transition |
 | 28 | | Madame Leota | MK: Haunted Mansion | green glowing head appears in a crystal ball | Peek; pairs with #5 for Halloween |
 | 29 | | Cinderella's pumpkin coach | MK | a pumpkin bursts into sparkles and becomes the coach | Assemble |
-| 30 | ✅ | Chip 'n' Dale | MK / DHS (various) | run in from opposite sides, meet nose to nose, scurry back off | Run-in from both edges |
+| 30 | ✅ | Chip 'n' Dale | MK / DHS (various) | run in from opposite sides and meet nose to nose, or rope-swing in (Dale bonks Chip), scurry off | Run-in from both edges; rope swing |
 | 31 | | Max and Roxanne (A Goofy Movie) | TBD | TBD | TBD |
 | 32 | ✅ | Mater | Cars (with McQueen, #15) | drives across backwards, grinning | Drive-by (`mater`) |
 | 33 | | Grogu | DHS: Star Wars: Galaxy's Edge | floats across in his hover pram, ears twitching; or raises a hand and Force-lifts the old screen away | Fly-by, or Wreck (`wants_prev`) |
@@ -455,6 +455,13 @@ half a second, turn round and scurry back off their own sides (about 1.7s). Trie
 gliding across with no feet moving, and turning their heads to look out at us (front-facing
 heads drawn after BRIK's read as different chipmunks, even redrawn with their white faces).
 In the rotation at 0.005; the Army Men went to 0.010 to make room.
+
+A second story, picked at random with the first (`chip_dale_swing` forces it): a Rescue
+Rangers rope swing. Chip swings in on tan twine from above the top left in an arm-up pose
+drawn from the user's art, uncovering the ride, lets go at the bottom and skids to a stop;
+Dale swings in after him, doesn't let go in time and bonks into his back, and both wobble and
+scurry off the right edge (about 3s). Other entrances considered: a rappel down a rope, a
+chase where Dale trips and rolls, and the Ranger Wing (new art, and close to Goofy's plane).
 
 **32. Mater.** Built (`MaterReveal`, `mater`) from the user's three-quarter pixel-art Mater:
 he drives across backwards, his favourite way, facing right with his buck-toothed grin while
