@@ -32,11 +32,11 @@ SPECIAL_EVENTS = {
     # more specific party above has to win over it.
     "after_hours": {"match": "disney after hours", "star_rgb": _RED},
     # Named by the schedule entry's own description rather than by the park's entities.
-    "extended_evening": {"schedule": "extended evening", "star_rgb": (80, 160, 255)},
+    "extended_evening": {"schedule": "extended evening", "star_rgb": (255, 215, 0)},
 }
 
-# A special event we can't name (e.g. extended evening hours) keeps the original gold star.
-DEFAULT_STAR_RGB = (255, 215, 0)
+# A special event we can't name gets a white star.
+DEFAULT_STAR_RGB = (255, 255, 255)
 
 # The fireworks show a park runs on an ordinary night, and its castle-fireworks theme (None is the
 # everyday look). A party night swaps in the party's own show and theme; see fireworks_show().

@@ -138,7 +138,7 @@ def test_extended_evening_is_named_by_the_schedule_not_the_party_season():
     now = et("2026-09-27 21:30")
     eeh = party("2026-09-27", opens="21:00", closes="23:00", description="Extended Evening")
     assert active_party(mk(eeh), now) == "extended_evening", "even in a park holding a party season"
-    assert star_rgb(mk(eeh, seasonal=None), now) == SPECIAL_EVENTS["extended_evening"]["star_rgb"]
+    assert star_rgb(mk(eeh, seasonal=None), now) == SPECIAL_EVENTS["extended_evening"]["star_rgb"] == (255, 215, 0), "gold"
     assert fireworks_show(mk(eeh), now) == NIGHTLY_FIREWORKS
 
 

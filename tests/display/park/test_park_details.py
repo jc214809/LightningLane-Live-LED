@@ -147,7 +147,7 @@ def test_render_park_hours():
     assert not any(call["text"] == "*" for call in text_recorder.calls), "no special event, no star"
 
 
-@pytest.mark.parametrize("event, color", [("halloween", (255, 130, 20)), (None, (255, 215, 0))])
+@pytest.mark.parametrize("event, color", [("halloween", (255, 130, 20)), (None, (255, 255, 255))])
 def test_park_hours_star_takes_the_partys_color(event, color):
     fake_matrix = FakeMatrix(width=200, height=64)
     text_recorder.calls = []
