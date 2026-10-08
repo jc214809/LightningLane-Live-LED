@@ -1,17 +1,17 @@
 import math
 import random
 
-from display.animation.drawing import _blackout, art_pixels, paint
+from display.animation.drawing import art_pixels, paint
 from display.animation.motion import FPS, ease_out
 
 
 class GenieReveal:
     """
-    Genie erupts from his lamp and flies off with the new screen in his wake. Not a
+    Genie erupts from his lamp over the finished ride screen and flies off. Not a
     FlyByReveal: the first half of the run is an emerge, where he has no flight path at
     all -- a plume of smoke pours out of the lamp's spout and he scales up out of it from
-    a point at the spout to full size. Only then does he cross the board, so the blackout
-    front stays at 0 (whole screen dark, lamp and smoke on black) until he takes off.
+    a point at the spout's tip to full size. Only then does he cross the board, and the
+    lamp sinks away off the bottom edge.
 
     His trail is smoke rather than the point-like dust the fly-bys leave: each puff is a
     soft disc that grows and fades, drawn additively over whatever is already on the
@@ -20,92 +20,96 @@ class GenieReveal:
 
     EMERGE_S, FLY_S = 1.6, 2.0
     duration = EMERGE_S + FLY_S
+    over_screen = True
+    # How long the lamp takes to sink off the bottom once he has taken off.
+    LAMP_SINK_S = 0.6
 
-    # The lamp he comes out of, drawn big enough to read as Aladdin's lamp: a looped
-    # handle on the left, domed lid with a knob, a low wide body on a short foot, and a
-    # long spout tapering off to the right with its tip turned up. It has its own color
-    # keys so it never borrows Genie's blue outline.
-    # '.' empty, A outline bronze, Y gold, L glint, O shaded gold.
-    LAMP_ART = [
-        "...........AA.............",
-        "..........ALYA............",
-        "...........AA.............",
-        ".........AAYYAA...........",
-        "........ALYYYYOA..........",
-        "..AAA.AAAAAAAAAAAA........",
-        ".AOOOALLYYYYYYYYYOA....AAA",
-        "AO..ALYYYYYYYYYYYYOAAAALYA",
-        "AO..AYYYYYYYYYYYYYYYYYYYA.",
-        ".AO.AYYYYYYYYYYYYYYOOOAA..",
-        "..AOAOYYYYYYYYYYYOOAAA....",
-        "...AAOOOYYYYYYYOOAA.......",
-        "......AAAAOOOOOAAA........",
-        ".........AYYYYA...........",
-        "........AOOOOOOA..........",
-        "........AAAAAAAA..........",
+    # Genie rising out of his lamp, cell for cell from docs/references/genie.jpg: black
+    # topknot with a red band, wide blue face, white eyes and grin, gold wrists, a red sash,
+    # and a tail that curls down to his lamp.
+    # '.' empty, B blue skin, b deep blue (ears, cuffs), S charcoal (hair, brows, pupils,
+    # goatee; the pattern's near-black was brightened, or it vanished on the board),
+    # W white, R red, Y wrist gold.
+    ART = [
+        ".........SSS.........",
+        "........SSSS.........",
+        "......SSSSS..........",
+        "......SSSRR..........",
+        "......S..BBB.........",
+        "........SBBBS........",
+        ".....B.SBSBSBS.B.....",
+        ".....bBBWWBWWBBb.....",
+        "......bBWSBSWBb......",
+        "......BBBBBBBBB......",
+        ".....BSWBBBBBWSB.....",
+        ".....SBRWWWWWRBS.....",
+        ".....SBRRRRRRRBS.....",
+        ".....SBBWWWWWBBS.....",
+        "....BBSBBBBBBBSBB....",
+        "...BBBBSSSSSSSBBBB...",
+        "..BBBBBBBBSSBBBBBBB..",
+        ".YBBBBBBBSSBBBBBBBBY.",
+        "BYYY.BbBBBBBBBbB.YYYB",
+        "BBB..BBbbbBbbbBB..BBB",
+        "......BBBBBBBBB......",
+        ".......BBBBBBB.......",
+        ".......RRRRRRR.......",
+        ".......RRRRRRR.......",
+        ".......BBBBBBB.......",
+        ".......BBBBBBBB......",
+        "........BBBBBBB......",
+        "........BBBBBB.......",
+        ".......BBBBB.........",
+        "......BBBB...........",
+        "......BBB............",
     ]
-    # The spout's upturned tip, in lamp cells: smoke pours from here and Genie grows out of it.
-    LAMP_SPOUT = (24.5, 6.0)
+    # His lamp, from the same pattern and on the same columns: lid on top (where his tail
+    # went in, in the pattern), handle on the left, spout tip turned up on the right, foot below. Its own
+    # color keys, so it never borrows Genie's.
+    # '.' empty, G lamp gold, O lid orange.
+    LAMP_ART = [
+        ".......OOO.....GG....",
+        "......OOOOO.....G....",
+        "..GGGGGGGGGGGGGG.....",
+        "..GG.OGGGGGGGG.......",
+        "..G...OOOGGG.........",
+        ".......GGGG..........",
+        "......GGGGGG.........",
+        ".....GGGGGGGG........",
+    ]
+    # The spout's upturned tip (columns 15-16, top row), in lamp cells: smoke pours from
+    # here and Genie grows out of it.
+    LAMP_SPOUT = (16.0, 0.0)
+    # The middle of his tail's tip, in Genie cells (columns 6-8): it sits over the spout.
+    TAIL_X = 7.5
     # The lamp stays 1x on both boards: doubled, it swamps the 64x64 board under Genie.
     LAMP_SCALE = 1
-
-    # Genie facing forward: swept-back black topknot, wide blue face, gold hoop earrings,
-    # a grin over a pointed black goatee, folded arms in gold cuffs, and -- instead of
-    # legs -- a wispy tail that tapers away into smoke.
-    # '.' empty, H topknot black, J topknot/goatee highlight, K body outline (a deep blue,
-    # not black, so the silhouette still reads on an unlit board), B blue skin, N nose
-    # shading, E eye white, W eye highlight, P pupil, U teeth, T tongue, M goatee,
-    # G earring gold, C cuff gold, S smoke tail, Y lamp gold.
-    ART = [
-        ".............JHHJ.......",
-        "............JHHHHJ......",
-        "...........JHHHHHJ......",
-        "...........JHHHHJ.......",
-        "..........JHHHHJ........",
-        "..........JHHHJ.........",
-        "......KKKKKHHKKKK.......",
-        ".....KBBBBBJJBBBBK......",
-        "....KBBBBBBBBBBBBBK.....",
-        "...KBBBBBBBBBBBBBBBK....",
-        "GGGKBBEEEBBBBBEEEBBK.GGG",
-        "GGGKBEWPPEBBBEWPPEBKGGG.",
-        "GGGKBEWPPEBNBEWPPEBKGGG.",
-        "...KBBEEEBBNNBEEEBBK....",
-        "...KBBBBBBBNNNBBBBBK....",
-        "...KBBBBUUUUUUUUBBBK....",
-        "....KBBBBTTTTTTBBBK.....",
-        ".....KBBBJMMMMJBBBK.....",
-        "......KKBJMMMMMJBKK.....",
-        ".......KKJMMMMMJKK......",
-        "..KKKKKKKKJMMMJKKKKKKK..",
-        ".KBBBBBBKKKJMJKKKKBBBBBK",
-        "KBBBBBBBKBBBJBBBKBBBBBBK",
-        "KCCCCCCKBBBBBBBBBKCCCCCK",
-        "KCCCCCCKBBBBBBBBBKCCCCCK",
-        ".KBBBBKKBBBBBBBBBKKBBBBK",
-        "..KKKK..KBBBBBBBK..KKKK.",
-        ".........KBSSSBK........",
-        "..........KSSSK.........",
-        ".........KSSSSK.........",
-        "..........KSSK..........",
-    ]
+    # Rows left out so he fits on his lamp: on 64x64 (Genie doubled, 62 + 8 rows) three
+    # of the tail's; on 64x32 (39 rows) those, a hair row and a waist row, and two of the
+    # lamp's foot.
+    TRIM_64 = (25, 27, 29)
+    TRIM_32 = (1, 21, 25, 27, 29)
+    LAMP_TRIM_32 = (5, 6)
     COLORS = {
-        "K": (20, 60, 120), "H": (16, 16, 30), "J": (70, 72, 105), "B": (60, 150, 235),
-        "N": (42, 115, 200), "E": (250, 250, 255), "W": (250, 250, 255), "P": (18, 18, 32),
-        "U": (252, 250, 245), "T": (200, 60, 80), "M": (16, 16, 30),
-        "G": (250, 205, 70), "C": (250, 205, 70), "S": (105, 180, 242),
-        "A": (125, 72, 12), "Y": (250, 200, 60), "L": (255, 246, 190), "O": (205, 135, 25),
+        "B": (136, 199, 239), "b": (35, 68, 241), "S": (70, 72, 105), "W": (254, 254, 254),
+        "R": (204, 18, 19), "Y": (242, 232, 45),
+        "G": (242, 232, 45), "O": (242, 146, 44),
     }
     SMOKE_COLORS = [(120, 160, 235), (150, 120, 225), (95, 130, 210), (185, 165, 245)]
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height
         self.rng = rng or random.Random()
-        self.scale = 2 if height >= 64 else 1
-        self.sprite_w = len(self.ART[0]) * self.scale
-        self.sprite_h = len(self.ART) * self.scale
-        self.lamp_w = len(self.LAMP_ART[0]) * self.LAMP_SCALE
-        self.lamp_h = len(self.LAMP_ART) * self.LAMP_SCALE
+        big = height >= 64
+        self.scale = 2 if big else 1
+        trim = self.TRIM_64 if big else self.TRIM_32
+        self.art = [row for i, row in enumerate(self.ART) if i not in trim]
+        lamp_trim = () if big else self.LAMP_TRIM_32
+        self.lamp_art = [row for i, row in enumerate(self.LAMP_ART) if i not in lamp_trim]
+        self.sprite_w = len(self.art[0]) * self.scale
+        self.sprite_h = len(self.art) * self.scale
+        self.lamp_w = len(self.lamp_art[0]) * self.LAMP_SCALE
+        self.lamp_h = len(self.lamp_art) * self.LAMP_SCALE
         self.lamp_x = 2
         self.lamp_y = height - self.lamp_h
         # Each puff: [x, y, vx, vy, frames_left, rgb, radius]
@@ -113,9 +117,14 @@ class GenieReveal:
         self.last_frame = -1
 
     def spout(self):
-        """Where the smoke leaves the lamp, and the point Genie scales up out of."""
+        """Where the smoke leaves the lamp (its spout's tip), and the point Genie scales up out of."""
         return (self.lamp_x + self.LAMP_SPOUT[0] * self.LAMP_SCALE,
                 self.lamp_y + self.LAMP_SPOUT[1] * self.LAMP_SCALE)
+
+    def lamp_top(self, t):
+        """The lamp's top row: on the bottom edge, then sinking off it once he takes off."""
+        sink = max(0.0, min(1.0, (t - self.EMERGE_S) / self.LAMP_SINK_S))
+        return self.lamp_y + round(ease_out(sink) * self.lamp_h)
 
     def grow(self, t):
         """0 (not yet formed) to 1 (full size). Smoke pours alone for the first third."""
@@ -125,11 +134,9 @@ class GenieReveal:
 
     def position(self, t):
         """The sprite's top-left at full size: parked over the lamp, then crossing right."""
-        sx, sy = self.spout()
-        # He is nearly as big as the board, so his resting pose is clamped fully onto it
-        # rather than centred on the lamp, which would hang half of him off the left edge.
-        home_x = max(0.0, min(sx - self.sprite_w / 2, self.width - self.sprite_w))
-        home_y = max(0.0, min(sy - self.sprite_h, self.height - self.sprite_h))
+        # Sitting on the lamp with the tip of his tail on the spout.
+        home_x = float(math.floor(self.spout()[0] - self.TAIL_X * self.scale + 0.5))
+        home_y = max(0.0, float(self.lamp_y - self.sprite_h))
         if t < self.EMERGE_S:
             return home_x, home_y
         p = (t - self.EMERGE_S) / self.FLY_S
@@ -137,19 +144,6 @@ class GenieReveal:
         x = home_x + (p * p * 0.35 + p * 0.65) * (self.width + self.sprite_w - home_x)
         y = home_y - math.sin(p * math.pi) * self.height * 0.18
         return x, max(0.0, min(y, self.height - self.sprite_h))
-
-    def reveal_x(self, t):
-        """
-        The blackout front. It tracks his body but is kept a little behind his leading
-        edge, and spans the full width over the fly — his sprite is wide enough (48px of
-        a 64px board at 2x) that following his centre would finish the sweep well before
-        he has left, leaving him flying over an already-revealed screen.
-        """
-        if t < self.EMERGE_S:
-            return 0
-        p = min(1.0, (t - self.EMERGE_S) / self.FLY_S)
-        x, _ = self.position(t)
-        return int(min(x + self.sprite_w * 0.35, p * (self.width + 1)))
 
     def spawn(self, t):
         """
@@ -238,27 +232,22 @@ class GenieReveal:
 
     def overlay(self, canvas, t):
         self._step_puffs(t)
-        if t < self.duration:
-            # Nothing is revealed while he is still forming: lamp and smoke on black.
-            _blackout(canvas, self.reveal_x(t), self.width, self.height)
         self._draw_puffs(canvas)
         if t < self.duration:
-            # The lamp stays put on the still-dark side until the reveal sweeps past it.
-            self._draw_art(canvas, self.LAMP_ART, self.lamp_x, self.lamp_y,
-                           clip_x=self.reveal_x(t))
+            self._draw_art(canvas, self.lamp_art, self.lamp_x, self.lamp_top(t))
             self._draw_genie(canvas, t)
         return t < self.duration or bool(self.puffs)
 
-    def _draw_art(self, canvas, art, x0, y0, clip_x=0):
-        cells = art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.LAMP_SCALE)
-        paint(canvas, ((p, rgb) for p, rgb in cells if p[0] >= clip_x), self.width, self.height)
+    def _draw_art(self, canvas, art, x0, y0):
+        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.LAMP_SCALE),
+              self.width, self.height)
 
     def _full_pixels(self):
         """(dx, dy, rgb) for every lit pixel of Genie at full size, worked out once."""
         if getattr(self, "_full", None) is None:
             s = self.scale
             self._full = [(col * s + sx, row * s + sy, self.COLORS[kind])
-                          for row, line in enumerate(self.ART) for col, kind in enumerate(line) if kind != "."
+                          for row, line in enumerate(self.art) for col, kind in enumerate(line) if kind != "."
                           for sy in range(s) for sx in range(s)]
         return self._full
 
@@ -282,7 +271,7 @@ class GenieReveal:
                     canvas.SetPixel(px, py, *rgb)
             return
         ax, ay = self.spout()
-        for row, line in enumerate(self.ART):
+        for row, line in enumerate(self.art):
             for col, kind in enumerate(line):
                 if kind == ".":
                     continue
