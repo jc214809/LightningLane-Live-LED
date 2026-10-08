@@ -21,18 +21,36 @@ def test_genie_art_rows_are_even_and_use_defined_colors():
         assert {ch for row in art for ch in row} - {"."} <= set(animation.GenieReveal.COLORS)
 
 
-def test_genie_lamp_is_big_with_its_spout_tip_up_and_right():
-    lamp, (sc, sr) = animation.GenieReveal.LAMP_ART, animation.GenieReveal.LAMP_SPOUT
+def test_genie_sits_on_his_lamp_tail_on_the_spout_filling_the_board_height():
+    """He comes out of the spout's upturned tip, not the lid."""
     for height in (32, 64):
         genie = animation.GenieReveal(64, height, random.Random(0))
-        assert genie.lamp_w >= 64 * 0.35, "big enough to read as a lamp, not a blob"
-        assert genie.lamp_x + genie.lamp_w <= 64 and genie.lamp_y >= 0, "and wholly on the board"
-        assert (genie.lamp_w, genie.lamp_h) == (len(lamp[0]), len(lamp)), \
+        assert (genie.lamp_w, genie.lamp_h) == (len(genie.lamp_art[0]), len(genie.lamp_art)), \
             "1x on both boards: doubled, it swamps the 64x64 board"
-    width = len(lamp[0])
-    tip = [c for c, ch in enumerate(lamp[int(sr)]) if ch != "."]
-    assert max(tip) >= width - 3, "the spout reaches out to the lamp's right end"
-    assert int(sc) in tip and sr < len(lamp) / 2, "smoke leaves from the upturned tip, not the body"
+        assert genie.lamp_x >= 0 and genie.lamp_x + genie.lamp_w <= 64
+        x, y = genie.position(0.0)
+        assert x >= 0 and x + genie.sprite_w <= 64, "he starts wholly on the board"
+        assert y + genie.sprite_h == genie.lamp_y and genie.lamp_y + genie.lamp_h == height, \
+            "Genie on lamp on the bottom edge, filling the height exactly"
+        tip = [c for c, ch in enumerate(genie.lamp_art[0]) if ch != "." and c > len(genie.lamp_art[0]) / 2]
+        assert tip and all(genie.lamp_art[0][c] == "G" for c in tip), "the spout's gold tip, right of the lid"
+        sx, sy = genie.spout()
+        assert genie.lamp_x + tip[0] <= sx <= genie.lamp_x + tip[-1] + 1 and sy == genie.lamp_y, \
+            "smoke leaves the spout's tip"
+        tail = [c for c, ch in enumerate(genie.art[-1]) if ch != "."]
+        assert int(x) + tail[0] * genie.scale <= sx <= int(x) + (tail[-1] + 1) * genie.scale, \
+            "the tip of his tail is on the spout"
+
+
+def test_genie_trims_whole_rows_and_keeps_the_pattern_on_the_64x64_lamp():
+    small, big = animation.GenieReveal(64, 32), animation.GenieReveal(64, 64)
+    assert len(small.art) + len(small.lamp_art) == 32
+    assert len(big.art) * 2 + len(big.lamp_art) == 64
+    assert big.lamp_art == animation.GenieReveal.LAMP_ART, "the whole lamp on 64x64"
+    for genie in (small, big):
+        assert all(row in animation.GenieReveal.ART for row in genie.art), "rows dropped, never redrawn"
+        assert genie.art[0] == animation.GenieReveal.ART[0] and genie.art[-1] == animation.GenieReveal.ART[-1], \
+            "topknot and tail tip always kept"
 
 
 def test_genie_lamp_does_not_share_colors_with_genie():
@@ -40,8 +58,7 @@ def test_genie_lamp_does_not_share_colors_with_genie():
     lamp = {ch for row in animation.GenieReveal.LAMP_ART for ch in row} - {"."}
     genie = {ch for row in animation.GenieReveal.ART for ch in row} - {"."}
     assert not lamp & genie
-    outline = animation.GenieReveal.COLORS["A"]
-    assert sum(outline) > 150, "the lamp's outline still shows on the black board"
+    assert sum(animation.GenieReveal.COLORS["S"]) > 150, "his dark hair still shows on the black board"
 
 
 def test_genie_is_drawn_solid_just_before_full_size():
@@ -56,19 +73,13 @@ def test_genie_is_drawn_solid_just_before_full_size():
         assert len(almost.px) >= len(full.px) * 0.97
 
 
-def test_genie_lamp_stays_on_the_dark_side_while_he_flies():
-    gold = {animation.GenieReveal.COLORS[k] for k in "AYLO"}
-    genie = animation.GenieReveal(64, 64, random.Random(0))
-    for f in range(int(genie.EMERGE_S * animation.FPS), int(genie.duration * animation.FPS)):
-        t = f / animation.FPS
-        genie.puffs = []
-        canvas = FakeCanvas(64, 64)
-        genie.overlay(canvas, t)
-        front = genie.reveal_x(t)
-        lamp = [x for (x, _), rgb in canvas.px.items() if rgb in gold and x < genie.lamp_x + genie.lamp_w]
-        assert all(x >= front for x in lamp), "never drawn over the revealed screen"
-        if f == int(genie.EMERGE_S * animation.FPS):
-            assert lamp, "and doesn't vanish the moment he takes off"
+def test_genie_lamp_stays_while_he_forms_then_sinks_off_the_bottom():
+    for height in (32, 64):
+        genie = animation.GenieReveal(64, height, random.Random(0))
+        assert genie.lamp_top(0.0) == genie.lamp_top(genie.EMERGE_S) == genie.lamp_y
+        assert genie.lamp_y < genie.lamp_top(genie.EMERGE_S + genie.LAMP_SINK_S / 2) < height
+        assert genie.lamp_top(genie.EMERGE_S + genie.LAMP_SINK_S) == height, "gone before he leaves"
+        assert genie.EMERGE_S + genie.LAMP_SINK_S < genie.duration
 
 
 def test_genie_finishes_within_its_duration_and_its_smoke_settles():
@@ -131,23 +142,16 @@ def test_genie_smoke_puffs_expand_and_decay():
     assert first[4] < life, "and burns down its remaining life"
 
 
-def test_genie_reveals_the_new_screen_behind_him_but_not_while_forming():
-    genie = animation.GenieReveal(64, 64, random.Random(6))
-    canvas = FakeCanvas(64, 64)
-    fill((9, 9, 9))(canvas, 0)
-    genie.overlay(canvas, genie.EMERGE_S / 2)
-    assert canvas.px[(0, 0)] == (0, 0, 0), "nothing is revealed while he forms in the lamp"
-
-    mid = genie.EMERGE_S + genie.FLY_S / 2
-    for f in range(int(genie.EMERGE_S * animation.FPS), int(mid * animation.FPS)):
-        canvas.Clear()
-        genie.overlay(canvas, f / animation.FPS)
-    canvas.Clear()
-    fill((9, 9, 9))(canvas, 0)
-    genie.puffs = []  # drifting emerge smoke would tint the dark corner checked below
-    genie.overlay(canvas, mid)
-    assert canvas.px[(0, 0)] == (9, 9, 9), "revealed in his wake"
-    assert canvas.px[(63, 63)] == (0, 0, 0), "still dark ahead of him"
+def test_genie_plays_over_the_screen_and_never_blacks_it_out():
+    assert animation.GenieReveal.over_screen
+    for height in (32, 64):
+        genie = animation.GenieReveal(64, height, random.Random(6))
+        for f in range(int(genie.duration * animation.FPS) + 1):
+            canvas = FakeCanvas(64, height)
+            fill((9, 9, 9))(canvas, 0)
+            genie.overlay(canvas, f / animation.FPS)
+            assert (0, 0, 0) not in canvas.px.values(), f"a black pixel at frame {f}"
+        assert canvas.px[(0, 0)] == (9, 9, 9), "the screen shows round him"
 
 
 def test_genie_is_drawn_big_on_both_board_sizes():
@@ -202,7 +206,7 @@ def test_genie_full_size_fast_path_draws_exactly_his_art():
         x0, y0 = (math.floor(v + 0.5) for v in genie.position(t))
         s = genie.scale
         expected = {(x0 + c * s + sx, y0 + r * s + sy): genie.COLORS[k]
-                    for r, line in enumerate(genie.ART) for c, k in enumerate(line) if k != "."
+                    for r, line in enumerate(genie.art) for c, k in enumerate(line) if k != "."
                     for sy in range(s) for sx in range(s)}
         expected = {p: rgb for p, rgb in expected.items() if 0 <= p[0] < 64 and 0 <= p[1] < height}
         assert canvas.px == expected
