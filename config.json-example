@@ -15,6 +15,29 @@
   "weather": {
     "apikey": "<API_KEY_HERE>"
   },
+  "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+  },
   "force_surprise": "",
   "debug": false
 }

@@ -1,0 +1,35 @@
+{
+  "Disneypi": {
+    "led_rows": 64,
+    "led_cols": 64,
+    "led_gpio_mapping": "adafruit-hat-pwm",
+    "led_slowdown_gpio": 4,
+    "led_brightness": 100,
+    "led_pwm_lsb_nanoseconds": 200
+  },
+  "MickeyPi": {
+    "led_rows": 64,
+    "led_cols": 64,
+    "led_gpio_mapping": "adafruit-hat-pwm",
+    "led_slowdown_gpio": 2
+  },
+  "PlutoPi": {
+    "led_rows": 32,
+    "led_cols": 64,
+    "led_gpio_mapping": "adafruit-hat-pwm",
+    "led_slowdown_gpio": 2,
+    "led_pixel_mapper": "Rotate:180",
+    "led_brightness": 85
+  },
+  "ZeroPi": {
+    "led_rows": 32,
+    "led_cols": 64,
+    "led_gpio_mapping": "adafruit-hat-pwm",
+    "led_slowdown_gpio": 2
+  },
+  "Joels-MacBook-Pro": {
+    "led_rows": 64,
+    "led_cols": 64,
+    "emulated": true
+  }
+}

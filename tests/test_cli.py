@@ -1,7 +1,7 @@
 import sys
 from argparse import Namespace
 import pytest
-from cli import arguments, led_matrix_options
+from cli import arguments, describe, led_matrix_options
 from utils import debug
 
 # -----------------------------------------------------------------------------
@@ -254,3 +254,155 @@ def test_both_board_heights_are_accepted(rows):
 def test_test_runner_flags_on_the_command_line_are_ignored_under_unittest(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["pytest", "-q", "--led-rows", "64", "-k", "something"])
     assert arguments().led_rows == 64
+
+
+# -----------------------------------------------------------------------------
+# config.json's "matrix" section
+# -----------------------------------------------------------------------------
+def test_matrix_settings_from_config_become_the_defaults():
+    parsed = arguments([], matrix={"led_rows": 64, "led_cols": 64, "led_gpio_mapping": "adafruit-hat-pwm",
+                                   "led_slowdown_gpio": 4, "led_pwm_lsb_nanoseconds": 200})
+    assert (parsed.led_rows, parsed.led_cols) == (64, 64)
+    assert parsed.led_gpio_mapping == "adafruit-hat-pwm"
+    assert parsed.led_slowdown_gpio == 4
+    assert parsed.led_pwm_lsb_nanoseconds == 200
+
+
+def test_a_flag_on_the_command_line_wins_over_config():
+    parsed = arguments(["--led-rows", "32", "--led-brightness", "50"], matrix={"led_rows": 64, "led_brightness": 80})
+    assert parsed.led_rows == 32
+    assert parsed.led_brightness == 50
+
+
+def test_switches_in_config_are_true_or_false():
+    assert arguments([], matrix={"led_show_refresh": True, "emulated": True}).led_show_refresh is True
+    parsed = arguments([], matrix={"led_show_refresh": False, "drop_privileges": False})
+    assert parsed.led_show_refresh is False and parsed.drop_privileges is False
+
+
+@pytest.mark.parametrize("matrix", [None, {}])
+def test_no_matrix_section_leaves_the_flag_defaults(matrix):
+    assert arguments([], matrix=matrix).led_rows == 32
+
+
+@pytest.mark.parametrize("matrix", [
+    {"led_rows": 16},                          # no fonts for it
+    {"led_rows": "sixty-four"},
+    {"led_gpio_mapping": "not-a-mapping"},
+    {"led-rows": 64},                          # the flag's spelling, not its name
+    {"rows": 64},
+    {"help": True},
+    {"led_show_refresh": "yes"},
+    ["led_rows", 64],
+])
+def test_bad_matrix_settings_exit_with_a_usage_message(matrix):
+    with pytest.raises(SystemExit):
+        arguments([], matrix=matrix)
+
+
+def test_config_matrix_settings_apply_under_unittest_too(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["pytest", "-q"])
+    assert arguments(matrix={"led_rows": 64}).led_rows == 64
+
+
+def test_null_in_config_leaves_the_setting_unset():
+    parsed = arguments([], matrix={"led_gpio_mapping": None, "led_slowdown_gpio": None})
+    assert parsed.led_gpio_mapping is None and parsed.led_slowdown_gpio is None
+
+
+def test_the_example_configs_matrix_section_lists_every_setting_and_overrides_nothing():
+    # Every setting is listed, all null: a board's config.json copied from the example must not
+    # override its boards.json preset (config wins over the preset).
+    import json
+    import os
+    from cli import _make_parser
+    example = os.path.join(os.path.dirname(__file__), os.pardir, "config.json-example")
+    with open(example) as f:
+        matrix = json.load(f)["matrix"]
+    every_setting = {a.dest for a in _make_parser()._actions if a.option_strings and a.dest != "help"}
+    assert set(matrix) == every_setting
+    assert all(value is None for value in matrix.values())
+    preset = {"led_rows": 64, "led_gpio_mapping": "adafruit-hat-pwm"}
+    assert vars(arguments([], matrix=matrix, board=preset, board_name="Disneypi")) == \
+        vars(arguments([], board=preset, board_name="Disneypi"))
+
+
+def test_describe_lists_changed_settings_and_where_each_came_from():
+    argv = ["--led-rows=64", "--led-gpio-mapping", "adafruit-hat-pwm", "--emulated"]
+    matrix = {"led_cols": 64, "led_brightness": 100, "led_slowdown_gpio": 4}
+    line = describe(arguments(argv, matrix=matrix), argv, matrix=matrix)
+    assert line == ("Board settings (no boards.json preset for this hostname): "
+                    "led_rows=64 (command line), led_cols=64 (config), "
+                    "led_gpio_mapping=adafruit-hat-pwm (command line), led_slowdown_gpio=4 (config), "
+                    "emulated=True (command line); the rest default"), "brightness 100 is the default: not listed"
+
+
+def test_describe_with_everything_default():
+    assert describe(arguments([]), []) == "Board settings (no boards.json preset for this hostname): all default"
+
+
+def test_describe_credits_the_command_line_when_both_set_it():
+    argv = ["--led-rows", "32"]
+    assert "led_rows" not in describe(arguments(argv, matrix={"led_rows": 64}), argv), "32 is the default again"
+    argv = ["--led-cols", "64"]
+    assert "led_cols=64 (command line)" in describe(arguments(argv, matrix={"led_cols": 128}), argv)
+
+
+# -----------------------------------------------------------------------------
+# boards.json: each board's settings, picked by hostname
+# -----------------------------------------------------------------------------
+import json as _json  # noqa: E402
+
+from cli import BOARDS_FILE, board_preset  # noqa: E402
+
+
+def _boards_file(tmp_path, boards):
+    path = tmp_path / "boards.json"
+    path.write_text(boards if isinstance(boards, str) else _json.dumps(boards))
+    return str(path)
+
+
+def test_board_preset_matches_the_hostname_ignoring_case_and_domain(tmp_path):
+    path = _boards_file(tmp_path, {"Disneypi": {"led_rows": 64}, "ZeroPi": {"led_rows": 32}})
+    assert board_preset("disneypi", path) == ("Disneypi", {"led_rows": 64})
+    assert board_preset("ZeroPi.local", path) == ("ZeroPi", {"led_rows": 32})
+
+
+def test_a_machine_without_a_preset_or_a_file_gets_none(tmp_path):
+    assert board_preset("Joels-MacBook-Pro", _boards_file(tmp_path, {"Disneypi": {}})) == (None, None)
+    assert board_preset("Disneypi", str(tmp_path / "missing.json")) == (None, None)
+
+
+@pytest.mark.parametrize("contents", ["{not json", '["Disneypi"]'])
+def test_a_broken_boards_file_stops_the_app(tmp_path, contents):
+    with pytest.raises(SystemExit):
+        board_preset("Disneypi", _boards_file(tmp_path, contents))
+
+
+def test_config_overrides_the_board_preset_and_the_command_line_overrides_both():
+    board = {"led_rows": 64, "led_cols": 64, "led_brightness": 85, "led_slowdown_gpio": 2}
+    matrix = {"led_brightness": 60, "led_slowdown_gpio": 3}
+    argv = ["--led-slowdown-gpio", "4"]
+    parsed = arguments(argv, matrix=matrix, board=board, board_name="PlutoPi")
+    assert (parsed.led_rows, parsed.led_brightness, parsed.led_slowdown_gpio) == (64, 60, 4)
+    line = describe(parsed, argv, matrix=matrix, board=board, board_name="PlutoPi")
+    assert line.startswith("Board settings (boards.json preset PlutoPi): ")
+    assert "led_rows=64 (board PlutoPi)" in line
+    assert "led_brightness=60 (config)" in line
+    assert "led_slowdown_gpio=4 (command line)" in line
+
+
+def test_a_bad_preset_names_its_board_in_the_error(capsys):
+    with pytest.raises(SystemExit):
+        arguments([], board={"led_row": 64}, board_name="PlutoPi")
+    assert 'boards.json "PlutoPi" has no setting "led_row"' in capsys.readouterr().err
+
+
+def test_every_board_in_the_repos_boards_json_parses():
+    # A typo here would stop a board at its next update; catch it before it's pushed.
+    with open(BOARDS_FILE) as f:
+        boards = _json.load(f)
+    assert boards, "boards.json lists the boards"
+    for name, settings in boards.items():
+        parsed = arguments([], board=settings, board_name=name)
+        assert parsed.led_rows == settings["led_rows"], name
