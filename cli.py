@@ -1,9 +1,27 @@
+"""
+The command line: the rgbmatrix library's --led-* flags plus our own (--emulated). Laid out as
+mlb-led-scoreboard's cli.py: disney.py parses it once, then switches the driver to the emulator
+if asked, so importing the driver never reads sys.argv.
+"""
 import argparse
+import sys
 
+import driver
 from utils import debug
 
 
-def args():
+def arguments(argv=None):
+    """Parsed command-line flags (argv defaults to sys.argv[1:]). Exits with a usage message on
+    an unknown flag; under unittest, test runners' own flags are ignored instead."""
+    parser = _make_parser()
+    if argv is None and "unittest" in sys.modules:
+        parsed, _ = parser.parse_known_args()
+    else:
+        parsed = parser.parse_args(argv)
+    return parsed
+
+
+def _make_parser():
     parser = argparse.ArgumentParser()
 
     # Options for the rpi-rgb-led-matrix library
@@ -121,13 +139,13 @@ def args():
     parser.add_argument(
         "--drop-privileges", action="store_true", help="Force the matrix driver to drop root privileges after setup."
     )
-    return parser.parse_args()
+    return parser
 
 
 def led_matrix_options(args):
-    from driver import RGBMatrixOptions
-
-    options = RGBMatrixOptions()
+    """The driver's RGBMatrixOptions from parsed flags. Call after any driver.set_mode, so the
+    options are the class of the driver in use."""
+    options = driver.RGBMatrixOptions()
 
     if args.led_gpio_mapping is not None:
         options.hardware_mapping = args.led_gpio_mapping

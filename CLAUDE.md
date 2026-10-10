@@ -91,7 +91,7 @@ Display rules:
 
 ### Driver abstraction
 
-`driver/` wraps `rgbmatrix` (real hardware, Pi only) and `RGBMatrixEmulator`; `driver/__init__.py` picks one, falling back to the emulator if rgbmatrix fails to import. Use `driver.is_emulated()` to branch.
+`driver/` wraps `rgbmatrix` (real hardware, Pi only) and `RGBMatrixEmulator`; `driver/__init__.py` picks hardware (the emulator under tests), falling back to the emulator if rgbmatrix fails to import. Use `driver.is_emulated()` to branch. As in mlb-led-scoreboard, importing it never reads the command line: `disney.main()` parses `cli.py:arguments()` once (a bad flag exits with a usage message), calls `driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)` for `--emulated`, then builds the matrix from `cli.py:led_matrix_options()`. `driver.graphics` resolves on the current driver at each use, so modules that imported it before the switch follow it; take `RGBMatrix` and the rest as `driver.X` after the switch, not with a module-level `from driver import`.
 
 ### Configuration
 

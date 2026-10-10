@@ -1,7 +1,7 @@
 import sys
 from argparse import Namespace
 import pytest
-from cli import args, led_matrix_options
+from cli import arguments, led_matrix_options
 from utils import debug
 
 # -----------------------------------------------------------------------------
@@ -166,19 +166,18 @@ def test_panel_type_on_an_old_library_warns_instead_of_crashing(monkeypatch):
     assert "The --led-panel-type argument will not work until it is updated." in warnings
 
 
-def test_panel_type_rejects_unknown_chipsets(monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["program", "--led-panel-type", "FM9999"])
+def test_panel_type_rejects_unknown_chipsets():
     with pytest.raises(SystemExit):
-        args()
+        arguments(["--led-panel-type", "FM9999"])
 
 # -----------------------------------------------------------------------------
-# Tests for argparse-based args() function
+# Tests for arguments()
 # -----------------------------------------------------------------------------
 def test_args_defaults():
     original_argv = sys.argv.copy()
     try:
         sys.argv = ["program"]
-        parsed = args()
+        parsed = arguments()
         assert parsed.led_rows == 32
         assert parsed.led_cols == 32
         assert parsed.led_chain == 1
@@ -201,54 +200,47 @@ def test_args_defaults():
         sys.argv = original_argv
 
 def test_args_custom():
-    original_argv = sys.argv.copy()
-    try:
-        custom = [
-            "program",
-            "--led-rows", "16",
-            "--led-cols", "64",
-            "--led-chain", "2",
-            "--led-parallel", "3",
-            "--led-pwm-bits", "8",
-            "--led-brightness", "50",
-            "--led-gpio-mapping", "adafruit-hat",
-            "--led-scan-mode", "0",
-            "--led-pwm-lsb-nanoseconds", "150",
-            "--led-show-refresh",
-            "--led-slowdown-gpio", "2",
-            "--led-no-hardware-pulse", "dummy",
-            "--led-rgb-sequence", "BGR",
-            "--led-pixel-mapper", "Rotate:180",
-            "--led-panel-type", "FM6126A",
-            "--led-row-addr-type", "2",
-            "--led-multiplexing", "3",
-            "--led-limit-refresh", "60",
-            "--led-pwm-dither-bits", "2",
-            "--emulated",
-            "--drop-privileges"
-        ]
-        sys.argv = custom
-        parsed = args()
-        assert parsed.led_rows == 16
-        assert parsed.led_cols == 64
-        assert parsed.led_chain == 2
-        assert parsed.led_parallel == 3
-        assert parsed.led_pwm_bits == 8
-        assert parsed.led_brightness == 50
-        assert parsed.led_gpio_mapping == "adafruit-hat"
-        assert parsed.led_scan_mode == 0
-        assert parsed.led_pwm_lsb_nanoseconds == 150
-        assert parsed.led_show_refresh is True
-        assert parsed.led_slowdown_gpio == 2
-        assert parsed.led_no_hardware_pulse == "dummy"
-        assert parsed.led_rgb_sequence == "BGR"
-        assert parsed.led_pixel_mapper == "Rotate:180"
-        assert parsed.led_panel_type == "FM6126A"
-        assert parsed.led_row_addr_type == 2
-        assert parsed.led_multiplexing == 3
-        assert parsed.led_limit_refresh == 60
-        assert parsed.led_pwm_dither_bits == 2
-        assert parsed.emulated is True
-        assert parsed.drop_privileges is True
-    finally:
-        sys.argv = original_argv
+    parsed = arguments([
+        "--led-rows", "64", "--led-cols", "64", "--led-chain", "2", "--led-parallel", "3",
+        "--led-pwm-bits", "8", "--led-brightness", "50", "--led-gpio-mapping", "adafruit-hat",
+        "--led-scan-mode", "0", "--led-pwm-lsb-nanoseconds", "150", "--led-show-refresh",
+        "--led-slowdown-gpio", "2", "--led-no-hardware-pulse", "dummy", "--led-rgb-sequence", "BGR",
+        "--led-pixel-mapper", "Rotate:180", "--led-panel-type", "FM6126A", "--led-row-addr-type", "2",
+        "--led-multiplexing", "3", "--led-limit-refresh", "60", "--led-pwm-dither-bits", "2",
+        "--emulated", "--drop-privileges",
+    ])
+    assert parsed.led_rows == 64
+    assert parsed.led_cols == 64
+    assert parsed.led_chain == 2
+    assert parsed.led_parallel == 3
+    assert parsed.led_pwm_bits == 8
+    assert parsed.led_brightness == 50
+    assert parsed.led_gpio_mapping == "adafruit-hat"
+    assert parsed.led_scan_mode == 0
+    assert parsed.led_pwm_lsb_nanoseconds == 150
+    assert parsed.led_show_refresh is True
+    assert parsed.led_slowdown_gpio == 2
+    assert parsed.led_no_hardware_pulse == "dummy"
+    assert parsed.led_rgb_sequence == "BGR"
+    assert parsed.led_pixel_mapper == "Rotate:180"
+    assert parsed.led_panel_type == "FM6126A"
+    assert parsed.led_row_addr_type == 2
+    assert parsed.led_multiplexing == 3
+    assert parsed.led_limit_refresh == 60
+    assert parsed.led_pwm_dither_bits == 2
+    assert parsed.emulated is True
+    assert parsed.drop_privileges is True
+
+
+@pytest.mark.parametrize("argv", [
+    ["--led-row", "64"],    # a typo'd flag
+    ["--config", "x"],      # removed: config.json is always read
+])
+def test_bad_flags_exit_with_a_usage_message(argv):
+    with pytest.raises(SystemExit):
+        arguments(argv)
+
+
+def test_test_runner_flags_on_the_command_line_are_ignored_under_unittest(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["pytest", "-q", "--led-rows", "64", "-k", "something"])
+    assert arguments().led_rows == 64
