@@ -233,12 +233,22 @@ def test_args_custom():
 
 
 @pytest.mark.parametrize("argv", [
+    ["--led-rows", "16"],   # no fonts or layouts for it
+    ["--led-rows", "128"],
+    ["--led-cols", "0"],
+    ["--led-chain", "0"],
+    ["--led-parallel", "-1"],
     ["--led-row", "64"],    # a typo'd flag
     ["--config", "x"],      # removed: config.json is always read
 ])
 def test_bad_flags_exit_with_a_usage_message(argv):
     with pytest.raises(SystemExit):
         arguments(argv)
+
+
+@pytest.mark.parametrize("rows", ["32", "64"])
+def test_both_board_heights_are_accepted(rows):
+    assert arguments(["--led-rows", rows]).led_rows == int(rows)
 
 
 def test_test_runner_flags_on_the_command_line_are_ignored_under_unittest(monkeypatch):

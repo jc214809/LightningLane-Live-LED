@@ -156,7 +156,7 @@ See [RGBMatrixEmulator](https://github.com/ty-porter/RGBMatrixEmulator) for emul
 
 You can configure your LED matrix with the same flags used in the [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix) library. More information on these arguments can be found in the library documentation.
 ```
---led-rows                Display rows. 16 for 16x32, 32 for 32x32. (Default: 32)
+--led-rows                Display rows: 32 or 64. (Default: 32)
 --led-cols                Panel columns. Typically 32 or 64. (Default: 32)
 --led-chain               Daisy-chained boards. (Default: 1)
 --led-parallel            For Plus-models or RPi2: parallel chains. 1..3. (Default: 1)
@@ -175,7 +175,7 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --led-multiplexing        Multiplexing type: 0 = direct; 1 = strip; 2 = checker; 3 = spiral; 4 = Z-strip; 5 = ZnMirrorZStripe; 6 = coreman; 7 = Kaler2Scan; 8 = ZStripeUneven. (Default: 0)
 --led-limit-refresh       Limit refresh rate to this frequency in Hz. Useful to keep a constant refresh rate on loaded system. 0=no limit. Default: 0
 --led-pwm-dither-bits     Time dithering of lower bits (Default: 0)
---emulated                Force the scoreboard to run in software emulation mode.
+--emulated                Run in the software emulator, even on a Pi.
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: false)
 ```
 

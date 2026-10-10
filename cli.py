@@ -9,15 +9,23 @@ import sys
 import driver
 from utils import debug
 
+# Fonts and layouts exist for these board heights only (display/display.py's initialize_fonts).
+SUPPORTED_ROWS = (32, 64)
+
 
 def arguments(argv=None):
     """Parsed command-line flags (argv defaults to sys.argv[1:]). Exits with a usage message on
-    an unknown flag; under unittest, test runners' own flags are ignored instead."""
+    an unknown flag or a value the boards can't use; under unittest, test runners' own flags are
+    ignored instead."""
     parser = _make_parser()
     if argv is None and "unittest" in sys.modules:
         parsed, _ = parser.parse_known_args()
     else:
         parsed = parser.parse_args(argv)
+    if parsed.led_rows not in SUPPORTED_ROWS:
+        parser.error(f"--led-rows must be one of {SUPPORTED_ROWS}, not {parsed.led_rows}")
+    if min(parsed.led_cols, parsed.led_chain, parsed.led_parallel) <= 0:
+        parser.error("--led-cols, --led-chain and --led-parallel must be positive")
     return parsed
 
 
@@ -28,7 +36,7 @@ def _make_parser():
     parser.add_argument(
         "--led-rows",
         action="store",
-        help="Display rows. 16 for 16x32, 32 for 32x32. (Default: 32)",
+        help="Display rows: 32 or 64. (Default: 32)",
         default=32,
         type=int,
     )
