@@ -1,8 +1,8 @@
 import asyncio
 import time
 import traceback
-from api.disney_api import (fetch_parks_and_attractions, fetch_park_live_data, get_down_time, parse_timestamp,
-                            update_parks_operating_status)
+from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, get_down_time, parse_timestamp
+from parks.operating import update_parks_operating_status
 from api.weather import fetch_weather_data
 from updater.shared import live_feed_healthy, note_network_result, parks_data_lock, wait_for_live_feed
 from utils import debug

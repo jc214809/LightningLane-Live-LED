@@ -17,4 +17,4 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["api*", "display*", "driver*", "updater*", "utils*"]
+include = ["api*", "display*", "driver*", "parks*", "updater*", "utils*"]
