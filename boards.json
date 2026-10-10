@@ -18,8 +18,7 @@
     "led_cols": 64,
     "led_gpio_mapping": "adafruit-hat-pwm",
     "led_slowdown_gpio": 2,
-    "led_pixel_mapper": "Rotate:180",
-    "led_brightness": 85
+    "led_pixel_mapper": "Rotate:180"
   },
   "ZeroPi": {
     "led_rows": 32,
