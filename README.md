@@ -179,6 +179,19 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: false)
 ```
 
+The same settings can go in `config.json`'s `"matrix"` section, named like the flags with underscores (`config.json-example` lists every one as `null`, which leaves it unset). A flag on the command line still wins over it:
+
+```json
+"matrix": {
+  "led_rows": 64,
+  "led_cols": 64,
+  "led_gpio_mapping": "adafruit-hat-pwm",
+  "led_slowdown_gpio": 4
+}
+```
+
+Switches like `led_show_refresh` take `true` or `false`. An unknown name or a bad value stops the app with a message, like a bad flag. The startup log shows the result: `Board settings: led_rows=64 (config), ...`.
+
 ### Waveshare P5 64×32 panel
 
 The Waveshare P5 64×32 panel labeled `P5(2121)-3264-16S-M5` and `HUB75-D` needs a panel initialization setting with this project. In our testing, the display stayed black with the default settings but worked with `--led-panel-type=FM6126A`. This flag selects a compatible initialization sequence; it does **not** mean the chips on the panel are FM6126A.

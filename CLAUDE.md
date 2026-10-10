@@ -91,11 +91,11 @@ Display rules:
 
 ### Driver abstraction
 
-`driver/` wraps `rgbmatrix` (Pi only) and `RGBMatrixEmulator`: hardware by default (the emulator under tests, or if rgbmatrix won't import). Branch on `driver.is_emulated()`. Importing it never reads the command line: `disney.main()` parses `cli.py:arguments()` once (bad flags and `--led-rows` other than 32/64 exit), calls `driver.set_mode(...)` for `--emulated`, then builds the matrix. `driver.graphics` resolves on the current driver at each use; take `RGBMatrix` etc. as `driver.X` after the switch. `import rgbmatrix` doesn't load its `graphics` submodule (the emulator's does), so `set_mode` imports it by name; tests can't catch this, check driver changes on a board before merging.
+`driver/` wraps `rgbmatrix` (Pi only) and `RGBMatrixEmulator`: hardware by default (the emulator under tests, or if rgbmatrix won't import). Branch on `driver.is_emulated()`. Importing it never reads the command line: `disney.main()` parses `cli.py:arguments()` once, over `config.json`'s `matrix` section (flag names with underscores; the command line wins; bad flags, settings and `--led-rows` other than 32/64 exit); `describe()` logs the result and each setting's source, calls `driver.set_mode(...)` for `--emulated`, then builds the matrix. `driver.graphics` resolves on the current driver at each use; take `RGBMatrix` etc. as `driver.X` after the switch. `import rgbmatrix` doesn't load its `graphics` submodule (the emulator's does), so `set_mode` imports it by name; tests can't catch this, check driver changes on a board before merging.
 
 ### Configuration
 
-`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `force_surprise`, `debug`.
+`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (board flags, see Driver), `force_surprise`, `debug`.
 
 ### Testing
 

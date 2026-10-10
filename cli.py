@@ -1,7 +1,8 @@
 """
 The command line: the rgbmatrix library's --led-* flags plus our own (--emulated). Laid out as
 mlb-led-scoreboard's cli.py: disney.py parses it once, then switches the driver to the emulator
-if asked, so importing the driver never reads sys.argv.
+if asked, so importing the driver never reads sys.argv. As upstream, config.json's "matrix"
+section can hold the same settings ({"led_rows": 64, ...}); a flag on the command line wins.
 """
 import argparse
 import sys
@@ -11,22 +12,68 @@ from utils import debug
 
 # Fonts and layouts exist for these board heights only (display/display.py's initialize_fonts).
 SUPPORTED_ROWS = (32, 64)
-
-
-def arguments(argv=None):
-    """Parsed command-line flags (argv defaults to sys.argv[1:]). Exits with a usage message on
-    an unknown flag or a value the boards can't use; under unittest, test runners' own flags are
-    ignored instead."""
+def arguments(argv=None, matrix=None):
+    """Parsed flags: config.json's "matrix" section (`matrix`), then the command line (argv,
+    default sys.argv[1:]), so a flag given there wins. Exits with a usage message on an unknown flag or setting, or a value the boards can't
+    use; under unittest, test runners' own flags on sys.argv are ignored instead."""
     parser = _make_parser()
+    from_config = _matrix_tokens(parser, matrix, 'config.json "matrix"')
     if argv is None and "unittest" in sys.modules:
-        parsed, _ = parser.parse_known_args()
+        parsed, _ = parser.parse_known_args(from_config + sys.argv[1:])
     else:
-        parsed = parser.parse_args(argv)
+        parsed = parser.parse_args(from_config + list(sys.argv[1:] if argv is None else argv))
     if parsed.led_rows not in SUPPORTED_ROWS:
         parser.error(f"--led-rows must be one of {SUPPORTED_ROWS}, not {parsed.led_rows}")
     if min(parsed.led_cols, parsed.led_chain, parsed.led_parallel) <= 0:
         parser.error("--led-cols, --led-chain and --led-parallel must be positive")
     return parsed
+
+
+def describe(parsed, argv=None, matrix=None):
+    """One line for the startup log: each setting that isn't at its default and what set it
+    (the command line or config.json's matrix section), by the same precedence as arguments()."""
+    parser = _make_parser()
+    by_flag = parser._option_string_actions
+    from_command_line = {by_flag[token.split("=", 1)[0]].dest
+                         for token in (sys.argv[1:] if argv is None else argv) if token.split("=", 1)[0] in by_flag}
+
+    def source(dest):
+        if dest in from_command_line:
+            return "command line"
+        return "config" if (matrix or {}).get(dest) is not None else "default"
+
+    changed = [f"{action.dest}={getattr(parsed, action.dest)} ({source(action.dest)})"
+               for action in parser._actions
+               if action.option_strings and action.dest != "help"
+               and getattr(parsed, action.dest, action.default) != action.default]
+    return "Board settings: " + (", ".join(changed) + "; the rest default" if changed else "all default")
+
+
+def _matrix_tokens(parser, matrix, where):
+    """A settings object (config.json's "matrix"; `where` names it in errors) as flags, checked by the same parser as the command line (types, choices) and put
+    before it, so later ones override it. Keys are the flags' names with underscores, as in
+    mlb-led-scoreboard: "led_gpio_mapping" for --led-gpio-mapping."""
+    if not matrix:
+        return []
+    if not isinstance(matrix, dict):
+        parser.error(f'{where} should be an object, like {{"led_rows": 64}}')
+    flags = {action.dest: action for action in parser._actions if action.option_strings and action.dest != "help"}
+    tokens = []
+    for key, value in matrix.items():
+        action = flags.get(key)
+        if action is None:
+            parser.error(f'{where} has no setting "{key}" '
+                         '(use a flag\'s name with underscores, like "led_rows")')
+        if value is None:  # null: not set, as if the flag weren't given
+            continue
+        if action.nargs == 0:  # a switch like --led-show-refresh: present or not
+            if not isinstance(value, bool):
+                parser.error(f'{where}: "{key}" should be true or false, not {value!r}')
+            if value:
+                tokens.append(action.option_strings[0])
+        else:
+            tokens += [action.option_strings[0], str(value)]
+    return tokens
 
 
 def _make_parser():

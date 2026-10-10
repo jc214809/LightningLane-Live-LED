@@ -11,7 +11,7 @@ import driver
 from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
-from cli import arguments, led_matrix_options
+from cli import arguments, describe, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
@@ -127,14 +127,14 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
 
 
 def main():
-    # The command line first, as in mlb-led-scoreboard: a bad flag exits before anything starts,
-    # and --emulated must switch the driver before the matrix is built.
-    command_line_args = arguments()
+    # Settings first, as in mlb-led-scoreboard: a bad flag or matrix setting exits before anything
+    # starts, and --emulated must switch the driver before the matrix is built.
+    config = load_config()
+    command_line_args = arguments(matrix=config.get("matrix"))
+    debug.info(describe(command_line_args, matrix=config.get("matrix")))
     if command_line_args.emulated:
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
-    # Load configuration
-    config = load_config()
     set_forced_surprise(config.get("force_surprise"))
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
