@@ -4,6 +4,7 @@ RGBMatrix, graphics` works the same on both. Hardware unless running under tests
 import; disney.py switches to the emulator with set_mode for --emulated (cli.py). Importing this
 never reads the command line, as in mlb-led-scoreboard.
 """
+import importlib
 import sys
 
 from driver.mode import DriverMode
@@ -20,13 +21,13 @@ class _Graphics:
         object.__setattr__(self, "_wrapper", wrapper)
 
     def __getattr__(self, name):
-        return getattr(self._wrapper.driver.graphics, name)
+        return getattr(self._wrapper.graphics_module, name)
 
     def __setattr__(self, name, value):
-        setattr(self._wrapper.driver.graphics, name, value)
+        setattr(self._wrapper.graphics_module, name, value)
 
     def __delattr__(self, name):
-        delattr(self._wrapper.driver.graphics, name)
+        delattr(self._wrapper.graphics_module, name)
 
 
 class DriverWrapper:
@@ -70,6 +71,9 @@ class DriverWrapper:
 
             self.driver = RGBMatrixEmulator
 
+        # Imported by name: `import rgbmatrix` doesn't load its graphics submodule (the emulator's
+        # package does), so rgbmatrix.graphics isn't an attribute until something imports it.
+        self.graphics_module = importlib.import_module(f"{self.driver.__name__}.graphics")
         debug.info(f"Driver mode: {self.mode}")
 
     def __getattr__(self, name):

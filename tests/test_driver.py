@@ -25,10 +25,14 @@ def _restore(stub):
         sys.modules["driver"] = stub
 
 
-def _fake_rgbmatrix():
-    module = types.ModuleType("rgbmatrix")
-    module.graphics = types.SimpleNamespace(DrawText="rgbmatrix DrawText")
-    return module
+def _install_fake_rgbmatrix(monkeypatch):
+    """Like the real one on a Pi: graphics is a submodule that `import rgbmatrix` doesn't load,
+    so it's no attribute of rgbmatrix until imported by name."""
+    graphics = types.ModuleType("rgbmatrix.graphics")
+    graphics.DrawText = "rgbmatrix DrawText"
+    monkeypatch.setitem(sys.modules, "rgbmatrix", types.ModuleType("rgbmatrix"))
+    monkeypatch.setitem(sys.modules, "rgbmatrix.graphics", graphics)
+    return graphics
 
 
 def test_importing_the_driver_never_reads_the_command_line(monkeypatch):
@@ -59,7 +63,7 @@ def test_emulated_on_a_pi_switches_graphics_imported_before_the_switch(real_driv
     # A Pi run with --emulated: display modules import graphics while the driver is still
     # rgbmatrix, then disney.main() switches to the emulator. rgbmatrix's DrawText would crash
     # on the emulator's canvas, so the graphics they hold must follow the switch.
-    monkeypatch.setitem(sys.modules, "rgbmatrix", _fake_rgbmatrix())
+    _install_fake_rgbmatrix(monkeypatch)
     real_driver.set_mode(real_driver.DriverMode.HARDWARE)
     assert real_driver.is_hardware()
     graphics = real_driver.graphics
@@ -73,9 +77,9 @@ def test_emulated_on_a_pi_switches_graphics_imported_before_the_switch(real_driv
 
 def test_swapping_a_graphics_function_patches_the_drivers_and_restores_cleanly(real_driver, monkeypatch):
     # display/capture.py swaps DrawText for its own while capturing a screen, then puts it back.
-    monkeypatch.setitem(sys.modules, "rgbmatrix", _fake_rgbmatrix())
+    hardware = _install_fake_rgbmatrix(monkeypatch)
     real_driver.set_mode(real_driver.DriverMode.HARDWARE)
-    graphics, hardware = real_driver.graphics, sys.modules["rgbmatrix"].graphics
+    graphics = real_driver.graphics
 
     saved = graphics.DrawText
     graphics.DrawText = "software DrawText"
