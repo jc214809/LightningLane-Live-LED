@@ -2,7 +2,7 @@ import sys
 
 from driver.mode import DriverMode
 from utils import debug
-from utils.utils import args
+from cli import args
 
 
 class DriverWrapper:

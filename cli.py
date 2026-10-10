@@ -1,21 +1,6 @@
 import argparse
-import json
-from collections.abc import Mapping
 
 from utils import debug
-
-
-def pretty_print_json(json_obj):
-    """Return a pretty-printed JSON string."""
-    return "\n%s" % json.dumps(json_obj, indent=4, sort_keys=True)
-
-
-def center_text_position(text, center_pos, font_width):
-    return abs(center_pos - ((len(text) * font_width) // 2))
-
-
-def split_string(string, num_chars):
-    return [(string[i : i + num_chars]).strip() for i in range(0, len(string), num_chars)]  # noqa: E203
 
 
 def args():
@@ -128,13 +113,6 @@ def args():
         "--led-pwm-dither-bits", action="store", help="Time dithering of lower bits (Default: 0)", default=0, type=int,
     )
     parser.add_argument(
-        "--config",
-        action="store",
-        help="Base file name for config file. Can use relative path, e.g. config/rockies.config",
-        default="config",
-        type=str,
-    )
-    parser.add_argument(
         "--emulated",
         action="store_const",
         help="Force using emulator mode over default matrix display.",
@@ -205,17 +183,4 @@ def led_matrix_options(args):
         options.disable_hardware_pulsing = True
 
     return options
-
-
-def deep_update(source, overrides):
-    """Update a nested dictionary or similar mapping.
-    Modify ``source`` in place.
-    """
-    for key, value in list(overrides.items()):
-        if isinstance(value, Mapping) and value:
-            returned = deep_update(source.get(key, {}), value)
-            source[key] = returned
-        else:
-            source[key] = overrides[key]
-    return source
 

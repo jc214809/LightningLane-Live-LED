@@ -12,7 +12,7 @@ from driver import RGBMatrix, __version__
 from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
-from utils.utils import args, led_matrix_options
+from cli import args, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen

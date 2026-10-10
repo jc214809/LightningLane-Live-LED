@@ -1,14 +1,7 @@
 import sys
 from argparse import Namespace
 import pytest
-from utils.utils import (
-    led_matrix_options,
-    center_text_position,
-    split_string,
-    deep_update,
-    args,
-    pretty_print_json,
-)
+from cli import args, led_matrix_options
 from utils import debug
 
 # -----------------------------------------------------------------------------
@@ -179,31 +172,6 @@ def test_panel_type_rejects_unknown_chipsets(monkeypatch):
         args()
 
 # -----------------------------------------------------------------------------
-# Tests for utility functions
-# -----------------------------------------------------------------------------
-def test_center_text_position():
-    # "abc" length=3, each char width=5 gives total width=15.
-    # Center position 50, so expected = abs(50 - (15//2)) = abs(50 - 7) = 43.
-    assert center_text_position("abc", 50, 5) == 43
-
-def test_split_string():
-    assert split_string("abcdef", 2) == ["ab", "cd", "ef"]
-
-def test_deep_update():
-    source = {"a": {"b": 1}}
-    overrides = {"a": {"c": 2}, "d": 3}
-    result = deep_update(source, overrides)
-    assert result == {"a": {"b": 1, "c": 2}, "d": 3}
-    assert source is result
-
-def test_pretty_print_json_exception():
-    # Test that pretty_print_json raises a TypeError for non-serializable objects.
-    class NotSerializable:
-        pass
-    with pytest.raises(TypeError):
-        pretty_print_json(NotSerializable())
-
-# -----------------------------------------------------------------------------
 # Tests for argparse-based args() function
 # -----------------------------------------------------------------------------
 def test_args_defaults():
@@ -226,7 +194,6 @@ def test_args_defaults():
         assert parsed.led_multiplexing == 0
         assert parsed.led_limit_refresh == 0
         assert parsed.led_pwm_dither_bits == 0
-        assert parsed.config == "config"
         # Store_true flags default to False.
         assert parsed.led_show_refresh is False
         assert parsed.drop_privileges is False
@@ -257,7 +224,6 @@ def test_args_custom():
             "--led-multiplexing", "3",
             "--led-limit-refresh", "60",
             "--led-pwm-dither-bits", "2",
-            "--config", "custom_config",
             "--emulated",
             "--drop-privileges"
         ]
@@ -282,7 +248,6 @@ def test_args_custom():
         assert parsed.led_multiplexing == 3
         assert parsed.led_limit_refresh == 60
         assert parsed.led_pwm_dither_bits == 2
-        assert parsed.config == "custom_config"
         assert parsed.emulated is True
         assert parsed.drop_privileges is True
     finally:
