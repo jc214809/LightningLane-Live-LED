@@ -179,18 +179,20 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: false)
 ```
 
-The same settings can go in `config.json`'s `"matrix"` section, named like the flags with underscores (`config.json-example` lists every one as `null`, which leaves it unset). A flag on the command line still wins over it:
+Each board's settings live in `boards.json`, keyed by the Pi's hostname, and a board picks its own at startup. To change one, edit its entry, commit, and update that board; there's nothing to change on the Pi itself, and its service needs no flags:
 
 ```json
-"matrix": {
-  "led_rows": 64,
+"PlutoPi": {
+  "led_rows": 32,
   "led_cols": 64,
   "led_gpio_mapping": "adafruit-hat-pwm",
-  "led_slowdown_gpio": 4
+  "led_slowdown_gpio": 2,
+  "led_pixel_mapper": "Rotate:180",
+  "led_brightness": 85
 }
 ```
 
-Switches like `led_show_refresh` take `true` or `false`. An unknown name or a bad value stops the app with a message, like a bad flag. The startup log shows the result: `Board settings: led_rows=64 (config), ...`.
+Settings are named like the flags with underscores. A board's `config.json` can override its preset in a `"matrix"` section of the same shape (`config.json-example` lists every setting as `null`, which overrides nothing), and a flag on the command line overrides both. Switches like `led_show_refresh` take `true` or `false`. An unknown name or a bad value stops the app with a message, like a bad flag. The startup log shows the result: `Board settings (boards.json preset PlutoPi): led_cols=64 (board PlutoPi), ...`.
 
 ### Waveshare P5 64×32 panel
 

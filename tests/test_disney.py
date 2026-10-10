@@ -648,6 +648,7 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
 
     monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}})
+    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
     monkeypatch.setattr(disney.driver, "set_mode", lambda mode: calls.append(("set_mode", mode)), raising=False)
     monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)
@@ -656,7 +657,8 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
     monkeypatch.setattr(disney, "led_matrix_options", lambda args: f"rows={args.led_rows} cols={args.led_cols}")
     with pytest.raises(_Built):
         disney.main()
-    assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=32")]
+    # cols from the board's preset, rows from config over the preset
+    assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64")]
 
 
 def disney_driver_modes():
