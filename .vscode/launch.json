@@ -2,6 +2,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Disney Config",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/disney.py",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUNBUFFERED": "1" }
+    },
+    {
       "name": "Disney (Emulated) 64x32",
       "type": "debugpy",
       "request": "launch",
