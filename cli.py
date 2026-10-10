@@ -1,31 +1,42 @@
+"""
+The command line: the rgbmatrix library's --led-* flags plus our own (--emulated). Laid out as
+mlb-led-scoreboard's cli.py: disney.py parses it once, then switches the driver to the emulator
+if asked, so importing the driver never reads sys.argv.
+"""
 import argparse
-import json
-from collections.abc import Mapping
+import sys
 
+import driver
 from utils import debug
 
-
-def pretty_print_json(json_obj):
-    """Return a pretty-printed JSON string."""
-    return "\n%s" % json.dumps(json_obj, indent=4, sort_keys=True)
+# Fonts and layouts exist for these board heights only (display/display.py's initialize_fonts).
+SUPPORTED_ROWS = (32, 64)
 
 
-def center_text_position(text, center_pos, font_width):
-    return abs(center_pos - ((len(text) * font_width) // 2))
+def arguments(argv=None):
+    """Parsed command-line flags (argv defaults to sys.argv[1:]). Exits with a usage message on
+    an unknown flag or a value the boards can't use; under unittest, test runners' own flags are
+    ignored instead."""
+    parser = _make_parser()
+    if argv is None and "unittest" in sys.modules:
+        parsed, _ = parser.parse_known_args()
+    else:
+        parsed = parser.parse_args(argv)
+    if parsed.led_rows not in SUPPORTED_ROWS:
+        parser.error(f"--led-rows must be one of {SUPPORTED_ROWS}, not {parsed.led_rows}")
+    if min(parsed.led_cols, parsed.led_chain, parsed.led_parallel) <= 0:
+        parser.error("--led-cols, --led-chain and --led-parallel must be positive")
+    return parsed
 
 
-def split_string(string, num_chars):
-    return [(string[i : i + num_chars]).strip() for i in range(0, len(string), num_chars)]  # noqa: E203
-
-
-def args():
+def _make_parser():
     parser = argparse.ArgumentParser()
 
     # Options for the rpi-rgb-led-matrix library
     parser.add_argument(
         "--led-rows",
         action="store",
-        help="Display rows. 16 for 16x32, 32 for 32x32. (Default: 32)",
+        help="Display rows: 32 or 64. (Default: 32)",
         default=32,
         type=int,
     )
@@ -128,13 +139,6 @@ def args():
         "--led-pwm-dither-bits", action="store", help="Time dithering of lower bits (Default: 0)", default=0, type=int,
     )
     parser.add_argument(
-        "--config",
-        action="store",
-        help="Base file name for config file. Can use relative path, e.g. config/rockies.config",
-        default="config",
-        type=str,
-    )
-    parser.add_argument(
         "--emulated",
         action="store_const",
         help="Force using emulator mode over default matrix display.",
@@ -143,13 +147,13 @@ def args():
     parser.add_argument(
         "--drop-privileges", action="store_true", help="Force the matrix driver to drop root privileges after setup."
     )
-    return parser.parse_args()
+    return parser
 
 
 def led_matrix_options(args):
-    from driver import RGBMatrixOptions
-
-    options = RGBMatrixOptions()
+    """The driver's RGBMatrixOptions from parsed flags. Call after any driver.set_mode, so the
+    options are the class of the driver in use."""
+    options = driver.RGBMatrixOptions()
 
     if args.led_gpio_mapping is not None:
         options.hardware_mapping = args.led_gpio_mapping
@@ -205,17 +209,4 @@ def led_matrix_options(args):
         options.disable_hardware_pulsing = True
 
     return options
-
-
-def deep_update(source, overrides):
-    """Update a nested dictionary or similar mapping.
-    Modify ``source`` in place.
-    """
-    for key, value in list(overrides.items()):
-        if isinstance(value, Mapping) and value:
-            returned = deep_update(source.get(key, {}), value)
-            source[key] = returned
-        else:
-            source[key] = overrides[key]
-    return source
 

@@ -7,12 +7,11 @@ import traceback
 from datetime import datetime, timezone
 
 import driver
-from driver import RGBMatrix, __version__
 
 from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
-from utils.utils import args, led_matrix_options
+from cli import arguments, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
@@ -128,6 +127,12 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
 
 
 def main():
+    # The command line first, as in mlb-led-scoreboard: a bad flag exits before anything starts,
+    # and --emulated must switch the driver before the matrix is built.
+    command_line_args = arguments()
+    if command_line_args.emulated:
+        driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
+
     # Load configuration
     config = load_config()
     set_forced_surprise(config.get("force_surprise"))
@@ -143,15 +148,11 @@ def main():
         if driver.hardware_load_failed:
             debug.log("rgbmatrix not installed, falling back to emulator!")
 
-        debug.log("Using RGBMatrixEmulator version %s", __version__)
+        debug.log("Using RGBMatrixEmulator version %s", driver.__version__)
     else:
-        debug.log("Using rgbmatrix version %s", __version__)
+        debug.log("Using rgbmatrix version %s", driver.__version__)
 
-    # Use your helper functions to get proper options.
-    command_line_args = args()
-    matrixOptions = led_matrix_options(command_line_args)
-
-    matrix = RGBMatrix(options=matrixOptions)
+    matrix = driver.RGBMatrix(options=led_matrix_options(command_line_args))
     initialize_fonts(matrix.height)
 
     park_names = config.get('parks', [])

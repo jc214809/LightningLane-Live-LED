@@ -836,7 +836,7 @@ Today the project is GPLv3 (`LICENSE.md`): anyone may sell it, but must share th
 GPLv3 too. Joel wants a license that forbids selling (PolyForm Noncommercial 1.0.0 is the
 software one). The GPL won't allow adding that restriction to code inherited from
 MLB-LED-Scoreboard (GPLv3), so first rewrite what came from it, then relicense:
-- Audit what's still inherited: `LLL-install.sh`, the CLI flags in `utils/utils.py:args()`,
+- Audit what's still inherited: `LLL-install.sh`, the CLI flags in `cli.py:arguments()` (now laid out as upstream's),
   the README's install/flags sections, anything else from the 2025-03-14 import (`36625d7`).
 - Rewrite those parts from scratch (not edited copies).
 - Swap `LICENSE.md` for PolyForm Noncommercial and update the README's Licensing section.
