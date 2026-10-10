@@ -1,6 +1,3 @@
-import json
-import os
-import tempfile
 from datetime import date, datetime, timedelta, timezone
 
 import pytest
@@ -24,21 +21,6 @@ class FakeMatrix:
     # Stub method to satisfy if SetImage is called.
     def SetImage(self, img):
         pass
-
-# ---- Tests for load_config ----
-
-def test_load_config():
-    # Create a temporary config file
-    config_data = {"debug": True, "trip_countdown": {"trip_date": "2023-10-01", "enabled": True}}
-    with tempfile.NamedTemporaryFile("w+", delete=False) as tmp:
-        json.dump(config_data, tmp)
-        tmp_path = tmp.name
-
-    # Use load_config from disney.py to read the file
-    loaded_config = disney.load_config(tmp_path)
-    os.unlink(tmp_path)  # Clean up
-
-    assert loaded_config == config_data
 
 # ---- Tests for rendering functions ----
 
@@ -274,13 +256,6 @@ def test_park_filter_limits_parks(monkeypatch):
     filtered = [p for p in all_parks if clean_park_name(p["name"]) in park_filter]
     assert len(filtered) == 1
     assert filtered[0]["id"] == "ak-id"
-
-
-def test_load_config_nonexistent(tmp_path):
-    # Test that load_config raises FileNotFoundError when the file doesn't exist.
-    non_existent = tmp_path / "nonexistent_config.json"
-    with pytest.raises(FileNotFoundError):
-        disney.load_config(str(non_existent))
 
 
 # Note: Testing main() is more challenging because it runs an infinite loop.

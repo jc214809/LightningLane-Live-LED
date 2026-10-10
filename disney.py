@@ -2,7 +2,6 @@ import sys
 import time
 import logging
 import threading
-import json
 import random
 import traceback
 from datetime import datetime, timezone
@@ -21,21 +20,16 @@ from display.landmarks import landmark_for, landmark_screen
 from utils.special_events import active_party, fireworks_show
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
-from updater.websocket_updater import websocket_live_updater, websocket_protocol, websocket_settings
+from updater.websocket_updater import websocket_live_updater
 from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
 from utils import debug
+from utils.config import debug_enabled, load_config, websocket_protocol, websocket_settings
 
 # Configure logging
-def load_config(file_path):
-    """Load the configuration from a JSON file."""
-    with open(file_path, 'r') as file:
-        config = json.load(file)
-    return config
-
 logger = logging.getLogger("disney-lll")
-if load_config('config.json')['debug']:
+if debug_enabled(load_config()):
     logger.setLevel(logging.DEBUG)
 else:
     logger.setLevel(logging.INFO)
@@ -135,7 +129,7 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
 
 def main():
     # Load configuration
-    config = load_config('config.json')
+    config = load_config()
     set_forced_surprise(config.get("force_surprise"))
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)

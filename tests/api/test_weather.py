@@ -5,7 +5,7 @@ import pyowm
 import requests
 
 import api.weather as weather_mod
-from api.weather import load_config, fetch_weather_data
+from api.weather import fetch_weather_data
 
 exceptions = pyowm.commons.exceptions
 
@@ -32,7 +32,7 @@ class TestWeatherModule(unittest.TestCase):
             patch('api.weather.time.monotonic', side_effect=lambda: self.clock),
             patch('api.weather.time.sleep', side_effect=self._sleep),
             patch('api.weather.random.uniform', return_value=0.0),
-            patch('api.weather.load_config', side_effect=lambda path: self.config),
+            patch('api.weather.load_config', side_effect=lambda *path: self.config),
             patch('pyowm.OWM'),
         ]
         mocks = [p.start() for p in patches]
@@ -49,11 +49,6 @@ class TestWeatherModule(unittest.TestCase):
 
     def advance(self, seconds):
         self.clock += seconds
-
-    @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data='{"weather": {"apikey": "valid_api_key"}}')
-    def test_load_config(self, mock_open):
-        config = load_config('fake_path.json')
-        self.assertEqual(config['weather']['apikey'], 'valid_api_key')
 
     def test_fetch_weather_data_valid(self):
         result = fetch_weather_data(0, 0)

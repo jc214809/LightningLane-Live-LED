@@ -1,4 +1,3 @@
-import json
 import random
 import time
 
@@ -6,6 +5,7 @@ import pyowm
 import requests
 
 from utils import debug
+from utils.config import load_config, weather_api_key
 
 # Retries within one fetch, for errors that usually clear in seconds (timeouts,
 # dropped connections, 5xx). The 5-minute update cycle is the long retry.
@@ -34,13 +34,6 @@ def _reset():
     _last_good.clear()
     _paused_until = 0.0
     _rejected = None
-
-
-def load_config(file_path):
-    """Load the configuration from a JSON file."""
-    with open(file_path, 'r') as file:
-        config = json.load(file)
-    return config
 
 
 def _redact(message, api_key):
@@ -94,7 +87,7 @@ def fetch_weather_data(lat, lon):
         return cached[0]
 
     try:
-        api_key = load_config('config.json').get('weather', {}).get('apikey')
+        api_key = weather_api_key(load_config())
     except (OSError, ValueError, AttributeError) as e:
         debug.warning(f"[WEATHER] Couldn't read the API key from config.json: {e}")
         return _fallback(location, now)

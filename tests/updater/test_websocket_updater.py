@@ -14,7 +14,6 @@ from updater.websocket_updater import (
     _SUBSCRIBE_RETRY_SECS,
     _PreviewFeed,
     _preview_ws_loop,
-    websocket_protocol,
     _RECONNECT_DELAY_INITIAL,
     _RECONNECT_DELAY_MAX,
     _WS_CLOSE_TIMEOUT_SECS,
@@ -29,8 +28,6 @@ from updater.websocket_updater import (
     WS_ENTITY_TYPES,
     WS_URL,
     _ws_loop,
-    has_api_key,
-    websocket_settings,
 )
 
 DUMMY_ATTRACTION = {
@@ -499,35 +496,6 @@ def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
     assert captured["timeout"].ws_close == _WS_CLOSE_TIMEOUT_SECS == 10
 
 
-@pytest.mark.parametrize("api_key", [None, "", "   ", "<THEMEPARKS_API_KEY>", 123])
-def test_has_api_key_is_false_without_a_real_key(api_key):
-    # The server closes keyless connections (3000 "Authentication timeout"), so these poll REST instead.
-    assert not has_api_key(api_key)
-
-
-def test_has_api_key_is_true_for_a_real_key():
-    assert has_api_key("real-key")
-
-
-@pytest.mark.parametrize("config, expected", [
-    ({"websocket": {"enabled": True, "api_key": "real-key"}}, (True, "real-key")),
-    ({"websocket": {"api_key": "real-key"}}, (True, "real-key")),  # enabled defaults to true
-    ({"websocket": {"enabled": False, "api_key": "real-key"}}, (False, "real-key")),
-    ({"websocket": {"enabled": True, "api_key": "<THEMEPARKS_API_KEY_HERE>"}}, (False, "<THEMEPARKS_API_KEY_HERE>")),
-    ({"websocket": {"enabled": True}}, (False, None)),
-    ({"websocket": {"enabled": "false", "api_key": "real-key"}}, (False, "real-key")),  # not a bool: off
-    ({"websocket": "real-key"}, (False, None)),
-    # Boards' configs from before the section keep working off the top-level key.
-    ({"themeparks_api_key": "real-key"}, (True, "real-key")),
-    ({"themeparks_api_key": "<KEY>", "websocket_only": True}, (False, "<KEY>")),
-    ({}, (False, None)),
-    # The section wins over a leftover top-level key.
-    ({"themeparks_api_key": "old-key", "websocket": {"enabled": False, "api_key": "new-key"}}, (False, "new-key")),
-])
-def test_websocket_settings(config, expected):
-    assert websocket_settings(config) == expected
-
-
 def test_ws_loop_subscribes_each_destination_once_per_displayed_entity_type():
     # One filter per subscription (the server rejects a list), so restaurants never arrive.
     captured = {}
@@ -596,7 +564,6 @@ def test_ws_update_stores_forecast_and_keeps_it_when_absent():
     assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
     _apply_live_update(_make_livedata_msg(), parks)
     assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
-
 
 
 def test_ws_update_stores_showtimes_and_keeps_them_when_absent():
@@ -696,18 +663,6 @@ def _entry(status="OPERATING", wait=45, last_updated="2026-10-04T16:10:00Z", ent
 def no_status_check():
     with patch("updater.websocket_updater.update_parks_operating_status") as check:
         yield check
-
-
-@pytest.mark.parametrize("config, expected", [
-    ({}, "legacy"),
-    ({"websocket": {"api_key": "k"}}, "legacy"),
-    ({"websocket": {"protocol": "preview"}}, "preview"),
-    ({"websocket": {"protocol": "legacy"}}, "legacy"),
-    ({"websocket": {"protocol": "Preview"}}, "legacy"),  # unknown values fall back, with a warning
-    ({"websocket": "k"}, "legacy"),
-])
-def test_websocket_protocol(config, expected):
-    assert websocket_protocol(config) == expected
 
 
 def test_preview_welcome_subscribes_each_destination_per_entity_type_with_a_snapshot():

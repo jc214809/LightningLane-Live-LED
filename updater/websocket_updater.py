@@ -149,39 +149,6 @@ def _apply_live_update(data, parks_data):
                 return
 
 
-def has_api_key(api_key):
-    """True for a real ThemeParks key. The WebSocket needs one: without it the
-    server accepts the handshake, then closes with 3000 "Authentication timeout"."""
-    return isinstance(api_key, str) and bool(api_key.strip()) and not api_key.startswith("<")
-
-
-def websocket_settings(config):
-    """(use_websocket, api_key) from config.json's "websocket" section:
-    {"enabled": true, "api_key": "..."}. Runs only when enabled with a real key.
-    A config without the section falls back to the old top-level themeparks_api_key."""
-    section = config.get("websocket")
-    if section is None:
-        api_key = config.get("themeparks_api_key")
-        if has_api_key(api_key):
-            debug.info('Using the top-level "themeparks_api_key"; move it to "websocket": {"api_key": ...} in config.json.')
-        return has_api_key(api_key), api_key
-    if not isinstance(section, dict):
-        debug.warning('config.json "websocket" should be {"enabled": true, "api_key": "..."}; using REST polling only.')
-        return False, None
-
-    enabled = section.get("enabled", True)
-    api_key = section.get("api_key")
-    if not isinstance(enabled, bool):
-        debug.warning(f'config.json "websocket.enabled" should be true or false, not {enabled!r}; using REST polling only.')
-        return False, api_key
-    if not enabled:
-        return False, api_key
-    if not has_api_key(api_key):
-        debug.warning('config.json "websocket.enabled" is true but "websocket.api_key" is not set; using REST polling only.')
-        return False, api_key
-    return True, api_key
-
-
 async def _ws_loop(api_key, parks_data):
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     delay = _RECONNECT_DELAY_INITIAL
@@ -287,7 +254,6 @@ async def _ws_loop(api_key, parks_data):
 # frame's cursor is saved, so a reconnect subscribes "since" it and gets what it missed replayed.
 # Spec: https://www.themeparks.wiki/api/websockets (not under ThemeParks.wiki's SLA while in preview).
 
-WS_PROTOCOLS = ("legacy", "preview")
 WS_PREVIEW_SUBPROTOCOLS = ("preview",)
 # The server pings an idle connection about every 30s (gaps can near 60s); 90s of nothing is dead.
 _PREVIEW_RECEIVE_TIMEOUT_SECS = 90
@@ -303,16 +269,6 @@ _REFUSED_RETRY_SECS = 600
 # Waits before re-sending a subscribe the server refused as retryable; then the next reconnect tries.
 _SUBSCRIBE_RETRY_SECS = (2, 5, 15, 30)
 _CURSOR_FRAME_TYPES = ("snapshot", "update", "resumed", "ping")
-
-
-def websocket_protocol(config):
-    """config.json's "websocket.protocol": "legacy" (the default) or "preview"."""
-    section = config.get("websocket")
-    protocol = section.get("protocol", "legacy") if isinstance(section, dict) else "legacy"
-    if protocol not in WS_PROTOCOLS:
-        debug.warning(f'config.json "websocket.protocol" should be "legacy" or "preview", not {protocol!r}; using "legacy".')
-        return "legacy"
-    return protocol
 
 
 class _PreviewFeed:
