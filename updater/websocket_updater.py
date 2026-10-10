@@ -10,7 +10,8 @@ import aiohttp
 import certifi
 
 from api.disney_api import (build_live_updates, fetch_park_live_data, get_down_time, parse_forecast,
-                            parse_queue_wait, parse_showtimes, update_parks_operating_status)
+                            parse_queue_wait, parse_showtimes)
+from parks.operating import update_parks_operating_status
 from updater.data_updater import merge_live_data
 from updater.shared import (note_live_feed_down, note_live_feed_frame, note_live_feed_synced,
                             note_network_result, parks_data_lock)
