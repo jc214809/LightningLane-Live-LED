@@ -58,12 +58,37 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Lumiere | 16 x 21 | Yes | Yes (2x too) | Pattern mode: box 290,204,392,334 |
 | [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Cogsworth | 15 x 20 | Yes | Yes (2x too) | Pattern mode: box 400,204,494,334 |
 | [Dug.jpg](Dug.jpg) | Dug | 22 x 27 | Yes | Yes (2x too) | `kevin`, redrawn at 14 x 17 under his balloons |
-| [Bullseye.jpg](Bullseye.jpg) | Toy Story, a sheet: Woody, Buzz, Mr. and Mrs. Potato Head, Slinky, Rex, Hamm, Bo Peep and her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Bullseye, Stinky Pete and more | up to about 26 x 28 each (Bullseye 26 x 28) | Yes | Yes (2x too) | |
+| [Bullseye.jpg](Bullseye.jpg) | Woody (one of 20 on a Toy Story sheet, 7.15 px cells) | 12 x 28 | Yes | Yes (2x too) | Pattern mode: box 84,40,168,240 |
+| [Bullseye.jpg](Bullseye.jpg) | Buzz Lightyear, wings out | 22 x 23 | Yes | Yes (2x too) | Pattern mode: box 180,76,336,240 |
+| [Bullseye.jpg](Bullseye.jpg) | Mr. Potato Head | about 12 x 16 | Yes | Yes (2x too) | Box 356,124,444,240 finds no grid: size from its pixel extent; Calibrate |
+| [Bullseye.jpg](Bullseye.jpg) | Slinky Dog, stretched | 21 x 15 | Yes | Yes (2x too) | Pattern mode: box 460,132,612,240 |
+| [Bullseye.jpg](Bullseye.jpg) | Rex | 23 x 24 | Yes | Yes (2x too) | Pattern mode: box 636,68,800,240 |
+| [Bullseye.jpg](Bullseye.jpg) | Hamm | 11 x 14 | Yes | Yes (2x too) | Pattern mode: box 816,140,896,240 |
+| [Bullseye.jpg](Bullseye.jpg) | Bo Peep | 12 x 25 | Yes | Yes (2x too) | Pattern mode: box 84,308,168,484 |
+| [Bullseye.jpg](Bullseye.jpg) | Bo Peep's sheep, three heads | 20 x 15 | Yes | Yes (2x too) | Pattern mode: box 172,376,316,484 |
+| [Bullseye.jpg](Bullseye.jpg) | Green Army Men: one on a parachute over three standing | 15 x 28 | Yes | Yes (2x too) | Pattern mode: box 328,284,436,484 |
+| [Bullseye.jpg](Bullseye.jpg) | A blue round toy with orange feet and a red fin, maybe Mr. Shark | about 12 x 8 | Yes | Yes (2x too) | Box 448,424,532,484 finds no grid: size from its pixel extent; Calibrate |
+| [Bullseye.jpg](Bullseye.jpg) | A yellow can with red limbs, unidentified | 18 x 16 | Yes | Yes (2x too) | Pattern mode: box 536,368,668,484 |
+| [Bullseye.jpg](Bullseye.jpg) | RC | 19 x 19 | Yes | Yes (2x too) | Pattern mode: box 672,348,808,484 |
+| [Bullseye.jpg](Bullseye.jpg) | An Alien | about 11 x 15 | Yes | Yes (2x too) | Box 824,376,904,484 finds no grid: size from its pixel extent; Calibrate |
+| [Bullseye.jpg](Bullseye.jpg) | Buzz Lightyear with a utility belt, wings out | 22 x 23 | Yes | Yes (2x too) | Pattern mode: box 32,572,192,736 |
+| [Bullseye.jpg](Bullseye.jpg) | Zurg | 18 x 28 | Yes | Yes (2x too) | Pattern mode: box 196,536,324,736 |
+| [Bullseye.jpg](Bullseye.jpg) | Mrs. Potato Head | 12 x 16 | Yes | Yes (2x too) | Pattern mode: box 340,620,428,736 |
+| [Bullseye.jpg](Bullseye.jpg) | Wheezy | 12 x 14 | Yes | Yes (2x too) | Pattern mode: box 448,636,532,736 |
+| [Bullseye.jpg](Bullseye.jpg) | Jessie | 16 x 27 | Yes | Yes (2x too) | Pattern mode: box 552,544,668,736 |
+| [Bullseye.jpg](Bullseye.jpg) | Bullseye | 25 x 28 | Yes | Yes (2x too) | Pattern mode: box 676,536,856,736 |
+| [Bullseye.jpg](Bullseye.jpg) | Stinky Pete | 12 x 24 | Yes | Yes (2x too) | Pattern mode: box 872,564,960,736 |
 | [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | Built: `forky`, cell for cell, 1x on 64x32 and 2x on 64x64 |
 | [hei-hei-small.jpg](hei-hei-small.jpg) | Heihei, small (brick pattern), with a leaf | 16 x 29 | Yes | Yes (2x too) | |
 | [Mickey.jpg](Mickey.jpg) | Mickey Mouse, standing (chibi) | 23 x 29 | Yes | Yes (2x too) | |
 | [Pluto.jpg](Pluto.jpg) | Pluto, crouching, side-on, tail up | 22 x 29 | Yes | Yes (2x too) | |
-| [dwarfs.jpg](dwarfs.jpg) | The seven dwarfs, a sheet | about 20 x 40 each | No (hat to beard, in the mine car) | Yes | Built: `mine_train`, cell for cell, shoulders up on 64x64 |
+| [dwarfs.jpg](dwarfs.jpg) | Dopey (one of 7 on a dwarfs sheet; ignore its axis numbers, the cells are about 11.5 px) | 20 x 41 | No (9 rows over) | Yes | Pattern mode: box 228,92,472,562; Built: `mine_train`, cell for cell, shoulders up on 64x64 |
+| [dwarfs.jpg](dwarfs.jpg) | Happy, likely: yellow hat, orange coat | 18 x 41 | No (9 rows over) | Yes | Pattern mode: box 472,92,692,562; Built: `mine_train`, cell for cell, shoulders up on 64x64 |
+| [dwarfs.jpg](dwarfs.jpg) | Doc | 18 x 40 | No (8 rows over) | Yes | Pattern mode: box 692,95,908,562; Built: `mine_train`, cell for cell, shoulders up on 64x64 |
+| [dwarfs.jpg](dwarfs.jpg) | Bashful, likely: green hat, brown coat | 22 x 41 | No (9 rows over) | Yes | Pattern mode: box 912,88,1172,562; Built: `mine_train`, cell for cell, shoulders up on 64x64 |
+| [dwarfs.jpg](dwarfs.jpg) | Sneezy, likely: teal hat, yellow coat, finger under his nose | 23 x 35 | No (3 rows over) | Yes | Pattern mode: box 236,568,518,978; Built: `mine_train`, cell for cell, shoulders up on 64x64 |
+| [dwarfs.jpg](dwarfs.jpg) | Grumpy, likely: blue hat, arms crossed, frowning | 20 x 34 | No (2 rows over) | Yes | Pattern mode: box 528,575,802,978; Built: `mine_train`, cell for cell, shoulders up on 64x64 |
+| [dwarfs.jpg](dwarfs.jpg) | Sleepy, likely: red hat, scratching his head, eyes half shut | 25 x 35 | No (3 rows over) | Yes | Pattern mode: box 798,570,1092,978; Built: `mine_train`, cell for cell, shoulders up on 64x64 |
 | [Tink.jpg](Tink.jpg) | Tinker Bell | 26 x 31 | Tight | Yes (2x too) | Built: `tink` |
 | [Hamm.jpg](Hamm.jpg) | Hamm | 41 x 31 | Tight | Yes | |
 | [Baby_Yoda.jpg](Baby_Yoda.jpg) | Grogu | 38 x 32 | Tight | Yes | |
@@ -128,8 +153,23 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [RC-NotPixels.webp](RC-NotPixels.webp) | RC, from Toy Story (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes, like the Falcon |
 | [princesses.png](princesses.png) | (none: the image is completely transparent) | | | | |
 | [simba_bricks.png](simba_bricks.png) | Young Simba, the Lion King logo pose (photo of a studded-brick build, about 8.5 degrees off straight, with a watermark) | about 27 x 25 | Yes | Yes (2x too) | Pattern mode reads it: Detect grid straightens it (`gridTurn`); a test holds it |
-| [TS_beads.jpg](TS_beads.jpg) | Toy Story in fused beads: Woody, Jessie, an Alien, Buzz, Mrs. and Mr. Potato Head (photo, each piece on its own grid, Buzz about 3 degrees off) | about 9 x 13 to 11 x 14 each | Yes | Yes (2x too) | Pattern mode: drag a box round one; Detect grid reads it bead for bead, and a test holds Woody, the Alien and Buzz |
-| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Toy Story 4, a sheet: Bunny, Ducky, Forky, Duke Caboom, Bo Peep in two outfits, an Alien, Buzz, Woody, Gabby Gabby and Benson, each scaled its own way, over a sky, wall and floor | about 15 x 23 to 21 x 27 each (Bunny 15 x 23, Woody 19 x 27) | Yes | Yes | Pattern mode: drag a box round one, tick Grid lines only; a test reads Bunny and Woody |
+| [TS_beads.jpg](TS_beads.jpg) | Woody (one of 6 Toy Story pieces in fused beads, a photo, each on its own grid) | 11 x 13 | Yes | Yes (2x too) | Pattern mode: box 125,15,385,330; Detect grid reads it bead for bead. The editor's test holds 9 x 13 here, the tool 11 x 13 with the hat brim |
+| [TS_beads.jpg](TS_beads.jpg) | Jessie | 11 x 13 | Yes | Yes (2x too) | Pattern mode: box 405,25,675,340 |
+| [TS_beads.jpg](TS_beads.jpg) | An Alien | 11 x 14 | Yes | Yes (2x too) | Pattern mode: box 90,355,355,680; a test holds it |
+| [TS_beads.jpg](TS_beads.jpg) | Buzz Lightyear (about 3 degrees off straight) | 10 x 12 | Yes | Yes (2x too) | Pattern mode: box 405,380,665,675 (straightened 3.1 degrees); a test holds it |
+| [TS_beads.jpg](TS_beads.jpg) | Mrs. Potato Head | 11 x 14 | Yes | Yes (2x too) | Pattern mode: box 110,725,375,1060 |
+| [TS_beads.jpg](TS_beads.jpg) | Mr. Potato Head | 11 x 14 | Yes | Yes (2x too) | Pattern mode: box 410,720,670,1060 |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Bunny (one of 11 on a Toy Story 4 sheet, each at its own scale over a sky, wall and floor) | 15 x 23 | Yes | Yes (2x too) | Pattern mode: box 15,25,190,285, Grid lines only; a test reads him |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Ducky | 13 x 18 | Yes | Yes (2x too) | Pattern mode: box 205,75,355,282, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Forky | 12 x 18 | Yes | Yes (2x too) | Pattern mode: box 385,80,530,288, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Duke Caboom | 13 x 24 | Yes | Yes (2x too) | Pattern mode: box 540,45,675,290, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Bo Peep, new outfit with cape | 14 x 23 | Yes | Yes (2x too) | Pattern mode: box 705,20,866,305, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Bo Peep, classic dress | 17 x 25 | Yes | Yes (2x too) | Pattern mode: box 885,22,1072,298, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | An Alien | 19 x 21 | Yes | Yes (2x too) | Pattern mode: box 5,325,212,560, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Buzz Lightyear | 21 x 26 | Yes | Yes (2x too) | Pattern mode: box 215,300,448,585, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Woody | 19 x 25 | Yes | Yes (2x too) | Pattern mode: box 435,295,665,590, Grid lines only; a test reads him from y 275, which adds two rows of sky (19 x 27) |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Gabby Gabby | 21 x 22 | Yes | Yes (2x too) | Pattern mode: box 650,312,910,582, Grid lines only |
+| [toy_story_4_sheet.png](toy_story_4_sheet.png) | Benson | 11 x 22 | Yes | Yes (2x too) | Pattern mode: box 918,305,1065,592, Grid lines only |
 | [Aladdin with lamp.jpg](<Aladdin with lamp.jpg>) | Aladdin holding the lamp | 26 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
 | [genie.jpg](genie.jpg) | Genie rising from his lamp | 21 x 39 | No (7 rows over) | Yes | Built: `genie`, cell for cell: 7 rows dropped on 64x32, doubled on a 1x lamp (3 tail rows dropped) on 64x64 |
 | [mickey_minnie_kiss.jpg](mickey_minnie_kiss.jpg) | Mickey and Minnie kissing, one piece (with the artist's initials at the bottom) | 50 x 34 | No (2 rows over) | Yes | Pattern mode reads it |

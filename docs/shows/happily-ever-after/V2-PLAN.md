@@ -51,7 +51,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | When You Wish fanfare (171-192) | castle | Ray | Code | Keeps buzzing, circling the spire. |
 | Part of Your World (192-215) | off | Ariel | Sheet | Swims across on a slow sine wave through the bubbles, tail flicking (two frames). |
 | PoYW climax (215-256) | ghost | Ariel | Sheet | Rises from the bottom toward the top and reaches up (needs a "reach" frame). |
-| Out There (268-303) | castle | Quasimodo | None | Swings on a rope from the spire between the towers (a pendulum). Small, about 10x14. |
+| Out There (268-303) | castle | Quasimodo | Sheet (`Hunchback of Notre Dame.jpg`, about 17x34) | Swings on a rope from the spire between the towers (a pendulum). 2 rows too tall for 64x32: trim or redraw smaller there. The gargoyles could peek from the towers. |
 | Touch the Sky / Up (303-325) | ghost | Up house | Code | Rises from behind the castle under a balloon cluster and drifts up and out to the right. |
 | | | Merida | Sheet (`Brave2.jpg` 21x30) | Optional, for Touch the Sky's opening seconds: draws her bow at the side. |
 | | | Dug (cameo) | Have (`kevin`) | Optional: runs along the ground after the house. |
@@ -65,7 +65,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | You've Got a Friend in Me (453-459, 6 s) | castle | Woody, Buzz | Have (`aliens` 14x18) | Buzz shoots across the sky, Woody waves from the ground beside the blocks. |
 | Mash-up: Wreck-It (459-473) | off | Ralph | Have | Smashes falling 8-bit bricks (two-fist pose `UP_ART`). |
 | | | Vanellope | Sheet (`Vanellope kart.jpg`) | Zips across in her kart, glitching. |
-| Mash-up: Big Hero 6 (474-481) | off | Baymax | Have | Inflates up from the bottom and waves. (Hiro: None, left out.) |
+| Mash-up: Big Hero 6 (474-481) | off | Baymax, Hiro | Have / Sheet (`Hiro and Baymax.jpg`, about 16x20) | Baymax inflates up from the bottom and waves; Hiro fist-bumps him. |
 | Mash-up: Zootopia (482-493) | off | Judy, Nick | Sheet (`nick and judy.jpg`, 15x33 and 18x40) | Stand side by side under a neon skyline (Code). Too tall for 64x32 as is: 64x64 only, or cut at the knees there. |
 | Mash-up: Inside Out (494-513) | off | Joy, Sadness | Sheet (`inside_out.jpg`, about 17x25) | Joy and Sadness each roll a memory orb (Code: a glowing yellow and blue ball) in from their side. |
 | That's What Friends Are For (514-527) | castle | Mike | Have | Pops up from behind a turret, blinks (his ride reveal). |
@@ -73,10 +73,10 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Friend Like Me, Genie (527-554) | ghost | Genie | Have | Loops round the sky in the party searchlights, trailing smoke. |
 | Genie finale (554-563) | castle | Genie | Have | Dives back into the lamp as the roof fountains go. |
 | Olaf's line (563-576) | ghost | Olaf | Have | Stands at the base and waves while the snow rises. |
-| Love Is an Open Door (576-603) | castle | Anna | Sheet (`Frozen.jpg` 19x33) | Optional. Hans has no art (a recoloured prince?). Fine with just the look. |
-| Can You Feel the Love (603-613) | off | WALL-E, EVE | Have / Code | The space dance: EVE (a white egg with blue eyes) and WALL-E orbit each other among the stars. |
+| Love Is an Open Door (576-603) | castle | Anna | Sheet (`Frozen.jpg` 19x33) | Optional, with Hans (`Frozen Group.jpg` 12x28): they meet, and the door bursts fit. Fine with just the look. |
+| Can You Feel the Love (603-613) | off | WALL-E, EVE | Have / Sheet (`WALL-E and EVE.jpg`, 24x29) | The space dance: EVE (a white egg with blue eyes) and WALL-E orbit each other among the stars. |
 | CYFtLT (613-623) | off | Simba, Nala | Sheet (`simba_bricks.png`) | Simba on a rock under the moon. Nala could be a recoloured Simba. |
-| You'll Be in My Heart (623-637) | ghost | Dumbo | Have (back half TODO) | Flies across holding the feather. Mrs. Jumbo, Tarzan, Kala: None. |
+| You'll Be in My Heart (623-637) | ghost | Dumbo | Have, back half from `Flying Dumbo.jpg` | Flies across holding the feather. Mrs. Jumbo (`Mrs Jumbo.jpg`, needs tracing) could reach her trunk up to him. Tarzan, Kala: None. |
 | Princess garden (637-668) | off | 4 couples | Sheet (princes sheet) | One couple every ~7.5 s: they walk in from either side, meet in the middle, and a heart floats up (`jack_sally`'s heart). Cinderella and Charming, Tiana and frog Naveen, Ariel and Eric, Belle and Beast. |
 | I See the Light (668-724) | ghost | Rapunzel, Flynn | Sheet | In a small boat (Code) at the bottom while the lanterns rise around them. |
 | Emperor (724-742) | castle | none | | The Emperor has no art. Keep the look. |
@@ -107,7 +107,11 @@ Updated 2026-10-11 after the second batch of references (docs/references/README.
   Belle and Beast (`belle and beast.jpg`), Judy and Nick, and the bigger `Detailed princesses.jpg`
   princesses. Each needs a 64x32 fallback: the princes-sheet version, a part (a head, tentacles,
   flame hair), or left out on that board.
-- **Code (8):** Ray, EVE, Mufasa's face, the Up house, Moana's canoe, Rapunzel's boat, memory orbs,
+- **Third batch:** EVE (`WALL-E and EVE.jpg`), Hiro (`Hiro and Baymax.jpg`), Hans and the rest of
+  Frozen (`Frozen Group.jpg`), Quasimodo and the gargoyles (`Hunchback of Notre Dame.jpg`, 64x64 size
+  as drawn), Dumbo's whole body (`Flying Dumbo.jpg`), Mrs. Jumbo (needs tracing), and the Aladdin cast
+  in miniature (`Aladdin Group.jpg`, 6-18 cells: Genie, Jafar, Iago, the carpet, Abu).
+- **Code (7):** Ray, Mufasa's face, the Up house, Moana's canoe, Rapunzel's boat, memory orbs,
   the neon skyline.
 - **Not in the show's list, but on hand if wanted:** Nemo, Dory and Flounder could swim through Part
   of Your World with Ariel. Rafiki could lift his staff while Mufasa speaks. Gothel, Facilier, Cruella,
@@ -116,22 +120,20 @@ Updated 2026-10-11 after the second batch of references (docs/references/README.
 
 ### Still missing (references to look for)
 
-Most useful first:
+Updated 2026-10-11 after the third batch: Quasimodo, EVE, Hiro, Hans and Mrs. Jumbo now have
+references, and `Flying Dumbo.jpg` gives Dumbo his missing back half. Most useful first:
 1. **A full-size Lion King pattern.** `Lion King.jpg` is a product photo of the right set (Pumbaa,
    Timon, Nala, Simba, Mufasa, Scar), but each figure is about 40 px tall, too small to count. The
    chart itself would give Hakuna Matata's Timon and Pumbaa, Nala for Can You Feel the Love Tonight,
    and a real Mufasa instead of the lion-shape stand-in.
-2. **Quasimodo** for Out There, ideally small (about 10x14), swinging. Nothing yet.
-3. **Bigger princes** (about 24x33) to stand with the `Detailed princesses.jpg` princesses on 64x64:
-   Charming, Eric, Naveen, Flynn, Hercules. Without them, the princess garden uses the princes sheet's
-   matched small pairs, which is fine.
-4. **EVE** for WALL-E's space dance (else a white egg in code).
-5. **Hiro** for Big Hero 6 (Baymax alone works).
-6. **Terk** for Trashin' the Camp, and **Tarzan, Jane, Kala** for You'll Be in My Heart and Go the
+2. **Terk** for Trashin' the Camp, and **Tarzan, Jane, Kala** for You'll Be in My Heart and Go the
    Distance.
-7. **Mrs. Jumbo** (Dumbo flies alone otherwise; his own art still needs its back half).
-8. **Jack Sparrow** (Captain Hook stands in), **Hans**, **Carl and Russell**, **Gramma Tala** (the
-   stingray stands in), and **the Emperor**: all optional; their scenes hold without them.
+3. **A clean chart of the bigger princes.** `Princes.jpg` has all of them (about 15x40, 64x64 size)
+   but it's a photo of stitching on fabric; the grid has to be calibrated by hand. Without it, the
+   princess garden uses the princes sheet's matched small pairs, which is fine.
+4. **A clearer Mrs. Jumbo**: `Mrs Jumbo.jpg`'s beads are too small to count.
+5. **Jack Sparrow** (Captain Hook stands in), **Carl and Russell**, **Gramma Tala** (the stingray
+   stands in), and **the Emperor**: all optional; their scenes hold without them.
 
 ## The code
 
@@ -197,7 +199,7 @@ the boards.
    then Genie, Olaf, WALL-E, Baymax, Ralph, Mike, Woody and Buzz, Dumbo. No new art.
 2. **Princes sheet:** the princess garden couples, Tiana, Ariel, Moana and Maui, Aladdin, Rapunzel
    and Flynn, Hercules, Megara and Mulan. One sheet, mostly two verbs.
-3. **Code shapes:** Ray, EVE, Mufasa, the Up house, the boats, memory orbs, skyline.
+3. **Code shapes:** Ray, Mufasa, the Up house, the boats, memory orbs, skyline.
 4. **The rest of the references:** Merida, Simba, Scar, Vanellope, Sulley, Joy and Sadness, then
    the 64x64-only ones (Ursula, Maleficent, Hades, Jafar, Captain Hook, Anna, Judy and Nick), each
    with its 64x32 fallback (the small version, a part, or left out on that board).

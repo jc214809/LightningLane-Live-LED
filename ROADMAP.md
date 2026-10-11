@@ -892,9 +892,14 @@ Done:
   `settings.local.json`) has a SessionStart hook that runs `--missing`, so a new session lists
   images with no row and measures them first.
 
-Not done: the sheets added before the one-row-per-character rule (Bullseye.jpg, the princess
-sheets, Beauty and the Beast.jpg, toy_story_4_sheet.png, TS_beads.jpg, dwarfs.jpg) still have one
-row each. Split them when one is next used. Lessons for CHARACTERS.md still come from building.
+- The sheets added before the one-row-per-character rule (Bullseye.jpg, the princess sheets,
+  Beauty and the Beast.jpg, toy_story_4_sheet.png, TS_beads.jpg, dwarfs.jpg) now have one row per
+  character with Pattern-mode boxes (2026-10-11). Several old sizes were off: most of
+  Princesses_and_Evil_Ladies.jpg fits 64x32, and Bullseye.jpg has no Forky and one Alien.
+
+Not done: TS_beads.jpg's Woody reads 11 x 13 in the tool (with his hat brim) but the editor's test
+holds 9 x 13 for the same box; check which is right. Five dwarfs are named from colour and pose
+only. Lessons for CHARACTERS.md still come from building.
 
 ## ~~13. Fireworks in time with the soundtrack~~ Built
 
