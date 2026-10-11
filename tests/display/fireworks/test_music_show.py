@@ -5,6 +5,7 @@ import pytest
 import display.fireworks.music_show as music_show
 from display.fireworks.fireworks import _CASTLE_COLORS
 from display.fireworks.music_show import CASTLE_LOOKS, SHAPES, MusicShow, render_music_show
+from display.animation.characters.tink import TinkReveal
 from display.fireworks.score import Cue, Score, load_score
 
 
@@ -252,3 +253,61 @@ def test_a_slow_board_keeps_time_with_the_music(clock, monkeypatch):
     assert all(title == ("one" if t < 2 else "two") for t, title in seen)
     assert seen[-1][0] >= 3.5
 
+
+# ---- Tink in "You Can Fly" ----
+
+def _tink_cue():
+    return _cue(title="You Can Fly", start=100, end=142, rate=1.4, effects={"tink"})
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_tink_takes_off_from_the_spire_and_flies_out_to_the_right(height):
+    show = MusicShow(64, height, random.Random(14))
+    cue = _tink_cue()
+    show.set_cue(cue, 100)
+    x0, y0 = show.tink_at()
+    assert x0 == pytest.approx(show.spire[0])
+    assert y0 + show.tink_h / 2 == pytest.approx(show.spire[1], abs=1), "feet on the spire"
+    path = []
+    for i in range(int(music_show.TINK_FLY_S * 10)):
+        show.set_cue(cue, 100 + i / 10)
+        path.append(show.tink_at())
+    xs = [x for x, _ in path]
+    assert xs == sorted(xs), "always heading right"
+    # The spire is near the top, so she climbs only a little: to the top fifth of the sky.
+    assert min(y for _, y in path) < y0 and min(y for _, y in path) <= height * 0.2 + show.tink_scale
+    assert xs[-1] - show.tink_w / 2 > 60, "nearly off the right edge"
+    show.set_cue(cue, 100 + music_show.TINK_FLY_S)
+    assert show.tink_at() is None, "gone after her flight"
+
+
+@pytest.mark.parametrize("height, size", [(32, (9, 8)), (64, (18, 16))])
+def test_tink_is_her_fly_by_size_and_drawn_over_the_castle(height, size):
+    show = MusicShow(64, height, random.Random(15))
+    show.set_cue(_tink_cue(), 100.5)
+    assert (show.tink_w, show.tink_h) == size
+    pixels = show.frame_pixels()
+    dress = TinkReveal.colors["G"]
+    assert sum(1 for rgb in pixels.values() if rgb == dress) >= 8 * (size[0] // 9) ** 2
+
+
+def test_tink_leaves_pixie_dust_that_fades_after_she_has_gone():
+    show = MusicShow(64, 32, random.Random(16))
+    cue = _tink_cue()
+    _run(show, cue, 6, start=100)
+    assert show.dust and {d[6] for d in show.dust} <= set(TinkReveal.dust_colors)
+    _run(show, cue, 4, start=100 + music_show.TINK_FLY_S)
+    assert not show.dust
+
+
+def test_the_fireworks_hold_back_while_tink_flies():
+    show = MusicShow(64, 32, random.Random(17))
+    cue = _tink_cue()
+    show.set_cue(cue, 101)
+    assert show.rate == pytest.approx(1.4 * music_show.TINK_RATE)
+    show.set_cue(cue, 100 + music_show.TINK_FLY_S)
+    assert show.rate == pytest.approx(1.4)
+
+
+def test_tink_flies_in_happily_ever_afters_you_can_fly():
+    assert "tink" in load_score("happily-ever-after").cue_at(1041).effects

@@ -13,7 +13,7 @@ from utils import debug
 
 SHOWS_DIR = os.path.join(os.path.dirname(__file__), "shows")
 
-EFFECTS = {"wishing_star", "lanterns", "embers", "rainbow", "final_flash"}
+EFFECTS = {"wishing_star", "lanterns", "embers", "rainbow", "final_flash", "tink"}
 # A section's intensity at which it launches like the everyday show.
 _EVERYDAY_INTENSITY = 0.6
 # Burst colours dimmer than this read as nothing on the LEDs.

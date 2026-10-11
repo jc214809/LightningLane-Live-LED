@@ -9,6 +9,7 @@ import random
 import time
 
 from display.animation import frame_canvas, present
+from display.animation.characters.tink import TinkReveal
 from display.fireworks.fireworks import (_CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE,
                                          castle_sprite)
 from display.motion import ease_out, smooth
@@ -34,6 +35,10 @@ WISH_RGB, WISH_GLOW_RGB = (255, 255, 230), (255, 220, 120)
 LANTERN_RGB = (255, 150, 40)
 EMBER_RGB = (255, 70, 20)
 FINAL_FLASH_S = 1.0  # the white flash this long before the final scene ends
+# "You Can Fly": Tink (her park-title sprite, doubled on 64x64 like there) takes off from the spire
+# and arcs up and out to the right in TINK_FLY_S, while the fireworks hold back to TINK_RATE.
+TINK_FLY_S = 12.0
+TINK_RATE = 0.3
 
 
 def _unit(points):
@@ -108,6 +113,7 @@ class MusicShow:
         self.frame = 0
         self.rockets, self.sparks = [], []
         self.lanterns, self.embers = [], []
+        self.dust = []  # Tink's pixie dust: [x, y, vx, vy, life, max life, rgb]
         self.flash = [0.0, 0.0, 0.0]
         self.white = 0.0
         self.frames_to_next_launch = 0
@@ -137,6 +143,9 @@ class MusicShow:
         self.castle_change_t = -CASTLE_FADE_S
         self.castle_look = None
         self.flashed = False
+        self.tink_scale = 2 if height >= 64 else 1
+        self.tink_w = len(TinkReveal.art[0]) * self.tink_scale
+        self.tink_h = len(TinkReveal.art) * self.tink_scale
 
     # ---- cues ----
 
@@ -146,7 +155,6 @@ class MusicShow:
         if cue is not self.cue:
             self.cue = cue
             self.palette = list(cue.palette)
-            self.rate = cue.rate
             self.shapes = cue.shapes
             self.effects = cue.effects
             if cue.castle != self.castle_look:
@@ -156,6 +164,8 @@ class MusicShow:
                 self.castle_to = {**_CASTLE_COLORS, **CASTLE_LOOKS.get(cue.castle, {})}
                 self.castle_change_t = when
                 self.castle_look = cue.castle
+        flying = "tink" in self.effects and t < cue.start + TINK_FLY_S
+        self.rate = cue.rate * (TINK_RATE if flying else 1.0)
         if "final_flash" in self.effects and not self.flashed and t >= cue.end - FINAL_FLASH_S:
             self.white, self.flashed = 1.0, True
 
@@ -276,6 +286,20 @@ class MusicShow:
             ember[4] -= 1
         self.embers = [e for e in self.embers if e[4] > 0 and e[1] < self.height]
 
+        tink = self.tink_at()
+        if tink:
+            x, y = tink
+            for _ in range(2 * self.tink_scale):
+                life = rng.randint(15, 30)
+                self.dust.append([x + rng.uniform(-self.tink_w / 2, 0), y + rng.uniform(0, self.tink_h / 2),
+                                  rng.uniform(-0.15, 0.05), rng.uniform(0.05, 0.3), life, life,
+                                  rng.choice(TinkReveal.dust_colors)])
+        for d in self.dust:
+            d[0] += d[2]
+            d[1] += d[3]
+            d[4] -= 1
+        self.dust = [d for d in self.dust if d[4] > 0]
+
         self.flash = [f * 0.85 for f in self.flash]
         self.white *= 0.93
         self.frame += 1
@@ -289,6 +313,21 @@ class MusicShow:
         ex, ey = self.spire
         k = ease_out(min(1.0, p / WISH_LANDS_AT))
         return sx + (ex - sx) * k, sy + (ey - sy) * k
+
+    def tink_at(self):
+        """Tink's centre while she flies, else None: up off the spire (rising for the first half of the
+        flight), then out past the right edge, speeding up as she goes, with a little bob."""
+        if "tink" not in self.effects or self.cue is None:
+            return None
+        p = (self.t - self.cue.start) / TINK_FLY_S
+        if not 0 <= p < 1:
+            return None
+        sx, sy = self.spire[0], self.spire[1] - self.tink_h / 2
+        top = self.height * 0.2
+        end_x = self.width + self.tink_w
+        x = sx + (end_x - sx) * p ** 1.5
+        y = sy + (top - sy) * smooth(p / 0.5) + math.sin(p * math.pi * 4) * self.tink_scale
+        return x, y
 
     def frame_pixels(self):
         """Compose the current frame as {(x, y): (r, g, b)}; unlisted pixels are black."""
@@ -346,7 +385,10 @@ class MusicShow:
                 put(x + dx, y + dy, WISH_GLOW_RGB)
             put(x, y, WISH_RGB)
 
-        # The castle is drawn last, so it hides anything launched from behind it.
+        for x, y, _, _, life, max_life, rgb in self.dust:
+            put(x, y, tuple(int(c * life / max_life) for c in rgb))
+
+        # The castle hides anything launched from behind it; only Tink flies in front.
         colours = self._castle_now()
         flicker = self.castle_look in _FLICKERS
         for dx, dy, kind in self.castle_pixels:
@@ -361,6 +403,20 @@ class MusicShow:
                     base = tuple(int(c * level) for c in base)
                 base = tuple(min(255, int(c * 0.75 + 110 * f)) for c, f in zip(base, self.flash))
             out[(x, y)] = base
+
+        tink = self.tink_at()
+        if tink:
+            left = int(round(tink[0] - self.tink_w / 2))
+            top = int(round(tink[1] - self.tink_h / 2))
+            for row, line in enumerate(TinkReveal.art):
+                for col, key in enumerate(line):
+                    if key == ".":
+                        continue
+                    for oy in range(self.tink_scale):
+                        for ox in range(self.tink_scale):
+                            x, y = left + col * self.tink_scale + ox, top + row * self.tink_scale + oy
+                            if 0 <= x < self.width and 0 <= y < self.height:
+                                out[(x, y)] = TinkReveal.colors[key]
 
         if self.white > 0.02:
             level = int(255 * min(1.0, self.white))

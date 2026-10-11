@@ -568,7 +568,10 @@
           "shapes": {
             "mickey": 0.1,
             "star": 0.1
-          }
+          },
+          "effects": [
+            "tink"
+          ]
         },
         {
           "start": 1083,
@@ -590,5 +593,5 @@
     "end": 1359,
     "note": "Separate track after the show; not part of it."
   },
-  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (wishing_star, lanterns, embers, rainbow, final_flash), palette (replaces the section's)."
+  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (wishing_star, lanterns, embers, rainbow, final_flash, tink), palette (replaces the section's)."
 }

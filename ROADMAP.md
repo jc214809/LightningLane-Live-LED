@@ -910,10 +910,14 @@ thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
   dark embers, gold), heart/star/Mickey bursts, rising lanterns, falling embers, a rainbow finale and
   a white flash on the last hit. Music and lights start together at 0:00 however late the board
   cuts in.
+- Tink in "You Can Fly" (the `tink` effect): her park-title sprite, doubled on 64x64 like there,
+  takes off from the spire and arcs up and out to the right in 12s with her pixie dust, while the
+  fireworks hold back to 30% (decided with the user, 2026-10-10). The spire sits near the top, so
+  she climbs only a few rows before heading out.
 
 Not done:
-- Characters in their scenes (Genie, Baymax, Ralph, Vanellope, Olaf, WALL-E, Mike, Tinker Bell,
-  Lightning McQueen, Woody are drawn already). Ask about each one first.
+- More characters in their scenes (Genie, Baymax, Ralph, Vanellope, Olaf, WALL-E, Mike, Lightning
+  McQueen, Woody are drawn already). Ask about each one first; Tink shows the pattern.
 - Matching the park to the second when the board cuts in late: needs a player that starts
   mid-file (sox's `play file.wav trim <s>`, ffplay `-ss`), installed on every board.
 - Check the sync by ear on a board: the log names each scene as it starts.
