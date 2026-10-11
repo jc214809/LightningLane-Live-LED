@@ -31,6 +31,7 @@ sys.path.insert(0, ROOT)
 
 from display.fireworks.music_show import MusicShow  # noqa: E402
 from display.fireworks.score import SHOWS_DIR, load_score, parse_lips, parse_score  # noqa: E402
+from display.fireworks.show_actors import ACTORS  # noqa: E402
 
 OUT_DIR = os.path.join(ROOT, "build", "show_sync")
 SOUNDS_DIR = os.path.join(ROOT, "sounds")
@@ -92,16 +93,36 @@ def render(score, height, out, audio=None, fps=FPS):
         raise RuntimeError(f"ffmpeg failed ({code}) writing {out}")
 
 
+# Characters drawn by a scene effect (music_show's own) rather than an actor, by effect name.
+EFFECT_CHARACTERS = {"tink": "Tinker Bell"}
+
+
+def cast(score):
+    """Our characters by scene title: [{"name", "start"}] for each one whose run of back-to-back scenes
+    starts there, at the show second it first shows (its scene's start plus its ENTERS_S), with the
+    characters an effect draws (EFFECT_CHARACTERS) from their scene's start."""
+    out, before, before_fx = {}, (), frozenset()
+    for cue in score.cues:
+        listed = [{"name": ACTORS[a].NAME or a, "start": round(cue.start + ACTORS[a].ENTERS_S, 2)}
+                  for a in cue.actors if a not in before]
+        listed += [{"name": name, "start": round(cue.start, 2)} for fx, name in EFFECT_CHARACTERS.items()
+                   if fx in cue.effects and fx not in before_fx]
+        out[cue.title] = sorted(listed, key=lambda c: c["start"])
+        before, before_fx = cue.actors, cue.effects
+    return out
+
+
 def sync_data(score, raw, boards, recording_file=None, version="v1"):
     """What the page needs, as a dict: the scenes (with what the board does in each), the sections'
     colours, the board videos, and how the recording's clock maps onto the show's."""
     by_title = {sc["title"]: (sec, sc) for sec in raw["sections"] for sc in sec["scenes"]}
-    scenes = []
+    scenes, ours = [], cast(score)
     for cue in score.cues:
         sec, sc = by_title[cue.title]
         scenes.append({"title": cue.title, "section": cue.section, "start": cue.start, "end": cue.end,
                        "castle": cue.castle, "effects": sorted(cue.effects), "rate": round(cue.rate, 2),
-                       "stage": cue.stage, "actors": list(cue.actors), "characters": sc.get("characters", [])})
+                       "stage": cue.stage, "actors": list(cue.actors), "cast": ours[cue.title],
+                       "characters": sc.get("characters", [])})
     rec = raw.get("recording")
     return {
         "name": score.name, "version": version, "end": score.end, "fps": FPS, "boards": boards,

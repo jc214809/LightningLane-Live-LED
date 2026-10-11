@@ -195,3 +195,31 @@ def test_main_renders_a_version_with_its_mouth_tracks(monkeypatch, tmp_path):
     assert tool.main(["--show", "tiny", "--version", "v2", "--height", "32"]) == 0
     assert rendered[0].lips["genie"].track == "012"
     assert rendered[0].cue_at(2).actors == ("genie",)
+
+
+def test_each_character_is_listed_once_under_the_scene_it_first_shows_in():
+    """The page lists our characters under their scenes to jump to: a character carried across
+    back-to-back scenes is listed once, and one that comes on partway through gives its own second."""
+    v2 = load_score("happily-ever-after", version="v2")
+    cast = tool.cast(v2)
+    mash = v2.cue_at(470)
+    assert [c["name"] for c in cast[mash.title]] == ["Ralph", "Baymax", "Joy and Sadness's memory orbs"]
+    assert [c["start"] for c in cast[mash.title]] == [mash.start, mash.start + 15, mash.start + 35]
+    assert cast["Friend Like Me (Genie)"] == [{"name": "Genie", "start": 527.0}]
+    assert cast["Friend Like Me (finale)"] == [], "Genie carries on from the scene before"
+    named = [c for listed in cast.values() for c in listed]
+    assert all(c["name"] for c in named) and len(named) == len({c["name"] for c in named})
+
+
+def test_the_page_lists_the_cast_as_buttons():
+    with open(PAGE) as f:
+        page = f.read()
+    assert "s.cast" in page and "seek(c.start - 1)" in page
+
+
+def test_tinker_bell_is_listed_though_an_effect_draws_her():
+    for version in ("v1", "v2"):
+        cast = tool.cast(load_score("happily-ever-after", version=version))
+        assert cast["You Can Fly"] == [{"name": "Tinker Bell", "start": 1042.2}]
+        assert all(c["name"] != "Tinker Bell" for title, listed in cast.items() if title != "You Can Fly" for c in listed)
+

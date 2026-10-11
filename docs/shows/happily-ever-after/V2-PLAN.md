@@ -1,9 +1,28 @@
 # Happily Ever After V2: characters share the spotlight (plan)
 
-**Status (2026-10-11):** batch 1 under way on `feat/hea-v2-plumbing`. Built: the version switch,
-the overlay file, the ghost/off stages, `show_actors.py`, and **Genie** (Friend Like Me: forms in a puff
-at the spire, circles it, 1x on both boards, fireworks halved to 0.8). Ghost level (25%) still to judge.
-Each character is built one at a time, its size and motion settled with the user before it's built
+**Status (2026-10-11):** batches 1 and 3 built on `feat/hea-v2-plumbing`, plus Moana and Mufasa from
+batch 4. Each character is one module under `display/fireworks/actors/` (Genie is in `show_actors.py`),
+registered in `ACTORS` and named in `happily-ever-after.v2.json`:
+
+| Scene | Character | Notes |
+|---|---|---|
+| Down in New Orleans, When You Wish fanfare | Ray | Firefly: a figure-eight by the evening star, then circles the spire |
+| Touch the Sky / Up | The Up house | Rises from behind the castle on its balloons, drifts off right |
+| How Far I'll Go (climax) | Moana's canoe | One crossing once the water is up; on 64x64 the toy's canoe (red spiral sail, outrigger) with Moana (princes sheet) aboard |
+| You've Got a Friend in Me | Buzz and Woody | Buzz flies across, Woody waves from the ground |
+| Friendship mash-up | Ralph, Baymax, memory orbs | Ralph smashes bricks, Baymax inflates, Joy's and Sadness's orbs. The Zootopia skyline was built and cut (nobody knew what it was) |
+| That's What Friends Are For | Mike | Peeks over a turret, then the other |
+| Friend Like Me, and its finale | Genie | Circles the spire, lip-synced, sings on through the finale |
+| Olaf | Olaf | Pops up and waves; on 64x64 a straighter skull and lip-synced |
+| Can You Feel the Love Tonight | WALL-E | Floats across the stars |
+| You'll Be in My Heart | Dumbo | `Flying Dumbo.jpg`'s whole body; flaps both ears over a still hat, paddles his legs |
+| I See the Light | Rapunzel and Flynn's boat | Drifts in among the lanterns; she lets her own go |
+| Embers | Mufasa | Traced from the user's clouds still, top right, his outline all mane; lip-synced, fading as he says "Remember who you are... Remember" |
+
+Lip sync: `tools/lip_sync.py` (demucs splits the voice, Whisper only to check words; see CLAUDE.md).
+Still open: the time the woman sings in Friend Like Me (Genie's mouth should be muted there), whether to
+remake Genie's and Olaf's tracks with the cleaner `htdemucs_ft` split, the ghost level (25%), and the
+rest of batches 2 and 4. Each character's size and motion are settled with the user before it's built
 (the user's call, 2026-10-11: sizes are per character, not a rule).
 
 V1 is all castle and fireworks. The real show is mostly projected characters (see README.md here,
