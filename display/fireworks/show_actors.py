@@ -127,11 +127,17 @@ class GenieOrbit(Actor):
 
 # One module each under actors/, building on actors/base.py.
 from display.fireworks.actors.baymax import BaymaxInflates  # noqa: E402
+from display.fireworks.actors.canoe import CanoeSails  # noqa: E402
 from display.fireworks.actors.dumbo import DumboFlies  # noqa: E402
+from display.fireworks.actors.lantern_boat import LanternBoat  # noqa: E402
+from display.fireworks.actors.memory_orbs import MemoryOrbs  # noqa: E402
 from display.fireworks.actors.mike import MikePeeks  # noqa: E402
+from display.fireworks.actors.mufasa import MufasaInTheStars  # noqa: E402
 from display.fireworks.actors.olaf import OlafStands  # noqa: E402
 from display.fireworks.actors.ralph import RalphSmashes  # noqa: E402
+from display.fireworks.actors.ray import RayGlows  # noqa: E402
 from display.fireworks.actors.toy_story import BuzzAndWoody  # noqa: E402
+from display.fireworks.actors.up_house import UpHouseFloats  # noqa: E402
 from display.fireworks.actors.walle import WallEFloats  # noqa: E402
 
 ACTORS = {
@@ -143,4 +149,10 @@ ACTORS = {
     "dumbo": DumboFlies,
     "ralph": RalphSmashes,
     "baymax": BaymaxInflates,
+    "mufasa": MufasaInTheStars,
+    "ray": RayGlows,
+    "up_house": UpHouseFloats,
+    "canoe": CanoeSails,
+    "lantern_boat": LanternBoat,
+    "memory_orbs": MemoryOrbs,
 }
