@@ -125,6 +125,22 @@ class GenieOrbit(Actor):
                 out[(x, y)] = rgb
 
 
+# One module each under actors/, building on actors/base.py.
+from display.fireworks.actors.baymax import BaymaxInflates  # noqa: E402
+from display.fireworks.actors.dumbo import DumboFlies  # noqa: E402
+from display.fireworks.actors.mike import MikePeeks  # noqa: E402
+from display.fireworks.actors.olaf import OlafStands  # noqa: E402
+from display.fireworks.actors.ralph import RalphSmashes  # noqa: E402
+from display.fireworks.actors.toy_story import BuzzAndWoody  # noqa: E402
+from display.fireworks.actors.walle import WallEFloats  # noqa: E402
+
 ACTORS = {
     "genie": GenieOrbit,
+    "buzz_woody": BuzzAndWoody,
+    "mike": MikePeeks,
+    "olaf": OlafStands,
+    "walle": WallEFloats,
+    "dumbo": DumboFlies,
+    "ralph": RalphSmashes,
+    "baymax": BaymaxInflates,
 }
