@@ -195,6 +195,11 @@ the boards.
 
 ## Batches
 
+0. **The sync checker** (built 2026-10-11, `feat/show-sync-checker`): `tools/render_show.py` records the
+   show as the boards draw it (the real `music_show.py`, 30 fps, both boards, in about a minute) and
+   `tools/show_sync_checker.html` plays it beside the real show's recording on one clock, with the
+   score's scenes, a timeline, and marks that turn into scene start times. Every later batch is
+   checked here: re-render, open the scene, compare.
 1. **Plumbing and the drawn ones:** switch, overlay, stage fade, preview-at, actors base and verbs,
    then Genie, Olaf, WALL-E, Baymax, Ralph, Mike, Woody and Buzz, Dumbo. No new art.
 2. **Princes sheet:** the princess garden couples, Tiana, Ariel, Moana and Maui, Aladdin, Rapunzel

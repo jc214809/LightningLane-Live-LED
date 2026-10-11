@@ -7,6 +7,12 @@
     "en.wikipedia.org/wiki/Happily_Ever_After_(Magic_Kingdom)",
     "youtube.com/watch?v=-LncKUxWMsQ (docs/shows/happily-ever-after/)"
   ],
+  "recording": {
+    "url": "https://www.youtube.com/watch?v=-LncKUxWMsQ",
+    "scale": 1.001,
+    "offset": 10.19,
+    "note": "The recording's time = audio time x scale + offset, measured by docs/shows/happily-ever-after/align_audio.py (2026-10-11). Used by tools/show_sync_checker.html."
+  },
   "sections": [
     {
       "id": "opening",

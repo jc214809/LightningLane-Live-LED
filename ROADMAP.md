@@ -955,7 +955,9 @@ Not done:
   web search, so the user looks there, or simple shapes get drawn from scratch.
 - Matching the park to the second when the board cuts in late: needs a player that starts
   mid-file (sox's `play file.wav trim <s>`, ffplay `-ss`), installed on every board.
-- Check the sync by ear on a board: the log names each scene as it starts.
+- Check the sync against the real show: `tools/render_show.py --recording`, then `tools/show_sync_checker.html`
+  plays the recording beside our render and turns marks into scene start times. (On a board, the log still
+  names each scene as it starts.)
 - Check by ear on a board: audio 268-303 (Out There, then Touch the Sky / Up at 303). Gemini's two
   chunks disagreed there; the score follows the more detailed one.
 - The real show's projected characters (Mufasa in the clouds, Hercules, the stained-glass heroes)

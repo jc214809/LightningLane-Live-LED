@@ -12,5 +12,6 @@ logs/
 README.md
 .claude/settings.local.json
 !docs/references/README.md
+!docs/shows/*/README.md
 sounds/*
 !sounds/README.md
