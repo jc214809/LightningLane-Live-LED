@@ -61,7 +61,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Aladdin's line (398-412) | ghost | Aladdin | Sheet / `Aladdin with lamp.jpg` | Stands at centre holding the lamp, with the lamp smoke coming from the lamp instead of the spire. |
 | Friend Like Me intro (412-428) | off | Aladdin, Genie | Have (`genie`) | Genie bursts out of Aladdin's lamp, the way his ride reveal already does. |
 | Trashin' the Camp (428-446) | castle | Terk | Lead | Swings across on a vine (same pendulum as Quasimodo). |
-| Hakuna Matata (446-453, 7 s) | castle | Timon, Pumbaa | Lead | March along the castle's base, left to right. |
+| Hakuna Matata (446-453, 7 s) | castle | Timon, Pumbaa | Timon: Sheet (`Simba and Timon chart.jpg` 32x25); Pumbaa: none | March along the castle's base, left to right; Timon alone, swinging his stick, until Pumbaa turns up. |
 | You've Got a Friend in Me (453-459, 6 s) | castle | Woody, Buzz | Have (`aliens` 14x18) | Buzz shoots across the sky, Woody waves from the ground beside the blocks. |
 | Mash-up: Wreck-It (459-473) | off | Ralph | Have | Smashes falling 8-bit bricks (two-fist pose `UP_ART`). |
 | | | Vanellope | Sheet (`Vanellope kart.jpg`) | Zips across in her kart, glitching. |
@@ -122,10 +122,10 @@ Updated 2026-10-11 after the second batch of references (docs/references/README.
 
 Updated 2026-10-11 after the third batch: Quasimodo, EVE, Hiro, Hans and Mrs. Jumbo now have
 references, and `Flying Dumbo.jpg` gives Dumbo his missing back half. Most useful first:
-1. **A full-size Lion King pattern.** `Lion King.jpg` is a product photo of the right set (Pumbaa,
-   Timon, Nala, Simba, Mufasa, Scar), but each figure is about 40 px tall, too small to count. The
-   chart itself would give Hakuna Matata's Timon and Pumbaa, Nala for Can You Feel the Love Tonight,
-   and a real Mufasa instead of the lion-shape stand-in.
+1. **Pumbaa, Nala and Mufasa.** Timon now has a chart (`Simba and Timon chart.jpg`). `Lion King.jpg`
+   is a shop photo of a set with all of them, too small to count: its full-size chart would give
+   Pumbaa for Hakuna Matata, Nala for Can You Feel the Love Tonight, and a real Mufasa instead of the
+   lion-shape stand-in.
 2. **Terk** for Trashin' the Camp, and **Tarzan, Jane, Kala** for You'll Be in My Heart and Go the
    Distance.
 3. **A clean chart of the bigger princes.** `Princes.jpg` has all of them (about 15x40, 64x64 size)
