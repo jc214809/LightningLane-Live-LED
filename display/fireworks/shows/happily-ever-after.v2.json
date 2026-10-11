@@ -5,6 +5,7 @@
     "Friendship mash-up": {"stage": "off", "note": "Ralph, Baymax"},
     "That's What Friends Are For": {"stage": "castle", "note": "Mike"},
     "Friend Like Me (Genie)": {"stage": "ghost", "actors": ["genie"], "rate": 0.8, "note": "Genie circles the spire; half V1's fireworks, so bursts don't sit on him"},
+    "Friend Like Me (finale)": {"actors": ["genie"], "note": "he sings on to 563, round the full castle and its fountains"},
     "Olaf: some people are worth melting for": {"stage": "ghost", "note": "Olaf"},
     "Can You Feel the Love Tonight": {"stage": "off", "note": "WALL-E"},
     "You'll Be in My Heart": {"stage": "ghost", "note": "Dumbo"}

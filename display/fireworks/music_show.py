@@ -175,8 +175,9 @@ class MusicShow:
     """Frame-stepped castle and fireworks that follow the cue set on them; knows nothing about the
     matrix driver or the clock."""
 
-    def __init__(self, width, height, rng=None):
+    def __init__(self, width, height, rng=None, lips=None):
         self.width, self.height = width, height
+        self.lips = lips or {}  # the score's mouth tracks (score.Lips) by actor, for those who sing
         self.rng = rng or random.Random()
         self.frame = 0
         self.rockets, self.sparks = [], []
@@ -398,6 +399,7 @@ class MusicShow:
             effect.step(name in self.effects)
         actors = self.cue.actors if self.cue else ()
         for name, actor in self.actors.items():
+            actor.follow(name in actors)
             actor.step(name in actors)
         self.frame += 1
 
@@ -545,7 +547,7 @@ class MusicShow:
 
 def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
     """Play the score's show on the matrix from its first second to its end, following the clock."""
-    show = MusicShow(matrix.width, matrix.height, rng)
+    show = MusicShow(matrix.width, matrix.height, rng, score.lips)
     canvas = frame_canvas(matrix)
     frame_time = 1.0 / fps
     debug.info(f"Playing the {score.name} show for {score.end:.0f}s.")

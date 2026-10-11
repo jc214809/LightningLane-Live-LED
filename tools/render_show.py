@@ -30,7 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from display.fireworks.music_show import MusicShow  # noqa: E402
-from display.fireworks.score import SHOWS_DIR, load_score, parse_score  # noqa: E402
+from display.fireworks.score import SHOWS_DIR, load_score, parse_lips, parse_score  # noqa: E402
 
 OUT_DIR = os.path.join(ROOT, "build", "show_sync")
 SOUNDS_DIR = os.path.join(ROOT, "sounds")
@@ -57,7 +57,7 @@ def panel_image(pixels, width, height, px=LED_PX):
 def frames(score, height, fps=FPS, seed=SEED, seconds=None):
     """Every frame of the show on a 64 x height board, as the board steps it: the scene at each frame's
     time, then one simulation step, then the picture. seconds stops early (for tests)."""
-    show = MusicShow(WIDTH, height, random.Random(seed))
+    show = MusicShow(WIDTH, height, random.Random(seed), score.lips)
     for i in range(int((seconds if seconds is not None else score.end) * fps)):
         t = i / fps
         show.set_cue(score.cue_at(t), t)
@@ -156,6 +156,10 @@ def main(argv=None):
         try:
             with open(os.path.join(SHOWS_DIR, f"{tag}.json")) as f:
                 score = parse_score(args.show, raw, json.load(f))
+            lips_path = os.path.join(SHOWS_DIR, f"{tag}.lips.json")
+            if os.path.exists(lips_path):
+                with open(lips_path) as f:
+                    score = score._replace(lips=parse_lips(json.load(f)))
         except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
             logger.error("can't use %s's %s: %r", args.show, args.version, e)
             return 1

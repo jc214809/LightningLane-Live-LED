@@ -1,93 +1,57 @@
 """
 Characters for the synced show's later versions (music_show.py), one class each, turned on by name in a
 scene's "actors" (a version's overlay file: see score.py). Like an effect, an actor steps every frame
-and only starts while its scene is on, but it places itself by the clock (elapsed(): seconds into its
-scene), not by frames, so a slow board keeps it with the music. Actors draw in front of the castle and
-the fireworks, under the final flash.
+and only starts while its scene is on, but it places itself by the clock (elapsed(): seconds since the
+first of the run of back-to-back scenes it's in, so it carries on across a cut), not by frames, so a slow
+board keeps it with the music. Actors draw in front of the castle and
+the fireworks, under the final flash. One who sings moves its mouth to the score's track for it
+(score.Lips, from tools/lip_sync.py), looked up by the clock like everything else.
 """
 import math
 
 from display.animation.characters.genie import GenieReveal
+from display.fireworks.actors.base import Actor, smoke, stamp  # noqa: F401 (stamp: tests import it here)
 from display.motion import ease_out, smooth
-
-
-class Actor:
-    def __init__(self, show):
-        self.show = show
-        self.rng = show.rng
-        self.big = show.height >= 64
-
-    def elapsed(self):
-        """Seconds since the current scene started."""
-        cue = self.show.cue
-        return self.show.t - cue.start if cue else 0.0
-
-    def step(self, active):
-        pass
-
-    def draw(self, put, out, active):
-        pass
-
-
-def stamp(out, art, colors, left, top, scale, width, height):
-    """Draw pixel art ('.' empty) over whatever is at out, its top-left at (left, top), each cell
-    scale x scale; cells off the board are skipped. Sprites are solid: they cover what's behind."""
-    left, top = int(round(left)), int(round(top))
-    for row, line in enumerate(art):
-        for col, kind in enumerate(line):
-            if kind == ".":
-                continue
-            rgb = colors[kind]
-            for oy in range(scale):
-                y = top + row * scale + oy
-                if not 0 <= y < height:
-                    continue
-                for ox in range(scale):
-                    x = left + col * scale + ox
-                    if 0 <= x < width:
-                        out[(x, y)] = rgb
-
-
-def smoke(out, puffs, stamp_for, width, height):
-    """Soft puffs [x, y, vx, vy, frames left, rgb, radius] added onto out, so what's behind shows through
-    a thinning puff; each pixel takes its brightest puff, as GenieReveal draws his."""
-    light = {}
-    for cx, cy, _, _, life, rgb, rad in puffs:
-        f = min(1.0, life / 18.0)
-        ox, oy = int(round(cx)), int(round(cy))
-        for dx, dy, falloff in stamp_for(rad):
-            x, y = ox + dx, oy + dy
-            g = f * falloff
-            if g <= 0.05 or not (0 <= x < width and 0 <= y < height):
-                continue
-            seen = light.get((x, y), (0.0, 0.0, 0.0))
-            light[(x, y)] = tuple(max(s, c * g) for s, c in zip(seen, rgb))
-    for xy, add in light.items():
-        under = out.get(xy, (0, 0, 0))
-        out[xy] = tuple(min(255, int(u + a)) for u, a in zip(under, add))
 
 
 class GenieOrbit(Actor):
     """
     Friend Like Me: Genie (his ride-reveal art, 1x on both boards) swells out of a puff of his smoke at
-    the castle's spire, as he grows out of the lamp on his ride screen, then circles the spire for the
-    rest of the scene: wide side to side, shallower up and down (on 64x32 he nearly fills the board's
-    height, so there it's mostly a side-to-side swing), trailing smoke. When his scene ends he vanishes
-    in another puff.
+    the castle's spire, as he grows out of the lamp on his ride screen, then circles the spire until he
+    stops singing (through the finale scene too): wide side to side, shallower up and down (on 64x32 he nearly fills the board's
+    height, so there it's mostly a side-to-side swing), trailing smoke. When his scenes end he vanishes
+    in another puff. He mouths his song (MOUTHS) to the score's track; without one he keeps his grin.
     """
+    NAME = "Genie"
     ARRIVE_S = 1.6  # the puff, then he swells out of it
     EASE_IN_S = 1.5  # from where he formed onto his orbit
     LAP_S = 6.0
     PUFFS = 2  # smoke per frame while he flies
     VANISH_PUFFS = 14
+    # His mouth rows (ART's 11-13) by shape: 2 open is his grin as drawn; 1 half shows teeth over a
+    # thinner red; 0 closed is a toothy grin line.
+    MOUTH_ROW = 11
+    MOUTHS = {
+        1: [".....SBRWWWWWRBS.....",
+            ".....SBBRRRRRBBS.....",
+            ".....SBBBBBBBBBS....."],
+        0: [".....SBBBBBBBBBS.....",
+            ".....SBSWWWWWSBS.....",
+            ".....SBBBBBBBBBS....."],
+    }
 
     def __init__(self, show):
         super().__init__(show)
         trim = GenieReveal.TRIM_64 if self.big else GenieReveal.TRIM_32
-        self.art = [row for i, row in enumerate(GenieReveal.ART) if i not in trim]
-        self.w, self.h = len(self.art[0]), len(self.art)
-        self.cells = [(col, row, GenieReveal.COLORS[kind]) for row, line in enumerate(self.art)
-                      for col, kind in enumerate(line) if kind != "."]
+        self.cells = {}  # his lit cells by mouth shape
+        for shape in (0, 1, 2):
+            art = list(GenieReveal.ART)
+            if shape in self.MOUTHS:
+                art[self.MOUTH_ROW:self.MOUTH_ROW + 3] = self.MOUTHS[shape]
+            art = [row for i, row in enumerate(art) if i not in trim]
+            self.cells[shape] = [(col, row, GenieReveal.COLORS[kind]) for row, line in enumerate(art)
+                                 for col, kind in enumerate(line) if kind != "."]
+        self.w, self.h = len(art[0]), len(art)
         self.puffs = []
         self.last = None  # his top-left on the last frame he was on, for the puff he vanishes in
         sx, sy = show.spire
@@ -150,7 +114,8 @@ class GenieOrbit(Actor):
             return
         left, top = (math.floor(v + 0.5) for v in self.top_left(e))
         ax, ay = show.spire
-        for col, row, rgb in self.cells:
+        shape = self.mouth("genie")
+        for col, row, rgb in self.cells[2 if shape is None else shape]:
             x, y = left + col, top + row
             if g < 1:
                 # The cell's centre pulled toward the spire, so he swells out of the smoke there.

@@ -186,3 +186,47 @@ def test_happily_ever_afters_v2_overlay_parses_onto_v1():
     assert v2.end == parse_score("happily-ever-after", data).end
     assert {c.title for c in v2.cues if c.stage != "castle" or c.actors} <= set(overlay["overlays"])
     assert v2.cue_at(540).stage == "ghost", "Friend Like Me (Genie)"
+
+
+# ---- mouth tracks (<show>.<version>.lips.json) ----
+
+def _lips(tmp_path, data):
+    (tmp_path / "show.v2.lips.json").write_text(data if isinstance(data, str) else json.dumps(data))
+
+
+def test_a_versions_mouth_tracks_come_with_it(tmp_path, monkeypatch):
+    monkeypatch.setitem(score_module.ACTORS, "someone", object)
+    _write(tmp_path, _two_scenes(), {"overlays": {"two": {"actors": ["someone"]}}})
+    _lips(tmp_path, {"lips": {"someone": {"start": 10, "fps": 10, "track": "0122"}}})
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").lips == \
+        {"someone": score_module.Lips(10.0, 10.0, "0122")}
+    assert load_score("show", shows_dir=str(tmp_path)).lips is None, "v1 has none"
+
+
+@pytest.mark.parametrize("data", [
+    "{not json",
+    {"lips": {"nobody": {"start": 0, "fps": 15, "track": "01"}}},
+    {"lips": {"someone": {"start": 0, "fps": 15, "track": "013"}}},
+    {"lips": {"someone": {"start": 0, "fps": 15, "track": ""}}},
+    {"lips": {"someone": {"start": 0, "fps": 0, "track": "01"}}},
+    {"lips": {"someone": {"fps": 15, "track": "01"}}},
+])
+def test_broken_mouth_tracks_are_dropped_but_the_version_still_plays(tmp_path, monkeypatch, data):
+    monkeypatch.setitem(score_module.ACTORS, "someone", object)
+    monkeypatch.setattr(score_module.debug, "warning", lambda msg: None)
+    _write(tmp_path, _two_scenes(), {"overlays": {"two": {"stage": "ghost", "actors": ["someone"]}}})
+    _lips(tmp_path, data)
+    v2 = load_score("show", shows_dir=str(tmp_path), version="v2")
+    assert v2.lips is None and v2.cues[1].actors == ("someone",)
+
+
+def test_a_mouth_track_is_looked_up_by_the_clock():
+    lips = score_module.Lips(10.0, 10.0, "0122")
+    assert [lips.shape(t) for t in (9.99, 10.0, 10.15, 10.25, 10.39, 10.4)] == [None, 0, 1, 2, 2, None]
+
+
+def test_happily_ever_afters_v2_mouth_tracks_cover_genies_scene():
+    with open(f"{score_module.SHOWS_DIR}/happily-ever-after.v2.lips.json") as f:
+        genie = score_module.parse_lips(json.load(f))["genie"]
+    scene = load_score("happily-ever-after").cue_at(540)
+    assert genie.shape(scene.start) is not None and genie.shape(scene.end - 0.01) is not None

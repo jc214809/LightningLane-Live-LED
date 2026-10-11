@@ -49,6 +49,15 @@ def test_frames_follow_the_score_like_the_board(tiny):
     assert reds(fire) > reds(dark) + 50
 
 
+def test_frames_give_the_show_the_scores_mouth_tracks(tiny, monkeypatch):
+    seen = []
+    real = tool.MusicShow
+    monkeypatch.setattr(tool, "MusicShow", lambda *args: seen.append(args[3]) or real(*args))
+    lips = {"genie": object()}
+    list(tool.frames(tiny._replace(lips=lips), 32, fps=10, seconds=0.2))
+    assert seen == [lips]
+
+
 def test_render_pipes_every_frame_to_ffmpeg(tiny, monkeypatch):
     written, cmds = [], []
 
@@ -166,3 +175,23 @@ def test_main_with_a_broken_or_missing_version_is_an_error(monkeypatch, caplog):
     monkeypatch.setattr(tool.shutil, "which", lambda name: "/usr/bin/" + name)
     assert tool.main(["--version", "v9"]) == 1
     assert "can't use happily-ever-after's v9" in caplog.text
+
+
+def test_main_renders_a_version_with_its_mouth_tracks(monkeypatch, tmp_path):
+    """The tool builds a version itself (to report a broken one), so it must load the mouth tracks too:
+    without them a singing character's mouth stays still in the render, though not on the board."""
+    shows, out = tmp_path / "shows", tmp_path / "out"
+    shows.mkdir()
+    (shows / "tiny.json").write_text(json.dumps(TINY))
+    (shows / "tiny.v2.json").write_text(json.dumps({"overlays": {"Fire": {"actors": ["genie"]}}}))
+    (shows / "tiny.v2.lips.json").write_text(json.dumps({"lips": {"genie": {"start": 1, "fps": 15, "track": "012"}}}))
+    monkeypatch.setattr(tool, "SHOWS_DIR", str(shows))
+    monkeypatch.setattr(tool, "OUT_DIR", str(out))
+    monkeypatch.setattr(tool, "SOUNDS_DIR", str(tmp_path))
+    monkeypatch.setattr(tool.shutil, "which", lambda name: "/usr/bin/" + name)
+    monkeypatch.setattr(tool, "load_score", lambda name: parse_score(name, TINY))
+    rendered = []
+    monkeypatch.setattr(tool, "render", lambda score, height, path, audio: rendered.append(score))
+    assert tool.main(["--show", "tiny", "--version", "v2", "--height", "32"]) == 0
+    assert rendered[0].lips["genie"].track == "012"
+    assert rendered[0].cue_at(2).actors == ("genie",)
