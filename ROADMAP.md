@@ -895,3 +895,25 @@ Done:
 Not done: the sheets added before the one-row-per-character rule (Bullseye.jpg, the princess
 sheets, Beauty and the Beast.jpg, toy_story_4_sheet.png, TS_beads.jpg, dwarfs.jpg) still have one
 row each. Split them when one is next used. Lessons for CHARACTERS.md still come from building.
+
+## ~~13. Fireworks in time with the soundtrack~~ Built
+
+Happily Ever After plays whole (1102s), in time with `sounds/happily-ever-after.wav`, through
+`display/fireworks/music_show.py`, a copy of the fireworks simulation (the user wanted it its own
+thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
+
+- The JSON is the user's show map (sections, palettes, intensity, scenes with characters and looks;
+  times in seconds into "Happily Ever After Full Show Audio", 1359s with the after-show track) plus
+  cues we added per scene: `rate`, `castle`, `shapes`, `effects`, `palette` (see its `cue_note`).
+- Built (decided with the user): section palettes and burst rates, dark silences and narration,
+  the castle fading between looks (blue after the wishing star lands, purple, villain green, fire,
+  dark embers, gold), heart/star/Mickey bursts, rising lanterns, falling embers, a rainbow finale and
+  a white flash on the last hit. Music and lights start together at 0:00 however late the board
+  cuts in.
+
+Not done:
+- Characters in their scenes (Genie, Baymax, Ralph, Vanellope, Olaf, WALL-E, Mike, Tinker Bell,
+  Lightning McQueen, Woody are drawn already). Ask about each one first.
+- Matching the park to the second when the board cuts in late: needs a player that starts
+  mid-file (sox's `play file.wav trim <s>`, ffplay `-ss`), installed on every board.
+- Check the sync by ear on a board: the log names each scene as it starts.

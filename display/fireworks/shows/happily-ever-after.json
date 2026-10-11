@@ -1,0 +1,594 @@
+{
+  "audio": "Happily_Ever_After_Full_Show_Audio.mp3",
+  "show_end": 1102,
+  "note": "Seconds. Section breaks match silences/shifts in this recording; scene times inside sections are from published song lengths and are within a few seconds.",
+  "sources": [
+    "forums.wdwmagic.com/threads/deconstructing-happily-ever-after.927091",
+    "en.wikipedia.org/wiki/Happily_Ever_After_(Magic_Kingdom)"
+  ],
+  "sections": [
+    {
+      "id": "opening",
+      "start": 0,
+      "end": 131,
+      "palette": [
+        "#FFFFFF",
+        "#7FB2FF",
+        "#FFD36B",
+        "#C1121F"
+      ],
+      "intensity": 0.6,
+      "scenes": [
+        {
+          "start": 0,
+          "end": 20,
+          "title": "Theme instrumental",
+          "characters": [],
+          "look": "Blue and orange, keyhole glow, searchlights"
+        },
+        {
+          "start": 20,
+          "end": 63,
+          "title": "Narrator opening",
+          "characters": [],
+          "look": "Dim, slow twinkles",
+          "rate": 0.15
+        },
+        {
+          "start": 63,
+          "end": 131,
+          "title": "Happily Ever After theme song",
+          "characters": [],
+          "look": "Gold sparkle stream, then red and gold; heart burst near the end",
+          "shapes": {
+            "heart": 0.08,
+            "mickey": 0.1
+          }
+        }
+      ]
+    },
+    {
+      "id": "dreams",
+      "start": 131,
+      "end": 268,
+      "palette": [
+        "#1B2A6B",
+        "#FFFFFF",
+        "#FFD36B",
+        "#3BB3E0"
+      ],
+      "intensity": 0.55,
+      "scenes": [
+        {
+          "start": 131,
+          "end": 144,
+          "title": "Wishing star lands on the castle",
+          "characters": [],
+          "look": "Castle turns blue, one bright star",
+          "rate": 0,
+          "castle": "blue",
+          "effects": [
+            "wishing_star"
+          ]
+        },
+        {
+          "start": 144,
+          "end": 174,
+          "title": "Down in New Orleans (prologue)",
+          "characters": [
+            "Tiana"
+          ],
+          "look": "Evening star, warm gold"
+        },
+        {
+          "start": 174,
+          "end": 184,
+          "title": "When You Wish Upon a Star",
+          "characters": [],
+          "look": "Soft starfield",
+          "rate": 0.3,
+          "shapes": {
+            "star": 0.4
+          }
+        },
+        {
+          "start": 184,
+          "end": 212,
+          "title": "Part of Your World",
+          "characters": [
+            "Ariel",
+            "Remy",
+            "Rapunzel"
+          ],
+          "look": "Underwater blues, bubbles, jellyfish bursts",
+          "castle": "blue"
+        },
+        {
+          "start": 212,
+          "end": 220,
+          "title": "When You Wish Upon a Star",
+          "characters": [],
+          "look": "Soft starfield",
+          "rate": 0.3,
+          "shapes": {
+            "star": 0.4
+          }
+        },
+        {
+          "start": 220,
+          "end": 268,
+          "title": "Out There",
+          "characters": [
+            "Quasimodo"
+          ],
+          "look": "Bells ringing, doves, stone gray and gold"
+        }
+      ]
+    },
+    {
+      "id": "journey",
+      "start": 268,
+      "end": 398,
+      "palette": [
+        "#2E7D32",
+        "#3BB3E0",
+        "#0F6E56",
+        "#FFD36B"
+      ],
+      "intensity": 0.7,
+      "scenes": [
+        {
+          "start": 268,
+          "end": 315,
+          "title": "Touch the Sky",
+          "characters": [
+            "Merida",
+            "Flik",
+            "Lightning McQueen",
+            "Up house",
+            "Nemo",
+            "Crush",
+            "Dory"
+          ],
+          "look": "Green growth, arrow bullseye, then ocean water rising"
+        },
+        {
+          "start": 315,
+          "end": 322,
+          "title": "Interlude",
+          "characters": [],
+          "look": "Calm water",
+          "rate": 0.3
+        },
+        {
+          "start": 322,
+          "end": 398,
+          "title": "How Far I'll Go",
+          "characters": [
+            "Moana",
+            "Maui",
+            "Gramma Tala"
+          ],
+          "look": "Ocean teal, torches, glowing stingray swirl"
+        }
+      ]
+    },
+    {
+      "id": "friendship",
+      "start": 398,
+      "end": 562,
+      "palette": [
+        "#FF4D6D",
+        "#FFD23F",
+        "#3EC300",
+        "#3BB3E0"
+      ],
+      "intensity": 0.8,
+      "scenes": [
+        {
+          "start": 398,
+          "end": 402,
+          "title": "Silence",
+          "characters": [],
+          "look": "Dark",
+          "rate": 0
+        },
+        {
+          "start": 402,
+          "end": 428,
+          "title": "Friend Like Me (instrumental)",
+          "characters": [
+            "Aladdin",
+            "Genie"
+          ],
+          "look": "Lamp smoke, colorful gearworks"
+        },
+        {
+          "start": 428,
+          "end": 448,
+          "title": "Trashin' the Camp",
+          "characters": [
+            "Terk",
+            "Tantor"
+          ],
+          "look": "Jungle green, bouncy bursts"
+        },
+        {
+          "start": 448,
+          "end": 458,
+          "title": "Hakuna Matata",
+          "characters": [
+            "Timon",
+            "Pumbaa"
+          ],
+          "look": "Yellow lion-head bursts with red manes"
+        },
+        {
+          "start": 458,
+          "end": 472,
+          "title": "You've Got a Friend in Me",
+          "characters": [
+            "Woody",
+            "Toy Story pals"
+          ],
+          "look": "Building blocks, primary colors"
+        },
+        {
+          "start": 472,
+          "end": 502,
+          "title": "Friendship mash-up",
+          "characters": [
+            "Baloo",
+            "Mowgli",
+            "Ralph",
+            "Vanellope",
+            "Baymax",
+            "Hiro",
+            "Judy",
+            "Nick",
+            "Joy",
+            "Sadness"
+          ],
+          "look": "Fast multicolor",
+          "rate": 1.6
+        },
+        {
+          "start": 502,
+          "end": 527,
+          "title": "That's What Friends Are For",
+          "characters": [
+            "Sully",
+            "Mike"
+          ],
+          "look": "Doors flipping, flashing canisters"
+        },
+        {
+          "start": 527,
+          "end": 562,
+          "title": "Friend Like Me (Genie)",
+          "characters": [
+            "Genie"
+          ],
+          "look": "Nightclub lights, smiley bursts, rocket launch",
+          "rate": 1.6,
+          "shapes": {
+            "mickey": 0.15
+          }
+        }
+      ]
+    },
+    {
+      "id": "love",
+      "start": 562,
+      "end": 721,
+      "palette": [
+        "#F48FB1",
+        "#9C6ADE",
+        "#FFA94D",
+        "#7FB2FF"
+      ],
+      "intensity": 0.4,
+      "scenes": [
+        {
+          "start": 562,
+          "end": 568,
+          "title": "Silence",
+          "characters": [],
+          "look": "Dark",
+          "rate": 0
+        },
+        {
+          "start": 568,
+          "end": 604,
+          "title": "Love Is an Open Door",
+          "characters": [
+            "Olaf",
+            "Sea turtles"
+          ],
+          "look": "Blue and purple, moon rising",
+          "castle": "purple"
+        },
+        {
+          "start": 604,
+          "end": 620,
+          "title": "Can You Feel the Love Tonight",
+          "characters": [
+            "WALL-E",
+            "EVE",
+            "Simba",
+            "Nala"
+          ],
+          "look": "Starry purple",
+          "castle": "purple",
+          "shapes": {
+            "star": 0.2
+          }
+        },
+        {
+          "start": 620,
+          "end": 633,
+          "title": "You'll Be in My Heart",
+          "characters": [
+            "Tarzan",
+            "Kala",
+            "Riley",
+            "Dory",
+            "Carl",
+            "Russell",
+            "Dumbo",
+            "Judy",
+            "The Incredibles"
+          ],
+          "look": "Warm hug glow, heart burst",
+          "shapes": {
+            "heart": 0.4
+          }
+        },
+        {
+          "start": 633,
+          "end": 664,
+          "title": "Princess garden",
+          "characters": [
+            "Cinderella",
+            "Prince Charming",
+            "Aladdin",
+            "Jasmine",
+            "Tiana",
+            "Ariel",
+            "Eric"
+          ],
+          "look": "Pink garden, waterfalls",
+          "shapes": {
+            "heart": 0.15
+          }
+        },
+        {
+          "start": 664,
+          "end": 721,
+          "title": "I See the Light",
+          "characters": [
+            "Rapunzel",
+            "Eugene"
+          ],
+          "look": "Dark sky, slow rising orange lanterns",
+          "rate": 0,
+          "palette": [
+            "#FFA94D",
+            "#FFD36B"
+          ],
+          "effects": [
+            "lanterns"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "adversity",
+      "start": 721,
+      "end": 860,
+      "palette": [
+        "#39FF14",
+        "#6A0DAD",
+        "#C1121F",
+        "#FF8C42"
+      ],
+      "intensity": 0.85,
+      "scenes": [
+        {
+          "start": 721,
+          "end": 742,
+          "title": "The Emperor's warning",
+          "characters": [
+            "Emperor of China"
+          ],
+          "look": "Dim, tense",
+          "rate": 0.2
+        },
+        {
+          "start": 742,
+          "end": 782,
+          "title": "Villains attack",
+          "characters": [
+            "Syndrome",
+            "Omnidroid",
+            "Mr. Incredible",
+            "Ursula",
+            "Eric"
+          ],
+          "look": "Electric green and purple bolts",
+          "rate": 1.4,
+          "castle": "green"
+        },
+        {
+          "start": 782,
+          "end": 815,
+          "title": "To Die For",
+          "characters": [
+            "Scar",
+            "Mufasa",
+            "Jafar",
+            "Maleficent",
+            "Philip"
+          ],
+          "look": "Red and green flashes, dragon fire",
+          "rate": 1.2
+        },
+        {
+          "start": 815,
+          "end": 860,
+          "title": "He's a Pirate",
+          "characters": [
+            "Pirates",
+            "Merida",
+            "Mulan",
+            "Philip"
+          ],
+          "look": "Castle on fire, orange and red explosions",
+          "rate": 1.6,
+          "castle": "fire"
+        }
+      ]
+    },
+    {
+      "id": "triumph",
+      "start": 860,
+      "end": 986,
+      "palette": [
+        "#FFD36B",
+        "#FFFFFF",
+        "#7FB2FF",
+        "#FF8C42"
+      ],
+      "intensity": 0.7,
+      "scenes": [
+        {
+          "start": 860,
+          "end": 874,
+          "title": "Embers",
+          "characters": [
+            "Mufasa"
+          ],
+          "look": "Dying red embers, Mufasa in the stars",
+          "rate": 0,
+          "castle": "dark",
+          "effects": [
+            "embers"
+          ]
+        },
+        {
+          "start": 874,
+          "end": 899,
+          "title": "Go the Distance (intro)",
+          "characters": [
+            "Mufasa"
+          ],
+          "look": "Stars brightening",
+          "rate": 0.3,
+          "shapes": {
+            "star": 0.4
+          }
+        },
+        {
+          "start": 899,
+          "end": 986,
+          "title": "Go the Distance",
+          "characters": [
+            "Hercules",
+            "Aladdin",
+            "Tarzan",
+            "Mulan",
+            "Moana",
+            "Anna",
+            "Elsa",
+            "Tiana",
+            "Woody",
+            "Merida",
+            "Belle"
+          ],
+          "look": "Castle rebuilds, gold stained glass, rising bursts",
+          "rate": 1.2,
+          "castle": "gold"
+        }
+      ]
+    },
+    {
+      "id": "conclusion",
+      "start": 986,
+      "end": 1010,
+      "palette": [
+        "#FFF6C7",
+        "#FFFFFF"
+      ],
+      "intensity": 0.25,
+      "scenes": [
+        {
+          "start": 986,
+          "end": 1010,
+          "title": "Narrator closing",
+          "characters": [],
+          "look": "Mostly dark, gentle sparkles",
+          "rate": 0.2
+        }
+      ]
+    },
+    {
+      "id": "finale",
+      "start": 1010,
+      "end": 1102,
+      "palette": [
+        "#FF4D6D",
+        "#FFD23F",
+        "#3EC300",
+        "#3BB3E0",
+        "#9C6ADE",
+        "#FFFFFF"
+      ],
+      "intensity": 1.0,
+      "scenes": [
+        {
+          "start": 1010,
+          "end": 1041,
+          "title": "Happily Ever After (reprise) builds",
+          "characters": [],
+          "look": "Colors cycle, building",
+          "rate": 1.3,
+          "shapes": {
+            "mickey": 0.15
+          }
+        },
+        {
+          "start": 1041,
+          "end": 1083,
+          "title": "You Can Fly",
+          "characters": [
+            "Tinker Bell"
+          ],
+          "look": "Pixie dust trail across the display, then full color",
+          "rate": 1.4,
+          "shapes": {
+            "mickey": 0.1,
+            "star": 0.1
+          }
+        },
+        {
+          "start": 1083,
+          "end": 1102,
+          "title": "Final chorus, keyhole opens",
+          "characters": [],
+          "look": "Full rainbow barrage, white flash on the last hit",
+          "rate": 2.5,
+          "effects": [
+            "rainbow",
+            "final_flash"
+          ]
+        }
+      ]
+    }
+  ],
+  "after_show": {
+    "start": 1110,
+    "end": 1359,
+    "note": "Separate track after the show; not part of it."
+  },
+  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (wishing_star, lanterns, embers, rainbow, final_flash), palette (replaces the section's)."
+}
