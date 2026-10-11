@@ -10,6 +10,7 @@ import time
 
 from display.animation import frame_canvas, present
 from display.animation.characters.tink import TinkReveal
+from display.fireworks import show_effects
 from display.fireworks.fireworks import (_CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE,
                                          castle_sprite)
 from display.motion import ease_out, smooth
@@ -24,7 +25,12 @@ CASTLE_LOOKS = {
     "fire": {"W": (255, 130, 50), "R": (200, 40, 20)},
     "gold": {"W": (255, 215, 120), "R": (230, 160, 40)},
     "dark": {"W": (60, 40, 45), "R": (40, 20, 35)},
+    "jungle": {"W": (90, 170, 80), "R": (40, 110, 40)},
+    "pink": {"W": (250, 175, 210), "R": (220, 90, 160)},
+    # Gold, its walls tiled in coloured glass (_STAINED_GLASS) as it fades in.
+    "stained_glass": {"W": (255, 215, 120), "R": (230, 160, 40)},
 }
+_STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}
 CASTLE_FADE_S = 1.5
 _LIT_KINDS = {"W", "R"}
@@ -80,7 +86,55 @@ def _star(per_edge=5):
     return points
 
 
-SHAPES = {"mickey": _mickey(), "heart": _heart(), "star": _star()}
+def _ring(r, n, rgb=None, cx=0.0, cy=0.0, start=0.0, end=2 * math.pi):
+    return [(cx + r * math.cos(start + (end - start) * i / n), cy + r * math.sin(start + (end - start) * i / n), rgb)
+            for i in range(n)]
+
+
+def _lion():
+    """Hakuna Matata's lion head: a yellow face in a red mane."""
+    face = [(x * 0.25, y * 0.25, (255, 200, 60)) for y in range(-2, 3) for x in range(-2, 3) if x * x + y * y <= 5]
+    return face + _ring(1.0, 30, (220, 60, 30))
+
+
+def _smiley():
+    yellow = (255, 220, 40)
+    return (_ring(1.0, 30, yellow) + [(-0.35, -0.3, yellow), (0.35, -0.3, yellow)]
+            + _ring(0.55, 9, yellow, start=math.radians(25), end=math.radians(155)))
+
+
+def _door():
+    """A Monsters, Inc. door: an upright rectangle with a gold knob."""
+    edge = [(x / 5 * 0.6, -1.0) for x in range(-5, 6)] + [(x / 5 * 0.6, 1.0) for x in range(-5, 6)]
+    edge += [(-0.6, y / 5) for y in range(-4, 5)] + [(0.6, y / 5) for y in range(-4, 5)]
+    return [(x, y, None) for x, y in edge] + [(0.35, 0.1, (255, 200, 60))]
+
+
+def _bullseye():
+    return _ring(1.0, 28, (230, 40, 40)) + _ring(0.66, 20, (255, 255, 255)) + _ring(0.33, 10, (230, 40, 40))
+
+
+def _jellyfish():
+    """A dome over four wavy tentacles."""
+    dome = _ring(0.8, 14, cy=-0.1, start=math.pi, end=2 * math.pi) + [(x / 4 * 0.8, -0.1, None) for x in range(-4, 5)]
+    tentacles = [(x + 0.1 * math.sin(y * 6), y, None) for x in (-0.5, -0.17, 0.17, 0.5) for y in (0.15, 0.4, 0.65, 0.9)]
+    return dome + tentacles
+
+
+# Burst shapes: (x, y, rgb) in units of the shape radius; an rgb of None takes the rocket's colour.
+SHAPES = {
+    "mickey": [(x, y, None) for x, y in _mickey()],
+    "heart": [(x, y, None) for x, y in _heart()],
+    "star": [(x, y, None) for x, y in _star()],
+    "lion": _lion(),
+    "smiley": _smiley(),
+    "door": _door(),
+    "bullseye": _bullseye(),
+    "jellyfish": _jellyfish(),
+}
+# Effects drawn here; show_effects.py has the rest.
+_OWN_EFFECTS = {"wishing_star", "lanterns", "embers", "rainbow", "final_flash", "tink"}
+EFFECTS = _OWN_EFFECTS | set(show_effects.EFFECTS)
 
 
 class _Rocket:
@@ -125,6 +179,7 @@ class MusicShow:
         self.spire = (self.castle_x + sx, self.castle_y + sy - 1)
 
         big = height >= 64
+        self.scale = 2 if big else 1  # the castle's pixel scale
         self.spark_count = 48 if big else 22
         self.spark_speed = 1.1 if big else 0.6
         self.rocket_speed = 1.6 if big else 1.1
@@ -143,9 +198,10 @@ class MusicShow:
         self.castle_change_t = -CASTLE_FADE_S
         self.castle_look = None
         self.flashed = False
-        self.tink_scale = 2 if height >= 64 else 1
+        self.tink_scale = self.scale
         self.tink_w = len(TinkReveal.art[0]) * self.tink_scale
         self.tink_h = len(TinkReveal.art) * self.tink_scale
+        self.extras = {name: effect(self) for name, effect in show_effects.EFFECTS.items()}
 
     # ---- cues ----
 
@@ -219,9 +275,9 @@ class MusicShow:
             # full size about 60% of the way through.
             travel = (1 - DRAG ** (MICKEY_LIFE * 0.6)) / (1 - DRAG)
             speed = self.shape_radius / travel
-            for px, py in SHAPES[rocket.shape]:
+            for px, py, rgb in SHAPES[rocket.shape]:
                 self.sparks.append(_Spark(rocket.x, rocket.y, px * speed, py * speed, MICKEY_LIFE,
-                                          rocket.color, gravity=GRAVITY * 0.2))
+                                          rgb or rocket.color, gravity=GRAVITY * 0.2))
         else:
             second = self._colour() if rng.random() < 0.35 else None
             ring = rng.random() < 0.3
@@ -302,6 +358,8 @@ class MusicShow:
 
         self.flash = [f * 0.85 for f in self.flash]
         self.white *= 0.93
+        for name, effect in self.extras.items():
+            effect.step(name in self.effects)
         self.frame += 1
 
     # ---- drawing ----
@@ -388,14 +446,21 @@ class MusicShow:
         for x, y, _, _, life, max_life, rgb in self.dust:
             put(x, y, tuple(int(c * life / max_life) for c in rgb))
 
-        # The castle hides anything launched from behind it; only Tink flies in front.
+        for name, effect in self.extras.items():
+            effect.draw_behind(put, out, name in self.effects)
+
+        # The castle hides anything launched from behind it; Tink and the effects' fronts don't.
         colours = self._castle_now()
         flicker = self.castle_look in _FLICKERS
+        glass = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S) if self.castle_look == "stained_glass" else 0
         for dx, dy, kind in self.castle_pixels:
             x, y = self.castle_x + dx, self.castle_y + dy
             if not (0 <= x < self.width and 0 <= y < self.height):
                 continue
             base = colours[kind]
+            if kind == "W" and glass:
+                tile = _STAINED_GLASS[(dx // (2 * self.scale) * 3 + dy // (2 * self.scale)) % 4]
+                base = tuple(int(a + (b - a) * glass) for a, b in zip(base, tile))
             if kind in _LIT_KINDS:
                 if flicker:
                     # Each LED on its own phase (a hash of its spot), so the fire doesn't band.
@@ -403,6 +468,9 @@ class MusicShow:
                     base = tuple(int(c * level) for c in base)
                 base = tuple(min(255, int(c * 0.75 + 110 * f)) for c, f in zip(base, self.flash))
             out[(x, y)] = base
+
+        for name, effect in self.extras.items():
+            effect.draw_front(put, out, name in self.effects)
 
         tink = self.tink_at()
         if tink:

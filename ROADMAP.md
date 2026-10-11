@@ -910,6 +910,11 @@ thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
   dark embers, gold), heart/star/Mickey bursts, rising lanterns, falling embers, a rainbow finale and
   a white flash on the last hit. Music and lights start together at 0:00 however late the board
   cuts in.
+- Every scene's look (batch 1 of the user's "add the missing parts", 2026-10-10): one class each in
+  `display/fireworks/show_effects.py`: searchlights, the keyhole glowing and then opening, a gold
+  sparkle stream, starfields, Tiana's evening star, bubbles, doves, ringing finials, rising water,
+  torches, the stingray, lamp smoke, toy blocks, the moon rising, waterfalls, lightning, green dragon
+  fire; lion, smiley, door, bullseye and jellyfish bursts; jungle, pink and stained-glass castles.
 - Tink in "You Can Fly" (the `tink` effect): her park-title sprite, doubled on 64x64 like there,
   takes off from the spire and arcs up and out to the right in 12s with her pixie dust, while the
   fireworks hold back to 30% (decided with the user, 2026-10-10). The spire sits near the top, so

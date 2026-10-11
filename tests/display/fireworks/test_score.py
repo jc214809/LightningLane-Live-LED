@@ -34,14 +34,14 @@ def test_every_cue_uses_known_looks_shapes_and_effects(hea):
 
 
 @pytest.mark.parametrize("t, title, rate, castle, effects", [
-    (0, "Theme instrumental", 1.0, None, set()),
+    (0, "Theme instrumental", 1.0, None, {"searchlights", "keyhole_glow"}),
     (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
     (400, "Silence", 0, None, set()),
     (700, "I See the Light", 0, None, {"lanterns"}),
     (830, "He's a Pirate", 1.6, "fire", set()),
     (865, "Embers", 0, "dark", {"embers"}),
-    (950, "Go the Distance", 1.2, "gold", set()),
-    (1100, "Final chorus, keyhole opens", 2.5, None, {"rainbow", "final_flash"}),
+    (950, "Go the Distance", 1.2, "stained_glass", set()),
+    (1100, "Final chorus, keyhole opens", 2.5, None, {"rainbow", "final_flash", "keyhole_open"}),
 ])
 def test_cue_at(hea, t, title, rate, castle, effects):
     cue = hea.cue_at(t)
@@ -81,7 +81,7 @@ def test_a_missing_score_is_none(tmp_path):
 @pytest.mark.parametrize("data", [
     "{not json",
     json.dumps({"sections": []}),
-    json.dumps(_show(castle="pink")),
+    json.dumps(_show(castle="plaid")),
     json.dumps(_show(shapes={"dragon": 0.5})),
     json.dumps(_show(effects=["confetti"])),
     json.dumps(_show(palette=["#000000"])),  # nothing bright enough

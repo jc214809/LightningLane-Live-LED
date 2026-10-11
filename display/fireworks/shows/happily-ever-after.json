@@ -24,7 +24,11 @@
           "end": 20,
           "title": "Theme instrumental",
           "characters": [],
-          "look": "Blue and orange, keyhole glow, searchlights"
+          "look": "Blue and orange, keyhole glow, searchlights",
+          "effects": [
+            "searchlights",
+            "keyhole_glow"
+          ]
         },
         {
           "start": 20,
@@ -32,7 +36,10 @@
           "title": "Narrator opening",
           "characters": [],
           "look": "Dim, slow twinkles",
-          "rate": 0.15
+          "rate": 0.15,
+          "effects": [
+            "starfield"
+          ]
         },
         {
           "start": 63,
@@ -43,7 +50,10 @@
           "shapes": {
             "heart": 0.08,
             "mickey": 0.1
-          }
+          },
+          "effects": [
+            "gold_stream"
+          ]
         }
       ]
     },
@@ -78,7 +88,10 @@
           "characters": [
             "Tiana"
           ],
-          "look": "Evening star, warm gold"
+          "look": "Evening star, warm gold",
+          "effects": [
+            "evening_star"
+          ]
         },
         {
           "start": 174,
@@ -89,7 +102,10 @@
           "rate": 0.3,
           "shapes": {
             "star": 0.4
-          }
+          },
+          "effects": [
+            "starfield"
+          ]
         },
         {
           "start": 184,
@@ -101,7 +117,13 @@
             "Rapunzel"
           ],
           "look": "Underwater blues, bubbles, jellyfish bursts",
-          "castle": "blue"
+          "castle": "blue",
+          "effects": [
+            "bubbles"
+          ],
+          "shapes": {
+            "jellyfish": 0.3
+          }
         },
         {
           "start": 212,
@@ -112,7 +134,10 @@
           "rate": 0.3,
           "shapes": {
             "star": 0.4
-          }
+          },
+          "effects": [
+            "starfield"
+          ]
         },
         {
           "start": 220,
@@ -121,7 +146,11 @@
           "characters": [
             "Quasimodo"
           ],
-          "look": "Bells ringing, doves, stone gray and gold"
+          "look": "Bells ringing, doves, stone gray and gold",
+          "effects": [
+            "doves",
+            "bells"
+          ]
         }
       ]
     },
@@ -150,7 +179,14 @@
             "Crush",
             "Dory"
           ],
-          "look": "Green growth, arrow bullseye, then ocean water rising"
+          "look": "Green growth, arrow bullseye, then ocean water rising",
+          "castle": "jungle",
+          "shapes": {
+            "bullseye": 0.2
+          },
+          "effects": [
+            "water"
+          ]
         },
         {
           "start": 315,
@@ -158,7 +194,10 @@
           "title": "Interlude",
           "characters": [],
           "look": "Calm water",
-          "rate": 0.3
+          "rate": 0.3,
+          "effects": [
+            "water"
+          ]
         },
         {
           "start": 322,
@@ -169,7 +208,12 @@
             "Maui",
             "Gramma Tala"
           ],
-          "look": "Ocean teal, torches, glowing stingray swirl"
+          "look": "Ocean teal, torches, glowing stingray swirl",
+          "effects": [
+            "water",
+            "torches",
+            "stingray"
+          ]
         }
       ]
     },
@@ -201,7 +245,10 @@
             "Aladdin",
             "Genie"
           ],
-          "look": "Lamp smoke, colorful gearworks"
+          "look": "Lamp smoke, colorful gearworks",
+          "effects": [
+            "smoke"
+          ]
         },
         {
           "start": 428,
@@ -211,7 +258,8 @@
             "Terk",
             "Tantor"
           ],
-          "look": "Jungle green, bouncy bursts"
+          "look": "Jungle green, bouncy bursts",
+          "castle": "jungle"
         },
         {
           "start": 448,
@@ -221,7 +269,10 @@
             "Timon",
             "Pumbaa"
           ],
-          "look": "Yellow lion-head bursts with red manes"
+          "look": "Yellow lion-head bursts with red manes",
+          "shapes": {
+            "lion": 0.4
+          }
         },
         {
           "start": 458,
@@ -231,7 +282,10 @@
             "Woody",
             "Toy Story pals"
           ],
-          "look": "Building blocks, primary colors"
+          "look": "Building blocks, primary colors",
+          "effects": [
+            "blocks"
+          ]
         },
         {
           "start": 472,
@@ -250,7 +304,10 @@
             "Sadness"
           ],
           "look": "Fast multicolor",
-          "rate": 1.6
+          "rate": 1.6,
+          "effects": [
+            "rainbow"
+          ]
         },
         {
           "start": 502,
@@ -260,7 +317,10 @@
             "Sully",
             "Mike"
           ],
-          "look": "Doors flipping, flashing canisters"
+          "look": "Doors flipping, flashing canisters",
+          "shapes": {
+            "door": 0.35
+          }
         },
         {
           "start": 527,
@@ -272,8 +332,12 @@
           "look": "Nightclub lights, smiley bursts, rocket launch",
           "rate": 1.6,
           "shapes": {
-            "mickey": 0.15
-          }
+            "mickey": 0.1,
+            "smiley": 0.3
+          },
+          "effects": [
+            "searchlights"
+          ]
         }
       ]
     },
@@ -306,7 +370,10 @@
             "Sea turtles"
           ],
           "look": "Blue and purple, moon rising",
-          "castle": "purple"
+          "castle": "purple",
+          "effects": [
+            "moon_rise"
+          ]
         },
         {
           "start": 604,
@@ -322,7 +389,11 @@
           "castle": "purple",
           "shapes": {
             "star": 0.2
-          }
+          },
+          "effects": [
+            "moon_rise",
+            "starfield"
+          ]
         },
         {
           "start": 620,
@@ -360,7 +431,11 @@
           "look": "Pink garden, waterfalls",
           "shapes": {
             "heart": 0.15
-          }
+          },
+          "castle": "pink",
+          "effects": [
+            "waterfalls"
+          ]
         },
         {
           "start": 664,
@@ -417,7 +492,10 @@
           ],
           "look": "Electric green and purple bolts",
           "rate": 1.4,
-          "castle": "green"
+          "castle": "green",
+          "effects": [
+            "bolts"
+          ]
         },
         {
           "start": 782,
@@ -431,7 +509,10 @@
             "Philip"
           ],
           "look": "Red and green flashes, dragon fire",
-          "rate": 1.2
+          "rate": 1.2,
+          "effects": [
+            "green_fire"
+          ]
         },
         {
           "start": 815,
@@ -507,7 +588,7 @@
           ],
           "look": "Castle rebuilds, gold stained glass, rising bursts",
           "rate": 1.2,
-          "castle": "gold"
+          "castle": "stained_glass"
         }
       ]
     },
@@ -527,7 +608,10 @@
           "title": "Narrator closing",
           "characters": [],
           "look": "Mostly dark, gentle sparkles",
-          "rate": 0.2
+          "rate": 0.2,
+          "effects": [
+            "starfield"
+          ]
         }
       ]
     },
@@ -554,7 +638,10 @@
           "rate": 1.3,
           "shapes": {
             "mickey": 0.15
-          }
+          },
+          "effects": [
+            "searchlights"
+          ]
         },
         {
           "start": 1041,
@@ -582,7 +669,8 @@
           "rate": 2.5,
           "effects": [
             "rainbow",
-            "final_flash"
+            "final_flash",
+            "keyhole_open"
           ]
         }
       ]
@@ -593,5 +681,5 @@
     "end": 1359,
     "note": "Separate track after the show; not part of it."
   },
-  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (wishing_star, lanterns, embers, rainbow, final_flash, tink), palette (replaces the section's)."
+  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (music_show.EFFECTS: its own plus show_effects.EFFECTS), palette (replaces the section's)."
 }
