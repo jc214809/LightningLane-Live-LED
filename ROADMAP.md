@@ -706,7 +706,7 @@ Built (2026-10-03), changed from the plan above while building:
 **60-62. More duels** (2026-10-06). The duel roll (`saber_duel`, still one 1 in 10 roll) now
 picks a matchup at random from `saber_duel.DUELS`; each is also its own transition for
 `force_surprise` (`saber_duel_luke`, `_obiwan`, `_yoda`). Matched to Luke and Vader's size, as asked.
-- **Obi-Wan** (`ObiWanDuelReveal`): from `hans- solo.jpg` cell for cell, already 24 rows. Both his
+- **Obi-Wan** (`ObiWanDuelReveal`): from `obiwan-saber.jpg` cell for cell, already 24 rows. Both his
   arms and the blade over his head came out; the blade hid the top of his head, so three rows of
   hair are filled in.
 - **Yoda** (`YodaDuelReveal`): from `Yoda-saber.jpg`, arms and blade out.

@@ -30,7 +30,7 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Dug.jpg](Dug.jpg) | Dug | 22 x 27 | Yes | Yes (2x too) | `kevin`, redrawn at 14 x 17 under his balloons |
 | [Bullseye.jpg](Bullseye.jpg) | Toy Story, a sheet: Woody, Buzz, Mr. and Mrs. Potato Head, Slinky, Rex, Hamm, Bo Peep and her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Bullseye, Stinky Pete and more | up to about 26 x 28 each (Bullseye 26 x 28) | Yes | Yes (2x too) | |
 | [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | Built: `forky`, cell for cell, 1x on 64x32 and 2x on 64x64 |
-| [hie-hie-small.jpg](hie-hie-small.jpg) | Heihei, small (brick pattern), with a leaf | 16 x 29 | Yes | Yes (2x too) | |
+| [hei-hei-small.jpg](hei-hei-small.jpg) | Heihei, small (brick pattern), with a leaf | 16 x 29 | Yes | Yes (2x too) | |
 | [Mickey.jpg](Mickey.jpg) | Mickey Mouse, standing (chibi) | 23 x 29 | Yes | Yes (2x too) | |
 | [Pluto.jpg](Pluto.jpg) | Pluto, crouching, side-on, tail up | 22 x 29 | Yes | Yes (2x too) | |
 | [dwarfs.jpg](dwarfs.jpg) | The seven dwarfs, a sheet | about 20 x 40 each | No (hat to beard, in the mine car) | Yes | Built: `mine_train`, cell for cell, shoulders up on 64x64 |
@@ -79,7 +79,6 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [toy_story_4_sheet.png](toy_story_4_sheet.png) | Toy Story 4, a sheet: Bunny, Ducky, Forky, Duke Caboom, Bo Peep in two outfits, an Alien, Buzz, Woody, Gabby Gabby and Benson, each scaled its own way, over a sky, wall and floor | about 15 x 23 to 21 x 27 each (Bunny 15 x 23, Woody 19 x 27) | Yes | Yes | Pattern mode: drag a box round one, tick Grid lines only; a test reads Bunny and Woody |
 | [aladin.jpg](aladin.jpg) | Aladdin holding the lamp | 26 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
 | [genie.jpg](genie.jpg) | Genie rising from his lamp | 21 x 39 | No (7 rows over) | Yes | Built: `genie`, cell for cell: 7 rows dropped on 64x32, doubled on a 1x lamp (3 tail rows dropped) on 64x64 |
-| [lion king bead.jpeg](<lion king bead.jpeg>) | Young Simba in the Lion King logo pose (photo of a studded-brick build, the same as simba_bricks.png, about 9 degrees off straight, with a watermark) | about 27 x 29 | Yes | Yes (2x too) | Pattern mode: drag a box above the watermark; Detect grid straightens it |
 | [mickey_minnie_kiss.jpg](mickey_minnie_kiss.jpg) | Mickey and Minnie kissing, one piece (with the artist's initials at the bottom) | 50 x 34 | No (2 rows over) | Yes | Pattern mode reads it |
 | [starwars.jpg](starwars.jpg) | R2-D2 (one of nine Star Wars charts on a sheet, each on its own grid) | 22 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
 | [starwars.jpg](starwars.jpg) | Yoda | 26 x 28 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
@@ -95,33 +94,33 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Runaway_Railway_pluto.jpeg](Runaway_Railway_pluto.jpeg) | Pluto in a Runaway Railway car (photo of an enamel pin, not pixel art) | | Needs tracing | Needs tracing | Trace it and keep the bold shapes |
 | [Buzz - New.jpg](<Buzz - New.jpg>) | Buzz Lightyear, a chibi (3D render of cubes over a sky and floor) | 15 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round him |
 | [Woody - New.jpg](<Woody - New.jpg>) | Woody, a chibi (a chart with a colour count under it) | 19 x 26 | Yes | Yes (2x too) | Pattern mode: drag a box round him, above the colour count |
-| [Vanellope Von - Car.jpg](<Vanellope Von - Car.jpg>) | Vanellope von Schweetz in her kart (pixel art, no grid lines) | 28 x 31 | Tight | Yes (2x too) | Pattern mode reads it |
+| [Vanellope kart.jpg](<Vanellope kart.jpg>) | Vanellope von Schweetz in her kart (pixel art, no grid lines) | 28 x 31 | Tight | Yes (2x too) | Pattern mode reads it |
 | [Gamora.jpg](Gamora.jpg) | Gamora, a chibi | 19 x 28 | Yes | Yes (2x too) | Pattern mode reads it |
 | [Groot.jpg](Groot.jpg) | Baby Groot, over a purple starry sky | about 25 x 39 | No (7 rows over) | Yes | Pattern mode reads it |
 | [Rocket.jpg](Rocket.jpg) | Rocket, a chibi | 23 x 29 | Yes | Yes (2x too) | Pattern mode reads it |
-| [Starlod.jpg](Starlod.jpg) | Star-Lord in his mask, a chibi | 19 x 29 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Star-Lord.jpg](Star-Lord.jpg) | Star-Lord in his mask, a chibi | 19 x 29 | Yes | Yes (2x too) | Pattern mode reads it |
 | [Thor.jpg](Thor.jpg) | Thor in his helmet with his hammer, a chibi | 24 x 26 | Yes | Yes (2x too) | Pattern mode reads it |
-| [Darth Mal.jpg](<Darth Mal.jpg>) | Darth Maul, a chibi, his double lightsaber held diagonally across the whole chart | 36 x 35 with the saber (about 21 x 24 without) | No (3 rows over) | Yes | Pattern mode reads it |
+| [Darth Maul.jpg](<Darth Maul.jpg>) | Darth Maul, a chibi, his double lightsaber held diagonally across the whole chart | 36 x 35 with the saber (about 21 x 24 without) | No (3 rows over) | Yes | Pattern mode reads it |
 | [Darth Vader.jpg](<Darth Vader.jpg>) | Darth Vader, a chibi with his lightsaber (soft, blurred pixel art, no grid lines) | 39 x 34 | No (2 rows over) | Yes | Pattern mode reads it; merge the blur's in-between shades |
 | [Darth-Vader-2.jpg](Darth-Vader-2.jpg) | Darth Vader, a chibi with his lightsaber (pixel art, no grid lines) | 25 x 20 | Yes | Yes (2x too) | Pattern mode reads it |
 | [Yoda-saber.jpg](Yoda-saber.jpg) | Yoda with his lightsaber (pixel art, no grid lines) | 32 x 21 | Yes | Yes (2x too) | Pattern mode reads it |
-| [hans- solo.jpg](<hans- solo.jpg>) | Obi-Wan Kenobi with his lightsaber, despite the file name (pixel art, no grid lines) | 31 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
+| [obiwan-saber.jpg](obiwan-saber.jpg) | Obi-Wan Kenobi with his lightsaber (pixel art, no grid lines) | 31 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
 | [skywalker-saber.jpg](skywalker-saber.jpg) | Luke Skywalker with his lightsaber (pixel art, no grid lines) | 24 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
 | [rey-saber.jpg](rey-saber.jpg) | Rey with her yellow lightsaber, by KidKinobi on DeviantArt (pixel art, no grid lines) | 23 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
 | [kylo-saber.jpg](kylo-saber.jpg) | Kylo Ren with his crossguard lightsaber, by KidKinobi on DeviantArt (pixel art, no grid lines) | 25 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
-| [many Starwars .jpg](<many Starwars .jpg>) | BB-8 (one of thirteen Star Wars bead charts on one grid, 11 px beads) | 14 x 18 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | R2-D2 | 18 x 21 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Princess Leia, head only, tiny | 11 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Yoda, head only, tiny | 11 x 8 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | A stormtrooper's helmet with a pink bow | 15 x 17 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Darth Maul's head | 13 x 19 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Darth Vader with his lightsaber | 21 x 21 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Kylo Ren with his crossguard lightsaber | 20 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Luke Skywalker, head only, tiny | 9 x 8 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Han Solo, head only, tiny | 11 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | An Ewok, head only, tiny | 9 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | R2-D2, tiny | 9 x 6 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
-| [many Starwars .jpg](<many Starwars .jpg>) | Chewbacca | 17 x 27 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | BB-8 (one of thirteen Star Wars bead charts on one grid, 11 px beads) | 14 x 18 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | R2-D2 | 18 x 21 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Princess Leia, head only, tiny | 11 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Yoda, head only, tiny | 11 x 8 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | A stormtrooper's helmet with a pink bow | 15 x 17 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Darth Maul's head | 13 x 19 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Darth Vader with his lightsaber | 21 x 21 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Kylo Ren with his crossguard lightsaber | 20 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Luke Skywalker, head only, tiny | 9 x 8 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Han Solo, head only, tiny | 11 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | An Ewok, head only, tiny | 9 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | R2-D2, tiny | 9 x 6 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [many Star Wars.jpg](<many Star Wars.jpg>) | Chewbacca | 17 x 27 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
 | [Villains.jpg](Villains.jpg) | The Evil Queen (one of six villainesses on a sheet, each on its own grid) | 31 x 37 | No (5 rows over) | Yes | Pattern mode: box 76,88,256,300 |
 | [Villains.jpg](Villains.jpg) | Maleficent with her staff | 30 x 41 | No (9 rows over) | Yes | Pattern mode: box 276,68,448,300 |
 | [Villains.jpg](Villains.jpg) | Lady Tremaine, the Stepmother | 22 x 35 | No (3 rows over) | Yes | Pattern mode: box 512,100,640,300 |

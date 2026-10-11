@@ -64,7 +64,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Hakuna Matata (446-453, 7 s) | castle | Timon, Pumbaa | Lead | March along the castle's base, left to right. |
 | You've Got a Friend in Me (453-459, 6 s) | castle | Woody, Buzz | Have (`aliens` 14x18) | Buzz shoots across the sky, Woody waves from the ground beside the blocks. |
 | Mash-up: Wreck-It (459-473) | off | Ralph | Have | Smashes falling 8-bit bricks (two-fist pose `UP_ART`). |
-| | | Vanellope | Sheet (`Vanellope Von - Car.jpg`) | Zips across in her kart, glitching. |
+| | | Vanellope | Sheet (`Vanellope kart.jpg`) | Zips across in her kart, glitching. |
 | Mash-up: Big Hero 6 (474-481) | off | Baymax | Have | Inflates up from the bottom and waves. (Hiro: None, left out.) |
 | Mash-up: Zootopia (482-493) | off | Judy, Nick | Sheet (`nick and judy.jpg`, 15x33 and 18x40) | Stand side by side under a neon skyline (Code). Too tall for 64x32 as is: 64x64 only, or cut at the knees there. |
 | Mash-up: Inside Out (494-513) | off | Joy, Sadness | Sheet (`inside_out.jpg`, about 17x25) | Joy and Sadness each roll a memory orb (Code: a glowing yellow and blue ball) in from their side. |
