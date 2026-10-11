@@ -168,3 +168,19 @@ def test_one_character_is_measured_from_a_box_on_a_sheet():
 def test_a_whole_sheet_on_many_grids_is_not_measured_as_one():
     reading = tool.read_image(os.path.join(REFS, "Bullseye.jpg"))
     assert not tool.grid_found(reading), "each character needs its own --box"
+
+
+def test_draft_row_says_a_given_cell_size_was_not_found():
+    row, notes = tool.draft_row("Princes.jpg", _reading(["RR"] * 4, box=[0, 0, 9, 9], cell=2.6))
+    assert row.endswith("| Pattern mode: drag a box round it; Calibrate to 2.6 px cells |")
+    assert notes[0] == "Grid: 2.6 px cells, given (--cell), not found."
+
+
+@needs_node
+def test_a_given_cell_size_reads_a_grid_detection_misses():
+    """Princes.jpg is stitching on fabric: detection finds no grid, but at Calibrate's 2.6 px a prince reads."""
+    path, box = os.path.join(REFS, "Princes.jpg"), (14, 222, 58, 350)
+    assert not tool.grid_found(tool.read_image(path, box=box, turn=False))
+    reading = tool.read_image(path, box=box, turn=False, cell=2.6)
+    rows = reading["rows"]
+    assert tool.grid_found(reading) and abs(len(rows[0]) - 15) <= 1 and abs(len(rows) - 40) <= 1

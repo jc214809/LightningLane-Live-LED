@@ -19,7 +19,9 @@ height, or within a row or two of it, so there's no room for anything under him.
 one. `python3 tools/analyze_reference.py <image>` finds the grid the way the sprite editor's
 Pattern mode does and prints a draft row (size, fits, colours) to finish with who it shows; `--art`
 also prints the sprite to paste. A sheet gets one row per character: measure each with
-`--box x0,y0,x1,y1` (pixels of the image), adding `--lines` for art drawn over a picture.
+`--box x0,y0,x1,y1` (pixels of the image), adding `--lines` for art drawn over a picture. When detection finds no grid (stitching on fabric, a soft photo), `--cell <px>` reads it at a
+cell size you give, as Pattern mode's Calibrate does: zoom in to count it, or sweep a few values and
+keep the one where the size holds steady.
 
 | Reference | Character | Size (cells, w x h) | 64x32 as is | 64x64 as is | On the board |
 |---|---|---|---|---|---|
@@ -299,17 +301,17 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Detailed Nick and Judy.png](<Detailed Nick and Judy.png>) | Judy Hopps in uniform, hands on hips (a cleaner chart than nick and judy.jpg; feet clipped by the chart's edge) | 18 x 46 | No (14 rows over) | Yes | Pattern mode: box 270,670,540,1375 (the whole image reads a false tilt) |
 | [Detailed Nick and Judy.png](<Detailed Nick and Judy.png>) | Nick Wilde with his tail out (an "Image ID" watermark over his feet) | 21 x 45 | No (13 rows over) | Yes | Pattern mode: box 545,675,885,1375 |
 | [Flying Dumbo.jpg](<Flying Dumbo.jpg>) | Dumbo flying, ears spread, trunk up, in his hat and collar (marker on graph paper; his whole body and tail, which `dumbo`'s sprite lacks; feet cut by the photo's edge) | 47 x 28 | Yes | Yes | Pattern mode reads it |
-| [Princes.jpg](Princes.jpg) | Snow White's prince (one of 11 princes standing in a row, a photo of a cross-stitch mockup on fabric) | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Prince Charming | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Prince Phillip, red cape | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Prince Eric | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Beast | about 19 x 42 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Aladdin | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | John Smith | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Li Shang | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Naveen | about 17 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Flynn Rider | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
-| [Princes.jpg](Princes.jpg) | Kristoff, probably (grey hat, dark coat with straps) | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Snow White's prince (one of 11 princes standing in a row, a photo of a cross-stitch mockup on fabric: too soft to copy stitch for stitch, so clean up after reading) | 15 x 40 | No (8 rows over) | Yes | Pattern mode: box 14,222,58,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Prince Charming | 15 x 40 | No (8 rows over) | Yes | Pattern mode: box 62,222,108,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Prince Phillip, red cape | 15 x 40 | No (8 rows over) | Yes | Pattern mode: box 112,222,156,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Prince Eric | 15 x 40 | No (8 rows over) | Yes | Pattern mode: box 160,222,205,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Beast | 19 x 42 | No (10 rows over) | Yes | Pattern mode: box 210,222,265,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Aladdin | 16 x 41 | No (9 rows over) | Yes | Pattern mode: box 268,222,313,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | John Smith | 15 x 40 | No (8 rows over) | Yes | Pattern mode: box 318,222,361,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Li Shang | 15 x 42 | No (10 rows over) | Yes | Pattern mode: box 366,222,409,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Naveen | 18 x 41 | No (9 rows over) | Yes | Pattern mode: box 411,222,462,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Flynn Rider | 16 x 41 | No (9 rows over) | Yes | Pattern mode: box 462,222,508,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
+| [Princes.jpg](Princes.jpg) | Kristoff, probably (grey hat, dark coat with straps) | 14 x 42 | No (10 rows over) | Yes | Pattern mode: box 513,222,557,350; Calibrate to 2.6 px cells (`--cell 2.6 --no-turn`) |
 | [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | The gargoyles Victor, Hugo and Laverne, overlapping as one group (one of seven on a cross-stitch mockup, same artist as Princes.jpg) | 38 x 28 for the three (Victor 16 x 29) | Yes | Yes | Pattern mode: box 8,255,158,369 |
 | [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Quasimodo | about 17 x 34 | No (2 rows over) | Yes | Pattern mode: box 160,234,232,369 misses the grid; Calibrate at 3.8 px a cell |
 | [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Djali, the goat | 10 x 15 | Yes | Yes (2x too) | Pattern mode: box 233,303,278,369 |

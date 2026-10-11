@@ -7,6 +7,7 @@ Pattern mode finds it (its JS core, run under Node), so the tool and the editor 
     python3 tools/analyze_reference.py docs/references/Forky.jpg
     python3 tools/analyze_reference.py <image> --box 435,275,665,590   # one character on a sheet
     python3 tools/analyze_reference.py <image> --lines --art           # chart over a picture; print the sprite
+    python3 tools/analyze_reference.py <image> --box ... --cell 2.6    # a grid detection misses: Calibrate's cell size
     python3 tools/analyze_reference.py --missing                       # images with no README row
 
 --missing needs only the standard library (the SessionStart hook runs it with whatever python3 is
@@ -137,7 +138,10 @@ def draft_row(name, reading):
     if not rows:
         return f"| {link} | TODO: who it shows | | | | |", ["A grid, but nothing on it once the background is dropped."]
     w, h = len(rows[0]), len(rows)
-    notes = [f"Grid: {fx['period']:.1f} x {fy['period']:.1f} px cells (score {min(fx['score'], fy['score']):.2f})."]
+    if reading.get("cell"):
+        notes = [f"Grid: {reading['cell']:g} px cells, given (--cell), not found."]
+    else:
+        notes = [f"Grid: {fx['period']:.1f} x {fy['period']:.1f} px cells (score {min(fx['score'], fy['score']):.2f})."]
     how = "Pattern mode reads it"
     if reading.get("turn"):
         notes.append(f"Turned {reading['turn']:g} degrees to straighten it: a photo shot at a tilt.")
@@ -146,6 +150,8 @@ def draft_row(name, reading):
         how = "Pattern mode: drag a box round it" + (", tick Grid lines only" if reading.get("lines") else "")
     elif reading.get("lines"):
         how += ", with Grid lines only"
+    if reading.get("cell"):
+        how += f"; Calibrate to {reading['cell']:g} px cells"
     found = pieces(rows)
     if len(found) > 1:
         sizes = ", ".join(f"{pw} x {ph}" for pw, ph in found)
@@ -172,7 +178,10 @@ let data = new Uint8ClampedArray(fs.readFileSync(opt.raw)), W = opt.W, H = opt.H
 if (opt.box) ({ data, W, H } = cropImage(data, W, H, opt.box));
 const turn = opt.turn ? gridTurn(data, W, H) : 0;
 if (turn) ({ data, W, H } = rotateImage(data, W, H, turn));
-const prof = edgeProfiles(data, W, H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+// A given cell size stands in for Calibrate: the period is known, only where the cells sit is found.
+const prof = opt.cell ? null : edgeProfiles(data, W, H);
+const fx = opt.cell ? { period: opt.cell, offset: 0, score: 1 } : findGrid(prof.x);
+const fy = opt.cell ? { period: opt.cell, offset: 0, score: 1 } : findGrid(prof.y);
 let out = { turn, fx, fy, rows: [], colors: {}, extraColors: 0 };
 if (fx && fy) {
   const { offsetX, offsetY } = alignGrid(data, W, H, fx.period, fy.period, fx.offset, fy.offset);
@@ -185,8 +194,9 @@ console.log(JSON.stringify(out));
 """
 
 
-def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", palette="COLORS"):
-    """Run Pattern mode's pipeline on an image: crop, straighten, find the grid, read the cells."""
+def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", palette="COLORS", cell=None):
+    """Run Pattern mode's pipeline on an image: crop, straighten, find the grid, read the cells. With cell
+    (pixels), the grid is that size instead of found, as Pattern mode's Calibrate sets it."""
     from PIL import Image  # only measuring needs Pillow, not --missing
     node = shutil.which("node")
     if node is None:
@@ -196,7 +206,7 @@ def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", pa
         raw.write(im.tobytes())
     try:
         opt = {"raw": raw.name, "W": im.width, "H": im.height, "box": list(box) if box else None,
-               "lines": lines, "turn": turn, "art": art, "name": name, "palette": palette}
+               "lines": lines, "turn": turn, "art": art, "name": name, "palette": palette, "cell": cell}
         # On stdin: the core embeds every sprite and is past Linux's limit for one argument.
         out = subprocess.run([node], input=_core() + "\n" + _PIPELINE % json.dumps(opt),
                              capture_output=True, text=True, timeout=120)
@@ -205,7 +215,7 @@ def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", pa
     if out.returncode != 0:
         raise RuntimeError(f"the editor's core failed under Node: {out.stderr.strip()[-500:]}")
     reading = json.loads(out.stdout)
-    reading.update(box=box, lines=lines)
+    reading.update(box=box, lines=lines, cell=cell)
     return reading
 
 
@@ -225,6 +235,7 @@ def main(argv=None):
     parser.add_argument("--lines", action="store_true", help="Grid lines only: art drawn over a picture")
     parser.add_argument("--no-turn", dest="turn", action="store_false", help="don't straighten a tilted photo")
     parser.add_argument("--art", action="store_true", help="also print the sprite rows and palette to paste")
+    parser.add_argument("--cell", type=float, help="cell size in pixels, for a grid detection misses (as Calibrate)")
     parser.add_argument("--name", default="ART", help="the art's name in --art's output (default ART)")
     parser.add_argument("--palette", default="COLORS", help="the palette's name in --art's output")
     args = parser.parse_args(argv)
@@ -242,7 +253,7 @@ def main(argv=None):
         parser.error("give an image, or --missing")
     try:
         reading = read_image(args.image, box=args.box, lines=args.lines, turn=args.turn, art=args.art,
-                             name=args.name, palette=args.palette)
+                             name=args.name, palette=args.palette, cell=args.cell)
     except (OSError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.error("%s: %s", args.image, e)
         return 1

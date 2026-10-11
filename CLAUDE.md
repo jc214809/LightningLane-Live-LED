@@ -23,7 +23,7 @@ uv venv --python 3.11 .venv && uv pip install --python .venv -r requirements-dev
 python3 tools/build_sprite_editor.py
 
 # Measure a new reference image for docs/references/README.md (a test fails until it has a row)
-python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [--lines] [--art]
+python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [--lines] [--cell PX] [--art]
 ```
 
 - **Python:** 3.11 is the target everywhere (`.python-version`, pyproject's `requires-python`, CI) because it's Raspberry Pi OS Bookworm's. CI also runs 3.13, the next OS's (Trixie). When the boards move, raise all three together.
