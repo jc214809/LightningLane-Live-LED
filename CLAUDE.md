@@ -88,7 +88,7 @@ Display rules:
 - Call `forget_screen()` after anything that bypasses `show_screen`, so the next sweep doesn't redraw a stale screen.
 - `over_screen` transitions play over a finished screen and let it keep animating underneath.
 - Fireworks: the castle is `_CASTLE_ART`, doubled on 64-row boards; `_BIG_CASTLE_ROW_PATCH` adjusts only the doubled one.
-- Synced shows: a show with a score in `display/fireworks/shows/<clip_name>.json` plays whole, in time with its music, through `display/fireworks/music_show.py` (its own copy of the fireworks simulation, so the everyday ones don't change; `score.py` reads the file). Scene looks are one class each in `show_effects.py`, turned on by name in a scene's `effects`; add one there and in `EFFECTS`. It follows the clock, not frames, so a slow board stays with the music.
+- Synced shows: a show with a score in `display/fireworks/shows/<clip_name>.json` plays whole, in time with its music, through `display/fireworks/music_show.py` (its own copy of the fireworks simulation, so the everyday ones don't change; `score.py` reads the file). Scene looks are one class each in `show_effects.py`, turned on by name in a scene's `effects`; add one there and in `EFFECTS`. What the real show does (timeline, colours, where ours is off) is in `docs/shows/<clip_name>/README.md`; start there for improvements. It follows the clock, not frames, so a slow board stays with the music.
 
 ### Driver abstraction
 
