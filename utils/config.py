@@ -5,6 +5,8 @@ without a restart. Feature-specific sections (trip_countdown, force_surprise) ar
 the code that validates them (utils/trips.py, disney.py).
 """
 import json
+from datetime import time
+from typing import NamedTuple, Optional, Tuple
 
 from utils import debug
 
@@ -73,3 +75,42 @@ def websocket_protocol(config):
         debug.warning(f'config.json "websocket.protocol" should be "legacy" or "preview", not {protocol!r}; using "legacy".')
         return "legacy"
     return protocol
+
+
+class SoundSettings(NamedTuple):
+    enabled: bool = False
+    device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card
+    quiet_hours: Optional[Tuple[time, time]] = None  # (start, end) in the board's local time
+
+
+def sound_settings(config):
+    """config.json's "sound" section: {"enabled": true, "device": null,
+    "quiet_hours": {"start": "22:00", "end": "08:00"}}. Without the section the board stays silent.
+    A bad quiet_hours turns sound off rather than risk playing in the night."""
+    section = config.get("sound")
+    if section is None:
+        return SoundSettings()
+    if not isinstance(section, dict):
+        debug.warning('config.json "sound" should be {"enabled": true, ...}; sound is off.')
+        return SoundSettings()
+
+    enabled = section.get("enabled", True)
+    if not isinstance(enabled, bool):
+        debug.warning(f'config.json "sound.enabled" should be true or false, not {enabled!r}; sound is off.')
+        return SoundSettings()
+    device = section.get("device")
+    if device is not None and not (isinstance(device, str) and device.strip()):
+        debug.warning(f'config.json "sound.device" should be an ALSA device like "plughw:1,0", not {device!r}; '
+                      'using the default.')
+        device = None
+
+    quiet = section.get("quiet_hours")
+    quiet_hours = None
+    if quiet is not None:
+        try:
+            quiet_hours = (time.fromisoformat(quiet["start"]), time.fromisoformat(quiet["end"]))
+        except (TypeError, KeyError, ValueError):
+            debug.warning(f'config.json "sound.quiet_hours" should be {{"start": "22:00", "end": "08:00"}}, '
+                          f'not {quiet!r}; sound is off.')
+            return SoundSettings()
+    return SoundSettings(enabled, device, quiet_hours)

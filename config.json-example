@@ -12,6 +12,11 @@
       {"start": "2025-12-01", "end": "2025-12-06", "name": "Fall Trip"}
     ]
   },
+  "sound": {
+    "enabled": false,
+    "device": null,
+    "quiet_hours": {"start": "22:00", "end": "08:00"}
+  },
   "weather": {
     "apikey": "<API_KEY_HERE>"
   },

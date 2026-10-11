@@ -481,6 +481,29 @@ def test_fireworks_play_without_the_title_once_per_performance(fireworks_played)
     assert len(fireworks_played) == 1, "the same performance never plays twice"
 
 
+def test_fireworks_play_the_shows_sound_until_they_end(monkeypatch):
+    events = []
+
+    class Recorder:
+        def __init__(self, names, settings, now):
+            events.append(("sound", names, settings, now))
+
+        def __enter__(self):
+            events.append("start")
+
+        def __exit__(self, *exc):
+            events.append("stop")
+
+    monkeypatch.setattr(disney, "playing", Recorder)
+    monkeypatch.setattr(disney, "render_castle_fireworks", lambda matrix, **kwargs: events.append("fireworks"))
+    monkeypatch.setattr(disney, "_shows_played", set())
+    monkeypatch.setattr(disney, "sound", disney.SoundSettings(True))
+    now = HEA_START + timedelta(seconds=8)
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
+    assert events == [("sound", ["happily-ever-after", "fireworks"], disney.SoundSettings(True), now),
+                      "start", "fireworks", "stop"]
+
+
 def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played):
     assert not disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START - timedelta(minutes=1))
     assert not disney.play_fireworks_show_if_due(

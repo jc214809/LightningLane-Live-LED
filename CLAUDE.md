@@ -95,7 +95,7 @@ Display rules:
 
 ### Configuration
 
-`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `force_surprise`, `debug`.
+`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `sound` (`enabled`, `device`, `quiet_hours`; played by `utils/sound.py:playing()` from the gitignored `sounds/`, during the fireworks show), `force_surprise`, `debug`.
 
 ### Testing
 

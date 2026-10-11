@@ -289,6 +289,24 @@ You can find the signup page for OpenWeatherMap at [https://home.openweathermap.
 
 There's nothing else to set: each park's location comes from the ThemeParks Wiki data.
 
+### Sound
+The board can play the fireworks soundtrack while its castle fireworks run. On a Pi this needs a **USB sound card** (with an OTG adapter on a Pi Zero) and a powered speaker. The Pi's own audio can't be used: it shares hardware with the LED matrix, and the installer turns it off. I2S amp boards clash with the RGB Matrix Bonnet's pins. An emulator run on a Mac plays through the Mac's speakers.
+
+1. Put WAV files in `sounds/` (see `sounds/README.md` for the names). They're gitignored, so copy them to each board.
+2. Turn sound on in `config.json`:
+
+```json
+"sound": {
+  "enabled": true,
+  "device": null,
+  "quiet_hours": {"start": "22:00", "end": "08:00"}
+}
+```
+
+- `device`: the ALSA device to play on, like `"plughw:1,0"` (`aplay -l` lists them). `null` uses the default, which is usually the USB card once the onboard audio is off.
+- `quiet_hours`: no sound between these times, in the board's local time. Leave it out for no quiet hours. A broken value turns sound off.
+- Set the volume on the Pi with `alsamixer`.
+
 ## Sources and Credits
 This project relies on:
 * [ThemeParks.wiki](https://themeparks.wiki): every park, attraction, wait time, showtime and schedule on the board comes from its free API and live WebSocket feed. Huge thanks to the ThemeParks.wiki project for building and running it. If this board is useful to you, consider supporting them.

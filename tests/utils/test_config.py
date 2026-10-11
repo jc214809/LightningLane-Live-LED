@@ -2,8 +2,10 @@ import json
 
 import pytest
 
-from utils.config import (debug_enabled, has_api_key, load_config, weather_api_key, websocket_protocol,
-                          websocket_settings)
+from datetime import time
+
+from utils.config import (SoundSettings, debug_enabled, has_api_key, load_config, sound_settings, weather_api_key,
+                          websocket_protocol, websocket_settings)
 
 
 def test_load_config(tmp_path):
@@ -81,3 +83,31 @@ def test_websocket_settings(config, expected):
 ])
 def test_websocket_protocol(config, expected):
     assert websocket_protocol(config) == expected
+
+
+@pytest.mark.parametrize("config, expected", [
+    ({}, SoundSettings(False, None, None)),  # no section: a board without a speaker stays silent
+    ({"sound": {}}, SoundSettings(True, None, None)),  # enabled defaults to true, like websocket
+    ({"sound": {"enabled": False}}, SoundSettings(False, None, None)),
+    ({"sound": {"enabled": True, "device": "plughw:1,0"}}, SoundSettings(True, "plughw:1,0", None)),
+    ({"sound": {"quiet_hours": {"start": "22:00", "end": "08:00"}}},
+     SoundSettings(True, None, (time(22, 0), time(8, 0)))),
+    ({"sound": {"device": None, "quiet_hours": None}}, SoundSettings(True, None, None)),
+])
+def test_sound_settings(config, expected):
+    assert sound_settings(config) == expected
+
+
+@pytest.mark.parametrize("section", [
+    "on", {"enabled": "yes"},
+    # A broken quiet_hours turns sound off rather than risk playing in the night.
+    {"quiet_hours": {"start": "22:00"}}, {"quiet_hours": {"start": "10pm", "end": "8am"}},
+    {"quiet_hours": "22:00-08:00"}, {"quiet_hours": {"start": 22, "end": 8}},
+])
+def test_bad_sound_settings_turn_sound_off(section):
+    assert sound_settings({"sound": section}).enabled is False
+
+
+@pytest.mark.parametrize("device", ["", "  ", 1])
+def test_a_bad_sound_device_falls_back_to_the_default(device):
+    assert sound_settings({"sound": {"device": device}}) == SoundSettings(True, None, None)
