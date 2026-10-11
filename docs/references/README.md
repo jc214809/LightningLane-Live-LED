@@ -25,8 +25,38 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 |---|---|---|---|---|---|
 | [sitting_stitch.jpg](sitting_stitch.jpg) | Stitch, sitting | 26 x 25 | Yes | Yes (2x too) | `stitch_surf` on 64x32 ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
 | [stitch.jpg](stitch.jpg) | Stitch, standing | 35 x 41 | No | Yes | `stitch_surf` on 64x64 ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
-| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Princesses and princes, a sheet | about 16 x 22 each | Yes | Yes (2x too) | |
-| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Gaston, Belle, Beast, Chip, Mrs. Potts, Lumiere, Cogsworth (photo of beads) | about 12 x 20 each | Yes | Yes (2x too) | |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Snow White (one of 24 on a sheet of princess and prince pairs) | 18 x 22 | Yes | Yes (2x too) | Pattern mode: box 64,68,192,228 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | The Prince (Snow White's) | 16 x 22 | Yes | Yes (2x too) | Pattern mode: box 212,68,324,228 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Jasmine | 21 x 23 | Yes | Yes (2x too) | Pattern mode: box 452,64,600,228 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Aladdin | 16 x 23 | Yes | Yes (2x too) | Pattern mode: box 628,64,744,228 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Pocahontas | 18 x 22 | Yes | Yes (2x too) | Pattern mode: box 868,68,996,228 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | John Smith | 16 x 23 | Yes | Yes (2x too) | Pattern mode: box 1024,64,1136,228 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Aurora | 22 x 24 | Yes | Yes (2x too) | Pattern mode: box 48,360,204,532 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Prince Phillip, feathered cap and cape | 20 x 23 | Yes | Yes (2x too) | Pattern mode: box 216,368,360,532 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Belle | 18 x 24 | Yes | Yes (2x too) | Pattern mode: box 444,360,572,532 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Beast | 23 x 27 | Yes | Yes (2x too) | Pattern mode: box 592,336,756,532 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Mulan, matchmaker makeup | 16 x 25 | Yes | Yes (2x too) | Pattern mode: box 880,352,996,532 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Li Shang | 16 x 23 | Yes | Yes (2x too) | Pattern mode: box 1024,364,1136,532 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Megara | 21 x 25 | Yes | Yes (2x too) | Pattern mode: box 48,648,200,828 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Hercules | 16 x 23 | Yes | Yes (2x too) | Pattern mode: box 216,664,332,828 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Ariel, mermaid tail | 28 x 24 | Yes | Yes (2x too) | Pattern mode: box 408,656,608,828 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Prince Eric | 16 x 22 | Yes | Yes (2x too) | Pattern mode: box 628,668,744,828 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Rapunzel with Pascal, hair trailing | 27 x 23 | Yes | Yes (2x too) | Pattern mode: box 812,664,1004,828 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Flynn Rider | 16 x 22 | Yes | Yes (2x too) | Pattern mode: box 1024,668,1136,828 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Moana | 19 x 20 | Yes | Yes (2x too) | Pattern mode: box 40,972,176,1116 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Maui | 22 x 27 | Yes | Yes (2x too) | Pattern mode: box 188,924,348,1116 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Tiana, lily-pad gown | 16 x 24 | Yes | Yes (2x too) | Pattern mode: box 472,944,588,1116 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Naveen as a frog | 13 x 13 | Yes | Yes (2x too) | Pattern mode: box 628,1024,720,1116 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Cinderella | 16 x 24 | Yes | Yes (2x too) | Pattern mode: box 860,944,976,1116 |
+| [princesses_and_Princes.jpg](princesses_and_Princes.jpg) | Prince Charming | 16 x 22 | Yes | Yes (2x too) | Pattern mode: box 1008,960,1124,1116 |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Gaston (one of eight on a photo of fused beads, about 6.2 px a bead) | 14 x 20 | Yes | Yes (2x too) | Pattern mode: box 110,60,204,196 |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Belle, blue village dress | 11 x 19 | Yes | Yes (2x too) | Pattern mode: box 210,78,286,198 |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Beast | about 14 x 20 | Yes | Yes (2x too) | Pattern mode: box 290,68,384,196; no grid found, size from the box: Calibrate |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Belle, gold gown ("Princess Belle" on the photo) | about 14 x 19 | Yes | Yes (2x too) | Pattern mode: box 384,74,474,198; no grid found, size from the box: Calibrate |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Chip | 13 x 14 | Yes | Yes (2x too) | Pattern mode: box 74,238,162,334 |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Mrs. Potts | 20 x 17 | Yes | Yes (2x too) | Pattern mode: box 163,224,292,334 |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Lumiere | 16 x 21 | Yes | Yes (2x too) | Pattern mode: box 290,204,392,334 |
+| [Beauty and the Beast.jpg](<Beauty and the Beast.jpg>) | Cogsworth | 15 x 20 | Yes | Yes (2x too) | Pattern mode: box 400,204,494,334 |
 | [Dug.jpg](Dug.jpg) | Dug | 22 x 27 | Yes | Yes (2x too) | `kevin`, redrawn at 14 x 17 under his balloons |
 | [Bullseye.jpg](Bullseye.jpg) | Toy Story, a sheet: Woody, Buzz, Mr. and Mrs. Potato Head, Slinky, Rex, Hamm, Bo Peep and her sheep, Forky, the Aliens, RC, Zurg, Wheezy, Jessie, Bullseye, Stinky Pete and more | up to about 26 x 28 each (Bullseye 26 x 28) | Yes | Yes (2x too) | |
 | [Forky.jpg](Forky.jpg) | Forky | 23 x 28 | Yes | Yes (2x too) | Built: `forky`, cell for cell, 1x on 64x32 and 2x on 64x64 |
@@ -42,7 +72,30 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [Ralph.jpg](Ralph.jpg) | Wreck-It Ralph | 25 x 34 | No (2 rows over, both outline) | Yes | `ralph`, from this pattern ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
 | [Sally and Jack pair.png](<Sally and Jack pair.png>) | Sally leaning on Jack, one piece | 43 x 39 | No (shortened to 32 rows on the board) | Yes | `jack_sally`: the walk-in and kiss |
 | [Zero.jpg](Zero.jpg) | Zero | 38 x 34 | No (2 rows over, both outline) | Yes | `jack_sally`, floating across |
-| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Princesses and villains, a sheet | about 25 x 35 each | No | Yes | |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Merida (one of 24 chibis on a sheet of princesses and villains; small, 3.7 px cells: boxes need padding, keep them as given) | 23 x 28 | Yes | Yes (2x too) | Pattern mode: box 22,34,146,176 (exactly: looser or tighter misreads) |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Ariel, mermaid tail | 21 x 31 | Tight | Yes (2x too) | Pattern mode: box 136,42,234,178 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Mulan | 17 x 28 | Yes | Yes (2x too) | Pattern mode: box 242,52,308,158 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Pocahontas | 22 x 28 | Yes | Yes (2x too) | Pattern mode: box 330,52,412,158 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Tiana, lily-pad gown | 17 x 31 | Tight | Yes (2x too) | Pattern mode: box 422,40,486,158 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Alice | 21 x 29 | Yes | Yes (2x too) | Pattern mode: box 506,48,586,158 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Elsa | 20 x 31 | Tight | Yes (2x too) | Pattern mode: box 42,180,130,310 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Anna | 17 x 28 | Yes | Yes (2x too) | Pattern mode: box 150,194,214,300 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Snow White | about 21 x 28 | Yes | Yes (2x too) | Pattern mode: box 236,194,314,300; no grid found, size from the box at 3.7 px cells: Calibrate |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Jasmine | 20 x 28 | Yes | Yes (2x too) | Pattern mode: box 332,194,408,300 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Rapunzel | 24 x 30 | Tight | Yes (2x too) | Pattern mode: box 418,194,510,308 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Tinker Bell | 17 x 32 | Tight | Yes (2x too) | Pattern mode: box 514,184,578,304 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Belle, blue village dress | 18 x 28 | Yes | Yes (2x too) | Pattern mode: box 52,336,120,442 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Belle, gold gown | 19 x 31 | Tight | Yes (2x too) | Pattern mode: box 140,320,224,448 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Cinderella, servant dress and kerchief | 19 x 28 | Yes | Yes (2x too) | Pattern mode: box 240,336,312,442 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Cinderella, ball gown | 19 x 32 | Tight | Yes (2x too) | Pattern mode: box 330,322,400,442 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Aurora as Briar Rose, peasant dress | about 19 x 28 | Yes | Yes (2x too) | Pattern mode: box 418,336,490,442; no grid found, size from the box at 3.7 px cells: Calibrate |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Aurora, pink gown | 19 x 28 | Yes | Yes (2x too) | Pattern mode: box 510,336,582,442 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Queen of Hearts | 19 x 31 | Tight | Yes (2x too) | Pattern mode: box 48,472,120,588 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Ursula | 27 x 31 | Tight | Yes (2x too) | Pattern mode: box 130,472,232,588 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Cruella de Vil | 19 x 32 | Tight | Yes (2x too) | Pattern mode: box 240,468,312,588 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Lady Tremaine | 19 x 30 | Tight | Yes (2x too) | Pattern mode: box 330,474,400,588 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | The Evil Queen | 21 x 31 | Tight | Yes (2x too) | Pattern mode: box 414,472,494,588 |
+| [Princesses_and_Evil_Ladies.jpg](Princesses_and_Evil_Ladies.jpg) | Maleficent, horns and staff | 25 x 35 | No (3 rows over) | Yes | Pattern mode: box 492,456,586,588 |
 | [Green alien.jpg](<Green alien.jpg>) | Toy Story alien | 40 x 37 | No | Yes | |
 | [bluey_beads.png](bluey_beads.png) | Bluey, arms out (photo of beads) | about 30 x 36 | No | Yes | Built: `keepy_uppy`, bead for bead on 64x64, redrawn 22 rows on 64x32 |
 | [Pluto_sitting.jpg](Pluto_sitting.jpg) | Pluto, sitting, facing us | 27 x 36 | No (4 rows over) | Yes | |
@@ -77,7 +130,7 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [simba_bricks.png](simba_bricks.png) | Young Simba, the Lion King logo pose (photo of a studded-brick build, about 8.5 degrees off straight, with a watermark) | about 27 x 25 | Yes | Yes (2x too) | Pattern mode reads it: Detect grid straightens it (`gridTurn`); a test holds it |
 | [TS_beads.jpg](TS_beads.jpg) | Toy Story in fused beads: Woody, Jessie, an Alien, Buzz, Mrs. and Mr. Potato Head (photo, each piece on its own grid, Buzz about 3 degrees off) | about 9 x 13 to 11 x 14 each | Yes | Yes (2x too) | Pattern mode: drag a box round one; Detect grid reads it bead for bead, and a test holds Woody, the Alien and Buzz |
 | [toy_story_4_sheet.png](toy_story_4_sheet.png) | Toy Story 4, a sheet: Bunny, Ducky, Forky, Duke Caboom, Bo Peep in two outfits, an Alien, Buzz, Woody, Gabby Gabby and Benson, each scaled its own way, over a sky, wall and floor | about 15 x 23 to 21 x 27 each (Bunny 15 x 23, Woody 19 x 27) | Yes | Yes | Pattern mode: drag a box round one, tick Grid lines only; a test reads Bunny and Woody |
-| [aladin.jpg](aladin.jpg) | Aladdin holding the lamp | 26 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Aladdin with lamp.jpg](<Aladdin with lamp.jpg>) | Aladdin holding the lamp | 26 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
 | [genie.jpg](genie.jpg) | Genie rising from his lamp | 21 x 39 | No (7 rows over) | Yes | Built: `genie`, cell for cell: 7 rows dropped on 64x32, doubled on a 1x lamp (3 tail rows dropped) on 64x64 |
 | [mickey_minnie_kiss.jpg](mickey_minnie_kiss.jpg) | Mickey and Minnie kissing, one piece (with the artist's initials at the bottom) | 50 x 34 | No (2 rows over) | Yes | Pattern mode reads it |
 | [starwars.jpg](starwars.jpg) | R2-D2 (one of nine Star Wars charts on a sheet, each on its own grid) | 22 x 25 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
@@ -186,3 +239,53 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [inside_out.jpg](inside_out.jpg) | Sadness | 18 x 23 | Yes | Yes (2x too) | Pattern mode: box 288,260,376,376 |
 | [nick and judy.jpg](<nick and judy.jpg>) | Nick Wilde (a phone screenshot of a watermarked bead chart) | 18 x 40 | No (8 rows over) | Yes | Pattern mode: box 44,200,362,906 |
 | [nick and judy.jpg](<nick and judy.jpg>) | Judy Hopps | 15 x 33 | No (1 row over) | Yes | Pattern mode: box 352,318,625,906 |
+| [WALL-E and EVE.jpg](<WALL-E and EVE.jpg>) | WALL-E with one arm raised (one of two on a pixel chart) | 23 x 26 | Yes | Yes (2x too) | Pattern mode: box 15,50,380,450 |
+| [WALL-E and EVE.jpg](<WALL-E and EVE.jpg>) | EVE, happy eyes, with a red heart above and her shadow below (the heart alone 5 x 4) | 24 x 29 | Yes | Yes (2x too) | Pattern mode: box 360,5,730,450 |
+| [Hiro and Baymax.jpg](<Hiro and Baymax.jpg>) | Hiro in his blue jacket (one of two in a photo of bead pieces, slightly tilted) | about 16 x 20 | Yes | Yes (2x too) | Pattern mode: box 110,125,300,345 (Detect grid straightens it; his count moves with the box) |
+| [Hiro and Baymax.jpg](<Hiro and Baymax.jpg>) | Baymax, standing | 27 x 31 | Tight | Yes (2x too) | Pattern mode: box 295,0,570,335 (Detect grid straightens it) |
+| [Mrs Jumbo.jpg](<Mrs Jumbo.jpg>) | Mrs. Jumbo, side-on in her blue blanket and pink headpiece (small watermarked bead photo) | about 40 x 38 | Needs tracing | Needs tracing | Beads too small to count (about 6 px); try Pattern mode's Calibrate |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Olaf, arms out (one of 12 on a pixel-art sheet of Frozen characters by @waseqazi) | 19 x 25 | Yes | Yes (2x too) | Pattern mode: box 210,98,296,220 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Elsa in her ice dress, making a snowflake | 15 x 27 | Yes | Yes (2x too) | Pattern mode: box 298,100,364,220 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Anna in her cloak | 12 x 27 | Yes | Yes (2x too) | Pattern mode: box 366,100,424,220 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Kristoff | 12 x 29 | Yes | Yes (2x too) | Pattern mode: box 426,94,478,220 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Sven with his harness | 28 x 30 | Tight | Yes (2x too) | Pattern mode: box 474,94,594,222 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Hans | 12 x 28 | Yes | Yes (2x too) | Pattern mode: box 134,286,190,412 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | The Duke of Weselton | 10 x 24 | Yes | Yes (2x too) | Pattern mode: box 194,306,246,412 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | The Duke's bodyguard (taller) | 14 x 30 | Tight | Yes (2x too) | Pattern mode: box 248,282,310,412 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | The Duke's bodyguard (shorter) | 12 x 28 | Yes | Yes (2x too) | Pattern mode: box 314,290,372,412 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Oaken in his sweater | 17 x 33 | No (1 row over) | Yes | Pattern mode: box 372,274,446,414 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | A troll | 11 x 14 | Yes | Yes (2x too) | Pattern mode: box 436,350,490,414 |
+| [Frozen Group.jpg](<Frozen Group.jpg>) | Marshmallow, the snow monster | 43 x 43 | No (11 rows over) | Yes | Pattern mode: box 490,236,668,418 |
+| [Detailed Nick and Judy.png](<Detailed Nick and Judy.png>) | Judy Hopps in uniform, hands on hips (a cleaner chart than nick and judy.jpg; feet clipped by the chart's edge) | 18 x 46 | No (14 rows over) | Yes | Pattern mode: box 270,670,540,1375 (the whole image reads a false tilt) |
+| [Detailed Nick and Judy.png](<Detailed Nick and Judy.png>) | Nick Wilde with his tail out (an "Image ID" watermark over his feet) | 21 x 45 | No (13 rows over) | Yes | Pattern mode: box 545,675,885,1375 |
+| [Flying Dumbo.jpg](<Flying Dumbo.jpg>) | Dumbo flying, ears spread, trunk up, in his hat and collar (marker on graph paper; his whole body and tail, which `dumbo`'s sprite lacks; feet cut by the photo's edge) | 47 x 28 | Yes | Yes | Pattern mode reads it |
+| [Princes.jpg](Princes.jpg) | Snow White's prince (one of 11 princes standing in a row, a photo of a cross-stitch mockup on fabric) | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Prince Charming | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Prince Phillip, red cape | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Prince Eric | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Beast | about 19 x 42 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Aladdin | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | John Smith | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Li Shang | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Naveen | about 17 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Flynn Rider | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Princes.jpg](Princes.jpg) | Kristoff, probably (grey hat, dark coat with straps) | about 15 x 40 | No (about 8 rows over) | Yes | No grid found (the fabric hides the stitches): Calibrate, about 2.6 px per stitch, good to about 2 cells |
+| [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | The gargoyles Victor, Hugo and Laverne, overlapping as one group (one of seven on a cross-stitch mockup, same artist as Princes.jpg) | 38 x 28 for the three (Victor 16 x 29) | Yes | Yes | Pattern mode: box 8,255,158,369 |
+| [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Quasimodo | about 17 x 34 | No (2 rows over) | Yes | Pattern mode: box 160,234,232,369 misses the grid; Calibrate at 3.8 px a cell |
+| [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Djali, the goat | 10 x 15 | Yes | Yes (2x too) | Pattern mode: box 233,303,278,369 |
+| [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Esmeralda | 19 x 40 | No (8 rows over) | Yes | Pattern mode: box 275,208,347,370 |
+| [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Phoebus | 15 x 40 | No (8 rows over) | Yes | Pattern mode: box 355,208,419,369 |
+| [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Achilles, Phoebus's horse, facing us | 14 x 40 | No (8 rows over) | Yes | Pattern mode: box 428,212,483,370 |
+| [Hunchback of Notre Dame.jpg](<Hunchback of Notre Dame.jpg>) | Frollo | 17 x 44 | No (12 rows over) | Yes | Pattern mode: box 490,197,561,370 |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Genie, floating (one of 12 on a pixel-art sheet of the Aladdin cast by @waseqazi, 6 px a cell) | about 18 x 20 | Yes | Yes (2x too) | Pattern mode: box 40,64,150,186 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | The Magic Carpet | about 8 x 8 | Yes | Yes (2x too) | Pattern mode: box 14,140,64,194 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Abu | about 6 x 6 | Yes | Yes (2x too) | Pattern mode: box 76,156,116,194 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Aladdin, standing | about 6 x 13 | Yes | Yes (2x too) | Pattern mode: box 112,112,154,194 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Jasmine | 6 x 12 | Yes | Yes (2x too) | Pattern mode: box 150,112,192,194 |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Rajah | 9 x 11 | Yes | Yes (2x too) | Pattern mode: box 186,130,240,196 |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Jafar with his snake staff | 13 x 17 | Yes | Yes (2x too) | Pattern mode: box 226,86,310,194 |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Iago, flying | about 8 x 6 | Yes | Yes (2x too) | Pattern mode: box 286,100,334,138 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | The Sultan | about 8 x 14 | Yes | Yes (2x too) | Pattern mode: box 322,104,370,194 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Prince Ali | about 6 x 15 | Yes | Yes (2x too) | Pattern mode: box 372,98,414,194 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Jafar disguised as the old prisoner | about 8 x 10 | Yes | Yes (2x too) | Pattern mode: box 414,128,470,194 misses the grid; Calibrate at 6 px a cell |
+| [Aladdin Group.jpg](<Aladdin Group.jpg>) | Genie Jafar | 12 x 18 | Yes | Yes (2x too) | Pattern mode: box 468,76,550,194 |

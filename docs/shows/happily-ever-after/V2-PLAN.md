@@ -58,7 +58,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | How Far I'll Go (325-370) | ghost | Moana | Sheet | Sails a small canoe (Code) across the water effect. |
 | | | Gramma Tala | | The existing `stingray` effect stands in. |
 | HFIG climax (370-398) | off | Moana, Maui | Sheet | Moana at the bow, Maui waving his hook. |
-| Aladdin's line (398-412) | ghost | Aladdin | Sheet / `aladin.jpg` | Stands at centre holding the lamp, with the lamp smoke coming from the lamp instead of the spire. |
+| Aladdin's line (398-412) | ghost | Aladdin | Sheet / `Aladdin with lamp.jpg` | Stands at centre holding the lamp, with the lamp smoke coming from the lamp instead of the spire. |
 | Friend Like Me intro (412-428) | off | Aladdin, Genie | Have (`genie`) | Genie bursts out of Aladdin's lamp, the way his ride reveal already does. |
 | Trashin' the Camp (428-446) | castle | Terk | Lead | Swings across on a vine (same pendulum as Quasimodo). |
 | Hakuna Matata (446-453, 7 s) | castle | Timon, Pumbaa | Lead | March along the castle's base, left to right. |
