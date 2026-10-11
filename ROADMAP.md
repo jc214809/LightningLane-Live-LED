@@ -915,6 +915,9 @@ thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
   sparkle stream, starfields, Tiana's evening star, bubbles, doves, ringing finials, rising water,
   torches, the stingray, lamp smoke, toy blocks, the moon rising, waterfalls, lightning, green dragon
   fire; lion, smiley, door, bullseye and jellyfish bursts; jungle, pink and stained-glass castles.
+- Next (decided with the user): batch 2, one lead character per scene flying in the sky like Tink,
+  starting with those that have references; batch 3, the game-sprite ones once downloaded. No art,
+  no character: their scenes keep just the look.
 - Tink in "You Can Fly" (the `tink` effect): her park-title sprite, doubled on 64x64 like there,
   takes off from the spire and arcs up and out to the right in 12s with her pixie dust, while the
   fireworks hold back to 30% (decided with the user, 2026-10-10). The spire sits near the top, so
@@ -923,6 +926,14 @@ thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
 Not done:
 - More characters in their scenes (Genie, Baymax, Ralph, Vanellope, Olaf, WALL-E, Mike, Lightning
   McQueen, Woody are drawn already). Ask about each one first; Tink shows the pattern.
+  Reference leads (searched 2026-10-10; game sprite rips on The Spriters Resource, not opened or
+  checked for size yet): Timon and Pumbaa (The Lion King 1½, GBA), Scar (The Lion King, Genesis),
+  Terk (Tarzan, GBC), Syndrome and the Omnidroids (The Incredibles, GBA), Jack Sparrow for the pirates
+  (Dead Man's Chest, GBA), Baloo and Mowgli (The Jungle Book, Genesis), Simba and Jafar (Kingdom
+  Hearts: Chain of Memories, GBA), Flik (A Bug's Life bootleg, SNES). Nothing found for Quasimodo,
+  Tantor, EVE, the Emperor, Mufasa, Nala, Nemo/Dory/Crush, the Up house, Carl and Russell, Judy and
+  Nick, Joy and Sadness, Hiro, Gramma Tala, Kala or Riley: Pinterest and Etsy patterns don't show in
+  web search, so the user looks there, or simple shapes get drawn from scratch.
 - Matching the park to the second when the board cuts in late: needs a player that starts
   mid-file (sox's `play file.wav trim <s>`, ffplay `-ss`), installed on every board.
 - Check the sync by ear on a board: the log names each scene as it starts.
