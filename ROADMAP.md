@@ -898,7 +898,7 @@ row each. Split them when one is next used. Lessons for CHARACTERS.md still come
 
 ## ~~13. Fireworks in time with the soundtrack~~ Built
 
-Happily Ever After plays whole (1102s), in time with `sounds/happily-ever-after.wav`, through
+Happily Ever After plays whole (1104s), in time with `sounds/happily-ever-after.wav`, through
 `display/fireworks/music_show.py`, a copy of the fireworks simulation (the user wanted it its own
 thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
 
@@ -922,6 +922,17 @@ thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
   takes off from the spire and arcs up and out to the right in 12s with her pixie dust, while the
   fireworks hold back to 30% (decided with the user, 2026-10-10). The spire sits near the top, so
   she climbs only a few rows before heading out.
+- Re-timed and re-looked from the real show (2026-10-11, the user's "make this the best show ever"
+  while away): `docs/shows/happily-ever-after/README.md` has what a recording of it does. The score
+  is now 49 scenes in the audio's own seconds (the recording lined up to it by cross-correlation;
+  big boundaries snapped to hits and silences in the wav), ending at 1104 when the music fades. The
+  sky stays dark until the theme's chorus (98s), I See the Light has its sparse bursts, the two
+  spoken lines (Aladdin, Olaf) have looks, Up's balloons follow Touch the Sky, and the final flash
+  fires on the last hit (1099.6) as its own scene starts. New: castle looks (amber, royal, pastel,
+  stone, sunset, monsters, ice, crimson), gold willow bursts (`willow`), comet fans, crossing comets,
+  coloured searchlights, Up's balloons, the heart of Te Fiti, roof fountains, Olaf's snow and
+  He's a Pirate's flame jets. The keyhole now opens over 12s from when it's first on and stays open
+  into the next scene. Unchecked by the user so far.
 
 Not done:
 - More characters in their scenes (Genie, Baymax, Ralph, Vanellope, Olaf, WALL-E, Mike, Lightning
@@ -937,3 +948,7 @@ Not done:
 - Matching the park to the second when the board cuts in late: needs a player that starts
   mid-file (sox's `play file.wav trim <s>`, ffplay `-ss`), installed on every board.
 - Check the sync by ear on a board: the log names each scene as it starts.
+- Check by ear on a board: audio 268-303 (Out There, then Touch the Sky / Up at 303). Gemini's two
+  chunks disagreed there; the score follows the more detailed one.
+- The real show's projected characters (Mufasa in the clouds, Hercules, the stained-glass heroes)
+  aren't drawn: that's the character batches above.

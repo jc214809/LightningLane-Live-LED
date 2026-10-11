@@ -154,15 +154,15 @@ def test_embers_fall_and_fade():
 
 def test_the_final_flash_whites_out_the_board_once_then_fades():
     show = MusicShow(64, 32, random.Random(12))
-    final = _cue(start=0, end=10, rate=0, effects={"final_flash"})
-    show.set_cue(final, 8.5)
-    assert show.white == 0, "not until the last second"
-    show.set_cue(final, 9.2)
+    show.set_cue(_cue(start=0, end=6, rate=0), 5.9)
+    assert show.white == 0, "not before its scene"
+    last_hit = _cue(title="last hit", start=6, end=10, rate=0, effects={"final_flash"})
+    show.set_cue(last_hit, 6)
     pixels = show.frame_pixels()
-    assert len(pixels) == 64 * 32 and min(min(rgb) for rgb in pixels.values()) == 255
-    for _ in range(60):
+    assert len(pixels) == 64 * 32 and min(min(rgb) for rgb in pixels.values()) == 255, "on the hit"
+    for i in range(60):
         show.step()
-        show.set_cue(final, 9.5)
+        show.set_cue(last_hit, 6 + i / 30)
     assert show.white < 0.02, "fades, and doesn't fire again"
 
 
@@ -310,4 +310,4 @@ def test_the_fireworks_hold_back_while_tink_flies():
 
 
 def test_tink_flies_in_happily_ever_afters_you_can_fly():
-    assert "tink" in load_score("happily-ever-after").cue_at(1041).effects
+    assert "tink" in load_score("happily-ever-after").cue_at(1043).effects

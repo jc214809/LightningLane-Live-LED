@@ -14,7 +14,7 @@ def hea():
 
 def test_happily_ever_after_has_a_score(hea):
     assert hea.name == "happily-ever-after"
-    assert hea.end == 1102
+    assert hea.end == 1104, "the music has faded to silence by 1104"
 
 
 def test_the_scenes_cover_the_show_end_to_end(hea):
@@ -33,19 +33,34 @@ def test_every_cue_uses_known_looks_shapes_and_effects(hea):
         assert cue.palette and all(max(c) >= 80 for c in cue.palette), "bursts bright enough to see"
 
 
+# Times from watching the real show (docs/shows/happily-ever-after/README.md).
 @pytest.mark.parametrize("t, title, rate, castle, effects", [
-    (0, "Theme instrumental", 1.0, None, {"searchlights", "keyhole_glow"}),
+    (0, "Theme fanfare", 0, "amber", {"searchlights", "keyhole_glow"}),
     (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
-    (400, "Silence", 0, None, set()),
-    (700, "I See the Light", 0, None, {"lanterns"}),
-    (830, "He's a Pirate", 1.6, "fire", set()),
+    (270, "Out There", 0.9, "stone", {"doves", "bells", "comet_fan", "willow"}),
+    (400, "Aladdin: a best friend by your side", 0, "blue", {"smoke"}),
+    (700, "I See the Light (lanterns)", 0.15, "blue", {"lanterns", "willow"}),
+    (780, "He's a Pirate", 1.4, "fire", {"flame_jets"}),
     (865, "Embers", 0, "dark", {"embers"}),
-    (950, "Go the Distance", 1.2, "stained_glass", set()),
-    (1100, "Final chorus, keyhole opens", 2.5, None, {"rainbow", "final_flash", "keyhole_open"}),
+    (950, "Go the Distance", 1.6, "stained_glass", {"willow", "comet_fan"}),
+    (1095, "Final chorus, keyhole opens", 2.6, "gold", {"rainbow", "keyhole_open", "comet_fan"}),
+    (1100, "The last hit", 0.6, "gold", {"final_flash", "keyhole_open", "willow"}),
 ])
 def test_cue_at(hea, t, title, rate, castle, effects):
     cue = hea.cue_at(t)
     assert (cue.title, cue.rate, cue.castle, set(cue.effects)) == (title, pytest.approx(rate), castle, effects)
+
+
+def test_the_sky_stays_dark_until_the_theme_chorus(hea):
+    """The real show fires nothing for its first 98 seconds: the castle and searchlights carry it."""
+    assert all(c.rate == 0 for c in hea.cues if c.start < 98)
+    assert hea.cue_at(98).rate > 1
+
+
+def test_the_flash_lands_on_the_last_hit(hea):
+    """The music's last big hit is at 1099.6-1100 in the audio; the flash fires as its scene starts."""
+    flash = next(c for c in hea.cues if "final_flash" in c.effects)
+    assert 1099 <= flash.start <= 1100.5
 
 
 def test_cue_at_past_either_end_holds_the_first_or_last_scene(hea):
@@ -54,8 +69,8 @@ def test_cue_at_past_either_end_holds_the_first_or_last_scene(hea):
 
 
 def test_rate_defaults_to_the_sections_intensity(hea):
-    # Touch the Sky sets no rate: the journey section's 0.7 against the everyday 0.6.
-    assert hea.cue_at(300).rate == pytest.approx(0.7 / 0.6)
+    # Hakuna Matata sets no rate: the friendship section's 0.8 against the everyday 0.6.
+    assert hea.cue_at(450).rate == pytest.approx(0.8 / 0.6)
 
 
 def test_dim_palette_colours_are_dropped(tmp_path):

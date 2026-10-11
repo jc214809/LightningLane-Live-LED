@@ -29,6 +29,15 @@ CASTLE_LOOKS = {
     "pink": {"W": (250, 175, 210), "R": (220, 90, 160)},
     # Gold, its walls tiled in coloured glass (_STAINED_GLASS) as it fades in.
     "stained_glass": {"W": (255, 215, 120), "R": (230, 160, 40)},
+    # From watching the real show (docs/shows/happily-ever-after/README.md):
+    "amber": {"W": (255, 150, 60), "R": (60, 90, 230)},  # the opening: warm amber walls, blue spires
+    "royal": {"W": (220, 60, 80), "R": (120, 50, 200)},  # the theme song's red and purple filigree
+    "pastel": {"W": (210, 170, 245), "R": (90, 210, 215)},  # When You Wish: lavender and turquoise
+    "stone": {"W": (150, 150, 160), "R": (70, 120, 70)},  # Out There: gothic stone and moss
+    "sunset": {"W": (255, 175, 60), "R": (225, 70, 40)},  # Hakuna Matata
+    "monsters": {"W": (70, 200, 200), "R": (130, 70, 210)},  # That's What Friends Are For
+    "ice": {"W": (170, 210, 255), "R": (120, 90, 220)},  # Olaf
+    "crimson": {"W": (130, 30, 45), "R": (40, 40, 90)},  # the Emperor: crimson on dark navy
 }
 _STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}
@@ -40,7 +49,9 @@ WISH_LANDS_AT = 0.7
 WISH_RGB, WISH_GLOW_RGB = (255, 255, 230), (255, 220, 120)
 LANTERN_RGB = (255, 150, 40)
 EMBER_RGB = (255, 70, 20)
-FINAL_FLASH_S = 1.0  # the white flash this long before the final scene ends
+# Gold willows: most bursts in a "willow" scene hang and droop in long-lived gold.
+WILLOW_CHANCE = 0.7
+WILLOW_RGB = (255, 185, 70)
 # "You Can Fly": Tink (her park-title sprite, doubled on 64x64 like there) takes off from the spire
 # and arcs up and out to the right in TINK_FLY_S, while the fireworks hold back to TINK_RATE.
 TINK_FLY_S = 12.0
@@ -133,7 +144,7 @@ SHAPES = {
     "jellyfish": _jellyfish(),
 }
 # Effects drawn here; show_effects.py has the rest.
-_OWN_EFFECTS = {"wishing_star", "lanterns", "embers", "rainbow", "final_flash", "tink"}
+_OWN_EFFECTS = {"wishing_star", "lanterns", "embers", "rainbow", "final_flash", "tink", "willow"}
 EFFECTS = _OWN_EFFECTS | set(show_effects.EFFECTS)
 
 
@@ -222,7 +233,8 @@ class MusicShow:
                 self.castle_look = cue.castle
         flying = "tink" in self.effects and t < cue.start + TINK_FLY_S
         self.rate = cue.rate * (TINK_RATE if flying else 1.0)
-        if "final_flash" in self.effects and not self.flashed and t >= cue.end - FINAL_FLASH_S:
+        # The white flash on the show's last hit: its scene starts on the hit.
+        if "final_flash" in self.effects and not self.flashed:
             self.white, self.flashed = 1.0, True
 
     def _castle_now(self):
@@ -278,6 +290,13 @@ class MusicShow:
             for px, py, rgb in SHAPES[rocket.shape]:
                 self.sparks.append(_Spark(rocket.x, rocket.y, px * speed, py * speed, MICKEY_LIFE,
                                           rgb or rocket.color, gravity=GRAVITY * 0.2))
+        elif "willow" in self.effects and rng.random() < WILLOW_CHANCE:
+            # Slow sparks that live long and droop, trailing gold.
+            for _ in range(self.spark_count):
+                angle = rng.uniform(0, 2 * math.pi)
+                speed = self.spark_speed * rng.uniform(0.4, 0.9)
+                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
+                                          rng.randint(60, 90), WILLOW_RGB, gravity=GRAVITY * 0.6))
         else:
             second = self._colour() if rng.random() < 0.35 else None
             ring = rng.random() < 0.3

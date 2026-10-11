@@ -33,12 +33,22 @@ def test_every_effect_is_known_to_the_score():
 @pytest.mark.parametrize("name", sorted(show_effects.EFFECTS))
 @pytest.mark.parametrize("height", [32, 64])
 def test_each_effect_draws_something_on_the_board(name, height):
+    """Somewhere in its first 12 seconds (some come and go, like flame jets)."""
     _, plain = _frame((), height=height)
-    show, frame = _frame((name,), height=height)
-    assert frame != plain, f"{name} drew nothing"
-    for (x, y), rgb in frame.items():
-        assert 0 <= x < 64 and 0 <= y < height
-        assert len(rgb) == 3 and all(isinstance(c, int) and 0 <= c <= 255 for c in rgb)
+    show = MusicShow(64, height, random.Random(1))
+    show.stars = []
+    cue, drew = _cue(effects=(name,)), False
+    for i in range(12 * 30):
+        show.set_cue(cue, i / 30)
+        show.step()
+        if i % 10:
+            continue
+        frame = show.frame_pixels()
+        drew = drew or frame != plain
+        for (x, y), rgb in frame.items():
+            assert 0 <= x < 64 and 0 <= y < height
+            assert len(rgb) == 3 and all(isinstance(c, int) and 0 <= c <= 255 for c in rgb)
+    assert drew, f"{name} drew nothing"
 
 
 @pytest.mark.parametrize("name", sorted(show_effects.EFFECTS))
@@ -118,11 +128,83 @@ def test_the_keyhole_opens_from_the_door_to_the_whole_sky():
     show = MusicShow(64, 32, random.Random(8))
     show.stars = []
     cue = _cue(start=0, end=19, effects=("keyhole_open",))
-    show.set_cue(cue, 1)
+    _run(show, cue, 1)
     early = sum(1 for rgb in show.frame_pixels().values() if rgb[0] > 0)
-    show.set_cue(cue, 18)
+    _run(show, cue, 11, start=1)
     late = sum(1 for rgb in show.frame_pixels().values() if rgb[0] > 0)
     assert late > 3 * early
+
+
+def test_the_keyhole_stays_open_into_the_next_scene_that_keeps_it():
+    """The last hit is its own scene: the keyhole mustn't close and open again on it."""
+    show = MusicShow(64, 32, random.Random(8))
+    _run(show, _cue(start=0, end=13, effects=("keyhole_open",)), 13)
+    keyhole = show.extras["keyhole_open"]
+    assert keyhole.opened() == 1
+    _run(show, _cue(start=13, end=17, effects=("keyhole_open",), title="last hit"), 1, start=13)
+    assert keyhole.opened() == 1
+    _run(show, _cue(start=17, end=30, title="after"), 1, start=17)
+    assert keyhole.opened() == 0
+
+
+@pytest.mark.parametrize("name, colours", [
+    ("searchlights", show_effects.Searchlights.COLOURS),
+    ("searchlights_gold", show_effects.GoldSearchlights.COLOURS),
+    ("searchlights_green", show_effects.GreenSearchlights.COLOURS),
+    ("searchlights_teal", show_effects.TealSearchlights.COLOURS),
+])
+def test_searchlights_shine_in_their_colours(name, colours):
+    show = MusicShow(64, 32, random.Random(14))
+    show.set_cue(_cue(effects=(name,)), 1)
+    pixels = {}
+    show.extras[name].draw_behind(lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb), pixels, True)
+    # The beam's brightest LED, at its foot, is 85% of its colour.
+    assert {tuple(int(c * 0.85) for c in rgb) for rgb in colours} <= set(pixels.values())
+
+
+def test_party_searchlights_change_colour():
+    show = MusicShow(64, 32, random.Random(15))
+    beams = show.extras["searchlights_party"]
+    show.t = 0
+    first = beams.colours()
+    show.t = 2
+    assert beams.colours() != first
+
+
+def test_comet_fans_rise_from_the_castles_foot_and_spread_out():
+    show = MusicShow(64, 32, random.Random(16))
+    _run(show, _cue(effects=("comet_fan",)), 1 / 30)
+    comets = show.extras["comet_fan"].comets
+    assert len(comets) >= 5
+    assert all(c[1] >= show.height - 2 and c[3] < 0 for c in comets), "from the ground, going up"
+    assert min(c[2] for c in comets) < 0 < max(c[2] for c in comets), "fanning both ways"
+
+
+def test_crossing_comets_cross_over_the_spire():
+    show = MusicShow(64, 32, random.Random(17))
+    effect = show.extras["crossing_comets"]
+    _run(show, _cue(effects=("crossing_comets",)), 1 / 30)
+    left, right = sorted(effect.comets[:2], key=lambda c: c[0])
+    assert left[0] < show.spire[0] < right[0] and left[2] > 0 > right[2], "from either side, heading in"
+
+
+def test_flame_jets_burst_from_the_castle_and_light_it():
+    show = MusicShow(64, 32, random.Random(18))
+    show.set_cue(_cue(effects=("flame_jets",)), 0)
+    show.step()
+    jets = show.extras["flame_jets"].jets
+    assert jets and all((x, y) in show.extras["flame_jets"].spots for x, y, _ in jets)
+    assert show.flash[0] > 0.5, "the castle lights up red-orange"
+
+
+def test_willow_bursts_hang_in_gold():
+    show = MusicShow(64, 32, random.Random(19))
+    show.set_cue(_cue(effects=("willow",)), 0)
+    from display.fireworks.music_show import WILLOW_RGB, _Rocket
+    for _ in range(10):
+        show._explode(_Rocket(32, 10, 0, -1, 10, (0, 0, 255)))
+    gold = [s for s in show.sparks if s.color == WILLOW_RGB]
+    assert gold and min(s.life for s in gold) >= 60, "long-lived gold"
 
 
 @pytest.mark.parametrize("shape, colours", [
@@ -162,7 +244,5 @@ def test_new_castle_looks_change_the_walls(look):
 
 
 def test_every_scene_in_the_show_has_a_look():
-    """Apart from its silences and Emperor's warning, every scene does something of its own."""
-    plain = [c.title for c in load_score("happily-ever-after").cues
-             if not (c.effects or c.shapes or c.castle) and c.title not in ("Silence", "The Emperor's warning")]
+    plain = [c.title for c in load_score("happily-ever-after").cues if not (c.effects or c.shapes or c.castle)]
     assert plain == []

@@ -1,68 +1,125 @@
 {
-  "audio": "Happily_Ever_After_Full_Show_Audio.mp3",
-  "show_end": 1102,
-  "note": "Seconds. Section breaks match silences/shifts in this recording; scene times inside sections are from published song lengths and are within a few seconds.",
+  "audio": "happily-ever-after.wav (sounds/, gitignored)",
+  "show_end": 1104,
+  "note": "Seconds into the audio. Re-timed 2026-10-11 from watching a recording of the real show (docs/shows/happily-ever-after/README.md): its times are converted to this audio by measured alignment, and the big boundaries are snapped to hits and silences in the audio itself.",
   "sources": [
     "forums.wdwmagic.com/threads/deconstructing-happily-ever-after.927091",
-    "en.wikipedia.org/wiki/Happily_Ever_After_(Magic_Kingdom)"
+    "en.wikipedia.org/wiki/Happily_Ever_After_(Magic_Kingdom)",
+    "youtube.com/watch?v=-LncKUxWMsQ (docs/shows/happily-ever-after/)"
   ],
   "sections": [
     {
       "id": "opening",
       "start": 0,
-      "end": 131,
+      "end": 98,
       "palette": [
         "#FFFFFF",
         "#7FB2FF",
         "#FFD36B",
-        "#C1121F"
+        "#E0242F"
       ],
       "intensity": 0.6,
       "scenes": [
         {
           "start": 0,
-          "end": 20,
-          "title": "Theme instrumental",
+          "end": 19,
+          "title": "Theme fanfare",
           "characters": [],
-          "look": "Blue and orange, keyhole glow, searchlights",
+          "look": "Warm amber castle, blue spires, the keyhole glowing gold, white searchlights crisscrossing; no fireworks",
+          "rate": 0,
+          "castle": "amber",
           "effects": [
             "searchlights",
             "keyhole_glow"
           ]
         },
         {
-          "start": 20,
-          "end": 63,
+          "start": 19,
+          "end": 47,
           "title": "Narrator opening",
           "characters": [],
-          "look": "Dim, slow twinkles",
-          "rate": 0.15,
+          "look": "Searchlights off, the keyhole dims, the sky dark",
+          "rate": 0,
+          "castle": "amber",
           "effects": [
             "starfield"
           ]
         },
         {
-          "start": 63,
-          "end": 131,
+          "start": 47,
+          "end": 63,
           "title": "Happily Ever After theme song",
           "characters": [],
-          "look": "Gold sparkle stream, then red and gold; heart burst near the end",
-          "shapes": {
-            "heart": 0.08,
-            "mickey": 0.1
-          },
+          "look": "Gold ribbons swirl, the keyhole glows; still no fireworks",
+          "rate": 0,
+          "castle": "amber",
           "effects": [
-            "gold_stream"
+            "gold_stream",
+            "keyhole_glow"
+          ]
+        },
+        {
+          "start": 63,
+          "end": 98,
+          "title": "Theme song builds",
+          "characters": [],
+          "look": "Red, purple and gold filigree on the castle, yellow and cyan searchlights; still no fireworks",
+          "rate": 0,
+          "castle": "royal",
+          "effects": [
+            "searchlights_gold",
+            "keyhole_glow"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chorus",
+      "start": 98,
+      "end": 137,
+      "palette": [
+        "#E0242F",
+        "#FFD36B",
+        "#FFFFFF"
+      ],
+      "intensity": 1.2,
+      "scenes": [
+        {
+          "start": 98,
+          "end": 119,
+          "title": "Theme chorus",
+          "characters": [],
+          "look": "The show's first fireworks on the chorus: red and gold peonies, then a red, gold and white strobe barrage",
+          "rate": 2.2,
+          "castle": "royal",
+          "shapes": {
+            "heart": 0.06,
+            "mickey": 0.08
+          }
+        },
+        {
+          "start": 119,
+          "end": 137,
+          "title": "Theme chorus (gold canopy)",
+          "characters": [],
+          "look": "A huge gold palm and willow canopy, a gold brocade crown fading to smoke",
+          "rate": 1.6,
+          "castle": "royal",
+          "palette": [
+            "#FFD36B",
+            "#FFFFFF"
+          ],
+          "effects": [
+            "willow"
           ]
         }
       ]
     },
     {
       "id": "dreams",
-      "start": 131,
-      "end": 268,
+      "start": 137,
+      "end": 303,
       "palette": [
-        "#1B2A6B",
         "#FFFFFF",
         "#FFD36B",
         "#3BB3E0"
@@ -70,11 +127,11 @@
       "intensity": 0.55,
       "scenes": [
         {
-          "start": 131,
-          "end": 144,
+          "start": 137,
+          "end": 150,
           "title": "Wishing star lands on the castle",
           "characters": [],
-          "look": "Castle turns blue, one bright star",
+          "look": "Music-box transition: the castle turns royal blue, the sky dark, one bright star",
           "rate": 0,
           "castle": "blue",
           "effects": [
@@ -82,137 +139,207 @@
           ]
         },
         {
-          "start": 144,
-          "end": 174,
+          "start": 150,
+          "end": 171,
           "title": "Down in New Orleans (prologue)",
           "characters": [
-            "Tiana"
+            "Tiana",
+            "Ray"
           ],
-          "look": "Evening star, warm gold",
+          "look": "Midnight blue, Evangeline the evening star twinkling, small single comets",
+          "rate": 0.3,
+          "castle": "blue",
+          "palette": [
+            "#FFD36B",
+            "#FFFFFF"
+          ],
           "effects": [
             "evening_star"
           ]
         },
         {
-          "start": 174,
-          "end": 184,
-          "title": "When You Wish Upon a Star",
-          "characters": [],
-          "look": "Soft starfield",
-          "rate": 0.3,
+          "start": 171,
+          "end": 192,
+          "title": "When You Wish Upon a Star (fanfare)",
+          "characters": [
+            "Ray"
+          ],
+          "look": "Brass fanfare: a fan of white and gold comets, gold chrysanthemums, green and white glitter",
+          "rate": 1.0,
+          "castle": "blue",
+          "palette": [
+            "#FFFFFF",
+            "#FFD36B",
+            "#3EC300"
+          ],
           "shapes": {
-            "star": 0.4
+            "star": 0.3
           },
           "effects": [
-            "starfield"
+            "comet_fan"
           ]
         },
         {
-          "start": 184,
-          "end": 212,
+          "start": 192,
+          "end": 215,
           "title": "Part of Your World",
           "characters": [
-            "Ariel",
-            "Remy",
-            "Rapunzel"
+            "Ariel"
           ],
-          "look": "Underwater blues, bubbles, jellyfish bursts",
+          "look": "Underwater turquoise and navy, glowing bubbles, sparse gold willows dripping over the spires",
+          "rate": 0.45,
           "castle": "blue",
-          "effects": [
-            "bubbles"
+          "palette": [
+            "#FFD36B",
+            "#3BB3E0"
           ],
-          "shapes": {
-            "jellyfish": 0.3
-          }
-        },
-        {
-          "start": 212,
-          "end": 220,
-          "title": "When You Wish Upon a Star",
-          "characters": [],
-          "look": "Soft starfield",
-          "rate": 0.3,
-          "shapes": {
-            "star": 0.4
-          },
           "effects": [
-            "starfield"
+            "bubbles",
+            "willow"
           ]
         },
         {
-          "start": 220,
+          "start": 215,
+          "end": 256,
+          "title": "Part of Your World (climax)",
+          "characters": [
+            "Ariel"
+          ],
+          "look": "Sunbeams through the water, magenta and ruby peonies, gold and white brocade",
+          "rate": 1.0,
+          "castle": "blue",
+          "palette": [
+            "#FF2E88",
+            "#C1121F",
+            "#FFD36B",
+            "#FFFFFF"
+          ],
+          "effects": [
+            "bubbles"
+          ]
+        },
+        {
+          "start": 256,
           "end": 268,
+          "title": "When You Wish Upon a Star (interlude)",
+          "characters": [],
+          "look": "Lavender, pink and turquoise castle; magenta and purple comets fanning left and right",
+          "rate": 0.4,
+          "castle": "pastel",
+          "palette": [
+            "#FF2EC8",
+            "#9C6ADE"
+          ],
+          "effects": [
+            "comet_fan"
+          ]
+        },
+        {
+          "start": 268,
+          "end": 303,
           "title": "Out There",
           "characters": [
             "Quasimodo"
           ],
-          "look": "Bells ringing, doves, stone gray and gold",
+          "look": "Cathedral bells, gothic stone and moss, doves; gold willow, emerald and white strobes, red and gold comets",
+          "rate": 0.9,
+          "castle": "stone",
+          "palette": [
+            "#FFD36B",
+            "#20D060",
+            "#FFFFFF",
+            "#C1121F"
+          ],
           "effects": [
             "doves",
-            "bells"
+            "bells",
+            "comet_fan",
+            "willow"
           ]
         }
       ]
     },
     {
       "id": "journey",
-      "start": 268,
+      "start": 303,
       "end": 398,
       "palette": [
-        "#2E7D32",
+        "#3EC300",
         "#3BB3E0",
-        "#0F6E56",
-        "#FFD36B"
+        "#FFD36B",
+        "#FFFFFF"
       ],
       "intensity": 0.7,
       "scenes": [
         {
-          "start": 268,
-          "end": 315,
-          "title": "Touch the Sky",
+          "start": 303,
+          "end": 325,
+          "title": "Touch the Sky / Up",
           "characters": [
             "Merida",
-            "Flik",
-            "Lightning McQueen",
-            "Up house",
-            "Nemo",
-            "Crush",
-            "Dory"
+            "Carl",
+            "Up house"
           ],
-          "look": "Green growth, arrow bullseye, then ocean water rising",
+          "look": "Bagpipes and tartan; Up's balloons fill the castle and lift the house; red, green and blue comets",
+          "rate": 0.8,
           "castle": "jungle",
+          "palette": [
+            "#E0242F",
+            "#3EC300",
+            "#3B6BFF",
+            "#FFD36B"
+          ],
           "shapes": {
-            "bullseye": 0.2
+            "bullseye": 0.15
           },
           "effects": [
-            "water"
+            "balloons"
           ]
         },
         {
-          "start": 315,
-          "end": 322,
-          "title": "Interlude",
-          "characters": [],
-          "look": "Calm water",
-          "rate": 0.3,
-          "effects": [
-            "water"
-          ]
-        },
-        {
-          "start": 322,
-          "end": 398,
+          "start": 325,
+          "end": 370,
           "title": "How Far I'll Go",
           "characters": [
             "Moana",
-            "Maui",
             "Gramma Tala"
           ],
-          "look": "Ocean teal, torches, glowing stingray swirl",
+          "look": "The heart of Te Fiti on the castle, ocean blues, the manta ray; sparse bursts building in green, gold and white",
+          "rate": 0.6,
+          "castle": "blue",
+          "palette": [
+            "#3EC300",
+            "#FFD36B",
+            "#FFFFFF"
+          ],
           "effects": [
+            "te_fiti",
             "water",
             "torches",
             "stingray"
+          ]
+        },
+        {
+          "start": 370,
+          "end": 398,
+          "title": "How Far I'll Go (climax)",
+          "characters": [
+            "Moana"
+          ],
+          "look": "Heavy gold brocade barrage, turquoise searchlights, green and yellow shells",
+          "rate": 1.8,
+          "castle": "blue",
+          "palette": [
+            "#FFD36B",
+            "#3EC300",
+            "#FFE14D"
+          ],
+          "effects": [
+            "water",
+            "torches",
+            "stingray",
+            "searchlights_teal",
+            "willow"
           ]
         }
       ]
@@ -220,7 +347,7 @@
     {
       "id": "friendship",
       "start": 398,
-      "end": 562,
+      "end": 563,
       "palette": [
         "#FF4D6D",
         "#FFD23F",
@@ -231,120 +358,186 @@
       "scenes": [
         {
           "start": 398,
-          "end": 402,
-          "title": "Silence",
-          "characters": [],
-          "look": "Dark",
-          "rate": 0
+          "end": 412.5,
+          "title": "Aladdin: a best friend by your side",
+          "characters": [
+            "Aladdin"
+          ],
+          "look": "Spoken line over gold and purple lamp smoke on a midnight-blue castle",
+          "rate": 0,
+          "castle": "blue",
+          "effects": [
+            "smoke"
+          ]
         },
         {
-          "start": 402,
+          "start": 412.5,
           "end": 428,
           "title": "Friend Like Me (instrumental)",
           "characters": [
             "Aladdin",
             "Genie"
           ],
-          "look": "Lamp smoke, colorful gearworks",
+          "look": "Brass patterns and lanterns on the castle; blue and gold fountains from the roofs, white shells",
+          "rate": 1.3,
+          "castle": "gold",
+          "palette": [
+            "#3B6BFF",
+            "#FFD36B",
+            "#FFFFFF"
+          ],
           "effects": [
-            "smoke"
+            "fountains"
           ]
         },
         {
           "start": 428,
-          "end": 448,
+          "end": 446,
           "title": "Trashin' the Camp",
           "characters": [
-            "Terk",
-            "Tantor"
+            "Terk"
           ],
-          "look": "Jungle green, bouncy bursts",
-          "castle": "jungle"
+          "look": "Vivid green and chartreuse, green flares and green and orange comets on the drums, green searchlights",
+          "rate": 1.0,
+          "castle": "jungle",
+          "palette": [
+            "#3EC300",
+            "#B5FF2E",
+            "#FF8C42"
+          ],
+          "effects": [
+            "searchlights_green",
+            "comet_fan"
+          ]
         },
         {
-          "start": 448,
-          "end": 458,
+          "start": 446,
+          "end": 453,
           "title": "Hakuna Matata",
           "characters": [
             "Timon",
             "Pumbaa"
           ],
-          "look": "Yellow lion-head bursts with red manes",
+          "look": "Timon and Pumbaa in sunset yellow, orange and red; red and gold shells",
+          "castle": "sunset",
+          "palette": [
+            "#E0242F",
+            "#FFD36B"
+          ],
           "shapes": {
             "lion": 0.4
           }
         },
         {
-          "start": 458,
-          "end": 472,
+          "start": 453,
+          "end": 459,
           "title": "You've Got a Friend in Me",
           "characters": [
             "Woody",
-            "Toy Story pals"
+            "Buzz"
           ],
-          "look": "Building blocks, primary colors",
+          "look": "Woody and Buzz on Andy's cloud wallpaper; red and yellow bursts",
+          "castle": "blue",
+          "palette": [
+            "#E0242F",
+            "#FFD23F"
+          ],
           "effects": [
             "blocks"
           ]
         },
         {
-          "start": 472,
-          "end": 502,
+          "start": 459,
+          "end": 514,
           "title": "Friendship mash-up",
           "characters": [
-            "Baloo",
-            "Mowgli",
             "Ralph",
             "Vanellope",
-            "Baymax",
             "Hiro",
+            "Baymax",
             "Judy",
             "Nick",
             "Joy",
             "Sadness"
           ],
-          "look": "Fast multicolor",
-          "rate": 1.6,
+          "look": "Ralph and Vanellope, Hiro and Baymax, Judy and Nick, Joy and Sadness; multicolour searchlights, steady pastel bursts",
+          "rate": 1.1,
+          "palette": [
+            "#FF8FC8",
+            "#7FB2FF",
+            "#7DFF8A",
+            "#FFD36B"
+          ],
           "effects": [
-            "rainbow"
+            "searchlights_party"
           ]
         },
         {
-          "start": 502,
+          "start": 514,
           "end": 527,
           "title": "That's What Friends Are For",
           "characters": [
-            "Sully",
+            "Sulley",
             "Mike"
           ],
-          "look": "Doors flipping, flashing canisters",
+          "look": "Sulley and Mike opening doors across the turrets, turquoise and purple; soft gold shells",
+          "rate": 0.6,
+          "castle": "monsters",
+          "palette": [
+            "#FFD36B",
+            "#FFFFFF"
+          ],
           "shapes": {
             "door": 0.35
           }
         },
         {
           "start": 527,
-          "end": 562,
+          "end": 554,
           "title": "Friend Like Me (Genie)",
           "characters": [
             "Genie"
           ],
-          "look": "Nightclub lights, smiley bursts, rocket launch",
+          "look": "Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, ring shells",
           "rate": 1.6,
+          "castle": "gold",
+          "palette": [
+            "#FF2EC8",
+            "#3EC300",
+            "#FFD36B"
+          ],
           "shapes": {
-            "mickey": 0.1,
-            "smiley": 0.3
+            "mickey": 0.1
           },
           "effects": [
-            "searchlights"
+            "searchlights_party"
+          ]
+        },
+        {
+          "start": 554,
+          "end": 563,
+          "title": "Friend Like Me (finale)",
+          "characters": [
+            "Genie"
+          ],
+          "look": "A huge gold willow barrage with roof fountains showering the castle",
+          "rate": 2.2,
+          "castle": "gold",
+          "palette": [
+            "#FFD36B",
+            "#FFFFFF"
+          ],
+          "effects": [
+            "fountains",
+            "willow"
           ]
         }
       ]
     },
     {
       "id": "love",
-      "start": 562,
-      "end": 721,
+      "start": 563,
+      "end": 724,
       "palette": [
         "#F48FB1",
         "#9C6ADE",
@@ -354,30 +547,48 @@
       "intensity": 0.4,
       "scenes": [
         {
-          "start": 562,
-          "end": 568,
-          "title": "Silence",
-          "characters": [],
-          "look": "Dark",
-          "rate": 0
-        },
-        {
-          "start": 568,
-          "end": 604,
-          "title": "Love Is an Open Door",
+          "start": 563,
+          "end": 576,
+          "title": "Olaf: some people are worth melting for",
           "characters": [
-            "Olaf",
-            "Sea turtles"
+            "Olaf"
           ],
-          "look": "Blue and purple, moon rising",
-          "castle": "purple",
+          "look": "Spoken line; icy blue and purple castle, snowflakes floating up, one gold shell",
+          "rate": 0.15,
+          "castle": "ice",
+          "palette": [
+            "#FFD36B"
+          ],
           "effects": [
-            "moon_rise"
+            "snow"
           ]
         },
         {
-          "start": 604,
-          "end": 620,
+          "start": 576,
+          "end": 603,
+          "title": "Love Is an Open Door",
+          "characters": [
+            "Anna",
+            "Hans"
+          ],
+          "look": "Hearts and rose stained glass, ending royal blue and violet; gold fan comets, pink, violet and gold peonies",
+          "rate": 0.8,
+          "castle": "pink",
+          "palette": [
+            "#FF6FB0",
+            "#9C6ADE",
+            "#FFD36B"
+          ],
+          "shapes": {
+            "heart": 0.25
+          },
+          "effects": [
+            "comet_fan"
+          ]
+        },
+        {
+          "start": 603,
+          "end": 623,
           "title": "Can You Feel the Love Tonight",
           "characters": [
             "WALL-E",
@@ -385,155 +596,251 @@
             "Simba",
             "Nala"
           ],
-          "look": "Starry purple",
+          "look": "Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala; spaced gold, soft pink and violet",
+          "rate": 0.5,
           "castle": "purple",
+          "palette": [
+            "#FFD36B",
+            "#FF8FC8",
+            "#B58CFF"
+          ],
           "shapes": {
             "star": 0.2
           },
           "effects": [
-            "moon_rise",
-            "starfield"
+            "starfield",
+            "moon_rise"
           ]
         },
         {
-          "start": 620,
-          "end": 633,
+          "start": 623,
+          "end": 637,
           "title": "You'll Be in My Heart",
           "characters": [
             "Tarzan",
             "Kala",
-            "Riley",
-            "Dory",
-            "Carl",
-            "Russell",
             "Dumbo",
-            "Judy",
-            "The Incredibles"
+            "Mrs. Jumbo"
           ],
-          "look": "Warm hug glow, heart burst",
+          "look": "Magenta, lavender and gold; Tarzan and Kala, Dumbo and Mrs. Jumbo; pink, violet and white with comets from the terraces",
+          "rate": 0.8,
+          "castle": "pink",
+          "palette": [
+            "#FF6FB0",
+            "#B58CFF",
+            "#FFFFFF"
+          ],
           "shapes": {
             "heart": 0.4
-          }
+          },
+          "effects": [
+            "comet_fan"
+          ]
         },
         {
-          "start": 633,
-          "end": 664,
+          "start": 637,
+          "end": 668,
           "title": "Princess garden",
           "characters": [
             "Cinderella",
             "Prince Charming",
-            "Aladdin",
-            "Jasmine",
             "Tiana",
+            "Naveen",
             "Ariel",
-            "Eric"
+            "Eric",
+            "Belle",
+            "Beast"
           ],
-          "look": "Pink garden, waterfalls",
+          "look": "Pink and rose stained-glass arches, flowers and waterfalls; gold brocade, pink peonies, gold palms",
+          "rate": 0.9,
+          "castle": "pink",
+          "palette": [
+            "#FFD36B",
+            "#FF6FB0"
+          ],
           "shapes": {
             "heart": 0.15
           },
-          "castle": "pink",
           "effects": [
-            "waterfalls"
+            "waterfalls",
+            "willow"
           ]
         },
         {
-          "start": 664,
-          "end": 721,
+          "start": 668,
+          "end": 697,
           "title": "I See the Light",
           "characters": [
             "Rapunzel",
-            "Eugene"
+            "Flynn"
           ],
-          "look": "Dark sky, slow rising orange lanterns",
-          "rate": 0,
+          "look": "Midnight blue, orange lanterns drifting up; white and gold bursts, then red and gold",
+          "rate": 0.35,
+          "castle": "blue",
           "palette": [
-            "#FFA94D",
-            "#FFD36B"
+            "#FFFFFF",
+            "#FFD36B",
+            "#E0242F"
           ],
           "effects": [
             "lanterns"
+          ]
+        },
+        {
+          "start": 697,
+          "end": 724,
+          "title": "I See the Light (lanterns)",
+          "characters": [
+            "Rapunzel",
+            "Flynn"
+          ],
+          "look": "A quiet sky full of lanterns, sparse gold willows",
+          "rate": 0.15,
+          "castle": "blue",
+          "palette": [
+            "#FFD36B"
+          ],
+          "effects": [
+            "lanterns",
+            "willow"
           ]
         }
       ]
     },
     {
       "id": "adversity",
-      "start": 721,
-      "end": 860,
+      "start": 724,
+      "end": 849,
       "palette": [
         "#39FF14",
-        "#6A0DAD",
-        "#C1121F",
+        "#8A2BE2",
+        "#E0242F",
         "#FF8C42"
       ],
       "intensity": 0.85,
       "scenes": [
         {
-          "start": 721,
+          "start": 724,
           "end": 742,
           "title": "The Emperor's warning",
           "characters": [
             "Emperor of China"
           ],
-          "look": "Dim, tense",
-          "rate": 0.2
-        },
-        {
-          "start": 742,
-          "end": 782,
-          "title": "Villains attack",
-          "characters": [
-            "Syndrome",
-            "Omnidroid",
-            "Mr. Incredible",
-            "Ursula",
-            "Eric"
-          ],
-          "look": "Electric green and purple bolts",
-          "rate": 1.4,
-          "castle": "green",
-          "effects": [
-            "bolts"
+          "look": "\"The flower that blooms in adversity...\", a gong; dark navy and crimson, low crimson and gold comets",
+          "rate": 0.3,
+          "castle": "crimson",
+          "palette": [
+            "#E0242F",
+            "#FFD36B"
           ]
         },
         {
-          "start": 782,
-          "end": 815,
+          "start": 742,
+          "end": 760,
+          "title": "Villains attack",
+          "characters": [
+            "Ursula",
+            "Scar",
+            "Hades"
+          ],
+          "look": "Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts",
+          "rate": 1.4,
+          "castle": "green",
+          "effects": [
+            "bolts",
+            "searchlights_green"
+          ]
+        },
+        {
+          "start": 760,
+          "end": 777,
           "title": "To Die For",
           "characters": [
-            "Scar",
-            "Mufasa",
-            "Jafar",
             "Maleficent",
-            "Philip"
+            "Jafar"
           ],
-          "look": "Red and green flashes, dragon fire",
+          "look": "Villains build; green dragon fire (the split from the attack is a guess: the video didn't show one)",
           "rate": 1.2,
+          "castle": "green",
           "effects": [
+            "bolts",
             "green_fire"
           ]
         },
         {
-          "start": 815,
-          "end": 860,
+          "start": 777,
+          "end": 806,
           "title": "He's a Pirate",
           "characters": [
-            "Pirates",
-            "Merida",
-            "Mulan",
-            "Philip"
+            "Pirates"
           ],
-          "look": "Castle on fire, orange and red explosions",
-          "rate": 1.6,
-          "castle": "fire"
+          "look": "The castle cracks and burns; flame jets on the terraces; red, orange and gold",
+          "rate": 1.4,
+          "castle": "fire",
+          "palette": [
+            "#E0242F",
+            "#FF8C42",
+            "#FFD36B"
+          ],
+          "effects": [
+            "flame_jets"
+          ]
+        },
+        {
+          "start": 806,
+          "end": 812,
+          "title": "He's a Pirate (green barrage)",
+          "characters": [],
+          "look": "Emerald shells and lime comets",
+          "rate": 2.2,
+          "castle": "fire",
+          "palette": [
+            "#20D060",
+            "#B5FF2E"
+          ],
+          "effects": [
+            "flame_jets"
+          ]
+        },
+        {
+          "start": 812,
+          "end": 837,
+          "title": "He's a Pirate (red and gold)",
+          "characters": [],
+          "look": "Dense red chrysanthemums and gold willow fans",
+          "rate": 1.8,
+          "castle": "fire",
+          "palette": [
+            "#E0242F",
+            "#FFD36B"
+          ],
+          "effects": [
+            "flame_jets",
+            "willow"
+          ]
+        },
+        {
+          "start": 837,
+          "end": 849,
+          "title": "He's a Pirate (finale)",
+          "characters": [],
+          "look": "A ruby-red and white perimeter finale, smoke",
+          "rate": 2.6,
+          "castle": "fire",
+          "palette": [
+            "#E0242F",
+            "#FFFFFF"
+          ],
+          "effects": [
+            "flame_jets"
+          ]
         }
       ]
     },
     {
       "id": "triumph",
-      "start": 860,
-      "end": 986,
+      "start": 849,
+      "end": 992,
       "palette": [
         "#FFD36B",
         "#FFFFFF",
@@ -543,13 +850,13 @@
       "intensity": 0.7,
       "scenes": [
         {
-          "start": 860,
-          "end": 874,
+          "start": 849,
+          "end": 889,
           "title": "Embers",
           "characters": [
             "Mufasa"
           ],
-          "look": "Dying red embers, Mufasa in the stars",
+          "look": "\"Remember who you are\": the castle near-black with an ember core, Mufasa in the clouds; no fireworks",
           "rate": 0,
           "castle": "dark",
           "effects": [
@@ -557,45 +864,64 @@
           ]
         },
         {
-          "start": 874,
-          "end": 899,
-          "title": "Go the Distance (intro)",
+          "start": 889,
+          "end": 915,
+          "title": "Go the Distance (the castle rebuilds)",
           "characters": [
-            "Mufasa"
+            "Hercules"
           ],
-          "look": "Stars brightening",
-          "rate": 0.3,
+          "look": "Cyan, royal blue and gold columns; Hercules in gold light; the keyhole glows; sky nearly dark",
+          "rate": 0.15,
+          "castle": "blue",
           "shapes": {
-            "star": 0.4
-          }
+            "star": 0.3
+          },
+          "effects": [
+            "starfield",
+            "keyhole_glow"
+          ]
         },
         {
-          "start": 899,
-          "end": 986,
+          "start": 915,
+          "end": 976,
           "title": "Go the Distance",
           "characters": [
             "Hercules",
-            "Aladdin",
+            "Megara",
             "Tarzan",
+            "Jane",
             "Mulan",
-            "Moana",
-            "Anna",
-            "Elsa",
-            "Tiana",
-            "Woody",
-            "Merida",
-            "Belle"
+            "Merida"
           ],
-          "look": "Castle rebuilds, gold stained glass, rising bursts",
-          "rate": 1.2,
-          "castle": "stained_glass"
+          "look": "Stained-glass hero windows in gold; gold and white willows and peonies, side comet plumes, rainbow comets",
+          "rate": 1.6,
+          "castle": "stained_glass",
+          "effects": [
+            "willow",
+            "comet_fan"
+          ]
+        },
+        {
+          "start": 976,
+          "end": 992,
+          "title": "Go the Distance (gold canopy)",
+          "characters": [],
+          "look": "Smiley and ring shells, green side comets, a gold willow canopy",
+          "rate": 1.4,
+          "castle": "stained_glass",
+          "shapes": {
+            "smiley": 0.25
+          },
+          "effects": [
+            "willow"
+          ]
         }
       ]
     },
     {
       "id": "conclusion",
-      "start": 986,
-      "end": 1010,
+      "start": 992,
+      "end": 1017,
       "palette": [
         "#FFF6C7",
         "#FFFFFF"
@@ -603,22 +929,24 @@
       "intensity": 0.25,
       "scenes": [
         {
-          "start": 986,
-          "end": 1010,
+          "start": 992,
+          "end": 1017,
           "title": "Narrator closing",
           "characters": [],
-          "look": "Mostly dark, gentle sparkles",
-          "rate": 0.2,
+          "look": "\"Find your Happily Ever After\": stained glass still lit, the keyhole glows, searchlights pan; no fireworks",
+          "rate": 0,
+          "castle": "stained_glass",
           "effects": [
-            "starfield"
+            "keyhole_glow",
+            "searchlights"
           ]
         }
       ]
     },
     {
       "id": "finale",
-      "start": 1010,
-      "end": 1102,
+      "start": 1017,
+      "end": 1104,
       "palette": [
         "#FF4D6D",
         "#FFD23F",
@@ -630,28 +958,38 @@
       "intensity": 1.0,
       "scenes": [
         {
-          "start": 1010,
-          "end": 1041,
-          "title": "Happily Ever After (reprise) builds",
+          "start": 1017,
+          "end": 1042.2,
+          "title": "Happily Ever After (reprise)",
           "characters": [],
-          "look": "Colors cycle, building",
-          "rate": 1.3,
-          "shapes": {
-            "mickey": 0.15
-          },
+          "look": "Gold scrollwork, the keyhole beams; gold comets crossing over the spires, gold and white spotlights",
+          "rate": 0.4,
+          "castle": "gold",
+          "palette": [
+            "#FFD36B",
+            "#FFFFFF"
+          ],
           "effects": [
-            "searchlights"
+            "keyhole_glow",
+            "crossing_comets",
+            "searchlights_gold"
           ]
         },
         {
-          "start": 1041,
-          "end": 1083,
+          "start": 1042.2,
+          "end": 1080,
           "title": "You Can Fly",
           "characters": [
             "Tinker Bell"
           ],
-          "look": "Pixie dust trail across the display, then full color",
-          "rate": 1.4,
+          "look": "Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple",
+          "rate": 1.5,
+          "palette": [
+            "#FFD36B",
+            "#E0242F",
+            "#B5FF2E",
+            "#9C6ADE"
+          ],
           "shapes": {
             "mickey": 0.1,
             "star": 0.1
@@ -661,23 +999,56 @@
           ]
         },
         {
-          "start": 1083,
-          "end": 1102,
+          "start": 1080,
+          "end": 1087,
+          "title": "You Can Fly (gold arcs)",
+          "characters": [],
+          "look": "Gold comets arching over the spire",
+          "rate": 1.2,
+          "palette": [
+            "#FFD36B",
+            "#FFFFFF"
+          ],
+          "effects": [
+            "crossing_comets"
+          ]
+        },
+        {
+          "start": 1087,
+          "end": 1099.6,
           "title": "Final chorus, keyhole opens",
           "characters": [],
-          "look": "Full rainbow barrage, white flash on the last hit",
-          "rate": 2.5,
+          "look": "Castle gold and red; a rainbow barrage, then a white and gold mine fan from the castle's foot",
+          "rate": 2.6,
+          "castle": "gold",
           "effects": [
             "rainbow",
+            "keyhole_open",
+            "comet_fan"
+          ]
+        },
+        {
+          "start": 1099.6,
+          "end": 1104,
+          "title": "The last hit",
+          "characters": [],
+          "look": "\"After!\": the white flash, then gold willows hanging over a castle washed in gold",
+          "rate": 0.6,
+          "castle": "gold",
+          "palette": [
+            "#FFD36B"
+          ],
+          "effects": [
             "final_flash",
-            "keyhole_open"
+            "keyhole_open",
+            "willow"
           ]
         }
       ]
     }
   ],
   "after_show": {
-    "start": 1110,
+    "start": 1107.5,
     "end": 1359,
     "note": "Separate track after the show; not part of it."
   },
