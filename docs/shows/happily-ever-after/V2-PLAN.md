@@ -53,6 +53,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | PoYW climax (215-256) | ghost | Ariel | Sheet | Rises from the bottom toward the top and reaches up (needs a "reach" frame). |
 | Out There (268-303) | castle | Quasimodo | None | Swings on a rope from the spire between the towers (a pendulum). Small, about 10x14. |
 | Touch the Sky / Up (303-325) | ghost | Up house | Code | Rises from behind the castle under a balloon cluster and drifts up and out to the right. |
+| | | Merida | Sheet (`Brave2.jpg` 21x30) | Optional, for Touch the Sky's opening seconds: draws her bow at the side. |
 | | | Dug (cameo) | Have (`kevin`) | Optional: runs along the ground after the house. |
 | How Far I'll Go (325-370) | ghost | Moana | Sheet | Sails a small canoe (Code) across the water effect. |
 | | | Gramma Tala | | The existing `stingray` effect stands in. |
@@ -65,26 +66,26 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Mash-up: Wreck-It (459-473) | off | Ralph | Have | Smashes falling 8-bit bricks (two-fist pose `UP_ART`). |
 | | | Vanellope | Sheet (`Vanellope Von - Car.jpg`) | Zips across in her kart, glitching. |
 | Mash-up: Big Hero 6 (474-481) | off | Baymax | Have | Inflates up from the bottom and waves. (Hiro: None, left out.) |
-| Mash-up: Zootopia (482-493) | off | Judy, Nick | None | Leave out. A neon city skyline (Code) holds the scene. |
-| Mash-up: Inside Out (494-513) | off | Joy, Sadness | None | Don't draw the characters: memory orbs (Code), yellow and blue glowing balls rolling in and stacking. |
+| Mash-up: Zootopia (482-493) | off | Judy, Nick | Sheet (`nick and judy.jpg`, 15x33 and 18x40) | Stand side by side under a neon skyline (Code). Too tall for 64x32 as is: 64x64 only, or cut at the knees there. |
+| Mash-up: Inside Out (494-513) | off | Joy, Sadness | Sheet (`inside_out.jpg`, about 17x25) | Joy and Sadness each roll a memory orb (Code: a glowing yellow and blue ball) in from their side. |
 | That's What Friends Are For (514-527) | castle | Mike | Have | Pops up from behind a turret, blinks (his ride reveal). |
-| | | Sulley | Sheet (`Sulley.jpg`, 64x64) | Peeks round the castle's side on 64x64. |
+| | | Sulley | Sheet (`Monsters_Inc.jpg` 18x25; `Sulley.jpg` 26x33 on 64x64) | Steps out of a door beside the castle while Mike pops up. |
 | Friend Like Me, Genie (527-554) | ghost | Genie | Have | Loops round the sky in the party searchlights, trailing smoke. |
 | Genie finale (554-563) | castle | Genie | Have | Dives back into the lamp as the roof fountains go. |
 | Olaf's line (563-576) | ghost | Olaf | Have | Stands at the base and waves while the snow rises. |
-| Love Is an Open Door (576-603) | castle | Anna | Sheet (villains sheet) | Optional. Hans has no art (a recoloured prince?). Fine with just the look. |
+| Love Is an Open Door (576-603) | castle | Anna | Sheet (`Frozen.jpg` 19x33) | Optional. Hans has no art (a recoloured prince?). Fine with just the look. |
 | Can You Feel the Love (603-613) | off | WALL-E, EVE | Have / Code | The space dance: EVE (a white egg with blue eyes) and WALL-E orbit each other among the stars. |
 | CYFtLT (613-623) | off | Simba, Nala | Sheet (`simba_bricks.png`) | Simba on a rock under the moon. Nala could be a recoloured Simba. |
 | You'll Be in My Heart (623-637) | ghost | Dumbo | Have (back half TODO) | Flies across holding the feather. Mrs. Jumbo, Tarzan, Kala: None. |
 | Princess garden (637-668) | off | 4 couples | Sheet (princes sheet) | One couple every ~7.5 s: they walk in from either side, meet in the middle, and a heart floats up (`jack_sally`'s heart). Cinderella and Charming, Tiana and frog Naveen, Ariel and Eric, Belle and Beast. |
 | I See the Light (668-724) | ghost | Rapunzel, Flynn | Sheet | In a small boat (Code) at the bottom while the lanterns rise around them. |
 | Emperor (724-742) | castle | none | | The Emperor has no art. Keep the look. |
-| Villains (742-760) | ghost | Ursula | Sheet (villains, 64x64) | Rises from the bottom, tentacles first. On 64x32, tentacles only (Code). |
-| | | Scar | Lead | Optional. |
-| | | Hades | Code | Optional: just his blue flame hair blazing at the bottom. |
+| Villains (742-760) | ghost | Ursula | Sheet (`Ursula.jpg` 37x38, `Villains.jpg` 33x42; 64x64) | Rises from the bottom, tentacles first. On 64x32, tentacles only (Code). |
+| | | Scar | Sheet (`Scar.jpg` 24x27) | Glares in from the left; fits both boards. |
+| | | Hades | Sheet (`Male villains.jpg` 31x42; 64x64) | His flame hair flares red as he rises. On 64x32, just the flame hair (Code). |
 | To Die For (760-777) | ghost | Maleficent | Sheet / `Maleficent.jpg` 29x40 | Looms in from the right through the green fire. On 64x32, head and horns peek in. |
-| | | Jafar | Lead | Optional. |
-| He's a Pirate (777-849) | castle | Jack Sparrow | Lead | Optional: a pirate ship silhouette (Code) sails behind the burning castle is cheaper. |
+| | | Jafar | Sheet (`Male villains.jpg` 30x41; 64x64) | Optional. |
+| He's a Pirate (777-849) | castle | Captain Hook | Sheet (`Male villains.jpg` 30x41; 64x64) | Stands in for Jack Sparrow (no art): swaggers past the burning castle. Or a pirate ship silhouette (Code). |
 | Embers / Mufasa (849-889) | castle (dark) | Mufasa | Code | A big dim lion face (the `lion` burst shape, scaled up) fades in over the spire in the clouds, speaks, fades out. |
 | Go the Distance, rebuild (889-915) | ghost | Hercules | Sheet | Rises in gold light at centre as the castle rebuilds. |
 | Go the Distance (915-976) | castle (stained glass) | Hercules, Megara, Mulan, Merida | Sheet | Hero panels: on 64x32, framed 16x22 windows either side of the castle, one hero at a time. On 64x64 the sides are too narrow, so they go in the sky strip, or the stage goes ghost. |
@@ -94,17 +95,43 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 
 ### By art status
 
+Updated 2026-10-11 after the second batch of references (docs/references/README.md has every row):
+
 - **Have (11):** Genie, Olaf, WALL-E, Baymax, Ralph, Mike, Woody, Buzz, Dumbo, Tink, Dug.
-- **Sheet (about 22):** princes sheet: Tiana, frog Naveen, Ariel, Eric, Moana, Maui, Aladdin,
-  Cinderella, Charming, Belle, Beast, Rapunzel, Flynn, Hercules, Megara, Mulan. Villains sheet
-  (64x64 size): Ursula, Maleficent, Anna, Merida. Singles: Simba (`simba_bricks.png`), Vanellope,
-  Sulley.
-- **Code (9):** Ray, EVE, Mufasa's face, the Up house, Moana's canoe, Rapunzel's boat, memory orbs,
-  the neon skyline, Hades' flame (and the pirate ship if wanted).
-- **Lead (6):** Timon, Pumbaa, Terk, Scar, Jafar, Jack Sparrow.
-- **None, proposed to leave out:** Quasimodo (unless drawn from scratch), Carl, Hiro, Judy, Nick,
-  Joy and Sadness as figures, Hans, Kala, Mrs. Jumbo, Tarzan, Jane, the Emperor, Nala (unless
-  recoloured from Simba).
+- **Sheet, fits both boards (about 16x22 to 24x30):** princes sheet: Tiana, frog Naveen, Ariel, Eric,
+  Moana, Maui, Aladdin, Cinderella, Charming, Belle, Beast, Rapunzel, Flynn, Hercules, Megara, Mulan.
+  Also Merida (`Brave2.jpg`), Rapunzel with her pan (`Rapunzel with pan.jpg`), Scar (`Scar.jpg`), Rafiki,
+  Simba (`simba_bricks.png`), Joy and Sadness (`inside_out.jpg`), Sulley (`Monsters_Inc.jpg`), Olaf,
+  Flounder, and the `Princesses with props.jpg` chibis (the princes sheet's size).
+- **Sheet, 64x64 only (33-42 rows):** Ursula, Maleficent, Jafar, Hades, Captain Hook, Anna, Elsa,
+  Belle and Beast (`belle and beast.jpg`), Judy and Nick, and the bigger `Detailed princesses.jpg`
+  princesses. Each needs a 64x32 fallback: the princes-sheet version, a part (a head, tentacles,
+  flame hair), or left out on that board.
+- **Code (8):** Ray, EVE, Mufasa's face, the Up house, Moana's canoe, Rapunzel's boat, memory orbs,
+  the neon skyline.
+- **Not in the show's list, but on hand if wanted:** Nemo, Dory and Flounder could swim through Part
+  of Your World with Ariel. Rafiki could lift his staff while Mufasa speaks. Gothel, Facilier, Cruella,
+  the Evil Queen, Lady Tremaine, Gaston and Frollo could cycle through the villains scene. The rose
+  could be Belle and Beast's moment in the princess garden.
+
+### Still missing (references to look for)
+
+Most useful first:
+1. **A full-size Lion King pattern.** `Lion King.jpg` is a product photo of the right set (Pumbaa,
+   Timon, Nala, Simba, Mufasa, Scar), but each figure is about 40 px tall, too small to count. The
+   chart itself would give Hakuna Matata's Timon and Pumbaa, Nala for Can You Feel the Love Tonight,
+   and a real Mufasa instead of the lion-shape stand-in.
+2. **Quasimodo** for Out There, ideally small (about 10x14), swinging. Nothing yet.
+3. **Bigger princes** (about 24x33) to stand with the `Detailed princesses.jpg` princesses on 64x64:
+   Charming, Eric, Naveen, Flynn, Hercules. Without them, the princess garden uses the princes sheet's
+   matched small pairs, which is fine.
+4. **EVE** for WALL-E's space dance (else a white egg in code).
+5. **Hiro** for Big Hero 6 (Baymax alone works).
+6. **Terk** for Trashin' the Camp, and **Tarzan, Jane, Kala** for You'll Be in My Heart and Go the
+   Distance.
+7. **Mrs. Jumbo** (Dumbo flies alone otherwise; his own art still needs its back half).
+8. **Jack Sparrow** (Captain Hook stands in), **Hans**, **Carl and Russell**, **Gramma Tala** (the
+   stingray stands in), and **the Emperor**: all optional; their scenes hold without them.
 
 ## The code
 
@@ -171,9 +198,10 @@ the boards.
 2. **Princes sheet:** the princess garden couples, Tiana, Ariel, Moana and Maui, Aladdin, Rapunzel
    and Flynn, Hercules, Megara and Mulan. One sheet, mostly two verbs.
 3. **Code shapes:** Ray, EVE, Mufasa, the Up house, the boats, memory orbs, skyline.
-4. **64x64-first:** Ursula, Maleficent, Merida, Anna, Simba, Vanellope, Sulley, each with its
-   64x32 fallback (peek, part, or left out on that board).
-5. **Game rips** once downloaded: Timon and Pumbaa, Terk, Scar, Jafar, Jack Sparrow.
+4. **The rest of the references:** Merida, Simba, Scar, Vanellope, Sulley, Joy and Sadness, then
+   the 64x64-only ones (Ursula, Maleficent, Hades, Jafar, Captain Hook, Anna, Judy and Nick), each
+   with its 64x32 fallback (the small version, a part, or left out on that board).
+5. **Still missing** (the list above) as references turn up: the Lion King set first.
 
 ## Decided (with the user, 2026-10-11)
 

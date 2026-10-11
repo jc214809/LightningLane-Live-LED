@@ -122,3 +122,68 @@ also prints the sprite to paste. A sheet gets one row per character: measure eac
 | [many Starwars .jpg](<many Starwars .jpg>) | An Ewok, head only, tiny | 9 x 7 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
 | [many Starwars .jpg](<many Starwars .jpg>) | R2-D2, tiny | 9 x 6 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
 | [many Starwars .jpg](<many Starwars .jpg>) | Chewbacca | 17 x 27 | Yes | Yes (2x too) | Pattern mode: drag a box round it |
+| [Villains.jpg](Villains.jpg) | The Evil Queen (one of six villainesses on a sheet, each on its own grid) | 31 x 37 | No (5 rows over) | Yes | Pattern mode: box 76,88,256,300 |
+| [Villains.jpg](Villains.jpg) | Maleficent with her staff | 30 x 41 | No (9 rows over) | Yes | Pattern mode: box 276,68,448,300 |
+| [Villains.jpg](Villains.jpg) | Lady Tremaine, the Stepmother | 22 x 35 | No (3 rows over) | Yes | Pattern mode: box 512,100,640,300 |
+| [Villains.jpg](Villains.jpg) | Mother Gothel | 29 x 36 | No (4 rows over) | Yes | Pattern mode: box 84,388,252,592 |
+| [Villains.jpg](Villains.jpg) | Ursula | 33 x 42 | No (10 rows over) | Yes | Pattern mode: box 280,352,468,592 |
+| [Villains.jpg](Villains.jpg) | Cruella de Vil | 29 x 37 | No (5 rows over) | Yes | Pattern mode: box 500,380,664,592 |
+| [Male villains.jpg](<Male villains.jpg>) | Jafar with his cobra staff (one of six villains on a sheet, same artist as Villains.jpg) | 30 x 41 | No (9 rows over) | Yes | Pattern mode: box 68,64,240,300 |
+| [Male villains.jpg](<Male villains.jpg>) | Captain Hook | 30 x 41 | No (9 rows over) | Yes | Pattern mode: box 288,64,460,300 |
+| [Male villains.jpg](<Male villains.jpg>) | Dr. Facilier | 25 x 39 | No (7 rows over) | Yes | Pattern mode: box 500,76,644,300 |
+| [Male villains.jpg](<Male villains.jpg>) | Gaston | 25 x 35 | No (3 rows over) | Yes | Pattern mode: box 96,392,240,592 |
+| [Male villains.jpg](<Male villains.jpg>) | Hades, flame hair | 31 x 42 | No (10 rows over) | Yes | Pattern mode: box 280,352,460,592 |
+| [Male villains.jpg](<Male villains.jpg>) | Judge Frollo | 27 x 38 | No (6 rows over) | Yes | Pattern mode: box 500,372,652,592 |
+| [Frozen.jpg](Frozen.jpg) | Elsa (same artist as Villains.jpg) | 20 x 33 | No (1 row over) | Yes | Pattern mode: box 12,112,236,480 |
+| [Frozen.jpg](Frozen.jpg) | Olaf | 15 x 24 | Yes | Yes (2x too) | Pattern mode: box 236,212,404,480 |
+| [Frozen.jpg](Frozen.jpg) | Anna in her cloak | 19 x 33 | No (1 row over) | Yes | Pattern mode: box 420,112,636,480 |
+| [belle and beast.jpg](<belle and beast.jpg>) | Belle in her gold gown | 21 x 34 | No (2 rows over) | Yes | Pattern mode: box 36,44,240,372 |
+| [belle and beast.jpg](<belle and beast.jpg>) | The Beast | 27 x 35 | No (3 rows over) | Yes | Pattern mode: box 296,32,556,372 |
+| [Enchanted rose.jpg](<Enchanted rose.jpg>) | The enchanted rose under its glass | 21 x 41 | No (9 rows over) | Yes | Pattern mode reads it |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Snow White with her apple (one of nine on a gridded chart, a phone screenshot: the back button hides her top left) | 17 x 27 | Yes | Yes (2x too) | Pattern mode: box 95,85,215,285; redraw what the button covers |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Cinderella with her glass slipper | 21 x 27 | Yes | Yes (2x too) | Pattern mode: box 315,80,470,285 |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Aurora with her crown | 21 x 27 | Yes | Yes (2x too) | Pattern mode: box 550,80,705,285 |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Ariel with Flounder | 19 x 24 | Yes | Yes (2x too) | Pattern mode: box 75,315,215,515 |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Belle with the rose | 19 x 27 | Yes | Yes (2x too) | Pattern mode: box 315,315,455,520 |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Jasmine with the lamp | 18 x 25 | Yes | Yes (2x too) | Pattern mode: box 550,325,690,520 |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Mulan with her sword | 15 x 25 | Yes | Yes (2x too) | Pattern mode: box 100,555,220,765 |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Tinker Bell | 21 x 26 | Yes | Yes (2x too) | Pattern mode: box 305,555,465,765 |
+| [Princesses with props.jpg](<Princesses with props.jpg>) | Elsa with a snowflake | 18 x 25 | Yes | Yes (2x too) | Pattern mode: box 555,555,695,765 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Ariel, mermaid tail (one of twelve on a gridded chart) | 24 x 32 | Tight | Yes (2x too) | Pattern mode: box 0,0,147,186 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Snow White | 18 x 30 | Tight | Yes (2x too) | Pattern mode: box 147,0,270,186 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Pocahontas | 23 x 32 | Tight | Yes (2x too) | Pattern mode: box 270,0,412,186 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Cinderella | 25 x 32 | Tight | Yes (2x too) | Pattern mode: box 412,0,564,186 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Belle | 25 x 36 | No (4 rows over) | Yes | Pattern mode: box 0,186,147,394 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Jasmine | 20 x 36 | No (4 rows over) | Yes | Pattern mode: box 147,186,270,394 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Elsa | 17 x 35 | No (3 rows over) | Yes | Pattern mode: box 270,186,412,394 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Tiana | 24 x 33 | No (1 row over) | Yes | Pattern mode: box 412,186,564,394 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Aurora | 25 x 44 | No (12 rows over) | Yes | Pattern mode: box 0,394,147,646 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Rapunzel | 19 x 38 | No (6 rows over) | Yes | Pattern mode: box 147,394,270,646 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Mulan | 24 x 44 | No (12 rows over) | Yes | Pattern mode: box 270,394,412,646 |
+| [Detailed princesses.jpg](<Detailed princesses.jpg>) | Merida | 24 x 41 | No (9 rows over) | Yes | Pattern mode: box 412,394,564,646 |
+| [Rapunzel with pan.jpg](<Rapunzel with pan.jpg>) | Rapunzel with her frying pan (a numbered 40 x 40 bead chart; size read off its axes) | 19 x 25 (29 x 25 with the pan) | Yes | Yes (2x too) | Detection misses the chart's grid: Pattern mode's Calibrate |
+| [elsa.jpg](elsa.jpg) | Elsa with a snowflake (a numbered 40 x 40 bead chart; size read off its axes) | 15 x 25 (28 x 25 with the snowflake) | Yes | Yes (2x too) | Detection misses the chart's grid: Pattern mode's Calibrate |
+| [Brave2.jpg](Brave2.jpg) | Merida with two arrows (a numbered 40 x 40 bead chart; size read off its axes) | 21 x 30 (30 x 30 with the arrows) | Tight | Yes (2x too) | Detection misses the chart's grid: Pattern mode's Calibrate |
+| [Ursula.jpg](Ursula.jpg) | Ursula, tentacles spread | 37 x 38 | No (6 rows over) | Yes | Pattern mode reads it |
+| [Scar.jpg](Scar.jpg) | Scar, a chibi (studded bricks) | 24 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Rafiki.jpg](Rafiki.jpg) | Rafiki with his staff (studded bricks) | 27 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Lion King.jpg](<Lion King.jpg>) | Pumbaa, Timon, Nala, Simba, Mufasa and Scar in a row (a product photo of a cross-stitch, too small to count) | | Needs tracing | Needs tracing | Each figure is about 40 px tall in the photo: find the full-size pattern, or redraw from it |
+| [Nemo.jpg](Nemo.jpg) | Nemo | 34 x 24 | Yes | Yes | Pattern mode reads it |
+| [Dory.jpg](Dory.jpg) | Dory | 29 x 24 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Flounder.jpg](Flounder.jpg) | Flounder | 24 x 18 | Yes | Yes (2x too) | Pattern mode reads it |
+| [Magic Mirror.jpg](<Magic Mirror.jpg>) | The Magic Mirror's face (Snow White) | 24 x 31 | Tight | Yes (2x too) | Pattern mode reads it |
+| [Monsters_Inc.jpg](Monsters_Inc.jpg) | Sulley (one of 30 Monsters, Inc. characters on a sheet; looks AI-made, so its pixels aren't on a strict grid) | 18 x 25 | Yes | Yes (2x too) | Pattern mode: box 24,54,160,234; check cell by cell |
+| [Monsters_Inc.jpg](Monsters_Inc.jpg) | Mike Wazowski | 18 x 20 | Yes | Yes (2x too) | Pattern mode: box 160,54,294,234 |
+| [Monsters_Inc.jpg](Monsters_Inc.jpg) | Boo | 17 x 22 | Yes | Yes (2x too) | Pattern mode: box 294,78,426,234 |
+| [Monsters_Inc.jpg](Monsters_Inc.jpg) | Randall | 16 x 25 | Yes | Yes (2x too) | Pattern mode: box 432,54,552,234 |
+| [Monsters_Inc.jpg](Monsters_Inc.jpg) | Celia | 16 x 22 | Yes | Yes (2x too) | Pattern mode: box 36,420,156,582 |
+| [Monsters_Inc.jpg](Monsters_Inc.jpg) | The other 25 monsters (background characters, a second Sulley top right) | about 16 x 25 each | Yes | Yes (2x too) | Pattern mode: drag a box round one |
+| [inside_out.jpg](inside_out.jpg) | Anxiety (one of seven Inside Out emotions, watermarked) | 19 x 27 | Yes | Yes (2x too) | Pattern mode: box 60,104,140,220 |
+| [inside_out.jpg](inside_out.jpg) | Embarrassment | 19 x 22 | Yes | Yes (2x too) | Pattern mode: box 156,112,248,220 |
+| [inside_out.jpg](inside_out.jpg) | Anger | 16 x 24 | Yes | Yes (2x too) | Pattern mode: box 260,104,336,220 |
+| [inside_out.jpg](inside_out.jpg) | Ennui | 16 x 28 | Yes | Yes (2x too) | Pattern mode: box 28,256,100,380 |
+| [inside_out.jpg](inside_out.jpg) | Joy | 17 x 26 | Yes | Yes (2x too) | Pattern mode: box 104,252,188,376 |
+| [inside_out.jpg](inside_out.jpg) | Disgust | 18 x 24 | Yes | Yes (2x too) | Pattern mode: box 192,256,280,376 |
+| [inside_out.jpg](inside_out.jpg) | Sadness | 18 x 23 | Yes | Yes (2x too) | Pattern mode: box 288,260,376,376 |
+| [nick and judy.jpg](<nick and judy.jpg>) | Nick Wilde (a phone screenshot of a watermarked bead chart) | 18 x 40 | No (8 rows over) | Yes | Pattern mode: box 44,200,362,906 |
+| [nick and judy.jpg](<nick and judy.jpg>) | Judy Hopps | 15 x 33 | No (1 row over) | Yes | Pattern mode: box 352,318,625,906 |
