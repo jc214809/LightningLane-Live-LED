@@ -77,6 +77,19 @@ def websocket_protocol(config):
     return protocol
 
 
+SHOW_VERSIONS = ("v1", "v2")
+
+
+def show_version(config):
+    """config.json's "show_version": which version of a synced fireworks show plays, "v1" (the
+    default: castle and fireworks) or "v2" (characters too; display/fireworks/score.py)."""
+    version = config.get("show_version", "v1")
+    if version not in SHOW_VERSIONS:
+        debug.warning(f'config.json "show_version" should be "v1" or "v2", not {version!r}; using "v1".')
+        return "v1"
+    return version
+
+
 class SoundSettings(NamedTuple):
     enabled: bool = False
     device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card

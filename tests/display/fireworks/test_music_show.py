@@ -3,6 +3,7 @@ import random
 import pytest
 
 import display.fireworks.music_show as music_show
+from display.fireworks import show_actors
 from display.fireworks.fireworks import _CASTLE_COLORS
 from display.fireworks.music_show import CASTLE_LOOKS, SHAPES, MusicShow, render_music_show
 from display.animation.characters.tink import TinkReveal
@@ -311,3 +312,81 @@ def test_the_fireworks_hold_back_while_tink_flies():
 
 def test_tink_flies_in_happily_ever_afters_you_can_fly():
     assert "tink" in load_score("happily-ever-after").cue_at(1043).effects
+
+
+# ---- stages and actors (later versions) ----
+
+def _castle_max(show):
+    """The brightest channel of any castle pixel this frame, with the stars and flash out of the way."""
+    show.stars, show.flash = [], [0.0, 0.0, 0.0]
+    pixels = show.frame_pixels()
+    return max((max(pixels.get((show.castle_x + dx, show.castle_y + dy), (0, 0, 0)))
+                for dx, dy, _ in show.castle_pixels), default=0)
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_the_castle_fades_to_a_ghost_then_off_and_back(height):
+    show = MusicShow(64, height, random.Random(20))
+    show.set_cue(_cue(rate=0), 0)
+    full = _castle_max(show)
+    ghost = _cue(title="ghost", start=10, end=20, rate=0)._replace(stage="ghost")
+    show.set_cue(ghost, 10)
+    assert _castle_max(show) == full, "starts from full"
+    show.set_cue(ghost, 10 + music_show.CASTLE_FADE_S)
+    assert _castle_max(show) == int(full * music_show.STAGE_LEVELS["ghost"])
+    off = _cue(title="off", start=20, end=30, rate=0)._replace(stage="off")
+    show.set_cue(off, 20)
+    show.set_cue(off, 20 + music_show.CASTLE_FADE_S / 2)
+    assert 0 < _castle_max(show) < full * music_show.STAGE_LEVELS["ghost"], "fading from the ghost"
+    show.set_cue(off, 20 + music_show.CASTLE_FADE_S)
+    assert _castle_max(show) == 0
+    back = _cue(title="back", start=30, end=40, rate=0)
+    show.set_cue(back, 30)
+    show.set_cue(back, 30 + music_show.CASTLE_FADE_S)
+    assert _castle_max(show) == full
+
+
+def test_fireworks_show_through_a_ghost_castle():
+    show = MusicShow(64, 32, random.Random(21))
+    ghost = _cue(rate=0)._replace(stage="ghost")
+    show.set_cue(ghost, 0)
+    show.set_cue(ghost, music_show.CASTLE_FADE_S)
+    dx, dy, _ = show.castle_pixels[len(show.castle_pixels) // 2]
+    x, y = show.castle_x + dx, show.castle_y + dy
+    show.sparks.append(music_show._Spark(x, y, 0, 0, 40, (0, 255, 0), gravity=0))
+    show.flash = [0.0, 0.0, 0.0]
+    assert show.frame_pixels()[(x, y)][1] > 200, "a ghost doesn't hide what's behind it"
+
+
+class _Marker(show_actors.Actor):
+    """A test actor: a white pixel on the castle's middle while its scene is on, at a spot that moves
+    one column a second, and a record of each step."""
+    def __init__(self, show):
+        super().__init__(show)
+        self.steps = []
+
+    def step(self, active):
+        self.steps.append(active)
+
+    def draw(self, put, out, active):
+        if active:
+            show = self.show
+            out[(show.castle_x + int(self.elapsed()), show.castle_y + show.castle_h // 2)] = (255, 255, 255)
+
+
+@pytest.fixture
+def marker(monkeypatch):
+    monkeypatch.setitem(show_actors.ACTORS, "marker", _Marker)
+
+
+def test_an_actor_draws_in_front_of_the_castle_only_in_its_scene(marker):
+    show = MusicShow(64, 32, random.Random(22))
+    plain, with_marker = _cue(rate=0), _cue(title="m", start=10, end=20, rate=0)._replace(actors=("marker",))
+    spot = (show.castle_x + 3, show.castle_y + show.castle_h // 2)
+    show.set_cue(plain, 9)
+    show.step()
+    assert show.frame_pixels().get(spot) != (255, 255, 255)
+    show.set_cue(with_marker, 13)
+    show.step()
+    assert show.frame_pixels()[spot] == (255, 255, 255), "placed by the clock: 3 s into its scene"
+    assert show.actors["marker"].steps == [False, True]

@@ -1,7 +1,10 @@
 # Happily Ever After V2: characters share the spotlight (plan)
 
-**Status (2026-10-11):** plan only. Nothing drawn, nothing built. Every character still goes through
-the usual question batch before it's drawn (CHARACTERS.md, "ask before drawing").
+**Status (2026-10-11):** batch 1 under way on `feat/hea-v2-plumbing`. Built: the version switch,
+the overlay file, the ghost/off stages, `show_actors.py`, and **Genie** (Friend Like Me: forms in a puff
+at the spire, circles it, 1x on both boards, fireworks halved to 0.8). Ghost level (25%) still to judge.
+Each character is built one at a time, its size and motion settled with the user before it's built
+(the user's call, 2026-10-11: sizes are per character, not a rule).
 
 V1 is all castle and fireworks. The real show is mostly projected characters (see README.md here,
 scene by scene). In V2 the castle fades out, or dims to a ghost, in the scenes where characters need
@@ -179,6 +182,9 @@ references, and `Flying Dumbo.jpg` gives Dumbo his missing back half. Most usefu
    that plays the synced show from that second with no sound. `render_music_show` gets a
    `start_at` offset on its clock. The live board needs this anyway, to start the music mid-file
    (see ROADMAP).
+   **Not built (2026-10-11):** `tools/render_show.py --version v2` and the sync checker do this
+   already (any second, in about a minute), and a new `cli.py` flag would also become a `matrix`
+   setting. The live board's mid-show start is still a ROADMAP item.
 7. **Fireworks under characters.** The overlay's `rate` thins the sky while a character is on,
    like Tink's `TINK_RATE` but per scene, so a busy burst doesn't sit on a face.
 8. **Tests**, in `tests/display/fireworks/`: `test_score.py` (overlay merge, unknown title, bad

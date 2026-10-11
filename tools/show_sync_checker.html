@@ -188,8 +188,9 @@ document.head.appendChild(script);
 function start(S) {
   if (!S || !Object.keys(S.boards || {}).length) { $("setup").hidden = false; return; }
   $("app").hidden = false;
-  $("title").textContent = "Show sync checker: " + S.name;
-  document.title = "Sync: " + S.name;
+  const label = S.name + (S.version && S.version !== "v1" ? " " + S.version : "");
+  $("title").textContent = "Show sync checker: " + label;
+  document.title = "Sync: " + label;
   const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
   const KEY = "show-sync:" + S.name + ":";
@@ -363,6 +364,8 @@ function start(S) {
       $("scene").textContent = s.title;
       const bits = [s.section, "castle: " + (s.castle || "everyday"), s.rate ? "fireworks " + s.rate + "×" : "no fireworks"];
       if (s.effects.length) bits.push(s.effects.join(", "));
+      if (s.stage && s.stage !== "castle") bits.push("castle " + s.stage);
+      if (s.actors && s.actors.length) bits.push("ours: " + s.actors.join(", "));
       if (s.characters.length) bits.push("real show: " + s.characters.join(", "));
       $("does").textContent = bits.join(" · ");
       list.querySelectorAll("li").forEach((li, i) => li.classList.toggle("on", scenes[i] === s));

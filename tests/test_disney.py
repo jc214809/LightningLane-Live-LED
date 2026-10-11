@@ -470,7 +470,7 @@ def fireworks_played(monkeypatch):
     monkeypatch.setattr(disney, "render_castle_fireworks",
                         lambda matrix, duration, title=True, theme=None: played.append((duration, title, theme)))
     monkeypatch.setattr(disney, "_shows_played", set())
-    monkeypatch.setattr(disney, "load_score", lambda name: None)  # the random fireworks; see the score tests
+    monkeypatch.setattr(disney, "load_score", lambda name, **kwargs: None)  # the random fireworks; see the score tests
     return played
 
 
@@ -497,7 +497,7 @@ def test_fireworks_play_the_shows_sound_until_they_end(monkeypatch):
 
     monkeypatch.setattr(disney, "playing", Recorder)
     monkeypatch.setattr(disney, "render_castle_fireworks", lambda matrix, **kwargs: events.append("fireworks"))
-    monkeypatch.setattr(disney, "load_score", lambda name: None)
+    monkeypatch.setattr(disney, "load_score", lambda name, **kwargs: None)
     monkeypatch.setattr(disney, "_shows_played", set())
     monkeypatch.setattr(disney, "sound", disney.SoundSettings(True))
     now = HEA_START + timedelta(seconds=8)
@@ -528,6 +528,16 @@ def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypa
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=late) is True
     assert events == [("sound", "happily-ever-after"), "start", ("synced", "happily-ever-after"), "stop"], \
         "the whole show from the top, however late the board cut in"
+
+
+def test_the_synced_show_plays_in_the_configured_version(monkeypatch):
+    asked = []
+    monkeypatch.setattr(disney, "load_score", lambda name, version: asked.append((name, version)))
+    monkeypatch.setattr(disney, "render_castle_fireworks", lambda *a, **k: None)
+    monkeypatch.setattr(disney, "_shows_played", set())
+    monkeypatch.setattr(disney, "show_version_setting", "v2")
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=5))
+    assert asked == [("happily-ever-after", "v2")]
 
 
 def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played):

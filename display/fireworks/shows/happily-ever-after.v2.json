@@ -1,0 +1,12 @@
+{
+  "note": "Happily Ever After V2: characters share the spotlight (docs/shows/happily-ever-after/V2-PLAN.md). An overlay on happily-ever-after.json's scenes, by title, read by display/fireworks/score.py when config.json's show_version is \"v2\". Per scene, each optional: stage (castle, ghost: dimmed for characters to stand in front of, off: gone), actors (display/fireworks/show_actors.ACTORS), rate (replaces the scene's), note.",
+  "overlays": {
+    "You've Got a Friend in Me": {"stage": "castle", "note": "Woody and Buzz"},
+    "Friendship mash-up": {"stage": "off", "note": "Ralph, Baymax"},
+    "That's What Friends Are For": {"stage": "castle", "note": "Mike"},
+    "Friend Like Me (Genie)": {"stage": "ghost", "actors": ["genie"], "rate": 0.8, "note": "Genie circles the spire; half V1's fireworks, so bursts don't sit on him"},
+    "Olaf: some people are worth melting for": {"stage": "ghost", "note": "Olaf"},
+    "Can You Feel the Love Tonight": {"stage": "off", "note": "WALL-E"},
+    "You'll Be in My Heart": {"stage": "ghost", "note": "Dumbo"}
+  }
+}

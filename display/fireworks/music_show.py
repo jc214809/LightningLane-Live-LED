@@ -10,7 +10,7 @@ import time
 
 from display.animation import frame_canvas, present
 from display.animation.characters.tink import TinkReveal
-from display.fireworks import show_effects
+from display.fireworks import show_actors, show_effects
 from display.fireworks.fireworks import (_CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE,
                                          castle_sprite)
 from display.motion import ease_out, smooth
@@ -42,6 +42,9 @@ CASTLE_LOOKS = {
 _STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}
 CASTLE_FADE_S = 1.5
+# The castle's brightness on each of a scene's stages (score.STAGES): a ghost leaves characters the
+# room to stand in front of it; off clears the board for them. It fades between them over CASTLE_FADE_S.
+STAGE_LEVELS = {"castle": 1.0, "ghost": 0.25, "off": 0.0}
 _LIT_KINDS = {"W", "R"}
 
 # The wishing star lands on the spire this far through its scene; the castle turns after that.
@@ -213,6 +216,10 @@ class MusicShow:
         self.tink_w = len(TinkReveal.art[0]) * self.tink_scale
         self.tink_h = len(TinkReveal.art) * self.tink_scale
         self.extras = {name: effect(self) for name, effect in show_effects.EFFECTS.items()}
+        self.stage = "castle"
+        self.stage_from = self.stage_to = 1.0
+        self.stage_change_t = -CASTLE_FADE_S
+        self.actors = {name: actor(self) for name, actor in show_actors.ACTORS.items()}
 
     # ---- cues ----
 
@@ -231,6 +238,11 @@ class MusicShow:
                 self.castle_to = {**_CASTLE_COLORS, **CASTLE_LOOKS.get(cue.castle, {})}
                 self.castle_change_t = when
                 self.castle_look = cue.castle
+            if cue.stage != self.stage:
+                self.stage_from = self.castle_level()
+                self.stage_to = STAGE_LEVELS[cue.stage]
+                self.stage_change_t = t
+                self.stage = cue.stage
         flying = "tink" in self.effects and t < cue.start + TINK_FLY_S
         self.rate = cue.rate * (TINK_RATE if flying else 1.0)
         # The white flash on the show's last hit: its scene starts on the hit.
@@ -241,6 +253,11 @@ class MusicShow:
         blend = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S)
         return {k: tuple(int(a + (b - a) * blend) for a, b in zip(self.castle_from[k], self.castle_to[k]))
                 for k in self.castle_to}
+
+    def castle_level(self):
+        """How bright the castle is (1 full, 0 gone), fading to the scene's stage."""
+        blend = smooth((self.t - self.stage_change_t) / CASTLE_FADE_S)
+        return self.stage_from + (self.stage_to - self.stage_from) * blend
 
     # ---- simulation ----
 
@@ -379,6 +396,9 @@ class MusicShow:
         self.white *= 0.93
         for name, effect in self.extras.items():
             effect.step(name in self.effects)
+        actors = self.cue.actors if self.cue else ()
+        for name, actor in self.actors.items():
+            actor.step(name in actors)
         self.frame += 1
 
     # ---- drawing ----
@@ -468,11 +488,13 @@ class MusicShow:
         for name, effect in self.extras.items():
             effect.draw_behind(put, out, name in self.effects)
 
-        # The castle hides anything launched from behind it; Tink and the effects' fronts don't.
+        # The castle hides anything launched from behind it; Tink and the effects' fronts don't. Dimmed
+        # for a stage, it's a ghost the sky shows through; gone, it hides nothing.
+        shown = self.castle_level()
         colours = self._castle_now()
         flicker = self.castle_look in _FLICKERS
         glass = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S) if self.castle_look == "stained_glass" else 0
-        for dx, dy, kind in self.castle_pixels:
+        for dx, dy, kind in (self.castle_pixels if shown > 0.01 else ()):
             x, y = self.castle_x + dx, self.castle_y + dy
             if not (0 <= x < self.width and 0 <= y < self.height):
                 continue
@@ -486,7 +508,10 @@ class MusicShow:
                     level = 0.75 + 0.25 * math.sin(self.frame * 0.7 + (dx * 7919 + dy * 104729) % 628 / 100)
                     base = tuple(int(c * level) for c in base)
                 base = tuple(min(255, int(c * 0.75 + 110 * f)) for c, f in zip(base, self.flash))
-            out[(x, y)] = base
+            if shown < 1:
+                put(x, y, tuple(int(c * shown) for c in base))
+            else:
+                out[(x, y)] = base
 
         for name, effect in self.extras.items():
             effect.draw_front(put, out, name in self.effects)
@@ -504,6 +529,10 @@ class MusicShow:
                             x, y = left + col * self.tink_scale + ox, top + row * self.tink_scale + oy
                             if 0 <= x < self.width and 0 <= y < self.height:
                                 out[(x, y)] = TinkReveal.colors[key]
+
+        actors = self.cue.actors if self.cue else ()
+        for name, actor in self.actors.items():
+            actor.draw(put, out, name in actors)
 
         if self.white > 0.02:
             level = int(255 * min(1.0, self.white))

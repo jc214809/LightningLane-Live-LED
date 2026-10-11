@@ -108,6 +108,14 @@ def test_sync_data_lists_every_scene_with_what_the_board_does(tiny):
     assert data["end"] == 4 and data["boards"] == {"64x32": "tiny-64x32.mp4"}
 
 
+def test_sync_data_says_which_version_and_what_each_scene_stages(tiny):
+    data = tool.sync_data(tiny, TINY, {}, None)
+    assert data["version"] == "v1" and data["scenes"][1]["stage"] == "castle" and data["scenes"][1]["actors"] == []
+    v2 = parse_score("tiny", TINY, {"overlays": {"Dark": {"stage": "off"}}})
+    data = tool.sync_data(v2, TINY, {}, None, "v2")
+    assert data["version"] == "v2" and data["scenes"][0]["stage"] == "off"
+
+
 def test_sync_data_has_no_recording_until_one_is_downloaded(tiny):
     assert tool.sync_data(tiny, TINY, {}, None)["recording"] is None
     no_entry = {k: v for k, v in TINY.items() if k != "recording"}
@@ -151,3 +159,10 @@ def test_main_with_an_unknown_show_is_an_error(monkeypatch, caplog):
     monkeypatch.setattr(tool.shutil, "which", lambda name: "/usr/bin/" + name)
     assert tool.main(["--show", "no-such-show"]) == 1
     assert "no usable score" in caplog.text
+
+
+def test_main_with_a_broken_or_missing_version_is_an_error(monkeypatch, caplog):
+    # Unlike the board, which plays V1 instead, the tool says what's wrong.
+    monkeypatch.setattr(tool.shutil, "which", lambda name: "/usr/bin/" + name)
+    assert tool.main(["--version", "v9"]) == 1
+    assert "can't use happily-ever-after's v9" in caplog.text

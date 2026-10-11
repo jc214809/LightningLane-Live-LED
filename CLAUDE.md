@@ -26,7 +26,7 @@ python3 tools/build_sprite_editor.py
 python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [--lines] [--cell PX] [--art]
 
 # Record the synced show as the boards draw it, then compare it with the real show in tools/show_sync_checker.html
-python3 tools/render_show.py [--recording]
+python3 tools/render_show.py [--recording] [--version v2]
 ```
 
 - **Python:** 3.11 is the target everywhere (`.python-version`, pyproject's `requires-python`, CI) because it's Raspberry Pi OS Bookworm's. CI also runs 3.13, the next OS's (Trixie). When the boards move, raise all three together.
@@ -92,6 +92,7 @@ Display rules:
 - `over_screen` transitions play over a finished screen and let it keep animating underneath.
 - Fireworks: the castle is `_CASTLE_ART`, doubled on 64-row boards; `_BIG_CASTLE_ROW_PATCH` adjusts only the doubled one.
 - Synced shows: a show with a score in `display/fireworks/shows/<clip_name>.json` plays whole, in time with its music, through `display/fireworks/music_show.py` (its own copy of the fireworks simulation, so the everyday ones don't change; `score.py` reads the file). Scene looks are one class each in `show_effects.py`, turned on by name in a scene's `effects`; add one there and in `EFFECTS`. What the real show does (timeline, colours, where ours is off) is in `docs/shows/<clip_name>/README.md`; start there for improvements. It follows the clock, not frames, so a slow board stays with the music. To check a change against the real show, re-run `tools/render_show.py` and open `tools/show_sync_checker.html` (recording and render side by side, scene marks to paste back).
+- Show versions: V2 (`config.json` `show_version`) is an overlay, `shows/<clip_name>.v2.json`, adding a `stage` (`castle`/`ghost`/`off`: the castle dims or goes) and `actors` to V1 scenes by title; a bad or missing overlay plays V1. Characters are one class each in `show_actors.py` (registered in `ACTORS`), placed by the clock. Plan and progress: `docs/shows/happily-ever-after/V2-PLAN.md`. Render with `--version v2` and open the checker with `?show=<clip_name>.v2`; serve it over http with Range support (`npx http-server`), or the videos won't seek.
 
 ### Driver abstraction
 
@@ -99,11 +100,12 @@ Display rules:
 
 ### Configuration
 
-`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `sound` (`enabled`, `device`, `quiet_hours`; played by `utils/sound.py:playing()` from the gitignored `sounds/`, during the fireworks show), `force_surprise`, `debug`.
+`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `sound` (`enabled`, `device`, `quiet_hours`; played by `utils/sound.py:playing()` from the gitignored `sounds/`, during the fireworks show), `show_version` (`"v1"`/`"v2"`, the synced show's version), `force_surprise`, `debug`.
 
 ### Testing
 
 - `tests/stubs/conftest.py` intercepts `config.json` reads with a dummy config and stubs the `driver` module, so tests run without hardware. Stubs for `aiohttp`, `requests` and `pyowm` live in `tests/stubs/` and mirror the real libraries' names and exceptions; check real-library behaviour separately when upgrading one.
+- App code logs through `utils/debug` (logger `disney-lll`), which pytest's `caplog` doesn't see: check a warning with `monkeypatch.setattr(module.debug, "warning", warnings.append)`. `tools/` scripts use plain `logging`, so `caplog` works there.
 - Animation tests mirror the package (`tests/display/animation/`, one file per module or character); shared fakes (`FakeCanvas`, `FakeMatrix`, …) in `support.py`; its `conftest.py` stubs `graphics` by patching `animation.drawing`. Landmark tests do the same in `tests/display/landmarks/`.
 
 ### Gotchas

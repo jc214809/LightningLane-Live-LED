@@ -116,3 +116,73 @@ def test_a_good_score_from_a_folder(tmp_path):
 
 def test_shows_dir_is_next_to_the_module_not_the_cwd():
     assert score_module.SHOWS_DIR.endswith("display/fireworks/shows")
+
+
+# ---- versions: an overlay file on V1's scenes ----
+
+def _write(tmp_path, show, overlay=None):
+    (tmp_path / "show.json").write_text(json.dumps(show))
+    if overlay is not None:
+        (tmp_path / "show.v2.json").write_text(json.dumps(overlay))
+
+
+def _two_scenes(**second):
+    return {"show_end": 20, "sections": [{"id": "s", "palette": ["#FF0000"], "intensity": 0.6, "scenes": [
+        {"start": 0, "end": 10, "title": "one"}, {"start": 10, "end": 20, "title": "two", **second}]}]}
+
+
+def test_v1_scenes_keep_the_castle_and_have_no_actors(hea):
+    assert all(c.stage == "castle" and c.actors == () for c in hea.cues)
+
+
+def test_an_overlay_adds_a_stage_actors_and_rate_to_its_scene_only(tmp_path, monkeypatch):
+    monkeypatch.setitem(score_module.ACTORS, "someone", object)
+    _write(tmp_path, _two_scenes(), {"overlays": {"two": {"stage": "ghost", "actors": ["someone"], "rate": 0.4}}})
+    v1 = load_score("show", shows_dir=str(tmp_path))
+    v2 = load_score("show", shows_dir=str(tmp_path), version="v2")
+    assert v2.cues[0] == v1.cues[0]
+    assert (v2.cues[1].stage, v2.cues[1].actors, v2.cues[1].rate) == ("ghost", ("someone",), 0.4)
+    assert v2.cues[1]._replace(stage="castle", actors=(), rate=v1.cues[1].rate) == v1.cues[1]
+
+
+def test_without_an_overlay_file_v2_plays_v1(tmp_path):
+    _write(tmp_path, _two_scenes())
+    assert load_score("show", shows_dir=str(tmp_path), version="v2") == load_score("show", shows_dir=str(tmp_path))
+
+
+@pytest.mark.parametrize("overlay", [
+    {"overlays": {"three": {"stage": "off"}}},  # a renamed or missing scene can't drop silently
+    {"overlays": {"two": {"stage": "aside"}}},
+    {"overlays": {"two": {"actors": ["nobody"]}}},
+    {"overlays": {"two": {"actors": "genie"}}},
+    {"overlays": {"two": {"costume": "red"}}},
+    {"scenes": {}},
+    "{not json",
+])
+def test_a_broken_overlay_is_logged_and_v1_plays(tmp_path, overlay, monkeypatch):
+    warnings = []
+    monkeypatch.setattr(score_module.debug, "warning", warnings.append)
+    _write(tmp_path, _two_scenes())
+    (tmp_path / "show.v2.json").write_text(overlay if isinstance(overlay, str) else json.dumps(overlay))
+    assert load_score("show", shows_dir=str(tmp_path), version="v2") == load_score("show", shows_dir=str(tmp_path))
+    assert len(warnings) == 1 and "playing v1" in warnings[0]
+
+
+@pytest.mark.parametrize("effect", sorted(score_module.CASTLE_EFFECTS))
+def test_the_castle_cant_be_off_in_a_scene_whose_effects_draw_on_it(tmp_path, effect):
+    _write(tmp_path, _two_scenes(effects=[effect]), {"overlays": {"two": {"stage": "off"}}})
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage == "castle", "fell back to v1"
+    _write(tmp_path, _two_scenes(effects=[effect]), {"overlays": {"two": {"stage": "ghost"}}})
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage == "ghost"
+
+
+def test_happily_ever_afters_v2_overlay_parses_onto_v1():
+    # Parsed directly, so a mistake fails here instead of quietly playing V1.
+    with open(f"{score_module.SHOWS_DIR}/happily-ever-after.json") as f:
+        data = json.load(f)
+    with open(f"{score_module.SHOWS_DIR}/happily-ever-after.v2.json") as f:
+        overlay = json.load(f)
+    v2 = parse_score("happily-ever-after", data, overlay)
+    assert v2.end == parse_score("happily-ever-after", data).end
+    assert {c.title for c in v2.cues if c.stage != "castle" or c.actors} <= set(overlay["overlays"])
+    assert v2.cue_at(540).stage == "ghost", "Friend Like Me (Genie)"
