@@ -935,6 +935,9 @@ thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
   into the next scene. Unchecked by the user so far.
 
 Not done:
+- V2, where the castle fades so characters share the spotlight: planned scene by scene in
+  `docs/shows/happily-ever-after/V2-PLAN.md` (2026-10-11; every character, what each does, the code).
+  Not started.
 - More characters in their scenes (Genie, Baymax, Ralph, Vanellope, Olaf, WALL-E, Mike, Lightning
   McQueen, Woody are drawn already). Ask about each one first; Tink shows the pattern.
   Reference leads (searched 2026-10-10; game sprite rips on The Spriters Resource, not opened or
