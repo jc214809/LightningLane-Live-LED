@@ -7,6 +7,7 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 | Scene | Character | Notes |
 |---|---|---|
 | Down in New Orleans, When You Wish fanfare | Ray | Firefly: a figure-eight by the evening star, then circles the spire |
+| Touch the Sky | Merida | 64x64 only (`Brave.jpg`, hair trimmed, a mouth added): says her line lip-synced, then on "touch the sky" shoots an arrow into a bullseye firework that shatters; the scene's rate 0.6 so the arrow shows |
 | Touch the Sky / Up | The Up house | Rises from behind the castle on its balloons, drifts off right |
 | How Far I'll Go (climax) | Moana's canoe | One crossing once the water is up; on 64x64 the toy's canoe (red spiral sail, outrigger) with Moana (princes sheet) aboard |
 | You've Got a Friend in Me | Buzz and Woody | Buzz flies across, Woody waves from the ground |
