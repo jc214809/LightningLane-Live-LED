@@ -584,3 +584,28 @@ The process above held; these are the lessons that were new.
 - **Draw whole frames cheaply.** Stretching the old screen per pixel into streaks would
   be hundreds of thousands of `SetPixel` calls a frame; mapping each output pixel back to
   a source pixel (`(x - shift) / stretch`) is one call per LED and reads the same.
+
+## Happily Ever After V2's characters: what worked
+
+The show's characters (`display/fireworks/actors/`) differ from transitions: they're placed by the
+show's clock, not by frames, and share the board with fireworks and the castle.
+
+- **Settle each one's size and motion with the user first.** Every character took one batch of
+  questions (boards, size, pose, motion, stage) and then built without rework; the ones guessed at
+  (Dumbo's ear flap, Mufasa's place) were redone.
+- **Check the real render, not just the actor alone.** Merida's brown arrow was drawn correctly and
+  invisible in the video among the scene's gold sparks; it took a bright shaft, a white trail and a
+  lower `rate` for the scene. Crop frames from `build/show_sync/*.mp4` with ffmpeg and look.
+- **Lift near-black to the LEDs' floor.** Chart blacks (Moana's, Charming's and Eric's hair,
+  Merida's bow) show as off; lift them to a dark colour of the same hue. Outlines can stay black.
+- **Lip sync from the voice, checked against the words.** demucs splits the voice; Whisper and the
+  lyric sheet say who sings what (Friend Like Me's backup singers are muted from Genie's track). A
+  mouth needs its own art row: Merida's face moved up a row to make one.
+- **Time big moments to words.** Mufasa fades from "Remember who you are", Olaf's face melts after his
+  last word, Merida's arrow hits on "sky": take the times from the mouth track or Whisper's word
+  timestamps, not from the scene's edges.
+- **Fit the scene, not the other way round.** A move longer than its scene (Olaf's melt) starts earlier
+  rather than spilling into the next; a fade must end inside its slot (Ariel's first didn't).
+- **Tests per actor:** placement and bounds on both boards, the key moments by the clock, "follows the
+  clock, not the frames" (30 fps and 7 fps land on the same frame), nothing drawn when inactive.
+

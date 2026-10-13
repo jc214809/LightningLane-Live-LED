@@ -26,7 +26,8 @@ from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
 from utils import debug
-from utils.config import SoundSettings, debug_enabled, load_config, sound_settings, websocket_protocol, websocket_settings
+from utils.config import (SoundSettings, debug_enabled, load_config, show_version, sound_settings, websocket_protocol,
+                          websocket_settings)
 from utils.sound import clip_name, playing
 
 # Configure logging
@@ -98,6 +99,8 @@ RIDE_VISITORS = {
 forced_surprise = None
 # config.json "sound", read once at start-up.
 sound = SoundSettings()
+# config.json "show_version": which version of a synced show plays, read once at start-up.
+show_version_setting = "v1"
 FIREWORKS_SHOW_S = 5 * 60
 _shows_played = set()
 
@@ -142,8 +145,9 @@ def main():
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
     set_forced_surprise(config.get("force_surprise"))
-    global sound
+    global sound, show_version_setting
     sound = sound_settings(config)
+    show_version_setting = show_version(config)
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
@@ -259,7 +263,7 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
     If the fireworks show a park runs tonight (from its schedule: see special_events.fireworks_show)
     started in the last FIREWORKS_SHOW_S seconds, play the castle fireworks in that show's theme,
     without the title, until that window ends (or, for a show with a score in display/fireworks/shows/,
-    its whole synced show: see music_show.py), with the show's sound (sounds/<show>.wav, else
+    its whole synced show, in config.json's show_version: see music_show.py), with the show's sound (sounds/<show>.wav, else
     sounds/fireworks.wav) if config.json turns sound on. Each performance plays once. Returns True if it played.
     """
     now = now or datetime.now(timezone.utc)
@@ -269,7 +273,7 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
         if start is None or (show, start) in _shows_played:
             continue
         _shows_played.add((show, start))
-        score = load_score(clip_name(show))
+        score = load_score(clip_name(show), version=show_version_setting)
         with playing([clip_name(show), "fireworks"], sound, now):
             if score:
                 # The whole show from its first note, with the music, however late the board cut in.

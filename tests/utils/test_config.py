@@ -4,8 +4,8 @@ import pytest
 
 from datetime import time
 
-from utils.config import (SoundSettings, debug_enabled, has_api_key, load_config, sound_settings, weather_api_key,
-                          websocket_protocol, websocket_settings)
+from utils.config import (SoundSettings, debug_enabled, has_api_key, load_config, show_version, sound_settings,
+                          weather_api_key, websocket_protocol, websocket_settings)
 
 
 def test_load_config(tmp_path):
@@ -111,3 +111,14 @@ def test_bad_sound_settings_turn_sound_off(section):
 @pytest.mark.parametrize("device", ["", "  ", 1])
 def test_a_bad_sound_device_falls_back_to_the_default(device):
     assert sound_settings({"sound": {"device": device}}) == SoundSettings(True, None, None)
+
+
+@pytest.mark.parametrize("config, expected", [
+    ({}, "v1"),
+    ({"show_version": "v1"}, "v1"),
+    ({"show_version": "v2"}, "v2"),
+    ({"show_version": "V2"}, "v1"),  # unknown values fall back, with a warning
+    ({"show_version": 2}, "v1"),
+])
+def test_show_version(config, expected):
+    assert show_version(config) == expected

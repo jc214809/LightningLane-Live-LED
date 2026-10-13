@@ -138,7 +138,8 @@ Times are audio seconds ((video − 10.19) / 1.001). Colours as Gemini named the
   and gold brocade (252-256).
 - 256-268 When You Wish interlude: castle lavender, pink and turquoise; magenta/purple comets fan
   left and right (257-262), then a lull.
-- 268-303 Out There: bells, gothic stone, moss, rose windows, Quasimodo swinging across the towers,
+- 268-303 Touch the Sky (Brave; titled Out There until its lyrics were checked): Merida's "Your
+  destiny lies within you" (265-271), the song from 276. Gemini described bells, gothic stone, moss, rose windows, Quasimodo swinging across the towers,
   white doves along the spires (289-302). Gold willow, one red comet high over the spire (277-280),
   emerald and white strobes (280-290), a fan of red/gold comets and ruby peonies (291-300).
 
@@ -243,10 +244,9 @@ New effects:
 
 ## Open questions
 
-- **4:38-5:13 (audio 268-303).** Chunk 1 says Out There with Quasimodo and doves, then Touch the
-  Sky's bagpipes and the Up balloons at 5:13. Chunk 2, starting at 5:00, calls 5:00-5:13 the end of
-  Touch the Sky with Merida, and puts the balloons at 5:14. Both put the balloons at ~303. Check by
-  ear what plays from audio 268 to 303.
+- **4:38-5:13 (audio 268-303)** is settled: by its lyrics (Whisper, 2026-10-11) it's Touch the Sky,
+  from Merida's "Your destiny lies within you" at 265; the score's scene was retitled from Out There.
+  Its look (bells, gothic stone, doves) is still Gemini's Out There reading: check it against the video.
 - Whether Remy and Rapunzel really are in Part of Your World; ask Gemini again with just
   3:12-4:30.
 - Settled: our audio and the recording are the same track (see Clock). Boundaries can be set to the

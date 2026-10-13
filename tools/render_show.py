@@ -8,9 +8,11 @@ on it. Nothing here changes the show.
     python3 tools/render_show.py                    # both boards, plus the page's data file
     python3 tools/render_show.py --recording        # also download the real show's recording
     python3 tools/render_show.py --height 64        # one board only
+    python3 tools/render_show.py --version v2       # a later version (its overlay file, see score.py)
 
 Writes to build/show_sync/ (gitignored): <show>-64x32.mp4, <show>-64x64.mp4, <show>.js (the score,
-for the page) and, with --recording, <show>-recording.mp4. Re-run it after changing the score: the
+for the page) and, with --recording, <show>-recording.mp4. A later version is named <show>.v2-64x32.mp4
+and so on; open the page with ?show=<show>.v2. Re-run it after changing the score: the
 whole show renders in about a minute. Needs ffmpeg (and yt-dlp for --recording) on the PATH.
 """
 import argparse
@@ -28,7 +30,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from display.fireworks.music_show import MusicShow  # noqa: E402
-from display.fireworks.score import SHOWS_DIR, load_score  # noqa: E402
+from display.fireworks.score import SHOWS_DIR, load_score, parse_lips, parse_score  # noqa: E402
+from display.fireworks.show_actors import ACTORS  # noqa: E402
 
 OUT_DIR = os.path.join(ROOT, "build", "show_sync")
 SOUNDS_DIR = os.path.join(ROOT, "sounds")
@@ -55,7 +58,7 @@ def panel_image(pixels, width, height, px=LED_PX):
 def frames(score, height, fps=FPS, seed=SEED, seconds=None):
     """Every frame of the show on a 64 x height board, as the board steps it: the scene at each frame's
     time, then one simulation step, then the picture. seconds stops early (for tests)."""
-    show = MusicShow(WIDTH, height, random.Random(seed))
+    show = MusicShow(WIDTH, height, random.Random(seed), score.lips)
     for i in range(int((seconds if seconds is not None else score.end) * fps)):
         t = i / fps
         show.set_cue(score.cue_at(t), t)
@@ -90,19 +93,39 @@ def render(score, height, out, audio=None, fps=FPS):
         raise RuntimeError(f"ffmpeg failed ({code}) writing {out}")
 
 
-def sync_data(score, raw, boards, recording_file=None):
+# Characters drawn by a scene effect (music_show's own) rather than an actor, by effect name.
+EFFECT_CHARACTERS = {"tink": "Tinker Bell"}
+
+
+def cast(score):
+    """Our characters by scene title: [{"name", "start"}] for each one whose run of back-to-back scenes
+    starts there, at the show second it first shows (its scene's start plus its ENTERS_S), with the
+    characters an effect draws (EFFECT_CHARACTERS) from their scene's start."""
+    out, before, before_fx = {}, (), frozenset()
+    for cue in score.cues:
+        listed = [{"name": ACTORS[a].NAME or a, "start": round(cue.start + ACTORS[a].ENTERS_S, 2)}
+                  for a in cue.actors if a not in before]
+        listed += [{"name": name, "start": round(cue.start, 2)} for fx, name in EFFECT_CHARACTERS.items()
+                   if fx in cue.effects and fx not in before_fx]
+        out[cue.title] = sorted(listed, key=lambda c: c["start"])
+        before, before_fx = cue.actors, cue.effects
+    return out
+
+
+def sync_data(score, raw, boards, recording_file=None, version="v1"):
     """What the page needs, as a dict: the scenes (with what the board does in each), the sections'
     colours, the board videos, and how the recording's clock maps onto the show's."""
     by_title = {sc["title"]: (sec, sc) for sec in raw["sections"] for sc in sec["scenes"]}
-    scenes = []
+    scenes, ours = [], cast(score)
     for cue in score.cues:
         sec, sc = by_title[cue.title]
         scenes.append({"title": cue.title, "section": cue.section, "start": cue.start, "end": cue.end,
                        "castle": cue.castle, "effects": sorted(cue.effects), "rate": round(cue.rate, 2),
+                       "stage": cue.stage, "actors": list(cue.actors), "cast": ours[cue.title],
                        "characters": sc.get("characters", [])})
     rec = raw.get("recording")
     return {
-        "name": score.name, "end": score.end, "fps": FPS, "boards": boards,
+        "name": score.name, "version": version, "end": score.end, "fps": FPS, "boards": boards,
         "sections": [{"id": s["id"], "start": s["start"], "end": s["end"], "palette": s["palette"]}
                      for s in raw["sections"]],
         "scenes": scenes,
@@ -134,6 +157,7 @@ def main(argv=None):
     parser.add_argument("--show", default="happily-ever-after", help="the show's clip name (its score's file name)")
     parser.add_argument("--height", type=int, choices=HEIGHTS, action="append", help="one board (default both)")
     parser.add_argument("--recording", action="store_true", help="also download the real show's recording")
+    parser.add_argument("--version", default="v1", help="the show's version: v1, or a later one's overlay file")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -146,6 +170,20 @@ def main(argv=None):
         return 1
     with open(os.path.join(SHOWS_DIR, f"{args.show}.json")) as f:
         raw = json.load(f)
+    tag = args.show
+    if args.version != "v1":
+        # Parsed here rather than through load_score, which plays V1 on a bad overlay: say what's wrong.
+        tag = f"{args.show}.{args.version}"
+        try:
+            with open(os.path.join(SHOWS_DIR, f"{tag}.json")) as f:
+                score = parse_score(args.show, raw, json.load(f))
+            lips_path = os.path.join(SHOWS_DIR, f"{tag}.lips.json")
+            if os.path.exists(lips_path):
+                with open(lips_path) as f:
+                    score = score._replace(lips=parse_lips(json.load(f)))
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+            logger.error("can't use %s's %s: %r", args.show, args.version, e)
+            return 1
     os.makedirs(OUT_DIR, exist_ok=True)
     audio = os.path.join(SOUNDS_DIR, f"{args.show}.wav")
     if not os.path.exists(audio):
@@ -154,7 +192,7 @@ def main(argv=None):
 
     boards = {}
     for height in args.height or HEIGHTS:
-        name = f"{args.show}-{WIDTH}x{height}.mp4"
+        name = f"{tag}-{WIDTH}x{height}.mp4"
         logger.info("rendering %s (%.0f s of show)...", name, score.end)
         try:
             render(score, height, os.path.join(OUT_DIR, name), audio)
@@ -164,7 +202,7 @@ def main(argv=None):
         boards[f"{WIDTH}x{height}"] = name
     # Keep boards rendered on an earlier run listed for the page.
     for height in HEIGHTS:
-        name = f"{args.show}-{WIDTH}x{height}.mp4"
+        name = f"{tag}-{WIDTH}x{height}.mp4"
         if f"{WIDTH}x{height}" not in boards and os.path.exists(os.path.join(OUT_DIR, name)):
             boards[f"{WIDTH}x{height}"] = name
 
@@ -179,9 +217,9 @@ def main(argv=None):
             logger.error("couldn't download the recording: %s", e)
             return 1
     have_rec = os.path.exists(os.path.join(OUT_DIR, rec_name))
-    write_sync_js(sync_data(score, raw, boards, rec_name if have_rec else None),
-                  os.path.join(OUT_DIR, f"{args.show}.js"))
-    page = os.path.join(ROOT, "tools", "show_sync_checker.html")
+    write_sync_js(sync_data(score, raw, boards, rec_name if have_rec else None, args.version),
+                  os.path.join(OUT_DIR, f"{tag}.js"))
+    page = os.path.join(ROOT, "tools", "show_sync_checker.html") + ("" if tag == args.show else f"?show={tag}")
     logger.info("done. Open %s%s", page, "" if have_rec else " (add --recording for the real show beside it)")
     return 0
 

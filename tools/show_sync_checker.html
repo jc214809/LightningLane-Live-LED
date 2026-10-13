@@ -71,6 +71,10 @@ kbd { font: inherit; font-size: .82em; border: 1px solid var(--line); border-bot
 .scenes li.on button { background: rgba(242,193,78,.16); }
 .scenes .t { font-variant-numeric: tabular-nums; color: var(--muted); }
 .scenes .sec { color: var(--muted); font-size: .8rem; }
+.scenes .cast { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 6px 4px 66px; }
+.scenes .cast button { all: unset; cursor: pointer; font-size: .78rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); }
+.scenes .cast button:hover { background: rgba(242,193,78,.16); }
+.scenes .cast button:focus-visible { outline: 2px solid var(--gold); }
 ol.marks { margin: 0; padding-left: 1.3em; max-height: 200px; overflow: auto; }
 .late { color: var(--bad); } .early { color: var(--good); }
 textarea { width: 100%; min-height: 150px; font: 13px/1.4 ui-monospace, Menlo, monospace; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
@@ -146,7 +150,7 @@ textarea { width: 100%; min-height: 150px; font: 13px/1.4 ui-monospace, Menlo, m
       <span class="hint">Measured by align_audio.py; nudge only if the two look off.</span>
       <span class="status" id="status"></span>
     </div>
-    <p class="hint"><kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> 1 s (<kbd>Shift</kbd> 5 s) · <kbd>M</kbd> mark · <kbd>[</kbd>/<kbd>]</kbd> slower/faster · click a scene to jump just before it</p>
+    <p class="hint"><kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> 1 s (<kbd>Shift</kbd> 5 s) · <kbd>M</kbd> mark · <kbd>[</kbd>/<kbd>]</kbd> slower/faster · click a scene to jump just before it, or one of our characters under it to jump to them</p>
 
     <div class="cols">
       <section class="panel">
@@ -188,8 +192,9 @@ document.head.appendChild(script);
 function start(S) {
   if (!S || !Object.keys(S.boards || {}).length) { $("setup").hidden = false; return; }
   $("app").hidden = false;
-  $("title").textContent = "Show sync checker: " + S.name;
-  document.title = "Sync: " + S.name;
+  const label = S.name + (S.version && S.version !== "v1" ? " " + S.version : "");
+  $("title").textContent = "Show sync checker: " + label;
+  document.title = "Sync: " + label;
   const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
   const KEY = "show-sync:" + S.name + ":";
@@ -305,7 +310,20 @@ function start(S) {
     const li = document.createElement("li"), b = document.createElement("button");
     b.innerHTML = `<span class="t">${fmt(s.start)}</span><span>${s.title}<br><span class="sec">${s.section}${s.characters.length ? " · " + s.characters.join(", ") : ""}</span></span>`;
     b.onclick = () => seek(s.start - 2);
-    li.appendChild(b); list.appendChild(li);
+    li.appendChild(b);
+    if ((s.cast || []).length) {
+      // Our characters in this scene: each jumps to a second before it first shows.
+      const row = document.createElement("div"); row.className = "cast";
+      s.cast.forEach(c => {
+        const cb = document.createElement("button");
+        cb.textContent = c.name + " " + fmt(c.start);
+        cb.title = "Jump to " + c.name;
+        cb.onclick = () => seek(c.start - 1);
+        row.appendChild(cb);
+      });
+      li.appendChild(row);
+    }
+    list.appendChild(li);
   });
 
   // ---- marks ----
@@ -363,6 +381,8 @@ function start(S) {
       $("scene").textContent = s.title;
       const bits = [s.section, "castle: " + (s.castle || "everyday"), s.rate ? "fireworks " + s.rate + "×" : "no fireworks"];
       if (s.effects.length) bits.push(s.effects.join(", "));
+      if (s.stage && s.stage !== "castle") bits.push("castle " + s.stage);
+      if (s.actors && s.actors.length) bits.push("ours: " + s.actors.join(", "));
       if (s.characters.length) bits.push("real show: " + s.characters.join(", "));
       $("does").textContent = bits.join(" · ");
       list.querySelectorAll("li").forEach((li, i) => li.classList.toggle("on", scenes[i] === s));

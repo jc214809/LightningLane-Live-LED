@@ -1,7 +1,31 @@
 # Happily Ever After V2: characters share the spotlight (plan)
 
-**Status (2026-10-11):** plan only. Nothing drawn, nothing built. Every character still goes through
-the usual question batch before it's drawn (CHARACTERS.md, "ask before drawing").
+**Status (2026-10-11):** batches 1 and 3 built on `feat/hea-v2-plumbing`, plus Moana and Mufasa from
+batch 4. Each character is one module under `display/fireworks/actors/` (Genie is in `show_actors.py`),
+registered in `ACTORS` and named in `happily-ever-after.v2.json`:
+
+| Scene | Character | Notes |
+|---|---|---|
+| Down in New Orleans, When You Wish fanfare | Ray | Firefly: a figure-eight by the evening star, then circles the spire |
+| Touch the Sky | Merida | 64x64 only (`Brave.jpg`, hair trimmed, a mouth added): says her line lip-synced, then on "touch the sky" shoots an arrow into a bullseye firework that shatters; the scene's rate 0.6 so the arrow shows |
+| Touch the Sky / Up | The Up house | Rises from behind the castle on its balloons, drifts off right |
+| How Far I'll Go (climax) | Moana's canoe | One crossing once the water is up; on 64x64 the toy's canoe (red spiral sail, outrigger) with Moana (princes sheet) aboard |
+| You've Got a Friend in Me | Buzz and Woody | Buzz flies across, Woody waves from the ground |
+| Friendship mash-up | Ralph, Baymax, memory orbs | Ralph smashes bricks, Baymax inflates, Joy's and Sadness's orbs. The Zootopia skyline was built and cut (nobody knew what it was) |
+| That's What Friends Are For | Mike | Peeks over a turret, then the other |
+| Friend Like Me, and its finale | Genie | Circles the spire, lip-synced, sings on through the finale |
+| Olaf | Olaf | Pops up and waves, grinning; on 64x64 a straighter skull and lip-synced; melts as he says his line (body first, his face after his last word) into a puddle |
+| Princess garden | Cinderella and Charming, Tiana and frog Naveen, Ariel and Eric, Belle and the Beast | Princes sheet, 1x on both boards: one couple a quarter of the scene, walking in to meet, a heart floating up; Naveen hops; Ariel sits on a rock (tail only on the sheet); Charming's and Eric's hair lifted for the LEDs |
+| Can You Feel the Love Tonight | WALL-E | Floats across the stars |
+| You'll Be in My Heart | Dumbo | `Flying Dumbo.jpg`'s whole body; flaps both ears over a still hat, paddles his legs |
+| I See the Light | Rapunzel and Flynn's boat | Drifts in among the lanterns; she lets her own go |
+| Embers | Mufasa | Traced from the user's clouds still, top right, his outline all mane; lip-synced, fading as he says "Remember who you are... Remember" |
+
+Lip sync: `tools/lip_sync.py` (demucs splits the voice, Whisper only to check words; see CLAUDE.md).
+Genie's mouth is muted for the backup singers in Friend Like Me (542.6-545 and the wa-wa-wa's at
+553.7-559.7, per the lyric sheet). Still open: whether to remake Genie's and Olaf's tracks with the cleaner `htdemucs_ft` split, the ghost level (25%), and the
+rest of batches 2 and 4. Each character's size and motion are settled with the user before it's built
+(the user's call, 2026-10-11: sizes are per character, not a rule).
 
 V1 is all castle and fireworks. The real show is mostly projected characters (see README.md here,
 scene by scene). In V2 the castle fades out, or dims to a ghost, in the scenes where characters need
@@ -51,9 +75,8 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | When You Wish fanfare (171-192) | castle | Ray | Code | Keeps buzzing, circling the spire. |
 | Part of Your World (192-215) | off | Ariel | Sheet | Swims across on a slow sine wave through the bubbles, tail flicking (two frames). |
 | PoYW climax (215-256) | ghost | Ariel | Sheet | Rises from the bottom toward the top and reaches up (needs a "reach" frame). |
-| Out There (268-303) | castle | Quasimodo | Sheet (`Hunchback of Notre Dame.jpg`, about 17x34) | Swings on a rope from the spire between the towers (a pendulum). 2 rows too tall for 64x32: trim or redraw smaller there. The gargoyles could peek from the towers. |
+| Touch the Sky (268-303) | castle | Merida | Sheet (`Brave2.jpg` 21x30) | Draws her bow at the side, or looses an arrow across the board. (Was planned as Out There with Quasimodo; it's Touch the Sky by its lyrics, so Quasimodo has no song here.) |
 | Touch the Sky / Up (303-325) | ghost | Up house | Code | Rises from behind the castle under a balloon cluster and drifts up and out to the right. |
-| | | Merida | Sheet (`Brave2.jpg` 21x30) | Optional, for Touch the Sky's opening seconds: draws her bow at the side. |
 | | | Dug (cameo) | Have (`kevin`) | Optional: runs along the ground after the house. |
 | How Far I'll Go (325-370) | ghost | Moana | Sheet | Sails a small canoe (Code) across the water effect. |
 | | | Gramma Tala | | The existing `stingray` effect stands in. |
@@ -179,6 +202,9 @@ references, and `Flying Dumbo.jpg` gives Dumbo his missing back half. Most usefu
    that plays the synced show from that second with no sound. `render_music_show` gets a
    `start_at` offset on its clock. The live board needs this anyway, to start the music mid-file
    (see ROADMAP).
+   **Not built (2026-10-11):** `tools/render_show.py --version v2` and the sync checker do this
+   already (any second, in about a minute), and a new `cli.py` flag would also become a `matrix`
+   setting. The live board's mid-show start is still a ROADMAP item.
 7. **Fireworks under characters.** The overlay's `rate` thins the sky while a character is on,
    like Tink's `TINK_RATE` but per scene, so a busy burst doesn't sit on a face.
 8. **Tests**, in `tests/display/fireworks/`: `test_score.py` (overlay merge, unknown title, bad

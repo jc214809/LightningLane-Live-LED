@@ -49,6 +49,15 @@ def test_frames_follow_the_score_like_the_board(tiny):
     assert reds(fire) > reds(dark) + 50
 
 
+def test_frames_give_the_show_the_scores_mouth_tracks(tiny, monkeypatch):
+    seen = []
+    real = tool.MusicShow
+    monkeypatch.setattr(tool, "MusicShow", lambda *args: seen.append(args[3]) or real(*args))
+    lips = {"genie": object()}
+    list(tool.frames(tiny._replace(lips=lips), 32, fps=10, seconds=0.2))
+    assert seen == [lips]
+
+
 def test_render_pipes_every_frame_to_ffmpeg(tiny, monkeypatch):
     written, cmds = [], []
 
@@ -108,6 +117,14 @@ def test_sync_data_lists_every_scene_with_what_the_board_does(tiny):
     assert data["end"] == 4 and data["boards"] == {"64x32": "tiny-64x32.mp4"}
 
 
+def test_sync_data_says_which_version_and_what_each_scene_stages(tiny):
+    data = tool.sync_data(tiny, TINY, {}, None)
+    assert data["version"] == "v1" and data["scenes"][1]["stage"] == "castle" and data["scenes"][1]["actors"] == []
+    v2 = parse_score("tiny", TINY, {"overlays": {"Dark": {"stage": "off"}}})
+    data = tool.sync_data(v2, TINY, {}, None, "v2")
+    assert data["version"] == "v2" and data["scenes"][0]["stage"] == "off"
+
+
 def test_sync_data_has_no_recording_until_one_is_downloaded(tiny):
     assert tool.sync_data(tiny, TINY, {}, None)["recording"] is None
     no_entry = {k: v for k, v in TINY.items() if k != "recording"}
@@ -151,3 +168,58 @@ def test_main_with_an_unknown_show_is_an_error(monkeypatch, caplog):
     monkeypatch.setattr(tool.shutil, "which", lambda name: "/usr/bin/" + name)
     assert tool.main(["--show", "no-such-show"]) == 1
     assert "no usable score" in caplog.text
+
+
+def test_main_with_a_broken_or_missing_version_is_an_error(monkeypatch, caplog):
+    # Unlike the board, which plays V1 instead, the tool says what's wrong.
+    monkeypatch.setattr(tool.shutil, "which", lambda name: "/usr/bin/" + name)
+    assert tool.main(["--version", "v9"]) == 1
+    assert "can't use happily-ever-after's v9" in caplog.text
+
+
+def test_main_renders_a_version_with_its_mouth_tracks(monkeypatch, tmp_path):
+    """The tool builds a version itself (to report a broken one), so it must load the mouth tracks too:
+    without them a singing character's mouth stays still in the render, though not on the board."""
+    shows, out = tmp_path / "shows", tmp_path / "out"
+    shows.mkdir()
+    (shows / "tiny.json").write_text(json.dumps(TINY))
+    (shows / "tiny.v2.json").write_text(json.dumps({"overlays": {"Fire": {"actors": ["genie"]}}}))
+    (shows / "tiny.v2.lips.json").write_text(json.dumps({"lips": {"genie": {"start": 1, "fps": 15, "track": "012"}}}))
+    monkeypatch.setattr(tool, "SHOWS_DIR", str(shows))
+    monkeypatch.setattr(tool, "OUT_DIR", str(out))
+    monkeypatch.setattr(tool, "SOUNDS_DIR", str(tmp_path))
+    monkeypatch.setattr(tool.shutil, "which", lambda name: "/usr/bin/" + name)
+    monkeypatch.setattr(tool, "load_score", lambda name: parse_score(name, TINY))
+    rendered = []
+    monkeypatch.setattr(tool, "render", lambda score, height, path, audio: rendered.append(score))
+    assert tool.main(["--show", "tiny", "--version", "v2", "--height", "32"]) == 0
+    assert rendered[0].lips["genie"].track == "012"
+    assert rendered[0].cue_at(2).actors == ("genie",)
+
+
+def test_each_character_is_listed_once_under_the_scene_it_first_shows_in():
+    """The page lists our characters under their scenes to jump to: a character carried across
+    back-to-back scenes is listed once, and one that comes on partway through gives its own second."""
+    v2 = load_score("happily-ever-after", version="v2")
+    cast = tool.cast(v2)
+    mash = v2.cue_at(470)
+    assert [c["name"] for c in cast[mash.title]] == ["Ralph", "Baymax", "Joy and Sadness's memory orbs"]
+    assert [c["start"] for c in cast[mash.title]] == [mash.start, mash.start + 15, mash.start + 35]
+    assert cast["Friend Like Me (Genie)"] == [{"name": "Genie", "start": 527.0}]
+    assert cast["Friend Like Me (finale)"] == [], "Genie carries on from the scene before"
+    named = [c for listed in cast.values() for c in listed]
+    assert all(c["name"] for c in named) and len(named) == len({c["name"] for c in named})
+
+
+def test_the_page_lists_the_cast_as_buttons():
+    with open(PAGE) as f:
+        page = f.read()
+    assert "s.cast" in page and "seek(c.start - 1)" in page
+
+
+def test_tinker_bell_is_listed_though_an_effect_draws_her():
+    for version in ("v1", "v2"):
+        cast = tool.cast(load_score("happily-ever-after", version=version))
+        assert cast["You Can Fly"] == [{"name": "Tinker Bell", "start": 1042.2}]
+        assert all(c["name"] != "Tinker Bell" for title, listed in cast.items() if title != "You Can Fly" for c in listed)
+
