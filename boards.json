@@ -26,6 +26,12 @@
     "led_gpio_mapping": "adafruit-hat-pwm",
     "led_slowdown_gpio": 2
   },
+  "TinyPi": {
+    "led_rows": 64,
+    "led_cols": 64,
+    "led_gpio_mapping": "adafruit-hat-pwm",
+    "led_slowdown_gpio": 2
+  },
   "Joels-MacBook-Pro": {
     "led_rows": 64,
     "led_cols": 64,
