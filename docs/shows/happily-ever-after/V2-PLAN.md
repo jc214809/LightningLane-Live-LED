@@ -20,8 +20,8 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 | Embers | Mufasa | Traced from the user's clouds still, top right, his outline all mane; lip-synced, fading as he says "Remember who you are... Remember" |
 
 Lip sync: `tools/lip_sync.py` (demucs splits the voice, Whisper only to check words; see CLAUDE.md).
-Still open: the time the woman sings in Friend Like Me (Genie's mouth should be muted there), whether to
-remake Genie's and Olaf's tracks with the cleaner `htdemucs_ft` split, the ghost level (25%), and the
+Genie's mouth is muted for the backup singers in Friend Like Me (542.6-545 and the wa-wa-wa's at
+553.7-559.7, per the lyric sheet). Still open: whether to remake Genie's and Olaf's tracks with the cleaner `htdemucs_ft` split, the ghost level (25%), and the
 rest of batches 2 and 4. Each character's size and motion are settled with the user before it's built
 (the user's call, 2026-10-11: sizes are per character, not a rule).
 

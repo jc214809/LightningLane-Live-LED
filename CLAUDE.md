@@ -29,7 +29,7 @@ python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [
 python3 tools/render_show.py [--recording] [--version v2]
 
 # Lip-sync a singing show character (demucs in its own venv: install lines atop the tool)
-python3 tools/lip_sync.py genie 525 565 --model htdemucs --close 549.82   # --close: an m inside a held note; --mute FROM-TO: someone else sings (the woman's part, time still to find)
+python3 tools/lip_sync.py genie 525 565 --model htdemucs --close 549.82 --mute 542.6-545.0 --mute 553.7-559.7   # --close: an m inside a held note; --mute FROM-TO: someone else sings (the backup singers, per the lyric sheet)
 python3 tools/lip_sync.py mufasa 849 889 --close 869.97 --close 871.70 --close 877.88 --close 882.3 --close 882.75 --from-mix 881.95-883.4   # --from-mix: his echoing last "Remember"
 ```
 
