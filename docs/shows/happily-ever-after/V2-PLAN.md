@@ -13,7 +13,7 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 | Friendship mash-up | Ralph, Baymax, memory orbs | Ralph smashes bricks, Baymax inflates, Joy's and Sadness's orbs. The Zootopia skyline was built and cut (nobody knew what it was) |
 | That's What Friends Are For | Mike | Peeks over a turret, then the other |
 | Friend Like Me, and its finale | Genie | Circles the spire, lip-synced, sings on through the finale |
-| Olaf | Olaf | Pops up and waves; on 64x64 a straighter skull and lip-synced |
+| Olaf | Olaf | Pops up and waves, grinning; on 64x64 a straighter skull and lip-synced; melts as he says his line (body first, his face after his last word) into a puddle |
 | Can You Feel the Love Tonight | WALL-E | Floats across the stars |
 | You'll Be in My Heart | Dumbo | `Flying Dumbo.jpg`'s whole body; flaps both ears over a still hat, paddles his legs |
 | I See the Light | Rapunzel and Flynn's boat | Drifts in among the lanterns; she lets her own go |

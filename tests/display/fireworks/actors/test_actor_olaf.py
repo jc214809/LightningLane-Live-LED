@@ -90,14 +90,58 @@ def test_on_64x64_his_head_stands_over_his_jaw_and_on_64x32_it_is_as_drawn():
     assert olaf.head_art is OlafReveal.BIG_HEAD_ART, "his ride screen keeps its own head"
 
 
-def test_on_64x64_he_mouths_his_line_by_the_clock():
+def test_on_64x64_he_mouths_his_line_by_the_clock_and_grins_either_side():
     from display.fireworks.score import Lips
-    track = "0" * 30 + "1" * 15 + "2" * 15  # 2 s closed, then a second each of half and open
+    # 2 s quiet, then a second each of half, closed and open, then quiet again
+    track = "0" * 30 + "1" * 15 + "0" * 15 + "2" * 15 + "0" * 30
     show = MusicShow(64, 64, random.Random(3), {"olaf": Lips(563.0, 15.0, track)})
     cue = _scene()
-    mouths = [_run(OlafStands(show), show, cue, cue.start + t) for t in (1.5, 2.5, 3.5)]
-    shut, half, wide = ({xy for xy, rgb in m.items() if rgb == OlafReveal.MOUTH} for m in mouths)
+    frames = [_run(OlafStands(show), show, cue, cue.start + t) for t in (1.5, 2.5, 3.5, 4.5)]
+    before, half, shut, wide = ({xy for xy, rgb in m.items() if rgb == OlafReveal.MOUTH} for m in frames)
     assert len(shut) < len(half) < len(wide), "more of his mouth shows as it opens"
+    shape = lambda cells: {(x, y - min(y for _, y in cells)) for x, y in cells}  # wherever he's sunk to
+    assert shape(before) == shape(wide), "his big open grin before his first word"
+    actor = OlafStands(show)
+    _run(actor, show, cue, cue.start + 5.5)
+    assert actor.shape(5.5) == 2, "and after his last"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_he_melts_as_he_says_his_line_his_face_last_into_a_puddle_gone_by_his_scene_end(height):
+    from display.fireworks.score import Lips
+    track = "0" * 120 + "2" * 30  # his line: 8-10 s into his 13 s scene, as his real one is
+    show = MusicShow(64, height, random.Random(5), {"olaf": Lips(563.0, 15.0, track)})
+    cue = _scene()
+    actor = OlafStands(show)
+    _run(actor, show, cue, cue.start)
+    body, head, gone = actor.melt_s()
+    assert (body, head, gone) == pytest.approx((8.0, 10.0, 13.0 - OlafStands.PUDDLE_S))
+    face = lambda out: {xy for xy, rgb in out.items() if rgb in (OlafReveal.CARROT, OlafReveal.EYE_RING)}
+    standing = _run(OlafStands(show), show, cue, cue.start + 7.9)
+    talking = _run(OlafStands(show), show, cue, cue.start + 9.9)
+    melting = _run(OlafStands(show), show, cue, cue.start + 11.8)
+    puddle = _run(OlafStands(show), show, cue, cue.start + gone + 0.05)
+    top = lambda out: min(y for _, y in out)
+    assert top(standing) < top(talking) < top(melting) < top(puddle), "he sinks down"
+    drop = top(talking) - top(standing)
+    assert drop > 0 and {(x, y + drop) for x, y in face(standing)} == face(talking), \
+        "his face rides down whole while he talks"
+    assert len(face(melting)) < len(face(standing)), "then it melts too"
+    assert max(y for _, y in puddle) == height - 1 and top(puddle) >= height - 3, "a puddle on the bottom rows"
+    near = lambda ref: any(all(abs(a - b) <= 0.1 * b + 1 for a, b in zip(rgb, ref)) for rgb in puddle.values())
+    assert near(OlafStands.WATER) and near(OlafReveal.CARROT), "his carrot in it"
+    assert not near(OlafReveal.WHITE), "no snow left"
+    assert not _run(OlafStands(show), show, cue, cue.end - 0.01), "the puddle's gone by his scene's end"
+
+
+def test_without_a_track_he_melts_in_his_scene_last_seconds():
+    show = MusicShow(64, 64, random.Random(6))
+    cue = _scene()
+    actor = OlafStands(show)
+    _run(actor, show, cue, cue.start)
+    start = 13.0 - OlafStands.MELT_S - OlafStands.PUDDLE_S
+    assert actor.melt_s()[:2] == pytest.approx((start, start))
+    assert not _run(OlafStands(show), show, cue, cue.end - 0.01)
 
 
 def test_on_64x32_his_mouth_stays_as_drawn_even_with_a_track():
