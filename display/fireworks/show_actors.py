@@ -135,6 +135,7 @@ from display.fireworks.actors.merida import MeridaShoots  # noqa: E402
 from display.fireworks.actors.mike import MikePeeks  # noqa: E402
 from display.fireworks.actors.mufasa import MufasaInTheStars  # noqa: E402
 from display.fireworks.actors.olaf import OlafStands  # noqa: E402
+from display.fireworks.actors.princess_garden import PrincessGarden  # noqa: E402
 from display.fireworks.actors.ralph import RalphSmashes  # noqa: E402
 from display.fireworks.actors.ray import RayGlows  # noqa: E402
 from display.fireworks.actors.toy_story import BuzzAndWoody  # noqa: E402
@@ -154,6 +155,7 @@ ACTORS = {
     "ray": RayGlows,
     "merida": MeridaShoots,
     "up_house": UpHouseFloats,
+    "princess_garden": PrincessGarden,
     "canoe": CanoeSails,
     "lantern_boat": LanternBoat,
     "memory_orbs": MemoryOrbs,

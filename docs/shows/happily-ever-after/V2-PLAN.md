@@ -15,6 +15,7 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 | That's What Friends Are For | Mike | Peeks over a turret, then the other |
 | Friend Like Me, and its finale | Genie | Circles the spire, lip-synced, sings on through the finale |
 | Olaf | Olaf | Pops up and waves, grinning; on 64x64 a straighter skull and lip-synced; melts as he says his line (body first, his face after his last word) into a puddle |
+| Princess garden | Cinderella and Charming, Tiana and frog Naveen, Ariel and Eric, Belle and the Beast | Princes sheet, 1x on both boards: one couple a quarter of the scene, walking in to meet, a heart floating up; Naveen hops; Ariel sits on a rock (tail only on the sheet); Charming's and Eric's hair lifted for the LEDs |
 | Can You Feel the Love Tonight | WALL-E | Floats across the stars |
 | You'll Be in My Heart | Dumbo | `Flying Dumbo.jpg`'s whole body; flaps both ears over a still hat, paddles his legs |
 | I See the Light | Rapunzel and Flynn's boat | Drifts in among the lanterns; she lets her own go |
