@@ -470,6 +470,7 @@ def fireworks_played(monkeypatch):
     monkeypatch.setattr(disney, "render_castle_fireworks",
                         lambda matrix, duration, title=True, theme=None: played.append((duration, title, theme)))
     monkeypatch.setattr(disney, "_shows_played", set())
+    monkeypatch.setattr(disney, "load_score", lambda name: None)  # the random fireworks; see the score tests
     return played
 
 
@@ -479,6 +480,54 @@ def test_fireworks_play_without_the_title_once_per_performance(fireworks_played)
     assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 8, False, None)], "until the window ends, no title"
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now + timedelta(seconds=40)) is False
     assert len(fireworks_played) == 1, "the same performance never plays twice"
+
+
+def test_fireworks_play_the_shows_sound_until_they_end(monkeypatch):
+    events = []
+
+    class Recorder:
+        def __init__(self, names, settings, now):
+            events.append(("sound", names, settings, now))
+
+        def __enter__(self):
+            events.append("start")
+
+        def __exit__(self, *exc):
+            events.append("stop")
+
+    monkeypatch.setattr(disney, "playing", Recorder)
+    monkeypatch.setattr(disney, "render_castle_fireworks", lambda matrix, **kwargs: events.append("fireworks"))
+    monkeypatch.setattr(disney, "load_score", lambda name: None)
+    monkeypatch.setattr(disney, "_shows_played", set())
+    monkeypatch.setattr(disney, "sound", disney.SoundSettings(True))
+    now = HEA_START + timedelta(seconds=8)
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
+    assert events == [("sound", ["happily-ever-after", "fireworks"], disney.SoundSettings(True), now),
+                      "start", "fireworks", "stop"]
+
+
+def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypatch):
+    events = []
+
+    class Recorder:
+        def __init__(self, names, settings, now):
+            events.append(("sound", names[0]))
+
+        def __enter__(self):
+            events.append("start")
+
+        def __exit__(self, *exc):
+            events.append("stop")
+
+    monkeypatch.setattr(disney, "playing", Recorder)
+    monkeypatch.setattr(disney, "render_castle_fireworks", lambda *a, **k: events.append("random fireworks"))
+    monkeypatch.setattr(disney, "render_music_show", lambda matrix, score: events.append(("synced", score.name)))
+    monkeypatch.setattr(disney, "_shows_played", set())
+    # The real score: Happily Ever After has one in display/fireworks/shows/.
+    late = HEA_START + timedelta(seconds=90)
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=late) is True
+    assert events == [("sound", "happily-ever-after"), "start", ("synced", "happily-ever-after"), "stop"], \
+        "the whole show from the top, however late the board cut in"
 
 
 def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played):

@@ -415,8 +415,7 @@ class ObiWanDuelReveal(_SaberDuel):
 
     LEFT, RIGHT = "obiwan", "vader"
 
-    # From "hans- solo.jpg" (Obi-Wan despite the name) cell for cell, 24 rows like Luke, with
-    # his raised sword arm, his blade held over his head and his pointing arm taken out (his
+    # From "obiwan-saber.jpg" cell for cell, 24 rows like Luke, with his raised sword arm, his blade held over his head and his pointing arm taken out (his
     # arms are drawn in code). The blade hid the top of his head, so rows 2-4 are his hair
     # filled in, and the background showing between his arm and his head is gone. '.' empty,
     # K outline, A hair and beard, O skin and light robe, o robe, W his eyes' whites, k belt,

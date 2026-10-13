@@ -706,7 +706,7 @@ Built (2026-10-03), changed from the plan above while building:
 **60-62. More duels** (2026-10-06). The duel roll (`saber_duel`, still one 1 in 10 roll) now
 picks a matchup at random from `saber_duel.DUELS`; each is also its own transition for
 `force_surprise` (`saber_duel_luke`, `_obiwan`, `_yoda`). Matched to Luke and Vader's size, as asked.
-- **Obi-Wan** (`ObiWanDuelReveal`): from `hans- solo.jpg` cell for cell, already 24 rows. Both his
+- **Obi-Wan** (`ObiWanDuelReveal`): from `obiwan-saber.jpg` cell for cell, already 24 rows. Both his
   arms and the blade over his head came out; the blade hid the top of his head, so three rows of
   hair are filled in.
 - **Yoda** (`YodaDuelReveal`): from `Yoda-saber.jpg`, arms and blade out.
@@ -892,6 +892,73 @@ Done:
   `settings.local.json`) has a SessionStart hook that runs `--missing`, so a new session lists
   images with no row and measures them first.
 
-Not done: the sheets added before the one-row-per-character rule (Bullseye.jpg, the princess
-sheets, Beauty and the Beast.jpg, toy_story_4_sheet.png, TS_beads.jpg, dwarfs.jpg) still have one
-row each. Split them when one is next used. Lessons for CHARACTERS.md still come from building.
+- The sheets added before the one-row-per-character rule (Bullseye.jpg, the princess sheets,
+  Beauty and the Beast.jpg, toy_story_4_sheet.png, TS_beads.jpg, dwarfs.jpg) now have one row per
+  character with Pattern-mode boxes (2026-10-11). Several old sizes were off: most of
+  Princesses_and_Evil_Ladies.jpg fits 64x32, and Bullseye.jpg has no Forky and one Alien.
+
+Not done: TS_beads.jpg's Woody reads 11 x 13 in the tool (with his hat brim) but the editor's test
+holds 9 x 13 for the same box; check which is right. Five dwarfs are named from colour and pose
+only. Lessons for CHARACTERS.md still come from building.
+
+## ~~13. Fireworks in time with the soundtrack~~ Built
+
+Happily Ever After plays whole (1104s), in time with `sounds/happily-ever-after.wav`, through
+`display/fireworks/music_show.py`, a copy of the fireworks simulation (the user wanted it its own
+thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
+
+- The JSON is the user's show map (sections, palettes, intensity, scenes with characters and looks;
+  times in seconds into "Happily Ever After Full Show Audio", 1359s with the after-show track) plus
+  cues we added per scene: `rate`, `castle`, `shapes`, `effects`, `palette` (see its `cue_note`).
+- Built (decided with the user): section palettes and burst rates, dark silences and narration,
+  the castle fading between looks (blue after the wishing star lands, purple, villain green, fire,
+  dark embers, gold), heart/star/Mickey bursts, rising lanterns, falling embers, a rainbow finale and
+  a white flash on the last hit. Music and lights start together at 0:00 however late the board
+  cuts in.
+- Every scene's look (batch 1 of the user's "add the missing parts", 2026-10-10): one class each in
+  `display/fireworks/show_effects.py`: searchlights, the keyhole glowing and then opening, a gold
+  sparkle stream, starfields, Tiana's evening star, bubbles, doves, ringing finials, rising water,
+  torches, the stingray, lamp smoke, toy blocks, the moon rising, waterfalls, lightning, green dragon
+  fire; lion, smiley, door, bullseye and jellyfish bursts; jungle, pink and stained-glass castles.
+- Next (decided with the user): batch 2, one lead character per scene flying in the sky like Tink,
+  starting with those that have references; batch 3, the game-sprite ones once downloaded. No art,
+  no character: their scenes keep just the look.
+- Tink in "You Can Fly" (the `tink` effect): her park-title sprite, doubled on 64x64 like there,
+  takes off from the spire and arcs up and out to the right in 12s with her pixie dust, while the
+  fireworks hold back to 30% (decided with the user, 2026-10-10). The spire sits near the top, so
+  she climbs only a few rows before heading out.
+- Re-timed and re-looked from the real show (2026-10-11, the user's "make this the best show ever"
+  while away): `docs/shows/happily-ever-after/README.md` has what a recording of it does. The score
+  is now 49 scenes in the audio's own seconds (the recording lined up to it by cross-correlation;
+  big boundaries snapped to hits and silences in the wav), ending at 1104 when the music fades. The
+  sky stays dark until the theme's chorus (98s), I See the Light has its sparse bursts, the two
+  spoken lines (Aladdin, Olaf) have looks, Up's balloons follow Touch the Sky, and the final flash
+  fires on the last hit (1099.6) as its own scene starts. New: castle looks (amber, royal, pastel,
+  stone, sunset, monsters, ice, crimson), gold willow bursts (`willow`), comet fans, crossing comets,
+  coloured searchlights, Up's balloons, the heart of Te Fiti, roof fountains, Olaf's snow and
+  He's a Pirate's flame jets. The keyhole now opens over 12s from when it's first on and stays open
+  into the next scene. Unchecked by the user so far.
+
+Not done:
+- V2, where the castle fades so characters share the spotlight: planned scene by scene in
+  `docs/shows/happily-ever-after/V2-PLAN.md` (2026-10-11; every character, what each does, the code).
+  Not started.
+- More characters in their scenes (Genie, Baymax, Ralph, Vanellope, Olaf, WALL-E, Mike, Lightning
+  McQueen, Woody are drawn already). Ask about each one first; Tink shows the pattern.
+  Reference leads (searched 2026-10-10; game sprite rips on The Spriters Resource, not opened or
+  checked for size yet): Timon and Pumbaa (The Lion King 1½, GBA), Scar (The Lion King, Genesis),
+  Terk (Tarzan, GBC), Syndrome and the Omnidroids (The Incredibles, GBA), Jack Sparrow for the pirates
+  (Dead Man's Chest, GBA), Baloo and Mowgli (The Jungle Book, Genesis), Simba and Jafar (Kingdom
+  Hearts: Chain of Memories, GBA), Flik (A Bug's Life bootleg, SNES). Nothing found for Quasimodo,
+  Tantor, EVE, the Emperor, Mufasa, Nala, Nemo/Dory/Crush, the Up house, Carl and Russell, Judy and
+  Nick, Joy and Sadness, Hiro, Gramma Tala, Kala or Riley: Pinterest and Etsy patterns don't show in
+  web search, so the user looks there, or simple shapes get drawn from scratch.
+- Matching the park to the second when the board cuts in late: needs a player that starts
+  mid-file (sox's `play file.wav trim <s>`, ffplay `-ss`), installed on every board.
+- Check the sync against the real show: `tools/render_show.py --recording`, then `tools/show_sync_checker.html`
+  plays the recording beside our render and turns marks into scene start times. (On a board, the log still
+  names each scene as it starts.)
+- Check by ear on a board: audio 268-303 (Out There, then Touch the Sky / Up at 303). Gemini's two
+  chunks disagreed there; the score follows the more detailed one.
+- The real show's projected characters (Mufasa in the clouds, Hercules, the stained-glass heroes)
+  aren't drawn: that's the character batches above.

@@ -11,6 +11,8 @@ import driver
 from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
+from display.fireworks.music_show import render_music_show
+from display.fireworks.score import load_score
 from cli import arguments, board_preset, describe, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
@@ -24,7 +26,8 @@ from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
 from utils import debug
-from utils.config import debug_enabled, load_config, websocket_protocol, websocket_settings
+from utils.config import SoundSettings, debug_enabled, load_config, sound_settings, websocket_protocol, websocket_settings
+from utils.sound import clip_name, playing
 
 # Configure logging
 logger = logging.getLogger("disney-lll")
@@ -93,6 +96,8 @@ RIDE_VISITORS = {
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
 # character on a real board; leave it unset otherwise.
 forced_surprise = None
+# config.json "sound", read once at start-up.
+sound = SoundSettings()
 FIREWORKS_SHOW_S = 5 * 60
 _shows_played = set()
 
@@ -137,6 +142,8 @@ def main():
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
     set_forced_surprise(config.get("force_surprise"))
+    global sound
+    sound = sound_settings(config)
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
@@ -251,7 +258,9 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
     """
     If the fireworks show a park runs tonight (from its schedule: see special_events.fireworks_show)
     started in the last FIREWORKS_SHOW_S seconds, play the castle fireworks in that show's theme,
-    without the title, until that window ends. Each performance plays once. Returns True if it played.
+    without the title, until that window ends (or, for a show with a score in display/fireworks/shows/,
+    its whole synced show: see music_show.py), with the show's sound (sounds/<show>.wav, else
+    sounds/fireworks.wav) if config.json turns sound on. Each performance plays once. Returns True if it played.
     """
     now = now or datetime.now(timezone.utc)
     for park in parks:
@@ -260,9 +269,16 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
         if start is None or (show, start) in _shows_played:
             continue
         _shows_played.add((show, start))
-        remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
-        debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
-        render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
+        score = load_score(clip_name(show))
+        with playing([clip_name(show), "fireworks"], sound, now):
+            if score:
+                # The whole show from its first note, with the music, however late the board cut in.
+                debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
+                render_music_show(matrix, score)
+            else:
+                remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
+                debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
+                render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
         forget_screen(matrix)
         return True
     return False
