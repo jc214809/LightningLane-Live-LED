@@ -37,7 +37,7 @@ def test_every_cue_uses_known_looks_shapes_and_effects(hea):
 @pytest.mark.parametrize("t, title, rate, castle, effects", [
     (0, "Theme fanfare", 0, "amber", {"searchlights", "keyhole_glow"}),
     (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
-    (270, "Out There", 0.9, "stone", {"doves", "bells", "comet_fan", "willow"}),
+    (270, "Touch the Sky", 0.9, "stone", {"doves", "bells", "comet_fan", "willow"}),
     (400, "Aladdin: a best friend by your side", 0, "blue", {"smoke"}),
     (700, "I See the Light (lanterns)", 0.15, "blue", {"lanterns", "willow"}),
     (780, "He's a Pirate", 1.4, "fire", {"flame_jets"}),

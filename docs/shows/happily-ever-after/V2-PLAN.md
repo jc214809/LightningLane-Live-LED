@@ -73,9 +73,8 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | When You Wish fanfare (171-192) | castle | Ray | Code | Keeps buzzing, circling the spire. |
 | Part of Your World (192-215) | off | Ariel | Sheet | Swims across on a slow sine wave through the bubbles, tail flicking (two frames). |
 | PoYW climax (215-256) | ghost | Ariel | Sheet | Rises from the bottom toward the top and reaches up (needs a "reach" frame). |
-| Out There (268-303) | castle | Quasimodo | Sheet (`Hunchback of Notre Dame.jpg`, about 17x34) | Swings on a rope from the spire between the towers (a pendulum). 2 rows too tall for 64x32: trim or redraw smaller there. The gargoyles could peek from the towers. |
+| Touch the Sky (268-303) | castle | Merida | Sheet (`Brave2.jpg` 21x30) | Draws her bow at the side, or looses an arrow across the board. (Was planned as Out There with Quasimodo; it's Touch the Sky by its lyrics, so Quasimodo has no song here.) |
 | Touch the Sky / Up (303-325) | ghost | Up house | Code | Rises from behind the castle under a balloon cluster and drifts up and out to the right. |
-| | | Merida | Sheet (`Brave2.jpg` 21x30) | Optional, for Touch the Sky's opening seconds: draws her bow at the side. |
 | | | Dug (cameo) | Have (`kevin`) | Optional: runs along the ground after the house. |
 | How Far I'll Go (325-370) | ghost | Moana | Sheet | Sails a small canoe (Code) across the water effect. |
 | | | Gramma Tala | | The existing `stingray` effect stands in. |
