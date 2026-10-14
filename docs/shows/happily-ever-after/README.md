@@ -9,6 +9,8 @@ comparison tables below are against the *old* score, kept as the record of what 
 timeline and looks further down are what the new one follows.
 
 - **Video:** https://www.youtube.com/watch?v=-LncKUxWMsQ (19:02, a guest's recording from the hub).
+- **Studying it further:** [WATCH.md](WATCH.md) is the scene-by-scene workbook: a `/watch` prompt per
+  scene, with Gemini's answers saved under each.
 - **Watched:** 2026-10-11, by Gemini (`gemini-3.7-flash` / `gemini-3.8-flash` through the `/watch`
   plugin), in four overlapping chunks. Its raw answers are `gemini-*.md` here; the question is
   `gemini-question.txt`; `watch-chunks.sh` re-runs it. Nobody here looked at frames: everything
