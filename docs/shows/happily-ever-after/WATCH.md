@@ -1326,6 +1326,7 @@ To capture this segment on 64x32 / 64x64 pixel matrices:
 - **Audio:** 303-325 s (5:03-5:25, 22 s) · **Video:** `--start 5:13 --end 5:35`
 - **Our score now:** Bagpipes and tartan; Up's balloons fill the castle and lift the house; red, green and blue comets. Characters: Merida, Carl, Up house.
 - **V2:** stage ghost; actors up_house (Carl's house rises from behind the castle on its balloons).
+- **To check by eye:** Gemini's answer below says only the balloons are shown (no house, Carl or Merida), and that the scene ends at 5:26 with Moana's music from 5:27, about 9 s before ours.
 
 **Your notes for this scene:**
 
@@ -1333,7 +1334,96 @@ To capture this segment on 64x32 / 64x64 pixel matrices:
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 5:10-5:38 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** **05:13**. At this point, the initial *Brave* sequence transitions as a dense cluster of multi-colored balloons begins floating upward across the central castle facade.
+* **End:** **05:26** marks the true end of the "Touch the Sky" segment, landing on the final belted vocal note and a massive gold willow/chrysanthemum canopy. By **05:27–05:35**, the music shifts into Polynesian percussion and ocean visuals introducing the *Moana* segment (with the Heart of Te Fiti spiral emerging at **05:34**).
+* **Verdict on 5:13 to 5:35:** 5:13 is accurate for the transition into the balloon sequence, but **5:35 is late**, as it runs ~9 seconds into the start of the *Moana* scene.
+
+**2. Music**
+* **Song:** "Touch the Sky" (*Brave*), transitioning at **05:27** into the opening percussion of *Moana*.
+* **Lyrics & Vocal Cues:**
+  * **05:10–05:12:** Vocal belt concluding an earlier phrase ("...sky!").
+  * **05:13–05:16:** Bagpipes and Celtic orchestral bridge while balloons rise.
+  * **05:17–05:21:** Female lead vocal: *"Chase the wind and touch the sky..."*
+  * **05:22–05:25:** Final soaring crescendo: *"...touch the sky!"*
+  * **05:26–05:38:** The vocal ends; rhythmic tribal/Polynesian drums and atmospheric strings fade in.
+* **Key Hits:**
+  * **05:22:** Sharp musical hit on the first word of *"Touch the sky!"*, launching parallel comet fireworks.
+  * **05:24:** Massive orchestral hit on *"sky!"*, triggering the main gold canopy bursts.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **05:10 – 05:13** | Green/white burst above central spire | Teal/green lower beam fans | Blue facade with white illuminated spire | None visible |
+| **05:14 – 05:16** | Faint residual crackle trails | Turret spotlights sweep outward | Multi-colored balloons inflate and rise up castle | Balloon cluster (*Up*) |
+| **05:17 – 05:21** | Small gold chrysanthemum bursts high above spire | Green/teal laser fans at sides | Colorful Scottish tartan/plaid tapestry projection | None |
+| **05:22 – 05:24** | 8–10 multi-colored comets shoot vertically in parallel flanks | Bright blue searchlights fan outward | Facade turns brilliant cyan/aqua blue | None |
+| **05:24 – 05:26** | Huge gold chrysanthemum burst over spire | Blue base lights wash upward | Castle bathed in intense blue/white glow | None |
+| **05:27 – 05:31** | Staggered pair of large gold willow/chrysanthemums bloom right and left | Blue searchlights sweep skyward | Deep aquatic blue projection with wave ripples | None |
+| **05:32 – 05:38** | Sky clear; faint sparks drift down | Ambient blue wash on lower hub | Ocean water pattern; glowing orange/red spiral at 05:34 | Heart of Te Fiti spiral |
+
+**4. Fireworks in the sky**
+* **05:10–05:12:** 1 green-and-white peony burst centered directly behind the main spire at medium-high elevation.
+* **05:17–05:21:** 2 small gold chrysanthemum bursts fired high, directly centered above the top spire.
+* **05:22–05:24 (The Comet Fan):** A simultaneous barrage of 8 to 10 straight-tailed comets shooting directly vertically on both sides of the castle (roughly 4–5 on the left, 4–5 on the right). Colors: green, yellow, orange, magenta/red, and cyan. They ascend in unison to spire height before burning out.
+* **05:24–05:30 (The Gold Canopy):**
+  * **05:24:** 1 massive gold chrysanthemum/willow centered directly behind the top spire.
+  * **05:27:** 1 large gold chrysanthemum bursting slightly to the right of the spire.
+  * **05:28–05:29:** 1 large gold chrysanthemum bursting to the left, creating a massive three-cluster overlapping golden canopy.
+* **05:31–05:38:** Sky is dark and quiet as the Moana sequence begins.
+
+**5. Fireworks on the castle**
+* **None.** No gerbs, fountains, or perimeter strobes are mounted on or fired from the castle turrets/battlements during this specific sequence. All pyrotechnics originate from ground/launch positions behind and adjacent to the castle.
+
+**6. Lasers and lighting**
+* **Lasers:** Low green/cyan laser fans project horizontally from the hub stage area outward to the left and right flanks between **05:10 and 05:20**.
+* **Spotlights & Searchlights:**
+  * **05:10–05:21:** Green and teal fixtures wash the lower landscaping and trees.
+  * **05:22–05:26:** Blue and white ground fixtures sweep sharply upward and fan outward across both sides of the castle, mirroring the vertical comet trajectories.
+  * **05:27–05:38:** Deep blue ground lighting stays stationary, casting an oceanic blue glow across the hub.
+
+**7. The castle**
+* **Lighting:**
+  * Blue-lit turret roofs throughout. 
+  * At **05:22**, the castle floodlights switch instantly to saturated cyan/ice blue.
+* **Projections:**
+  * **05:10–05:13:** White/cyan light streaming down the center spire.
+  * **05:14–05:16:** Hundreds of small multi-colored round balloons (red, yellow, blue, green, purple) float rapidly up from the main lower gateway, covering the lower and middle facade.
+  * **05:17–05:21:** Facade transitions into a vertical geometric Scottish tartan/plaid pattern composed of vibrant vertical stripes and diamond weaves in red, gold, purple, and blue.
+  * **05:22–05:26:** Solid radiant aqua blue wash.
+  * **05:27–05:38:** Undulating deep navy and turquoise ocean waves ripple across the stone facade. At **05:34**, a glowing reddish-orange spiral emblem (the Heart of Te Fiti) forms over the lower central wall.
+
+**8. Characters**
+* **Characters Present:** **No character figures** (neither Merida, Carl, Russell, nor Moana) physically appear as animated projection characters during this exact 05:10–05:38 clip.
+* **Symbolic Motifs:**
+  * **Balloons (*Up*):** Rise from the bottom-center (grid position bottom-center to center) between **05:14 and 05:16**.
+  * **Heart of Te Fiti (*Moana*):** Appears at grid position bottom-center (over the main gateway arch) at **05:34**, glowing orange-red against the blue sea ripples.
+
+**9. For our boards**
+1. **The Balloon Rise (05:14–05:16):** An upward-scrolling cluster of multi-colored pixels (red, green, blue, yellow, purple dots) traveling up the center 16 columns of the castle sprite.
+2. **The Rainbow Comet Sweep (05:22):** Parallel single-pixel trails in distinct bright colors (green, yellow, pink, blue) rising simultaneously straight up on both flanks of the castle.
+3. **The Gold Willow Climax (05:24–05:28):** Castle turns instantly solid bright cyan while 2–3 overlapping golden expanding chrysanthemums/willows burst above the spire, trailing gold sparks downward.
+
+**10. What you couldn't see**
+* Ground-level pyro mortars and launch racks are hidden behind the castle architecture.
+* Trees at the bottom corners slightly obscure the extreme outer edges of the low laser scans.
+
+**11. Our version**
+* **What is right:**
+  * Bagpipes in the audio track (05:13–05:16).
+  * Tartan plaid projection on the castle (05:17–05:21).
+  * *Up* balloons floating up the castle facade (05:14–05:16).
+  * Multi-colored comets firing upward on the vocal hit (05:22).
+* **What is wrong:**
+  * **Characters:** Merida, Carl, and the *Up* house **do not appear** in this clip. Only the balloons float upward—the house is not attached or projected here, and neither Carl nor Merida are shown.
+  * The comets are not just red, green, and blue; they include vibrant yellows, oranges, and purples.
+* **What is missing:**
+  * The massive triple golden willow/chrysanthemum canopy that fills the entire upper sky between **05:24 and 05:29**.
+  * The instant transition into *Moana* at **05:27**, where the music drops into Polynesian drums, the castle turns into deep rippling ocean water, and the Heart of Te Fiti spiral symbol glows on the lower gate at **05:34**.
+
+</details>
 
 ### 4.2 How Far I'll Go
 
@@ -1346,13 +1436,117 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 5:32-6:23 · notes: none</summary>
+
+Here is the detailed breakdown of the "How Far I'll Go" sequence based on the video:
+
+**1. Where this part starts and ends**
+* **Starts at 05:35**: The previous sequence fades out, and the glowing spiral **Heart of Te Fiti** symbol appears on the center of Cinderella Castle amidst rhythmic Polynesian percussion, followed by the spoken/chanted vocal call *"Moana..."* at 05:40. Your start time of **05:35 is spot on**.
+* **Ends at 06:21**: At 06:20–06:21, Moana finishes the bridge (*"...will I cross that line?"*) as blue searchlights sweep upward and castle-mounted comet fans ignite right on the downbeat of the triumphant chorus (*"See the line where the sky meets the sea..."* at 06:21). Your 06:20 cutoff marks the precise end of this build-up verse, just as the main chorus kicks in.
+
+**2. Music**
+* **Song**: *"How Far I'll Go"* from Disney’s *Moana* (performed by Auli'i Cravalho).
+* **Vocals & Lyrics**:
+  * **05:40**: Ancestral chant/call: *"Moana..."*
+  * **05:46 – 05:57**: *"Every turn I take, every trail I track, every path I make, every road leads back to the place I know where I cannot go, where I long to be..."*
+  * **05:58 – 06:10**: *"See the light where the sky meets the sea? It calls me... And no one knows, how far it goes..."*
+  * **06:11 – 06:20**: *"And it seems like it's calling out to me, so come find me! And let me know, what's beyond that line, will I cross that line?..."*
+  * **06:21+**: Explosive chorus downbeat (*"See the line..."*).
+* **Key Musical Hits**:
+  * **05:52**: Beat accent on *"place I know"* (first sky burst).
+  * **05:59**: Cymbal crash and rising pitch on *"See the light..."* (fan of upward white/gold comets).
+  * **06:02**: Swelling orchestral hit on *"calls me"* (peony bursts overhead).
+  * **06:07**: Hit on *"how far it goes"* (bursts at castle spire).
+  * **06:21**: Major orchestral climax into the chorus with high brass and drum accents.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **05:32 – 05:34** | Lingering gold glitter falling from prior sequence. | Deep blue floodlights on lower hub/castle base. | Castle lit in deep indigo/ocean blue; golden window glow. | None. |
+| **05:35 – 05:44** | Sky completely dark; quiet. | Warm ambient uplighting fades in. | Glowing amber/orange spiral Heart of Te Fiti projection appears on mid-castle. | None. |
+| **05:45 – 05:51** | Quiet/dark sky. | Low blue wash on towers. | Castle base turns into ocean waves/sand patterns. | Moana fades into center lower gateway (standing, singing). |
+| **05:52 – 05:55** | Single white/gold crossette/glitter peony burst to the left. | Searchlights idle. | Heart of Te Fiti pulses; Polynesian voyaging motifs across stone. | Moana singing at base. |
+| **05:56 – 05:58** | Sky dark. | Deep blue/cyan floodlights on wings. | Green island foliage/vine patterns begin wrapping towers. | Moana transitions / looks up. |
+| **05:59 – 06:01** | Fan of 4 white comet tails firing left and right behind castle. | White ground searchlight beams begin sweeping skyward. | Castle turns rich emerald green and ocean cyan. | Young/older Moana imagery on central facade. |
+| **06:02 – 06:05** | Pair of large golden/orange chrysanthemum bursts left and right of spire. | Searchlights sweep outward. | Full vibrant tropical green, amber, and turquoise patterns. | Moana standing proudly in projection. |
+| **06:06 – 06:10** | Continuous gold/white peony and glitter bursts centered directly above spire. | Green and cyan exterior floodlights intensify. | Island foliage motifs covering main body and spires. | Moana looking out towards the sea. |
+| **06:11 – 06:17** | Sky pauses / quiet; sparse trailing sparks. | Searchlights hold narrow vertical angles. | Castle transitions to vibrant sunset gold/amber on upper towers, green on mid, deep cyan at base. | Moana in full projection; glowing spirit manta ray forms near base. |
+| **06:18 – 06:20** | Soft golden willow burst directly over the high spire. | Searchlights fan outward. | Swirling bioluminescent blues wash over the castle, replacing green with ocean waters. | Giant ethereal blue bioluminescent manta ray (Gramma Tala) glides upward across the castle facade. |
+| **06:21 – 06:22** | Angled fan of bright silver/white comet mines shoot outward from hub/rooftops; gold peony high left. | Bright cyan/blue searchlights sweep across the sky. | Entire castle engulfed in glowing ocean blue and turquoise water ripples. | Manta ray wings flap gracefully as it ascends the spire. |
+
+**4. Fireworks in the sky**
+* **05:35 – 05:51**: **Dark/quiet sky**. The section starts with an intentional silence to focus on the solo acoustic vocal.
+* **05:52 – 05:55**: **1 medium white/silver glittering peony burst** bursting medium-high on the left side.
+* **05:59 – 06:01**: **4 white comets** launched in mirrored angled pairs (2 left, 2 right) shooting upward and outward.
+* **06:02 – 06:05**: **2 large golden chrysanthemums** (one medium-high to the left, one high directly behind/right of the main spire).
+* **06:06 – 06:10**: Rapid wave of **3–4 white/silver strobing peonies and chrysanthemums** bursting high directly above the central spire, about 1 per second.
+* **06:11 – 06:17**: **Dark lull**: sky clears completely as the lyrics soften (*"And it seems like it's calling out to me..."*).
+* **06:18 – 06:20**: **1 soft golden/white willow burst** high above the main spire drifting slowly downward.
+* **06:21 – 06:22**: A mirrored barrage of **comets and white/gold shell bursts** kicking off the chorus.
+
+**5. Fireworks on the castle**
+* **05:35 – 06:20**: No gerbs, fountains, or facade fireworks fire directly from the castle parapets or turrets. All pyro originates from launch stations immediately behind and flanking the castle.
+* **06:21**: Low-level fan mines and angled comets launch from the castle perimeter/rooftop launch rails synchronized with the chorus hit.
+
+**6. Lasers and lighting**
+* **Lasers**: No distinct geometric aerial laser beams are featured in this specific build-up sequence (focus is entirely on projection mapping and sky shells).
+* **Searchlights / Moving Heads**:
+  * Located at ground level flanking the castle and behind the hub berms.
+  * Mostly off or parked low during 05:35–05:58.
+  * At **05:59**, white/pale-blue beams turn on and tilt outward.
+  * At **06:18–06:22**, bright cyan and cool-blue searchlight beams sweep upward in an expansive V-fan into the sky, mimicking rays of sunlight underwater.
+
+**7. The castle**
+* **Base Architectural Lighting**:
+  * Starts in deep navy and royal ocean blue with warm glowing windows (05:32–05:38).
+  * Shifts to lush tropical emerald green and golden yellow as Te Fiti’s greenery spreads (05:56–06:17).
+  * Drops back to bioluminescent deep ocean turquoise and cobalt blue as the water takes over (06:18–06:22).
+* **Projections**:
+  * **05:35 – 05:44**: The **Heart of Te Fiti** (the iconic circular spiral symbol) glows vibrantly in amber/gold right in the central facade over the grand balcony.
+  * **05:45 – 05:55**: Stylized Polynesian tapa patterns and rolling ocean shorelines wash across the stone.
+  * **05:56 – 06:17**: Lush island greenery, tropical leaves, and vines spread outward across the towers and side turrets, turning the castle into the restored island of Motunui/Te Fiti.
+  * **06:18 – 06:22**: Swirling, fluid water ripples wash over the foliage, transforming the castle into deep sea blue, through which bioluminescent sea life and ocean currents ripple.
+
+**8. Characters**
+1. **Moana**:
+   * **Location**: Lower-center of the castle (bottom-middle of a 3x3 grid, over the gateway arch and lower balconies).
+   * **Size**: Approx. 1/4 to 1/3 the height of the castle facade.
+   * **Action/Movement**: Appears at **05:45** singing, looking contemplative, then looking forward toward the horizon; fades/transitions between scenes on the central tower before fading out around **06:16**.
+2. **Gramma Tala / Manta Ray Spirit**:
+   * **Location**: Starts at the castle base (bottom-center) and glides upward through the mid-section toward the spire.
+   * **Size**: Massive wingspan covering nearly the full width of the main central facade (approx. 1/3 of the castle width/height).
+   * **Action/Movement**: Emerges at **06:17–06:18** glowing as an ethereal, bioluminescent blue/turquoise manta ray, flapping its wings and swimming gracefully upward against the castle's blue ocean backdrop through **06:22**.
+
+**9. For our boards (LED matrix recreation tips)**
+To capture this on 64x32 / 64x64 matrices:
+1. **The Te Fiti to Foliage Shift (05:35 – 06:05)**: Start with the castle silhouette in dark blue with a bright 6x6 amber spiral pulsing in the center. Then, flood the castle pixels into lush emerald green as Moana sings the first verse.
+2. **The Quiet Space**: Keep the sky matrix completely black during 05:35–05:51; resist adding fireworks until the single burst at 05:52 and the small fan comets at 05:59. This silence makes the subsequent chorus explode with impact.
+3. **The Manta Ray Transition (06:18 – 06:21)**: Instantly shift the castle pixels from emerald green to deep aquatic cyan/navy, and animate a bright cyan/white diamond-shaped manta ray gliding from the bottom row up toward the spire right before the burst of comets.
+
+**10. What you couldn't see**
+* **Hub crowds**: The bottom edge of the frame contains spectator silhouettes and raised mobile phones, partially obscuring the very bottom roadway/foot of the castle gate.
+* **Perimeter Launchers**: The exact ground firing hardware behind the castle is hidden behind the castle structure and trees.
+
+**11. Our version**
+* **What’s right**:
+  * You correctly identified the **Heart of Te Fiti** on the castle, the **ocean blues**, and the **manta ray**.
+  * Having **sparse bursts building in green, gold, and white** is musically and visually accurate.
+  * Having **Moana** and **Gramma Tala** (as the manta ray) is the correct character pairing.
+* **What’s wrong / needs precision**:
+  * Gramma Tala does **not** appear in human form here—she is exclusively depicted as the glowing **spirit manta ray**.
+  * The castle is not solely "ocean blues"—during the middle verse (05:56–06:17), the castle is overwhelmingly dominated by **lush tropical emerald greens and amber island foliage**, before washing back into ocean blues when the manta ray appears at 06:18.
+* **What’s missing**:
+  * The prominent **emerald green island takeover** phase on the castle facade between 05:56 and 06:17.
+  * The mirrored **upward comet fans** at 05:59 and the dramatic chorus takeoff comets at 06:21.
+
+</details>
 
 ### 4.3 How Far I'll Go (climax)
 
 - **Audio:** 370-398 s (6:10-6:38, 28 s) · **Video:** `--start 6:20 --end 6:48`
 - **Our score now:** Heavy gold brocade barrage, turquoise searchlights, green and yellow shells. Characters: Moana.
 - **V2:** stage off; actors canoe (Moana's canoe sails across once the castle goes).
+- **Checked (2026-10-14):** Gemini's answer below says Tangled starts at 6:48; it doesn't, Aladdin's line (5.1) does, and I See the Light is at about 11:18. Its end time (6:48) still matches the score.
 
 **Your notes for this scene:**
 
@@ -1360,7 +1554,108 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 6:17-6:51 · notes: none</summary>
+
+Here is the detailed analysis of the **Moana – “How Far I’ll Go (Climax)”** section of Disney’s *Happily Ever After* fireworks show:
+
+**1. Where this part starts and ends**
+* **Start:** **06:21** (video clock). Marked by the vocal drop into the chorus (*“See the line where the sky meets the sea...”*), a massive cymbal/orchestral hit, searchlights snapping upward, and simultaneous skybursts flanking the castle. 
+  * *Note on your 06:20 estimate:* **06:20 is slightly early** (at 06:20 she is still finishing the pre-chorus *“Will I cross that line?”* over a surging wave projection), but it captures the exact upbeat/transition.
+* **End:** **06:48** (video clock). Marked by the final held orchestral chord of *“...how far I’ll go!”* fading out, the cessation of sky fireworks, and the castle immediately morphing into warm golden candlelight/lantern hues for the start of the *Tangled* section at 06:48.
+  * *Note on your 06:48 estimate:* **06:48 is exact**.
+
+**2. Music**
+* **Song:** “How Far I’ll Go” (Climax/Reprise) from Disney’s *Moana*.
+* **Lyrics & Timestamps:**
+  * **06:17–06:18:** *“What’s beyond that line?”*
+  * **06:19–06:21:** *“Will I cross that line?”*
+  * **06:21–06:26:** *“See the line where the sky meets the sea? It calls me!”*
+  * **06:26–06:32:** *“And no one kno-o-ows, how far it go-o-oes!”*
+  * **06:32–06:37:** *“If the wind in my sail on the sea stays behind me...”*
+  * **06:37–06:41:** *“One day I’ll know, if I go there’s just no telling...”*
+  * **06:41–06:47:** *“...how far I’ll go-o-o!”*
+* **Big Musical Hits:**
+  * **06:21:** Massive chorus downbeat on *“See”*.
+  * **06:32:** Downbeat on *“If”* (initiates the soaring brass run).
+  * **06:37:** Climax modulation downbeat on *“One [day]”*.
+  * **06:42:** High belt arrival on *“[how far I’ll] GO!”*.
+  * **06:47:** Final orchestral cutoff before the quiet *Tangled* transition.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle Projections | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **06:17–06:20** | Quiet overhead; small glittering sparks drifting left. | Cyan/blue up-lights wash lower hub. | Deep ocean greens, teals, and rising wave crests. | None visible. |
+| **06:21–06:25** | High gold comet crossettes/peonies split above; twin comets shoot up from rear castle flanks. | Wide blue and cyan beam fans sweep skyward from hub left/right. | Castle floods in luminous bright turquoise and rolling ocean waves. | Moana’s canoe/sail silhouette begins emerging at center. |
+| **06:26–06:31** | Low/mid golden comet tails and sparkling aerial breaks behind spire. | Beams tilt and pulse in bright cyan and emerald green. | Vibrant Polynesian tapa quilt patterns wrap turrets; glowing spiral Heart of Te Fiti forms at base. | Moana projected standing on the center tower shaft (waist-up). |
+| **06:32–06:36** | High, massive golden brocade/willow canopy bursts directly above the spire, raining down. | Cyan searchlights narrow straight up; bright green accent beams sweep horizontally. | Central shaft shows glowing blue starry sky & water; lower arch glows fiery amber/orange. | Moana remains projected on central tower; glowing Heart of Te Fiti emblem prominent on main gate. |
+| **06:37–06:40** | Huge emerald-green chrysanthemum burst (high center/left), followed immediately by bright silver/white strobe peony (center). | Beams angle into high criss-cross fans; turrets bathed in electric turquoise and gold. | Turrets covered in glowing Polynesian tribal art patterns; central spire saturated in bright violet/magenta. | Moana singing heroically at center; Heart of Te Fiti pulsing in gold/orange at gate. |
+| **06:41–06:47** | Layered grand finale: emerald peony left (06:41), massive white flash center (06:42), giant double rose-gold / pink brocade chrysanthemums covering the entire sky (06:43–06:46). | Beams spread into a massive wide fan across the entire sky. | Bright magenta/gold geometric tattoo tapestries across all walls. | Moana fades back into the patterns as the note sustains. |
+| **06:48** | Quiet; aerial bursts stop completely. | Searchlights extinguish / fade down to soft amber. | Instantly morphs to soft slate-grey/warm amber stone; cathedral sail arches dissolve into *Tangled* lanterns. | Moana gone. |
+
+**4. Fireworks in the sky**
+* **06:21–06:24:** 2 high aerial shells (white/gold comet crossettes) bursting left and right of the upper spire, accompanied by 4–6 fast comet tails shooting straight up behind the castle.
+* **06:28–06:31:** Small wave of 3–4 medium-altitude gold glitter comets breaking behind the spire.
+* **06:32–06:35:** 1 very large, high-altitude golden brocade willow shell bursting directly over the main spire and drifting down in glittering tendrils.
+* **06:36–06:37:** 1 large emerald-green dahlia/chrysanthemum shell at spire height slightly left of center.
+* **06:38–06:40:** 1 large brilliant silver/white glitter peony bursting high center, expanding over the main tower.
+* **06:41–06:46 (Grand Climax Barrage):**
+  * 06:41: 1 medium bright-green ring/peony shell on the upper left.
+  * 06:42: 1 massive white-gold burst dead center above the spire.
+  * 06:43–06:46: 2 massive, overlapping deep rose-pink/gold glittering chrysanthemum shells expanding left and right, filling the entire upper sky canopy.
+* **Rhythm:** Starts with single punctuation bursts (06:21), pauses briefly during the verse line (06:27–06:31), builds to a 1-shell-per-second cadence (06:32–06:40), and finishes in a dense 4-second overlapping crescendo (06:41–06:46). The sky is completely dark/quiet at 06:48.
+
+**5. Fireworks on the castle**
+* **06:21–06:23:** Twin comet/tracer launches fired from launch decks directly behind the lower castle flanks, angling slightly outward.
+* *Note:* No continuous gerbs or turret waterfall fountains are fired directly off the stone ledges in this specific 27-second window; the pyrotechnic action is focused on the high aerial shell launches from behind the castle.
+
+**6. Lasers and lighting**
+* **Searchlights:** Ground-based moving heads flanking the hub fire beams upward in electric cyan/turquoise and lime/emerald green.
+  * At **06:21**, they shoot straight up, framing the castle.
+  * At **06:26–06:35**, they criss-cross and fan outwards into the sky.
+  * At **06:41–06:46**, they fan out at their widest angle to frame the massive finale shells.
+* **Lasers:** No sharp geometric scanning lasers are visible projecting into the open sky here; the effect is driven predominantly by wide aerial searchlight beams and high-intensity architectural wash fixtures.
+
+**7. The castle**
+* **Base Architectural Lighting:** Flooded with saturated cyan/turquoise wash on the lower ramparts, transitioning to deep royal blue and violet on the upper spires.
+* **Projections:**
+  * **06:20–06:25:** Vibrant turquoise ocean swells surge upward across the castle facade.
+  * **06:26–06:40:** Rich Polynesian tapa patterns (geometric tribal motifs, manta rays, stylized leaves) cover all outer turrets and side walls in neon cyan, gold, and magenta. The main entrance archway transforms into a glowing, spinning green-gold Heart of Te Fiti spiral emblem.
+  * **06:41–06:47:** The central shaft and spires intensify into saturated magenta, violet, and gold geometric tapestry art.
+  * **06:48:** The tapa art dissolves abruptly; castle stone shifts to warm slate/amber with soft glowing warm light for *Tangled*.
+
+**8. Characters**
+* **Character:** **Moana**.
+* **Position:** Center column of Cinderella Castle (Grid: center-middle to center-top, along the main clock/window facade).
+* **Size:** Approximately 1/4 to 1/3 the height of the main castle body.
+* **Movement:** 
+  * Appears around **06:24–06:26** emerging out of the turquoise wave projection, standing at the helm of her sailing canoe looking forward.
+  * She remains centrally projected, singing dynamically facing the audience through **06:40**.
+  * Blends/fades back into the vibrant tapa art by **06:43** as the final barrage erupts.
+* **Symbolic Character Art:** The **Heart of Te Fiti** (the green/golden swirl) is projected prominently right in the central gateway archway (Grid: bottom-center) from **06:26 to 06:47**.
+
+**9. For our boards**
+To make a 64x32 or 64x64 LED matrix version look instantly recognizable:
+1. **The Palette Shift (06:21):** The castle must instantly flip from dark ocean green to blinding turquoise/cyan, with cyan searchlight rays fanning out 45 degrees left and right.
+2. **The Heart of Te Fiti Gate:** Placing a vibrant 5x5 or 7x7 pixel glowing green/yellow spiral right in the castle entrance archway will immediately signal *Moana* to viewers even at low resolution.
+3. **The Finale Sequence (06:41–06:46):** Fire an emerald-green burst on the left, a bright white burst center, and finish with a double wide-canopy pink/gold glitter burst overhead that hangs while the final vocal note sustains.
+
+**10. What you couldn't see**
+* Extremely low ground pyro at the perimeter launch sites (behind trees/crowd heads) is not visible from this hub perspective.
+* Fine detailing of Moana’s face on the central projection is somewhat softened due to the high-contrast brightness of the projection against the castle stones.
+
+**11. Our version**
+* **What’s right:** 
+  * "Turquoise searchlights" (prominent throughout 06:21–06:46).
+  * "Green shells" (striking emerald bursts at 06:36 and 06:41).
+  * "Characters: Moana" (projected on the main tower).
+* **What’s wrong:** 
+  * "Heavy gold brocade barrage" is not the *only* or even dominant sky element at the start; the climax relies heavily on **electric green, silver/white strobe, and deep pink/rose-gold chrysanthemums**, with pure gold brocade mainly featured in a single massive willow at 06:33.
+* **What’s missing:**
+  * **The Heart of Te Fiti** glowing spiral emblem at the castle base gate (crucial Moana visual).
+  * **The giant rose-pink/magenta finale chrysanthemums** at 06:43–06:46 (the actual visual climax of the song).
+  * **The colorful Polynesian tapa/tribal projections** covering the side turrets in magenta and cyan.
+
+</details>
 
 ## 5. Friendship (audio 6:38-9:23, video 6:48-9:33)
 
