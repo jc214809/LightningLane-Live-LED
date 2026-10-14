@@ -184,6 +184,7 @@ class MusicShow:
         self.lanterns, self.embers = [], []
         self.dust = []  # Tink's pixie dust: [x, y, vx, vy, life, max life, rgb]
         self.flash = [0.0, 0.0, 0.0]
+        self._castle_key, self._castle_layer = None, {}  # frame_pixels' finished castle, kept while it holds
         self.white = 0.0
         self.frames_to_next_launch = 0
 
@@ -431,13 +432,16 @@ class MusicShow:
     def frame_pixels(self):
         """Compose the current frame as {(x, y): (r, g, b)}; unlisted pixels are black."""
         out = {}
+        width, height, seen = self.width, self.height, out.get
 
+        # Called for every lit LED of every frame, so it's written out long-hand: a Pi Zero spends
+        # most of a frame here.
         def put(x, y, rgb):
             xi, yi = int(round(x)), int(round(y))
-            if 0 <= xi < self.width and 0 <= yi < self.height:
-                prev = out.get((xi, yi))
+            if 0 <= xi < width and 0 <= yi < height:
+                prev = seen((xi, yi))
                 if prev:
-                    rgb = tuple(max(a, b) for a, b in zip(prev, rgb))
+                    rgb = (max(prev[0], rgb[0]), max(prev[1], rgb[1]), max(prev[2], rgb[2]))
                 out[(xi, yi)] = rgb
 
         for sx, sy in self.stars:
@@ -447,9 +451,11 @@ class MusicShow:
         for s in self.sparks:
             f = s.life / s.max_life
             hot = max(0.0, (f - 0.8) / 0.2)
-            put(s.x, s.y, tuple(int((c + (255 - c) * hot) * f) for c in s.color))
+            r, g, b = s.color
+            put(s.x, s.y, (int((r + (255 - r) * hot) * f), int((g + (255 - g) * hot) * f),
+                           int((b + (255 - b) * hot) * f)))
             if f > 0.5:
-                put(s.x - s.vx * 1.5, s.y - s.vy * 1.5, tuple(int(c * f * 0.35) for c in s.color))
+                put(s.x - s.vx * 1.5, s.y - s.vy * 1.5, (int(r * f * 0.35), int(g * f * 0.35), int(b * f * 0.35)))
 
         for r in self.rockets:
             put(r.x, r.y, (255, 230, 180))
@@ -496,24 +502,72 @@ class MusicShow:
         colours = self._castle_now()
         flicker = self.castle_look in _FLICKERS
         glass = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S) if self.castle_look == "stained_glass" else 0
-        for dx, dy, kind in (self.castle_pixels if shown > 0.01 else ()):
-            x, y = self.castle_x + dx, self.castle_y + dy
-            if not (0 <= x < self.width and 0 <= y < self.height):
-                continue
-            base = colours[kind]
-            if kind == "W" and glass:
-                tile = _STAINED_GLASS[(dx // (2 * self.scale) * 3 + dy // (2 * self.scale)) % 4]
-                base = tuple(int(a + (b - a) * glass) for a, b in zip(base, tile))
-            if kind in _LIT_KINDS:
-                if flicker:
+        # A lit colour and a dimmed one depend only on the colour going in (and this frame's flash and
+        # stage level), so each is worked out once a frame, not once an LED: the castle is most of a
+        # frame's LEDs.
+        fr, fg, fb = self.flash
+        lit, dimmed = {}, {}
+
+        def glowing(base):
+            glow = lit.get(base)
+            if glow is None:
+                glow = lit[base] = (min(255, int(base[0] * 0.75 + 110 * fr)),
+                                    min(255, int(base[1] * 0.75 + 110 * fg)),
+                                    min(255, int(base[2] * 0.75 + 110 * fb)))
+            return glow
+
+        def dim(base):
+            low = dimmed.get(base)
+            if low is None:
+                low = dimmed[base] = (int(base[0] * shown), int(base[1] * shown), int(base[2] * shown))
+            return low
+
+        if shown > 0.01 and not flicker:
+            # Without the fire's flicker every LED of a kind (or of a stained-glass tile) is one colour,
+            # and from one frame to the next usually the same one: the finished castle is kept and
+            # reused while its colours hold.
+            finals = {}
+            for kind, base in colours.items():
+                finals[kind] = glowing(base) if kind in _LIT_KINDS else base
+            if glass:
+                for i, tile in enumerate(_STAINED_GLASS):
+                    base = tuple(int(a + (b - a) * glass) for a, b in zip(colours["W"], tile))
+                    finals[("W", i)] = glowing(base) if "W" in _LIT_KINDS else base
+            if shown < 1:
+                finals = {k: dim(rgb) for k, rgb in finals.items()}
+            key = (tuple(sorted((str(k), rgb) for k, rgb in finals.items())), shown < 1)
+            if key != self._castle_key:
+                layer = {}
+                for dx, dy, kind in self.castle_pixels:
+                    x, y = self.castle_x + dx, self.castle_y + dy
+                    if 0 <= x < width and 0 <= y < height:
+                        if kind == "W" and glass:
+                            kind = ("W", (dx // (2 * self.scale) * 3 + dy // (2 * self.scale)) % 4)
+                        layer[(x, y)] = finals[kind]
+                self._castle_key, self._castle_layer = key, layer
+            if shown < 1:
+                for xy, rgb in self._castle_layer.items():
+                    prev = seen(xy)
+                    out[xy] = (max(prev[0], rgb[0]), max(prev[1], rgb[1]), max(prev[2], rgb[2])) if prev else rgb
+            else:
+                out.update(self._castle_layer)
+        else:
+            for dx, dy, kind in (self.castle_pixels if shown > 0.01 else ()):
+                x, y = self.castle_x + dx, self.castle_y + dy
+                if not (0 <= x < width and 0 <= y < height):
+                    continue
+                base = colours[kind]
+                if kind == "W" and glass:
+                    tile = _STAINED_GLASS[(dx // (2 * self.scale) * 3 + dy // (2 * self.scale)) % 4]
+                    base = tuple(int(a + (b - a) * glass) for a, b in zip(base, tile))
+                if kind in _LIT_KINDS:
                     # Each LED on its own phase (a hash of its spot), so the fire doesn't band.
                     level = 0.75 + 0.25 * math.sin(self.frame * 0.7 + (dx * 7919 + dy * 104729) % 628 / 100)
-                    base = tuple(int(c * level) for c in base)
-                base = tuple(min(255, int(c * 0.75 + 110 * f)) for c, f in zip(base, self.flash))
-            if shown < 1:
-                put(x, y, tuple(int(c * shown) for c in base))
-            else:
-                out[(x, y)] = base
+                    base = glowing((int(base[0] * level), int(base[1] * level), int(base[2] * level)))
+                if shown < 1:
+                    put(x, y, dim(base))
+                else:
+                    out[(x, y)] = base
 
         for name, effect in self.extras.items():
             effect.draw_front(put, out, name in self.effects)
@@ -546,13 +600,23 @@ class MusicShow:
 
 
 def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
-    """Play the score's show on the matrix from its first second to its end, following the clock."""
+    """Play the score's show on the matrix from its first second to its end, following the clock. Logs
+    each scene's frame rate and slowest frame as it ends, to see how a board keeps up."""
+    # The music started just before this call: count from here, so the time spent building the show
+    # (its characters draw their poses up front) doesn't put the picture behind the music.
+    t0 = clock()
     show = MusicShow(matrix.width, matrix.height, rng, score.lips)
     canvas = frame_canvas(matrix)
     frame_time = 1.0 / fps
-    debug.info(f"Playing the {score.name} show for {score.end:.0f}s.")
-    t0 = clock()
+    debug.info(f"Playing the {score.name} show for {score.end:.0f}s (ready in {(clock() - t0) * 1000:.0f} ms).")
     cue = None
+    frames, slowest, scene_start = 0, 0.0, 0.0
+
+    def log_scene(t):
+        if cue is not None and t > scene_start:
+            debug.info(f"{score.name} {cue.title}: {frames / (t - scene_start):.1f} fps "
+                       f"(aiming for {fps}), slowest frame {slowest * 1000:.0f} ms")
+
     while True:
         start = clock()
         t = start - t0
@@ -560,7 +624,9 @@ def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
             break
         now = score.cue_at(t)
         if now is not cue:
+            log_scene(t)
             cue = now
+            frames, slowest, scene_start = 0, 0.0, t
             debug.info(f"{score.name} {t:.0f}s: {cue.title}")  # once a scene, to check the sync by ear
         show.set_cue(cue, t)
         show.step()
@@ -568,7 +634,11 @@ def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
         for (x, y), (r, g, b) in show.frame_pixels().items():
             canvas.SetPixel(x, y, r, g, b)
         canvas = present(matrix, canvas)
-        remaining = frame_time - (clock() - start)
+        spent = clock() - start
+        frames += 1
+        slowest = max(slowest, spent)
+        remaining = frame_time - spent
         if remaining > 0:
             time.sleep(remaining)
+    log_scene(clock() - t0)
     matrix.Clear()

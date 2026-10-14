@@ -255,6 +255,31 @@ def test_a_slow_board_keeps_time_with_the_music(clock, monkeypatch):
     assert seen[-1][0] >= 3.5
 
 
+
+def test_each_scene_logs_how_fast_the_board_kept_up(clock, monkeypatch):
+    slow = clock(0.25)  # 4 fps
+    logged = []
+    monkeypatch.setattr(music_show.debug, "info", logged.append)
+    render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=slow)
+    rates = [line for line in logged if "fps" in line]
+    assert rates == ["test one: 4.0 fps (aiming for 30), slowest frame 250 ms",
+                     "test two: 4.0 fps (aiming for 30), slowest frame 250 ms"], "each scene, the last one too"
+
+
+def test_building_the_show_doesnt_put_the_picture_behind_the_music(clock, monkeypatch):
+    fake = clock(0.01)
+    built = MusicShow.__init__
+
+    def slow_build(self, *args, **kwargs):  # a Pi Zero drawing every character's poses up front
+        built(self, *args, **kwargs)
+        fake.now += 1.5
+    monkeypatch.setattr(MusicShow, "__init__", slow_build)
+    seen = []
+    original = MusicShow.set_cue
+    monkeypatch.setattr(MusicShow, "set_cue", lambda self, cue, t: (seen.append(t), original(self, cue, t)))
+    render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=fake)
+    assert seen[0] >= 1.5, "the first frame is where the music is by then, not its start"
+
 # ---- Tink in "You Can Fly" ----
 
 def _tink_cue():
