@@ -18,7 +18,7 @@ from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen
-from utils.special_events import active_party, fireworks_show
+from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, fireworks_show
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
@@ -97,6 +97,10 @@ RIDE_VISITORS = {
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
 # character on a real board; leave it unset otherwise.
 forced_surprise = None
+# config.json "force_show": a fireworks show's name ("Happily Ever After"), played once at start-up
+# whatever the schedule says, with its sound. For checking a show on a real board; leave it unset
+# otherwise. (show, theme) once validated.
+forced_show = None
 # config.json "sound", read once at start-up.
 sound = SoundSettings()
 # config.json "show_version": which version of a synced show plays, read once at start-up.
@@ -145,6 +149,7 @@ def main():
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
     set_forced_surprise(config.get("force_surprise"))
+    set_forced_show(config.get("force_show"))
     global sound, show_version_setting
     sound = sound_settings(config)
     show_version_setting = show_version(config)
@@ -179,6 +184,7 @@ def main():
 
     last_trip_shown = None
     try:
+        play_forced_show(matrix)
         while True:
             play_fireworks_show_if_due(matrix, parks_data)
             render_logo(matrix)
@@ -273,19 +279,57 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
         if start is None or (show, start) in _shows_played:
             continue
         _shows_played.add((show, start))
-        score = load_score(clip_name(show), version=show_version_setting)
-        with playing([clip_name(show), "fireworks"], sound, now):
-            if score:
-                # The whole show from its first note, with the music, however late the board cut in.
-                debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
-                render_music_show(matrix, score)
-            else:
-                remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
-                debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
-                render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
-        forget_screen(matrix)
+        play_show(matrix, show, theme, start, now)
         return True
     return False
+
+def play_show(matrix, show, theme, start, now):
+    """Play show, which started at start: its whole synced show if it has a score, else the castle
+    fireworks in theme until FIREWORKS_SHOW_S after start; with its sound if config.json turns it on."""
+    score = load_score(clip_name(show), version=show_version_setting)
+    with playing([clip_name(show), "fireworks"], sound, now):
+        if score:
+            # The whole show from its first note, with the music, however late the board cut in.
+            debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
+            render_music_show(matrix, score)
+        else:
+            remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
+            debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
+            render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
+    forget_screen(matrix)
+
+def known_shows():
+    """{show name: fireworks theme} for every show the board can play: the nightly one and each party's."""
+    shows = {NIGHTLY_FIREWORKS[0]: NIGHTLY_FIREWORKS[1]}
+    for event in SPECIAL_EVENTS.values():
+        if event.get("fireworks_show"):
+            shows[event["fireworks_show"]] = event.get("fireworks_theme")
+    return shows
+
+def set_forced_show(name):
+    """Validate config.json's force_show, matched loosely (case, apostrophes); an unknown name is
+    ignored, not fatal."""
+    global forced_show
+    forced_show = None
+    if not name:
+        return
+    shows = known_shows()
+    match = next((show for show in shows if clip_name(show) == clip_name(str(name))), None)
+    if match is None:
+        debug.warning(f"force_show {name!r} isn't a show the board plays; ignoring it. "
+                      f"Choices: {', '.join(shows)}")
+        return
+    forced_show = (match, shows[match])
+    debug.warning(f"force_show is set: {match} plays at start-up. Remove it from config.json when done testing.")
+
+def play_forced_show(matrix, now=None):
+    """Play config.json's force_show now, from its start, if it's set. Returns True if it played."""
+    if forced_show is None:
+        return False
+    now = now or datetime.now(timezone.utc)
+    show, theme = forced_show
+    play_show(matrix, show, theme, now, now)
+    return True
 
 def set_forced_surprise(name):
     """Validate config.json's force_surprise; an unknown name is ignored, not fatal."""

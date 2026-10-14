@@ -306,6 +306,7 @@ The board can play the fireworks soundtrack while its castle fireworks run. For 
 - `device`: the ALSA device to play on, like `"plughw:1,0"` (`aplay -l` lists them). `null` uses the default, which is usually the USB card once the onboard audio is off.
 - `quiet_hours`: no sound between these times, in the board's local time. Leave it out for no quiet hours. A broken value turns sound off.
 - Set the volume on the Pi with `alsamixer`.
+- To hear a show now instead of waiting for showtime, set `"force_show": "Happily Ever After"` (or a party's show, like `"Disney's Not-So-Spooky Spectacular"`) and restart the service: the board plays it once at start-up, with its sound, then carries on as usual. Restart again to replay it, and set it back to `""` when done.
 
 ## Sources and Credits
 This project relies on:
