@@ -2169,7 +2169,37 @@ Here is the breakdown of this section of *Happily Ever After*:
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · claude-opus-5-5-local-frames · video 7:46-8:47 · notes: none</summary>
+
+_Watched by Claude from frames (one every 2 s, plus close crops of the castle), not by Gemini: the free key was out of quota. The captions only say "[music]", so there is nothing here about the music; check timings by ear._
+
+**1. Where this part starts and ends**
+* The scene is really six short segments, not one mash-up: Toy Story first, then Ralph and Vanellope, Zootopia, Inside Out and Monsters, Inc.
+* **07:49-07:50:** the castle switches from Bare Necessities' purple and magenta to Toy Story's primary-coloured blocks.
+* **08:42-08:44:** it ends on the Monsters, Inc. doors; the two red and gold peonies at 08:44 open 5.7.
+
+**2. Timeline**
+| Video | Castle | Characters | Fireworks | Lighting |
+| :--- | :--- | :--- | :--- | :--- |
+| 07:50-08:03 | Toy blocks: red, yellow and blue walls, blue roofs | Woody and Buzz, small, in the gate arch | Small red and gold peonies by the spire (07:52-07:56), a big pink chrysanthemum left of the spire (07:58), a green-white ring (08:02) | Green and blue searchlight fans from both sides |
+| 08:04-08:10 | Lime green and blue, white figures in the central tower window and the side windows | Not identified (white silhouettes; possibly a dancer and a dark-haired figure in the gate) | Gold crackle behind the spire, a pink peony high right (08:08) | Searchlights off |
+| 08:12-08:15 | Pink walls, teal candy-striped roofs, a round emblem over the gate | Probably Sugar Rush (Vanellope); a dark-haired figure in the gate | Big pink-gold chrysanthemums either side of the spire (08:10-08:12), a gold ring (08:14) | None |
+| 08:16-08:28 | Blue and red-gold, a ZPD badge banner on the central tower (08:24), a doughnut wheel on the left (08:26) | Zootopia: an orange figure (Nick) in the tower windows at 08:18-08:22 | A white-gold horizontal fan left (08:16); pairs of red and gold chrysanthemums over the spire (08:22-08:26); green-gold willows (08:28) | Violet-blue searchlight fans from both sides |
+| 08:30-08:35 | Goes dark, then the central tower and windows fill with rainbow-coloured memory orbs | Inside Out: Joy (yellow) and Sadness (blue), small, in the gate | A gold burst low left (08:34), red bursts behind the castle | Searchlights off |
+| 08:36-08:41 | Yellow and blue, a vertical Monsters, Inc. sign on the tower, a lit balustrade over the gate | Sulley (blue) and Mike (green) in the gate | White gerbs and fountains along the castle front and both flanks (08:36-08:40) | White floods from the flanks |
+| 08:42-08:44 | Pink centre, door projections | Monsters, Inc. doors | Small gold bursts behind the spire | None |
+
+**3. Our version**
+* **Right:** Ralph and Vanellope, Judy and Nick, and Joy and Sadness are all here, in the gate and tower; multicolour searchlights and pastel bursts fit the Toy Story and Zootopia parts.
+* **Wrong:** our 5.6 has no Toy Story, but Toy Story fills its first 13 s. The order is probably Toy Story, an unidentified green part, Sugar Rush, Zootopia, Inside Out, then Monsters, Inc.: our 5.7 (Sulley and Mike) really starts at about 08:36, inside this window.
+* **Missing:** the white gerb and fountain line along the castle at 08:36-08:40; the ZPD badge; the castle going dark for the Inside Out memory orbs.
+* **Hiro and Baymax:** I couldn't see them. The green 08:04-08:10 part may be them (the white figure in the tower), but nothing confirms it: re-watch 08:04-08:10 by eye or with Gemini.
+
+**4. What I couldn't see**
+* Anything about the music: I had no audio track to check, only frames.
+* At this zoom the characters are a few pixels tall; Woody, Buzz, Nick, Joy, Sadness, Sulley and Mike are clear from colour and shape, the 08:04-08:15 figures are not.
+
+</details>
 
 ### 5.7 That's What Friends Are For
 
