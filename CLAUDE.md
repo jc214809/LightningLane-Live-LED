@@ -105,7 +105,7 @@ Display rules:
 
 ### Configuration
 
-`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `sound` (`enabled`, `device`, `quiet_hours`; played by `utils/sound.py:playing()` from the gitignored `sounds/`, during the fireworks show), `show_version` (`"v1"`/`"v2"`, the synced show's version), `force_surprise`, `debug`.
+`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `sound` (`enabled`, `device`, `quiet_hours`; played by `utils/sound.py:playing()` from the gitignored `sounds/`, during the fireworks show), `show_version` (`"v1"`/`"v2"`, the synced show's version), `force_surprise`, `force_show` (a show's name, played once at start-up whatever the schedule, for checking a show and its sound on a board), `debug`.
 
 ### Testing
 

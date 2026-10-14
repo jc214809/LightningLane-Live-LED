@@ -45,5 +45,6 @@
   },
   "show_version": "v1",
   "force_surprise": "",
+  "force_show": "",
   "debug": false
 }
