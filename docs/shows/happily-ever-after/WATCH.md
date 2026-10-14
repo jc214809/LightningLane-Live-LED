@@ -2063,7 +2063,99 @@ To convey this segment instantly on a 64x32 or 64x64 matrix:
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 7:40-7:52 · notes: none</summary>
+
+Here is the breakdown of this section of *Happily Ever After*:
+
+**1. Where this part starts and ends**
+* **The user’s estimate (07:43 to 07:49) is early/incorrect for “You’ve Got a Friend in Me”.** 
+* **07:40 – 07:42:** The final crescendo and big firework blast of the preceding **“Friend Like Me”** (*Aladdin*) section concludes.
+* **07:42 – 07:49:** This segment is actually **“The Bare Necessities”** (*The Jungle Book*), marked by a swing jazz clarinet intro starting at 07:42 and a green neon projection of Baloo dancing in the lower center gate/balcony.
+* **07:49 – 07:50:** **“You’ve Got a Friend in Me”** (*Toy Story*) only **begins** at **07:49/07:50**, marked by a musical tempo shift into the relaxed Randy Newman stride-piano/shuffle beat and the castle projections snapping into bright primary-colored Toy Story alphabet building blocks.
+
+**2. Music**
+* **07:40 – 07:41:** Big brass Broadway finish of *“Friend Like Me”* with a sustained cymbal/percussion and crowd roar.
+* **07:42 – 07:49:** *The Jungle Book* – **“The Bare Necessities”**:
+  * **07:42:** Upbeat swing jazz clarinet/dixieland band instrumentation begins.
+  * **07:46 – 07:48:** Baloo’s vocal line kicks in (*“The bare necessities of life will come to you...”*).
+  * **07:47:** Strong percussion downbeat accompanied by a gold aerial shell explosion.
+* **07:49 – 07:51:** *Toy Story* – **“You’ve Got a Friend in Me”**:
+  * **07:49 – 07:50:** Transition into the iconic ragtime/jazz piano intro of *“You’ve Got a Friend in Me”*.
+  * **07:51:** Musical accent hit synced with a bright red aerial burst on the left.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **07:40** | White/gold rising comet tails behind both flanks | Blue/violet upward spotlights from hub | Purple base, gold spires, Genie portal artwork | Genie (*Aladdin*) fading out |
+| **07:41** | Massive gold/white chrysanthemum burst high left | Searchlights sweep skyward | Deep royal purple and gold wash | Archway transitions |
+| **07:42 – 07:45** | Quiet sky; low residual embers drifting down | Sconce lights glow magenta/pink | Walls wash in magenta/deep violet with blue turret roofs | Neon lime-green silhouette of Baloo dancing in the central portal |
+| **07:46 – 07:48** | Large golden brocade/chrysanthemum shell bursts high left (07:47) | Violet accent floodlights on outer towers | Castle remains magenta/violet with blue roofs | Baloo continues dancing in center portal |
+| **07:49 – 07:50** | Sky briefly dark; launch trails rising | Lights shift toward warm amber and cyan | Projection wipe: multicolored children's building blocks appear across main facade | Baloo fades out; Toy Story graphic theme begins |
+| **07:51** | Medium bright red peony/ring shell bursts mid-high left | Yellow/cyan washes on lower walls and turrets | Bright yellow, red, and blue blocks with letters/toys on lower facade; green & blue towers | Toy blocks / Andy's room motifs; characters not yet fully resolved |
+
+**4. Fireworks in the sky**
+* **07:40 – 07:41:** 
+  * Two pairs of thick white/gold comet trails launched from behind both flanks.
+  * 1 large spherical gold/white chrysanthemum burst at high altitude on the upper left.
+* **07:42 – 07:46:** 
+  * Sky is dark/quiet (gap between musical numbers).
+* **07:47 – 07:48:** 
+  * 1 large golden brocade/peony shell bursting high left of the main spire on Baloo's vocal accent.
+* **07:50 – 07:51:** 
+  * 1 medium-sized vibrant red peony (with inner white/silver core) bursting mid-to-high altitude to the left of the spire at 07:51.
+* **Rhythm:** Sparse, single accent shells (roughly 1 burst every 3–4 seconds) emphasizing musical syncopations.
+
+**5. Fireworks on the castle**
+* None fired directly from castle turrets, ledges, or battlements during this sequence (all effects originate from perimeter launch sites behind the castle).
+
+**6. Lasers and lighting**
+* **Lasers:** No sharp overhead laser beams active during these 10 seconds.
+* **Searchlights:** Narrow violet and cyan moving searchlights mounted in the moat/hub sweeping up toward the sky at 07:40–07:41, settling into static side-fill washes on the trees and outer turrets by 07:43.
+* **Flames/Fountains:** None active.
+
+**7. The castle**
+* **07:40 – 07:48 (*The Bare Necessities*):** 
+  * Castle body is illuminated in deep violet-magenta and indigo.
+  * Turret roofs are royal blue.
+  * Sconces and clock tower edges glow in warm gold.
+* **07:49 – 07:51 (*Toy Story* transition):**
+  * Projections snap on: the lower middle facade transforms into vibrant primary-colored alphabet blocks (yellow, red, green, and blue cubes).
+  * Upper walls and turrets take on bright lime green and cyan lighting.
+
+**8. Characters**
+* **Genie (*Aladdin*):**
+  * Visible until 07:40–07:41 inside the central portal/lower castle; fades as the song ends.
+* **Baloo (*The Jungle Book*):**
+  * **Location:** Lower-center gate/balcony archway (bottom-center 3x3 grid).
+  * **Size:** Small, roughly 1/6 to 1/8 of total castle height, confined to the main arch above the front gate.
+  * **Appearance:** Stylized, glowing lime-green neon silhouette outline.
+  * **Movement:** Bouncing, dancing/waddling rhythmically side to side.
+  * **Time:** Appears at 07:42, dances continuously, and fades out at 07:49.
+* **Woody & Buzz (*Toy Story*):**
+  * Not yet visible on the castle during 07:43–07:49; only the toy block background elements begin appearing at 07:50–07:51.
+
+**9. For our boards (LED matrix recreation)**
+1. **Accurate Song Transition:** Do not start *Toy Story* graphics at 07:43. At 07:42–07:49, show a purple castle with a simple green dancing bear silhouette (Baloo) in the gate archway.
+2. **Palette Snap at 07:50:** The entire mood changes instantly at 07:50—switch the castle LEDs abruptly from deep purple/blue to vibrant checkerboard primary colors (red, yellow, cyan blocks).
+3. **Firework Accents:**
+   * Single gold burst at top-left at 07:47.
+   * Single red burst at top-left at 07:51 on the beat.
+
+**10. What you couldn't see**
+* The camera zooms in between 07:42 and 07:46, cutting off the outer perimeter launch points and side trees.
+* Projections at the very bottom base of the castle are partially obscured by guest heads/silhouettes in the foreground.
+
+**11. Our version**
+* **What's right:** Woody, Buzz, and Andy's room elements belong to the *“You’ve Got a Friend in Me”* portion of the show.
+* **What's wrong:** 
+  * The timing: 07:43 to 07:49 is **not** *Toy Story* / *“You’ve Got a Friend in Me”*. It is *The Bare Necessities*.
+  * Woody and Buzz do not appear between 07:43 and 07:49.
+  * There is no cloud wallpaper shown here yet.
+* **What's missing:**
+  * Baloo (green silhouette) dancing in the gate arch from 07:42 to 07:49 over a purple castle wash.
+  * *Toy Story* only begins loading its block graphics onto the castle at 07:50.
+
+</details>
 
 ### 5.6 Friendship mash-up
 
@@ -2091,7 +2183,92 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 8:41-9:00 · notes: none</summary>
+
+Here is the detailed breakdown of the segment for your LED matrix recreation:
+
+**1. Where this part starts and ends**
+* **Start:** **08:44** — Marked by a heavy musical bass beat and the launch/burst of twin aerial shells as the *Monsters, Inc.* door projections transition into a framed central archway. The deep bass vocal entry starts at **08:46**.
+* **End:** **08:57** — Marked by the end of the held vocal note, a bright chime/transition chord in the score, a sudden purple wash over the castle, outward-fanning searchlight beams, and Corona sun emblems (*Tangled* segment).
+* **Evaluation of 08:44 to 08:57:** Your timestamp range is **exact**.
+
+**2. Music**
+* **Song:** *"That's What Friends Are For (The Vulture Song)"* from *The Jungle Book* (1967).
+* **Style:** Barbershop quartet / deep bass-baritone solo.
+* **Lyrics & Timestamps:**
+  * **08:44:** Orchestral beat/impact announcing the transition.
+  * **08:46:** *"That's..."* (deep bass note).
+  * **08:48:** *"...what..."*
+  * **08:49:** *"...friends..."*
+  * **08:51:** *"...are..."*
+  * **08:53 – 08:56:** *"...foooor..."* (held sustained note fading into chime).
+  * **08:56 – 08:57:** Orchestral transition chime/flourish into the *Tangled* motif.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **08:41 – 08:43** | Low gold/white comet trails fade out on flanks | Blue and amber floodlights on lower turrets | Colorful door grid projection (turquoise, purple, orange) | Sulley (lower center archway) |
+| **08:44 – 08:45** | Two high red/gold peony shells burst symmetrically left and right of spire | Floodlights stay warm amber on trim, dark blue on facade | Doors collapse; castle shifts to dark navy/royal blue with a golden gothic frame in the central lower portal | Transition/empty portal |
+| **08:46 – 08:50** | Sky is dark / no launches | Static floodlights; no lasers | Deep blue walls; glowing warm-yellow portal in center | Four Vultures (*The Jungle Book*) perched on a branch in center portal |
+| **08:51 – 08:55** | Sky remains dark | Static floodlights | Portal shifts to warm yellow/stained-glass hue | Quasimodo embracing a gargoyle (*The Hunchback of Notre Dame*) |
+| **08:56 – 08:57** | Quiet sky; single rocket ascent begins behind spire | Searchlight beams suddenly ignite, fanning outward in purple and white | Castle instantly washes in deep violet/magenta; glowing yellow Corona suns appear across facade | Vultures/Quasimodo vanish |
+| **08:58 – 08:59** | Large gold chrysanthemum bursts high directly behind spire | Searchlights sweep across the sky | Purple wash with floating sun symbols | Transition to Rapunzel segment |
+
+**4. Fireworks in the sky**
+* **08:44 – 08:45:** Exactly **two** high-altitude aerial shells.
+  * *Type:* Peony/chrysanthemum with ruby red outer stars and glittering gold/white centers.
+  * *Position:* High sky, symmetrically mirrored (one on the left, one on the right of the central spire).
+* **08:46 – 08:56:** **0 bursts**. The sky is completely dark and quiet during the vocal line to draw full focus to the vocal quartet and the central projection portal.
+* **08:58 – 08:59:** Exactly **one** large gold willow/chrysanthemum shell bursting at high altitude directly over the central spire on the next musical beat.
+
+**5. Fireworks on the castle**
+* **None.** There are no fountains, gerbs, strobes, or rooftop pyro fired from the castle structure itself between 08:44 and 08:57.
+
+**6. Lasers and lighting**
+* **08:44 – 08:56:** No visible lasers. Base facade floodlights maintain a deep navy blue body with warm golden-amber lighting along the turret balconies, roofs, and window trim.
+* **08:56 – 08:57:** High-powered stage searchlights/beam fixtures behind and beside the castle turn on and fan upward/outward at roughly 45° angles into the sky in bright violet and white.
+
+**7. The castle**
+* **Base Lighting:** Dark royal blue on main stone walls, warm gold/amber accent lighting outlining turrets and spires.
+* **Projections:**
+  * **08:44:** The colorful mosaic doors from *Monsters, Inc.* dissolve. The facade turns to dark stone with an ornate gothic arch highlighted in gold around the lower center entrance.
+  * **08:46 – 08:55:** The projection is strictly confined to the **lower center archway portal** with a warm yellow/gold interior glow.
+  * **08:56 – 08:57:** Instant wipe to an overall royal purple/magenta castle wash with multiple bright golden-yellow sun emblems (Corona crests from *Tangled*) projected across the lower walls, central tower, and side turrets.
+
+**8. Characters**
+1. **The Vultures (Buzzie, Flaps, Ziggy, Dizzy from *The Jungle Book*)**
+   * *Location:* Bottom-center (lower 1/3 of the castle, inside the main gateway arch).
+   * *Size:* Small (approx. 1/6 of total castle height, confined entirely inside the lower portal).
+   * *Movement:* Perched on a branch, slightly swaying/bobbing to the barbershop rhythm.
+   * *Duration:* Appear at **08:46**, dissolve at **08:50**.
+2. **Quasimodo & Gargoyle (*The Hunchback of Notre Dame*)**
+   * *Location:* Bottom-center (same lower archway portal).
+   * *Size:* Approx. 1/6 of castle height.
+   * *Movement:* Static silhouette/figure, Quasimodo shown embracing a gargoyle.
+   * *Duration:* Appears at **08:51**, fades out at **08:56**.
+
+**9. For our boards**
+To capture this 13-second moment on a 64x32 or 64x64 matrix:
+1. **08:44 Hit:** Fire exactly two symmetrical red-and-gold 5x5 or 7x7 pixel burst clusters high on either side of the spire.
+2. **08:46 – 08:55 Contrast:** Keep the sky **completely black** and castle facade **dark blue**. Light only a small 6x8 pixel arched doorway at the bottom center in bright warm amber/yellow, displaying a small perched vulture cluster.
+3. **08:56 Transition:** Instantly shift the castle silhouette to deep purple, turn on 2–4 upward diagonal beam lines (searchlights), and light a single high gold shell over the spire at 08:58.
+
+**10. What you couldn't see**
+* **Perimeter Launchers:** Ground-level launch sites are hidden behind tree lines and castle walls.
+* **Vulture Facial Detail:** Due to distance and exposure, the four vultures appear primarily as dark silhouettes against the warm glowing interior archway rather than full high-detail character art.
+
+**11. Our version**
+* **What's right:** You correctly identified the turquoise/purple door projections and Sulley, but that is the **previous** segment (*Monsters, Inc.* / "If I Didn't Have You"), which ends at **08:43**.
+* **What's wrong:**
+  * For "That's What Friends Are For" (08:44–08:57), the characters are **not** Sulley and Mike.
+  * There are no doors on the turrets during this song.
+  * The aerial shells at 08:44 are not generic "soft gold shells"; they are two distinct ruby-red peonies with gold glitter centers.
+* **What's missing:**
+  * **The Vultures** (*The Jungle Book*) and **Quasimodo** (*The Hunchback of Notre Dame*) in the lower central archway.
+  * The deliberate **dark/quiet sky** during the singing from 08:46 to 08:56.
+  * The transition at 08:56–08:57 to deep purple castle lighting with fanning searchlights and yellow Corona sun emblems.
+
+</details>
 
 ### 5.8 Friend Like Me (Genie)
 
