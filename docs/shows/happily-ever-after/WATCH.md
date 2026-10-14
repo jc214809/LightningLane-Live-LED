@@ -1663,6 +1663,7 @@ To make a 64x32 or 64x64 LED matrix version look instantly recognizable:
 
 - **Audio:** 398-412.5 s (6:38-6:52, 14.5 s) · **Video:** `--start 6:48 --end 7:03`
 - **Our score now:** Spoken line over gold and purple lamp smoke on a midnight-blue castle. Characters: Aladdin.
+- **Checked (2026-10-14):** Gemini's answer below calls the scene before this one Tarzan; it's How Far I'll Go (4.3).
 
 **Your notes for this scene:**
 
@@ -1670,7 +1671,80 @@ To make a 64x32 or 64x64 LED matrix version look instantly recognizable:
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 6:45-7:06 · notes: none</summary>
+
+Here are the detailed facts for the "Aladdin: a best friend by your side" transition segment based on the video:
+
+**1. Where this part starts and ends**
+* **Starts at 06:48**: The preceding high-energy *Tarzan* section concludes with massive white/gold aerial bursts (06:48–06:51), while a giant projection of the Magic Lamp appears directly over the center entrance arch of Cinderella Castle (06:48). Your 06:48 estimate is **exact**.
+* **Ends at 07:01–07:02**: Genie finishes speaking *"possibilities"* (07:00), the audio transitions abruptly with a cymbal roll/horn fanfare into the upbeat intro of *"Friend Like Me"* at 07:01, and the entire castle flashes into multi-colored kaleidoscopic Arabian architecture at 07:02. Your 07:03 end mark is **slightly late** (by about 1 to 2 seconds).
+
+**2. Music**
+* **Track / Background Score**: Atmospheric orchestral strings and mystical bells swelling from *Aladdin*, transitioning directly into the dynamic brass intro of *"Friend Like Me"*.
+* **Spoken Lines (Genie / Robin Williams vocal audio)**:
+  * **06:55–07:00**: *"Trust me, having that best friend by your side opens up a whole new world of possibilities!"*
+* **Musical Hits / Cues**:
+  * **06:48–06:50**: Final heavy percussive orchestral hits concluding the *Tarzan* sequence.
+  * **06:52**: Gentle sparkling chime effect as gold willows disperse and the sky falls quiet.
+  * **07:01**: Brass fanfare flourish and cymbal roll leading into the upbeat swing tempo of *"Friend Like Me"*.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle Projections & Base Wash | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **06:48** | 2 large gold/white chrysanthemum bursts high above the castle spire. | Green and yellow laser beams sweep outwards into the sky; side beams fade down. | Deep blue/purple tower wash; bright gold Magic Lamp glowing at the central gateway; swirling gold smoke trail rising up the main facade. | Magic Lamp at center base; Genie begins emerging as blue vapor. |
+| **06:50** | 1 large golden willow burst blooms high directly over center spire. | Sky searchlights and side lasers turn off; castle lighting darkens. | Deep midnight blue base wash over turrets; golden lamp smoke continues rising up the central tower. | Magic Lamp glowing bright at lower center. |
+| **06:52–06:54** | Sky clears to dark; trailing gold brocade willow falls behind the upper spire. | Low ambient front wash; stage lights dimmed down. | Castle body illuminated in rich royal/midnight blue; archway framed in warm amber light around the lamp. | Golden lamp resting inside the central archway. |
+| **06:55–07:00** | Sky is completely dark and silent (no fireworks). | No lasers or searchlights; dark sky contrast. | Saturated midnight-blue stone wash across all towers and walls; central balcony/entrance features the golden lamp on a dark pedestal backdrop. | Genie (blue silhouette/bust with glowing eyes/smile) materializes out of yellow/green mystical smoke above the lamp in the center gate window. |
+| **07:01–07:02** | Quiet sky; fireworks launch from ground behind castle (streaks starting up). | Blue/purple wash instantly replaced by brilliant rainbow floodlights. | Castle abruptly transforms into vibrant teal, magenta, gold, and green mosaic palace facade with elephant motifs. | Genie disappears into the full ensemble scene transformation. |
+
+**4. Fireworks in the sky**
+* **06:48–06:49**: Two large spherical chrysanthemum shells (bright white-gold center with crackling tips), detonating high above the central spire (left-center and right-center).
+* **06:50–06:52**: One massive center brocade willow shell detonates high directly behind the main spire, draping long, shimmering golden trails that slowly fall behind the upper castle.
+* **06:53–07:01**: **Total quiet in the sky**. Zero aerial fireworks during Genie’s spoken line (06:55–07:00). The sky is completely dark, allowing focus on the castle projection and voiceover.
+* **Launch rhythm**: Wave of 3 heavy concluding bursts from 06:48 to 06:50, followed by a total lull of ~9 seconds.
+
+**5. Fireworks on the castle**
+* None fired from the castle turrets, battlements, or roofs during this window.
+
+**6. Lasers and lighting**
+* **Lasers**: Green and yellow laser fans sweep outward across the sky at 06:48 from castle rooftops, but are shut off completely by 06:50. No lasers fire from 06:51 to 07:01.
+* **Searchlights / Sky beams**: Narrow white searchlight beams crossing in front of the castle fade out by 06:49.
+* **Castle Wash**: Saturated deep midnight-blue/cobalt floodlighting blankets the outer turrets, spires, and side walls, focusing all visual attention on the bright golden portal at the bottom center.
+
+**7. The castle**
+* **Base / Turrets**: Deep cobalt blue and royal purple wash across all stone surfaces and spires from 06:50 to 07:01.
+* **Projections**:
+  * **06:48–06:52**: A bright golden Magic Lamp sits at the center gateway; a vertical trail of swirling golden smoke streams up the main tower face.
+  * **06:53–07:00**: The lamp remains anchored at the bottom-center portal (center-bottom 3x3 grid). A decorative pointed Arabian archway outlines the portal. Mystical green-and-yellow smoke pools in the arch above the lamp.
+  * **07:01–07:02**: Instant shift—the blue facade snaps into full-color Moroccan/Arabian patterned tiles with pinks, greens, oranges, and blue elephants.
+
+**8. Characters**
+* **The Magic Lamp**:
+  * *Location*: Bottom-center (center grid row 3, right over the main entrance arch).
+  * *Size*: ~1/6 the height of the castle facade.
+  * *Movement*: Static, glowing brightly in brilliant golden yellow.
+  * *Duration*: Visible 06:48 to 07:01.
+* **The Genie**:
+  * *Location*: Bottom-center, emerging directly above the Magic Lamp inside the illuminated archway.
+  * *Size*: Compact silhouette/figure filling the lower archway (~1/5 the castle's height).
+  * *Appearance / Movement*: Materializes as a swirling blue spirit silhouette surrounded by yellow/green magical vapor, gesturing as his voice speaks (06:55–07:00).
+  * *Duration*: Fades in around 06:54; vanishes at 07:01 as the song begins.
+* *(Note: Aladdin himself does **not** appear during this speaking segment; only the Genie and the Magic Lamp).*
+
+**9. For our boards**
+1. **The Midnight Blue Contrast**: Keep the entire castle matrix deep royal/midnight blue with the surrounding sky pitch black (LEDs off) from 06:52 to 07:01.
+2. **The Glowing Golden Lamp**: A crisp, bright yellow/gold lamp graphic anchored at the bottom-center gate with a gentle yellow/cyan puff or silhouette above it representing the Genie speaking.
+3. **The Abrupt Burst into Color at 07:01–07:02**: The dramatic shift from quiet, dark blue stillness into vivid, saturated rainbow/teal palace patterns exactly as the brass fanfare hits.
+
+**10. What you couldn't see**
+* Genie’s facial expressions within the lower portal projection are small and slightly low-resolution due to wide-angle recording distance and lighting contrast, appearing primarily as a glowing blue animated torso/silhouette within magical smoke.
+
+**11. Our version**
+* **What's right**: The midnight-blue castle base wash, the spoken line timing, and the gold/purple magical smoke coming from the lamp are accurate.
+* **What's wrong**: **Aladdin does not appear here.** The character shown and heard is the **Genie** (emerging from the lamp).
+* **What's missing**: The **Magic Lamp** itself (anchored prominently in gold at the castle's bottom portal) and the **3-burst gold willow sky finale** from 06:48–06:51 that precedes the complete sky blackout during the dialogue.
+
+</details>
 
 ### 5.2 Friend Like Me (instrumental)
 
@@ -1683,7 +1757,104 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 7:00-7:21 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Starts:** **07:02**. The musical transition hits with a big-band brass fanfare, and the castle immediately transforms from dark blue into vibrant turquoise, gold, and green palace mosaics. 
+* **Ends:** **07:18**. The vibrant palace facade dims and transitions into swirling neon-green and blue magic smoke on a sharp musical beat, introducing the next phrase.
+* **Accuracy of 07:03 to 07:18:** Very accurate. The visual projection change begins at 07:02, the opening firework comets launch at 07:03, and the green visual shift occurs precisely at 07:18.
+
+**2. Music**
+* **Song:** *"Friend Like Me"* from Disney’s *Aladdin* (energetic, big-band jazz instrumental arrangement with vocal shouts/scats).
+* **Lyrics/Vocals:**
+  * **07:06 – 07:08:** Vocal scat: *"Wah-wah-wah!"*
+  * **07:08 – 07:10:** Scat vocal: *"Oh-ah-ah!"*
+  * **07:11 – 07:13:** Vocal shout: *"Oh yeah!"*
+* **Big Musical Hits:**
+  * **07:02 / 07:03:** Initial brass stab / downbeat launching the theme.
+  * **07:06:** Heavy brass accent on *"Wah-wah-wah"*.
+  * **07:08:** Accent beat on *"Oh-ah-ah"*.
+  * **07:11:** Major downbeat on *"Oh yeah!"*.
+  * **07:15 – 07:17:** Three rapid, ascending rhythmic horn stabs.
+  * **07:18:** Trill and beat drop transitioning into the next measure.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **07:00 – 07:01** | Sky dark / remnants of previous bursts | Low white searchlights | Dark blue wash with violet accents | Silhouette of Genie in bottom archway |
+| **07:02 – 07:03** | Twin white comet tails launch vertically from low flanks | White searchlight beams fan outward from castle base | Projections snap to colorful Agrabah/palace jewel mosaics | Golden Magic Lamp appears in lower gate arch |
+| **07:04 – 07:05** | Comets arc and burst into crackling tourbillons/whistles high left & right | Searchlights sweep slightly inward | Vibrant turquoise, magenta, and gold facade; emerald-green turret domes | Genie’s face appears in center balcony window |
+| **07:06** | Golden brocade/peony shell bursts dead-center over spire | Bright ground uplighting accents castle facade | Mosaic patterns shimmer to the brass beat | Genie animates in central window |
+| **07:07 – 07:09** | Mirrored gold comets shoot up and cross in an "X" over spire; high gold peony shell bursts center | Searchlight beams tilt upward into the sky | Facade lit in turquoise, purple, and gold | Lamp glows bright yellow at base; Genie animated above |
+| **07:10 – 07:14** | Massive gold willow / kamuro shell with crackling glitter canopy fills high sky | White beams point nearly vertical | Rich gold and turquoise architectural projections | Genie visible in center balcony |
+| **07:15** | Symmetrical fanned white/silver comets shoot outward from side rooftops | Searchlight beams pulse | Jewel patterns intensify | Magic lamp at bottom center |
+| **07:16** | Symmetrical fanned coral/red comets shoot outward from side rooftops | Side uplighting shifts reddish | Ornate palace archways projected across walls | Genie in center window |
+| **07:17** | Symmetrical fanned bright green comets shoot outward from side rooftops | Side uplighting flashes bright green | Facade pulses bright green and gold | Genie animates in window |
+| **07:18** | Fan comets fade; trailing smoke drifts | Searchlights swing outward; green wash floods castle | Mosaic clears; replaced by swirling deep blue and acid-green magic smoke | Genie starts morphing/floating as smoke swirls |
+
+**4. Fireworks in the sky**
+* **07:03 – 07:05:** Symmetrical pair of bright white/silver whistling comet tails launch from low left and right, climbing high before breaking into crackling spinning comets/tourbillons.
+* **07:06 (1 shell):** Medium-sized gold brocade/peony burst right at the tip of the central spire.
+* **07:07 – 07:09 (2 comets, 1 shell):** A mirrored pair of gold comet tails launch angled inward, crossing in an "A/X" shape high above the spire, while a high-altitude golden chrysanthemum bursts dead-center at 07:08.
+* **07:10 – 07:14 (1 large shell):** A massive gold willow/kamuro shell explodes high center, cascading down in lingering glitter and crackles across the entire width of the upper sky.
+* **07:15 – 07:17 (Perimeter Fan Barrages - 3 waves):**
+  * **07:15:** Low-to-mid fanned white/silver comet plumes fire simultaneously on both left and right flanks (approx. 5–6 comets per side).
+  * **07:16:** Low-to-mid fanned red/pink comet plumes fire simultaneously on both flanks.
+  * **07:17:** Low-to-mid fanned bright lime-green comet plumes fire simultaneously on both flanks.
+* **Rhythm:** Starts with twin accent launches (07:03), settles into single large gold hits on the vocal scats (07:06, 07:08, 07:10), followed by rapid, syncopated three-step fan bursts (07:15–07:17) matching the horn rhythm.
+
+**5. Fireworks on the castle**
+* **07:06:** Central roofline/behind-spire launcher fires the spire shell.
+* **07:15 – 07:17:** Low rooftop/parapet launchers fire the 3-step color fan (white, red, green) directly from the lower perimeter flanking walls of the castle.
+
+**6. Lasers and lighting**
+* **Searchlights:** Four to six bright white moving-head searchlight beams placed at ground level on either side of the castle base. They fan outward at 07:03, pull vertical during the willow burst (07:10–07:14), and crisscross rapidly at 07:17–07:18.
+* **Lasers:** No direct beam lasers are visible in this specific segment.
+* **Flames/Fountains:** No fire nozzles or water fountains active in this shot.
+
+**7. The castle**
+* **Base Architectural Lighting:** Shifts from blue/violet (07:00) to vivid turquoise/cyan base wash (07:02–07:16), then flashes emerald green (07:17–07:18).
+* **Projections:**
+  * **07:02 – 07:17:** Intricate Arabian palace / Cave of Wonders jewel facade:
+    * Turret conical roofs turn bright emerald green with gold leaf tips.
+    * Castle walls are mapped with turquoise and magenta arched alcoves, gold filigree, and Islamic geometric tile patterns.
+  * **07:18:** The geometric patterns vanish; the castle base and midsection turn into dark blue stone covered in swirling acid-green magical vapor.
+
+**8. Characters**
+* **Genie (Magic Lamp):**
+  * **Location:** Bottom-center (main entrance archway).
+  * **Size:** Approx. 1/8 of castle height.
+  * **Movement:** Stationary glowing gold lamp, with yellow/gold light and smoke billowing upward.
+  * **Appears:** 07:00 (silhouette), fully lit from 07:02 to 07:17.
+* **Genie (Character Face/Bust):**
+  * **Location:** Center of castle (middle row, center column — the large balcony window above the main gateway).
+  * **Size:** Approx. 1/5 of castle height.
+  * **Movement:** Blue animated face framed in the window, smiling and shifting expressions with the beat.
+  * **Appears:** 07:04; transitions to swirling full-body magic at 07:18.
+* *Note:* Aladdin is not clearly identifiable as an isolated standalone projection during these specific seconds; the focus of the visuals is Genie and the Magic Lamp.
+
+**9. For our boards**
+On a 64×32 or 64×64 LED matrix:
+1. **The Instant Facade Transformation (07:02):** Snap the castle palette instantly from dark blue to bright cyan/turquoise walls with emerald-green turret tops and gold trim.
+2. **The "Crossing Comets" & Spire Shell (07:07 – 07:10):** Draw two angled gold lines crossing over the spire, exploding into a golden willow canopy.
+3. **The 3-Beat Flanking Fan (07:15 – 07:17):** Three successive pixel fans shooting left and right from the castle shoulders: **White** on beat 1, **Red** on beat 2, **Green** on beat 3.
+
+**10. What you couldn't see**
+* Ground-level details below the castle bridge railing (blocked by hub crowds and foliage).
+* The outer perimeter launch sites far behind Fantasyland (only the rising trails in the night sky are visible).
+
+**11. Our version**
+* **What's right:** The presence of Genie and the ornate gold/brass architectural patterns across the castle facade.
+* **What's wrong:**
+  * It is not "lanterns"; it is the golden **Magic Lamp** at the bottom archway and **Genie's face** in the center window.
+  * There are no "blue and gold fountains from the roofs"; the rooftop/perimeter fireworks are **fanned comets** that fire in three distinct color waves: **White, Red, and Green** (07:15–07:17).
+  * The aerial shells are predominantly **warm gold/brocade willows**, not plain white shells.
+* **What's missing:**
+  * The iconic twin crossing gold comets over the central spire (07:07).
+  * The emerald-green turret roofs mapped onto the castle towers.
+  * The rapid 3-color horn-stab fan burst (white $\rightarrow$ red $\rightarrow$ green) at 07:15–07:17, which is the visual climax of this musical phrase.
+
+</details>
 
 ### 5.3 Trashin' the Camp
 
@@ -1696,12 +1867,98 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 7:15-7:39 · notes: none</summary>
+
+Here is the detailed breakdown of the segment for your LED matrix recreation:
+
+**1. Where this part starts and ends**
+* **Start:** **07:18**. Your estimate of 07:18 is **exact**. At 07:18, the prior "Friend Like Me" music cue and blue/multi-colour fireworks resolve. The brass horn riff and heavy percussive beat of "Trashin’ the Camp" (from *Tarzan*) begin, the castle projections instantaneously transition to vibrant lime/chartreuse jungle tones with animal prints, and Terk appears on the main gate.
+* **End:** **07:37**. Your estimate of 07:36 is slightly early by about 1 second. At **07:37**, a sudden deep percussive crash/hit occurs alongside a blinding single-frame flash and launch of bright green comets from the roofline, transitioning into the vocal riff/vocalisation leading into the next segment (the music shifts to Hakuna Matata / Lion King percussion at 07:38–07:39).
+
+**2. Music**
+* **Track:** *"Trashin' the Camp"* from Disney’s *Tarzan* (instrumental/scat mix).
+* **Audio timeline & lyrics:**
+  * **07:18–07:20:** Upbeat big-band swing horn riff and heavy syncopated drum kit beat intro.
+  * **07:20–07:23:** Scat vocal line: *"Za-ba-da-doo-bee, do-ba-da-doo-bee-dab-bee-yap-bam!"* landing on a hard percussive drum hit at **07:24**.
+  * **07:25–07:28:** Second scat vocal line: *"Za-ba-da-doo-bee, do-ba-da-doo-bee-dab-bee-yap-bam!"* landing on a massive crash/brass hit at **07:28**.
+  * **07:29–07:34:** Horns and drum kit swing breakdown, accelerating rhythm.
+  * **07:34–07:36:** Drawn-out scat vocalisation: *"Ooo-weee-aaa-ooo-ooo..."*
+  * **07:37:** Heavy drum accent hit, cutting the scatter rhythm abruptly.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle Projections & Base Light | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **07:18** | Prior high bursts fade; brief sky lull. | Blue sky searchlights sweep upward. | Castle shifts instantly to deep green/chartreuse jungle pattern; windows illuminated green/gold. | Terk (gorilla) appears in center gate archway (bottom-center). |
+| **07:20** | Dual low fan bursts: angled green comet tails with red/orange tips fire outward left and right. | Bright neon-green laser beams shoot out from lower castle flanking walls to the sides/sky. | Bright chartreuse/yellow geometric/tribal patterns pulse on castle facade. | Terk drumming/scatting in center gate; Tantor’s trunk/face visible above. |
+| **07:24** | Heavy drum beat: White/gold spherical peony bursts directly above spire. | Green laser beams fan out horizontally; searchlights swing outward. | Castle flashes lime green on drum hit. | Terk actively animated in bottom-center frame. |
+| **07:26** | Sky briefly quiet; launching trails rising. | Bright green laser beams shoot straight diagonally right and left. | Vivid chartreuse and dark green jungle foliage textures. | Tantor (elephant) clearly visible on upper central wall/tower (center-mid/top). |
+| **07:28–07:30** | Massive hit: Giant green and red/magenta peony bursts high above spire, accompanied by low fan comets. | Green lasers pulse; searchlights sweep across the sky. | Castle walls flash bright yellow-green. | Terk (center-bottom) and Tantor (center-mid) bouncing to the beat. |
+| **07:31–07:33** | Large golden willow / brocade burst high center, drifting down over spire. | Searchlights pan across sky in blue/white beams; green stage lights pulse at base. | Dynamic shifting tribal/jungle textures across all turrets. | Terk and jungle friends animated in projection center. |
+| **07:34–07:36** | Red-orange peony/crossette burst at mid-right height. | Green searchlight/laser beams sweep upward; base floods in emerald green. | Saturated emerald and lime green facade lighting. | Final scat animations of Terk; Tantor pulls back. |
+| **07:37** | Sharp fan of 4 bright green comets launches upward from castle lower roofline/battlements. | Full stage flash; searchlights swing wide. | Abrupt flash to solid emerald green wash, resetting projections. | Terk projection fades out as transition begins. |
+
+**4. Fireworks in the sky**
+* **07:20–07:22:** Low-to-mid angled fan: 4–6 angled comet tails firing left and right simultaneously, splitting into bright neon green tails with distinct red/orange starburst tips.
+* **07:24:** 1 medium-sized white/gold chrysanthemum/peony directly centered directly above the central high spire.
+* **07:28–07:30:** High barrage: 2 large simultaneous floral bursts (peonies) directly overhead/high center — bright emerald green mixed with vibrant red/magenta stars, followed by a secondary lower golden sparkle.
+* **07:31–07:33:** 1 large golden brocade/willow shell high center, cascading down in soft gold tentacles over the upper spire.
+* **07:34–07:36:** 1 medium red-orange peony/dahlia bursting to the mid-right side of the upper castle spire.
+* **Total sky bursts:** ~5 distinct sky shell events (plus low angled fan shots). Sky rhythm is syncopated, firing precisely on the vocal scat punctuations at 07:20, 07:24, and 07:28.
+
+**5. Fireworks on the castle**
+* **07:20 & 07:28:** Low launch tubes mounted immediately behind the castle perimeter/rooftops eject low angled angled comets outward left and right.
+* **07:37:** A tight, symmetric fan of **4 bright green comet tails** fires directly upward from the castle lower battlements/roofline, marking the hit at the end of the scat routine.
+
+**6. Lasers and lighting**
+* **Lasers:** Vivid neon green laser beams originate from the flanking hub walls/lower castle terraces (left and right of the main moat). At **07:20–07:28**, they emit sharp, tight green slicing beams pointing diagonally outward and upward into the night sky, scanning back and forth across the front of the castle.
+* **Searchlights:** Four to six narrow-beam robotic fixtures on the flanking roofs sweep skyward in cool white/pale cyan during the transitions, alternating with emerald green uplighting.
+* **Flames/Fountains:** No real flames or water fountains are used in this specific short segment.
+
+**7. The castle**
+* **Base wash lighting:** Dominated entirely by **electric lime green and chartreuse**, with deep forest green shadows around the outer lower turrets and perimeter walls.
+* **Projections:**
+  * **07:18–07:36:** The entire castle surface is covered in stylized, vibrant jungle patterns, tropical foliage, and geometric tribal animal motifs (bright yellow, lime green, and teal). 
+  * Turret cones and spires are mapped with glowing yellow/green textures.
+  * Center gate and central facade are used as the primary video screen for character animation.
+
+**8. Characters**
+1. **Terk (Gorilla from *Tarzan*):**
+   * **Location:** Center gate / lower-central facade (Grid position: **Center-Bottom**).
+   * **Size:** Spans roughly the height of the main entryway gate (approx. 1/5 of the total castle height).
+   * **Movement:** Centered, energetic drumming, gesturing, and scatting facing forward, synchronized to the vocal audio.
+   * **Timing:** Appears at **07:18**, animates continuously, fades at **07:37**.
+2. **Tantor (Elephant from *Tarzan*):**
+   * **Location:** Upper central facade/main balcony level directly above the gate (Grid position: **Center-Middle**).
+   * **Size:** Trunk, head, and eyes span roughly 1/4 the castle width; approx. 1/6 the castle height.
+   * **Movement:** Trumpeting with trunk curling upward and swaying along to the brass lines.
+   * **Timing:** Clearly visible from **07:20** through **07:33**.
+
+**9. For our boards (LED matrix recreation tips)**
+To convey this segment instantly on a 64x32 or 64x64 matrix:
+1. **The Signature Color Palette:** Switch the entire castle palette to **lime green and chartreuse** with gold windows on the exact downbeat at **07:18**.
+2. **The Scat Accents (07:20 & 07:28):** Mirror two outward-angled comets (green trails with orange tips) on the scat punchlines, followed by sharp green diagonal laser lines slicing outward from the castle base.
+3. **Character Representation:** A 10–12 pixel animated dark grey/brown gorilla (Terk) drumming inside the bottom center gate archway, with a small pink/red elephant trunk (Tantor) bobbing directly above the gate.
+4. **Cutoff Hit (07:37):** A 1-frame green screen flash + 4 vertical green pixel comet lines firing up from the castle roofline.
+
+**10. What you couldn't see**
+* Exact perimeter ground launch tubes behind the castle are hidden behind castle parapets.
+* Details on the far left and far right outer perimeter towers are slightly washed out due to brightness saturation.
+
+**11. Our version**
+* **What’s right:** "Vivid green and chartreuse", "green flares", "green and orange comets on the drums", and "Terk" are all spot on.
+* **What’s wrong:** Calling the lights "green searchlights" is slightly inaccurate; the sharp moving beams cutting across the castle are **neon green laser beams** (the searchlights themselves mostly sweep in cyan/white high in the sky).
+* **What’s missing:** 
+  1. **Tantor (the elephant):** He is prominently projected directly above Terk on the central wall throughout the scat sequence.
+  2. **High floral bursts:** The major sky pyro hits at **07:24** (gold peony) and **07:28** (large green/red duo peony).
+  3. **The 07:37 transition hit:** The synchronized 4-comet green fan blast that terminates the scat routine.
+
+</details>
 
 ### 5.4 Hakuna Matata
 
 - **Audio:** 446-453 s (7:26-7:33, 7 s) · **Video:** `--start 7:36 --end 7:43`
 - **Our score now:** Timon and Pumbaa in sunset yellow, orange and red; red and gold shells. Characters: Timon, Pumbaa.
+- **To check by eye and ear:** Gemini's answer below says this isn't Hakuna Matata but The Bare Necessities (Mowgli and Baloo, to 7:36) then *Tangled*'s "I've Got a Dream" (the Corona sun, Pascal at the gate, from 7:39). Unconfirmed: Whisper on our split-out vocals (audio 425-465) hears only "oh, oh" scat, no lyrics either way, and Gemini has misplaced Tangled once already (4.3).
 
 **Your notes for this scene:**
 
@@ -1709,7 +1966,90 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 7:33-7:46 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** Exactly at **07:37**, marked by the final upbeat jazz horn hit of *The Bare Necessities* ending, an immediate fanfare/drum beat launching angled green comets, and the transition into the jaunty pub-style melody of *"I've Got a Dream"* from *Tangled*. 
+* **End:** This clip ends at **07:46** while *"I've Got a Dream"* is still actively playing.
+* **Accuracy of your 07:36 to 07:43 range:** Your timing is **late for the start** (the transition begins cleanly at 07:37) and **early for the end** of the musical section (the *Tangled* segment continues well past 07:43 through the end of the clip). Most importantly, **this is not "Hakuna Matata"**; it transitions from *The Jungle Book* (*The Bare Necessities*) straight into *Tangled* (*I've Got a Dream*).
+
+**2. Music**
+* **07:33 – 07:36:** *"The Bare Necessities"* (*The Jungle Book*) concluding with jazz brass, percussion, and Baloo’s scat vocal ("Yeah man!").
+* **07:37:** Big percussion hit and transition chord into *"I've Got a Dream"* (*Tangled*).
+* **07:38 – 07:46:** Pub accordion, piano, and brass playing the bouncy opening melody of *"I've Got a Dream"* with the Snuggly Duckling ruffians singing the chorus rhythm (*"I've got a dream! I've got a dream!..."*).
+
+**3. Timeline**
+
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **07:33 – 07:36** | Crackling gold/white willow/peony bursts and red/orange peonies fading in the upper sky. | White/light-blue searchlight beams pointing outward from behind the castle sides. | Jungle/forest green wash on walls, foliage textures, clock face illuminated. | Mowgli and Baloo dancing inside the lower center balcony window (fading out by 07:36). |
+| **07:37 – 07:38** | Symmetrical low angled fan of bright green comets/mines shot from both flanks. | Green ambient wash lighting across the hub and castle base. | Bright emerald green flash, jungle patterns transitioning to dark stone/wood textures. | Transition; no character prominent. |
+| **07:39 – 07:40** | Sky clears of major bursts. | Blue searchlight beams narrow behind the spires. | Castle lighting shifts dramatically to vivid magenta, pink, and violet. | Corona kingdom patterns start forming; golden Tangled sun crest appears over the clock face. |
+| **07:41 – 07:42** | Single medium-high pink/golden peony shell bursts to the upper left of the spire. | Purple wash on castle facade, narrow blue beams behind. | Bright violet/purple towers, glowing yellow window arches, Corona sun emblem in center. | Pascal (the chameleon) appears in vivid lime green at the center bottom entrance archway. |
+| **07:43 – 07:46** | Sky clear of major shell bursts; camera zooms in. | Pink and purple architectural floodlights wash the castle walls and spires. | Saturated pink/magenta spires and upper facade, deep blue turret roofs, glowing warm windows. | Pascal stands/moves at the center bottom doorway arch against the purple background. |
+
+**4. Fireworks in the sky**
+* **07:33 – 07:36:** 
+  * Chrysanthemum/peony bursts in gold/white crackle and red/orange fill the upper sky directly above and behind the central spire (roughly 2–3 bursts per second, fading out at 07:36).
+* **07:37 – 07:38:** 
+  * Low/mid-height angled comet mine fan: approximately 3 bright neon-green comets on the left and 3 on the right, shooting outward symmetrically from behind the castle walls at roughly 45-degree angles.
+* **07:39 – 07:40:** 
+  * Sky goes quiet/dark with no new burst shells.
+* **07:41 – 07:42:** 
+  * Exactly 1 round peony shell in pink/rose with a soft golden center bursts high to the upper left of the main spire.
+* **07:43 – 07:46:** 
+  * Sky remains dark/quiet (no overhead sky bursts during the zoom-in).
+
+**5. Fireworks on the castle**
+* None fired directly from the turrets, parapets, or roof ledges during this specific clip (the comet fans at 07:37 launch from ground positions/launch sites directly behind the flanking walls).
+
+**6. Lasers and lighting**
+* **Lasers:** No visible overhead beam lasers during this segment.
+* **Searchlights:** Cool-white and light-blue narrow searchlight beams fan upward from behind the left and right castle terraces (07:33–07:40), then dim down as the castle zooms in.
+* **Hub/Perimeter Lighting:** Flashes bright green at 07:37 to match the comet launch, then transitions to deep purple and pink ambient wash lighting along the trees and hub.
+
+**7. The castle**
+* **Base & Turret Lighting:**
+  * **07:33 – 07:38:** Emerald green wash across the entire lower facade, green spires, glowing green side turrets.
+  * **07:39 – 07:46:** Dramatic instantaneous shift to rich magenta/pink lighting across the main facade, deep blue on the conical turret roofs, and warm golden illumination in the lower portals and window cutouts.
+* **Projections:**
+  * **07:33 – 07:36:** Jungle Book leafy vine textures and jungle stone.
+  * **07:39 – 07:46:** The *Tangled* motif: the iconic golden Corona Sun symbol projected directly over the central clock/rose-window area, surrounded by purple and gold decorative bunting/tapestry patterns.
+
+**8. Characters**
+* **Mowgli & Baloo:**
+  * **Location:** Projected inside the center balcony frame (grid center: (2,2)).
+  * **Size:** Small, roughly 1/6th the height of the castle facade.
+  * **Movement:** Dancing/grooving in place.
+  * **Times:** Visible up to **07:36**, fading out as the music changes.
+* **Pascal (from *Tangled*):**
+  * **Location:** Lower-center base (grid bottom-center: (3,2)), right above/inside the main gate tunnel archway.
+  * **Size:** Small, about 1/10th the height of the castle facade.
+  * **Movement:** Appears as a bright lime-green silhouette, standing/scampering on the archway ledge against the dark/purple background.
+  * **Times:** Appears at **07:41** and remains through **07:46**.
+* *(Note: Timon, Pumbaa, and Simba do not appear anywhere in this sequence).*
+
+**9. For our boards**
+1. **The Instant Color Switch at 07:39:** Switch your matrix background instantly from jungle green to a vibrant split of bright magenta/purple on the castle walls and deep royal blue on the turret roofs.
+2. **The 07:37 Green Comet Fan:** Fire symmetrical diagonal green comets (or streaks) outward from both sides of the castle base on the musical transition beat.
+3. **The Corona Sun & Pascal:** A bright yellow/gold circular sun emblem at the center clock position, with a small, glowing lime-green sprite (Pascal) at the bottom-center archway against the purple castle base.
+
+**10. What you couldn't see**
+* Around **07:42**, the camera operator zooms in tightly onto the castle facade, cutting off the outer peripheral trees, perimeter launch locations, and upper sky edges for the rest of the clip.
+* Precise details of secondary character artwork inside the lower windows at 07:43–07:46 are partially obscured by the exposure and zoom motion.
+
+**11. Our version**
+* **What's right:** You correctly identified that a transition happens in this time frame (07:36/07:37).
+* **What's wrong:** 
+  * The song is **not** "Hakuna Matata" and the characters are **not** Timon and Pumbaa. The music is *"I've Got a Dream"* from *Tangled*.
+  * The color scheme is **not** sunset yellow, orange, and red; the castle shifts into vivid **magenta, violet/purple, and royal blue**, accented by a **golden yellow sun**.
+  * The shell at 07:41 is a single pink/magenta and gold peony, not a barrage of red and gold shells.
+* **What's missing:** 
+  * The symmetrical fan of neon-green comets at 07:37.
+  * The Corona sun emblem projected over the castle clock.
+  * Pascal (the lime-green chameleon) projected at the main gate arch.
+
+</details>
 
 ### 5.5 You've Got a Friend in Me
 
