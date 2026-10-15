@@ -4160,6 +4160,7 @@ Here is the breakdown of the "Go the Distance / Castle Rebuilds" segment of *Hap
 
 - **Audio:** 915-976 s (15:15-16:16, 61 s) · **Video:** `--start 15:26 --end 16:27`
 - **Our score now:** Stained-glass hero windows in gold; gold and white willows and peonies, side comet plumes, rainbow comets. Characters: Hercules, Megara, Tarzan, Jane, Mulan, Merida.
+- **Checked by eye (2026-10-15):** no Jane. From the user's screenshot of the stained-glass hero mosaic (gold frames, blue roofs, gold willows overhead): lower left Mulan, Aurora, Aladdin; Cinderella with Gus over the gate; lower right Tarzan (long hair, alone) and Aurora again; Mickey far right; up the centre Elsa and Anna left of the spire, Merida and Woody on the right-hand tower, Tiana near the top. Not seen at 15:24: the mosaic comes later in the scene (Gemini: from about 16:04).
 
 **Your notes for this scene:**
 
