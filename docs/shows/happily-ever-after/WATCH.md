@@ -2531,6 +2531,7 @@ To make this segment unmistakably recognizable on low-resolution matrix displays
 - **Audio:** 563-576 s (9:23-9:36, 13 s) · **Video:** `--start 9:33 --end 9:46`
 - **Our score now:** Spoken line; icy blue and purple castle, snowflakes floating up, one gold shell. Characters: Olaf.
 - **V2:** stage ghost; actors olaf (Olaf pops up and waves in the snow).
+- **Checked by eye (2026-10-14):** Gemini is right about the shell: about 7 s of dark sky, then one shell to the left of the spire. Leave Olaf as he is in our version.
 
 **Your notes for this scene:**
 
