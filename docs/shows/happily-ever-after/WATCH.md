@@ -3232,6 +3232,7 @@ Here is the detailed breakdown of the segment:
 
 - **Audio:** 724-742 s (12:04-12:22, 18 s) · **Video:** `--start 12:14 --end 12:32`
 - **Our score now:** "The flower that blooms in adversity...", a gong; dark navy and crimson, low crimson and gold comets. Characters: Emperor of China.
+- **Checked by eye (2026-10-14):** Gemini is right: Mulan and the Emperor in the gate, two lone shells, no gong.
 
 **Your notes for this scene:**
 
@@ -3331,6 +3332,7 @@ Here is the detailed analysis of this segment of the show:
 
 - **Audio:** 742-760 s (12:22-12:40, 18 s) · **Video:** `--start 12:32 --end 12:50`
 - **Our score now:** Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts. Characters: Ursula, Scar, Hades.
+- **Checked by eye (2026-10-14):** couldn't tell which villains are here; still open.
 
 **Your notes for this scene:**
 
@@ -3436,6 +3438,7 @@ Here is the detailed analysis of this segment of the show:
 
 - **Audio:** 760-777 s (12:40-12:57, 17 s) · **Video:** `--start 12:50 --end 13:07`
 - **Our score now:** Villains build; green dragon fire (the split from the attack is a guess: the video didn't show one). Characters: Maleficent, Jafar.
+- **Checked by eye (2026-10-14):** it's The Incredibles fighting a robot monster (the Omnidroid) at about video 12:48, not the Lion King stampede (Gemini) or Maleficent and Jafar (our score).
 
 **Your notes for this scene:**
 
@@ -3545,6 +3548,7 @@ To capture this section authentically on 64x32 or 64x64 matrices:
 
 - **Audio:** 777-806 s (12:57-13:26, 29 s) · **Video:** `--start 13:07 --end 13:36`
 - **Our score now:** The castle cracks and burns; flame jets on the terraces; red, orange and gold. Characters: Pirates.
+- **Checked by eye (2026-10-14):** at about video 13:07 the Scar and Simba fight starts (the Lion King, not the pirates' Aztec coin Gemini describes). At 13:30 it's Aladdin fighting Jafar as the snake, then Maleficent after that.
 
 **Your notes for this scene:**
 
@@ -3678,6 +3682,7 @@ To capture this segment convincingly on low-res 64x32/64x64 matrices:
 
 - **Audio:** 806-812 s (13:26-13:32, 6 s) · **Video:** `--start 13:36 --end 13:43`
 - **Our score now:** Emerald shells and lime comets. Characters: none.
+- **Checked by eye (2026-10-14):** this follows Aladdin and the snake (about 13:30); Maleficent comes after it (see 7.4's check).
 
 **Your notes for this scene:**
 
@@ -3868,6 +3873,7 @@ To capture this segment authentically on tiny matrix displays:
 
 - **Audio:** 837-849 s (13:57-14:09, 12 s) · **Video:** `--start 14:08 --end 14:20`
 - **Our score now:** A ruby-red and white perimeter finale, smoke. Characters: none.
+- **Checked by eye (2026-10-14):** fine as it is.
 
 **Your notes for this scene:**
 
