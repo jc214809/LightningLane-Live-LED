@@ -199,6 +199,7 @@ To recreate this fanfare authentically on 64x32 or 64x64 LED matrices:
 
 - **Audio:** 19-47 s (0:19-0:47, 28 s) · **Video:** `--start 0:29 --end 0:57`
 - **Our score now:** Searchlights off, the keyhole dims, the sky dark. Characters: none.
+- **Checked by eye (2026-10-14):** can't tell whether the keyhole brightens (as Gemini says) or dims; still open.
 
 **Your notes for this scene:**
 
@@ -465,6 +466,7 @@ To make this segment unmistakably authentic on small pixel displays:
 
 - **Audio:** 98-119 s (1:38-1:59, 21 s) · **Video:** `--start 1:48 --end 2:09`
 - **Our score now:** The show's first fireworks on the chorus: red and gold peonies, then a red, gold and white strobe barrage. Characters: none.
+- **Checked by eye (2026-10-14):** the castle is red with gold magic tracing its design. Which fireworks (comet pairs and willows, or a strobe barrage) doesn't matter much.
 
 **Your notes for this scene:**
 
@@ -562,6 +564,7 @@ To make this segment unmistakably authentic on small pixel displays:
 
 - **Audio:** 119-137 s (1:59-2:17, 18 s) · **Video:** `--start 2:09 --end 2:27`
 - **Our score now:** A huge gold palm and willow canopy, a gold brocade crown fading to smoke. Characters: none.
+- **Checked by eye (2026-10-14):** on the chorus drop the castle fades slowly from its previous colours to blue, starting at the top and working down to the base (not a blue top over a gold base).
 
 **Your notes for this scene:**
 
@@ -656,6 +659,7 @@ On a 64x32 or 64x64 LED matrix:
 
 - **Audio:** 137-150 s (2:17-2:30, 13 s) · **Video:** `--start 2:27 --end 2:40`
 - **Our score now:** Music-box transition: the castle turns royal blue, the sky dark, one bright star. Characters: none.
+- **Checked by eye (2026-10-14):** the wishing star shoots across the sky and lands directly on the castle.
 
 **Your notes for this scene:**
 
@@ -836,6 +840,7 @@ Here is the detailed breakdown of the segment for your LED matrix recreation:
 - **Audio:** 171-192 s (2:51-3:12, 21 s) · **Video:** `--start 3:01 --end 3:22`
 - **Our score now:** Brass fanfare: a fan of white and gold comets, gold chrysanthemums, green and white glitter. Characters: Ray.
 - **V2:** stage castle; actors ray (Ray drifts over and circles the spire).
+- **Checked by eye (2026-10-14):** Ray isn't clearly visible; keeping him in 3.3's first seconds is fine but not required.
 
 **Your notes for this scene:**
 
@@ -1020,6 +1025,7 @@ Here is the detailed breakdown of the segment:
 - **Audio:** 215-256 s (3:35-4:16, 41 s) · **Video:** `--start 3:45 --end 4:26`
 - **Our score now:** Sunbeams through the water, magenta and ruby peonies, gold and white brocade. Characters: Ariel.
 - **Checked by lyrics (Whisper on our audio, 2026-10-13):** this is **"Out There"** (*The Hunchback of Notre Dame*), not Part of Your World: "Out there… strolling by the Seine, taste the morning air… just one day and then I swear I'll be content" from audio 215 s, its last "Out there!" at 254 s. Gemini's answer below (Quasimodo, the Notre Dame rose window) agrees. The score's title, characters and look for this scene are wrong.
+- **Checked by eye (2026-10-14):** Quasimodo, confirmed. No doves anywhere: drop them.
 
 **Your notes for this scene:**
 
@@ -1213,6 +1219,7 @@ Here is the detailed breakdown of the segment:
 - **Audio:** 268-303 s (4:28-5:03, 35 s) · **Video:** `--start 4:38 --end 5:13`
 - **Our score now:** Cathedral bells, gothic stone and moss, doves; gold willow, emerald and white strobes, red and gold comets. Characters: Merida.
 - **V2:** stage ghost; actors merida (fewer fireworks, so her arrow shows; Merida says her line at the bottom left, then on "touch the sky" shoots an arrow into a bullseye firework (64x64)).
+- **Checked by eye (2026-10-14):** Merida fires her arrow here (video 4:47).
 
 **Your notes for this scene:**
 
@@ -1327,6 +1334,7 @@ To capture this segment on 64x32 / 64x64 pixel matrices:
 - **Our score now:** Bagpipes and tartan; Up's balloons fill the castle and lift the house; red, green and blue comets. Characters: Merida, Carl, Up house.
 - **V2:** stage ghost; actors up_house (Carl's house rises from behind the castle on its balloons).
 - **To check by eye:** Gemini's answer below says only the balloons are shown (no house, Carl or Merida), and that the scene ends at 5:26 with Moana's music from 5:27, about 9 s before ours.
+- **Checked by eye (2026-10-14):** keep the balloons, they're good. The Up house can stay too, but it needs drawing better.
 
 **Your notes for this scene:**
 
