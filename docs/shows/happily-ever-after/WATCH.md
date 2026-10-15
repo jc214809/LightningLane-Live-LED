@@ -2712,6 +2712,7 @@ Here is the breakdown of the "Love Is an Open Door" sequence:
 - **Audio:** 603-623 s (10:03-10:23, 20 s) · **Video:** `--start 10:13 --end 10:33`
 - **Our score now:** Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala; spaced gold, soft pink and violet. Characters: WALL-E, EVE, Simba, Nala.
 - **V2:** stage off; actors walle (WALL-E floats across the stars).
+- **Checked by eye (2026-10-14):** WALL-E and EVE are both there (Gemini's answer says they aren't; it's wrong), and so is Simba and Nala's savanna: the castle turns amber with black acacia-tree silhouettes on the lower walls from about 10:25.
 
 **Your notes for this scene:**
 
