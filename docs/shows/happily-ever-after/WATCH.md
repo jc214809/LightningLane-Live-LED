@@ -1759,6 +1759,7 @@ Here are the detailed facts for the "Aladdin: a best friend by your side" transi
 
 - **Audio:** 412.5-428 s (6:52-7:08, 15.5 s) · **Video:** `--start 7:03 --end 7:18`
 - **Our score now:** Brass patterns and lanterns on the castle; blue and gold fountains from the roofs, white shells. Characters: Aladdin, Genie.
+- **Checked by eye (2026-10-14):** Gemini is right: at about 7:15-7:17 the side rooftops fire three quick fans of comets, one per beat (white, then red, then green). Ours has blue and gold fountains instead.
 
 **Your notes for this scene:**
 
@@ -2218,7 +2219,7 @@ _Watched by Claude from frames (one every 2 s, plus close crops of the castle), 
 - **Audio:** 514-527 s (8:34-8:47, 13 s) · **Video:** `--start 8:44 --end 8:57`
 - **Our score now:** Sulley and Mike opening doors across the turrets, turquoise and purple; soft gold shells. Characters: Sulley, Mike.
 - **V2:** stage castle; actors mike (Mike peeks over the left turret, then the right).
-- **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it. Sulley and Mike belong at the end of 5.6, not here.
+- **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it: its stonework animates, with no characters. Sulley and Mike belong at the end of 5.6, not here.
 
 **Your notes for this scene:**
 
@@ -2318,6 +2319,7 @@ To capture this 13-second moment on a 64x32 or 64x64 matrix:
 - **Audio:** 527-554 s (8:47-9:14, 27 s) · **Video:** `--start 8:57 --end 9:24`
 - **Our score now:** Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, ring shells. Characters: Genie.
 - **V2:** stage ghost; actors genie (Genie circles the spire; half V1's fireworks, so bursts don't sit on him).
+- **Checked by eye (2026-10-14):** Gemini is right: at about 9:17 red and green comets fan outward from both sides of the castle, then on the last big note (about 9:21) a green shell's sparks hang over the castle like a curtain. Ours has ring shells instead.
 
 **Your notes for this scene:**
 
