@@ -3951,7 +3951,87 @@ To capture this iconic moment on a 64x32 or 64x64 matrix:
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 14:17-15:03 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start (14:20):** Starts as the grand villain/conflict finale fireworks completely fade out. The musical score drops from chaotic, booming battle music down to a quiet, somber orchestral tone. The castle lighting drops to a dark silhouette with fiery ember cracks. Your 14:20 start timestamp is **exact**.
+* **End (15:02):** Ends as Mufasa’s final whispered *"Remember..."* echoes away, and Cinderella Castle shifts from dark blue/ember tones into peaceful blue/purple lighting as the gentle solo flute/piano intro to Hercules (*"Go the Distance"*) begins at 15:02 (singing begins at 15:03: *"I have often dreamed..."*). Your 15:00 end timestamp is **about 2 seconds early**.
+
+**2. Music**
+* **Song / Score:** Dramatic, somber orchestral interlude transitioning from the Villains/Defeat sequence into the stirring Lion King theme and the quiet intro of *Go the Distance* (Hercules).
+* **Dialogue / Spoken Lines:**
+  * **14:33 – 14:35:** Mufasa: *"Look inside yourself."*
+  * **14:35 – 14:36:** Young Simba (faint child's voice): *"Simba."*
+  * **14:40 – 14:44:** Mufasa: *"You are more than what you have become."*
+  * **14:48 – 14:51:** Mufasa: *"Remember who you are."*
+  * **14:52 – 14:55:** Mufasa: *"Remember..."*
+  * **15:03:** Vocal begins: *"I have often dreamed..."*
+* **Musical Hits / Beats:**
+  * **14:38:** Subtle orchestral punctuation synced to a sweeping fan of searchlights and a gold comet launch.
+  * **14:46:** Second orchestral swell/hit synced to another gold comet launch.
+  * **14:57 – 15:01:** Low strings fade down into gentle harp/chimes leading into the soft piano/flute melody of *Go the Distance* at 15:02.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **14:20 – 14:30** | None (sky quiet/clearing) | Sweeping faint blue beam lights from hub perimeter; castle illuminated in deep purple/blue edges | Darkened battlements, glowing fiery embers and cracks across lower walls and center gateway | None |
+| **14:31 – 14:37** | None | Low blue beam lights at sides; center spotlight illuminates castle spire | Glowing golden fire/ember texture gathers on center upper tower | Mufasa’s lion face appears within the golden fiery cloud on the center tower (14:32) |
+| **14:38 – 14:45** | 1 thick gold glittering comet trails up to the upper-left (launches 14:38) | Sweeping white/pale-blue spotlights fan outward from behind castle base | Center tower blazes in golden amber/orange clouds surrounded by dark navy/purple outer turrets | Mufasa’s face remains visible, swirling gently in the golden glow |
+| **14:46 – 14:51** | 1 thick gold glittering comet trails up to the upper-left (launches 14:46) | White/pale-blue searchlights cross behind castle and pulse | Golden ember cloud reaches peak brilliance on upper center tower | Mufasa’s face remains centered, speaking |
+| **14:52 – 15:00** | None (sky dark) | Blue searchlights sweep low across the sides; base stays dim | Golden glow slowly dissolves into deep indigo/midnight blue across the main tower | Mufasa’s face fades out into mist/smoke by 14:54 |
+| **15:01 – 15:03** | None | Searchlights reset; soft ambient cyan/blue wash comes up | Soft blue and purple wash fills the walls; warm light inside gateway | None |
+
+**4. Fireworks in the sky**
+During this quiet, contemplative scene, sky fireworks are intentionally minimal:
+* **14:38:** A single **thick gold glittering comet** launches from ground level behind the left side of the castle, ascending diagonally toward the upper-left sky (reaching spire height before burning out).
+* **14:46:** A second identical **thick gold glittering comet** launches along the exact same diagonal trajectory to the upper-left, reaching spire height before burning out.
+* **Count:** Exactly **2 comet launches** in total. The rest of the sky is completely dark and clear of bursts.
+
+**5. Fireworks on the castle**
+* **None.** No gerbs, fountains, rooftop strobes, or lancework fire from the castle structure itself during this segment.
+
+**6. Lasers and lighting**
+* **Lasers:** None visible during this scene.
+* **Searchlights / Moving Beams:** 
+  * Banks of white/pale blue moving searchlights located behind and beside Cinderella Castle.
+  * At **14:38** and **14:46** (matching the two comet launches), the beams fan outward across the sky in synchronized, sweeping searchlight arrays before narrowing down.
+* **Flames & Fountains:** None.
+
+**7. The castle**
+* **Base Architecture Lighting:** The outer walls, lower flanks, and side turrets remain bathed in a moody, deep midnight-blue and dark violet wash, keeping the overall structure in near-silhouette.
+* **Projections:**
+  * **14:20 – 14:30:** The castle facade appears scarred and fractured with smoldering orange/amber ember cracks running through the central archway and lower midsection.
+  * **14:31 – 14:52:** A radiant, billowing cloud of golden-orange embers and clouds consolidates specifically on the upper center tower and beneath the main spire.
+  * **14:53 – 15:01:** The golden clouds fade away, leaving the entire castle in deep royal blue and violet stone textures.
+
+**8. Characters**
+* **Character:** **Mufasa** (The Lion King).
+* **Location on 3x3 Grid:** **Center-Center to Center-Top** (projected directly across the main upper tower, just below the clock and main spire).
+* **Size:** Spans approximately 25%–30% of the castle's total vertical height; concentrated tightly on the center facade of the upper tower.
+* **Motion / Presentation:** He fades in from within a swirling cloud of golden embers starting at 14:32, remains centered and gently shifting like animated fire/clouds as he speaks his lines, and slowly dissipates/fades away between 14:52 and 14:54.
+
+**9. For our boards**
+To capture this moment authentically on a 64x32 or 64x64 LED matrix:
+1. **The High-Contrast Color Palette:** Keep the castle perimeter and outer towers near-black and deep dark indigo. Concentrate all warm amber, bright orange, and yellow pixels exclusively on the center upper tower to represent the glowing ember cloud/Mufasa.
+2. **The Two Diagonal Gold Comets:** At 14:38 and 14:46, launch a single pixel (or 2-pixel gold streak with trailing sparks) angled up and to the left against the pitch-black sky. These sparse, deliberate shots provide the signature sparse emotional tempo of this scene.
+3. **Fade Timing:** Slowly intensify the golden center from 14:31 to 14:45, hold through the line *"Remember who you are,"* then smoothly fade the core to dark blue by 14:54 as the music softens.
+
+**10. What you couldn't see**
+* The camera zooms in slightly between 14:31 and 14:37, cropping out the far outer perimeter launch points, but zooms back out to full wide-angle by 14:38.
+* Low-lying perimeter ground effects (if any existed far out on the hub walkways) were blocked by foreground trees and castle hub turrets.
+
+**11. Our version**
+* **What's Right:** 
+  * *"Castle near-black with an ember core"*: Exactly right. The castle is kept dark with deep blue/purple accents, focusing all brightness on the glowing ember center.
+  * *Mufasa in the clouds*: Accurate. He appears within the golden fiery cloud on the center upper tower.
+  * *Audio quote*: *"Remember who you are"* is the defining central line of the scene.
+* **What's Wrong:**
+  * *"No fireworks"*: **Incorrect**. While the sky is mostly dark, there are **two distinct gold comets** launched at 14:38 and 14:46 trailing upward to the upper-left.
+* **What's Missing:**
+  * The sweeping **white/pale-blue fanning searchlight beams** from behind the castle that accompany the comets at 14:38 and 14:46.
+  * The transition at 15:02 where the golden ember dissolves back into cool blue before the Hercules sequence starts.
+
+</details>
 
 ### 8.2 Go the Distance (the castle rebuilds)
 
@@ -3964,7 +4044,88 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 14:57-15:29 · notes: none</summary>
+
+Here is the breakdown of the "Go the Distance / Castle Rebuilds" segment of *Happily Ever After*:
+
+**1. Where this part starts and ends**
+* **Starts at 15:01 – 15:02:** The chaotic red/orange embers of the preceding villain battle extinguish at the castle base. The opening gentle piano/harp notes of *"Go the Distance"* begin, the first vocal enters at **15:02**, and cyan/golden light streams begin reconstructing the shattered castle. (Your 15:00 timestamp is about 1–2 seconds early).
+* **Ends at 15:26:** The choir hits the peak sustained crescendo note on the word *"be"*. A bright golden light bursts out of the main gate archway ("keyhole"), and at **15:26–15:27**, the quiet sky breaks with the first dual golden aerial shell bursts. (Your 15:26 end time is exact).
+
+**2. Music**
+* **Song:** *"Go the Distance"* (from Disney’s *Hercules*, Alan Menken / David Zippel).
+* **Vocals & Lyrics:**
+  * **15:02 – 15:13:** Female solo: *"I have often dreamed / Of a far-off place / Where a hero's welcome / Would be waiting for me..."*
+  * **15:14 – 15:19:** Male solo: *"Where the crowds would cheer / When they see my face..."*
+  * **15:20 – 15:26:** Full choral harmony / duet: *"And a voice keeps saying / This is where I'm meant to be—"*
+* **Key Musical Hits:**
+  * **15:01:** Transition downbeat as the quiet piano melody takes over.
+  * **15:14:** Male vocal entry and strings swell.
+  * **15:26:** Huge orchestral and choral brass swell on *"be"*, triggering the golden gate bloom and first aerial fireworks.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **15:01 – 15:05** | None (sky dark) | Perimeter floodlights dim deep blue | Ruined facade transforms; cyan & gold light streams rise up towers | Hercules fades into lower arch portal in warm amber light |
+| **15:06 – 15:12** | None | Low ambient blue | Fluted Greek columns and golden fretwork complete rebuilding upward | Hercules stands in central portal |
+| **15:13 – 15:19** | None | Narrow blue uplighting beams along hub perimeter | Camera zooms; upper towers/spire glow royal blue and violet | Hercules holding the golden medallion in center stained glass window |
+| **15:20 – 15:23** | None | Side searchlight beams sweep faintly upward right | Stained-glass window frame sparkles; clock face glows cyan | Hercules gazes forward heroically |
+| **15:24 – 15:25** | None | Stage/hub perimeter washes golden | Center archway/gate ("keyhole") ignites with intense golden-yellow light | Hercules dissolves into the golden glow |
+| **15:26 – 15:28** | Two large golden chrysanthemums burst high (left and right of spire) at 15:26; massive willow bursts at 15:28 | Bright white/gold flash from castle base; vertical white searchlights on right | Entire castle bathed in radiant royal blue, cyan, and glowing gold | None (scene transitions to golden gate / fireworks) |
+
+**4. Fireworks in the sky**
+* **15:01 – 15:25:** **Zero fireworks.** The sky is completely dark and silent. This deliberate quiet pause allows the castle rebuilding animation to take full focus.
+* **15:26 – 15:27:** Exactly on the musical crescendo at 15:26, **two large golden chrysanthemum shells** burst high in the sky framing the spire (one high to the upper left, one slightly lower to the right).
+* **15:28:** A massive, dense golden willow/brocade shell breaks directly over the upper central spire.
+
+**5. Fireworks on the castle**
+* **None** are launched from the castle body, parapets, or turrets during this specific segment (15:01–15:26).
+
+**6. Lasers and lighting**
+* **Lasers:** No sharp laser graphics or scanning beams are used here.
+* **Searchlights / Uplights:** Faint, narrow cyan/blue searchlight beams project vertically from behind the trees on the right side of the hub (visible around **15:24–15:28**).
+* **Floodlighting:** The castle base uses deep indigo and royal blue floodlighting. At **15:25–15:26**, a blinding warm-white/gold wash erupts from within the center archway.
+
+**7. The castle**
+* **Base illumination:** Turrets and spires are saturated in deep royal blue and violet.
+* **Rebuilding Projection Animation:**
+  * **15:01 – 15:10:** Vertical streams of cyan, aqua, and gold light travel upward across the facade, "repairing" the cracks from the previous battle. The masonry turns into classical Greek fluted columns with Greek-key (meander) decorative friezes.
+  * **15:11 – 15:23:** The finished castle looks like an ancient Greek temple rendered in blue stone and glowing gold accents.
+  * **15:24 – 15:26:** The center ground-level gateway ("the keyhole") begins to glow from within with warm amber light, rapidly expanding to an intense, radiant yellow-white bloom that overpowers the lower center facade.
+
+**8. Characters**
+* **Hercules:**
+  * **Identity:** Hercules (adult form, wearing his bronze breastplate/armor and red cape).
+  * **Location:** Center column, lower-middle section (grid position: center / center-bottom), inside the tall arched window/portal above the main gate.
+  * **Size:** Approximately 1/5 the visible height of the castle facade.
+  * **Appearance / Movement:**
+    * Appears at **15:02** surrounded by a warm golden halo against the cool blue facade.
+    * From **15:14 to 15:23**, he is framed in a heroic stance holding his medallion of the gods. He remains static within the frame, subtly breathing/shifting like a living stained-glass portrait.
+    * Fades/dissolves into the brilliant golden light blooming from the archway at **15:24–15:25**.
+
+**9. For your LED matrix boards**
+1. **Vertical Rebuild Effect (15:02 – 15:10):** Keep the sky pitch black and animate vertical columns of cyan/aqua LEDs rising from the bottom baseline to the turret tops to represent the castle reassembling.
+2. **Center Amber Portal:** Keep Hercules as a warm gold/amber cluster (around 6–10 pixels tall on a 64-pixel board) centered on the castle facade, contrasting against the blue/cyan structure.
+3. **The Climax at 15:26:** At the exact beat of 15:26, flare the bottom-center gate pixels to solid bright white/yellow, followed immediately by 2 golden spark bursts at the top left/right of the spire.
+
+**10. What couldn't be seen**
+* From **15:13 to 15:24**, the camera operator zooms in tightly onto the castle spire and central window, cutting off the outer courtyard walls and outer perimeter launch points.
+* Any character animations within the small side windows are either non-existent or too small to resolve.
+
+**11. Our version**
+* **What is right:**
+  * *"Cyan, royal blue and gold columns"* is completely accurate to the rebuilding projection.
+  * *"Hercules in gold light"* is accurate.
+  * *"The keyhole glows"* is accurate (the archway intensifies into bright gold).
+  * *"Sky nearly dark"* is accurate (in fact, completely dark until the exact 15:26 crescendo).
+  * *"Characters: Hercules"* is correct.
+* **What is wrong:**
+  * Nothing in your description is incorrect.
+* **What is missing:**
+  * The **exact timing of the sky burst:** At **15:26**, the darkness ends abruptly with a pair of large gold chrysanthemum fireworks flanking the spire.
+  * The **upward motion:** The columns don't just sit there; they actively reconstruct from ground to spire between 15:02 and 15:10.
+
+</details>
 
 ### 8.3 Go the Distance
 
@@ -3977,7 +4138,131 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 15:23-16:30 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** **15:26**. 
+  * *Marks the change:* The closing phrase of the previous transition ("...find my way") resolves into the bold brass fanfare of *"Go the Distance"*, punctuated at 15:26–15:27 by the first high double gold bursts above Cinderella Castle as the facade transforms into deep Greek-mythology blue with glowing golden constellation patterns and the Zeus temple portal.
+  * *Prompt estimate:* 15:26 is **exact** for the launch of the main theme fireworks and musical downbeat.
+* **End:** **16:29**.
+  * *Marks the change:* The final soaring vocal cadence ("...where I belong" / hero's welcome climax) concludes with a massive crescendo: twin ring/satellite shell bursts flanked by giant ground fan plumes and a central gold willow explosion across the entire frame.
+  * *Prompt estimate:* 16:27 is slightly **early** by about 2 seconds, as the musical climax and crowning firework barrage peak between 16:27 and 16:29.
+
+**2. Music**
+* **Song:** *"Go the Distance"* from Disney's *Hercules* (choral orchestral arrangement).
+* **Lyrics & Musical Hits:**
+  * **15:23–15:25:** *"...find my way..."* (soft closing resolve).
+  * **15:26–15:27:** **Heavy brass and percussion strike** initiating the main motif.
+  * **15:27–15:35:** *“I will find my way…”* (soloist).
+  * **15:36–15:47:** *“I can go the distance…”* (horn countermelody).
+  * **15:48–15:58:** *“I’ll be there someday, I can go the distance…”*
+  * **16:00–16:02:** **Ascending orchestral run and drum roll** building to the key change / choir entrance.
+  * **16:02–16:03:** **Major musical impact** as rainbow comets erupt from the castle battlements.
+  * **16:04–16:15:** *“I will find my way, I can go the distance…”* (full cinematic choir).
+  * **16:16–16:24:** *“I would cross the world, just to find my hero’s welcome…”*
+  * **16:25–16:29:** Climax note on percussion/brass hits with massive ground-to-sky finale explosions.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **15:23–15:25** | None | Low blue architectural floodlights | Deep royal blue with glowing cyan Greek geometric patterns | Hercules medallion motif glowing in lower arch |
+| **15:27–15:31** | Pair of gold brocade/willow peonies bloom high above spire, followed by a wide gold willow burst | Searchlights point vertically behind castle | Golden architectural linework sharpens against royal blue | Medallion glow deepens |
+| **15:32–15:38** | Gold willow bursts raining down; bursts continue above spire | Cyan/white beam searchlights sweep subtly | Center archway turns warm golden amber | Megara appears inside the central portal (15:33–15:38) |
+| **15:39–15:47** | Consecutive gold peonies and willow breaks above castle spire | Vertical spotlights flank castle walls | Stained-glass golden framing begins tracing upper windows | Hercules in silhouette/relief on upper turret level (15:45) |
+| **15:48–15:58** | Series of bright white/gold strobing peonies and chrysanthemums | Blue ground beams sweep across castle facade | Blue and gold Greek columns form along castle towers | Hercules flexing/striking poses in upper center projection |
+| **16:01–16:03** | 6 multi-colored comet tails (red, yellow, green) fan outward from castle turrets | Brilliant white flash on castle facade | Golden bursts of light wash over castle walls | Stained-glass window panels assemble across all levels |
+| **16:04–16:15** | Massive gold willow bursts overhead with cascading crackle fingers | Sweeping cyan/blue laser lines shooting out from upper balcony into sky | Full stained-glass cathedral hero mosaic across facade (gold, blue, green, amber) | Left: Tarzan; Center: Hercules; Right: Mulan & Merida in arches |
+| **16:16–16:23** | Golden comets and willow bursts blooming rhythmically overhead | Dual fan searchlights sweeping horizontally across the trees and sky | Mosaic stays illuminated in vibrant stained-glass colors | Hercules, Megara, Tarzan, Mulan, Merida clearly visible in side/center arches |
+| **16:24–16:27** | Dense rapid gold willow cluster exploding high dead-center | White and yellow searchlights cross overhead | Facade pulses with bright internal illumination | Characters stand triumphant in stained glass panels |
+| **16:28–16:29** | Two distinct ring/circle shells high left & right; wide outward-angled white comet mines along perimeter | Full-stage perimeter lighting at peak brilliance | Castle fully saturated in bright gold and azure blue | All hero stained-glass portraits fully displayed |
+
+**4. Fireworks in the Sky**
+* **15:27:** Mirrored pair of medium gold brocade peonies breaking high, left and right of the main spire.
+* **15:29–15:31:** Large gold willow shell detonating high dead-center directly above the spire, trailing long golden tendrils.
+* **15:33–15:43:** Steady wave (approx. 1 burst every 2 seconds) of high-altitude gold willows and chrysanthemum breaks alternating slightly left-of-center and right-of-center.
+* **15:44–15:51:** Golden crackling peony bursts breaking mid-to-high level behind upper spires.
+* **15:52–15:58:** Double/triple gold chrysanthemum bursts with bright white strobe centers breaking dead-center high.
+* **16:04–16:15:** Continuous overhead golden willow canopy with hanging embers raining down across the entire width of the castle.
+* **16:16–16:24:** Overlapping golden brocade shells bursting high center every 1–2 seconds.
+* **16:28–16:29 (Climax):** 
+  * **Perimeter:** Multi-shot angled ground-level comet mine racks firing wide fans of thick white/gold glittering comet tails outward to the left and right.
+  * **Mid/High:** Massive center gold willow barrage.
+  * **Upper Sky:** Two distinct ring/annular pattern shells breaking simultaneously high left and high right of the main spire.
+
+**5. Fireworks on the Castle**
+* **16:01–16:03:** A tight fan of **6 angled comets** launched directly from the castle’s mid-level roofline/turret launch points: 3 shooting left and 3 shooting right in distinct saturated colors (reds, yellows/greens), arching outward over the hub.
+* There are no low fountain gerbs on the ground walls during this specific lyrical section; all other effects originate from rear launch sites behind the castle.
+
+**6. Lasers and Lighting**
+* **Lasers:** 
+  * Active primarily from **16:04 to 16:29**, emitted from mid-level castle balconies.
+  * Colors: Bright cyan, aqua-blue, and vivid green.
+  * Motion: Sharp, fan-like geometric beams slicing upward and outward into the sky, oscillating in wide scans behind the fireworks smoke.
+* **Searchlights:**
+  * Ground and rooftop moving heads flank the castle. From **15:26–15:58**, they project vertical white/light-blue columns flanking the spires.
+  * At **16:18–16:28**, they spread into wide crossing criss-cross scissor patterns across the night sky.
+* **Flames & Fountains:** None used in this sequence.
+
+**7. The Castle**
+* **Base Castle Lighting:**
+  * **15:26–16:00:** Deep lapis lazuli and royal blue flood lighting on all lower walls and upper spires, accented by warm gold flood on the central clock tower.
+  * **16:01–16:29:** Bright warm architectural illumination matching the vibrant stained-glass projections.
+* **Projections:**
+  * **15:26–15:31:** Ancient Greek architectural motifs—Greek key borders, fluted Ionic/Doric column overlays, and golden constellation starlight on a midnight-blue stone facade.
+  * **15:32–15:45:** Central gateway arch glows amber; glowing celestial designs pulse across the upper walls.
+  * **16:01–16:04:** Transformative wipe: geometric lines of light race across the facade to map out multi-pane gothic/arch stained-glass window frames.
+  * **16:04–16:29:** Full **Stained-Glass Hero Windows** display:
+    * Lower left tower: Tarzan arch.
+    * Central clock/portal section: Hercules hero portrait arch.
+    * Lower right tower: Mulan & Merida arches.
+    * Upper turrets: Intricate blue, gold, and turquoise mosaic tiles.
+
+**8. Characters**
+1. **Megara (*Hercules*):**
+   * *Location:* Bottom-center (the main gate / entry archway portal).
+   * *Size:* Approx. 1/6 to 1/5 of the castle’s vertical height.
+   * *Motion:* Appears standing in a golden amber glow (15:33–15:38), looking outward, then fades as the arch motif transforms.
+2. **Hercules (*Hercules*):**
+   * *Location:* Center-middle (directly on the central tower facade below the clock face) and lower center.
+   * *Size:* Approx. 1/4 of castle height.
+   * *Motion:* Fades in around 15:45 flexing/heroic stance; at 16:04 becomes the dominant stained-glass central figure standing proudly in golden-orange armor against a blue field.
+3. **Tarzan (*Tarzan*):**
+   * *Location:* Bottom-left / lower-left turret archway (grid cell: middle-left / bottom-left).
+   * *Size:* Approx. 1/4 of castle height.
+   * *Motion:* Static stained-glass portrait framed in a tall arch from 16:04 to 16:29.
+4. **Mulan (*Mulan*):**
+   * *Location:* Bottom-right turret archway (grid cell: bottom-right).
+   * *Size:* Approx. 1/5 of castle height.
+   * *Motion:* Static stained-glass window portrait, standing heroically from 16:04 to 16:29.
+5. **Merida (*Brave*):**
+   * *Location:* Right-center wall / outer right turret archway (grid cell: middle-right).
+   * *Size:* Approx. 1/5 of castle height.
+   * *Motion:* Static stained-glass window portrait with bow from 16:04 to 16:29.
+
+**9. For Our Boards (64x32 / 64x64 LED Matrix)**
+1. **The 16:01 Turret Rainbow Comet Fan:**
+   * At 16:01–16:03, firing 3 colored diagonal comet lines left (red/orange) and 3 right (yellow/green) directly off the castle shoulders is visually distinct and easy to render at low pixel resolution.
+2. **The Stained-Glass Architectural Snap (16:04):**
+   * Transition castle lighting abruptly from dark royal blue into segmented, multi-colored vertical portrait columns (amber center, green/red side pillars) with bright golden framing.
+3. **The 16:28 Climax Barrage:**
+   * Ground-level angled fan comets (white/gold lines shooting diagonally out from lower corners) combined with 2 distinct circular ring shells in the upper sky corners and a dense willow canopy in the top-center.
+
+**10. What You Couldn't See**
+* **Ground-level perimeter launching pads:** The physical firing mortars behind the trees left and right of the hub are obscured by the park tree line.
+* **Turret archway fine details:** Due to low lighting and camera exposure, the fine internal linework of the stained-glass character faces (especially Merida and Mulan on the right towers) is slightly soft/overexposed during heavy firework flashes.
+* **Jane (*Tarzan*):** Cannot be confirmed as visible on the castle facade in this footage (unsure; Tarzan is prominent on the left, but Jane is not clearly discernable alongside him).
+
+**11. Our Version**
+* **What's Right:**
+  * Stained-glass hero windows framed in gold.
+  * Gold and white willows, gold peonies, side comet plumes, and rainbow comets off the castle.
+  * Hercules, Megara, Tarzan, Mulan, and Merida are all present.
+* **What's Wrong / Missing:**
+  * **Jane:** Incorrect (she does not appear alongside Tarzan in these hero stained-glass arches; only Tarzan represents his film here).
+  * **Missing Firework Detail:** You missed the distinctive **twin ring/satellite shells** at the 16:28–16:29 finale, which are a signature visual marker of the crescendo.
+  * **Missing Lighting Detail:** The transition from Greek constellation blue (15:26–16:00) into multi-color stained glass (16:04) accompanied by intense cyan/green sky-scanning lasers.
+
+</details>
 
 ### 8.4 Go the Distance (gold canopy)
 
@@ -3990,7 +4275,88 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 16:24-16:46 · notes: none</summary>
+
+Here is a detailed breakdown of the "Go the Distance (gold canopy)" segment from the recording:
+
+**1. Where this part starts and ends**
+* **Start:** **16:27** (your timing is accurate). This starts on the sustained climax chord of the *Hercules* ("Go the Distance") arrangement, marked by mirrored white comet fans launching outward and the first high-altitude pattern shells detonating.
+* **End:** **16:44 – 16:45**. The massive gold willow canopy completely falls and fades, the triumphant orchestral swell resolves into soft chimes/strings, and the narrator begins speaking: *"And so, our..."* at **16:45**. Your 16:43 end-time is slightly early by about 2 seconds, as the willow canopy continues raining gold down to 16:45.
+
+**2. Music**
+* **Music:** Climax of **"Go the Distance"** (*Hercules*), orchestral and choral arrangement.
+* **Lyrics / Vocals:** 
+  * The soaring, sustained final choral/vocal note of the anthem holds through **16:27 – 16:35**.
+  * No words are sung in this exact window—it is a sustained, triumphant full-choir belt/vowel chord.
+  * At **16:36 – 16:44**, the choir trails off and the brass/strings hold a deep, resonant resolving chord beneath sparkling chimes.
+  * At **16:45**, the male narrator begins: *"And so, our..."*
+* **Big Hits & Accents:**
+  * **16:28:** Cymbal crash / brass swell as two pattern shells detonate high overhead.
+  * **16:30:** Rapid percussion/choral accent as fan volleys erupt low and mid-level.
+  * **16:37 – 16:38:** The peak detonation bang of the massive gold canopy shell directly over the spire.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **16:24 – 16:26** | Central gold chrysanthemum rises behind spire; white strobing fallout. | Soft front wash, green lasers scanning low across audience/trees. | Stained-glass mosaic projections of Disney heroes/heroines on blue background. | Various stained-glass heroes (Hercules, Moana, Aladdin, etc.) static on facade. |
+| **16:27 – 16:28** | Symmetrical white comet fans shoot outward left/right; 2 pattern shells (ringed Saturn/smiley effect) burst high left and right. | White searchlights fan upward from hub perimeter. | Stained-glass hero mosaic remains illuminated with blue-violet turret lighting. | Stained-glass hero portraits remain static across lower/mid facade. |
+| **16:29 – 16:33** | Center-sky red-to-gold peony bursts; angled green comet fans criss-cross on flanks; white comets fire upward from roofline. | Vertical white searchlight beams flank the castle. | Stained-glass window montage remains steady on main facade. | Same stained-glass hero portraits. |
+| **16:34 – 16:36** | Crackling gold/silver mines and fan barrages across both flanks; a single heavy shell launches behind the central spire. | Bright white ground searchlight beams point straight up into the sky. | Blue structural lighting on spires; stained glass on lower walls. | Same stained-glass hero portraits. |
+| **16:37 – 16:41** | Massive golden weeping willow / kamuro shell bursts dead center above the main spire, opening into an enormous raining canopy. | Static vertical white beams framing the sides. | Blue core lighting; stained glass projections steadily displayed. | Same stained-glass hero portraits. |
+| **16:42 – 16:44** | Golden willow tendrils drift down around castle spires, shimmering and crackling out. Sky clears. | White vertical searchlight beams dim down. | Castle transitions slightly darker as the canopy burns out. | Stained glass portraits start fading/prepping for narration scene. |
+
+**4. Fireworks in the sky**
+* **Pattern / Shaped Shells (16:28):** 
+  * 2 high-altitude shells burst simultaneously at high left and high right. They appear as golden/white ringed/Saturn or smiley-face shells with outer perimeter dots.
+* **Side Comets / Fans (16:27 – 16:35):**
+  * Mirrored angled comets (white and bright lime-green) shooting out in fans from both left and right launch sites, alternating with rapid crackling mines.
+* **Center Shells (16:29 – 16:33):**
+  * Symmetrical red peonies and golden chrysanthemums exploding directly above the upper turrets.
+* **The Climax Canopy Shell (16:37 – 16:44):**
+  * A single, massive aerial shell (kamuro / brocade crown willow) fired behind the spire.
+  * Bursts at **16:37 – 16:38** at high center and spreads wider than the entire castle footprint, slowly weeping downward in long, dense, shimmering gold trails until **16:44**.
+* **Rhythm:** Heavy, dense barrage from 16:27 to 16:35 (roughly 4–6 projectile bursts per second), pausing for a brief half-second breath at 16:36 as the single giant shell launches, culminating in the single slow-motion gold canopy burst.
+
+**5. Fireworks on the castle**
+* **16:29 – 16:34:** White angled comet shots and small silver gerb/mine bursts launch directly from the castle rooftops/ramparts upward into the fan pattern, matching the ground-level flank comets.
+
+**6. Lasers and lighting**
+* **Searchlights:** Multiple powerful white searchlights positioned around the hub/moat, pointing straight up or slightly outward to form vertical light pillars framing the castle (**16:27 – 16:43**).
+* **Lasers:** Subtle green laser beams originate from castle lower turrets, scanning horizontally across the tree lines and into the sky during 16:24–16:30.
+* **Flames/Fountains:** No flame units or water fountains used in this specific cue.
+
+**7. The castle**
+* **Base & Turret Lighting:** Spires and upper turrets are bathed in a deep royal blue and indigo wash, with golden highlights picking out the ornamental trims.
+* **Projections:** The entire front facade of Cinderella Castle is covered in an intricate **stained-glass window / mosaic design** framed in gothic arches. The projection maintains this heroic stained-glass tableau throughout the entire sequence without cutting or changing scenes until the narrator speaks at 16:45.
+
+**8. Characters**
+* **Appearance Style:** Projected as static, vibrant stained-glass mosaic portraits inside gothic arch window frames across the castle front.
+* **Who & Where:**
+  * **Hercules:** Lower-center gate / main entrance (bottom-center of 3x3 grid), approx. 1/5 castle height.
+  * **Moana:** Bottom-left turret arch.
+  * **Aladdin & Jasmine:** Mid-left facade arch.
+  * **Tarzan / Merida / others:** Mid-right and bottom-right arch panels (stained glass style makes individual small side portraits slightly indistinct from wide hub distance).
+* **Motion:** Static; they do not walk or fly during this cue—they remain luminous window panes.
+
+**9. For our boards (LED matrix recreation)**
+To capture this iconic moment on 64x32 / 64x64 pixels:
+1. **The Green & White Side Fans (16:28 – 16:33):** Pixel comets shooting out at 45° angles from the left and right castle base, while the castle facade displays a multicolored stained-glass grid (blue background with amber/cyan panels).
+2. **The "Gold Canopy" Drop (16:37 – 16:44):** A single central gold pixel launches high above the spire, detonates, and expands into a large umbrella/fan of shimmering yellow/gold pixels that slowly drift downward across the upper half of the display while all side firing stops.
+
+**10. What you couldn't see**
+* Exact facial features of individual characters in the outer stained-glass panels are slightly soft/diffused due to the wide-angle camera distance and bright firework backlight.
+* Extreme low ground-launch positions to the far left and right are partially obscured by tree canopies in the hub.
+
+**11. Our version**
+* **What's right:** You correctly identified the smiley/ring shells, green side comets, and the gold willow canopy.
+* **What's wrong:** Saying *"Characters: none"* is technically inaccurate. While no animated characters are moving across the sky or flying, the castle itself is explicitly covered in the iconic Disney hero stained-glass portraits (most notably **Hercules** centered in the grand archway).
+* **What's missing:** 
+  * The vertical white searchlight pillars framing the castle.
+  * The red/gold chrysanthemum mid-level bursts accompanying the green comets (16:29–16:32).
+  * The roofline comets shooting directly off the castle ramparts.
+  * Adjusting the end timestamp by +2 seconds to **16:45** to allow the willow canopy to fully resolve before the narration.
+
+</details>
 
 ## 9. Conclusion (audio 16:32-16:57, video 16:43-17:08)
 
@@ -4005,7 +4371,83 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 16:40-17:11 · notes: none</summary>
+
+Here is the detailed breakdown of the segment for your LED matrix recreation:
+
+**1. Where this part starts and ends**
+* **Starts at 16:44–16:45**: The music drops to a gentle, reflective orchestral underscore and the Narrator begins speaking (*"And so, our journey comes to an end..."*). Your suggested start of **16:43 is slightly early**, as the giant golden brocade willow from the previous scene is still brightly illuminating the sky.
+* **Ends at 17:08**: The Narrator concludes with the words *"...happily... ever... after."* At **17:09**, the solo female vocal begins (*"Look at the sky..."* / *"The journey begins..."*) and a bright golden comet/rocket launches on the far left. Your suggested **17:08 is exact**.
+
+**2. Music & Spoken Dialogue**
+* **Music**: A soft, introspective orchestral version of the *Happily Ever After* theme featuring strings, harp, and warm French horns, leaving ample acoustic space for the spoken dialogue.
+* **Dialogue**:
+  * **16:45 – 16:48**: *"And so, our journey comes to an end."*
+  * **16:48 – 16:51**: *"But yours, continues on."*
+  * **16:51 – 16:54**: *"Grab hold of your dreams, and make them come true."*
+  * **16:55 – 16:59**: *"For you are the key to unlocking your own magic."*
+  * **16:59 – 17:02**: *"Now go. Let your dreams guide you."*
+  * **17:03 – 17:08**: *"Reach out and find your... happily... ever... after."*
+  * **17:09**: Female solo vocalist reprises the show anthem.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **16:40 – 16:44** | Massive gold brocade willow hanging and drifting in upper sky. | 8 upward white searchlight beams (4 left, 4 right). | Fully covered in stained-glass projection mapping. | Stained-glass character portraits visible across facade. |
+| **16:45 – 16:47** | Gold brocade embers fade and burn out completely. | Searchlight beams shut off / fade away. | Stained-glass projection glowing softly. | Stained-glass character portraits static and shimmering. |
+| **16:48 – 16:54** | None; sky is completely dark. | No searchlights; ambient projection only. | Stained glass remains illuminated. | Stained-glass character portraits continue. |
+| **16:55 – 16:58** | None; sky is dark. | No searchlights. | Central entrance arch / keyhole begins glowing bright golden-white. | Character panels remain lit on towers. |
+| **16:59 – 17:08** | None; sky is dark and silent. | No searchlights. | Golden-white magical glow expands up the central spire and lower portal. | Cinderella silhouette in center portal; surrounding stained-glass portraits remain. |
+| **17:09 – 17:10** | Single bright gold comet/flare launches from far-left ground angling up. | Hub lighting prepares for finale. | Golden center glow reaches peak brightness. | Stained-glass portraits remain as female vocal starts. |
+
+**4. Fireworks in the Sky**
+* **16:40 – 16:46**: Residual gold willow/brocade stars drifting downward from the previous climax.
+* **16:47 – 17:08**: **Zero fireworks**. The sky is completely dark, quiet, and clear of pyrotechnics to focus on the spoken message.
+* **17:09 – 17:10**: A single high-intensity golden-white comet/rocket launches from the tree line on the far left, trailing upward and toward the right over the castle (the cue/signal rocket for Tinker Bell's arrival).
+
+**5. Fireworks on the Castle**
+* **None**. No fountains, gerbs, strobes, or roof launches occur on the castle structure during this speech.
+
+**6. Lasers and Lighting**
+* **Searchlights**: At 16:40–16:43, vertical white searchlight pillars flank the castle. By 16:45, they turn off completely, leaving the castle as the sole light source.
+* **Lasers / Flames / Fountains**: None active.
+
+**7. The Castle**
+* **Base Architecture**: Completely covered in video projection mapping representing an illuminated stained-glass cathedral.
+* **Projections**:
+  * Arched stained-glass window panes filled with jewel-toned patterns (blues, purples, golds, greens, reds).
+  * **16:55**: On the line *"For you are the key..."*, the central main portal archway transforms into a glowing, brilliant golden-yellow/white keyhole shape.
+  * **17:02 – 17:08**: The golden light radiates outward through the lower center arch and up the seams of the central tower.
+
+**8. Characters**
+The characters do not animate or fly during this section; they are rendered as **static stained-glass mosaic portraits** inside window frames:
+* **Center Bottom Arch (Base Center)**: Cinderella (standing in ballgown; becomes a glowing silhouette as the keyhole brightens).
+* **Lower-Left Arch (Base Left)**: Snow White in blue/yellow gown.
+* **Mid-Left Tower (Mid Left)**: Aladdin & Jasmine on the Magic Carpet.
+* **Far-Left Tower Walls**: Pocahontas and Mulan medallions.
+* **Lower-Right Arch (Base Right)**: Tiana & Prince Naveen in green formal attire.
+* **Mid-Right Tower (Mid Right)**: Belle & Beast in ballroom attire.
+* **Far-Right Tower Walls**: Ariel & Prince Eric.
+* **Upper Central Turrets (Spire / Mid Top)**: Hercules / Tarzan / Rapunzel vignettes.
+* **Timing**: They remain visible throughout the entire monologue from 16:45 to 17:08.
+
+**9. For Your LED Boards**
+1. **The Dramatic Drop in Energy**: Transition from dense gold pixels slowly raining down (16:44–16:46) to an entirely blank/black sky above the castle by 16:47.
+2. **The Glowing Castle Keyhole**: Keep the castle body textured in rich blues, purples, and ambers (representing stained glass), then pulse a 4x6 pixel cluster in the center archway into blinding white/yellow starting at 16:55 and holding through 17:08.
+3. **The Signal Comet (17:09)**: Right on the vocal beat at 17:09, send a single bright pixel with a 2–3 pixel trailing tail shooting upward at a ~60° angle from the bottom-left edge toward the castle peak.
+
+**10. What Could Not Be Seen**
+* Between 16:52 and 16:58, the camera zooms into the castle midsection, cropping out the outer wing turrets and ground perimeter.
+* Due to the artistic stained-glass styling, finer details of the smaller upper-tower character cameos cannot be identified with complete certainty.
+
+**11. Feedback on Your Current Version**
+* **What’s right**: Stained glass is lit, the keyhole glows, and the sky has no fireworks during the speech.
+* **What’s wrong**: 
+  * *"Characters: none"*: This is incorrect. The stained-glass facade prominently displays the major Disney couples and heroes (Cinderella, Belle & Beast, Tiana & Naveen, Aladdin & Jasmine, Snow White) in arched panels across the front.
+  * *"Searchlights pan"*: Incorrect. The searchlights turn off by 16:45; there is no moving searchlight pan during the monologue.
+* **What’s missing**: The fading gold willow fallout across 16:44–16:46 at the beginning, and the single cue comet launching from the lower-left at 17:09.
+
+</details>
 
 ## 10. Finale (audio 16:57-18:24, video 17:08-18:35)
 
@@ -4020,7 +4462,105 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 17:05-17:36 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** **17:08 / 17:09**. Marked by the narrator finishing the spoken words *"Happily... ever... after"* (17:05–17:08), followed immediately by the opening piano/strings and female solo vocals (*"Look at us..."*) at 17:09, and the first whistling comet launch at 17:10.
+* **End:** **17:33**. Marked by the choir's entrance on *"You can fly!"* (17:29), the projection transition on Cinderella Castle from the stained-glass mosaic to royal red/blue/gold scrollwork (17:31–17:32), and the fan of comets launching just before Tinker Bell's flight begins at 17:34.
+* **Assessment:** Your 17:08 to 17:33 window is **very accurate**. It encapsulates the reflective verse of the reprise leading precisely into the energetic "You Can Fly" transition.
+
+**2. Music**
+* **Songs:** *"Happily Ever After"* (Reprise) transitioning into *"You Can Fly!"* (*Peter Pan*).
+* **Lyrics and Spoken Dialogue:**
+  * **17:05–17:07:** Narrator (deep voice): *"Happily... ever... after."*
+  * **17:09–17:14:** Female Solo: *"Look at us... the stories... that we've lived..."*
+  * **17:15–17:18:** Female Solo: *"...were lost in all the glory, which reach far away..."*
+  * **17:19–17:24:** Female Solo: *"...we'll live them again, just look up and reach to the sky..."*
+  * **17:25–17:28:** Female Solo: *"...we all have the courage to fly-y-y..."*
+  * **17:29–17:36:** Full Choir / Orchestra: *"You can fly! You can fly! You can fly!"*
+* **Big Musical Hits:**
+  * **17:09:** Soft downbeat (piano and strings) as the vocal verse begins.
+  * **17:22:** Sustained high vocal belt on *"sky"*.
+  * **17:27–17:28:** Crest on *"fly"*, where percussion and orchestra swell.
+  * **17:29:** Massive orchestral and choral downbeat on *"You can fly!"* with brass and cymbal crash.
+  * **17:33–17:34:** Second choral hit on *"You can fly!"* signaling the flight launch.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **17:05–17:08** | None active | Standard perimeter/stage floodlights | Stained-glass mosaic projection | Stained-glass character portraits |
+| **17:09–17:14** | Whistling comets launch alternately from left and right | Floodlights steady | Stained-glass mosaic | Stained-glass portraits steady |
+| **17:15–17:22** | Wave of ~8–10 whistling tourbillon comets criss-crossing high over spires | Floodlights steady | Stained-glass mosaic | Stained-glass portraits steady |
+| **17:23–17:25** | Sky briefly clear of active bursts | Floodlights steady | Stained-glass mosaic | Stained-glass portraits steady |
+| **17:26–17:28** | Pair of vertical gold comets shoot up flanks | White searchlight beams tilt up from hub/base | Stained-glass mosaic brightens | Stained-glass portraits steady |
+| **17:29–17:30** | Criss-cross gold comets launch from flanks | White/gold searchlight fan | Stained-glass mosaic begins transition | Stained-glass portraits fade |
+| **17:31–17:33** | Rising comet trails overhead | Searchlight beams active | Transitions to royal red, deep blue, gold scrollwork & clock | Characters disappear from projection |
+| **17:34–17:36** | Upward fan of gold comets | Upward spotlights | Royal red/blue/gold motif | Tinker Bell flies from upper spire (17:34) |
+
+**4. Fireworks in the sky**
+* **17:10–17:22 (Whistling Crossing Comets):**
+  * **Type:** Whistling tourbillon / serpentine comets (corkscrew motion with bright golden-white comet heads).
+  * **Colour:** Bright warm golden-white.
+  * **Trajectory & Direction:** Launched from ground launch positions low on the left and right sides of the castle. They arc high across the main spire, crossing each other in mid-air.
+  * **Count/Rhythm:** ~10 to 12 individual whistling comets firing in steady, overlapping alternating succession (roughly one every 1–1.5 seconds) creating an arching criss-cross pattern.
+  * **17:23–17:25:** Brief quiet lull in the sky as trails dissipate.
+* **17:26–17:28 (Vertical Comets):**
+  * **Type:** 2 straight-shooting gold comets / mines.
+  * **Position:** Straight vertical launches on the left and right flanks of the castle, reaching spire height.
+* **17:29–17:33 (Fan Comets):**
+  * **Type:** Rapid fan of gold comet tails.
+  * **Position & Direction:** Angled crossing shots from the perimeter flanks, firing upward and crossing over the castle roofline.
+
+**5. Fireworks on the castle**
+* **None:** There are no gerbs, fountains, or pyro fired directly from the castle parapets, balconies, or turrets during 17:08–17:33. All pyrotechnics launch from ground positions behind or beside the castle.
+
+**6. Lasers and lighting**
+* **Lasers:** No sky-scanning laser beams are prominent during this specific window.
+* **Searchlights / Beams:**
+  * **17:08–17:26:** Mostly low background ambient lighting/wash.
+  * **17:26–17:33:** Multiple white and warm-gold searchlight beams switch on around the castle hub/base and point upwards into the sky, fanning outward to support the musical crescendo.
+
+**7. The castle**
+* **17:08–17:30 (Stained-Glass Collage):**
+  * **Base Lighting/Projections:** Cinderella Castle is covered in an intricate stained-glass window mosaic. Upper spires and roofs are deep royal blue/violet; mid-level panels have dark lead lines and vibrant multicoloured glass panes; the lower central archway is illuminated in a warm glowing yellow/amber lantern light.
+* **17:31–17:33 (Royal Transformation):**
+  * **Projection Change:** The stained-glass windows dissolve/wipe away.
+  * **New Scene:** The castle transforms into its classic finale royal motif: deep royal blue spires and turrets, crimson/red wall sections, prominent glowing gold architectural piping and baroque scrollwork, with a bright round clock face appearing on the main tower.
+
+**8. Characters**
+* **17:08–17:30 (Stained-Glass Projections):**
+  * **Who & Where (3x3 grid):**
+    * *Hercules, Moana, Aladdin & Jasmine, Merida:* Visible in stained-glass style panes on the middle-left and lower-left towers/walls.
+    * *Tiana, Rapunzel & Flynn, Pocahontas:* Visible on the middle-right and lower-right towers/walls.
+    * *Cinderella & Prince Charming:* Centered just above the lower gateway.
+  * **Size:** Each portrait pane is roughly 1/8 to 1/6 the width of the castle façade.
+  * **Movement:** Completely static, stylized stained-glass windows.
+  * **Exit:** They fade/dissolve out completely between 17:30 and 17:32.
+* **17:34 (Tinker Bell):**
+  * Appears right after this segment at 17:34, physically flying on a wire from the upper-right spire down across towards the left, glowing brilliant green/white.
+
+**9. For our boards**
+For low-resolution LED matrix boards (64x32 / 64x64):
+1. **The Criss-Crossing Whistling Comets (17:10–17:22):** The defining visual of this verse is golden pixels launching alternately from bottom-left and bottom-right, arcing over the center spire and intersecting.
+2. **The Castle Mode Switch at 17:31:** The castle must clearly switch from a multicoloured mosaic (or stained glass blocks) to rich deep blue and red with gold edge accents and a central clock.
+3. **The Musical Swell at 17:29:** Spotlights/beams fanning upward as the choir enters on *"You can fly!"*.
+
+**10. What you couldn't see**
+* Individual character faces in the lower/outer stained-glass panels are somewhat soft and compressed in the projection mapping, making exact identification of every minor panel difficult.
+* Exact launch locations behind the castle perimeter are obscured by the castle structure and trees.
+
+**11. Our version**
+* **What's Right:**
+  * Gold comets crossing over the spires (17:10–17:22).
+  * Gold and white spotlights turning on and fanning up during the crescendo (17:26–17:33).
+* **What's Wrong:**
+  * *"Gold scrollwork, characters: none"* is **incorrect for 17:08–17:30**. During 90% of this segment, Cinderella Castle is wrapped in the colourful stained-glass character mosaic. The gold scrollwork does not appear until **17:31–17:32**.
+* **What's Missing:**
+  * The **stained-glass character mosaic** covering the castle body from 17:08 to 17:30.
+  * The dramatic **castle texture wipe/change at 17:31** from stained glass to royal blue/red/gold.
+  * The vertical/fan comet bursts at 17:26–17:33 accompanying the choir's entrance.
+
+</details>
 
 ### 10.2 You Can Fly
 
@@ -4033,7 +4573,128 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 17:30-18:14 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** Exactly at **17:33**. The choir sings the opening line *"You can fly!"* following the fanfare build-up from 17:30–17:32. Your 17:33 estimate is **exact**.
+* **End:** At **18:10–18:11**. The choir holds the final climactic note of *"You can fly!"* through a huge white brocade shell barrage ending at 18:10, punctuated at 18:10–18:11 by two screaming golden/white whistle comets crossing over the castle. Your 18:11 estimate is **exact**.
+
+**2. Music**
+* **Song:** *"You Can Fly! You Can Fly! You Can Fly!"* from Disney’s *Peter Pan*, performed by an energetic choral and orchestral arrangement.
+* **Lyrics & Timestamps:**
+  * **17:33–17:35:** *"You can fly!"*
+  * **17:35–17:37:** *"You can fly!"*
+  * **17:37–17:40:** *"You can fly!"*
+  * **17:40–17:48:** *"Think of the happiest things, it's the same as having wings..."*
+  * **17:48–17:53:** *"Take the path that Moonbeams make..."*
+  * **17:53–17:59:** *"If the Moon is still awake, you'll see him sneeze..."*
+  * **17:59–18:10:** *"You can fly! You can fly! You can fly-y-y!"* (building to orchestral crescendo).
+* **Major Musical Hits:**
+  * **17:33–17:38:** Each vocal *"You can fly!"* triggers ascending perimeter comets.
+  * **17:39:** Orchestral beat drop: first paired red peony bursts.
+  * **17:43:** Beat transition: pair of bright orange-red chrysanthemums.
+  * **17:48:** Line change: bursts transition into emerald-green peonies.
+  * **17:52:** Melodic shift: bright gold glitter chrysanthemums.
+  * **17:56:** Chorus shift: rich magenta/pink peonies burst.
+  * **18:00:** Re-entry of *"You can fly!"*: massive orange-red canopy shells.
+  * **18:05–18:09:** Final vocal run: rapid, dense succession of brilliant silver/white brocade and chrysanthemum shells.
+  * **18:10:** Final chord peak: twin high-screamer crossing comets.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **17:30–17:32** | Golden comets criss-cross upward from sides. | Dark/accent beams off-axis. | Golden clockface on center tower, London swirls. | Peter Pan & Darling children silhouettes on upper towers. |
+| **17:33–17:38** | Angled gold comet sweeps upward from castle perimeter. | Spotlights sweep toward sky; zip-line path lit. | Castle glows warm gold/amber with glowing clock face. | **Live Tinker Bell** flies on high wire from spire towards camera right. |
+| **17:39–17:42** | Red peonies at mid-height; gold trailing shells high. | Beams fan outward horizontally from behind hub/castle. | Gold/yellow illumination, starry projections. | London flight motifs. |
+| **17:43–17:47** | Symmetrical orange-red chrysanthemums with gold glitter. | Beams sweep outward across the night sky. | Castle saturated in deep crimson/gold wash. | Peter Pan / starry accents projected. |
+| **17:48–17:51** | Vibrant emerald-green peony bursts left & right. | Green/cyan stage floodlights wash castle base. | Castle transforms into rich emerald-green and gold. | Tinker Bell fairy-dust trails swirl on facades. |
+| **17:52–17:55** | Large golden willow/chrysanthemum shells above spire. | White/golden searchlights fan wide. | Castle transitions back to bright sparkling gold/amber. | Swirling stardust & golden pixie dust projections. |
+| **17:56–17:59** | Bright magenta/purple peony bursts flanking the spire. | Purple wash lights across castle base and turrets. | Turrets bathed in violet/magenta and deep blue. | Silhouetted flying motifs in projections. |
+| **18:00–18:04** | Large orange-gold brocade shells left, right, and center. | Rapid fanning searchlight sweeps behind castle. | Warm golden-red illumination with glowing clock tower. | Golden stardust cascades. |
+| **18:05–18:09** | Dense, rapid barrage of brilliant white/silver brocades. | Upward white searchlights converge and pulse. | Brilliant white and golden royal lighting. | Cascading light sparkles. |
+| **18:10–18:14** | Twin whistle comets cross; vertical comets & mines from hub. | White beam fans sweep wide; camera reframes. | Clock tower projection remains prominent; turrets blue/gold. | Projections begin transitioning. |
+
+**4. Fireworks in the Sky**
+* **17:30–17:38 (Launch & Tinker Bell Flight):**
+  * Gold tail comets launch in mirrored diagonal criss-cross patterns from both sides (low to mid-height).
+  * Rate: ~2–3 comets per second.
+* **17:39–17:42 (Opening Peonies):**
+  * Mid-to-high altitude: 2 medium-sized red peonies burst symmetrically on the left and right spires, followed immediately by high gold willow/dahlia bursts.
+* **17:43–17:47 (Red Barrage):**
+  * 4–6 high-altitude, large orange-red chrysanthemums bursting overhead with crackling gold cores, mirrored left and right.
+* **17:48–17:51 (Green Transformation):**
+  * 4 large emerald-green peonies burst high above both sides of the spire, matching the lyric *"Take the path that Moonbeams make"*.
+* **17:52–17:55 (Gold Transformation):**
+  * 3–4 large bright golden willow/chrysanthemum shells opening high directly over and flanking the spire.
+* **17:56–17:59 (Magenta/Purple Transformation):**
+  * 4 large magenta/purple peony bursts flank the central spire.
+* **18:00–18:04 (Warm Amber/Orange Resurgence):**
+  * 4–6 very large orange-red to gold brocade shells bursting at high altitude.
+* **18:05–18:09 (Grand Climax):**
+  * Intense, multi-shot barrage of 15+ heavy white-silver brocade and glittering chrysanthemum shells filling the entire upper sky directly above and behind the castle (~3–4 bursts per second).
+* **18:10–18:14 (Crossing Comets):**
+  * 2 high-screamer comet tails launch from ground level far left and right, arching across each other high above the central spire, followed by low vertical golden mines.
+
+**5. Fireworks on the Castle**
+* **Behind/Roof of Castle:** Low perimeter launcher racks immediately behind the castle turrets fire the angled ascending gold tail comets at 17:30–17:38 and the lower vertical golden mine bursts at 18:10–18:14.
+* **Castle Turrets/Rooftops:** No stationary gerbs or fountain sparklers are active on the castle parapets during this specific song; all pyrotechnics are mortars and comets fired from the roofs and perimeter behind the castle.
+
+**6. Lasers and Lighting**
+* **Searchlights:** Banks of high-powered motorized beam fixtures behind the castle and hub walls project sharp beams into the sky:
+  * At 17:41–17:48, they form wide angled horizontal and diagonal fans flanking the castle.
+  * At 17:48–17:51, they shift into tight vertical columns flanking the green castle.
+  * At 18:05–18:10, they criss-cross rapidly and pulse straight up during the white finale shell barrage.
+* **Lasers:** No visible horizontal geometric laser sheet across the sky in this segment; emphasis is on high-intensity searchlight beams and flood washes.
+* **Wash Lighting:** The castle body and lower hub walls dynamically color-wash in lockstep with the fireworks: Red/Amber (17:43) $\rightarrow$ Emerald Green (17:48) $\rightarrow$ Golden Yellow (17:52) $\rightarrow$ Violet/Purple (17:56) $\rightarrow$ Orange/Gold (18:00) $\rightarrow$ Full Brilliant White/Gold (18:05).
+
+**7. The Castle**
+* **Base Structure Lighting:** Turret roofs stay predominantly royal blue with gold spire caps, while the facade wall wash rapidly shifts color thematic palettes to match the lyrics and shell colors.
+* **Projections:**
+  * **17:30–17:47:** The central tower projects the illuminated clock face of Big Ben (glowing yellow/gold clock face in center-middle of the grid). Golden scrollwork, London architecture, and starfields wrap the lower wings.
+  * **17:48–17:51:** Swirls of glowing green and gold fairy pixie dust spiral up the towers.
+  * **17:52–18:09:** Pixie dust, stars, and celestial golden clouds cascade across all castle surfaces, pulsing brighter with each musical hit.
+
+**8. Characters**
+1. **Tinker Bell (Live Flight Performer):**
+   * **Location:** Starts from high on the main central spire (top-center grid) and flies diagonally down and across to the right side of the screen/sky (grid: top-center $\rightarrow$ top-right).
+   * **Appearance/Movement:** Dressed in an illuminated, glowing green costume with lighted fairy wings. Glides down a zip-line high above the castle/hub at a steady, swift flying pace.
+   * **Timing:** Appears exiting the spire at **17:34**, glides across the right sky from **17:35 to 17:38**, exiting frame right at **17:38**.
+   * **Size:** Small human silhouette relative to castle (approx. 1/15th castle height).
+2. **Peter Pan & Darling Children (Projections):**
+   * **Location:** Silhouettes projected on the upper left and right turrets flanking the main spire (top-left and top-right sections of the castle facade).
+   * **Appearance/Movement:** Silhouettes flying and floating around the Big Ben tower motifs.
+   * **Timing:** Clearly established at **17:30–17:33** before dissolving into swirling golden pixie dust trails as Tinker Bell flies.
+
+**9. For Our Boards**
+1. **Tinker Bell's Diagonal Flight (17:34–17:38):**
+   * On a 64x64 or 64x32 matrix, a bright green multi-pixel dot with twinkling white wings moving diagonally from top-center (spire) down toward the upper-right edge over 4 seconds will instantly sell the scene.
+2. **Synchronized 4-Color Castle/Sky Palette Shifts (17:43–17:59):**
+   * Group 1: Crimson/Red shells & red castle wash (17:43).
+   * Group 2: Emerald-Green shells & green castle wash (17:48).
+   * Group 3: Gold willow shells & warm yellow castle wash (17:52).
+   * Group 4: Magenta/Purple shells & purple castle wash (17:56).
+3. **The Brocade Climax & Screamer Crossing (18:05–18:12):**
+   * A dense cluster of flashing white/silver pixels over the castle canopy for 4 seconds, immediately followed by two single bright white/gold tracer dots arching in opposite directions across the sky.
+
+**10. What You Couldn't See**
+* **Ground Level Launchers:** Mortar positions behind the castle and in perimeter launch fields are occluded by the castle itself and trees.
+* **Hub Crowds:** The camera is angled upward; crowd elements at the base are in silhouette or out of frame.
+* **Laser Fixture Apertures:** Specific laser scanner heads cannot be individually distinguished from the floodlight fixtures mounted on castle ledges.
+
+**11. Our Version**
+* **What's Right:**
+  * Tinker Bell taking off from the spire is completely correct (17:34).
+  * The color sequence (Red, Gold, Green, Cyan/Purple/Magenta) is accurate.
+  * Identifying Tinker Bell as the key character is correct.
+* **What's Wrong:**
+  * **Tink’s flight timing vs fireworks:** Tinker Bell does not fly during the gold palms/red strobes; she flies *at the very beginning* (17:34–17:38) while the sky only has rising comets. The heavy colored peonies/chrysanthemums only burst *after* she has already cleared the castle.
+  * **Cyan:** The palette shifts cleanly between Red $\rightarrow$ Emerald Green $\rightarrow$ Golden Yellow $\rightarrow$ Magenta/Purple; there is no dominant cyan shell phase.
+* **What's Missing:**
+  * **The Clock Face (Big Ben):** The central castle tower projection prominently features the illuminated clock face during this entire song.
+  * **The Grand Climax Barrage (18:05–18:10):** The biggest fireworks moment of the segment—the massive white/silver brocade canopy—is omitted from your summary.
+  * **The Twin Crossing Whistle Comets (18:10–18:12):** The signature pyrotechnic punctuation that ends the song is missing.
+
+</details>
 
 ### 10.3 You Can Fly (gold arcs)
 
@@ -4046,7 +4707,77 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 18:08-18:21 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Starts:** **18:10** (video time). While the comets cross overhead around 18:11, their launch trails ignite and rise from the perimeter flanks at 18:10 on an orchestral fanfare. Your 18:11 start is slightly late.
+* **Ends:** **18:18**. The gold comet trails fade completely by 18:17, leaving a brief one-second pause at 18:18 before the multicolored perimeter mine barrage erupts at 18:19. Your 18:18 end timestamp is accurate.
+
+**2. Music**
+* **Song:** Finale reprise of *"Happily Ever After"* (following the *"You Can Fly!"* transition from *Peter Pan* at 18:08–18:09).
+* **Lyrics:**
+  * **18:14–18:15:** Choir sings: *"Happily..."*
+  * **18:16:** *"...Ever..."*
+  * **18:17:** *"...After!"*
+* **Musical hits:**
+  * **18:10:** Brass fanfare hit on the launch of the first pair of comets.
+  * **18:12:** Percussion/orchestral beat landing simultaneously with the gold aerial burst behind the spire.
+  * **18:14–18:17:** Heavy choral downbeats on each word (*"Happily"*, *"Ever"*, *"After"*).
+  * **18:18:** Brief vocal pause/breath before the massive finale crescendo at 18:19.
+
+**3. Timeline**
+
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **18:08–18:09** | Dense white/silver aerial peony/chrysanthemum canopy fades out. | Upward white beam lights from perimeter. | Ornate red and gold filigree; glowing Big Ben clock on center tower. | Big Ben clock face projected on upper center tower. |
+| **18:10–18:11** | Two thick gold comets launch from low left and right, arching inward toward spire. | Searchlights sweep slightly outwards behind castle. | Castle base deep royal blue; Big Ben face brightly lit in white/cyan. | Silhouette in central gateway arch. |
+| **18:12** | First pair crosses above spire; single golden chrysanthemum burst detonates above center. | Steady upward searchlights. | Consistent blue turrets with gold and red filigree. | Silhouette continues in gateway arch. |
+| **18:13–18:15** | Fan of 6–8 mirrored gold comets launch from left and right flanks, creating criss-crossing overhead golden arches. | Stage/castle floodlights illuminate facade details. | Filigree glows brightly; lower gateway illuminated in warm gold. | Silhouette continues in gateway arch. |
+| **18:16–18:17** | Comets reach apex, cross over the spire, and extinguish into falling gold embers. | Lighting remains steady. | Projections hold steady during the choral phrase *"Happily Ever After"*. | Silhouette remains visible in lower arch. |
+| **18:18** | Sky is dark and quiet; previous trails dissipate. | Subtle searchlights angled outward behind castle. | Static golden/blue filigree and Big Ben clock. | Silhouette remains in lower arch. |
+
+**4. Fireworks in the sky**
+* **18:10–18:12:** 2 large gold comets with thick, sparkling tails launch simultaneously from ground level on the far left and right. They trace high, sweeping arcs inward toward the central spire, crossing behind it at ~18:11–18:12.
+* **18:12:** 1 medium-large gold chrysanthemum burst detonates directly behind and above the castle spire at high altitude as the first comet pair crosses.
+* **18:12–18:15:** A fan of approximately 6 to 8 thick gold comets launched in quick succession from both left and right perimeter pads. They shoot upward in sweeping inward arcs, crossing each other over the upper tower and spire between mid and high altitude.
+* **18:16–18:17:** Comets burn out at the apex, leaving brief hanging golden sparks.
+* **18:18:** Quiet lull; sky is clear of active bursts.
+* **Total count:** Approximately 8–10 gold comet tails and 1 central aerial burst.
+
+**5. Fireworks on the castle**
+* **None.** No rooftop gerbs, fountains, or perimeter strobes are fired directly off Cinderella Castle’s walls or balconies during this specific window; all comets originate from ground launch sites behind/flanking the castle.
+
+**6. Lasers and lighting**
+* **Lasers:** None visible in this section.
+* **Searchlights/Beams:** Pale white/blue searchlights shoot upward and outward from behind the castle tree line, remaining stationary or gently drifting.
+* **Fountains/Flames:** None.
+
+**7. The castle**
+* **Base & Turrets:** Roof turrets are illuminated in rich royal blue, trimmed with golden architectural uplighting.
+* **Projections:**
+  * **Center tower (middle grid):** A glowing white-and-cyan projection of the Big Ben clock face with Roman numerals and ornate clock hands (*Peter Pan* motif).
+  * **Walls/Balconies:** Covered in intricate red, gold, and turquoise storybook filigree/scrollwork.
+  * **Lower gateway (bottom-center):** A glowing circular golden/chartreuse portal.
+
+**8. Characters**
+* **Big Ben clock face:** Center tower (middle row, center column of a 3x3 grid), taking up roughly the width of the tower; static, glowing projection.
+* **Silhouette in Gateway:** Center-bottom (grid position bottom-center, inside the main gate archway). A small dark silhouette (proportioned to the doorway, roughly 1/10th castle height) is framed inside the bright circular portal throughout 18:10–18:18.
+
+**9. For our boards**
+1. **The Gold Crossing Arcs:** The defining visual is 3–4 bright gold comet heads launching from the bottom corners and tracing symmetrical curved arcs that intersect directly over the tip of the central spire.
+2. **Spire Center Burst:** A single yellow/gold pixel cluster exploding at high center at 18:12 right as the first arc crosses.
+3. **Castle Palette:** Royal blue turrets, warm yellow facade lighting, and a distinct bright circular clock face in the center tower just below the spire.
+
+**10. What you couldn't see**
+* Ground launch positions are obscured by trees and hub architecture.
+* The specific identity of the small silhouette in the base gateway arch is slightly soft and indistinct due to glare from the circular backlighting (unsure whether it depicts Peter Pan, Wendy, or Mickey).
+
+**11. Our version**
+* **What’s right:** "Gold comets arching over the spire" is the exact signature pyro effect of this segment.
+* **What’s wrong:** "Characters: none" overlooks the prominent projected Big Ben clock face on the center tower and the framed silhouette inside the lower gateway.
+* **What’s missing:** The single gold burst detonating high over the spire at 18:12 right as the first pair crosses, and the timing of the choir singing the climactic title phrase *"Happily Ever After"* across 18:14–18:17.
+
+</details>
 
 ### 10.4 Final chorus, keyhole opens
 
@@ -4059,7 +4790,76 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 18:15-18:33 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** **18:19** (your 18:18 mark is slightly early, at the tail end of the rising serpents/comet criss-cross). It starts on the choral downbeat of the final chorus (*"Happily ever after!"*), marked by simultaneous colored comet shoots and a massive multi-color burst canopy.
+* **End:** **18:30** (accurate). Marked by a giant musical downbeat/cymbal crash where the multi-color barrage stops and an enormous, sweeping white-and-gold comet mine fan erupts upward and outward from the base and perimeter of the castle.
+
+**2. Music**
+* **Song:** *"Happily Ever After"* (Theme Song).
+* **18:15 – 18:18:** Choral vocal build: *"...af-ter..."* sustaining a dramatic crescendo on a high vocal harmony.
+* **18:18 / 18:19:** Giant hit: Lead vocals and full choir burst into the final chorus climax: *"Happily ever after!"*
+* **18:24 – 18:29:** Orchestral brass and strings swell with continuing choral backing (*"reach out and find your..."*), accompanied by intense rhythmic crackling and booming firework shell breaks.
+* **18:30:** Massive orchestral crash/hit that triggers the finale fan sequence.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **18:15 – 18:18** | Whistling golden-white criss-crossing comets rising left and right. | Dark/ambient perimeter lighting. | Red, gold, and blue heraldic projection; green/gold glowing keyhole at lower center gate. | None. |
+| **18:19 – 18:24** | Multi-colored comets shoot straight up in columns on left and right; rapid barrage of multi-color peonies (red, green, blue, yellow, violet) behind and above spire. | Spotlights stay focused on castle facade. | Gold/red stained glass patterns; glowing green/gold keyhole portal radiating at gate. | None. |
+| **18:25 – 18:28** | White strobe/glittering bursts transition into a dense, deep magenta/red and golden chrysanthemum canopy directly over the spire. | Backlight intensity increases. | Ornate gold filigree over red/blue walls; keyhole continues radiating. | None. |
+| **18:29 – 18:30** | Lingering golden willow/brocade crackle overhead. | Searchlight beams begin to power up behind battlements. | Golden architectural trim; keyhole fully saturated with light. | None. |
+| **18:31 – 18:33** | Massive fan of brilliant white/gold glitter comet mines erupts from castle foot/hub in a wide V-spread. | Blue/cyan searchlight beams shoot upward into the sky from castle rear. | Flash of bright white wash over castle facade. | None. |
+
+**4. Fireworks in the sky**
+* **18:15 – 18:18:** Rising whistling comets (roughly 10–12 trails) arching inward and criss-crossing over the central spire.
+* **18:19 – 18:24 (The Rainbow Barrage):**
+  * **Comet columns:** Mirrored sets of 4–5 vertical roman-candle/comet shoots on the left and right (red, green, cyan, magenta, gold) reaching mid-to-high level.
+  * **Aerial breaks:** High-altitude, multi-colored peony and glittering chrysanthemum shells detonating in rapid waves (approx. 4–6 bursts per second) filling the entire upper grid (left, center, and right).
+* **18:25 – 18:28:** High-altitude white glittering strobes and crackle cakes, immediately followed by dense crimson/magenta peony bursts right above the central spire.
+* **18:29 – 18:30:** High golden brocade burst spreading outward as the colored sky barrage clears for a brief split-second pause.
+* **18:30 – 18:33 (The Mine Fan):**
+  * A symmetrical, wide-angle fan (approx. 14–16 points) of thick, glittering white-gold comets/mines blasting from low to high in a synchronized V-pattern.
+  * The rhythm shifts from continuous multi-burst saturation (18:19–18:28) to an instant single-frame explosive fan wall (18:30).
+
+**5. Fireworks on the castle**
+* **18:19 – 18:28:** The fireworks originate from launch locations directly behind the castle walls and perimeter firing fields; no direct gerbs/fountains fire off the castle roofline itself during these seconds.
+* **18:30 – 18:32:** Low-level mine charges erupt along the castle base/moat line and flanking lower hub roofs, producing the upward-reaching white-gold fan.
+
+**6. Lasers and lighting**
+* **Lasers:** None active during this segment.
+* **Searchlights / Beams:** 
+  * At **18:30 – 18:33**, bright cyan/blue searchlights power on behind the castle walls, projecting upward angled fan beams into the smoke/sky.
+* **Facade wash:** A sudden high-intensity white flood wash hits the entire castle facade at **18:31** in sync with the mine explosion.
+
+**7. The castle**
+* **Projections:**
+  * **18:15 – 18:29:** The castle facade features ornate golden filigree, jewel-toned reds, blues, and stained-glass architectural detailing on the towers and spires.
+  * **The Keyhole:** At the bottom-center (castle main gate), a large, glowing, enchanted keyhole portal is projected in vivid green and bright golden-white light, radiating outward.
+* **18:30 – 18:32:** The projections are bleached out by intense bright gold and white flood illumination for the grand finale hit.
+
+**8. Characters**
+* **None appear.** During this climactic chorus (18:18–18:30), no Disney character figures, faces, or silhouettes are projected on the castle or formed by pyrotechnics. The visual design is entirely architectural, portal-focused, and pyrotechnic.
+
+**9. For our boards**
+For 64x32 or 64x64 LED matrices, prioritize these three elements:
+1. **The Keyhole & Castle Base (18:19–18:29):** Keep the castle in regal red/gold, but ensure a bright pulsating green/gold 3x3 or 4x4 pixel block at the bottom-center gate to represent the open magic keyhole.
+2. **Rainbow Side Comets + Color Canopy (18:19–18:24):** Vertical multi-colored lines (magenta, cyan, green, yellow) shooting up the side columns, blossoming into multi-color twinkling pixels across the top half.
+3. **The White-Gold Fan (18:30):** Clear the sky pixels for an instant, then draw a rapid outward-radiating V-shape / fan of bright white and gold trails originating from the lower castle perimeter, matched with a brief white castle wash.
+
+**10. What you couldn't see**
+* Extreme low ground level behind the guest crowd is occluded.
+* Inside the bright core of the projected keyhole portal at the main gate, any very subtle character line art is completely blown out by high projection brightness.
+
+**11. Our version**
+* **What's right:** Castle gold and red; rainbow barrage; white and gold mine fan from the castle's foot; "Characters: none" is completely correct.
+* **What's wrong:** The timing/transition: the rainbow barrage is not immediately followed by the white and gold fan; there is an intermediate wave of bright white strobes and deep magenta/red bursts over the spire between 18:25 and 18:29.
+* **What's missing:** 
+  1. The prominent glowing **green and gold keyhole** at the center main gate of the castle.
+  2. The upward-pointing **blue/cyan searchlight beams** that activate alongside the white-and-gold mine fan at 18:30.
+
+</details>
 
 ### 10.5 The last hit
 
@@ -4072,4 +4872,97 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 18:27-18:38 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Starts:** **18:30** (or precisely at the upbeat right before the hit, **18:31**). At **18:30–18:31**, the vocal climaxes on the word **"AFTER!"**, accompanied by an explosive upward fan of white/gold comet mines and brilliant castle rooftop pyro, leading directly into the finale burst.
+* **Ends:** **18:35** (reverberation fades through **18:37**). The massive golden brocade/willow canopy fully expands and begins to drift down as the climactic orchestral chord sustains and resolves, followed by red report bursts at **18:36**.
+* **Verdict on your 18:30 to 18:35 window:** It is **spot on**. 18:30 initiates the launching fan and vocal climax ("AFTER!"), peaking into the massive golden willow canopy between 18:32 and 18:35.
+
+**2. Music**
+* **Song:** *"Happily Ever After"* (Theme Song finale reprise / Jordan Fisher & Angie Keilhauer arrangement).
+* **Lyrics & Musical Hits:**
+  * **18:27–18:30:** Choir/lead vocals crescendo through *"...happily ever..."*
+  * **18:31:** Giant final vocal belt: **"...AFTER!"** landing on a massive orchestral downbeat/timpani hit and cymbal crash.
+  * **18:32–18:35:** Sustained triumphant orchestral chord holds as the canopy sparkles.
+  * **18:35–18:37:** Final orchestral swell and punchy concluding brass/percussion cutoff.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **18:27–18:29** | Multi-colored bursts (red, green, white) and crackling willow shells bursting above and behind the spire; red star peony at 18:28. | Low perimeter floodlighting; warm architectural glow. | Vivid multi-color scrollwork/stained glass projections across the facade and turrets. | None visible (stylized decorative patterns). |
+| **18:30** | Pre-launch mine trails and golden peony high center-left; launching trails rise. | Ground wash starts intensifying. | Warm gold and multi-colored projection mapping on main facade. | None visible. |
+| **18:31** | **The Final Hit:** Huge wide-angled fan of bright white/gold comets/mines erupts across the perimeter; bright pyro sprays erupt directly from castle parapets. | Brilliant white front flash; bright blue/cyan searchlight beams flare upward from flanking hub/parapets. | Castle blazes bright in white flash, transitioning into vibrant golden-yellow lighting with blue turret accents. | None. |
+| **18:32–18:34** | Massive gold brocade/crackling willow shell explodes directly over the castle spire, raining a dense canopy of gold tendrils across the entire sky. | Bright cyan/blue searchlight beams fan outward into the sky from castle flanks; warm golden wash illuminates the facade. | Golden glowing castle with intricate scrollwork projections, illuminated yellow clock face, and rich royal blue roofs. | None. |
+| **18:35–18:38** | Gold willow canopy fades and drifts downward; secondary crackling red peony bursts pop high behind the spire at 18:36. | Blue beams remain fanned outward, panning slowly upward into the night sky. | Castle remains stably lit in radiant gold, green, and royal blue architectural lighting. | None. |
+
+**4. Fireworks in the Sky**
+* **18:27–18:29 (Buildup):**
+  * Mixed aerial shells: Red, emerald green, and white strobe peonies and chrysanthemums bursting high behind and to the flanks of the spire.
+  * Rapid cadence (approx. 2–3 bursts per second).
+* **18:30–18:31 (The Hit / Fan):**
+  * **Type:** Ground-launched angled comets / mine fan.
+  * **Color:** Brilliant silver-white / gold.
+  * **Pattern:** Wide symmetrical fan of roughly 12–16 thick rising comets shooting straight and diagonally upward from behind and beside the castle.
+  * **Height:** Mid-to-high, framing the castle.
+* **18:32–18:35 (The Finale Canopy):**
+  * **Type:** Giant brocade / Kamuro / crackling willow shell.
+  * **Color:** Deep glittering gold / amber.
+  * **Position & Size:** Centered directly overhead/behind the highest central spire; fills the entire upper frame spanning left to right edge.
+  * **Rhythm:** Single massive simultaneous explosion that holds and drifts slowly downward for 3–4 seconds.
+* **18:36–18:37 (Post-climax):**
+  * High-altitude red chrysanthemum/peony bursts with crackle popping centered behind the spire.
+
+**5. Fireworks on the Castle**
+* **18:31 (Peak Hit):**
+  * Fountains / bright white gerb-style pyro flares fire upwards from the lower castle battlements and flanking parapet roofs.
+  * Creates an instantaneous bright white blast of light emanating directly from the structure itself, perfectly synchronized with the ground-to-sky comet fan.
+
+**6. Lasers and Lighting**
+* **Lasers:** No distinct green or multi-color beam laser patterns are visible cutting through the sky during this specific 18:30–18:35 burst (the pyro takes visual precedence).
+* **Searchlights / Moving Heads:**
+  * At **18:31**, bright cyan/electric blue spotlight beams ignite from the base/flanks of the castle.
+  * They fan outward symmetrically (pointing up and out toward the 10 o'clock and 2 o'clock positions), creating a strong blue V-shape contrast behind the castle against the golden fireworks.
+* **Flashes:** A sharp, blinding white illumination flash occurs on the beat of 18:31 from castle stage strobes and rooftop pyro.
+
+**7. The Castle**
+* **Base & Turret Lighting:**
+  * Turrets and conical roofs are illuminated in deep sapphire/royal blue.
+  * The main body glows in intense radiant warm gold/yellow.
+* **Projections:**
+  * The facade is wrapped in ornate, glowing golden/amber filigree, scrollwork, and stained-glass architectural framing.
+  * The clock face glows bright yellow-white.
+  * The lower walls feature green and golden heraldic accents.
+  * No scene change occurs during the hit—the projection holds as a majestic, static golden "triumphant royal castle" look.
+
+**8. Characters**
+* **Characters present:** **None.**
+* During this final climax (18:30–18:35), no animated Disney characters are projected on the castle or formed in the sky. The visuals focus entirely on the grand architectural illumination and the overwhelming fireworks canopy.
+
+**9. For Our Boards (64x32 / 64x64 LED Matrix)**
+To make this moment feel authentic on a low-resolution matrix:
+1. **The 18:31 Hit (White Flash + Comet Fan):** For 1–2 frames, trigger a full-screen white flash combined with angled white/yellow diagonal lines shooting up in a V-fan from behind the castle silhouette, while firing bright white pixels directly on the castle's lower rooftop ledges.
+2. **The 18:32–18:35 Willow Canopy:** A huge dome of golden/amber cascading pixels expanding from high-center and slowly trickling downwards like golden rain.
+3. **Contrast Color Palette:** The castle silhouette must be warm amber/gold in the center with striking royal blue spires, flanked by two diagonal cyan/blue beams pointing upward into the night sky.
+
+**10. What You Couldn't See**
+* **Ground launch points:** Launch locations behind the castle and in perimeter backstage areas are hidden behind trees and castle architecture.
+* **Crowd/Moat details:** The lower moat and ground-level pathways are obscured by the silhouette of the foreground crowd.
+
+**11. Our Version**
+* **Your current version:**
+  > *""After!": the white flash, then gold willows hanging over a castle washed in gold. Characters: none."*
+* **What's right:**
+  * Perfect timing on the "After!" hit.
+  * The white flash is completely accurate.
+  * Gold willows hanging overhead is the defining visual element.
+  * "Characters: none" is 100% correct.
+* **What's wrong:**
+  * The castle is not *only* washed in gold; its turrets and roofs are distinctly rich royal blue, and bright electric cyan/blue searchlights shoot up from its sides.
+* **What's missing:**
+  * **The wide angled fan of comets/mines** shooting up across the entire frame at 18:31 right as the flash occurs.
+  * **The rooftop pyro flares** directly on the castle battlements.
+  * **The cyan/blue searchlight beams** forming an upward V-fan framing the castle beneath the gold canopy.
+
+</details>
+
