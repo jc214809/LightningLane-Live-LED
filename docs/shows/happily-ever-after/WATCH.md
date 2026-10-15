@@ -3217,7 +3217,93 @@ Here is the detailed breakdown of the segment:
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 12:11-12:35 · notes: none</summary>
+
+Here is the detailed analysis of this segment of the show:
+
+**1. Where this part starts and ends**
+* **Starts at 12:19**: The Emperor’s spoken line begins (*"The flower that blooms in adversity..."*) as the projection focuses on the central balcony/arch. (Your 12:14 start is slightly early, capturing the preceding zoom-in/transition).
+* **Ends at 12:27–12:28**: The Emperor finishes speaking (*"...of all"* at 12:26) and the massive gold willow firework fully cascades down. A silent pause/musical transition follows until the percussion hit at 12:33. (Your 12:32 is slightly late, extending into the dark pause before the next sequence).
+
+**2. Music**
+* **Score**: Soft, contemplative traditional Chinese instrumental theme (*Mulan* orchestral score).
+* **Spoken Lines (Emperor of China)**:
+  * 12:19 – 12:21: *"The flower..."*
+  * 12:21 – 12:23: *"...that blooms in adversity..."*
+  * 12:23 – 12:26: *"...is the most rare and beautiful of all."*
+* **Hits**:
+  * 12:22: Visual/audio sync as the flower-shaped firework opens on *"blooms in adversity"*.
+  * 12:24: Grand explosion on *"rare and beautiful"*.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **12:14 – 12:18** | Smoke drifting in sky; no bursts | Castle floodlights active | Spires in deep blue; lower base bathed in deep crimson/red | Emperor of China standing tall in the center lower balcony projection |
+| **12:19 – 12:20** | Quiet sky; faint launch trail left of spire | Static castle lighting | Red lower walls, blue spires | Emperor standing; Mulan in hanfu dress appears below him |
+| **12:21 – 12:23** | Pink/magenta outer ring with green/white pistil center bursts high, just left of the central spire | Turret lights remain warm red and cool blue | Lantern patterns and red architectural wash on lower walls | Emperor and Mulan projected in center portal |
+| **12:24 – 12:27** | Massive white/gold brocade willow shell detonates high directly above the central spire, trailing down into cascading gold tentacles | Ambient sky glow from the brocade burst reflects off castle | Lower walls red/orange glow, central tower blue | Mulan/Emperor fade into Chinese floral motifs |
+| **12:28 – 12:32** | Golden willow embers slowly fade and drift downward; sky goes dark | Castle lighting remains static: red base, blue upper spires | Warm red archways, blue upper spires; projections hold steady | Scene holds in center portal |
+
+**4. Fireworks in the sky**
+* **12:21 – 12:23**: 
+  * **Type**: Special blossom-pattern peony shell (pink/magenta outer ring representing flower petals with a white/pistachio-green center core).
+  * **Location**: High, just left of the central spire.
+  * **Count**: 1 large specialty shell.
+* **12:24 – 12:27**: 
+  * **Type**: Large brocade / kamuro willow shell. Detonates with an intense white flash, blooming into long-hanging, cascading golden willow streamers that droop down across the top half of the castle skyline.
+  * **Location**: High, dead center directly above the main spire.
+  * **Count**: 1 massive aerial shell.
+* **Pacing**: Deliberate, solitary, majestic bursts synced directly to the spoken wisdom.
+
+**5. Fireworks on the castle**
+* None during this quiet, intimate story moment.
+
+**6. Lasers and lighting**
+* **Lasers**: None used in this section.
+* **Searchlights / Fountains / Flames**: None active.
+* **Wash Lights**: Steady deep red/crimson wash illuminating the hub perimeter and the castle base/walls; cool cyan/cobalt blue uplights on the upper spires and turrets.
+
+**7. The castle**
+* **Base Lighting**: 
+  * Lower battlements and walls: Deep crimson red.
+  * Upper towers and spires: Deep royal/cyan blue with soft amber turret peak lights.
+* **Projections**:
+  * Centered exclusively on the lower central facade/archway.
+  * The castle facade is textured with Chinese architectural framing (dark wood beams, red imperial paper lanterns, and ornamental borders).
+  * Deep red glow inside all the lower castle windows and gateway.
+
+**8. Characters**
+* **Emperor of China**:
+  * **Location**: Center-bottom (balcony projection above the central archway).
+  * **Size**: Approximately 1/6 to 1/8 the castle’s overall height.
+  * **Appearance**: Tall traditional imperial yellow and red robes with his ornate black-and-gold beaded imperial cap (*mianguan*). Stands upright and dignified.
+  * **Timing**: Visible from before 12:14 through ~12:21.
+* **Mulan**:
+  * **Location**: Center-bottom, projected directly in the central arch below/alongside the Emperor.
+  * **Size**: Small, matching standard human scale on the balcony.
+  * **Appearance**: Wearing her traditional Chinese gown (green, yellow, and blue matchmaker dress).
+  * **Timing**: Fades in around 12:18–12:19, remains through the voiceover until ~12:26.
+
+**9. For our boards (LED matrix recreation)**
+1. **The "Blossom" Shell (12:22)**: A distinct magenta/pink ring with a bright green/white center dot launched high-left of the spire. On a 64x32/64x64 matrix, drawing this as a clear 2-color concentric ring/flower captures the exact metaphor of the Emperor's line.
+2. **The Golden Brocade Cascade (12:24–12:27)**: A bright white flash dead-center above the main spire that expands and falls slowly into drooping gold pixel trails.
+3. **Castle Palette**: 
+   * Top 1/3 (spires): Cobalt blue pixels.
+   * Bottom 2/3 (walls): Crimson red pixels with a small yellow/gold glow in the center portal for the Emperor.
+
+**10. What you couldn't see**
+* The camera is slightly zoomed in and off-center to the left, but the castle and the sky immediately overhead are fully visible.
+* Fine facial details on the projected characters cannot be resolved due to scale and exposure, though silhouettes and clothing colors are identifiable.
+
+**11. Our version**
+* **What's right**: The quote (*"The flower that blooms in adversity..."*), the crimson/navy castle color scheme, and having the Emperor of China as the featured character.
+* **What's wrong**: 
+  * It is not a "warning"; it is the Emperor's tribute/praise of Mulan.
+  * There is no gong hit here—the audio is soft strings and voiceover; the percussion hit occurs later at 12:33.
+  * There are no "low crimson and gold comets"—the fireworks are two solitary, high aerial shells: a pink/green blossom ring followed by a massive golden willow.
+* **What's missing**: Mulan herself projected alongside the Emperor in the archway, and the specific pink/magenta blossom shell at 12:22 that visually illustrates the line.
+
+</details>
 
 ### 7.2 Villains attack
 
@@ -3230,7 +3316,99 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 12:29-12:53 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** The scene transition begins around **12:29–12:31** with fading willow embers and simmering red/orange light across the base of Cinderella Castle. A clear ignition marker occurs at **12:36**, when a single vertical red rocket shoots directly behind the spire, followed by the first heavy aerial red explosion at **12:40**.
+* **End:** The villain attack segment does **not** end at 12:50; at **12:50–12:53**, the sequence is actively intensifying with massive red aerial chrysanthemums, castle parapet fountains, and villain projections continuing past the end of the clip.
+* **Accuracy of 12:32 to 12:50:** Starting at 12:32 is slightly late for the initial transition build-up (which begins at ~12:29), but close to the red rocket cue (12:36). Ending at 12:50 is **significantly early**, as the villain sequence is midway through its crescendo at 12:53.
+
+**2. Music**
+* **Music / Themes:** The orchestral villain montage from *Happily Ever After*, featuring dramatic brass and percussion cues incorporating elements of Disney villain themes (including the Magic Mirror invocation, *Hellfire*, and *Friends on the Other Side*).
+* **Big Hits & Beats:**
+  * **12:36:** High, rising musical cue/whistle landing on the upward launch of the red tracer rocket behind the central spire.
+  * **12:40–12:41:** Heavy orchestral/percussive hit landing precisely as the first high red peony explodes.
+  * **12:44:** Second heavy brass beat synced to the second red chrysanthemum burst.
+  * **12:46–12:48:** Sharp rhythmic accent landing on the yellow comet fan (12:46) and twin castle gerbs (12:48).
+  * **12:51–12:52:** Major cymbal crash / crescendo matching the overhead golden palm and dense red aerial detonation.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **12:29–12:32** | Faint residual green/gold willow trails fade in upper sky | Perimeter dark; deep warm red/amber floodlights on lower castle walls | Molten orange/red embers projected on lower walls; upper spires in shadow | None visible |
+| **12:33–12:35** | Sky completely dark; embers finish drifting down | Red base lighting deepens; side searchlights idle | Red fire patterns continue boiling on lower battlements | None visible |
+| **12:36–12:39** | Single red comet rocket ascends straight up behind main spire | Narrow red glow follows rocket upward | Spire illuminated in sharp crimson; lower facade dims slightly | None visible |
+| **12:40–12:43** | High red peony bursts center-left (12:40), second red peony breaks (12:41) | Castle base sharply switches to vivid electric cyan/blue flood; spire stays red | Cyan/blue stone projections on lower facade; glowing blue windows | Indistinct dark shadows creeping across lower facade |
+| **12:44–12:45** | Large red chrysanthemum burst high directly above center spire | Cyan base wash and red upper spire maintained | Blue walls with glowing red battlements; circular frame forms on main tower | Circle frame resolves on tower |
+| **12:46–12:47** | Fan of ~6 yellow/gold comets launches upward-left behind castle | Cool white/blue side searchlight beams illuminate left and right flanks | Central tower highlights a round glowing frame; archway glows fiery red | **Magic Mirror** face appears inside center tower circle (12:46) |
+| **12:48–12:50** | Twin silver gerb fountains shoot outward from castle parapets in a "V" shape | Bright white vertical beam lights flank castle; purple/red perimeter wash | Main tower shows framed mirror face; lower gateway glows deep red | **Magic Mirror** visible; dark villain silhouette appears in lower gateway (12:49) |
+| **12:51–12:53** | Golden palm burst overhead (12:51), followed immediately by giant red peony (12:52) | Sky and castle fully lit by aerial flares and intense white/cyan castle spotlights | Castle fully lit with dark textures, fiery central archway | **Magic Mirror** continues on center tower; silhouette in archway |
+
+**4. Fireworks in the Sky**
+* **12:29–12:31:** Pale green/gold willow remnants drifting down from the preceding scene (high altitude, both sides).
+* **12:36:** 1 vertical red tail/comet launched directly behind the main castle spire, climbing to high altitude before detonating.
+* **12:40–12:41:** 2 red peonies, medium-to-large, detonating high above the castle spire, slightly center-left.
+* **12:44:** 1 large red chrysanthemum breaking high directly above the central spire, showering bright red embers downward.
+* **12:46:** 1 fan barrage of ~6 yellow/golden comets launching from behind the left mid-castle wall, spreading upward and outward to the left.
+* **12:51:** 1 bright golden palm/brocade shell breaking high center.
+* **12:52–12:53:** 1 large, saturated red peony bursting directly over the golden palm, expanding across the upper center sky.
+* **Rhythm:** After a brief pause from 12:32 to 12:35, bursts fire at a steady, rhythmic cadence of approximately one major shell every 2–3 seconds on major musical hits, accelerating into overlapping shells at 12:51–12:53.
+
+**5. Fireworks on the Castle**
+* **12:36:** Red tracer comet launches straight up from immediately behind the highest central spire.
+* **12:46:** A 6-shot angled fan of golden comets fires from behind the left castle battlements.
+* **12:48–12:49:** Two bright silver/white gerb fountains or comets fire symmetrically outward from the lower left and right battlements flanking the main gate, creating a wide "V" shape.
+
+**6. Lasers and Lighting**
+* **Lasers:** No visible laser beams are active in this clip segment.
+* **Searchlights / Spotlights:** Cool white and cyan searchlights flank the castle base (left and right), projecting upright vertical columns into the sky starting around 12:46–12:52.
+* **Architectural Floodlights:** Lower hub trees and castle perimeter transition from deep crimson (12:29–12:35) to saturated electric blue/cyan (12:40–12:45), then deep purple and dark navy (12:46–12:52).
+* **Flames:** No physical flame projectors; fire is rendered purely through lighting and projection mapping.
+
+**7. The Castle**
+* **Lighting Changes:**
+  * **12:29–12:35:** Lower half illuminated in fiery molten red and orange; upper half dark.
+  * **12:36–12:39:** Crimson wash shoots up the main spire following the rocket.
+  * **12:40–12:45:** Dramatic split: lower half turns vibrant icy/electric cyan-blue; upper spire stays deep crimson.
+  * **12:46–12:53:** Main walls shift to navy/purple tones; central tower face is highlighted in white; the lower central gateway glows with fiery red backlighting.
+* **Projections:**
+  * **12:29–12:35:** Fluid, roiling red/orange lava/fire textures creeping along the lower castle base.
+  * **12:40–12:45:** Dark, shadowy vines/tendrils creeping across blue stone textures.
+  * **12:46–12:53:** A distinct circular/oval mirror frame appears on the upper-center tower directly beneath the clock, displaying a stylized white-and-dark theatrical face. The bottom entrance portal projects a blazing red chamber.
+
+**8. Characters**
+* **Magic Mirror (from *Snow White and the Seven Dwarfs*):**
+  * **Location:** Center-top / upper-middle tower (directly beneath the spire clock).
+  * **Size:** Spans the width of the central tower (about 1/4 of total castle height).
+  * **Movement:** Fades in inside a glowing circular portal at **12:46**, speaks/shifts within the frame, and remains active through **12:53**.
+* **Villain Silhouette (Gateway Portal):**
+  * **Location:** Bottom-center, inside the central entry archway.
+  * **Size:** Small (approximately 1/10 the castle height).
+  * **Movement:** Appears at **12:49**, standing and gesturing against the glowing red portal interior through **12:53**. (Specific identity is shadowy; unsure if Dr. Facilier or Jafar).
+
+**9. For our boards**
+1. **The 12:40 Color Split:** Sudden contrast shift where the castle base snaps from fiery red to vivid electric cyan/blue while the top spire remains crimson, crowned by a high red peony burst.
+2. **The Magic Mirror & Parapet Gerbs (12:46–12:48):** A circular white face centered on the main tower, immediately accompanied by twin silver fountain flares firing outward in a "V" shape from the castle battlements.
+3. **The Gold-to-Red Finale Burst (12:51–12:53):** A bright golden palm shell instantly engulfed by a massive crimson peony in the upper sky.
+
+**10. What you couldn't see**
+* **Lower Courtyard / Hub:** The ground level and moat railings are blocked by audience heads in the foreground.
+* **Far Turret Details:** Projections on the outermost left and right lower turrets are obscured by trees and darkness.
+* **Gateway Silhouette Identity:** The character silhouette inside the archway at 12:49–12:52 is back-lit and low resolution; it cannot be definitively identified from the video alone (unsure).
+
+**11. Our version**
+* **What's Right:** "Blood red" and "red bursts" are completely correct—deep red washes and saturated red aerial peonies dominate the sequence from 12:36 to 12:53.
+* **What's Wrong:**
+  * There is **no electric lime** or **crackling green comets** in this window (comets are red at 12:36 and yellow/gold at 12:46; the secondary castle color is electric cyan/blue, not lime).
+  * No **crossing green searchlights** are present (searchlights are cool white/cyan beams).
+  * Ursula, Scar, and Hades are **not** present in this 12:29–12:53 timeframe.
+* **What's Missing:**
+  * **The Magic Mirror**, which is the primary, central character projection from 12:46 to 12:53.
+  * The **electric cyan/blue lower castle wash** that creates the dramatic contrast at 12:40.
+  * The **castle-mounted pyro**: the 12:36 red spire rocket and the 12:48 silver "V" gerbs on the parapets.
+  * The **gold fan/palm effects** at 12:46 and 12:51.
+
+</details>
 
 ### 7.3 To Die For
 
@@ -3243,7 +3421,103 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 12:47-13:10 · notes: none</summary>
+
+Here is the breakdown of the "To Die For" (wildebeest stampede) segment of *Happily Ever After*:
+
+**1. Where this part starts and ends**
+* **Start:** **12:51**. The segment transitions from the end of the *Lion King* ("Be Prepared") motif where Scar is perched above the gates to the rapid, pulsing brass and percussion of Hans Zimmer's score cue *"To Die For"* (the wildebeest stampede). The castle projections switch from Scar standing over the gorge to shadows of running wildebeests surging across the facade, accompanied by ground-level fireworks.
+* **End:** **13:07–13:08**. The frantic stampede music culminates in a heavy, dramatic hit/cymbal crash at 13:07. The sky falls dark, the wildebeests vanish, and at **13:08–13:09**, the music shifts into ominous, dramatic brass/choir as the castle transitions to fiery orange and red with a sinister demonic/cat-slitted eye appearing in the rose window above the archway (leading into the next villain sequence).
+* **Evaluation of 12:50 to 13:07:** Your timing is very accurate. 12:50 is just a second early (capturing the final beat of Scar's stance), and 13:07 exactly marks the final musical hit before the next transition.
+
+**2. Music**
+* **Music Cue:** *"To Die For"* (instrumental score composed by Hans Zimmer for *The Lion King* stampede sequence).
+* **Lyrics/Dialogue:** Entirely instrumental/orchestral; no sung lyrics or spoken dialogue occur during this section.
+* **Key Musical Hits:**
+  * **12:51:** Driving orchestral strings and brass kick in rapidly on the downbeat.
+  * **12:53–12:55:** Rising melodic fanfare with recurring orchestral hits syncing to bursts overhead.
+  * **12:58:** Sudden crescendo and key modulation, marked by bright crackling willow shells bursting.
+  * **13:03–13:05:** Climax of the stampede cue with cascading descending brass and pounding timpani.
+  * **13:07:** Final massive resolving orchestral hit/percussion strike, immediately followed by silence in the sky and a low, threatening chord.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **12:47–12:50** | Red peony burst high above spire; lower right comets/bursts. | Purple/blue floodlights wash lower turrets; ground wash on hub trees. | Projections show the Elephant Graveyard skull on upper spire wall; dusty gorge walls below. | Scar perched on the rock promontory above the center gate; Elephant Skull. |
+| **12:51–12:52** | Ground perimeter mine shells fire upwards in bright white/gold streaks from behind castle. | Deep blue/violet searchlight beams tilt upward from behind castle. | Canyon walls turn dark slate blue/indigo; wildebeest herd starts running. | Wildebeests begin stampeding across the base from stage-right to stage-left. Scar fades away. |
+| **12:53–12:55** | Large crimson/red peony shells burst directly over the central spire; trailing red comets. | Bright violet and cyan base floods; searchlights sweeping slightly outward. | Projections shift to dark blue/purple rocky gorge textures with high-contrast shadows. | Silhouettes of dozens of stampeding wildebeests running horizontally across the lower facade. |
+| **12:56–12:57** | Red burst fades into dark sky; lower smoke drifts. | Blue searchlight beams crisscross behind the upper spire. | Canyon wall projections remain blue/slate with dust and shadows moving left. | Stampeding herd continues across the bottom level. |
+| **12:58–13:02** | Rapid succession of bright gold-to-white crackling chrysanthemum/willow bursts high over spire. | Searchlights fan outward; violet wash lights intensify on flanking towers. | Facade base remains illuminated in deep blue/purple with shadows of running beasts. | Stampeding wildebeest silhouettes continue rushing across the castle walls. |
+| **13:03–13:06** | Massive golden-white brocade/willow aerial canopy fills the entire upper sky, slowly drifting down. | Blue searchlights angled steeply upward into the smoke/fireworks. | Lower facade displays chaotic movement of charging wildebeest horns and dust. | Final wave of the stampede rushes across the lower castle walls and dissipates. |
+| **13:07–13:08** | Sky goes dark; golden willow sparks burn out. | Searchlights turn off or drop down; purple perimeter lighting dims. | Dark canyon projection fades out; castle lights dim momentarily. | Wildebeests completely vanish. |
+| **13:09–13:10** | Sky remains dark (no aerial fireworks). | Vivid red and golden-yellow wash lights strike the lower walls and forecourt. | Castle rapidly transforms into glowing fiery amber/red stone; Gothic arches appear. | A giant glowing sinister eye (slitted pupil) appears inside the circular arch/rose window above the clock. |
+
+**4. Fireworks in the sky**
+* **12:47–12:50:** 2 large red peony shells bursting directly above the main spire, with secondary red comet tails launching from the right rear perimeter.
+* **12:52–12:55:** 2 dense red/crimson peony aerial shells blooming centrally above the spire, cascading downward into soft red sparks. 
+* **12:58–13:01:** A wave of 3–4 medium-to-large golden/white glittering chrysanthemum bursts fired in rapid succession directly behind the central spire.
+* **13:02–13:06:** Grand aerial finale for this cue: 3 large brocade/kamuro willow shells bursting nearly simultaneously at high altitude, spreading a massive golden curtain across the sky over both left, center, and right.
+* **13:07–13:10:** Complete blackout in the sky; dark and quiet, creating tension for the next villain sequence.
+* **Rhythm:** Starts with single rhythmic red accents (~1 shell every 2 seconds), ramps up at 12:58 to a multi-shell burst wave (~2 shells/sec), peaks with the large brocade barrage at 13:03, then abruptly stops dead at 13:07.
+
+**5. Fireworks on the castle**
+* **12:51–12:52:** A low-level launch of white/gold comet mines fired from ground positions immediately behind the rear castle walls/parapets, shooting straight up like vertical tracers to announce the stampede.
+* No gerbs, static fountains, or rooftop Roman candles are mounted directly on the castle turrets during these seconds.
+
+**6. Lasers and lighting**
+* **Lasers:** No visible thin-beam aerial lasers are active during this segment.
+* **Searchlights:** High-powered blue and violet moving-head searchlights situated behind the castle point upward into the sky in a stationary "V" or narrow fan framing the central spire from 12:51 to 13:06.
+* **Flames/Fountains:** No real flame projectors or water fountains are used in this segment.
+* **Wash Lights:** Turrets and flanking towers are bathed in deep, eerie blue and violet LED floods to match the nighttime gorge ambiance, which snap to harsh red/yellow at 13:09.
+
+**7. The castle**
+* **Base Architectural Lighting:** 
+  * 12:51–13:07: Main spire, roofs, and side turrets are lit in cool indigo, dark royal blue, and violet.
+  * 13:08–13:10: Base lighting instantly switches to fierce amber-gold and blood-red.
+* **Projections:**
+  * **12:47–12:50:** The upper tower shows the eerie, gaping-mouthed Elephant Graveyard skull; lower walls show the rocky ledges of the gorge.
+  * **12:51–13:07:** The entire lower and middle facade projects the sheer rock walls of the gorge in cold blue/slate gray. Projected dust clouds and stampeding silhouettes sweep continuously across the bottom tier.
+  * **13:08–13:10:** Dramatic transformation into flaming orange/red stone architecture with Gothic tracery and a glowing, slitted eye.
+
+**8. Characters**
+1. **Scar (*The Lion King*)**
+   * **Location:** Bottom-center (directly over the main gate and lower balcony).
+   * **Size:** Approximately 1/6 the total height of the castle facade.
+   * **Action:** Seen standing menacingly on the rock outcropping looking down with glowing green/yellow eyes.
+   * **Timing:** Present at 12:47; fades away into dust between 12:50 and 12:51.
+2. **The Wildebeest Herd (*The Lion King*)**
+   * **Location:** Spans the entire bottom-third of the castle (bottom-left, bottom-center, bottom-right).
+   * **Size:** Each individual wildebeest is small (approx. 1/20 of castle height), moving as a dense herd.
+   * **Action:** Silhouetted shadows stampeding at high speed horizontally across the castle walls from right to left, accompanied by rising dust effects.
+   * **Timing:** Enters at 12:51; exits/dissipates at 13:07.
+3. **Fiery Sinister Eye (Claude Frollo / *Hunchback of Notre Dame* / Villains motif)**
+   * **Location:** Center-center (inside the circular clock/rose window above the main gate arch).
+   * **Size:** Fills the circular window space (approx. 1/8 the castle height).
+   * **Action:** Snaps into view staring forward with a vertical slit pupil surrounded by burning yellow/orange iris.
+   * **Timing:** Appears at 13:09.
+
+**9. For our boards (LED Matrix recreation)**
+To capture this section authentically on 64x32 or 64x64 matrices:
+1. **The Stampede Movement:** The signature visual of this 16-second cue is the dark silhouettes of animals sprinting across the bottom 8–12 pixel rows of your castle from right to left against a dark blue background.
+2. **Color Contrast & Pacing:** 
+   * 12:51–12:57: Dark blue/indigo castle with isolated bright crimson/red bursts directly overhead.
+   * 12:58–13:06: Intense cascade of bright white/gold willow particles drifting down across the matrix.
+   * 13:07–13:09: Complete darkness in the sky; sudden change of the castle base from cool blue to burning red/orange, with a single bright yellow/red eye staring out from the center.
+
+**10. What couldn't see**
+* The exact ground launch points behind the castle are hidden behind the castle walls and hub structures.
+* Street-level projections on Main Street U.S.A. buildings are out of frame (the camera is fixed on Cinderella Castle).
+
+**11. Our version**
+* **What's right:** You correctly identified that a major villain sequence build occurs here, leading into intense dramatic effects.
+* **What's wrong:** 
+  * There is **no green dragon fire** anywhere between 12:50 and 13:07. The colors in this cue are exclusively **deep blue/slate** on the castle, with **red** and **gold/white willow** fireworks overhead. Dragon fire (Maleficent) occurs in a different segment of the show.
+  * **Jafar and Maleficent are not present** in this 12:50–13:07 cue.
+* **What's missing:** 
+  * The cue is specifically the **Wildebeest Stampede (*The Lion King*)**, featuring **Scar** at the transition (12:50) and a **moving herd of wildebeests** running across the base (12:51–13:07).
+  * The sudden blackout at 13:07 followed by the appearance of the fiery sinister eye at 13:09.
+
+</details>
 
 ### 7.4 He's a Pirate
 
@@ -3256,7 +3530,127 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 13:04-13:39 · notes: none</summary>
+
+Here is the detailed breakdown of the *Pirates of the Caribbean* ("He's a Pirate") segment from the video.
+
+**1. Where this part starts and ends**
+* **Start:** **13:08 - 13:09**. 
+  * *Audio:* The previous orchestral sweep concludes and the driving, rhythmic cello/brass motif of Klaus Badelt’s "He's a Pirate" starts abruptly.
+  * *Visual:* Castle lighting flashes bright yellow-gold, revealing the Aztec medallion / cursed gold coin projection over the center entrance at 13:09.
+* **End:** **13:32 - 13:33**.
+  * *Audio:* Ursula’s loud, echoing cackle (*"Ha ha ha ha!"*) cuts directly into the music.
+  * *Visual:* The castle lighting snaps from pirate orange/fire tones to deep villainous sea-green and neon violet at 13:32–13:33, transitioning into *The Little Mermaid* / Villains sequence.
+* **Assessment of your range (13:07 to 13:36):**
+  * **13:07 is slightly early:** At 13:07, gold willow bursts from the previous sequence are still drifting down against blue castle illumination.
+  * **13:36 is late:** By 13:33, Ursula has laughed, the pirate theme has ended, and green tentacle projections and green comet fans ("Poor Unfortunate Souls") have completely taken over.
+
+**2. Music**
+* **Song:** *"He's a Pirate"* (composed by Klaus Badelt / Hans Zimmer).
+* **Vocals/Spoken lines:** Instrumental score throughout this section until Ursula's maniacal laugh (*"Ha ha ha ha!"*) strikes at **13:32–13:34**.
+* **Major Musical Hits & Beats:**
+  * **13:08:** Theme kickoff (driving 12/8 rhythm starts).
+  * **13:10:** First massive orchestral downbeat — accompanied by continuous roaring real flame jets bursting on both sides of the castle base.
+  * **13:11:** Twin fanned volley of red/orange comets launching into the sky on the rhythmic beat.
+  * **13:16 – 13:18:** Syncopated brass crescendo — accompanied by arching red/gold comets and large red chrysanthemum bursts high overhead.
+  * **13:28 – 13:30:** Second musical climax — high red peony burst explodes right of the spire at 13:28, followed by a double red shell burst at 13:30.
+  * **13:32 – 13:33:** Musical transition hit — music breaks sharply for Ursula’s laughter.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **13:08** | Dying gold willow embers from previous scene | Blue searchlights sweep upward behind castle | Switches from blue/cyan to bright amber/gold wash | Aztec gold medallion motif appears on main gate |
+| **13:10** | Low launcher pre-ignition flashes | **6 real flame jets** erupt along base & lower terraces | Base glows burning deep red/orange; spire turns amber | Medallion skull emblem sharpens in center gate |
+| **13:11 – 13:15** | Fan of ~10 vertical red/gold comets with crackling tails launch outward | Flame jets pulse; warm amber/red architectural wash | Red brickwork texture with burning edges projected across central facade | Cursed Aztec coin / skull eye glows at center |
+| **13:16 – 13:19** | Fan of arching red comets left/right, followed by 2 large red peony/chrysanthemum shells high | Searchlights track outward; amber ground wash | Castle engulfed in fiery projections and rolling ocean storm waves | Silhouette of pirate ship (Black Pearl) & ghostly skeletal pirates fighting |
+| **13:20 – 13:26** | White/gold rising comet tails angling outward; sky mostly clear of large bursts | Sharp blue & white searchlight beams criss-cross behind castle spire | Castle switches to eerie moonlit stone, deep ocean blues, and warm lantern glows | Ghostly pirates battling along castle ramparts; pirate silhouettes moving |
+| **13:27 – 13:31** | 1 medium red peony right (13:28), then 2 large ruby red peonies high left & center (13:30) | Purple/red backlight sweeps upward behind spires | Stone walls look aged/cracked, with warm torchlight in archways | Ship rigging / Jack Sparrow compass & pirate iconography at castle center |
+| **13:32 – 13:33** | Single small red star trailing right | Lighting abruptly cuts to electric green & deep magenta | Projections shift from pirate fire to bubbling green ocean depths | Pirate projections fade; Ursula silhouette hints emerge |
+| **13:34 – 13:38** | Massive synchronized fan of neon lime-green comets and green starbursts overhead | Intense neon green ground wash and sweeping green spotlights | Fully green and deep violet stone; giant projected black tentacles wrapping towers | Ursula's tentacles writhe up lower towers and ramparts |
+
+**4. Fireworks in the Sky**
+* **13:11 – 13:15:**
+  * *Type/Color:* Fanned straight comets, bright red heads with trailing gold crackle/sparks.
+  * *Size/Height:* Mid-to-high, shooting ~1.5x the height of the castle base.
+  * *Side/Arrangement:* Symmetrical fanned volley (approx. 5 on the left, 5 on the right).
+* **13:16 – 13:19:**
+  * *Type/Color:* Two fanned arching comets firing inward/outward, breaking into 2 large spherical peony/chrysanthemum aerial shells in deep ruby red.
+  * *Height:* High overhead above the spire.
+* **13:20 – 13:26:**
+  * *Rhythm:* Sky goes quiet for 6 seconds to let the music and projections take prominence; only 2–3 low rising white/gold comets angle outward.
+* **13:28 – 13:31:**
+  * *Type/Color:* High-altitude red peony shells. One shell at 13:28 (mid-high, right of spire), followed at 13:30 by a synchronized twin shell burst (large, directly above and left of spire).
+* **13:34+ (Villains intro):**
+  * *Type/Color:* Fanned bright lime-green comets launching wide left and right, topped by medium green peony bursts high above the spire.
+
+**5. Fireworks on the Castle**
+* No small fountains/gerbs are fired from the castle turrets during this specific sequence.
+* All pyrotechnics in this segment are either launched from **ground perimeters behind/beside the castle** or generated by **physical flame projectors** installed along the lower hub terraces in front of the castle.
+
+**6. Lasers and Lighting**
+* **Flames:** At **13:10**, 6 massive liquid-fuel flame projectors positioned on the castle forecourt/terraces fire towering plumes of real orange fire (approx. 20–30 ft high), pulsing in sync with the heavy brass beats until ~13:14.
+* **Searchlights / Moving Lights:**
+  * *13:08 – 13:19:* Warm amber and fiery red wash lights bath the lower structure; narrow-beam searchlights behind the castle cast deep blue and amber beams scanning upward.
+  * *13:20 – 13:26:* Searchlights behind the castle shift to stark blue and white, criss-crossing rapidly to mimic a nautical storm/lightning effect.
+  * *13:32 – 13:38:* Instant snap to vibrant lime-green searchlights sweeping across the sky on Ursula’s laugh.
+* **Lasers:** Sharp, green/cyan needle laser lines appear intermittently slicing horizontally across the moat trees and castle base around 13:35–13:38.
+
+**7. The Castle**
+* **Lighting Changes:**
+  * **13:08:** Snaps from cool Tangled blues to glowing golden yellow.
+  * **13:10 – 13:19:** Drops into saturated deep crimson and volcanic red on the lower ramparts, transitioning into burning yellow-orange up the central spire.
+  * **13:20 – 13:27:** Darkens significantly into cool midnight navy, shadowed stone grey, and warm lantern glows in the windows.
+  * **13:32 – 13:33:** Sharp switch to eerie toxic green on the upper spires and royal purple on the lower half.
+* **Projections:**
+  * **13:08 – 13:12:** The large circular Aztec medallion / cursed gold coin from *The Curse of the Black Pearl* fills the center gate archway, with cracked, smoldering stonework and fiery ember textures spreading across the facade.
+  * **13:13 – 13:22:** Stormy ocean swells, splashing water, rolling flames, and wooden ship hull textures projected along the curtain walls.
+  * **13:23 – 13:31:** The castle appears as a dark pirate fortress under moonlight; silhouettes of swords and rigging across the main tower.
+  * **13:33 – 13:38:** Giant dark purple/black tentacles writhe up the turrets against a green bubbling water wash.
+
+**8. Characters**
+* **Aztec Medallion Skull / Cursed Coin:**
+  * *Grid position:* Center (lower-middle gate, bottom-center 3x3).
+  * *Size:* Approx. 1/4 castle height.
+  * *Timing & Movement:* Appears at **13:09**, glows steadily with glowing eyes until ~13:14.
+* **Ghostly Skeletal Pirates & Jack Sparrow Silhouette:**
+  * *Grid position:* Lower-left, center, and lower-right battlements.
+  * *Size:* Approx. 1/6 castle height.
+  * *Timing & Movement:* Between **13:18 and 13:26**, dark silhouettes and skeletal figures brandishing swords clash and fight across the castle ramparts, moving horizontally across the parapets before dissolving into sea spray.
+* **The Black Pearl:**
+  * *Grid position:* Center-left to center.
+  * *Size:* Approx. 1/3 castle width.
+  * *Timing:* Silhouetted masts and tattered black sails cross the lower mid-section during the storm sequence (13:19–13:24).
+
+**9. For Your LED Boards (Key Authenticity Moments)**
+To capture this segment convincingly on low-res 64x32/64x64 matrices:
+1. **The Instant Color Shift & Flame Flash (13:09–13:10):**
+   * Snap the castle instantly from blue/gold to blazing deep red and orange.
+   * Render vertical orange/yellow flame bursts popping on the terrace base (2–3 columns of bright orange/yellow flicker for 2–3 seconds).
+2. **Fanned Red Comets to Red Peony (13:11 – 13:17):**
+   * Fire a symmetrical V-fan of trailing red comets outward, culminating in a large red burst directly overhead.
+3. **The Hard Green Snap (13:32):**
+   * Cut the red/fire palette instantly to solid lime-green on the spire and purple at the base on Ursula’s laugh (13:32), immediately launching green angled comet lines.
+
+**10. What Couldn't Be Seen / Uncertainties**
+* Due to bright pyrotechnic smoke between 13:12 and 13:22, individual facial details of the projected pirates on the mid-balcony are somewhat obscured; only their sharp combat silhouettes and skeletal glows are clearly distinguishable.
+* The exact count of real flame units along the hub perimeter appears to be 6, but outermost flanking flame jets may be partially out of frame to the far left/right.
+
+**11. Review of Your Current Version**
+*Your text: "The castle cracks and burns; flame jets on the terraces; red, orange and gold. Characters: Pirates."*
+
+* **What's Right:**
+  * "The castle cracks and burns" accurately matches the projected ember/cracking stonework texture.
+  * "Flame jets on the terraces" is completely correct — the physical flame cannons at 13:10 are a defining feature.
+  * "Red, orange and gold" is the exact colorway for this sequence.
+  * "Characters: Pirates" is the correct theme/content.
+* **What's Wrong:**
+  * Your timing bounds (13:07–13:36) extend too late: by 13:33, the show has already transitioned to Ursula / The Villains with green/purple lighting and tentacle projections.
+* **What's Missing:**
+  * The iconic **Aztec gold medallion** projected right over the main entrance archway (13:09–13:13).
+  * The **symmetrical fanned comets** and **high ruby-red peony shells** that burst overhead to the signature brass hits.
+  * The transition to a **stormy sea battle** (ocean blues and pirate ship silhouette) midway through (13:20–13:25) before the finale shells.
+
+</details>
 
 ### 7.5 He's a Pirate (green barrage)
 
@@ -3269,7 +3663,87 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 13:33-13:46 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** **13:37**. Marked by a sudden, massive launch of green comets in a wide fan flanking the castle, synced to an accelerating brass crescendo in "He's a Pirate." 
+  * *Note on 13:36:* Starting at 13:36 is slightly early; at 13:36, only a single stray red shell bursts on the left before the coordinated green barrage erupts at 13:37.
+* **End:** **13:43**. Marked by the final crackling spread of the green canopy across the upper sky. At 13:44, the green trails fade out, and at 13:45, the show shifts into a fiery crimson/red barrage with red perimeter mines and red wash on the castle.
+  * *Note on 13:43:* 13:43 is exactly on time for the end of the green barrage.
+
+**2. Music**
+* **Song:** "He's a Pirate" (from *Pirates of the Caribbean: The Curse of the Black Pearl*, composed by Klaus Badelt and Hans Zimmer).
+* **Lyrics/Spoken lines:** Purely instrumental symphonic pirate theme during this segment; no lyrics or voiceover.
+* **Musical hits and beats:**
+  * **13:37:** Fast, syncopated brass and percussion crescendo accompanies the simultaneous upward firing of green comet fans.
+  * **13:38 – 13:40:** Driving 12/8 pirate meter with heavy drum accents matching successive volleys of bursting green aerial shells.
+  * **13:41 – 13:42:** Climactic brass fanfare flourish synced with the widest fan of angled green comet tails and gold crossette/mine bursts.
+  * **13:43:** Final cadence beat of this phrase before transitioning into the darker, percussive battle rhythm at 13:44–13:45.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **13:33 – 13:35** | Quiet sky; faint trailing sparks overhead. | Green and lime floodlighting washing up the lower walls and central facade. | Ethereal lime green and dark purple pirate wash with ship rigging patterns. | Indistinct ghostly pirate ship textures. |
+| **13:36** | Single low/mid red peony bursts on the far left. | Green floodlights continue illuminating facade. | Castle facade lit in bright electric green and yellow-green on upper spires. | None visible. |
+| **13:37** | Symmetrical fan of intense green comets launches upward from both sides of the castle. | Green wash intensifies; high-intensity green spotlights accent the turrets. | Lime-green illumination on central spire and towers; purple/blue on lower outer walls. | Ghostly pirate vessel details projected on center gate. |
+| **13:38 – 13:39** | Multiple large green peony/chrysanthemum shells break high above the spire; green comets fan outward. | Bright green upward beam wash matching the fireworks. | High-contrast green and dark blue pirate ship projections across the main facade. | Undefined ghostly crew/rigging silhouettes. |
+| **13:40 – 13:41** | Massive continuous barrage of green aerial shells breaking overhead; two angled golden mine/comet plumes erupt at the flanks (13:41). | Vivid emerald green washes on castle; ambient flash from bursts lights the hub. | Bright yellow-green main tower; deep green and shadowy blue on lower levels. | Silhouette of pirate ship helm and sails across center facade. |
+| **13:42 – 13:43** | Apex of the barrage: dense green willows/crossettes fill the sky from left to right; upward green comets reach peak spread. | Saturated emerald and lime lighting across all turrets and walls. | Glowing neon green spire with pirate fortress/ship projections below. | Silhouette textures begin fading into darker tones. |
+| **13:44 – 13:45** | Green stars drift and extinguish; at 13:45, massive red comet mines and high red shells erupt. | Castle wash shifts rapidly from green to deep amber and fiery crimson red. | Castle turns solid blood-red/crimson for the ensuing battle section. | Projections shift into fiery pirate combat imagery. |
+
+**4. Fireworks in the sky**
+* **Types:** Green comets, green chrysanthemums/peonies, trailing green willows, and at 13:41, two angled gold/orange mine comet bursts.
+* **Colors:** Predominantly emerald green and bright lime green, with brief gold/amber accents.
+* **Height and position:**
+  * **Low to Mid-level:** Ground-launched green comets shooting upwards in wide mirrored fans left and right of the castle (reaching spire height, ~150–200 ft).
+  * **High-level:** Large aerial shells exploding 100–200 ft above the top spire, spreading across the entire upper sky (left, center, and right).
+* **Launches and Pattern:**
+  * Symmetrical, mirrored fan launches flanking the castle.
+  * Approximately 10–12 green comets launch simultaneously per volley from ground firing sites.
+  * Aerial breaks explode in rapid clusters (roughly 3 to 5 large breaks per second between 13:38 and 13:42).
+  * Rapid, continuous barrage with no quiet gaps between 13:37 and 13:43, creating a solid canopy of green overhead.
+
+**5. Fireworks on the castle**
+* There are **no fountains, gerbs, or roof-mounted pyrotechnics** fired directly from Cinderella Castle's battlements or turrets during this segment. 
+* All pyrotechnics originate from the ground launch areas flanking the castle and the distant perimeter launch site behind it.
+
+**6. Lasers and lighting**
+* **Lasers:** No visible laser beams overhead during this specific barrage.
+* **Castle Floodlights:** High-powered LED wash fixtures bathe the castle in vibrant emerald green and lime green, with dark purple/cyan accents on the outer lower towers.
+* **Searchlights:** Upward-firing architectural searchlights track up the main central spire in bright lime-yellow/green, reinforcing the vertical lines of the castle.
+* **Flames/Fountains:** No ground flame projectors or water fountains active in this segment.
+
+**7. The castle**
+* **Base Lighting:**
+  * 13:33–13:43: Castle walls are washed in saturated lime green, neon emerald green, and deep sea-purple.
+  * 13:44–13:45: Instantaneous transition to dark amber, switching to deep crimson/blood red at 13:45.
+* **Projections:**
+  * Dynamic projection mapping depicts the eerie, supernatural world of *Pirates of the Caribbean*: ghostly water currents, wooden ship timbers, skeletal rigging, and ocean spray across the central facade and towers.
+  * The main clock tower displays pirate motifs and ethereal green ghostly light.
+
+**8. Characters**
+* **Identifiable Characters:** No clearly defined, standalone animated Disney characters (e.g., full-figure Jack Sparrow, Davy Jones, or Hector Barbossa) are distinctly resolved or projected as isolated focal points on the castle facade in this shot.
+* **Environmental/Ensemble Figures:** Ghostly pirate silhouettes and nautical ship textures appear integrated into the stonework projections across the lower-center grid (base and middle gate, rows 2–3, column 2), but they function as environmental atmospheric textures rather than distinct character animations.
+
+**9. For our boards (64x32 and 64x64 LED matrix)**
+1. **The Green Fan Eruption (13:37):** Simultaneously fire two angled fans of bright green single-pixel comets from the lower-left and lower-right of the castle upward toward the top edges of the matrix.
+2. **The Emerald Overhead Canopy (13:38 – 13:42):** Fill the upper third of the matrix with expanding green star bursts (chrysanthemums/willows) cascading downward while continuous green streaks rise from the sides.
+3. **Palette & Castle Transition (13:43 – 13:45):** Keep the castle silhouette illuminated in vivid lime/emerald green (with dark purple flanking towers) throughout the barrage, then sharply switch the castle pixels to deep fiery red at 13:44–13:45 as the green fireworks fade out.
+
+**10. What you couldn't see**
+* **Projection Fine Detail:** Due to distance, bright pyrotechnic exposure, and ambient illumination, fine line details of the projections on the central castle gate are partially washed out; specific skeletal crew faces cannot be confirmed with absolute certainty (noted as "unsure").
+* **Launch Points:** Ground-level firing racks are located behind backstage foliage/structures and cannot be seen directly.
+
+**11. Our version**
+* **What's right:** "Emerald shells and lime comets" is completely correct and accurately captures the color palette and pyrotechnic types used throughout this sequence. "Characters: none" is also practically accurate, as no distinct animated characters take the spotlight.
+* **What's wrong:** Nothing is factually incorrect.
+* **What's missing:**
+  * The symmetrical **mirrored fan formation** of the comets launching outward from both flanks.
+  * The dual **gold/amber comet/mine burst** at 13:41 that accents the green shells.
+  * The strong **emerald/lime green and purple floodlighting** on the castle itself.
+  * The immediate, dramatic transition to **deep red** at 13:44–13:45 which marks the boundary of this cue.
+
+</details>
 
 ### 7.6 He's a Pirate (red and gold)
 
@@ -3282,7 +3756,91 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.7-flash · video 13:40-14:11 · notes: none</summary>
+
+Here is the detailed breakdown of the "He's a Pirate (red and gold)" sequence from the video:
+
+**1. Where this part starts and ends**
+* **Start:** Exactly at **13:44**. The transition is marked by a sudden musical shift from the eerie villain theme into the driving triple-meter rhythm of *He's a Pirate*, accompanied by the castle projections and lighting instantly shifting from glowing green/purple to deep fiery red and gold, followed immediately by simultaneous red aerial bursts and mine launches.
+* **End:** Exactly at **14:08 – 14:09**, ending on a massive percussive musical hit where a giant V-fan of comets erupts directly from the castle ramparts, transitioning into the triumphant trumpet fanfare of the next segment at 14:10.
+* **Assessment of your range (13:43 to 14:08):** Extremely accurate. 13:43 catches the final decaying green burst; 13:44 is the true explosive downbeat of the red/gold pirate theme, and 14:08–14:09 is the closing punctuation.
+
+**2. Music**
+* **Music track:** *"He's a Pirate"* (from *Pirates of the Caribbean: The Curse of the Black Pearl*, composed by Klaus Badelt and Hans Zimmer), arranged for full symphonic orchestra.
+* **Lyrics:** None (entirely instrumental/orchestral).
+* **Key Musical Hits & Beats:**
+  * **13:44:** Dramatic downbeat of the main theme; massive orchestral strike.
+  * **13:48 – 13:50:** Secondary rhythmic cadence hit; barrage of gold brocade/willow breaks.
+  * **13:54 – 13:56:** Climax of the first melodic phrase, accompanied by layered high-altitude gold/white chrysanthemums.
+  * **13:59 – 14:00:** Syncopated turnaround beat where aerial activity briefly pauses before the next phrase.
+  * **14:04 – 14:05:** Powerful cannon-like orchestral strike synced to a ground flash/concussion behind the castle and a central red peony overhead.
+  * **14:08 – 14:09:** Final explosive crescendo chord marking the climax of the pirate sequence.
+
+**3. Timeline**
+| Time | Fireworks | Lasers & Lighting | Castle Projections & Wash | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **13:44** | Instant launch of vertical red mines from low flanks; high-altitude red/white crackle peonies break overhead. | Golden-green searchlights point outward; warm wash floods the base. | Base lighting flips instantly from villain-green to blood-orange and red. | None visible. |
+| **13:45 – 13:47** | Symmetrical salvos of thick red comets/mines angled outward; large gold/white brocade shells burst high center. | Green and gold searchlight beams sweep outward at 45° angles. | Castle façade bathed in fiery orange, red, and yellow stone textures. | Swirling pirate compass/coin projection begins to form at center. |
+| **13:48 – 13:53** | Rolling waves of red/gold chrysanthemums burst high above the spire; red tail comets continue firing from flanks. | Green and amber searchlights criss-cross behind the turrets. | Turret roofs lit in deep crimson; golden light illuminates the central arch. | **Captain Jack Sparrow** silhouette/figure visible projected in the center lower-third gate area. |
+| **13:54 – 13:58** | Dense canopy of sparkling gold willow/chrysanthemums raining down overhead; red comet tails flare on both sides. | Amber and yellow ground/turret floodlights intensify. | Detailed glowing pirate iconography (Aztec gold / compass motif) across the central tower. | Jack Sparrow continues in central archway. |
+| **13:59 – 14:00** | Sky clears briefly (pause in overhead bursting). | Beams angle sharply outward like ship masts. | Castle remains lit in warm golden yellow on center tower and deep red on outer walls. | Jack Sparrow projection fades. |
+| **14:01 – 14:03** | Angled white/silver comet fans shoot outward on left and right flanks; bright red peony bursts high above the spire. | Searchlights sweep back inward. | Façade shifts to rich amber and fiery orange. | None. |
+| **14:04 – 14:07** | Bright white ground flash/burst behind castle (14:04); red peony bursts center-high with cascading white glitter mines on flanks. | Strobe lighting accents the perimeter walls. | Strong golden wash up the center spire; crimson side turrets. | None. |
+| **14:08 – 14:10** | Massive outward-angled fan of thick golden comet tails / gerb mines launched directly from the castle battlements. | Blinding golden white wash across the entire castle structure. | Full-castle golden-white illumination flare. | None. |
+
+**4. Fireworks in the Sky**
+* **Types:** Red comet mines, gold willow/brocade shells, crackling chrysanthemums, red peonies, and silver/white comets.
+* **Launch Locations & Pattern:**
+  * **Flanks (Left & Right):** Upward-shooting red and silver mines/comets launched in paired outward fans.
+  * **High Center (Above Spire):** Large-caliber aerial shells breaking in high-altitude brocades, gold willows with red tips, and crisp red peonies.
+* **Counts & Rates:**
+  * **13:44 – 13:57:** Very dense barrage—roughly 4 to 6 discrete breaks/launches per second, layering red ground tracers with high-altitude gold waterfalls.
+  * **13:58 – 14:00:** Lull/quiet pocket where high bursts clear out.
+  * **14:01 – 14:07:** Measured, rhythmic firing (approx. 2 breaks per second), alternating white side comets with high red peony shells.
+  * **14:08:** Single coordinated fan blast across the full castle width.
+
+**5. Fireworks on the Castle**
+* **13:44 – 14:07:** Launch trails of low mines originate from launch pads immediately behind the castle flanks and parapets.
+* **14:08 – 14:09:** A coordinated, multi-point **mine/comet fan** fires directly from the lower rooftops and upper battlements of Cinderella Castle, shooting bright gold comet streamers outward in a wide "V" shape.
+
+**6. Lasers and Lighting**
+* **Searchlights:** High-intensity beam fixtures positioned behind the hub and behind the castle outer walls. During this segment, they project **amber/gold and lime-green/emerald beams** tilted outward at 30° to 45° angles, suggesting the rigging or cannons of a pirate galleon.
+* **Lasers:** No sharp geometric laser vectors are visible in this specific segment; beam effects are driven by searchlights and lighting fixtures.
+* **Ground Flashes:** A bright white/gold pyrotechnic flash behind the lower castle wall occurs at **14:04**.
+
+**7. The Castle**
+* **Base & Wall Lighting:**
+  * Flips from glowing green to intense blood red and burnt orange at **13:44**.
+  * The central tower is highlighted in rich golden yellow, while the flanking turrets and roofs remain saturated in deep red and amber.
+  * At **14:08**, flashes completely to high-intensity warm white/gold.
+* **Projections:**
+  * **13:45 – 13:58:** The façade displays textures of pirate adventure—golden Aztec medallion/compass filigree spinning slowly on the main tower above the entryway, set against glowing ember-lit fortress walls.
+
+**8. Characters**
+* **Character:** **Captain Jack Sparrow** (from *Pirates of the Caribbean*).
+* **Location:** Lower-center grid of the castle, framed within the central gateway and immediately above the main archway.
+* **Size:** Approximately 1/4 to 1/3 the height of the main castle center block (comparatively small against the entire structure).
+* **Movement:** Appears around **13:48**, standing/moving subtly within the projection frame inside the central archway, then dissolves/fades away by **13:59** as the tempo shifts.
+
+**9. For your LED Boards (64x32 / 64x64)**
+To capture this segment authentically on tiny matrix displays:
+1. **The 13:44 Palette Snap:** Instantly flip the castle pixels from green/purple to deep crimson red with a bright gold center spire, while immediately firing vertical red comet pixels up the left and right borders.
+2. **Gold Willow Canopy (13:48 – 13:56):** Generate falling gold sparkle pixels cascading downward from the top of the display over the castle, framed by pulsing red ground mines on the flanks.
+3. **The Climax Fan (14:08):** Clear the sky for 1 second at 14:00, fire alternating white side dashes and central red dots (14:01–14:06), and then fire a dramatic outward "V"-shaped fan of gold comet pixels originating directly from the castle roofline at 14:08.
+
+**10. What couldn't be seen**
+* **Perimeter Hub Lighting:** Street lamps and hub projection towers are mostly cropped out.
+* **Fine Projection Detail:** Because of camera exposure adjusted for bright fireworks, the exact details of the Jack Sparrow projection in the lower gate are slightly washed out, though the iconic silhouette and the Aztec gold medallion/compass motifs are recognizable.
+
+**11. Our Version (Critique)**
+* **What's right:** Identifying the dense red and gold aerial fireworks color scheme ("dense red chrysanthemums and gold willow fans").
+* **What's wrong:** Saying **"Characters: none"** is incorrect—Captain Jack Sparrow is projected in the central gate area between ~13:48 and 13:58.
+* **What's missing:**
+  1. The rapid vertical red mines/comets flanking the castle from 13:44 to 13:57.
+  2. The brief pause in overhead fire around 13:59–14:00 followed by the rhythmic red center shells and white flank comets (14:01–14:06).
+  3. The signature finale element at 14:08: the massive V-shaped comet fan fired straight off the castle battlements.
+
+</details>
 
 ### 7.7 He's a Pirate (finale)
 
@@ -3295,7 +3853,89 @@ _None yet._
 
 **Answers** (newest first):
 
-_None yet._
+<details><summary><b>2026-10-14</b> · gemini-3.8-flash · video 14:05-14:23 · notes: none</summary>
+
+**1. Where this part starts and ends**
+* **Start:** Exactly **14:08**. Marked by a massive percussive musical hit/cannon explosion and an immediate upward fan blast of brilliant white comets/gerbs launching from Cinderella Castle.
+* **End:** Exactly **14:19** – **14:20**. Marked by the final sustaining orchestral chord of "He's a Pirate" dying down, the red perimeter fallout clearing, and the castle illumination shifting abruptly from fiery red/amber to deep cool blue/cyan at 14:19–14:20.
+* **Accuracy of 14:08 to 14:20:** Spot on.
+
+**2. Music**
+* **Music:** "He's a Pirate" (composed by Klaus Badelt and Hans Zimmer) from *Pirates of the Caribbean*.
+* **Lyrics / Spoken Lines:** Instrumental only; no singing or spoken dialogue during this finale barrage. Cannon fire, sword clashes, and cinematic battle explosions are mixed into the orchestral track.
+* **Key Hits/Beats:**
+  * **14:08:** First giant symphonic hit / cannon boom, cueing the castle rooftop comet fan.
+  * **14:10:** Second orchestral accent, launching high-arching red and gold comets.
+  * **14:11 – 14:12:** Heavy triple orchestral crash, unleashing the massive 360° perimeter red mine/comet barrage.
+  * **14:16 – 14:17:** Final explosive orchestral climax of the melody.
+  * **14:18 – 14:20:** Sustained low strings and brass resolving as the tempo drops and the track transitions out of the battle sequence.
+
+**3. Timeline**
+| Time | Fireworks | Lasers and Lighting | Castle | Characters |
+| :--- | :--- | :--- | :--- | :--- |
+| **14:08** | Rapid high-power white comet/gerb fan bursts upward and outward from behind the castle roofline. | Intense yellow-gold/white floodlights flare on the castle face; warm searchlights point up. | Whiteout flash, instantly washing out the facade into gold/white. | None. |
+| **14:09 – 14:10** | Wide V-shaped fan of red and gold crossettes/comets shoots high above the spire. | Red and amber side washes on trees; green/gold spotlights angled upward. | Castle projection shows pirate ship / stone texture illuminated in glowing yellow-green and fiery orange. | None. |
+| **14:11** | Thick red arching comets / tourbillons erupt upward from behind the spire in a narrow fan; red mines fire at base. | Bright red base uplighting flashes intensely. | Lower facade glows dark crimson/amber; battlements in silhouette. | None. |
+| **14:12 – 14:15** | Massive full-perimeter perimeter barrage: hundreds of red comets with bright white/silver rising tails shoot up across the entire left, centre, and right horizon to high altitude. | Cyan and red searchlight beams sweep upward from the castle base into the sky. | Castle saturated in deep fiery crimson and golden amber. | None. |
+| **14:16 – 14:17** | Second wave of red perimeter tails pop and crackle at the top; dense wall of red fire across the entire sky. | Cyan searchlights actively scissor/cross behind the castle spires. | Red wash gradually dims on upper towers; amber remains on base. | None. |
+| **14:18 – 14:19** | Red fallout finishes drifting down; small twinkling white hang-time strobes drift in the upper sky. | Cyan/blue searchlights sweep outward; castle facade wash snaps from red to cool blue/teal. | Castle shifts from warm flame colors to cool blue/aqua stonework. | None. |
+| **14:20** | Sky clears of active launches; faint white strobe/ember residue fades out. | Low-intensity cyan/blue stage lights sweep gently. | Deep royal blue and teal base projection with eerie glowing windows. | None. |
+
+**4. Fireworks in the Sky**
+* **14:08 – 14:10:**
+  * *Type/Color:* White/gold glittering comets and red comet tails.
+  * *Height & Side:* Mid to high level, originating directly behind Cinderella Castle, spreading outward in mirrored V-fans. Count: ~20–30 comet trails.
+* **14:11 – 14:17 (Perimeter Finale):**
+  * *Type:* Perimeter comet mines and comets with rising silver/white tails terminating in intense ruby-red stars/strobes.
+  * *Height & Side:* Low, mid, and high spanning 180° across the viewer’s field of vision (left perimeter, center castle, right perimeter).
+  * *Count & Rhythm:* Continuous rapid-fire barrage, firing dozens per second (over 200+ individual red tracer lines launched across the full width between 14:12 and 14:16).
+* **14:18 – 14:20:**
+  * *Type:* Falling red embers and hanging white micro-strobes drifting downwards. No new sky bursts launched.
+
+**5. Fireworks on the Castle**
+* **14:08:** Giant white upward fountain/gerb blast launched directly from the lower rooftops and rear battlements of the castle, creating a bright silhouette.
+* **14:09 – 14:11:** Angled low-level red/gold comet mortars fired from the castle turrets/shoulders, fanning left and right.
+
+**6. Lasers and Lighting**
+* **Lasers:** No distinct pinpoint graphical lasers are visible during this specific barrage; the effect is driven predominantly by high-output wash fixtures and moving-head searchlights.
+* **Searchlights / Beams:**
+  * **14:08 – 14:11:** Amber and green-yellow searchlight beams positioned around the hub/castle moat pointing steeply skyward.
+  * **14:12 – 14:18:** Brilliant cyan/electric-blue searchlight beams cut diagonally through the red barrage, fanning and crossing behind the central spire.
+* **Flames / Fountains:** No real physical flame projectors are fired in this sequence.
+
+**7. The Castle**
+* **Internal / Architectural Lighting:**
+  * **14:08:** Overwhelmed by a high-intensity white flash/flare from the rooftop fireworks.
+  * **14:09 – 14:11:** Lower base and turrets washed in saturated warm amber and lime-green.
+  * **14:12 – 14:17:** Deep crimson floodlights saturate the entire castle profile to match the red perimeter barrage.
+  * **14:18 – 14:20:** Instant transition: crimson wash cuts off, replaced by cold navy blue and cyan LED washes on all towers and spires.
+* **Projections:**
+  * **14:08 – 14:11:** Abstract nautical/pirate masonry textures (dark stone blocks, cannon ports, glowing lanterns).
+  * **14:12 – 14:17:** Washed out by fiery red ambient lighting and pyrotechnics; castle functions primarily as a dark fortress silhouette against the bright sky.
+  * **14:18 – 14:20:** Cold blue pirate shipwreck/underwater masonry projection appears on the main gate and center turret.
+
+**8. Characters**
+* **None visible:** No Disney or *Pirates of the Caribbean* characters (e.g., Jack Sparrow, Davy Jones, or skeleton pirates) are projected or depicted during this specific finale burst (14:08–14:20). The scene is purely atmospheric and pyrotechnic.
+
+**9. For Our Boards (LED Matrix Recreation)**
+To capture this iconic moment on a 64x32 or 64x64 matrix:
+1. **The 14:08 Center Blast:** Start with a dark/amber castle silhouette, instantly bursting with a vertical white V-fan of fast-moving bright white pixels shooting upward from behind the central tower.
+2. **The 14:12 – 14:16 Perimeter Red Wall:** Fill the bottom half/edges of the matrix with dense columns of rising red pixels with white tips, covering the entire display width (left, center, right), while turning the castle structure deep red.
+3. **The 14:18 – 14:20 Color Snap:** Clear the red sky pixels, leave faint lingering white sparkle pixels drifting down, and snap the castle silhouette pixels from bright red to deep blue/cyan with cyan beam lines angled outward behind it.
+
+**10. What You Couldn't See**
+* Projections on the castle facade between 14:12 and 14:16 are partially obscured/washed out by the sheer intensity of the red pyrotechnic illumination.
+* The exact ground launch positions along the far perimeter berms are outside the camera frame (only their rising trails into the sky are visible).
+
+**11. Our Version**
+* **What's right:** "A ruby-red and white perimeter finale" is exactly right for the main barrage (14:12–14:17). Stating "Characters: none" is completely correct.
+* **What's wrong:** Omitting the opening white/gold comet fan burst at 14:08 and missing the dramatic color snap to blue at 14:19–14:20.
+* **What's missing:**
+  1. The initial white/gold castle rooftop fan burst at 14:08 that kicks off the finale.
+  2. The cyan/electric-blue searchlight beams crossing behind the castle while the red perimeter fires.
+  3. The immediate color transition of Cinderella Castle turning from fiery crimson to deep ocean blue/cyan at 14:19–14:20 as the music resolves.
+
+</details>
 
 ## 8. Triumph (audio 14:09-16:32, video 14:20-16:43)
 
