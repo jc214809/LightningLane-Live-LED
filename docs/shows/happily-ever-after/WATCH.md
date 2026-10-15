@@ -4394,6 +4394,7 @@ To capture this iconic moment on 64x32 / 64x64 pixels:
 
 - **Audio:** 992-1017 s (16:32-16:57, 25 s) · **Video:** `--start 16:43 --end 17:08`
 - **Our score now:** "Find your Happily Ever After": stained glass still lit, the keyhole glows, searchlights pan; no fireworks. Characters: none.
+- **Checked by eye (2026-10-15):** the narrator starts just after video 16:41, and the stained-glass hero mosaic (as in 8.3's check) stays up nearly the whole time he speaks. No searchlights (Gemini is right; our "searchlights pan" is wrong).
 
 **Your notes for this scene:**
 
