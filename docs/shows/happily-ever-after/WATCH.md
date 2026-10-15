@@ -3038,6 +3038,7 @@ Here is the detailed breakdown of the segment:
 - **Audio:** 668-697 s (11:08-11:37, 29 s) · **Video:** `--start 11:18 --end 11:47`
 - **Our score now:** Midnight blue, orange lanterns drifting up; white and gold bursts, then red and gold. Characters: Rapunzel, Flynn.
 - **V2:** stage ghost; actors lantern_boat (Rapunzel and Flynn's boat drifts in among the lanterns).
+- **Checked by eye (2026-10-14):** leave our version as it is (Gemini's lanterns-on-the-castle and small boat notes aren't worth changing it for).
 
 **Your notes for this scene:**
 
