@@ -3332,7 +3332,7 @@ Here is the detailed analysis of this segment of the show:
 
 - **Audio:** 742-760 s (12:22-12:40, 18 s) · **Video:** `--start 12:32 --end 12:50`
 - **Our score now:** Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts. Characters: Ursula, Scar, Hades.
-- **Checked by eye (2026-10-14):** couldn't tell which villains are here; still open.
+- **Checked by eye (2026-10-14):** couldn't tell which villains are here; still open. In frames: 12:32-12:40 the lower castle glows red-orange like fire, the upper towers icy blue-white, with a round glowing red emblem over the gate (maybe still Mulan: the Huns' attack?); about 12:42 the castle flips to teal-green with a red streak up the spire; from about 12:44 orange towers, and the Incredibles' silver robot fills the centre by 12:46-12:48.
 
 **Your notes for this scene:**
 
