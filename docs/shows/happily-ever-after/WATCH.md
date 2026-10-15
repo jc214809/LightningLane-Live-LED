@@ -4815,6 +4815,7 @@ For low-resolution LED matrix boards (64x32 / 64x64):
 
 - **Audio:** 1087-1099.6 s (18:07-18:19, 12.599999999999909 s) · **Video:** `--start 18:18 --end 18:30`
 - **Our score now:** Castle gold and red; a rainbow barrage, then a white and gold mine fan from the castle's foot. Characters: none.
+- **Checked by eye (2026-10-15):** no keyhole. Rainbow bursts, then at the very end the white and gold fan: our version is right, with no white strobes or magenta bursts between them (Gemini is wrong on both).
 
 **Your notes for this scene:**
 
