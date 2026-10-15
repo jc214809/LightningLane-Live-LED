@@ -3972,6 +3972,7 @@ To capture this iconic moment on a 64x32 or 64x64 matrix:
 - **Audio:** 849-889 s (14:09-14:49, 40 s) · **Video:** `--start 14:20 --end 15:00`
 - **Our score now:** "Remember who you are": the castle near-black with an ember core, Mufasa in the clouds; no fireworks. Characters: Mufasa.
 - **V2:** stage castle; actors mufasa (Mufasa's face fades in among the stars over the spire).
+- **Checked by eye (2026-10-15):** Mufasa as we already have him. But it isn't fireworks-free: there are definitely fireworks just before Mufasa appears (Gemini's gold comets with searchlights, about 14:38 and 14:46), so add them.
 
 **Your notes for this scene:**
 
