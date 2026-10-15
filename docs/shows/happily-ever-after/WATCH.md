@@ -2930,6 +2930,7 @@ Here is the detailed breakdown of the segment from **10:10 to 10:36**:
 - **Audio:** 637-668 s (10:37-11:08, 31 s) · **Video:** `--start 10:47 --end 11:18`
 - **Our score now:** Pink and rose stained-glass arches, flowers and waterfalls; gold brocade, pink peonies, gold palms. Characters: Cinderella, Prince Charming, Tiana, Naveen, Ariel, Eric, Belle, Beast.
 - **V2:** stage ghost; actors princess_garden (four couples meet in turn, a heart floating up between each).
+- **Checked by eye (2026-10-14):** no princesses at all: not Cinderella and Charming (Gemini) nor Tiana, Naveen, Ariel, Eric, Belle and Beast (our score). In frames: the castle stays pink and red with gold accents to about 11:05 (the same look as 6.4's family montage), pink comets from the sides at about 10:50, gold palms and willows, a red peony at about 11:04; then royal blue from about 11:06 with gold willows, into Tangled's purple and gold at 11:18.
 
 **Your notes for this scene:**
 
