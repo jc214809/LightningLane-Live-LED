@@ -4597,6 +4597,7 @@ For low-resolution LED matrix boards (64x32 / 64x64):
 
 - **Audio:** 1042.2-1080 s (17:22-18:00, 37.799999999999955 s) · **Video:** `--start 17:33 --end 18:11`
 - **Our score now:** Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple. Characters: Tinker Bell.
+- **Checked by eye (2026-10-15):** Tink's flight and the coloured bursts are almost simultaneous: time them however looks best on the board. No Big Ben clock face on the tower (Gemini is wrong there).
 
 **Your notes for this scene:**
 
