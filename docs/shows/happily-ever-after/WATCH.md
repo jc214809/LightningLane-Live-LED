@@ -2816,6 +2816,7 @@ Here is the detailed breakdown of the segment from **10:10 to 10:36**:
 - **Audio:** 623-637 s (10:23-10:37, 14 s) · **Video:** `--start 10:33 --end 10:47`
 - **Our score now:** Magenta, lavender and gold; Tarzan and Kala, Dumbo and Mrs. Jumbo; pink, violet and white with comets from the terraces. Characters: Tarzan, Kala, Dumbo, Mrs. Jumbo.
 - **V2:** stage ghost; actors dumbo (Dumbo flies across, flapping his ears).
+- **Checked by eye (2026-10-14):** correct that it opens with Kala and baby Tarzan and that the sky is quiet. It's a montage of families on the right side of the tall centre tower, not just two vignettes in the gate: Simba and Nala, then Tarzan, then Riley and her family (Inside Out), Dory (the blue shape at about 10:41, which Gemini took for Dumbo), and others. No Dumbo or Mrs. Jumbo seen.
 
 **Your notes for this scene:**
 
