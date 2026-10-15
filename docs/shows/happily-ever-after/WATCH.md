@@ -1672,6 +1672,7 @@ To make a 64x32 or 64x64 LED matrix version look instantly recognizable:
 - **Audio:** 398-412.5 s (6:38-6:52, 14.5 s) · **Video:** `--start 6:48 --end 7:03`
 - **Our score now:** Spoken line over gold and purple lamp smoke on a midnight-blue castle. Characters: Aladdin.
 - **Checked (2026-10-14):** Gemini's answer below calls the scene before this one Tarzan; it's How Far I'll Go (4.3).
+- **Checked by eye (2026-10-14):** Genie and the lamp or Aladdin, either works. 5.8 already has the Genie, so leaving Aladdin here is fine.
 
 **Your notes for this scene:**
 
@@ -1967,6 +1968,7 @@ To convey this segment instantly on a 64x32 or 64x64 matrix:
 - **Audio:** 446-453 s (7:26-7:33, 7 s) · **Video:** `--start 7:36 --end 7:43`
 - **Our score now:** Timon and Pumbaa in sunset yellow, orange and red; red and gold shells. Characters: Timon, Pumbaa.
 - **To check by eye and ear:** Gemini's answer below says this isn't Hakuna Matata but The Bare Necessities (Mowgli and Baloo, to 7:36) then *Tangled*'s "I've Got a Dream" (the Corona sun, Pascal at the gate, from 7:39). Unconfirmed: Whisper on our split-out vocals (audio 425-465) hears only "oh, oh" scat, no lyrics either way, and Gemini has misplaced Tangled once already (4.3).
+- **Checked by eye (2026-10-14):** it is Hakuna Matata (Gemini's Bare Necessities here is wrong), and it runs until Toy Story starts at about video 7:50.
 
 **Your notes for this scene:**
 
@@ -2064,6 +2066,7 @@ To convey this segment instantly on a 64x32 or 64x64 matrix:
 - **Audio:** 453-459 s (7:33-7:39, 6 s) · **Video:** `--start 7:43 --end 7:49`
 - **Our score now:** Woody and Buzz on Andy's cloud wallpaper; red and yellow bursts. Characters: Woody, Buzz.
 - **V2:** stage castle; actors buzz_woody (Buzz flies across, Woody waves from the ground).
+- **Checked by eye (2026-10-14):** Toy Story starts at about video 7:50. Bare Necessities comes after it, in the green part of 5.6.
 
 **Your notes for this scene:**
 
@@ -2170,6 +2173,7 @@ Here is the breakdown of this section of *Happily Ever After*:
 - **Audio:** 459-514 s (7:39-8:34, 55 s) · **Video:** `--start 7:49 --end 8:44`
 - **Our score now:** Ralph and Vanellope, Hiro and Baymax, Judy and Nick, Joy and Sadness; multicolour searchlights, steady pastel bursts. Characters: Ralph, Vanellope, Hiro, Baymax, Judy, Nick, Joy, Sadness.
 - **V2:** stage off; actors ralph, baymax, memory_orbs (Ralph smashes bricks (0-14 s in), Baymax inflates and waves (15-22), Joy's and Sadness's memory orbs (35-54)).
+- **Checked by eye (2026-10-14):** in order: Toy Story (from 7:50); the castle turns green for Bare Necessities, with the Jungle Book characters dancing (about 8:04); the castle turns pink and Wreck-It Ralph appears (about 8:12); back to blue-topped towers for Baymax in his super suit with Hiro (about 8:16); Nick and Judy at the bottom, in the gate, then a doughnut rolls over the castle and chases them off (Zootopia); the whole castle fills with Inside Out's memory orbs, with Joy and Sadness (about 8:30); then Mike and Sulley, surrounded by scream canisters (about 8:36). Vanellope wasn't mentioned.
 
 **Your notes for this scene:**
 
@@ -2214,6 +2218,7 @@ _Watched by Claude from frames (one every 2 s, plus close crops of the castle), 
 - **Audio:** 514-527 s (8:34-8:47, 13 s) · **Video:** `--start 8:44 --end 8:57`
 - **Our score now:** Sulley and Mike opening doors across the turrets, turquoise and purple; soft gold shells. Characters: Sulley, Mike.
 - **V2:** stage castle; actors mike (Mike peeks over the left turret, then the right).
+- **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it. Sulley and Mike belong at the end of 5.6, not here.
 
 **Your notes for this scene:**
 
@@ -2417,6 +2422,7 @@ To make this readable and authentic on a 64x32 / 64x64 matrix:
 - **Audio:** 554-563 s (9:14-9:23, 9 s) · **Video:** `--start 9:24 --end 9:33`
 - **Our score now:** A huge gold willow barrage with roof fountains showering the castle. Characters: Genie.
 - **V2:** stage castle; actors genie (he sings on to 563, round the full castle and its fountains).
+- **Checked by eye (2026-10-14):** ignore Gemini's answer here; it isn't what the show does. Leave the scene as it is.
 
 **Your notes for this scene:**
 
