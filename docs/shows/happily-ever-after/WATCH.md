@@ -199,7 +199,7 @@ To recreate this fanfare authentically on 64x32 or 64x64 LED matrices:
 
 - **Audio:** 19-47 s (0:19-0:47, 28 s) · **Video:** `--start 0:29 --end 0:57`
 - **Our score now:** Searchlights off, the keyhole dims, the sky dark. Characters: none.
-- **Checked by eye (2026-10-14):** can't tell whether the keyhole brightens (as Gemini says) or dims; still open.
+- **Checked by eye (2026-10-14):** the keyhole (the gateway arch) stays dim through the narration. When the show is ready to begin (about video 0:56), magic comes out of the keyhole and spreads through the whole castle. So it doesn't dim further, and it doesn't light up gold on its own: the magic pours out of it.
 
 **Your notes for this scene:**
 
