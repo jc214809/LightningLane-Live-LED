@@ -2617,6 +2617,7 @@ Here are the details for this segment based on the video:
 
 - **Audio:** 576-603 s (9:36-10:03, 27 s) · **Video:** `--start 9:46 --end 10:13`
 - **Our score now:** Hearts and rose stained glass, ending royal blue and violet; gold fan comets, pink, violet and gold peonies. Characters: Anna, Hans.
+- **Checked by eye (2026-10-14):** the sky bursts are gold (some green-gold), with the pink and violet only on the castle, as Gemini says. No Anna or Hans anywhere (checked by eye and in frames 9:44-10:15): the figure in the centre window at 9:46-9:52, which Gemini took for them, is Olaf carrying on from 6.1; after that the castle has no characters. Gold comet fans fire from the sides from about 10:05.
 
 **Your notes for this scene:**
 
