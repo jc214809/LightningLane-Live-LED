@@ -44,11 +44,12 @@
           "end": 45.8,
           "title": "Narrator opening",
           "characters": [],
-          "look": "Searchlights off, the keyhole dim, the sky dark",
+          "look": "Searchlights off, the sky dark, the gate a dim steady cyan as the narrator speaks",
           "rate": 0,
           "castle": "amber",
           "effects": [
-            "starfield"
+            "starfield",
+            "keyhole_glow_dim"
           ]
         },
         {
@@ -56,7 +57,7 @@
           "end": 47,
           "title": "Magic from the keyhole",
           "characters": [],
-          "look": "As the show is ready to begin (video 0:56), magic pours out of the keyhole and climbs the walls until the whole castle glows gold, then settles as the theme song starts",
+          "look": "As the show is ready to begin (video 0:56), the keyhole blazes gold-orange and its magic climbs the walls, tinting them gold while the roofs stay blue, then fades back as the singing starts (about 0:59)",
           "rate": 0,
           "castle": "amber",
           "effects": [

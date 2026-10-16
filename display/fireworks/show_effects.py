@@ -216,6 +216,11 @@ class CyanKeyholeGlow(KeyholeGlow):
     PULSE = 0.75
 
 
+class DimKeyholeGlow(CyanKeyholeGlow):
+    """The narrator's opening: the same cyan gate at half brightness, waiting for the magic."""
+    COLOUR = (30, 110, 115)
+
+
 class KeyholeOpen(Effect):
     """The finale: the doorway blazes and its gold light spreads out over the whole sky in OPEN_S,
     from when it's first turned on, staying open through the scenes after that keep it."""
@@ -264,21 +269,23 @@ class KeyholeOpen(Effect):
 
 
 class KeyholeMagic(Effect):
-    """The end of the narrator's opening: magic pours out of the keyhole and climbs the castle walls,
-    sparkling at its edge, until the whole castle is lit gold (CLIMB_S); it holds, then fades back to
-    the castle's own colours. Timed from when it's first turned on, carrying on through the scenes after
-    that keep it."""
-    CLIMB_S, HOLD_S, FADE_S = 3.0, 3.0, 3.0
+    """The end of the narrator's opening: the keyhole blazes gold-orange and its magic climbs the castle
+    walls, sparkling at its edge, tinting them gold (TINT) up to the top (CLIMB_S) while the roofs stay
+    their own blue; it holds, then fades back to the castle's own colours as the singing starts. Timed
+    from when it's first turned on, carrying on through the scenes after that keep it."""
+    CLIMB_S, HOLD_S, FADE_S = 1.5, 0.8, 1.5
     LIT = (255, 215, 110)
+    TINT = 0.45
+    BLAZE = (255, 175, 60)
 
     def __init__(self, show):
         super().__init__(show)
         self.door, _ = _door(show)
         self.bottom = max(y for _, y in self.door)
         self.top = show.castle_y
-        # The walls and roofs, lowest first, so a frame stops at the climbing edge.
+        # The walls, lowest first, so a frame stops at the climbing edge.
         self.cells = sorted(((show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels
-                             if kind in ("W", "R")), key=lambda p: -p[1])
+                             if kind == "W"), key=lambda p: -p[1])
         self.since = None
         self.sparkles = []  # [x, y, life]
 
@@ -315,14 +322,14 @@ class KeyholeMagic(Effect):
     def draw_front(self, put, out, active):
         climbed, strength = self.amounts()
         if strength > 0 and climbed > 0:
-            edge, k = self.edge(climbed), 0.75 * strength
+            edge, k = self.edge(climbed), self.TINT * strength
             for xy in self.cells:
                 if xy[1] < edge:
                     break
                 prev = out.get(xy, (0, 0, 0))
                 out[xy] = tuple(int(p + (g - p) * k) for p, g in zip(prev, self.LIT))
             for xy in self.door:
-                out[xy] = tuple(int(c * strength) for c in GOLD)
+                out[xy] = tuple(int(c * strength) for c in self.BLAZE)
         for x, y, life in self.sparkles:
             put(x, y, tuple(int(c * life / 12) for c in (255, 250, 220)))
 
@@ -963,6 +970,7 @@ EFFECTS = {
     "flame_jets": FlameJets,
     "keyhole_glow": KeyholeGlow,
     "keyhole_glow_cyan": CyanKeyholeGlow,
+    "keyhole_glow_dim": DimKeyholeGlow,
     "keyhole_open": KeyholeOpen,
     "keyhole_magic": KeyholeMagic,
     "gold_trace": GoldTrace,

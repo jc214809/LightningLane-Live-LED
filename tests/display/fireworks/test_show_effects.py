@@ -207,6 +207,18 @@ def test_the_fanfare_gate_glows_cyan_and_the_others_gold():
         assert (b > r) if name == "keyhole_glow_cyan" else (r > b), name
 
 
+def test_the_narrators_gate_is_the_fanfares_cyan_at_half_brightness():
+    show = MusicShow(64, 32, random.Random(14))
+    show.set_cue(_cue(effects=("keyhole_glow_cyan", "keyhole_glow_dim")), 1)
+    seen = []
+    for name in ("keyhole_glow_cyan", "keyhole_glow_dim"):
+        pixels = {}
+        show.extras[name].draw_front(lambda x, y, rgb: pixels.__setitem__((x, y), rgb), pixels, True)
+        seen.append(next(iter(pixels.values())))
+    bright, dim = seen
+    assert all(abs(d * 2 - c) <= 3 for c, d in zip(bright, dim))
+
+
 def test_party_searchlights_change_colour():
     show = MusicShow(64, 32, random.Random(15))
     beams = show.extras["searchlights_party"]
@@ -315,20 +327,24 @@ def test_the_keyhole_magic_climbs_the_walls_holds_then_fades(height):
         show.flash = plain.flash = [0.0, 0.0, 0.0]
         return show.frame_pixels(), plain.frame_pixels()
 
-    _run(show, cue, 1.0)
-    _run(plain, _cue(start=0, end=20, castle="amber"), 1.0)
+    _run(show, cue, 0.5)
+    _run(plain, _cue(start=0, end=20, castle="amber"), 0.5)
     low, high = _wall(show), _wall(show, low=False)
     climbed, _ = magic.amounts()
     assert 0 < climbed < 1
     lit, unlit = frames()
     assert lit[low] != unlit[low], "gold at the bottom first"
     assert lit[high] == unlit[high], "not yet at the top"
-    _run(show, cue, 3.0, start=1.0)
-    _run(plain, _cue(start=0, end=20, castle="amber"), 3.0, start=1.0)
+    _run(show, cue, 1.5, start=0.5)
+    _run(plain, _cue(start=0, end=20, castle="amber"), 1.5, start=0.5)
     lit, unlit = frames()
     assert lit[high] != unlit[high], "the whole castle by CLIMB_S"
+    roofs = [(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels if kind == "R"]
+    assert all(lit[xy] == unlit[xy] for xy in roofs), "the roofs stay blue"
+    r, g, b = lit[magic.door[0]]
+    assert r == 255 and r > g > b, "the keyhole blazes gold-orange"
     done = magic.CLIMB_S + magic.HOLD_S + magic.FADE_S
-    _run(show, cue, done - 3.5, start=4.0)
+    _run(show, cue, done - 1.5, start=2.0)
     assert magic.amounts()[1] == 0, "faded back to the castle's own colours"
 
 
