@@ -7,7 +7,7 @@ from display.fireworks.actors.walle import WallEFloats
 from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
-START, END = 603.0, 623.0
+START, END = 607.0, 623.0
 
 
 def _scene():

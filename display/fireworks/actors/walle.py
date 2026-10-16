@@ -14,7 +14,7 @@ class WallEFloats(Actor):
     a squirt: a short burst of white specks puffs out behind him and fades.
     """
     NAME = "WALL-E"
-    CROSS_S = 19.0  # edge to edge; the scene is 20 s
+    CROSS_S = 15.0  # edge to edge; the scene is 16 s
     BOB_S = 2.6  # one bob
     SQUIRT_S = 2.2  # one squirt every this many seconds...
     SQUIRT_ON_S = 0.5  # ...lasting this long

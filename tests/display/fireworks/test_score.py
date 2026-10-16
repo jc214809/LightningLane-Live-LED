@@ -35,10 +35,10 @@ def test_every_cue_uses_known_looks_shapes_and_effects(hea):
 
 # Times from watching the real show (docs/shows/happily-ever-after/README.md).
 @pytest.mark.parametrize("t, title, rate, castle, effects", [
-    (0, "Theme fanfare", 0, "amber", {"searchlights", "keyhole_glow"}),
+    (0, "Theme fanfare", 0, "amber", {"searchlights_fanfare", "keyhole_glow_cyan"}),
     (46, "Magic from the keyhole", 0, "amber", {"starfield", "keyhole_magic"}),
     (100, "Theme chorus", 2.2, "red", {"gold_trace"}),
-    (125, "Theme chorus (gold canopy)", 1.6, "blue", {"willow", "wipe_down"}),
+    (130, "Theme chorus (gold canopy)", 1.6, "blue", {"willow", "wipe_down"}),
     (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
     (230, "Out There", 1.0, "stone", {"bells"}),
     (270, "Touch the Sky", 0.9, "jungle", {"comet_fan", "willow"}),

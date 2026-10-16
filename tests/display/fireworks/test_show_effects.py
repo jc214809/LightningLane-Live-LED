@@ -1,3 +1,4 @@
+import math
 import random
 
 import pytest
@@ -162,6 +163,50 @@ def test_searchlights_shine_in_their_colours(name, colours):
     assert {tuple(int(c * 0.85) for c in rgb) for rgb in colours} <= set(pixels.values())
 
 
+def _beam_tips(show, e):
+    """Where each fanfare beam's far end is, e seconds into a scene starting at 0: [(foot x, tip x)]."""
+    beams = show.extras["searchlights_fanfare"]
+    show.set_cue(_cue(effects=("searchlights_fanfare",)), e)
+    tips = []
+    for side, foot in ((-1, show.castle_x - 2), (1, show.castle_x + show.castle_w + 1)):
+        for k in (0, 1):
+            ox = foot + side * k * 3 * beams.s
+            a = -math.pi / 2 + side * (beams.lean(e, k) + beams.SWAY * math.sin(e * 1.3 + k * 1.7 + side))
+            tips.append((ox, ox + math.cos(a) * show.height))
+    return tips
+
+
+def test_fanfare_searchlights_cross_over_the_spire_then_fan_out_wide_then_fade():
+    show = MusicShow(64, 32, random.Random(14))
+    mid = show.castle_x + show.castle_w / 2
+    left, right = _beam_tips(show, 8.0)[:2], _beam_tips(show, 8.0)[2:]
+    assert all(tip > mid for _, tip in left) and all(tip < mid for _, tip in right), "crossed over the spire"
+    wide = _beam_tips(show, 13.0)
+    assert all(tip < foot for foot, tip in wide[:2]) and all(tip > foot for foot, tip in wide[2:]), "fanned out"
+    pixels = {}
+    show.set_cue(_cue(effects=("searchlights_fanfare",)), 13.0)
+    show.extras["searchlights_fanfare"].draw_behind(lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb),
+                                                    pixels, True)
+    feet = {(int(foot), show.height - 1) for foot, _ in wide}
+    assert feet <= set(pixels), "four beams"
+    pixels.clear()
+    show.set_cue(_cue(effects=("searchlights_fanfare",)), 18.0)
+    show.extras["searchlights_fanfare"].draw_behind(lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb),
+                                                    pixels, True)
+    assert not any(any(rgb) for rgb in pixels.values()), "gone before the narrator"
+
+
+def test_the_fanfare_gate_glows_cyan_and_the_others_gold():
+    show = MusicShow(64, 32, random.Random(14))
+    show.set_cue(_cue(effects=("keyhole_glow_cyan", "keyhole_glow")), 1)
+    for name in ("keyhole_glow_cyan", "keyhole_glow"):
+        pixels = {}
+        effect = show.extras[name]
+        effect.draw_front(lambda x, y, rgb: pixels.__setitem__((x, y), rgb), pixels, True)
+        r, g, b = next(iter(pixels.values()))
+        assert (b > r) if name == "keyhole_glow_cyan" else (r > b), name
+
+
 def test_party_searchlights_change_colour():
     show = MusicShow(64, 32, random.Random(15))
     beams = show.extras["searchlights_party"]
@@ -318,9 +363,9 @@ def test_the_savanna_warms_the_castle_only_late_in_its_scene_and_not_with_the_ca
     show.stars = []
     savanna = show.extras["savanna"]
     cue = _cue(start=0, end=20, effects=("savanna",), castle="purple")
-    _run(show, cue, 10)
+    _run(show, cue, 8)
     assert savanna.level == 0
-    _run(show, cue, 6, start=10)
+    _run(show, cue, 8, start=8)
     assert savanna.level == 1
     frame = show.frame_pixels()
     r, g, b = frame[_wall(show)]

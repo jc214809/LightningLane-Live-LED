@@ -31,12 +31,12 @@
           "end": 19,
           "title": "Theme fanfare",
           "characters": [],
-          "look": "Warm amber castle, blue spires, the keyhole glowing gold, white searchlights crisscrossing; no fireworks",
+          "look": "Warm amber castle, blue spires, the gate lit cyan; two banks of white and ice-blue searchlights stand and sway, cross over the spire (video 0:17), fan out wide (0:22) and fade before the narrator (0:27); no fireworks",
           "rate": 0,
           "castle": "amber",
           "effects": [
-            "searchlights",
-            "keyhole_glow"
+            "searchlights_fanfare",
+            "keyhole_glow_cyan"
           ]
         },
         {
@@ -106,7 +106,7 @@
       "scenes": [
         {
           "start": 98,
-          "end": 119,
+          "end": 128,
           "title": "Theme chorus",
           "characters": [],
           "look": "The show's first fireworks on the chorus: a red castle, its design traced in running gold magic; red and gold peonies, then a red, gold and white strobe barrage",
@@ -121,7 +121,7 @@
           ]
         },
         {
-          "start": 119,
+          "start": 128,
           "end": 137,
           "title": "Theme chorus (gold canopy)",
           "characters": [],
@@ -152,7 +152,7 @@
       "scenes": [
         {
           "start": 137,
-          "end": 150,
+          "end": 147,
           "title": "Wishing star lands on the castle",
           "characters": [],
           "look": "Music-box transition: the castle turns royal blue, the sky dark, one bright star",
@@ -163,7 +163,7 @@
           ]
         },
         {
-          "start": 150,
+          "start": 147,
           "end": 171,
           "title": "Down in New Orleans (prologue)",
           "characters": [
@@ -247,8 +247,8 @@
           "end": 268,
           "title": "When You Wish Upon a Star (interlude)",
           "characters": [],
-          "look": "Lavender, pink and turquoise castle; magenta and purple comets fanning left and right",
-          "rate": 0.4,
+          "look": "The castle glows; magenta and pink comet fans fire from across the base from 4:27, then a gold crown with white over the spire",
+          "rate": 1.0,
           "castle": "pastel",
           "palette": [
             "#FF2EC8",
@@ -256,6 +256,71 @@
           ],
           "effects": [
             "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 256.6,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 257.3,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 258.0,
+              "kind": "roof_fan",
+              "colour": "#9C6ADE"
+            },
+            {
+              "at": 258.7,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 259.4,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 260.1,
+              "kind": "roof_fan",
+              "colour": "#9C6ADE"
+            },
+            {
+              "at": 260.8,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 261.5,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 262.2,
+              "kind": "roof_fan",
+              "colour": "#9C6ADE"
+            },
+            {
+              "at": 262.9,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 263.6,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 264.5,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.2,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -576,16 +641,58 @@
           "characters": [
             "Genie"
           ],
-          "look": "A huge gold willow barrage with roof fountains showering the castle",
+          "look": "Genie's big finish: dense magenta, red and green comets fanning out from both sides of the castle, one fan a beat, to his \"Ha!\"",
           "rate": 2.2,
           "castle": "gold",
           "palette": [
-            "#FFD36B",
-            "#FFFFFF"
+            "#FF2EC8",
+            "#E0242F",
+            "#3EE060"
           ],
           "effects": [
-            "fountains",
-            "willow"
+            "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 554.5,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 555.5,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 556.5,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 557.5,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 558.5,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 559.5,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 560.5,
+              "kind": "roof_fan",
+              "colour": "#FF2EC8"
+            },
+            {
+              "at": 561.5,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            }
           ]
         }
       ]
@@ -631,7 +738,7 @@
         },
         {
           "start": 576,
-          "end": 603,
+          "end": 607,
           "title": "Love Is an Open Door",
           "characters": [
             "Olaf"
@@ -651,7 +758,7 @@
           ]
         },
         {
-          "start": 603,
+          "start": 607,
           "end": 623,
           "title": "Can You Feel the Love Tonight",
           "characters": [
@@ -660,13 +767,13 @@
             "Simba",
             "Nala"
           ],
-          "look": "Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); spaced gold, soft pink and violet",
-          "rate": 0.5,
+          "look": "Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29)",
+          "rate": 0.9,
           "castle": "purple",
           "palette": [
             "#FFD36B",
-            "#FF8FC8",
-            "#B58CFF"
+            "#D8E060",
+            "#FF8FC8"
           ],
           "shapes": {
             "star": 0.2
@@ -674,12 +781,47 @@
           "effects": [
             "starfield",
             "moon_rise",
-            "savanna"
+            "savanna",
+            "willow"
+          ],
+          "hits": [
+            {
+              "at": 612.0,
+              "kind": "shell",
+              "colour": "#D8E060",
+              "x": 0.45,
+              "y": 0.22,
+              "style": "willow"
+            },
+            {
+              "at": 616.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.3,
+              "y": 0.2,
+              "style": "willow"
+            },
+            {
+              "at": 616.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.7,
+              "y": 0.2,
+              "style": "willow"
+            },
+            {
+              "at": 619.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "curtain"
+            }
           ]
         },
         {
           "start": 623,
-          "end": 637,
+          "end": 639,
           "title": "You'll Be in My Heart",
           "characters": [
             "Kala",
@@ -703,7 +845,7 @@
           ]
         },
         {
-          "start": 637,
+          "start": 639,
           "end": 668,
           "title": "Princess garden",
           "characters": [],
@@ -730,8 +872,8 @@
             "Rapunzel",
             "Flynn"
           ],
-          "look": "Midnight blue, orange lanterns drifting up; white and gold bursts, then red and gold",
-          "rate": 0.35,
+          "look": "Lanterns rise; a big white burst at 11:29, then a wall of red and pink peonies at 11:38-11:42",
+          "rate": 0.5,
           "castle": "blue",
           "palette": [
             "#FFFFFF",
@@ -740,6 +882,112 @@
           ],
           "effects": [
             "lanterns"
+          ],
+          "hits": [
+            {
+              "at": 678.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 678.4,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.35,
+              "y": 0.22,
+              "style": "peony"
+            },
+            {
+              "at": 678.8,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.65,
+              "y": 0.22,
+              "style": "peony"
+            },
+            {
+              "at": 687.4,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.3,
+              "y": 0.25,
+              "style": "peony"
+            },
+            {
+              "at": 687.85,
+              "kind": "shell",
+              "colour": "#FF6FB0",
+              "x": 0.7,
+              "y": 0.22,
+              "style": "peony"
+            },
+            {
+              "at": 688.3,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 688.75,
+              "kind": "shell",
+              "colour": "#FF6FB0",
+              "x": 0.15,
+              "y": 0.3,
+              "style": "peony"
+            },
+            {
+              "at": 689.2,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.85,
+              "y": 0.28,
+              "style": "peony"
+            },
+            {
+              "at": 689.65,
+              "kind": "shell",
+              "colour": "#FF6FB0",
+              "x": 0.4,
+              "y": 0.2,
+              "style": "peony"
+            },
+            {
+              "at": 690.1,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.6,
+              "y": 0.18,
+              "style": "peony"
+            },
+            {
+              "at": 690.55,
+              "kind": "shell",
+              "colour": "#FF6FB0",
+              "x": 0.25,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 691.0,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.75,
+              "y": 0.14,
+              "style": "peony"
+            },
+            {
+              "at": 691.45,
+              "kind": "shell",
+              "colour": "#FF6FB0",
+              "x": 0.5,
+              "y": 0.24,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -886,15 +1134,49 @@
           "end": 849,
           "title": "He's a Pirate (finale)",
           "characters": [],
-          "look": "A ruby-red and white perimeter finale, smoke",
+          "look": "A white V fan of comets off the battlements at 14:08, then the sky turns red: red comets and fountains firing across the base, red peonies, flame jets",
           "rate": 2.6,
           "castle": "fire",
           "palette": [
             "#E0242F",
-            "#FFFFFF"
+            "#FF3030",
+            "#FF6A5A"
           ],
           "effects": [
-            "flame_jets"
+            "flame_jets",
+            "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 837.2,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 839.5,
+              "kind": "roof_fan",
+              "colour": "#FF3030"
+            },
+            {
+              "at": 841.0,
+              "kind": "roof_fan",
+              "colour": "#FF3030"
+            },
+            {
+              "at": 842.5,
+              "kind": "roof_fan",
+              "colour": "#FF3030"
+            },
+            {
+              "at": 844.0,
+              "kind": "roof_fan",
+              "colour": "#FF3030"
+            },
+            {
+              "at": 845.5,
+              "kind": "roof_fan",
+              "colour": "#FF3030"
+            }
           ]
         }
       ]
@@ -1064,13 +1346,14 @@
           "characters": [
             "Tinker Bell"
           ],
-          "look": "Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple",
-          "rate": 1.5,
+          "look": "Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple; then a dense glitter barrage fills the sky, orange, then green, pink and orange again",
+          "rate": 2.4,
           "palette": [
-            "#FFD36B",
+            "#FF6A2A",
+            "#3EE060",
+            "#FF6FB0",
             "#E0242F",
-            "#B5FF2E",
-            "#9C6ADE"
+            "#FFD36B"
           ],
           "shapes": {
             "mickey": 0.1,

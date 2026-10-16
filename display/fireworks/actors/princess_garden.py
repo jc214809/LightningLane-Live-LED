@@ -291,7 +291,7 @@ class PrincessGarden(Actor):
     SCENE_S = 31.0  # used only if the show has no cue
     WALK_S = 2.0  # walking in, and off again
     LEAN_S = 0.3
-    HEART_S = 3.2  # the heart floating up while they lean together
+    HEART_S = 2.8  # the heart floating up while they lean together (a couple takes 7.1 s of its 7.25 s slot)
     STRIDE_S = 0.18  # each bob of their walk
     HOP_S = 0.4  # each of the frog's hops
     HOP_UP = 4  # rows each hop lifts him

@@ -126,6 +126,49 @@ class Searchlights(Effect):
                     put(ox + math.cos(a) * k + w, oy + math.sin(a) * k, beam)
 
 
+class FanfareSearchlights(Searchlights):
+    """The theme fanfare's banks of beams: two from each side of the castle, white and ice blue. They
+    stand up and sway, lean in to cross over the spire (video 0:17), swing out into a wide fan (0:22)
+    and fade before the narrator speaks (0:27-0:28). KEYS are (seconds into the scene, inner beam's
+    lean, outer beam's lean) in radians, outward positive, so a negative lean crosses the middle."""
+    KEYS = ((0.0, 0.12, 0.3), (5.0, 0.2, 0.38), (6.8, -0.55, -0.62), (9.5, -0.5, -0.58), (11.8, 0.32, 0.48),
+            (16.8, 0.3, 0.45))
+    FADE = (16.8, 17.8)
+    SWAY = 0.06
+
+    def lean(self, e, k):
+        """Beam k's (0 inner, 1 outer) lean e seconds into the scene, eased between KEYS."""
+        keys = self.KEYS
+        if e <= keys[0][0]:
+            return keys[0][1 + k]
+        for (t0, *a), (t1, *b) in zip(keys, keys[1:]):
+            if e < t1:
+                f = smooth((e - t0) / (t1 - t0))
+                return a[k] + (b[k] - a[k]) * f
+        return keys[-1][1 + k]
+
+    def draw_behind(self, put, out, active):
+        if not active:
+            return
+        show = self.show
+        e = show.t - (show.cue.start if show.cue else 0.0)
+        fade = 1 - smooth((e - self.FADE[0]) / (self.FADE[1] - self.FADE[0]))
+        if fade <= 0:
+            return
+        length = show.height * 1.2
+        gap = 3 * self.s
+        for side, foot in ((-1, show.castle_x - 2), (1, show.castle_x + show.castle_w + 1)):
+            for k, rgb in enumerate(self.COLOURS):
+                ox, oy = foot + side * k * gap, show.height - 1
+                lean = self.lean(e, k) + self.SWAY * math.sin(e * 1.3 + k * 1.7 + side)
+                a = -math.pi / 2 + side * lean
+                for j in range(int(length)):
+                    level = 0.85 * fade * (1 - j / length)
+                    beam = tuple(int(c * level) for c in rgb)
+                    for w in range(self.s):  # 2 LEDs wide on a 64-row board
+                        put(ox + math.cos(a) * j + w, oy + math.sin(a) * j, beam)
+
+
 class GoldSearchlights(Searchlights):
     """Yellow and cyan (the theme song's build; gold and white for the reprise)."""
     COLOURS = ((255, 210, 70), (90, 220, 255))
@@ -150,7 +193,9 @@ class PartySearchlights(Searchlights):
 
 
 class KeyholeGlow(Effect):
-    """The castle's doorway glows gold, pulsing."""
+    """The castle's doorway glows gold, pulsing (from PULSE of full to full)."""
+    COLOUR = GOLD
+    PULSE = 0.1
 
     def __init__(self, show):
         super().__init__(show)
@@ -159,9 +204,16 @@ class KeyholeGlow(Effect):
     def draw_front(self, put, out, active):
         if not active:
             return
-        pulse = 0.55 + 0.45 * math.sin(self.show.t * 3)
+        swing = (1 - self.PULSE) / 2
+        pulse = 1 - swing + swing * math.sin(self.show.t * 3)
         for x, y in self.door:
-            put(x, y, tuple(int(c * pulse) for c in GOLD))
+            put(x, y, tuple(int(c * pulse) for c in self.COLOUR))
+
+
+class CyanKeyholeGlow(KeyholeGlow):
+    """The theme fanfare's doorway: a steadier cyan glow, as the real gate is lit turquoise."""
+    COLOUR = (60, 220, 230)
+    PULSE = 0.75
 
 
 class KeyholeOpen(Effect):
@@ -757,7 +809,7 @@ class Savanna(_Level):
     """Can You Feel the Love Tonight's Pride Lands, from FROM of the way through the scene (video 10:25):
     the castle's walls and roofs warm to amber and two black acacia trees stand on its lower walls. Drawn
     only as far as the castle is shown, so it's gone with the castle off."""
-    FROM = 0.56
+    FROM = 0.45
     AMBER = (255, 150, 50)
     ACACIA = ["#######", ".#####.", "...#...", "...#..."]
 
@@ -897,6 +949,7 @@ class FlameJets(Effect):
 
 EFFECTS = {
     "searchlights": Searchlights,
+    "searchlights_fanfare": FanfareSearchlights,
     "searchlights_gold": GoldSearchlights,
     "searchlights_green": GreenSearchlights,
     "searchlights_teal": TealSearchlights,
@@ -909,6 +962,7 @@ EFFECTS = {
     "snow": Snow,
     "flame_jets": FlameJets,
     "keyhole_glow": KeyholeGlow,
+    "keyhole_glow_cyan": CyanKeyholeGlow,
     "keyhole_open": KeyholeOpen,
     "keyhole_magic": KeyholeMagic,
     "gold_trace": GoldTrace,

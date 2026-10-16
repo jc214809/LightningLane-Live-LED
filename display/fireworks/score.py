@@ -27,8 +27,8 @@ _MIN_BURST_LEVEL = 80
 # or none (music_show.STAGE_LEVELS has the brightness of each).
 STAGES = ("castle", "ghost", "off")
 # Effects that draw on or from the castle, so a scene with it off can't use them.
-CASTLE_EFFECTS = frozenset({"keyhole_glow", "keyhole_open", "bells", "flame_jets", "fountains", "te_fiti",
-                            "wishing_star", "tink"})
+CASTLE_EFFECTS = frozenset({"keyhole_glow", "keyhole_glow_cyan", "keyhole_open", "bells", "flame_jets", "fountains",
+                            "te_fiti", "wishing_star", "tink"})
 # A scene's "hits": one firework at a set moment, for the real show's single cues. A roof fan fires comets
 # outward from both side rooftops; a shell bursts at (x, y), fractions of the board; a comet flies up and
 # across from one side.
