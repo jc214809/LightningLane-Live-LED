@@ -28,6 +28,9 @@ python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [
 # Record the synced show as the boards draw it, then compare it with the real show in tools/show_sync_checker.html
 python3 tools/render_show.py [--recording] [--version v2]
 
+# Loop part of the synced show live in the emulator, with its music (audio seconds; run from a folder whose emulator_config.json sets the port)
+python3 tools/loop_show.py 0 98 [--rows 64] [--sound] [--version v1]
+
 # Lip-sync a singing show character (demucs in its own venv: install lines atop the tool)
 python3 tools/lip_sync.py genie 525 565 --model htdemucs --close 549.82 --mute 542.6-545.0 --mute 553.7-559.7   # --close: an m inside a held note; --mute FROM-TO: someone else sings (the backup singers, per the lyric sheet)
 python3 tools/lip_sync.py merida 268 276.3 --model htdemucs
