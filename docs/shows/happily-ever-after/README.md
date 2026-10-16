@@ -248,7 +248,8 @@ New effects:
 
 - **4:38-5:13 (audio 268-303)** is settled: by its lyrics (Whisper, 2026-10-11) it's Touch the Sky,
   from Merida's "Your destiny lies within you" at 265; the score's scene was retitled from Out There.
-  Its look (bells, gothic stone, doves) is still Gemini's Out There reading: check it against the video.
+  Its old look (bells, gothic stone, doves) was Gemini's Out There reading; checked by eye (2026-10-15),
+  the stone and bells moved to Out There (215-256, which is Notre Dame) and the doves are gone.
 - Whether Remy and Rapunzel really are in Part of Your World; ask Gemini again with just
   3:12-4:30.
 - Settled: our audio and the recording are the same track (see Clock). Boundaries can be set to the

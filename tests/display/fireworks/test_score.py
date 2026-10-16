@@ -4,7 +4,7 @@ import pytest
 
 from display.fireworks import score as score_module
 from display.fireworks.music_show import CASTLE_LOOKS, SHAPES
-from display.fireworks.score import EFFECTS, load_score, parse_score
+from display.fireworks.score import EFFECTS, Hit, load_score, parse_score
 
 
 @pytest.fixture(scope="module")
@@ -36,13 +36,19 @@ def test_every_cue_uses_known_looks_shapes_and_effects(hea):
 # Times from watching the real show (docs/shows/happily-ever-after/README.md).
 @pytest.mark.parametrize("t, title, rate, castle, effects", [
     (0, "Theme fanfare", 0, "amber", {"searchlights", "keyhole_glow"}),
+    (46, "Magic from the keyhole", 0, "amber", {"starfield", "keyhole_magic"}),
+    (100, "Theme chorus", 2.2, "red", {"gold_trace"}),
+    (125, "Theme chorus (gold canopy)", 1.6, "blue", {"willow", "wipe_down"}),
     (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
-    (270, "Touch the Sky", 0.9, "stone", {"doves", "bells", "comet_fan", "willow"}),
+    (230, "Out There", 1.0, "stone", {"bells"}),
+    (270, "Touch the Sky", 0.9, "jungle", {"comet_fan", "willow"}),
     (400, "Aladdin: a best friend by your side", 0, "blue", {"smoke"}),
     (700, "I See the Light (lanterns)", 0.15, "blue", {"lanterns", "willow"}),
     (780, "He's a Pirate", 1.4, "fire", {"flame_jets"}),
+    (808, "He's a Pirate (green barrage)", 2.2, "fire", {"flame_jets", "green_fire"}),
     (865, "Embers", 0, "dark", {"embers"}),
     (950, "Go the Distance", 1.6, "stained_glass", {"willow", "comet_fan"}),
+    (1000, "Narrator closing", 0, "stained_glass", {"keyhole_glow"}),
     (1095, "Final chorus, keyhole opens", 2.6, "gold", {"rainbow", "keyhole_open", "comet_fan"}),
     (1100, "The last hit", 0.6, "gold", {"final_flash", "keyhole_open", "willow"}),
 ])
@@ -102,6 +108,12 @@ def test_a_missing_score_is_none(tmp_path):
     json.dumps(_show(palette=["#000000"])),  # nothing bright enough
     json.dumps(_show(palette=["red"])),
     json.dumps({"show_end": 10, "sections": [{"id": "s"}]}),
+    json.dumps(_show(hits=[{"at": 5, "kind": "rocket", "colour": "#FF0000"}])),
+    json.dumps(_show(hits=[{"at": 12, "kind": "shell", "colour": "#FF0000"}])),  # past the scene's end
+    json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "style": "ring"}])),
+    json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "x": 1.5}])),
+    json.dumps(_show(hits=[{"at": 5, "kind": "comet", "colour": "#FF0000", "side": "up"}])),
+    json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "when": 3}])),
 ])
 def test_a_broken_score_is_logged_and_none(tmp_path, data):
     (tmp_path / "show.json").write_text(data)
@@ -112,6 +124,16 @@ def test_a_good_score_from_a_folder(tmp_path):
     (tmp_path / "show.json").write_text(json.dumps(_show(castle="gold", shapes={"heart": 0.5})))
     score = load_score("show", shows_dir=str(tmp_path))
     assert score.cue_at(5).castle == "gold" and score.cue_at(5).shapes == (("heart", 0.5),)
+
+
+def test_a_scenes_hits_are_read_in_time_order(tmp_path):
+    (tmp_path / "show.json").write_text(json.dumps(_show(hits=[
+        {"at": 7, "kind": "roof_fan", "colour": "#FFFFFF"},
+        {"at": 5, "kind": "shell", "colour": "#FF0000", "x": 0.3, "style": "willow"},
+    ])))
+    hits = load_score("show", shows_dir=str(tmp_path)).cue_at(1).hits
+    assert hits == (Hit(5.0, "shell", (255, 0, 0), 0.3, 0.25, "willow", "right"),
+                    Hit(7.0, "roof_fan", (255, 255, 255)))
 
 
 def test_shows_dir_is_next_to_the_module_not_the_cwd():

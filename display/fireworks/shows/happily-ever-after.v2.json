@@ -8,7 +8,7 @@
     "Touch the Sky / Up": {"stage": "ghost", "actors": ["up_house"], "note": "Carl's house rises from behind the castle on its balloons"},
     "How Far I'll Go (climax)": {"stage": "off", "actors": ["canoe"], "note": "Moana's canoe sails across once the castle goes"},
     "You've Got a Friend in Me": {"stage": "castle", "actors": ["buzz_woody"], "note": "Buzz flies across, Woody waves from the ground"},
-    "Friendship mash-up": {"stage": "off", "actors": ["ralph", "baymax", "memory_orbs"], "note": "Ralph smashes bricks (0-14 s in), Baymax inflates and waves (15-22), Joy's and Sadness's memory orbs (35-54)"},
+    "Friendship mash-up": {"stage": "off", "actors": ["ralph", "baymax", "memory_orbs"], "note": "at the real show's moments: Ralph smashes bricks (7-13 s in, video 8:12), Baymax inflates and waves (13-19.5, video 8:16), Joy's and Sadness's memory orbs (25-34.5, video 8:30)"},
     "That's What Friends Are For": {"stage": "castle", "actors": ["mike"], "note": "Mike peeks over the left turret, then the right"},
     "Friend Like Me (Genie)": {"stage": "ghost", "actors": ["genie"], "rate": 0.8, "note": "Genie circles the spire; half V1's fireworks, so bursts don't sit on him"},
     "Friend Like Me (finale)": {"actors": ["genie"], "note": "he sings on to 563, round the full castle and its fountains"},

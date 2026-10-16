@@ -41,14 +41,27 @@
         },
         {
           "start": 19,
-          "end": 47,
+          "end": 45.8,
           "title": "Narrator opening",
           "characters": [],
-          "look": "Searchlights off, the keyhole dims, the sky dark",
+          "look": "Searchlights off, the keyhole dim, the sky dark",
           "rate": 0,
           "castle": "amber",
           "effects": [
             "starfield"
+          ]
+        },
+        {
+          "start": 45.8,
+          "end": 47,
+          "title": "Magic from the keyhole",
+          "characters": [],
+          "look": "As the show is ready to begin (video 0:56), magic pours out of the keyhole and climbs the walls until the whole castle glows gold, then settles as the theme song starts",
+          "rate": 0,
+          "castle": "amber",
+          "effects": [
+            "starfield",
+            "keyhole_magic"
           ]
         },
         {
@@ -60,6 +73,7 @@
           "rate": 0,
           "castle": "amber",
           "effects": [
+            "keyhole_magic",
             "gold_stream",
             "keyhole_glow"
           ]
@@ -95,28 +109,32 @@
           "end": 119,
           "title": "Theme chorus",
           "characters": [],
-          "look": "The show's first fireworks on the chorus: red and gold peonies, then a red, gold and white strobe barrage",
+          "look": "The show's first fireworks on the chorus: a red castle, its design traced in running gold magic; red and gold peonies, then a red, gold and white strobe barrage",
           "rate": 2.2,
-          "castle": "royal",
+          "castle": "red",
           "shapes": {
             "heart": 0.06,
             "mickey": 0.08
-          }
+          },
+          "effects": [
+            "gold_trace"
+          ]
         },
         {
           "start": 119,
           "end": 137,
           "title": "Theme chorus (gold canopy)",
           "characters": [],
-          "look": "A huge gold palm and willow canopy, a gold brocade crown fading to smoke",
+          "look": "On the chorus drop the castle fades slowly to blue from the spire down to its base; a huge gold palm and willow canopy, a gold brocade crown fading to smoke",
           "rate": 1.6,
-          "castle": "royal",
+          "castle": "blue",
           "palette": [
             "#FFD36B",
             "#FFFFFF"
           ],
           "effects": [
-            "willow"
+            "willow",
+            "wipe_down"
           ]
         }
       ]
@@ -207,13 +225,13 @@
         {
           "start": 215,
           "end": 256,
-          "title": "Part of Your World (climax)",
+          "title": "Out There",
           "characters": [
-            "Ariel"
+            "Quasimodo"
           ],
-          "look": "Sunbeams through the water, magenta and ruby peonies, gold and white brocade",
+          "look": "Notre Dame: gothic stone, a glowing rose window, royal-blue roofs, the bells ringing; Quasimodo; magenta and ruby peonies, gold and white brocade",
           "rate": 1.0,
-          "castle": "blue",
+          "castle": "stone",
           "palette": [
             "#FF2E88",
             "#C1121F",
@@ -221,7 +239,7 @@
             "#FFFFFF"
           ],
           "effects": [
-            "bubbles"
+            "bells"
           ]
         },
         {
@@ -247,9 +265,9 @@
           "characters": [
             "Merida"
           ],
-          "look": "Cathedral bells, gothic stone and moss, doves; gold willow, emerald and white strobes, red and gold comets",
+          "look": "Merida's Highlands: emerald and teal castle, Celtic knotwork; her arrow flies at 277 (video 4:47); gold willow, emerald and white strobes, red and gold comets",
           "rate": 0.9,
-          "castle": "stone",
+          "castle": "jungle",
           "palette": [
             "#FFD36B",
             "#20D060",
@@ -257,8 +275,6 @@
             "#C1121F"
           ],
           "effects": [
-            "doves",
-            "bells",
             "comet_fan",
             "willow"
           ]
@@ -384,7 +400,7 @@
             "Aladdin",
             "Genie"
           ],
-          "look": "Brass patterns and lanterns on the castle; blue and gold fountains from the roofs, white shells",
+          "look": "Brass patterns and lanterns on the castle, white shells; on three beats the side rooftops fire fans of comets, white, red, then green (video 7:15-7:17)",
           "rate": 1.3,
           "castle": "gold",
           "palette": [
@@ -392,8 +408,23 @@
             "#FFD36B",
             "#FFFFFF"
           ],
-          "effects": [
-            "fountains"
+          "effects": [],
+          "hits": [
+            {
+              "at": 424.4,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 425.4,
+              "kind": "roof_fan",
+              "colour": "#FF4A3A"
+            },
+            {
+              "at": 426.4,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            }
           ]
         },
         {
@@ -418,7 +449,7 @@
         },
         {
           "start": 446,
-          "end": 453,
+          "end": 459.3,
           "title": "Hakuna Matata",
           "characters": [
             "Timon",
@@ -435,14 +466,14 @@
           }
         },
         {
-          "start": 453,
-          "end": 459,
+          "start": 459.3,
+          "end": 473.3,
           "title": "You've Got a Friend in Me",
           "characters": [
             "Woody",
             "Buzz"
           ],
-          "look": "Woody and Buzz on Andy's cloud wallpaper; red and yellow bursts",
+          "look": "Toy Story from video 7:50: Woody and Buzz on Andy's cloud wallpaper, the castle in primary-coloured blocks; red and yellow bursts",
           "castle": "blue",
           "palette": [
             "#E0242F",
@@ -453,20 +484,22 @@
           ]
         },
         {
-          "start": 459,
+          "start": 473.3,
           "end": 514,
           "title": "Friendship mash-up",
           "characters": [
+            "Baloo",
             "Ralph",
-            "Vanellope",
             "Hiro",
             "Baymax",
             "Judy",
             "Nick",
             "Joy",
-            "Sadness"
+            "Sadness",
+            "Mike",
+            "Sulley"
           ],
-          "look": "Ralph and Vanellope, Hiro and Baymax, Judy and Nick, Joy and Sadness; multicolour searchlights, steady pastel bursts",
+          "look": "In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts",
           "rate": 1.1,
           "palette": [
             "#FF8FC8",
@@ -482,11 +515,8 @@
           "start": 514,
           "end": 527,
           "title": "That's What Friends Are For",
-          "characters": [
-            "Sulley",
-            "Mike"
-          ],
-          "look": "Sulley and Mike opening doors across the turrets, turquoise and purple; soft gold shells",
+          "characters": [],
+          "look": "The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells",
           "rate": 0.6,
           "castle": "monsters",
           "palette": [
@@ -504,7 +534,7 @@
           "characters": [
             "Genie"
           ],
-          "look": "Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, ring shells",
+          "look": "Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, gold chrysanthemums; red and green comet fans from the roofs (video 9:17), then a green curtain hanging over the castle on the last big note (9:21)",
           "rate": 1.6,
           "castle": "gold",
           "palette": [
@@ -517,6 +547,26 @@
           },
           "effects": [
             "searchlights_party"
+          ],
+          "hits": [
+            {
+              "at": 546.3,
+              "kind": "roof_fan",
+              "colour": "#FF3030"
+            },
+            {
+              "at": 546.8,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 550.3,
+              "kind": "shell",
+              "colour": "#3EE060",
+              "x": 0.5,
+              "y": 0.2,
+              "style": "curtain"
+            }
           ]
         },
         {
@@ -559,14 +609,24 @@
           "characters": [
             "Olaf"
           ],
-          "look": "Spoken line; icy blue and purple castle, snowflakes floating up, one gold shell",
-          "rate": 0.15,
+          "look": "Spoken line; icy blue and purple castle, snowflakes floating up; the sky dark for about 7 s, then one gold willow left of the spire (video 9:43)",
+          "rate": 0,
           "castle": "ice",
           "palette": [
             "#FFD36B"
           ],
           "effects": [
             "snow"
+          ],
+          "hits": [
+            {
+              "at": 572.2,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.38,
+              "y": 0.25,
+              "style": "willow"
+            }
           ]
         },
         {
@@ -574,16 +634,14 @@
           "end": 603,
           "title": "Love Is an Open Door",
           "characters": [
-            "Anna",
-            "Hans"
+            "Olaf"
           ],
-          "look": "Hearts and rose stained glass, ending royal blue and violet; gold fan comets, pink, violet and gold peonies",
+          "look": "Olaf stays in the centre window to about 582 (video 9:52), then no characters; pink and violet only on the castle, the bursts in the sky gold (some green-gold); gold comet fans from the sides from about 585",
           "rate": 0.8,
           "castle": "pink",
           "palette": [
-            "#FF6FB0",
-            "#9C6ADE",
-            "#FFD36B"
+            "#FFD36B",
+            "#D8E060"
           ],
           "shapes": {
             "heart": 0.25
@@ -602,7 +660,7 @@
             "Simba",
             "Nala"
           ],
-          "look": "Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala; spaced gold, soft pink and violet",
+          "look": "Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); spaced gold, soft pink and violet",
           "rate": 0.5,
           "castle": "purple",
           "palette": [
@@ -615,7 +673,8 @@
           },
           "effects": [
             "starfield",
-            "moon_rise"
+            "moon_rise",
+            "savanna"
           ]
         },
         {
@@ -623,12 +682,12 @@
           "end": 637,
           "title": "You'll Be in My Heart",
           "characters": [
-            "Tarzan",
             "Kala",
-            "Dumbo",
-            "Mrs. Jumbo"
+            "Tarzan",
+            "Riley",
+            "Dory"
           ],
-          "look": "Magenta, lavender and gold; Tarzan and Kala, Dumbo and Mrs. Jumbo; pink, violet and white with comets from the terraces",
+          "look": "Magenta, lavender and gold; families on the centre tower's right side: Kala and baby Tarzan, Riley and her family, Dory; pink, violet and white with comets from the terraces",
           "rate": 0.8,
           "castle": "pink",
           "palette": [
@@ -647,17 +706,8 @@
           "start": 637,
           "end": 668,
           "title": "Princess garden",
-          "characters": [
-            "Cinderella",
-            "Prince Charming",
-            "Tiana",
-            "Naveen",
-            "Ariel",
-            "Eric",
-            "Belle",
-            "Beast"
-          ],
-          "look": "Pink and rose stained-glass arches, flowers and waterfalls; gold brocade, pink peonies, gold palms",
+          "characters": [],
+          "look": "No princesses in the real show: the families' pink and red castle carries on, pink comets from the sides, gold palms and willows, a red peony; it turns royal blue at about 646 (video 11:06)",
           "rate": 0.9,
           "castle": "pink",
           "palette": [
@@ -730,9 +780,10 @@
           "end": 742,
           "title": "The Emperor's warning",
           "characters": [
-            "Emperor of China"
+            "Emperor of China",
+            "Mulan"
           ],
-          "look": "\"The flower that blooms in adversity...\", a gong; dark navy and crimson, low crimson and gold comets",
+          "look": "\"The flower that blooms in adversity...\": the Emperor's praise of Mulan, both in the gate; dark navy and crimson; two lone shells, a pink and green ring then a big gold willow; no gong",
           "rate": 0.3,
           "castle": "crimson",
           "palette": [
@@ -762,15 +813,14 @@
           "end": 777,
           "title": "To Die For",
           "characters": [
-            "Maleficent",
-            "Jafar"
+            "The Incredibles",
+            "Omnidroid"
           ],
-          "look": "Villains build; green dragon fire (the split from the attack is a guess: the video didn't show one)",
+          "look": "The Incredibles fight a giant robot from about 12:44 (video); lightning",
           "rate": 1.2,
           "castle": "green",
           "effects": [
-            "bolts",
-            "green_fire"
+            "bolts"
           ]
         },
         {
@@ -778,9 +828,12 @@
           "end": 806,
           "title": "He's a Pirate",
           "characters": [
-            "Pirates"
+            "Scar",
+            "Simba",
+            "Aladdin",
+            "Jafar"
           ],
-          "look": "The castle cracks and burns; flame jets on the terraces; red, orange and gold",
+          "look": "Scar and Simba fight (777, video 13:07), then Aladdin and Jafar as the snake (799, video 13:30); the castle cracks and burns; flame jets on the terraces; red, orange and gold",
           "rate": 1.4,
           "castle": "fire",
           "palette": [
@@ -796,8 +849,10 @@
           "start": 806,
           "end": 812,
           "title": "He's a Pirate (green barrage)",
-          "characters": [],
-          "look": "Emerald shells and lime comets",
+          "characters": [
+            "Maleficent"
+          ],
+          "look": "Maleficent after the snake: her green dragon fire along the ground; emerald shells and lime comets",
           "rate": 2.2,
           "castle": "fire",
           "palette": [
@@ -805,7 +860,8 @@
             "#B5FF2E"
           ],
           "effects": [
-            "flame_jets"
+            "flame_jets",
+            "green_fire"
           ]
         },
         {
@@ -862,11 +918,25 @@
           "characters": [
             "Mufasa"
           ],
-          "look": "\"Remember who you are\": the castle near-black with an ember core, Mufasa in the clouds; no fireworks",
+          "look": "\"Remember who you are\": the castle near-black with an ember core, Mufasa in the clouds; between his lines two gold comets (video 14:38 and 14:46)",
           "rate": 0,
           "castle": "dark",
           "effects": [
             "embers"
+          ],
+          "hits": [
+            {
+              "at": 866.9,
+              "kind": "comet",
+              "colour": "#FFD36B",
+              "side": "right"
+            },
+            {
+              "at": 874.9,
+              "kind": "comet",
+              "colour": "#FFD36B",
+              "side": "right"
+            }
           ]
         },
         {
@@ -895,11 +965,18 @@
             "Hercules",
             "Megara",
             "Tarzan",
-            "Jane",
             "Mulan",
-            "Merida"
+            "Merida",
+            "Aurora",
+            "Aladdin",
+            "Cinderella",
+            "Elsa",
+            "Anna",
+            "Woody",
+            "Tiana",
+            "Mickey"
           ],
-          "look": "Stained-glass hero windows in gold; gold and white willows and peonies, side comet plumes, rainbow comets",
+          "look": "Stained-glass hero windows in gold (from about 954): Mulan, Aurora and Aladdin lower left, Cinderella over the gate, Tarzan (no Jane) lower right, Elsa and Anna, Merida and Woody up the towers, Tiana near the top; gold and white willows and peonies, side comet plumes, rainbow comets",
           "rate": 1.6,
           "castle": "stained_glass",
           "effects": [
@@ -939,12 +1016,11 @@
           "end": 1017,
           "title": "Narrator closing",
           "characters": [],
-          "look": "\"Find your Happily Ever After\": stained glass still lit, the keyhole glows, searchlights pan; no fireworks",
+          "look": "\"Find your Happily Ever After\": the stained-glass heroes stay lit through the narration, the keyhole glows; no searchlights, no fireworks",
           "rate": 0,
           "castle": "stained_glass",
           "effects": [
-            "keyhole_glow",
-            "searchlights"
+            "keyhole_glow"
           ]
         }
       ]
@@ -1058,5 +1134,5 @@
     "end": 1359,
     "note": "Separate track after the show; not part of it."
   },
-  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (music_show.EFFECTS: its own plus show_effects.EFFECTS), palette (replaces the section's)."
+  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (music_show.EFFECTS: its own plus show_effects.EFFECTS), palette (replaces the section's), hits ([{at: show seconds, kind: score.HIT_KINDS, colour, and x, y, style for a shell or side for a comet}]: one firework at a set moment)."
 }

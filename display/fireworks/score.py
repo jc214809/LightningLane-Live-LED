@@ -29,6 +29,22 @@ STAGES = ("castle", "ghost", "off")
 # Effects that draw on or from the castle, so a scene with it off can't use them.
 CASTLE_EFFECTS = frozenset({"keyhole_glow", "keyhole_open", "bells", "flame_jets", "fountains", "te_fiti",
                             "wishing_star", "tink"})
+# A scene's "hits": one firework at a set moment, for the real show's single cues. A roof fan fires comets
+# outward from both side rooftops; a shell bursts at (x, y), fractions of the board; a comet flies up and
+# across from one side.
+HIT_KINDS = ("roof_fan", "shell", "comet")
+SHELL_STYLES = ("peony", "willow", "curtain")  # a curtain is a big willow hanging down over the castle
+SIDES = ("left", "right")
+
+
+class Hit(NamedTuple):
+    at: float  # seconds into the show: when a shell bursts, or a fan or comet launches
+    kind: str  # one of HIT_KINDS
+    rgb: Tuple[int, int, int]
+    x: float = 0.5  # a shell's burst, as fractions of the board's width and height
+    y: float = 0.25
+    style: str = "peony"  # a shell's, one of SHELL_STYLES
+    side: str = "right"  # where a comet launches from, one of SIDES
 
 
 class Cue(NamedTuple):
@@ -43,6 +59,7 @@ class Cue(NamedTuple):
     effects: FrozenSet[str]
     stage: str = "castle"  # one of STAGES
     actors: Tuple[str, ...] = ()  # show_actors.ACTORS keys, drawn in front of everything
+    hits: Tuple[Hit, ...] = ()  # set-moment fireworks, by time
 
     def progress(self, t):
         """0..1 through this scene at t seconds into the show."""
@@ -92,6 +109,24 @@ def _palette(colours):
     return bright
 
 
+def _hits(scene):
+    hits = []
+    for entry in scene.get("hits", ()):
+        unknown = set(entry) - {"at", "kind", "colour", "x", "y", "style", "side"}
+        if unknown:
+            raise ValueError(f"{scene['title']}: unknown hit keys {sorted(unknown)}")
+        hit = Hit(float(entry["at"]), entry["kind"], _rgb(entry["colour"]), float(entry.get("x", 0.5)),
+                  float(entry.get("y", 0.25)), entry.get("style", "peony"), entry.get("side", "right"))
+        if hit.kind not in HIT_KINDS or hit.style not in SHELL_STYLES or hit.side not in SIDES:
+            raise ValueError(f"{scene['title']}: unknown hit {entry}")
+        if not float(scene["start"]) <= hit.at < float(scene["end"]):
+            raise ValueError(f"{scene['title']}: a hit at {hit.at} is outside the scene")
+        if not (0 <= hit.x <= 1 and 0 <= hit.y <= 1):
+            raise ValueError(f"{scene['title']}: a hit's x and y are fractions of the board")
+        hits.append(hit)
+    return tuple(sorted(hits))
+
+
 def _cue(section, scene):
     palette = _palette(scene.get("palette", section["palette"]))
     rate = float(scene.get("rate", section["intensity"] / _EVERYDAY_INTENSITY))
@@ -106,7 +141,7 @@ def _cue(section, scene):
     if not effects <= EFFECTS:
         raise ValueError(f"unknown effects {sorted(effects - EFFECTS)}")
     return Cue(section["id"], scene["title"], float(scene["start"]), float(scene["end"]),
-               palette, max(0.0, rate), castle, shapes, effects)
+               palette, max(0.0, rate), castle, shapes, effects, hits=_hits(scene))
 
 
 def _overlay(cue, extra):
