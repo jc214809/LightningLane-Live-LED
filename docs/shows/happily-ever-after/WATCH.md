@@ -1346,7 +1346,7 @@ To capture this segment on 64x32 / 64x64 pixel matrices:
 ### 4.1 Touch the Sky / Up
 
 - **Audio:** 303-325 s (5:03-5:25, 22 s) · **Video:** `--start 5:13 --end 5:35`
-- **Our score now:** Bagpipes and tartan; Up's balloons fill the castle and lift the house; red, green and blue comets. Characters: Merida, Carl, Up house.
+- **Our score now:** Up's balloons fill the blue castle and lift the house; a gold burst over the spire (video 5:20), red, white and green comets rising (5:23), big gold chrysanthemums (5:26-5:30). Characters: Merida, Carl, Up house.
 - **V2:** stage ghost; actors up_house (Carl's house rises from behind the castle on its balloons).
 - **To check by eye:** Gemini's answer below says only the balloons are shown (no house, Carl or Merida), and that the scene ends at 5:26 with Moana's music from 5:27, about 9 s before ours.
 - **Checked by eye (2026-10-14):** keep the balloons, they're good. The Up house can stay too, but it needs drawing better.
@@ -1451,7 +1451,7 @@ To capture this segment on 64x32 / 64x64 pixel matrices:
 ### 4.2 How Far I'll Go
 
 - **Audio:** 325-370 s (5:25-6:10, 45 s) · **Video:** `--start 5:35 --end 6:20`
-- **Our score now:** The heart of Te Fiti on the castle, ocean blues, the manta ray; sparse bursts building in green, gold and white. Characters: Moana, Gramma Tala.
+- **Our score now:** The heart of Te Fiti on the castle, ocean blues, the manta ray; a dark sky with one white peony (video 5:53), then gold chrysanthemums as the song lifts (6:04) and a white one (6:10). Characters: Moana, Gramma Tala.
 
 **Your notes for this scene:**
 
@@ -1567,7 +1567,7 @@ To capture this on 64x32 / 64x64 matrices:
 ### 4.3 How Far I'll Go (climax)
 
 - **Audio:** 370-398 s (6:10-6:38, 28 s) · **Video:** `--start 6:20 --end 6:48`
-- **Our score now:** Heavy gold brocade barrage, turquoise searchlights, green and yellow shells. Characters: Moana.
+- **Our score now:** The chorus: turquoise searchlights, gold glitter, then big white and gold chrysanthemums over the spire (video 6:34-6:43). Characters: Moana.
 - **V2:** stage off; actors canoe (Moana's canoe sails across once the castle goes).
 - **Checked (2026-10-14):** Gemini's answer below says Tangled starts at 6:48; it doesn't, Aladdin's line (5.1) does, and I See the Light is at about 11:18. Its end time (6:48) still matches the score.
 

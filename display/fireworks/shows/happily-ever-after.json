@@ -599,20 +599,73 @@
             "Carl",
             "Up house"
           ],
-          "look": "Bagpipes and tartan; Up's balloons fill the castle and lift the house; red, green and blue comets",
-          "rate": 0.8,
-          "castle": "jungle",
+          "look": "Up's balloons fill the blue castle and lift the house; a gold burst over the spire (video 5:20), red, white and green comets rising (5:23), big gold chrysanthemums (5:26-5:30)",
+          "rate": 0.5,
+          "castle": "blue",
           "palette": [
-            "#E0242F",
-            "#3EC300",
-            "#3B6BFF",
-            "#FFD36B"
+            "#FFD36B",
+            "#FFFFFF"
           ],
-          "shapes": {
-            "bullseye": 0.15
-          },
           "effects": [
             "balloons"
+          ],
+          "hits": [
+            {
+              "at": 309.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 312.6,
+              "kind": "comet",
+              "colour": "#E0242F",
+              "side": "left"
+            },
+            {
+              "at": 312.9,
+              "kind": "comet",
+              "colour": "#FFFFFF",
+              "side": "right"
+            },
+            {
+              "at": 313.2,
+              "kind": "comet",
+              "colour": "#3EE060",
+              "side": "left"
+            },
+            {
+              "at": 313.5,
+              "kind": "comet",
+              "colour": "#E0242F",
+              "side": "right"
+            },
+            {
+              "at": 315.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.45,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 318.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.35,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 319.4,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.65,
+              "y": 0.12,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -623,8 +676,8 @@
             "Moana",
             "Gramma Tala"
           ],
-          "look": "The heart of Te Fiti on the castle, ocean blues, the manta ray; sparse bursts building in green, gold and white",
-          "rate": 0.6,
+          "look": "The heart of Te Fiti on the castle, ocean blues, the manta ray; a dark sky with one white peony (video 5:53), then gold chrysanthemums as the song lifts (6:04) and a white one (6:10)",
+          "rate": 0.35,
           "castle": "blue",
           "palette": [
             "#3EC300",
@@ -636,6 +689,40 @@
             "water",
             "torches",
             "stingray"
+          ],
+          "hits": [
+            {
+              "at": 343.0,
+              "kind": "shell",
+              "colour": "#9CC8FF",
+              "x": 0.42,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 353.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.45,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 354.5,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.6,
+              "y": 0.18,
+              "style": "peony"
+            },
+            {
+              "at": 360.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.4,
+              "y": 0.12,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -645,13 +732,13 @@
           "characters": [
             "Moana"
           ],
-          "look": "Heavy gold brocade barrage, turquoise searchlights, green and yellow shells",
-          "rate": 1.8,
+          "look": "The chorus: turquoise searchlights, gold glitter, then big white and gold chrysanthemums over the spire (video 6:34-6:43)",
+          "rate": 1.0,
           "castle": "blue",
           "palette": [
             "#FFD36B",
-            "#3EC300",
-            "#FFE14D"
+            "#FFFFFF",
+            "#3EE060"
           ],
           "effects": [
             "water",
@@ -659,6 +746,48 @@
             "stingray",
             "searchlights_teal",
             "willow"
+          ],
+          "hits": [
+            {
+              "at": 384.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.45,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 387.8,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.55,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 388.4,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.4,
+              "y": 0.18,
+              "style": "peony"
+            },
+            {
+              "at": 391.8,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 392.5,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.62,
+              "y": 0.18,
+              "style": "peony"
+            }
           ]
         }
       ]
