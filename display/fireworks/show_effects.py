@@ -170,7 +170,7 @@ class FanfareSearchlights(Searchlights):
 
 
 class GoldSearchlights(Searchlights):
-    """Yellow and cyan (the theme song's build; gold and white for the reprise)."""
+    """Yellow and cyan (the reprise)."""
     COLOURS = ((255, 210, 70), (90, 220, 255))
 
 
@@ -193,9 +193,9 @@ class PartySearchlights(Searchlights):
 
 
 class KeyholeGlow(Effect):
-    """The castle's doorway glows gold, shimmering gently (from PULSE of full to full), as the real
+    """The castle's doorway glows yellow, shimmering gently (from PULSE of full to full), as the real
     gate glows steadily."""
-    COLOUR = GOLD
+    COLOUR = (255, 225, 60)
     PULSE = 0.8
 
     def __init__(self, show):
@@ -211,15 +211,9 @@ class KeyholeGlow(Effect):
             put(x, y, tuple(int(c * pulse) for c in self.COLOUR))
 
 
-class CyanKeyholeGlow(KeyholeGlow):
-    """The theme fanfare's doorway: a steadier cyan glow, as the real gate is lit turquoise."""
-    COLOUR = (60, 220, 230)
-    PULSE = 0.75
-
-
-class DimKeyholeGlow(CyanKeyholeGlow):
-    """The narrator's opening: the same cyan gate at half brightness, waiting for the magic."""
-    COLOUR = (30, 110, 115)
+class DimKeyholeGlow(KeyholeGlow):
+    """The narrator's opening: the yellow gate at half brightness, waiting for the magic."""
+    COLOUR = (128, 112, 30)
 
 
 class KeyholeOpen(Effect):
@@ -270,14 +264,14 @@ class KeyholeOpen(Effect):
 
 
 class KeyholeMagic(Effect):
-    """The end of the narrator's opening: the keyhole blazes gold-orange and its magic climbs the castle
+    """The end of the narrator's opening: the keyhole blazes yellow and its magic climbs the castle
     walls, sparkling at its edge, tinting them gold (TINT) up to the top (CLIMB_S) while the roofs stay
     their own blue; it holds, then fades back to the castle's own colours as the singing starts. Timed
     from when it's first turned on, carrying on through the scenes after that keep it."""
     CLIMB_S, HOLD_S, FADE_S = 1.5, 0.8, 1.5
     LIT = (255, 215, 110)
     TINT = 0.45
-    BLAZE = (255, 175, 60)
+    BLAZE = (255, 235, 90)
 
     def __init__(self, show):
         super().__init__(show)
@@ -509,37 +503,6 @@ class GoldStream(_Particles):
         band = (show.t * 8) % (show.width + 20) - 10
         colours = [GOLD, WHITE] + ([(220, 40, 40)] if self.progress() > 0.5 else [])
         return [band + rng.uniform(-6, 6), -1.0, 0.15, rng.uniform(0.3, 0.6) * self.s, 50, 50, rng.choice(colours)]
-
-
-class WallSparkles(_Particles):
-    """Gold magic twinkling over the castle's walls, drifting slowly up (the theme song, where the
-    real show's gold ribbons swirl on the castle itself)."""
-    front = True
-    cap = 40
-
-    def __init__(self, show):
-        super().__init__(show)
-        self.cells = [(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels
-                      if kind == "W"]
-
-    @property
-    def chance(self):
-        return 1.0 if self.big else 0.6
-
-    def spawn(self):
-        rng = self.rng
-        x, y = rng.choice(self.cells)
-        life = rng.randint(20, 35)
-        return [float(x), float(y), rng.uniform(-0.04, 0.04) * self.s, -rng.uniform(0.03, 0.08) * self.s, life, life,
-                rng.choice(((255, 240, 160), (255, 250, 215)))]
-
-    def _draw(self, put):
-        # Pale and bright to show against the warm walls, and 2x2 on a 64-row board, like its castle.
-        for x, y, _, _, life, max_life, rgb in self.parts:
-            f = math.sin(math.pi * life / max_life)  # twinkles in and out
-            for dx in range(self.s):
-                for dy in range(self.s):
-                    put(x + dx, y + dy, tuple(int(c * f) for c in rgb))
 
 
 class GoldBurst(Effect):
@@ -1044,13 +1007,11 @@ EFFECTS = {
     "snow": Snow,
     "flame_jets": FlameJets,
     "keyhole_glow": KeyholeGlow,
-    "keyhole_glow_cyan": CyanKeyholeGlow,
     "keyhole_glow_dim": DimKeyholeGlow,
     "keyhole_open": KeyholeOpen,
     "keyhole_magic": KeyholeMagic,
     "gold_trace": GoldTrace,
     "gold_stream": GoldStream,
-    "wall_sparkles": WallSparkles,
     "gold_burst": GoldBurst,
     "starfield": Starfield,
     "evening_star": EveningStar,

@@ -31,12 +31,12 @@
           "end": 19,
           "title": "Theme fanfare",
           "characters": [],
-          "look": "Warm amber castle, blue spires, the gate lit cyan; two banks of white and ice-blue searchlights stand and sway, cross over the spire (video 0:17), fan out wide (0:22) and fade before the narrator (0:27); no fireworks",
+          "look": "Grey castle, blue spires, the gate lit yellow; two banks of white and ice-blue searchlights stand and sway, cross over the spire (video 0:17), fan out wide (0:22) and fade before the narrator (0:27); no fireworks",
           "rate": 0,
-          "castle": "amber",
+          "castle": "grey",
           "effects": [
             "searchlights_fanfare",
-            "keyhole_glow_cyan"
+            "keyhole_glow"
           ]
         },
         {
@@ -44,9 +44,9 @@
           "end": 45.8,
           "title": "Narrator opening",
           "characters": [],
-          "look": "Searchlights off, the sky dark, the gate a dim steady cyan as the narrator speaks",
+          "look": "Searchlights off, the sky dark, the gate a dim steady yellow as the narrator speaks",
           "rate": 0,
-          "castle": "amber",
+          "castle": "grey",
           "effects": [
             "starfield",
             "keyhole_glow_dim"
@@ -57,9 +57,9 @@
           "end": 47,
           "title": "Magic from the keyhole",
           "characters": [],
-          "look": "As the show is ready to begin (video 0:56), the keyhole blazes gold-orange and its magic climbs the walls, tinting them gold while the roofs stay blue, then fades back as the singing starts (about 0:59)",
+          "look": "As the show is ready to begin (video 0:56), the keyhole blazes yellow and its magic climbs the walls, tinting them gold while the roofs stay blue, then fades back as the singing starts (about 0:59)",
           "rate": 0,
-          "castle": "amber",
+          "castle": "grey",
           "effects": [
             "starfield",
             "keyhole_magic"
@@ -70,13 +70,12 @@
           "end": 63,
           "title": "Happily Ever After theme song",
           "characters": [],
-          "look": "Gold sparkles fall through the sky and twinkle over the castle walls, the gate glowing steadily; still no fireworks",
+          "look": "Gold sparkles fall through the sky, the gate glowing steadily yellow; still no fireworks",
           "rate": 0,
-          "castle": "amber",
+          "castle": "grey",
           "effects": [
             "keyhole_magic",
             "gold_stream",
-            "wall_sparkles",
             "keyhole_glow"
           ]
         },
@@ -85,11 +84,11 @@
           "end": 98,
           "title": "Theme song builds",
           "characters": [],
-          "look": "On \"...unfold\" (video 1:13) a burst of gold magic out of the gate over the lower castle; then red, purple and gold filigree on the castle, yellow and cyan searchlights; still no fireworks",
+          "look": "On \"...unfold\" (video 1:13) a burst of gold magic out of the gate over the lower castle; then red walls under royal-blue roofs, white and ice-blue searchlights; still no fireworks",
           "rate": 0,
           "castle": "royal",
           "effects": [
-            "searchlights_gold",
+            "searchlights",
             "keyhole_glow",
             "gold_burst"
           ]
