@@ -1,3 +1,4 @@
+import math
 import random
 
 import pytest
@@ -162,6 +163,86 @@ def test_searchlights_shine_in_their_colours(name, colours):
     assert {tuple(int(c * 0.85) for c in rgb) for rgb in colours} <= set(pixels.values())
 
 
+def _beam_tips(show, e):
+    """Where each fanfare beam's far end is, e seconds into a scene starting at 0: [(foot x, tip x)]."""
+    beams = show.extras["searchlights_fanfare"]
+    show.set_cue(_cue(effects=("searchlights_fanfare",)), e)
+    tips = []
+    for side, foot in ((-1, show.castle_x - 2), (1, show.castle_x + show.castle_w + 1)):
+        for k in (0, 1):
+            ox = foot + side * k * 3 * beams.s
+            a = -math.pi / 2 + side * (beams.lean(e, k) + beams.SWAY * math.sin(e * 1.3 + k * 1.7 + side))
+            tips.append((ox, ox + math.cos(a) * show.height))
+    return tips
+
+
+def test_fanfare_searchlights_cross_over_the_spire_then_fan_out_wide_then_fade():
+    show = MusicShow(64, 32, random.Random(14))
+    mid = show.castle_x + show.castle_w / 2
+    left, right = _beam_tips(show, 8.0)[:2], _beam_tips(show, 8.0)[2:]
+    assert all(tip > mid for _, tip in left) and all(tip < mid for _, tip in right), "crossed over the spire"
+    wide = _beam_tips(show, 13.0)
+    assert all(tip < foot for foot, tip in wide[:2]) and all(tip > foot for foot, tip in wide[2:]), "fanned out"
+    pixels = {}
+    show.set_cue(_cue(effects=("searchlights_fanfare",)), 13.0)
+    show.extras["searchlights_fanfare"].draw_behind(lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb),
+                                                    pixels, True)
+    feet = {(int(foot), show.height - 1) for foot, _ in wide}
+    assert feet <= set(pixels), "four beams"
+    pixels.clear()
+    show.set_cue(_cue(effects=("searchlights_fanfare",)), 18.0)
+    show.extras["searchlights_fanfare"].draw_behind(lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb),
+                                                    pixels, True)
+    assert not any(any(rgb) for rgb in pixels.values()), "gone before the narrator"
+
+
+def test_the_gate_glows_yellow():
+    show = MusicShow(64, 32, random.Random(14))
+    show.set_cue(_cue(effects=("keyhole_glow",)), 1)
+    pixels = {}
+    show.extras["keyhole_glow"].draw_front(lambda x, y, rgb: pixels.__setitem__((x, y), rgb), pixels, True)
+    r, g, b = next(iter(pixels.values()))
+    assert r > 200 and g > 180 and b < 80, "yellow, not orange or sienna"
+
+
+def test_the_narrators_gate_is_the_yellow_glow_at_half_brightness():
+    show = MusicShow(64, 32, random.Random(14))
+    show.set_cue(_cue(effects=("keyhole_glow", "keyhole_glow_dim")), 1)
+    seen = []
+    for name in ("keyhole_glow", "keyhole_glow_dim"):
+        pixels = {}
+        show.extras[name].draw_front(lambda x, y, rgb: pixels.__setitem__((x, y), rgb), pixels, True)
+        seen.append(next(iter(pixels.values())))
+    bright, dim = seen
+    assert all(abs(d * 2 - c) <= 3 for c, d in zip(bright, dim))
+
+
+def test_the_gold_gate_glows_steadily():
+    show = MusicShow(64, 32, random.Random(14))
+    glow = show.extras["keyhole_glow"]
+    levels = []
+    for i in range(60):
+        show.set_cue(_cue(effects=("keyhole_glow",)), i / 30)
+        pixels = {}
+        glow.draw_front(lambda x, y, rgb: pixels.__setitem__((x, y), rgb), pixels, True)
+        levels.append(next(iter(pixels.values()))[0] / glow.COLOUR[0])
+    assert min(levels) >= 0.79, "never fades towards black"
+
+
+def test_the_gold_burst_fires_once_from_the_gate_over_the_lower_castle_then_fades():
+    show = MusicShow(64, 32, random.Random(14))
+    burst = show.extras["gold_burst"]
+    cue = _cue(effects=("gold_burst",), castle="grey")
+    _run(show, cue, 0.5)
+    assert burst.sparks, "it bursts as the scene starts"
+    _, cy = burst.centre
+    assert all(p[1] <= cy + 1 and p[1] >= show.castle_y for p in burst.sparks), "up over the lower castle"
+    _run(show, cue, 2.0, start=0.5)
+    assert not burst.sparks, "faded in about 1.5 s"
+    _run(show, cue, 3.0, start=2.5)
+    assert not burst.sparks, "only once"
+
+
 def test_party_searchlights_change_colour():
     show = MusicShow(64, 32, random.Random(15))
     beams = show.extras["searchlights_party"]
@@ -262,7 +343,7 @@ def test_the_keyhole_magic_climbs_the_walls_holds_then_fades(height):
     show = MusicShow(64, height, random.Random(1))
     show.stars = []
     magic = show.extras["keyhole_magic"]
-    cue = _cue(start=0, end=20, effects=("keyhole_magic",), castle="amber")
+    cue = _cue(start=0, end=20, effects=("keyhole_magic",), castle="grey")
     plain = MusicShow(64, height, random.Random(1))
     plain.stars = []
 
@@ -270,21 +351,36 @@ def test_the_keyhole_magic_climbs_the_walls_holds_then_fades(height):
         show.flash = plain.flash = [0.0, 0.0, 0.0]
         return show.frame_pixels(), plain.frame_pixels()
 
-    _run(show, cue, 1.0)
-    _run(plain, _cue(start=0, end=20, castle="amber"), 1.0)
+    _run(show, cue, 0.5)
+    _run(plain, _cue(start=0, end=20, castle="grey"), 0.5)
     low, high = _wall(show), _wall(show, low=False)
     climbed, _ = magic.amounts()
     assert 0 < climbed < 1
     lit, unlit = frames()
     assert lit[low] != unlit[low], "gold at the bottom first"
     assert lit[high] == unlit[high], "not yet at the top"
-    _run(show, cue, 3.0, start=1.0)
-    _run(plain, _cue(start=0, end=20, castle="amber"), 3.0, start=1.0)
+    _run(show, cue, 1.5, start=0.5)
+    _run(plain, _cue(start=0, end=20, castle="grey"), 1.5, start=0.5)
     lit, unlit = frames()
     assert lit[high] != unlit[high], "the whole castle by CLIMB_S"
+    roofs = [(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels if kind == "R"]
+    assert all(lit[xy] == unlit[xy] for xy in roofs), "the roofs stay blue"
+    r, g, b = lit[magic.door[0]]
+    assert r == 255 and g > 220 and b < 120, "the keyhole blazes yellow"
     done = magic.CLIMB_S + magic.HOLD_S + magic.FADE_S
-    _run(show, cue, done - 3.5, start=4.0)
+    _run(show, cue, done - 1.5, start=2.0)
     assert magic.amounts()[1] == 0, "faded back to the castle's own colours"
+
+
+def test_the_keyhole_magic_fades_back_to_the_gates_own_glow_not_to_black():
+    show = MusicShow(64, 32, random.Random(1))
+    show.stars = []
+    magic = show.extras["keyhole_magic"]
+    cue = _cue(start=0, end=20, effects=("keyhole_magic", "keyhole_glow"), castle="grey")
+    _run(show, cue, magic.CLIMB_S + magic.HOLD_S + magic.FADE_S * 0.8)
+    show.flash = [0.0, 0.0, 0.0]
+    r, g, b = show.frame_pixels()[magic.door[0]]
+    assert r > 200, "still lit, between the blaze and the gold glow"
 
 
 def test_the_keyhole_magic_carries_on_into_the_theme_song():
@@ -318,9 +414,9 @@ def test_the_savanna_warms_the_castle_only_late_in_its_scene_and_not_with_the_ca
     show.stars = []
     savanna = show.extras["savanna"]
     cue = _cue(start=0, end=20, effects=("savanna",), castle="purple")
-    _run(show, cue, 10)
+    _run(show, cue, 8)
     assert savanna.level == 0
-    _run(show, cue, 6, start=10)
+    _run(show, cue, 8, start=8)
     assert savanna.level == 1
     frame = show.frame_pixels()
     r, g, b = frame[_wall(show)]

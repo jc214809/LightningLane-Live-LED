@@ -6,7 +6,7 @@ from display.fireworks.actors.princess_garden import ARIEL, NAVEEN, ROCK_COLORS,
 from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
-START, END = 637.0, 668.0  # Princess garden
+START, END = 639.0, 668.0  # Princess garden
 SLOT = (END - START) / 4
 
 

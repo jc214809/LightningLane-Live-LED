@@ -15,7 +15,7 @@ class RayGlows(Actor):
     end. Everything, the trail included, is placed by the clock, so he leaves nothing behind when off.
     """
     NAME = "Ray"
-    FIRST_S = 21.0  # the prologue's length; the fanfare follows
+    FIRST_S = 24.0  # the prologue's length; the fanfare follows
     EIGHT_S = 8.0  # one figure-eight
     DRIFT_S = 4.0  # from the eight over to the spire
     LAP_S = 6.0  # one circle of the spire

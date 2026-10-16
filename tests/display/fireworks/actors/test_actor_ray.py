@@ -7,7 +7,7 @@ from display.fireworks.actors.ray import RayGlows
 from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
-START, MID, END = 150.0, 171.0, 192.0
+START, MID, END = 147.0, 171.0, 192.0
 
 
 def _scenes():

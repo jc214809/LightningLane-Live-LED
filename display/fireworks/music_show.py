@@ -30,8 +30,8 @@ CASTLE_LOOKS = {
     # Gold, its walls tiled in coloured glass (_STAINED_GLASS) as it fades in.
     "stained_glass": {"W": (255, 215, 120), "R": (230, 160, 40)},
     # From watching the real show (docs/shows/happily-ever-after/README.md):
-    "amber": {"W": (255, 150, 60), "R": (60, 90, 230)},  # the opening: warm amber walls, blue spires
-    "royal": {"W": (220, 60, 80), "R": (120, 50, 200)},  # the theme song's red and purple filigree
+    "grey": {"W": (180, 180, 190), "R": (60, 90, 230)},  # the opening: grey walls, blue spires
+    "royal": {"W": (220, 60, 80), "R": (60, 90, 230)},  # the theme song's build: red walls, royal-blue roofs
     "red": {"W": (215, 35, 40), "R": (160, 20, 40)},  # the theme chorus, its design traced in gold
     "pastel": {"W": (210, 170, 245), "R": (90, 210, 215)},  # When You Wish: lavender and turquoise
     "stone": {"W": (150, 150, 160), "R": (30, 60, 210)},  # Out There: Notre Dame's gothic stone, royal-blue roofs
