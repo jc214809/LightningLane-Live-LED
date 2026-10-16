@@ -75,8 +75,8 @@ def test_cue_at_past_either_end_holds_the_first_or_last_scene(hea):
 
 
 def test_rate_defaults_to_the_sections_intensity(hea):
-    # Hakuna Matata sets no rate: the friendship section's 0.8 against the everyday 0.6.
-    assert hea.cue_at(450).rate == pytest.approx(0.8 / 0.6)
+    # You've Got a Friend in Me sets no rate: the friendship section's 0.8 against the everyday 0.6.
+    assert hea.cue_at(465).rate == pytest.approx(0.8 / 0.6)
 
 
 def test_dim_palette_colours_are_dropped(tmp_path):
