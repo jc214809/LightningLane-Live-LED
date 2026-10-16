@@ -32,7 +32,7 @@ CASTLE_LOOKS = {
     # From watching the real show (docs/shows/happily-ever-after/README.md):
     "grey": {"W": (180, 180, 190), "R": (60, 90, 230)},  # the opening: grey walls, blue spires
     "royal": {"W": (220, 60, 80), "R": (60, 90, 230)},  # the theme song's build: red walls, royal-blue roofs
-    "red": {"W": (215, 35, 40), "R": (160, 20, 40)},  # the theme chorus, its design traced in gold
+    "red": {"W": (215, 35, 40), "R": (60, 90, 230)},  # the theme chorus, its design traced in gold, blue roofs
     "pastel": {"W": (210, 170, 245), "R": (90, 210, 215)},  # When You Wish: lavender and turquoise
     "stone": {"W": (150, 150, 160), "R": (30, 60, 210)},  # Out There: Notre Dame's gothic stone, royal-blue roofs
     "sunset": {"W": (255, 175, 60), "R": (225, 70, 40)},  # Hakuna Matata

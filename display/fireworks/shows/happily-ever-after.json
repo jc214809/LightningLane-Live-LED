@@ -111,15 +111,94 @@
           "end": 128,
           "title": "Theme chorus",
           "characters": [],
-          "look": "The show's first fireworks on the chorus: a red castle, its design traced in running gold magic; red and gold peonies, then a red, gold and white strobe barrage",
+          "look": "The show's first fireworks on the chorus: the castle red under blue roofs, its design traced in running gold magic; white comet fans off the rooftops, big gold and white chrysanthemums, a gold willow, red fans and a red peony",
           "rate": 2.2,
           "castle": "red",
-          "shapes": {
-            "heart": 0.06,
-            "mickey": 0.08
-          },
           "effects": [
             "gold_trace"
+          ],
+          "palette": [
+            "#E0242F",
+            "#FFD36B",
+            "#FFFFFF"
+          ],
+          "hits": [
+            {
+              "at": 98.9,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 99.3,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 101.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.35,
+              "y": 0.18,
+              "style": "peony"
+            },
+            {
+              "at": 102.4,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.65,
+              "y": 0.2,
+              "style": "peony"
+            },
+            {
+              "at": 104.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 108.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.45,
+              "y": 0.18,
+              "style": "willow"
+            },
+            {
+              "at": 112.6,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 113.4,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 113.2,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 120.6,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.55,
+              "y": 0.18,
+              "style": "peony"
+            },
+            {
+              "at": 124.6,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            }
           ]
         },
         {
@@ -127,7 +206,7 @@
           "end": 137,
           "title": "Theme chorus (gold canopy)",
           "characters": [],
-          "look": "On the chorus drop the castle fades slowly to blue from the spire down to its base; a huge gold palm and willow canopy, a gold brocade crown fading to smoke",
+          "look": "On the chorus drop the castle fades slowly to blue from the spire down to its base; a huge gold willow canopy over the spire, white comet fans firing off both sides, a gold brocade crown fading to smoke",
           "rate": 1.6,
           "castle": "blue",
           "palette": [
@@ -137,6 +216,41 @@
           "effects": [
             "willow",
             "wipe_down"
+          ],
+          "hits": [
+            {
+              "at": 129.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "curtain"
+            },
+            {
+              "at": 130.9,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 131.7,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 132.5,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 133.3,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 134.1,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            }
           ]
         }
       ]
