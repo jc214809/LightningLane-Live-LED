@@ -99,7 +99,7 @@ future question.
 ### 1.1 Theme fanfare
 
 - **Audio:** 0-19 s (0:00-0:19, 19 s) · **Video:** `--start 0:10 --end 0:29`
-- **Our score now:** Warm amber castle, blue spires, the keyhole glowing gold, white searchlights crisscrossing; no fireworks. Characters: none.
+- **Our score now:** Grey castle, blue spires, the gate lit yellow; two banks of white and ice-blue searchlights stand and sway, cross over the spire (video 0:17), fan out wide (0:22) and fade before the narrator (0:27); no fireworks. Characters: none.
 
 **Your notes for this scene:**
 
@@ -197,8 +197,8 @@ To recreate this fanfare authentically on 64x32 or 64x64 LED matrices:
 
 ### 1.2 Narrator opening
 
-- **Audio:** 19-47 s (0:19-0:47, 28 s) · **Video:** `--start 0:29 --end 0:57`
-- **Our score now:** Searchlights off, the keyhole dims, the sky dark. Characters: none.
+- **Audio:** 19-45.8 s (0:19-0:45, 26.8 s) · **Video:** `--start 0:29 --end 0:56`
+- **Our score now:** Searchlights off, the sky dark, the gate a dim steady yellow as the narrator speaks. Characters: none.
 - **Checked by eye (2026-10-14):** the keyhole (the gateway arch) stays dim through the narration. When the show is ready to begin (about video 0:56), magic comes out of the keyhole and spreads through the whole castle. So it doesn't dim further, and it doesn't light up gold on its own: the magic pours out of it.
 
 **Your notes for this scene:**
@@ -279,10 +279,23 @@ To recreate this fanfare authentically on 64x32 or 64x64 LED matrices:
 
 </details>
 
+### 1.2a Magic from the keyhole
+
+- **Audio:** 45.8-47 s (0:45-0:47, 1.2 s) · **Video:** `--start 0:56 --end 0:57`
+- **Our score now:** As the show is ready to begin (video 0:56), the keyhole blazes yellow and its magic climbs the walls, tinting them gold while the roofs stay blue, then fades back as the singing starts (about 0:59). Characters: none.
+
+**Your notes for this scene:**
+
+> _(add what to look for; sent after the base prompt)_
+
+**Answers** (newest first):
+
+_None yet._
+
 ### 1.3 Happily Ever After theme song
 
 - **Audio:** 47-63 s (0:47-1:03, 16 s) · **Video:** `--start 0:57 --end 1:13`
-- **Our score now:** Gold ribbons swirl, the keyhole glows; still no fireworks. Characters: none.
+- **Our score now:** Gold sparkles fall through the sky, the gate glowing steadily yellow; still no fireworks. Characters: none.
 - **Checked by eye (2026-10-13):** at video 1:13, on "…unfold", it's a burst of **gold magic**, not two comets as Gemini's answer below says. The sky stays free of fireworks until the chorus (1.4: 1:48).
 
 **Your notes for this scene:**
@@ -368,7 +381,7 @@ To make this segment unmistakably authentic on small pixel displays:
 ### 1.4 Theme song builds
 
 - **Audio:** 63-98 s (1:03-1:38, 35 s) · **Video:** `--start 1:13 --end 1:48`
-- **Our score now:** Red, purple and gold filigree on the castle, yellow and cyan searchlights; still no fireworks. Characters: none.
+- **Our score now:** On "...unfold" (video 1:13) a burst of gold magic out of the gate over the lower castle; then red walls under royal-blue roofs, white and ice-blue searchlights; still no fireworks. Characters: none.
 
 **Your notes for this scene:**
 
@@ -464,8 +477,8 @@ To make this segment unmistakably authentic on small pixel displays:
 
 ### 2.1 Theme chorus
 
-- **Audio:** 98-119 s (1:38-1:59, 21 s) · **Video:** `--start 1:48 --end 2:09`
-- **Our score now:** The show's first fireworks on the chorus: red and gold peonies, then a red, gold and white strobe barrage. Characters: none.
+- **Audio:** 98-128 s (1:38-2:08, 30 s) · **Video:** `--start 1:48 --end 2:18`
+- **Our score now:** The show's first fireworks on the chorus: a red castle, its design traced in running gold magic; red and gold peonies, then a red, gold and white strobe barrage. Characters: none.
 - **Checked by eye (2026-10-14):** the castle is red with gold magic tracing its design. Which fireworks (comet pairs and willows, or a strobe barrage) doesn't matter much.
 
 **Your notes for this scene:**
@@ -562,8 +575,8 @@ To make this segment unmistakably authentic on small pixel displays:
 
 ### 2.2 Theme chorus (gold canopy)
 
-- **Audio:** 119-137 s (1:59-2:17, 18 s) · **Video:** `--start 2:09 --end 2:27`
-- **Our score now:** A huge gold palm and willow canopy, a gold brocade crown fading to smoke. Characters: none.
+- **Audio:** 128-137 s (2:08-2:17, 9 s) · **Video:** `--start 2:18 --end 2:27`
+- **Our score now:** On the chorus drop the castle fades slowly to blue from the spire down to its base; a huge gold palm and willow canopy, a gold brocade crown fading to smoke. Characters: none.
 - **Checked by eye (2026-10-14):** on the chorus drop the castle fades slowly from its previous colours to blue, starting at the top and working down to the base (not a blue top over a gold base).
 
 **Your notes for this scene:**
@@ -657,7 +670,7 @@ On a 64x32 or 64x64 LED matrix:
 
 ### 3.1 Wishing star lands on the castle
 
-- **Audio:** 137-150 s (2:17-2:30, 13 s) · **Video:** `--start 2:27 --end 2:40`
+- **Audio:** 137-147 s (2:17-2:27, 10 s) · **Video:** `--start 2:27 --end 2:37`
 - **Our score now:** Music-box transition: the castle turns royal blue, the sky dark, one bright star. Characters: none.
 - **Checked by eye (2026-10-14):** the wishing star shoots across the sky and lands directly on the castle.
 
@@ -745,7 +758,7 @@ Here is the detailed breakdown of the segment:
 
 ### 3.2 Down in New Orleans (prologue)
 
-- **Audio:** 150-171 s (2:30-2:51, 21 s) · **Video:** `--start 2:40 --end 3:01`
+- **Audio:** 147-171 s (2:27-2:51, 24 s) · **Video:** `--start 2:37 --end 3:01`
 - **Our score now:** Midnight blue, Evangeline the evening star twinkling, small single comets. Characters: Tiana, Ray.
 - **V2:** stage ghost; actors ray (Ray loops a figure-eight by the evening star).
 
@@ -1020,10 +1033,10 @@ Here is the detailed breakdown of the segment:
 
 </details>
 
-### 3.5 Part of Your World (climax)
+### 3.5 Out There
 
 - **Audio:** 215-256 s (3:35-4:16, 41 s) · **Video:** `--start 3:45 --end 4:26`
-- **Our score now:** Sunbeams through the water, magenta and ruby peonies, gold and white brocade. Characters: Ariel.
+- **Our score now:** Notre Dame: gothic stone, a glowing rose window, royal-blue roofs, the bells ringing; Quasimodo; magenta and ruby peonies, gold and white brocade. Characters: Quasimodo.
 - **Checked by lyrics (Whisper on our audio, 2026-10-13):** this is **"Out There"** (*The Hunchback of Notre Dame*), not Part of Your World: "Out there… strolling by the Seine, taste the morning air… just one day and then I swear I'll be content" from audio 215 s, its last "Out there!" at 254 s. Gemini's answer below (Quasimodo, the Notre Dame rose window) agrees. The score's title, characters and look for this scene are wrong.
 - **Checked by eye (2026-10-14):** Quasimodo, confirmed. No doves anywhere: drop them.
 
@@ -1127,7 +1140,7 @@ Here is the detailed breakdown of the segment:
 ### 3.6 When You Wish Upon a Star (interlude)
 
 - **Audio:** 256-268 s (4:16-4:28, 12 s) · **Video:** `--start 4:26 --end 4:38`
-- **Our score now:** Lavender, pink and turquoise castle; magenta and purple comets fanning left and right. Characters: none.
+- **Our score now:** The castle glows; magenta and pink comet fans fire from across the base from 4:27, then a gold crown with white over the spire. Characters: none.
 
 **Your notes for this scene:**
 
@@ -1217,7 +1230,7 @@ Here is the detailed breakdown of the segment:
 ### 3.7 Touch the Sky
 
 - **Audio:** 268-303 s (4:28-5:03, 35 s) · **Video:** `--start 4:38 --end 5:13`
-- **Our score now:** Cathedral bells, gothic stone and moss, doves; gold willow, emerald and white strobes, red and gold comets. Characters: Merida.
+- **Our score now:** Merida's Highlands: emerald and teal castle, Celtic knotwork; her arrow flies at 277 (video 4:47); gold willow, emerald and white strobes, red and gold comets. Characters: Merida.
 - **V2:** stage ghost; actors merida (fewer fireworks, so her arrow shows; Merida says her line at the bottom left, then on "touch the sky" shoots an arrow into a bullseye firework (64x64)).
 - **Checked by eye (2026-10-14):** Merida fires her arrow here (video 4:47).
 
@@ -1758,7 +1771,7 @@ Here are the detailed facts for the "Aladdin: a best friend by your side" transi
 ### 5.2 Friend Like Me (instrumental)
 
 - **Audio:** 412.5-428 s (6:52-7:08, 15.5 s) · **Video:** `--start 7:03 --end 7:18`
-- **Our score now:** Brass patterns and lanterns on the castle; blue and gold fountains from the roofs, white shells. Characters: Aladdin, Genie.
+- **Our score now:** Brass patterns and lanterns on the castle, white shells; on three beats the side rooftops fire fans of comets, white, red, then green (video 7:15-7:17). Characters: Aladdin, Genie.
 - **Checked by eye (2026-10-14):** Gemini is right: at about 7:15-7:17 the side rooftops fire three quick fans of comets, one per beat (white, then red, then green). Ours has blue and gold fountains instead.
 
 **Your notes for this scene:**
@@ -1966,7 +1979,7 @@ To convey this segment instantly on a 64x32 or 64x64 matrix:
 
 ### 5.4 Hakuna Matata
 
-- **Audio:** 446-453 s (7:26-7:33, 7 s) · **Video:** `--start 7:36 --end 7:43`
+- **Audio:** 446-459.3 s (7:26-7:39, 13.3 s) · **Video:** `--start 7:36 --end 7:49`
 - **Our score now:** Timon and Pumbaa in sunset yellow, orange and red; red and gold shells. Characters: Timon, Pumbaa.
 - **To check by eye and ear:** Gemini's answer below says this isn't Hakuna Matata but The Bare Necessities (Mowgli and Baloo, to 7:36) then *Tangled*'s "I've Got a Dream" (the Corona sun, Pascal at the gate, from 7:39). Unconfirmed: Whisper on our split-out vocals (audio 425-465) hears only "oh, oh" scat, no lyrics either way, and Gemini has misplaced Tangled once already (4.3).
 - **Checked by eye (2026-10-14):** it is Hakuna Matata (Gemini's Bare Necessities here is wrong), and it runs until Toy Story starts at about video 7:50.
@@ -2064,8 +2077,8 @@ To convey this segment instantly on a 64x32 or 64x64 matrix:
 
 ### 5.5 You've Got a Friend in Me
 
-- **Audio:** 453-459 s (7:33-7:39, 6 s) · **Video:** `--start 7:43 --end 7:49`
-- **Our score now:** Woody and Buzz on Andy's cloud wallpaper; red and yellow bursts. Characters: Woody, Buzz.
+- **Audio:** 459.3-473.3 s (7:39-7:53, 14 s) · **Video:** `--start 7:49 --end 8:03`
+- **Our score now:** Toy Story from video 7:50: Woody and Buzz on Andy's cloud wallpaper, the castle in primary-coloured blocks; red and yellow bursts. Characters: Woody, Buzz.
 - **V2:** stage castle; actors buzz_woody (Buzz flies across, Woody waves from the ground).
 - **Checked by eye (2026-10-14):** Toy Story starts at about video 7:50. Bare Necessities comes after it, in the green part of 5.6.
 
@@ -2171,8 +2184,8 @@ Here is the breakdown of this section of *Happily Ever After*:
 
 ### 5.6 Friendship mash-up
 
-- **Audio:** 459-514 s (7:39-8:34, 55 s) · **Video:** `--start 7:49 --end 8:44`
-- **Our score now:** Ralph and Vanellope, Hiro and Baymax, Judy and Nick, Joy and Sadness; multicolour searchlights, steady pastel bursts. Characters: Ralph, Vanellope, Hiro, Baymax, Judy, Nick, Joy, Sadness.
+- **Audio:** 473.3-514 s (7:53-8:34, 40.7 s) · **Video:** `--start 8:03 --end 8:44`
+- **Our score now:** In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts. Characters: Baloo, Ralph, Hiro, Baymax, Judy, Nick, Joy, Sadness, Mike, Sulley.
 - **V2:** stage off; actors ralph, baymax, memory_orbs (Ralph smashes bricks (0-14 s in), Baymax inflates and waves (15-22), Joy's and Sadness's memory orbs (35-54)).
 - **Checked by eye (2026-10-14):** in order: Toy Story (from 7:50); the castle turns green for Bare Necessities, with the Jungle Book characters dancing (about 8:04); the castle turns pink and Wreck-It Ralph appears (about 8:12); back to blue-topped towers for Baymax in his super suit with Hiro (about 8:16); Nick and Judy at the bottom, in the gate, then a doughnut rolls over the castle and chases them off (Zootopia); the whole castle fills with Inside Out's memory orbs, with Joy and Sadness (about 8:30); then Mike and Sulley, surrounded by scream canisters (about 8:36). Vanellope wasn't mentioned.
 
@@ -2217,7 +2230,7 @@ _Watched by Claude from frames (one every 2 s, plus close crops of the castle), 
 ### 5.7 That's What Friends Are For
 
 - **Audio:** 514-527 s (8:34-8:47, 13 s) · **Video:** `--start 8:44 --end 8:57`
-- **Our score now:** Sulley and Mike opening doors across the turrets, turquoise and purple; soft gold shells. Characters: Sulley, Mike.
+- **Our score now:** The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells. Characters: none.
 - **V2:** stage castle; actors mike (Mike peeks over the left turret, then the right).
 - **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it: its stonework animates, with no characters. Sulley and Mike belong at the end of 5.6, not here.
 
@@ -2317,7 +2330,7 @@ To capture this 13-second moment on a 64x32 or 64x64 matrix:
 ### 5.8 Friend Like Me (Genie)
 
 - **Audio:** 527-554 s (8:47-9:14, 27 s) · **Video:** `--start 8:57 --end 9:24`
-- **Our score now:** Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, ring shells. Characters: Genie.
+- **Our score now:** Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, gold chrysanthemums; red and green comet fans from the roofs (video 9:17), then a green curtain hanging over the castle on the last big note (9:21). Characters: Genie.
 - **V2:** stage ghost; actors genie (Genie circles the spire; half V1's fireworks, so bursts don't sit on him).
 - **Checked by eye (2026-10-14):** Gemini is right: at about 9:17 red and green comets fan outward from both sides of the castle, then on the last big note (about 9:21) a green shell's sparks hang over the castle like a curtain. Ours has ring shells instead.
 
@@ -2422,7 +2435,7 @@ To make this readable and authentic on a 64x32 / 64x64 matrix:
 ### 5.9 Friend Like Me (finale)
 
 - **Audio:** 554-563 s (9:14-9:23, 9 s) · **Video:** `--start 9:24 --end 9:33`
-- **Our score now:** A huge gold willow barrage with roof fountains showering the castle. Characters: Genie.
+- **Our score now:** Genie's big finish: dense magenta, red and green comets fanning out from both sides of the castle, one fan a beat, to his "Ha!". Characters: Genie.
 - **V2:** stage castle; actors genie (he sings on to 563, round the full castle and its fountains).
 - **Checked by eye (2026-10-14):** ignore Gemini's answer here; it isn't what the show does. Leave the scene as it is.
 
@@ -2529,7 +2542,7 @@ To make this segment unmistakably recognizable on low-resolution matrix displays
 ### 6.1 Olaf: some people are worth melting for
 
 - **Audio:** 563-576 s (9:23-9:36, 13 s) · **Video:** `--start 9:33 --end 9:46`
-- **Our score now:** Spoken line; icy blue and purple castle, snowflakes floating up, one gold shell. Characters: Olaf.
+- **Our score now:** Spoken line; icy blue and purple castle, snowflakes floating up; the sky dark for about 7 s, then one gold willow left of the spire (video 9:43). Characters: Olaf.
 - **V2:** stage ghost; actors olaf (Olaf pops up and waves in the snow).
 - **Checked by eye (2026-10-14):** Gemini is right about the shell: about 7 s of dark sky, then one shell to the left of the spire. Leave Olaf as he is in our version.
 
@@ -2615,8 +2628,8 @@ Here are the details for this segment based on the video:
 
 ### 6.2 Love Is an Open Door
 
-- **Audio:** 576-603 s (9:36-10:03, 27 s) · **Video:** `--start 9:46 --end 10:13`
-- **Our score now:** Hearts and rose stained glass, ending royal blue and violet; gold fan comets, pink, violet and gold peonies. Characters: Anna, Hans.
+- **Audio:** 576-607 s (9:36-10:07, 31 s) · **Video:** `--start 9:46 --end 10:17`
+- **Our score now:** Olaf stays in the centre window to about 582 (video 9:52), then no characters; pink and violet only on the castle, the bursts in the sky gold (some green-gold); gold comet fans from the sides from about 585. Characters: Olaf.
 - **Checked by eye (2026-10-14):** the sky bursts are gold (some green-gold), with the pink and violet only on the castle, as Gemini says. No Anna or Hans anywhere (checked by eye and in frames 9:44-10:15): the figure in the centre window at 9:46-9:52, which Gemini took for them, is Olaf carrying on from 6.1; after that the castle has no characters. Gold comet fans fire from the sides from about 10:05.
 
 **Your notes for this scene:**
@@ -2709,8 +2722,8 @@ Here is the breakdown of the "Love Is an Open Door" sequence:
 
 ### 6.3 Can You Feel the Love Tonight
 
-- **Audio:** 603-623 s (10:03-10:23, 20 s) · **Video:** `--start 10:13 --end 10:33`
-- **Our score now:** Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala; spaced gold, soft pink and violet. Characters: WALL-E, EVE, Simba, Nala.
+- **Audio:** 607-623 s (10:07-10:23, 16 s) · **Video:** `--start 10:17 --end 10:33`
+- **Our score now:** Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29). Characters: WALL-E, EVE, Simba, Nala.
 - **V2:** stage off; actors walle (WALL-E floats across the stars).
 - **Checked by eye (2026-10-14):** WALL-E and EVE are both there (Gemini's answer says they aren't; it's wrong), and so is Simba and Nala's savanna: the castle turns amber with black acacia-tree silhouettes on the lower walls from about 10:25.
 
@@ -2813,8 +2826,8 @@ Here is the detailed breakdown of the segment from **10:10 to 10:36**:
 
 ### 6.4 You'll Be in My Heart
 
-- **Audio:** 623-637 s (10:23-10:37, 14 s) · **Video:** `--start 10:33 --end 10:47`
-- **Our score now:** Magenta, lavender and gold; Tarzan and Kala, Dumbo and Mrs. Jumbo; pink, violet and white with comets from the terraces. Characters: Tarzan, Kala, Dumbo, Mrs. Jumbo.
+- **Audio:** 623-639 s (10:23-10:39, 16 s) · **Video:** `--start 10:33 --end 10:49`
+- **Our score now:** Magenta, lavender and gold; families on the centre tower's right side: Kala and baby Tarzan, Riley and her family, Dory; pink, violet and white with comets from the terraces. Characters: Kala, Tarzan, Riley, Dory.
 - **V2:** stage ghost; actors dumbo (Dumbo flies across, flapping his ears).
 - **Checked by eye (2026-10-14):** correct that it opens with Kala and baby Tarzan and that the sky is quiet. It's a montage of families on the right side of the tall centre tower, not just two vignettes in the gate: Simba and Nala, then Tarzan, then Riley and her family (Inside Out), Dory (the blue shape at about 10:41, which Gemini took for Dumbo), and others. No Dumbo or Mrs. Jumbo seen.
 
@@ -2927,8 +2940,8 @@ Here is the detailed breakdown of the segment from **10:10 to 10:36**:
 
 ### 6.5 Princess garden
 
-- **Audio:** 637-668 s (10:37-11:08, 31 s) · **Video:** `--start 10:47 --end 11:18`
-- **Our score now:** Pink and rose stained-glass arches, flowers and waterfalls; gold brocade, pink peonies, gold palms. Characters: Cinderella, Prince Charming, Tiana, Naveen, Ariel, Eric, Belle, Beast.
+- **Audio:** 639-668 s (10:39-11:08, 29 s) · **Video:** `--start 10:49 --end 11:18`
+- **Our score now:** No princesses in the real show: the families' pink and red castle carries on, pink comets from the sides, gold palms and willows, a red peony; it turns royal blue at about 646 (video 11:06). Characters: none.
 - **V2:** stage ghost; actors princess_garden (four couples meet in turn, a heart floating up between each).
 - **Checked by eye (2026-10-14):** no princesses at all: not Cinderella and Charming (Gemini) nor Tiana, Naveen, Ariel, Eric, Belle and Beast (our score). In frames: the castle stays pink and red with gold accents to about 11:05 (the same look as 6.4's family montage), pink comets from the sides at about 10:50, gold palms and willows, a red peony at about 11:04; then royal blue from about 11:06 with gold willows, into Tangled's purple and gold at 11:18.
 
@@ -3036,7 +3049,7 @@ Here is the detailed breakdown of the segment:
 ### 6.6 I See the Light
 
 - **Audio:** 668-697 s (11:08-11:37, 29 s) · **Video:** `--start 11:18 --end 11:47`
-- **Our score now:** Midnight blue, orange lanterns drifting up; white and gold bursts, then red and gold. Characters: Rapunzel, Flynn.
+- **Our score now:** Lanterns rise; a big white burst at 11:29, then a wall of red and pink peonies at 11:38-11:42. Characters: Rapunzel, Flynn.
 - **V2:** stage ghost; actors lantern_boat (Rapunzel and Flynn's boat drifts in among the lanterns).
 - **Checked by eye (2026-10-14):** leave our version as it is (Gemini's lanterns-on-the-castle and small boat notes aren't worth changing it for).
 
@@ -3231,7 +3244,7 @@ Here is the detailed breakdown of the segment:
 ### 7.1 The Emperor's warning
 
 - **Audio:** 724-742 s (12:04-12:22, 18 s) · **Video:** `--start 12:14 --end 12:32`
-- **Our score now:** "The flower that blooms in adversity...", a gong; dark navy and crimson, low crimson and gold comets. Characters: Emperor of China.
+- **Our score now:** "The flower that blooms in adversity...": the Emperor's praise of Mulan, both in the gate; dark navy and crimson; two lone shells, a pink and green ring then a big gold willow; no gong. Characters: Emperor of China, Mulan.
 - **Checked by eye (2026-10-14):** Gemini is right: Mulan and the Emperor in the gate, two lone shells, no gong.
 
 **Your notes for this scene:**
@@ -3437,7 +3450,7 @@ Here is the detailed analysis of this segment of the show:
 ### 7.3 To Die For
 
 - **Audio:** 760-777 s (12:40-12:57, 17 s) · **Video:** `--start 12:50 --end 13:07`
-- **Our score now:** Villains build; green dragon fire (the split from the attack is a guess: the video didn't show one). Characters: Maleficent, Jafar.
+- **Our score now:** The Incredibles fight a giant robot from about 12:44 (video); lightning. Characters: The Incredibles, Omnidroid.
 - **Checked by eye (2026-10-14):** it's The Incredibles fighting a robot monster (the Omnidroid) at about video 12:48, not the Lion King stampede (Gemini) or Maleficent and Jafar (our score).
 
 **Your notes for this scene:**
@@ -3547,7 +3560,7 @@ To capture this section authentically on 64x32 or 64x64 matrices:
 ### 7.4 He's a Pirate
 
 - **Audio:** 777-806 s (12:57-13:26, 29 s) · **Video:** `--start 13:07 --end 13:36`
-- **Our score now:** The castle cracks and burns; flame jets on the terraces; red, orange and gold. Characters: Pirates.
+- **Our score now:** Scar and Simba fight (777, video 13:07), then Aladdin and Jafar as the snake (799, video 13:30); the castle cracks and burns; flame jets on the terraces; red, orange and gold. Characters: Scar, Simba, Aladdin, Jafar.
 - **Checked by eye (2026-10-14):** at about video 13:07 the Scar and Simba fight starts (the Lion King, not the pirates' Aztec coin Gemini describes). At 13:30 it's Aladdin fighting Jafar as the snake, then Maleficent after that.
 
 **Your notes for this scene:**
@@ -3681,7 +3694,7 @@ To capture this segment convincingly on low-res 64x32/64x64 matrices:
 ### 7.5 He's a Pirate (green barrage)
 
 - **Audio:** 806-812 s (13:26-13:32, 6 s) · **Video:** `--start 13:36 --end 13:43`
-- **Our score now:** Emerald shells and lime comets. Characters: none.
+- **Our score now:** Maleficent after the snake: her green dragon fire along the ground; emerald shells and lime comets. Characters: Maleficent.
 - **Checked by eye (2026-10-14):** this follows Aladdin and the snake (about 13:30); Maleficent comes after it (see 7.4's check).
 
 **Your notes for this scene:**
@@ -3872,7 +3885,7 @@ To capture this segment authentically on tiny matrix displays:
 ### 7.7 He's a Pirate (finale)
 
 - **Audio:** 837-849 s (13:57-14:09, 12 s) · **Video:** `--start 14:08 --end 14:20`
-- **Our score now:** A ruby-red and white perimeter finale, smoke. Characters: none.
+- **Our score now:** A white V fan of comets off the battlements at 14:08, then the sky turns red: red comets and fountains firing across the base, red peonies, flame jets. Characters: none.
 - **Checked by eye (2026-10-14):** fine as it is.
 
 **Your notes for this scene:**
@@ -3970,7 +3983,7 @@ To capture this iconic moment on a 64x32 or 64x64 matrix:
 ### 8.1 Embers
 
 - **Audio:** 849-889 s (14:09-14:49, 40 s) · **Video:** `--start 14:20 --end 15:00`
-- **Our score now:** "Remember who you are": the castle near-black with an ember core, Mufasa in the clouds; no fireworks. Characters: Mufasa.
+- **Our score now:** "Remember who you are": the castle near-black with an ember core, Mufasa in the clouds; between his lines two gold comets (video 14:38 and 14:46). Characters: Mufasa.
 - **V2:** stage castle; actors mufasa (Mufasa's face fades in among the stars over the spire).
 - **Checked by eye (2026-10-15):** Mufasa as we already have him. But it isn't fireworks-free: there are definitely fireworks just before Mufasa appears (Gemini's gold comets with searchlights, about 14:38 and 14:46), so add them.
 
@@ -4159,7 +4172,7 @@ Here is the breakdown of the "Go the Distance / Castle Rebuilds" segment of *Hap
 ### 8.3 Go the Distance
 
 - **Audio:** 915-976 s (15:15-16:16, 61 s) · **Video:** `--start 15:26 --end 16:27`
-- **Our score now:** Stained-glass hero windows in gold; gold and white willows and peonies, side comet plumes, rainbow comets. Characters: Hercules, Megara, Tarzan, Jane, Mulan, Merida.
+- **Our score now:** Stained-glass hero windows in gold (from about 954): Mulan, Aurora and Aladdin lower left, Cinderella over the gate, Tarzan (no Jane) lower right, Elsa and Anna, Merida and Woody up the towers, Tiana near the top; gold and white willows and peonies, side comet plumes, rainbow comets. Characters: Hercules, Megara, Tarzan, Mulan, Merida, Aurora, Aladdin, Cinderella, Elsa, Anna, Woody, Tiana, Mickey.
 - **Checked by eye (2026-10-15):** no Jane. From the user's screenshot of the stained-glass hero mosaic (gold frames, blue roofs, gold willows overhead): lower left Mulan, Aurora, Aladdin; Cinderella with Gus over the gate; lower right Tarzan (long hair, alone) and Aurora again; Mickey far right; up the centre Elsa and Anna left of the spire, Merida and Woody on the right-hand tower, Tiana near the top. Not seen at 15:24: the mosaic comes later in the scene (Gemini: from about 16:04).
 
 **Your notes for this scene:**
@@ -4393,7 +4406,7 @@ To capture this iconic moment on 64x32 / 64x64 pixels:
 ### 9.1 Narrator closing
 
 - **Audio:** 992-1017 s (16:32-16:57, 25 s) · **Video:** `--start 16:43 --end 17:08`
-- **Our score now:** "Find your Happily Ever After": stained glass still lit, the keyhole glows, searchlights pan; no fireworks. Characters: none.
+- **Our score now:** "Find your Happily Ever After": the stained-glass heroes stay lit through the narration, the keyhole glows; no searchlights, no fireworks. Characters: none.
 - **Checked by eye (2026-10-15):** the narrator starts just after video 16:41, and the stained-glass hero mosaic (as in 8.3's check) stays up nearly the whole time he speaks. No searchlights (Gemini is right; our "searchlights pan" is wrong).
 
 **Your notes for this scene:**
@@ -4484,7 +4497,7 @@ The characters do not animate or fly during this section; they are rendered as *
 
 ### 10.1 Happily Ever After (reprise)
 
-- **Audio:** 1017-1042.2 s (16:57-17:22, 25.200000000000045 s) · **Video:** `--start 17:08 --end 17:33`
+- **Audio:** 1017-1042.2 s (16:57-17:22, 25.2 s) · **Video:** `--start 17:08 --end 17:33`
 - **Our score now:** Gold scrollwork, the keyhole beams; gold comets crossing over the spires, gold and white spotlights. Characters: none.
 
 **Your notes for this scene:**
@@ -4595,8 +4608,8 @@ For low-resolution LED matrix boards (64x32 / 64x64):
 
 ### 10.2 You Can Fly
 
-- **Audio:** 1042.2-1080 s (17:22-18:00, 37.799999999999955 s) · **Video:** `--start 17:33 --end 18:11`
-- **Our score now:** Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple. Characters: Tinker Bell.
+- **Audio:** 1042.2-1080 s (17:22-18:00, 37.8 s) · **Video:** `--start 17:33 --end 18:11`
+- **Our score now:** Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple; then a dense glitter barrage fills the sky, orange, then green, pink and orange again. Characters: Tinker Bell.
 - **Checked by eye (2026-10-15):** Tink's flight and the coloured bursts are almost simultaneous: time them however looks best on the board. No Big Ben clock face on the tower (Gemini is wrong there).
 
 **Your notes for this scene:**
@@ -4813,7 +4826,7 @@ For low-resolution LED matrix boards (64x32 / 64x64):
 
 ### 10.4 Final chorus, keyhole opens
 
-- **Audio:** 1087-1099.6 s (18:07-18:19, 12.599999999999909 s) · **Video:** `--start 18:18 --end 18:30`
+- **Audio:** 1087-1099.6 s (18:07-18:19, 12.6 s) · **Video:** `--start 18:18 --end 18:30`
 - **Our score now:** Castle gold and red; a rainbow barrage, then a white and gold mine fan from the castle's foot. Characters: none.
 - **Checked by eye (2026-10-15):** no keyhole. Rainbow bursts, then at the very end the white and gold fan: our version is right, with no white strobes or magenta bursts between them (Gemini is wrong on both).
 
@@ -4896,7 +4909,7 @@ For 64x32 or 64x64 LED matrices, prioritize these three elements:
 
 ### 10.5 The last hit
 
-- **Audio:** 1099.6-1104 s (18:19-18:24, 4.400000000000091 s) · **Video:** `--start 18:30 --end 18:35`
+- **Audio:** 1099.6-1104 s (18:19-18:24, 4.4 s) · **Video:** `--start 18:30 --end 18:35`
 - **Our score now:** "After!": the white flash, then gold willows hanging over a castle washed in gold. Characters: none.
 
 **Your notes for this scene:**
