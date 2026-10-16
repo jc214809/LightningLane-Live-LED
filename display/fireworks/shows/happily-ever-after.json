@@ -1670,18 +1670,26 @@
         {
           "start": 742,
           "end": 760,
-          "title": "Villains attack",
+          "title": "Mulan's battle",
           "characters": [
-            "Ursula",
-            "Scar",
-            "Hades"
+            "Mulan"
           ],
-          "look": "Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts; a red rocket, then red peonies (12:40, 12:45)",
-          "rate": 1.4,
-          "castle": "green",
-          "effects": [
-            "bolts",
-            "searchlights_green"
+          "look": "Not villains: Mulan fights the Huns in the window over the gate, the Fa family's red dragon in the gate; the lower walls fire orange, the upper towers icy blue (the avalanche), the sky dark but for a lone red rocket behind the spire (video 12:36); at about 749.8 (12:40, on the first red peony) the castle flashes teal-green with a red streak up the spire, and by 752 it's blue below, orange above, for the Incredibles; red peonies (12:40, 12:45)",
+          "rate": 0.3,
+          "palette": [
+            "#E0242F",
+            "#FFD36B"
+          ],
+          "castle": "fire",
+          "castle_changes": [
+            {
+              "at": 749.8,
+              "castle": "monsters"
+            },
+            {
+              "at": 752.0,
+              "castle": "purple"
+            }
           ],
           "hits": [
             {

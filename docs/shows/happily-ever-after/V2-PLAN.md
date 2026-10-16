@@ -103,11 +103,8 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Princess garden (637-668) | off | 4 couples | Sheet (princes sheet) | One couple every ~7.5 s: they walk in from either side, meet in the middle, and a heart floats up (`jack_sally`'s heart). Cinderella and Charming, Tiana and frog Naveen, Ariel and Eric, Belle and Beast. |
 | I See the Light (668-724) | ghost | Rapunzel, Flynn | Sheet | In a small boat (Code) at the bottom while the lanterns rise around them. |
 | Emperor (724-742) | castle | none | | The Emperor has no art. Keep the look. |
-| Villains (742-760) | ghost | Ursula | Sheet (`Ursula.jpg` 37x38, `Villains.jpg` 33x42; 64x64) | Rises from the bottom, tentacles first. On 64x32, tentacles only (Code). |
-| | | Scar | Sheet (`Scar.jpg` 24x27) | Glares in from the left; fits both boards. |
-| | | Hades | Sheet (`Male villains.jpg` 31x42; 64x64) | His flame hair flares red as he rises. On 64x32, just the flame hair (Code). |
-| To Die For (760-777) | ghost | Maleficent | Sheet / `Maleficent.jpg` 29x40 | Looms in from the right through the green fire. On 64x32, head and horns peek in. |
-| | | Jafar | Sheet (`Male villains.jpg` 30x41; 64x64) | Optional. |
+| Mulan's battle (742-760) | castle | none yet | | Was planned as villains; the real show has none here (checked 2026-10-16): Mulan fights the Huns in the window over the gate. A small Mulan with her sword there would be the actor, if any. |
+| To Die For (760-777) | castle | none yet | | The Incredibles fight the Omnidroid (not Maleficent or Jafar). |
 | He's a Pirate (777-849) | castle | Captain Hook | Sheet (`Male villains.jpg` 30x41; 64x64) | Stands in for Jack Sparrow (no art): swaggers past the burning castle. Or a pirate ship silhouette (Code). |
 | Embers / Mufasa (849-889) | castle (dark) | Mufasa | Code | A big dim lion face (the `lion` burst shape, scaled up) fades in over the spire in the clouds, speaks, fades out. |
 | Go the Distance, rebuild (889-915) | ghost | Hercules | Sheet | Rises in gold light at centre as the castle rebuilds. |
