@@ -4513,7 +4513,7 @@ The characters do not animate or fly during this section; they are rendered as *
 ### 10.1 Happily Ever After (reprise)
 
 - **Audio:** 1017-1042.2 s (16:57-17:22, 25.2 s) · **Video:** `--start 17:08 --end 17:33`
-- **Our score now:** Gold scrollwork, the keyhole beams; gold comets crossing over the spires, gold and white spotlights. Characters: none.
+- **Our score now:** The stained-glass hero mosaic stays on the castle as the reprise begins; white comets arc up and cross over the spire (video 17:15-17:27), no searchlights. Characters: none.
 
 **Your notes for this scene:**
 
@@ -4624,7 +4624,7 @@ For low-resolution LED matrix boards (64x32 / 64x64):
 ### 10.2 You Can Fly
 
 - **Audio:** 1042.2-1080 s (17:22-18:00, 37.8 s) · **Video:** `--start 17:33 --end 18:11`
-- **Our score now:** Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple; then a dense glitter barrage fills the sky, orange, then green, pink and orange again. Characters: Tinker Bell.
+- **Our score now:** Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple; then a dense glitter barrage fills the sky, orange, then green, pink and orange again; gold comet fans off the rooftops as Tink takes off (17:34), no shaped shells. Characters: Tinker Bell.
 - **Checked by eye (2026-10-15):** Tink's flight and the coloured bursts are almost simultaneous: time them however looks best on the board. No Big Ben clock face on the tower (Gemini is wrong there).
 
 **Your notes for this scene:**
@@ -4759,7 +4759,7 @@ For low-resolution LED matrix boards (64x32 / 64x64):
 ### 10.3 You Can Fly (gold arcs)
 
 - **Audio:** 1080-1087 s (18:00-18:07, 7 s) · **Video:** `--start 18:11 --end 18:18`
-- **Our score now:** Gold comets arching over the spire. Characters: none.
+- **Our score now:** Gold comets arching over the spire; white comet fans off the rooftops (video 18:15). Characters: none.
 
 **Your notes for this scene:**
 
