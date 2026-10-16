@@ -3246,7 +3246,7 @@ Here is the detailed breakdown of the segment:
 ### 7.1 The Emperor's warning
 
 - **Audio:** 724-742 s (12:04-12:22, 18 s) · **Video:** `--start 12:14 --end 12:32`
-- **Our score now:** "The flower that blooms in adversity...": the Emperor's praise of Mulan, both in the gate; dark navy and crimson; two lone shells, a pink and green ring then a big gold willow; no gong. Characters: Emperor of China, Mulan.
+- **Our score now:** "The flower that blooms in adversity...": the Emperor's praise of Mulan, both in the gate; dark navy and crimson; two lone shells, a pink and green ring then a big gold willow; no gong; two lone shells: a white chrysanthemum (video 12:21) and a gold willow (12:26). Characters: Emperor of China, Mulan.
 - **Checked by eye (2026-10-14):** Gemini is right: Mulan and the Emperor in the gate, two lone shells, no gong.
 
 **Your notes for this scene:**
@@ -3346,7 +3346,7 @@ Here is the detailed analysis of this segment of the show:
 ### 7.2 Villains attack
 
 - **Audio:** 742-760 s (12:22-12:40, 18 s) · **Video:** `--start 12:32 --end 12:50`
-- **Our score now:** Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts. Characters: Ursula, Scar, Hades.
+- **Our score now:** Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts; a red rocket, then red peonies (12:40, 12:45). Characters: Ursula, Scar, Hades.
 - **Checked by eye (2026-10-14):** couldn't tell which villains are here; still open. In frames: 12:32-12:40 the lower castle glows red-orange like fire, the upper towers icy blue-white, with a round glowing red emblem over the gate (maybe still Mulan: the Huns' attack?); about 12:42 the castle flips to teal-green with a red streak up the spire; from about 12:44 orange towers, and the Incredibles' silver robot fills the centre by 12:46-12:48.
 
 **Your notes for this scene:**
@@ -3452,7 +3452,7 @@ Here is the detailed analysis of this segment of the show:
 ### 7.3 To Die For
 
 - **Audio:** 760-777 s (12:40-12:57, 17 s) · **Video:** `--start 12:50 --end 13:07`
-- **Our score now:** The Incredibles fight a giant robot from about 12:44 (video); lightning. Characters: The Incredibles, Omnidroid.
+- **Our score now:** The Incredibles fight a giant robot from about 12:44 (video); lightning; the castle blue and purple; big red peonies (12:55), then white chrysanthemums (13:00-13:04). Characters: The Incredibles, Omnidroid.
 - **Checked by eye (2026-10-14):** it's The Incredibles fighting a robot monster (the Omnidroid) at about video 12:48, not the Lion King stampede (Gemini) or Maleficent and Jafar (our score).
 
 **Your notes for this scene:**
@@ -3562,7 +3562,7 @@ To capture this section authentically on 64x32 or 64x64 matrices:
 ### 7.4 He's a Pirate
 
 - **Audio:** 777-806 s (12:57-13:26, 29 s) · **Video:** `--start 13:07 --end 13:36`
-- **Our score now:** Scar and Simba fight (777, video 13:07), then Aladdin and Jafar as the snake (799, video 13:30); the castle cracks and burns; flame jets on the terraces; red, orange and gold. Characters: Scar, Simba, Aladdin, Jafar.
+- **Our score now:** Scar and Simba fight (777, video 13:07), then Aladdin and Jafar as the snake (799, video 13:30); the castle cracks and burns; flame jets on the terraces; red, orange and gold; red comet fans off the rooftops (13:14), red peonies (13:19, 13:29). Characters: Scar, Simba, Aladdin, Jafar.
 - **Checked by eye (2026-10-14):** at about video 13:07 the Scar and Simba fight starts (the Lion King, not the pirates' Aztec coin Gemini describes). At 13:30 it's Aladdin fighting Jafar as the snake, then Maleficent after that.
 
 **Your notes for this scene:**
@@ -3696,7 +3696,7 @@ To capture this segment convincingly on low-res 64x32/64x64 matrices:
 ### 7.5 He's a Pirate (green barrage)
 
 - **Audio:** 806-812 s (13:26-13:32, 6 s) · **Video:** `--start 13:36 --end 13:43`
-- **Our score now:** Maleficent after the snake: her green dragon fire along the ground; emerald shells and lime comets. Characters: Maleficent.
+- **Our score now:** Maleficent after the snake: her green dragon fire along the ground; emerald shells and lime comets; green comet fans firing off both sides. Characters: Maleficent.
 - **Checked by eye (2026-10-14):** this follows Aladdin and the snake (about 13:30); Maleficent comes after it (see 7.4's check).
 
 **Your notes for this scene:**
@@ -3790,7 +3790,7 @@ To capture this segment convincingly on low-res 64x32/64x64 matrices:
 ### 7.6 He's a Pirate (red and gold)
 
 - **Audio:** 812-837 s (13:32-13:57, 25 s) · **Video:** `--start 13:43 --end 14:08`
-- **Our score now:** Dense red chrysanthemums and gold willow fans. Characters: none.
+- **Our score now:** Dense red chrysanthemums and gold willow fans; red fans and a white chrysanthemum (13:46), white and red (13:53). Characters: none.
 
 **Your notes for this scene:**
 
