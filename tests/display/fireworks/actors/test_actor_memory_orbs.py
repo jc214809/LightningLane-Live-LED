@@ -7,7 +7,10 @@ from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
 
-def _scene(start=459.0, end=514.0):
+S, E = MemoryOrbs.START_S, MemoryOrbs.END_S
+
+
+def _scene(start=473.3, end=514.0):
     return Cue("s", "Friendship mash-up", start, end, ((255, 0, 0),), 0.0, None, (), frozenset(), "ghost", ())
 
 
@@ -32,17 +35,17 @@ def _frame(height, at, fps=30, seed=1, active=True):
 
 @pytest.mark.parametrize("height", [32, 64])
 def test_orbs_are_drawn_only_in_their_window(height):
-    assert not _frame(height, 34.9)[1]
-    assert _frame(height, 40.0)[1]
-    assert not _frame(height, 54.0)[1]
+    assert not _frame(height, S - 0.1)[1]
+    assert _frame(height, S + 5.0)[1]
+    assert not _frame(height, E)[1]
 
 
 @pytest.mark.parametrize("height", [32, 64])
 def test_orbs_stay_on_the_board(height):
     orbs = _frame(height, 0.0)[0]
     assert orbs.r == (5 if height == 64 else 3)
-    for at in [35.2, 36.5, 39.0, 39.5, 45.0, 52.0, 53.9]:
-        out = _frame(height, at)[1]
+    for at in [0.2, 1.5, 4.0, 4.5, 6.0, 8.0, 9.4]:
+        out = _frame(height, S + at)[1]
         assert all(0 <= x < 64 and 0 <= y < height for x, y in out)
 
 
@@ -57,8 +60,8 @@ def test_orbs_roll_in_from_opposite_sides_meet_and_float_up(height):
     assert sx2 - jx2 == pytest.approx(2 * orbs.r + 1), "touching in the middle"
     assert orbs.gap(4.4) > orbs.gap(5.0), "bump apart then settle"
     assert jy0 == orbs.ground
-    assert orbs.centres(17.0)[0][1] < jy0 - height * 0.3, "float up together"
-    out = _frame(height, 37.0)[1]
+    assert orbs.centres(8.0)[0][1] < jy0 - height * 0.3, "float up together"
+    out = _frame(height, S + 2.0)[1]
     left = [rgb for (x, _), rgb in out.items() if x < 32]
     right = [rgb for (x, _), rgb in out.items() if x >= 32]
     yellow = lambda rgb: rgb[0] > 150 and rgb[1] > 100 and rgb[2] < 80
@@ -68,15 +71,15 @@ def test_orbs_roll_in_from_opposite_sides_meet_and_float_up(height):
 
 
 def test_orbs_fade_by_the_end():
-    bright = max(max(rgb) for rgb in _frame(64, 45.0)[1].values())
-    late = max(max(rgb) for rgb in _frame(64, 53.7)[1].values())
+    bright = max(max(rgb) for rgb in _frame(64, S + 5.0)[1].values())
+    late = max(max(rgb) for rgb in _frame(64, E - 0.3)[1].values())
     assert late < bright * 0.2
 
 
 def test_orbs_follow_the_clock_not_the_frames():
-    for at in [35.4, 38.75, 39.3, 47.1, 53.6]:
-        assert _frame(64, at, fps=30)[1] == _frame(64, at, fps=7)[1]
+    for at in [0.4, 3.75, 4.3, 7.1, 9.1]:
+        assert _frame(64, S + at, fps=30)[1] == _frame(64, S + at, fps=7)[1]
 
 
 def test_nothing_when_inactive():
-    assert not _frame(64, 40.0, active=False)[1]
+    assert not _frame(64, S + 5.0, active=False)[1]

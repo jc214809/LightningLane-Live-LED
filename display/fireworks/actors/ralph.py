@@ -7,14 +7,16 @@ from display.motion import ease_out
 
 class RalphSmashes(Actor):
     """
-    Friendship mash-up, elapsed 0-14 s: Wreck-It Ralph (his ride-reveal art, 1x on both boards) walks in
-    from the left to the bottom centre in the first second, then 8-bit bricks fall from the top, one at a
+    Friendship mash-up, elapsed 7-13 s (the real show's Ralph, on its pink castle at video 8:12): Wreck-It
+    Ralph (his ride-reveal art, 1x on both boards) walks in from the left to the bottom centre in his first
+    second, then 8-bit bricks fall from the top, one at a
     time, alternately over each fist. As one reaches him he throws his fists up (UP_ART on 64x64,
     SHOULDER_ART on 64x32, as in his reveal) and it bursts into pieces that fall away. In his last second
-    he drops off the bottom of the board. Everything, pieces included, is placed by the clock.
+    he drops off the bottom of the board. Everything, pieces included, is placed by the clock, in seconds
+    into his window (elapsed - START_S).
     """
     NAME = "Ralph"
-    START_S, END_S = 0.0, 14.0
+    START_S, END_S = 7.0, 13.0
     ENTERS_S = START_S
     WALK_S = 1.0
     DROP_S = 1.0  # he drops away at the end of his window
@@ -48,7 +50,7 @@ class RalphSmashes(Actor):
         # Each brick: (hit time, left, colours, pieces as (dx, dy, rgb, vx, vy)), fixed up front.
         self.bricks = []
         hit, i = self.FIRST_HIT_S, 0
-        while hit < self.END_S - self.DROP_S - 0.3:
+        while hit < self.END_S - self.START_S - self.DROP_S - 0.3:
             left = int(round(self.raised_left + fist_cols[i % 2] - bw / 2))
             colors = self.BRICK_COLORS[i % len(self.BRICK_COLORS)]
             pieces = []
@@ -65,12 +67,13 @@ class RalphSmashes(Actor):
         return self.START_S <= e < self.END_S
 
     def left_top(self, e):
-        """His standing art's top-left e seconds in: walking in, at the bottom centre, then dropping away."""
+        """His standing art's top-left e seconds into his window: walking in, at the bottom centre, then
+        dropping away."""
         left = self.mid
         if e < self.WALK_S:
             left = -self.w + ease_out(e / self.WALK_S) * (self.mid + self.w)
         top = self.ground
-        drop = e - (self.END_S - self.DROP_S)
+        drop = e - (self.END_S - self.START_S - self.DROP_S)
         if drop > 0:
             p = drop / self.DROP_S
             top += p * p * (self.show.height - self.ground + 1)
@@ -85,6 +88,7 @@ class RalphSmashes(Actor):
         e = self.elapsed()
         if not self.on(e):
             return
+        e -= self.START_S
         show = self.show
         W, H = show.width, show.height
         left, top = self.left_top(e)

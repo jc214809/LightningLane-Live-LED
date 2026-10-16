@@ -246,3 +246,86 @@ def test_new_castle_looks_change_the_walls(look):
 def test_every_scene_in_the_show_has_a_look():
     plain = [c.title for c in load_score("happily-ever-after").cues if not (c.effects or c.shapes or c.castle)]
     assert plain == []
+
+
+# ---- the castle's own looks: the keyhole's magic, the gold trace, the savanna ----
+
+def _wall(show, low=True):
+    """A wall LED near the castle's bottom (or top) on the board."""
+    pick = max if low else min
+    dx, dy, _ = pick((p for p in show.castle_pixels if p[2] == "W"), key=lambda p: p[1])
+    return show.castle_x + dx, show.castle_y + dy
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_the_keyhole_magic_climbs_the_walls_holds_then_fades(height):
+    show = MusicShow(64, height, random.Random(1))
+    show.stars = []
+    magic = show.extras["keyhole_magic"]
+    cue = _cue(start=0, end=20, effects=("keyhole_magic",), castle="amber")
+    plain = MusicShow(64, height, random.Random(1))
+    plain.stars = []
+
+    def frames():
+        show.flash = plain.flash = [0.0, 0.0, 0.0]
+        return show.frame_pixels(), plain.frame_pixels()
+
+    _run(show, cue, 1.0)
+    _run(plain, _cue(start=0, end=20, castle="amber"), 1.0)
+    low, high = _wall(show), _wall(show, low=False)
+    climbed, _ = magic.amounts()
+    assert 0 < climbed < 1
+    lit, unlit = frames()
+    assert lit[low] != unlit[low], "gold at the bottom first"
+    assert lit[high] == unlit[high], "not yet at the top"
+    _run(show, cue, 3.0, start=1.0)
+    _run(plain, _cue(start=0, end=20, castle="amber"), 3.0, start=1.0)
+    lit, unlit = frames()
+    assert lit[high] != unlit[high], "the whole castle by CLIMB_S"
+    done = magic.CLIMB_S + magic.HOLD_S + magic.FADE_S
+    _run(show, cue, done - 3.5, start=4.0)
+    assert magic.amounts()[1] == 0, "faded back to the castle's own colours"
+
+
+def test_the_keyhole_magic_carries_on_into_the_theme_song():
+    show = MusicShow(64, 32, random.Random(1))
+    magic = show.extras["keyhole_magic"]
+    _run(show, _cue(start=45.8, end=47, effects=("keyhole_magic",)), 1.2)
+    _run(show, _cue(start=47, end=63, effects=("keyhole_magic",), title="song"), 2.0, start=47)
+    assert magic.since == pytest.approx(45.8), "one climb, not a fresh one on the cut"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_the_gold_trace_climbs_both_sides_of_the_outline_to_the_spire(height):
+    show = MusicShow(64, height, random.Random(1))
+    trace = show.extras["gold_trace"]
+    castle = {(show.castle_x + dx, show.castle_y + dy) for dx, dy, _ in show.castle_pixels}
+    left, right = trace.sides
+    assert set(left) | set(right) <= castle
+    assert left[0][1] == right[0][1] == max(y for _, y in castle), "from the bottom corners"
+    assert left[-1] == right[-1] and left[-1][1] == min(y for _, y in castle), "to the top of the spire"
+    assert max(x for x, _ in left) <= min(x for x, _ in right) + 1, "one up each side"
+    cue = _cue(effects=("gold_trace",), castle="red")
+    _run(show, cue, trace.TRACE_S * 0.5)
+    frame = show.frame_pixels()
+    heads = [side[i] for side, i in trace.heads()]
+    assert len(heads) == 2 * len(trace.PHASES)
+    assert all(frame[xy] == trace.HEAD for xy in heads)
+
+
+def test_the_savanna_warms_the_castle_only_late_in_its_scene_and_not_with_the_castle_off():
+    show = MusicShow(64, 32, random.Random(1))
+    show.stars = []
+    savanna = show.extras["savanna"]
+    cue = _cue(start=0, end=20, effects=("savanna",), castle="purple")
+    _run(show, cue, 10)
+    assert savanna.level == 0
+    _run(show, cue, 6, start=10)
+    assert savanna.level == 1
+    frame = show.frame_pixels()
+    r, g, b = frame[_wall(show)]
+    assert r > b + 60, "amber walls"
+    assert any(frame.get(xy) == (0, 0, 0) for xy in savanna.trees), "black acacia trees"
+    off = MusicShow(64, 32, random.Random(1))
+    _run(off, cue._replace(stage="off"), 16)
+    assert not any(off.frame_pixels().get(xy) for xy in off.extras["savanna"].cells)

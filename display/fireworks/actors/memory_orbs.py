@@ -13,13 +13,14 @@ def _ease_out(p):
 
 class MemoryOrbs(Actor):
     """
-    Friendship mash-up, elapsed 35-54 s: two Inside Out memory orbs, Joy's yellow rolling in from the
+    Friendship mash-up, elapsed 25-34.5 s (the real show's Inside Out, its orbs filling the castle at
+    video 8:30): two Inside Out memory orbs, Joy's yellow rolling in from the
     left and Sadness's blue from the right along the bottom (a shine highlight turns as they roll). They
     meet in the middle, bump apart a little and settle touching, then float up together glowing and fade
-    out over the last 3 s. Placed by the clock: positions are functions of (elapsed - 35) s.
+    out over the last 3 s. Placed by the clock: positions are functions of (elapsed - START_S) s.
     """
     NAME = "Joy and Sadness's memory orbs"
-    START_S, END_S = 35.0, 54.0
+    START_S, END_S = 25.0, 34.5
     ENTERS_S = START_S
     ROLL_S, BUMP_S, RISE_FROM_S, FADE_S = 4.0, 0.8, 5.5, 3.0
 

@@ -917,7 +917,7 @@ thing, 2026-10-10) driven by `display/fireworks/shows/happily-ever-after.json`.
   cuts in.
 - Every scene's look (batch 1 of the user's "add the missing parts", 2026-10-10): one class each in
   `display/fireworks/show_effects.py`: searchlights, the keyhole glowing and then opening, a gold
-  sparkle stream, starfields, Tiana's evening star, bubbles, doves, ringing finials, rising water,
+  sparkle stream, starfields, Tiana's evening star, bubbles, ringing finials, rising water,
   torches, the stingray, lamp smoke, toy blocks, the moon rising, waterfalls, lightning, green dragon
   fire; lion, smiley, door, bullseye and jellyfish bursts; jungle, pink and stained-glass castles.
 - Next (decided with the user): batch 2, one lead character per scene flying in the sky like Tink,

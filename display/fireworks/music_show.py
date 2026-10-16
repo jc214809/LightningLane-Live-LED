@@ -32,8 +32,9 @@ CASTLE_LOOKS = {
     # From watching the real show (docs/shows/happily-ever-after/README.md):
     "amber": {"W": (255, 150, 60), "R": (60, 90, 230)},  # the opening: warm amber walls, blue spires
     "royal": {"W": (220, 60, 80), "R": (120, 50, 200)},  # the theme song's red and purple filigree
+    "red": {"W": (215, 35, 40), "R": (160, 20, 40)},  # the theme chorus, its design traced in gold
     "pastel": {"W": (210, 170, 245), "R": (90, 210, 215)},  # When You Wish: lavender and turquoise
-    "stone": {"W": (150, 150, 160), "R": (70, 120, 70)},  # Out There: gothic stone and moss
+    "stone": {"W": (150, 150, 160), "R": (30, 60, 210)},  # Out There: Notre Dame's gothic stone, royal-blue roofs
     "sunset": {"W": (255, 175, 60), "R": (225, 70, 40)},  # Hakuna Matata
     "monsters": {"W": (70, 200, 200), "R": (130, 70, 210)},  # That's What Friends Are For
     "ice": {"W": (170, 210, 255), "R": (120, 90, 220)},  # Olaf
@@ -42,6 +43,9 @@ CASTLE_LOOKS = {
 _STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}
 CASTLE_FADE_S = 1.5
+# "wipe_down": the scene's castle change runs from the spire down to the base over WIPE_S instead
+# (the theme chorus's slow fade to blue): the top row is done halfway through, the bottom row starts then.
+WIPE_S = 8.0
 # The castle's brightness on each of a scene's stages (score.STAGES): a ghost leaves characters the
 # room to stand in front of it; off clears the board for them. It fades between them over CASTLE_FADE_S.
 STAGE_LEVELS = {"castle": 1.0, "ghost": 0.25, "off": 0.0}
@@ -59,6 +63,8 @@ WILLOW_RGB = (255, 185, 70)
 # and arcs up and out to the right in TINK_FLY_S, while the fireworks hold back to TINK_RATE.
 TINK_FLY_S = 12.0
 TINK_RATE = 0.3
+# The frame rate a hit shell's climb is timed at (render_music_show's), so it bursts on its hit.
+HIT_FPS = 30
 
 
 def _unit(points):
@@ -147,18 +153,19 @@ SHAPES = {
     "jellyfish": _jellyfish(),
 }
 # Effects drawn here; show_effects.py has the rest.
-_OWN_EFFECTS = {"wishing_star", "lanterns", "embers", "rainbow", "final_flash", "tink", "willow"}
+_OWN_EFFECTS = {"wishing_star", "lanterns", "embers", "rainbow", "final_flash", "tink", "willow", "wipe_down"}
 EFFECTS = _OWN_EFFECTS | set(show_effects.EFFECTS)
 
 
 class _Rocket:
-    __slots__ = ("x", "y", "vx", "vy", "burst_y", "color", "shape")
+    __slots__ = ("x", "y", "vx", "vy", "burst_y", "color", "shape", "style")
 
-    def __init__(self, x, y, vx, vy, burst_y, color, shape=None):
+    def __init__(self, x, y, vx, vy, burst_y, color, shape=None, style=None):
         self.x, self.y, self.vx, self.vy = x, y, vx, vy
         self.burst_y = burst_y
         self.color = color
         self.shape = shape
+        self.style = style  # a hit shell's (score.SHELL_STYLES)
 
 
 class _Spark:
@@ -213,11 +220,14 @@ class MusicShow:
         self.castle_from = self.castle_to = dict(_CASTLE_COLORS)
         self.castle_change_t = -CASTLE_FADE_S
         self.castle_look = None
+        self.castle_wipe = False  # the change under way runs top to bottom (WIPE_S)
         self.flashed = False
         self.tink_scale = self.scale
         self.tink_w = len(TinkReveal.art[0]) * self.tink_scale
         self.tink_h = len(TinkReveal.art) * self.tink_scale
         self.extras = {name: effect(self) for name, effect in show_effects.EFFECTS.items()}
+        self.hit_comets = show_effects.HitComets(self)
+        self.hits_done = set()  # (scene start, index) of the score's hits already fired
         self.stage = "castle"
         self.stage_from = self.stage_to = 1.0
         self.stage_change_t = -CASTLE_FADE_S
@@ -240,6 +250,7 @@ class MusicShow:
                 self.castle_to = {**_CASTLE_COLORS, **CASTLE_LOOKS.get(cue.castle, {})}
                 self.castle_change_t = when
                 self.castle_look = cue.castle
+                self.castle_wipe = "wipe_down" in cue.effects
             if cue.stage != self.stage:
                 self.stage_from = self.castle_level()
                 self.stage_to = STAGE_LEVELS[cue.stage]
@@ -252,7 +263,7 @@ class MusicShow:
             self.white, self.flashed = 1.0, True
 
     def _castle_now(self):
-        blend = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S)
+        blend = smooth((self.t - self.castle_change_t) / (WIPE_S if self.castle_wipe else CASTLE_FADE_S))
         return {k: tuple(int(a + (b - a) * blend) for a, b in zip(self.castle_from[k], self.castle_to[k]))
                 for k in self.castle_to}
 
@@ -309,6 +320,15 @@ class MusicShow:
             for px, py, rgb in SHAPES[rocket.shape]:
                 self.sparks.append(_Spark(rocket.x, rocket.y, px * speed, py * speed, MICKEY_LIFE,
                                           rgb or rocket.color, gravity=GRAVITY * 0.2))
+        elif rocket.style in ("willow", "curtain"):
+            # A hit's willow in its own colour; a curtain is bigger and hangs down over the castle.
+            curtain = rocket.style == "curtain"
+            for _ in range(int(self.spark_count * (1.6 if curtain else 1.0))):
+                angle = rng.uniform(0, 2 * math.pi)
+                speed = self.spark_speed * rng.uniform(0.4, 1.0 if curtain else 0.9)
+                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
+                                          rng.randint(90, 130) if curtain else rng.randint(60, 90), rocket.color,
+                                          gravity=GRAVITY * (0.9 if curtain else 0.6)))
         elif "willow" in self.effects and rng.random() < WILLOW_CHANCE:
             # Slow sparks that live long and droop, trailing gold.
             for _ in range(self.spark_count):
@@ -337,6 +357,9 @@ class MusicShow:
                     self.launch()
                 self.frames_to_next_launch = rng.randint(*self.launch_gap) / self.rate
             self.frames_to_next_launch -= 1
+
+        self._fire_hits()
+        self.hit_comets.step(False)
 
         rising = []
         for r in self.rockets:
@@ -403,6 +426,29 @@ class MusicShow:
             actor.follow(name in actors)
             actor.step(name in actors)
         self.frame += 1
+
+    def _fire_hits(self):
+        """Fire each of the scene's hits once, at its time: a shell launches early by its climb so it
+        bursts on time. One more than a second late (the show started past it) is skipped."""
+        cue = self.cue
+        for i, hit in enumerate(cue.hits if cue else ()):
+            key = (cue.start, i)
+            if key in self.hits_done:
+                continue
+            burst_y = hit.y * self.height
+            climb_s = (self.height - 1 - burst_y) / self.rocket_speed / HIT_FPS if hit.kind == "shell" else 0.0
+            if self.t < hit.at - climb_s:
+                continue
+            self.hits_done.add(key)
+            if self.t > hit.at + 1.0:
+                continue
+            if hit.kind == "shell":
+                self.rockets.append(_Rocket(hit.x * self.width, self.height - 1, 0.0, -self.rocket_speed,
+                                            burst_y, hit.rgb, style=hit.style))
+            elif hit.kind == "roof_fan":
+                self.hit_comets.roof_fan(hit.rgb)
+            else:
+                self.hit_comets.comet(hit.side, hit.rgb)
 
     # ---- drawing ----
 
@@ -495,12 +541,24 @@ class MusicShow:
 
         for name, effect in self.extras.items():
             effect.draw_behind(put, out, name in self.effects)
+        self.hit_comets.draw_behind(put, out, True)
 
         # The castle hides anything launched from behind it; Tink and the effects' fronts don't. Dimmed
         # for a stage, it's a ghost the sky shows through; gone, it hides nothing.
         shown = self.castle_level()
         colours = self._castle_now()
         flicker = self.castle_look in _FLICKERS
+        wipe = (self.t - self.castle_change_t) / WIPE_S if self.castle_wipe else 1.0
+        wiping = 0 <= wipe < 1
+        rows = {}  # a wipe's colours for each row of the castle, worked out once a frame
+
+        def row_colours(dy):
+            row = rows.get(dy)
+            if row is None:
+                f = smooth(wipe * 2 - dy / self.castle_h)
+                row = rows[dy] = {k: tuple(int(a + (b - a) * f) for a, b in zip(self.castle_from[k], to))
+                                  for k, to in self.castle_to.items()}
+            return row
         glass = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S) if self.castle_look == "stained_glass" else 0
         # A lit colour and a dimmed one depend only on the colour going in (and this frame's flash and
         # stage level), so each is worked out once a frame, not once an LED: the castle is most of a
@@ -522,7 +580,7 @@ class MusicShow:
                 low = dimmed[base] = (int(base[0] * shown), int(base[1] * shown), int(base[2] * shown))
             return low
 
-        if shown > 0.01 and not flicker:
+        if shown > 0.01 and not flicker and not wiping:
             # Without the fire's flicker every LED of a kind (or of a stained-glass tile) is one colour,
             # and from one frame to the next usually the same one: the finished castle is kept and
             # reused while its colours hold.
@@ -556,14 +614,16 @@ class MusicShow:
                 x, y = self.castle_x + dx, self.castle_y + dy
                 if not (0 <= x < width and 0 <= y < height):
                     continue
-                base = colours[kind]
+                base = row_colours(dy)[kind] if wiping else colours[kind]
                 if kind == "W" and glass:
                     tile = _STAINED_GLASS[(dx // (2 * self.scale) * 3 + dy // (2 * self.scale)) % 4]
                     base = tuple(int(a + (b - a) * glass) for a, b in zip(base, tile))
-                if kind in _LIT_KINDS:
+                if kind in _LIT_KINDS and flicker:
                     # Each LED on its own phase (a hash of its spot), so the fire doesn't band.
                     level = 0.75 + 0.25 * math.sin(self.frame * 0.7 + (dx * 7919 + dy * 104729) % 628 / 100)
                     base = glowing((int(base[0] * level), int(base[1] * level), int(base[2] * level)))
+                elif kind in _LIT_KINDS:
+                    base = glowing(base)
                 if shown < 1:
                     put(x, y, dim(base))
                 else:

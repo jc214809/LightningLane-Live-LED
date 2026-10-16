@@ -91,6 +91,16 @@ def _door(show):
     return door, (cx, cy)
 
 
+def _roof_peaks(show):
+    """The top of each roof on the board, left to right: the highest roof LED in each run of columns."""
+    tops = {}
+    for dx, dy, kind in show.castle_pixels:
+        if kind == "R" and (dx not in tops or dy < tops[dx]):
+            tops[dx] = dy
+    peaks = [dx for dx in sorted(tops) if tops.get(dx - 1, 99) >= tops[dx] <= tops.get(dx + 1, 99)]
+    return [(show.castle_x + dx, show.castle_y + tops[dx]) for dx in peaks]
+
+
 # ---- the opening ----
 
 class Searchlights(Effect):
@@ -201,6 +211,134 @@ class KeyholeOpen(Effect):
                 out[(x, y)] = (255, 240, 200)
 
 
+class KeyholeMagic(Effect):
+    """The end of the narrator's opening: magic pours out of the keyhole and climbs the castle walls,
+    sparkling at its edge, until the whole castle is lit gold (CLIMB_S); it holds, then fades back to
+    the castle's own colours. Timed from when it's first turned on, carrying on through the scenes after
+    that keep it."""
+    CLIMB_S, HOLD_S, FADE_S = 3.0, 3.0, 3.0
+    LIT = (255, 215, 110)
+
+    def __init__(self, show):
+        super().__init__(show)
+        self.door, _ = _door(show)
+        self.bottom = max(y for _, y in self.door)
+        self.top = show.castle_y
+        # The walls and roofs, lowest first, so a frame stops at the climbing edge.
+        self.cells = sorted(((show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels
+                             if kind in ("W", "R")), key=lambda p: -p[1])
+        self.since = None
+        self.sparkles = []  # [x, y, life]
+
+    def amounts(self):
+        """(how far up the castle it has climbed 0..1, how strong the gold is 0..1)."""
+        if self.since is None:
+            return 0.0, 0.0
+        e = self.show.t - self.since
+        climbed = smooth(min(1.0, e / self.CLIMB_S))
+        fade = (e - self.CLIMB_S - self.HOLD_S) / self.FADE_S
+        return climbed, max(0.0, min(1.0, 1 - fade))
+
+    def edge(self, climbed):
+        """The row the gold has reached."""
+        return self.bottom - (self.bottom - self.top + 1) * climbed
+
+    def step(self, active):
+        if not active:
+            self.since = None
+        elif self.since is None:
+            self.since = self.show.t
+        climbed, strength = self.amounts()
+        if active and 0 < climbed < 1:
+            edge = self.edge(climbed)
+            near = [c for c in self.cells if abs(c[1] - edge) <= self.s]
+            for _ in range(2 * self.s):
+                if near:
+                    x, y = self.rng.choice(near)
+                    self.sparkles.append([x, y, 12])
+        for sparkle in self.sparkles:
+            sparkle[2] -= 1
+        self.sparkles = [sparkle for sparkle in self.sparkles if sparkle[2] > 0]
+
+    def draw_front(self, put, out, active):
+        climbed, strength = self.amounts()
+        if strength > 0 and climbed > 0:
+            edge, k = self.edge(climbed), 0.75 * strength
+            for xy in self.cells:
+                if xy[1] < edge:
+                    break
+                prev = out.get(xy, (0, 0, 0))
+                out[xy] = tuple(int(p + (g - p) * k) for p, g in zip(prev, self.LIT))
+            for xy in self.door:
+                out[xy] = tuple(int(c * strength) for c in GOLD)
+        for x, y, life in self.sparkles:
+            put(x, y, tuple(int(c * life / 12) for c in (255, 250, 220)))
+
+
+def _outline(show):
+    """The castle's outline on the board as one loop, traced clockwise from its bottom-left corner
+    (Moore-neighbour tracing over the castle's LEDs)."""
+    cells = {(show.castle_x + dx, show.castle_y + dy) for dx, dy, _ in show.castle_pixels}
+    start = min(cells, key=lambda p: (-p[1], p[0]))
+    ring = ((-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1))  # clockwise from west
+    path, here, came = [start], start, (start[0] - 1, start[1])
+    for _ in range(4 * len(cells)):
+        k = ring.index((came[0] - here[0], came[1] - here[1]))
+        for i in range(1, 9):
+            dx, dy = ring[(k + i) % 8]
+            nxt = (here[0] + dx, here[1] + dy)
+            if nxt in cells:
+                pdx, pdy = ring[(k + i - 1) % 8]
+                came, here = (here[0] + pdx, here[1] + pdy), nxt
+                break
+        if here == start:
+            break
+        path.append(here)
+    return path
+
+
+class GoldTrace(Effect):
+    """The theme chorus: gold magic tracing the castle's design. Bright gold points climb its outline
+    from the bottom corners, up each side to the top of the spire every TRACE_S (two a side, half a run
+    apart), each leaving a fading gold trail."""
+    TRACE_S = 2.5
+    PHASES = (0.0, 0.5)  # the points on each side, as fractions of a run
+    HEAD = (255, 245, 200)
+
+    def __init__(self, show):
+        super().__init__(show)
+        path = _outline(show)
+        top = min(range(len(path)), key=lambda i: (path[i][1], i))
+        bottom_right = max(range(top, len(path)), key=lambda i: (path[i][1], path[i][0]))
+        self.sides = (path[:top + 1], path[top:bottom_right + 1][::-1])  # each from the bottom up
+        self.trail = 10 * self.s
+        self.since = None
+
+    def step(self, active):
+        if not active:
+            self.since = None
+        elif self.since is None:
+            self.since = self.show.t
+
+    def heads(self):
+        """Each point as (its side, its place along it), or () while it's off."""
+        if self.since is None:
+            return ()
+        run = (self.show.t - self.since) / self.TRACE_S
+        return tuple((side, int(((run + phase) % 1.0) * (len(side) - 1)))
+                     for side in self.sides for phase in self.PHASES)
+
+    def draw_front(self, put, out, active):
+        if not active:
+            return
+        for side, head in self.heads():
+            for k in range(self.trail, 0, -1):
+                if head - k >= 0:
+                    fade = 1 - k / (self.trail + 1)
+                    out[side[head - k]] = tuple(int(c * fade) for c in GOLD)
+            out[side[head]] = self.HEAD
+
+
 class _Comets(Effect):
     """Comets: bright heads on fading tails, falling back under gravity; volley() launches some."""
     every_s = (2.5, 4.0)  # seconds between volleys
@@ -272,6 +410,29 @@ class CrossingComets(_Comets):
             vx = (sx - x0) * 2 / frames  # over the spire about halfway, then on across
             vy = -(show.height - sy + 4 * self.s) / (frames * 0.55)
             self._comet(x0, show.height - 1.0, vx * rng.uniform(0.9, 1.1), vy, rgb, life=70)
+
+
+class HitComets(_Comets):
+    """The comets of a scene's set-moment hits (score.Hit), fired by the show at their time rather than
+    in volleys: a fan from both side rooftops, or one comet up and across from a side."""
+    FAN = 5  # comets per rooftop
+
+    def __init__(self, show):
+        super().__init__(show)
+        peaks = _roof_peaks(show) or [show.spire]
+        self.roofs = (peaks[0], peaks[-1])
+
+    def roof_fan(self, rgb):
+        speed = 0.75 if self.big else 0.5
+        for side, (x, y) in zip((-1, 1), self.roofs):
+            for k in range(self.FAN):
+                a = -math.pi / 2 + side * (0.25 + k * 0.2)  # from nearly straight up to well out
+                self._comet(x, y - 1.0, math.cos(a) * speed, math.sin(a) * speed, rgb, life=45)
+
+    def comet(self, side, rgb):
+        show, away = self.show, (-1 if side == "right" else 1)  # flies across, away from its side
+        x = show.width - 1.0 if side == "right" else 0.0  # from the board's edge, clear of the castle
+        self._comet(x, show.height - 1.0, away * 0.35 * self.s, -0.75 * self.s, rgb, life=80)
 
 
 class GoldStream(_Particles):
@@ -349,38 +510,6 @@ class Bubbles(_Particles):
                 put(x + 0.6, y - 0.6, WHITE)
             else:
                 put(x, y, rgb)
-
-
-class Doves(Effect):
-    """White doves flying up and out from the spire (Out There)."""
-
-    def __init__(self, show):
-        super().__init__(show)
-        self.doves = []  # [x, y, vx, vy, phase]
-
-    def step(self, active):
-        rng = self.rng
-        if active and len(self.doves) < 8 and rng.random() < 0.05:
-            sx, sy = self.show.spire
-            side = rng.choice((-1, 1))
-            self.doves.append([sx, sy, side * rng.uniform(0.25, 0.5) * self.s, -rng.uniform(0.1, 0.25) * self.s,
-                               rng.uniform(0, 2 * math.pi)])
-        for d in self.doves:
-            d[0] += d[2]
-            d[1] += d[3]
-        w = self.show.width
-        self.doves = [d for d in self.doves if -4 <= d[0] <= w + 4 and d[1] > -4]
-
-    def draw_front(self, put, out, active):
-        frame = self.show.frame
-        for x, y, _, _, phase in self.doves:
-            up = (frame // 4 + int(phase * 10)) % 2 == 0
-            tip = -1 if up else 1
-            wings = [(0, 0), (-1, tip), (1, tip)]
-            if self.big:
-                wings += [(-2, tip * 2 if up else tip), (2, tip * 2 if up else tip)]
-            for dx, dy in wings:
-                put(x + dx, y + dy, (235, 235, 245))
 
 
 class Bells(Effect):
@@ -532,13 +661,7 @@ class Fountains(_Particles):
 
     def __init__(self, show):
         super().__init__(show)
-        # The top of each roof: the highest roof LED in each run of columns.
-        tops = {}
-        for dx, dy, kind in show.castle_pixels:
-            if kind == "R" and (dx not in tops or dy < tops[dx]):
-                tops[dx] = dy
-        peaks = [dx for dx in sorted(tops) if tops.get(dx - 1, 99) >= tops[dx] <= tops.get(dx + 1, 99)]
-        self.sources = [(show.castle_x + dx, show.castle_y + tops[dx]) for dx in peaks] or [show.spire]
+        self.sources = _roof_peaks(show) or [show.spire]
 
     def step(self, active):
         if active and self.big and len(self.parts) < self.cap:  # twice as many on a 64-row board
@@ -628,6 +751,42 @@ class MoonRise(_Level):
             for x in range(int(cx - r), int(cx + r) + 1):
                 if (x - cx) ** 2 + (y - cy) ** 2 <= r * r:
                     put(x, y, rgb)
+
+
+class Savanna(_Level):
+    """Can You Feel the Love Tonight's Pride Lands, from FROM of the way through the scene (video 10:25):
+    the castle's walls and roofs warm to amber and two black acacia trees stand on its lower walls. Drawn
+    only as far as the castle is shown, so it's gone with the castle off."""
+    FROM = 0.56
+    AMBER = (255, 150, 50)
+    ACACIA = ["#######", ".#####.", "...#...", "...#..."]
+
+    def __init__(self, show):
+        super().__init__(show)
+        self.cells = [(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels
+                      if kind in ("W", "R")]
+        th = len(self.ACACIA) * self.s
+        self.trees = []
+        for at in (0.12, 0.70):
+            left, top = show.castle_x + int(show.castle_w * at), show.height - th
+            self.trees += [(left + col * self.s + ox, top + row * self.s + oy)
+                           for row, line in enumerate(self.ACACIA) for col, c in enumerate(line) if c == "#"
+                           for oy in range(self.s) for ox in range(self.s)]
+
+    def step(self, active):
+        super().step(active and self.progress() >= self.FROM)
+
+    def draw_front(self, put, out, active):
+        k = self.level * self.show.castle_level()
+        if k <= 0.01:
+            return
+        warm = 0.8 * k
+        for xy in self.cells:
+            prev = out.get(xy, (0, 0, 0))
+            out[xy] = tuple(int(p + (a - p) * warm) for p, a in zip(prev, self.AMBER))
+        for xy in self.trees:
+            if xy in out:
+                out[xy] = tuple(int(c * (1 - k)) for c in out[xy])
 
 
 class Waterfalls(_Particles):
@@ -751,11 +910,12 @@ EFFECTS = {
     "flame_jets": FlameJets,
     "keyhole_glow": KeyholeGlow,
     "keyhole_open": KeyholeOpen,
+    "keyhole_magic": KeyholeMagic,
+    "gold_trace": GoldTrace,
     "gold_stream": GoldStream,
     "starfield": Starfield,
     "evening_star": EveningStar,
     "bubbles": Bubbles,
-    "doves": Doves,
     "bells": Bells,
     "water": Water,
     "torches": Torches,
@@ -764,6 +924,7 @@ EFFECTS = {
     "blocks": Blocks,
     "moon_rise": MoonRise,
     "waterfalls": Waterfalls,
+    "savanna": Savanna,
     "bolts": Bolts,
     "green_fire": GreenFire,
 }

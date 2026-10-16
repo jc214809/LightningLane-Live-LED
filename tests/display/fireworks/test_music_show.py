@@ -7,7 +7,7 @@ from display.fireworks import show_actors
 from display.fireworks.fireworks import _CASTLE_COLORS
 from display.fireworks.music_show import CASTLE_LOOKS, SHAPES, MusicShow, render_music_show
 from display.animation.characters.tink import TinkReveal
-from display.fireworks.score import Cue, Score, load_score
+from display.fireworks.score import Cue, Hit, Score, load_score
 
 
 def _cue(title="x", start=0.0, end=10.0, palette=((255, 0, 0),), rate=1.0, castle=None, shapes=(),
@@ -415,3 +415,92 @@ def test_an_actor_draws_in_front_of_the_castle_only_in_its_scene(marker):
     show.step()
     assert show.frame_pixels()[spot] == (255, 255, 255), "placed by the clock: 3 s into its scene"
     assert show.actors["marker"].steps == [False, True]
+
+
+# ---- a scene's set-moment hits ----
+
+def _hit_cue(*hits):
+    return _cue(rate=0)._replace(hits=tuple(hits))
+
+
+def _bursts(show, monkeypatch):
+    """Record every burst as (t, x, y, colour, style), still exploding it."""
+    bursts, explode = [], show._explode
+    monkeypatch.setattr(show, "_explode", lambda r: (bursts.append((show.t, r.x, r.y, r.color, r.style)), explode(r)))
+    return bursts
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_a_shell_hit_bursts_once_where_and_when_the_score_says(monkeypatch, height):
+    show = MusicShow(64, height, random.Random(1))
+    bursts = _bursts(show, monkeypatch)
+    _run(show, _hit_cue(Hit(5.0, "shell", (255, 0, 0), 0.3, 0.25, "willow")), 10)
+    assert len(bursts) == 1
+    t, x, y, rgb, style = bursts[0]
+    assert t == pytest.approx(5.0, abs=0.4), "launched early by its climb, so it bursts on the hit"
+    assert x == pytest.approx(0.3 * 64) and y == pytest.approx(0.25 * height, abs=2)
+    assert (rgb, style) == ((255, 0, 0), "willow")
+
+
+def test_a_curtain_shell_is_bigger_and_hangs_longer_than_a_willow(monkeypatch):
+    sparks = {}
+    for style in ("willow", "curtain"):
+        show = MusicShow(64, 32, random.Random(1))
+        _run(show, _hit_cue(Hit(1.0, "shell", (60, 230, 90), style=style)), 1.5)
+        sparks[style] = show.sparks
+    assert len(sparks["curtain"]) > len(sparks["willow"])
+    assert max(s.life for s in sparks["curtain"]) > max(s.life for s in sparks["willow"])
+    assert all(s.color == (60, 230, 90) for s in sparks["curtain"]), "in the hit's own colour"
+
+
+def test_a_hit_already_well_past_when_the_show_starts_is_skipped(monkeypatch):
+    show = MusicShow(64, 32, random.Random(1))
+    bursts = _bursts(show, monkeypatch)
+    _run(show, _hit_cue(Hit(5.0, "shell", (255, 0, 0))), 2, start=7.0)
+    assert not bursts and not show.rockets
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_a_roof_fan_hit_fires_comets_outward_from_both_side_roofs(height):
+    show = MusicShow(64, height, random.Random(1))
+    cue = _hit_cue(Hit(2.0, "roof_fan", (255, 255, 255)))
+    _run(show, cue, 1.9)
+    assert not show.hit_comets.comets
+    _run(show, cue, 0.2, start=1.9)
+    comets = show.hit_comets.comets
+    left = [c for c in comets if c[0] < show.width / 2]
+    right = [c for c in comets if c[0] >= show.width / 2]
+    assert len(left) == len(right) == show.hit_comets.FAN
+    assert all(c[2] < 0 for c in left) and all(c[2] > 0 for c in right), "fanning outward"
+    assert all(c[3] < 0 for c in comets), "and up"
+    pixels = show.frame_pixels()
+    assert any((round(c[0]), round(c[1])) in pixels for c in comets)
+    _run(show, cue, 3, start=2.1)
+    assert not show.hit_comets.comets, "fired once, then gone"
+
+
+def test_a_comet_hit_flies_up_and_away_from_its_side():
+    show = MusicShow(64, 32, random.Random(1))
+    _run(show, _hit_cue(Hit(1.0, "comet", (255, 200, 60), side="right")), 1.5)
+    (x, y, vx, *_), = show.hit_comets.comets
+    assert x < 63 and y < 31 and vx < 0
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_a_wipe_down_turns_the_castle_from_the_spire_to_its_base(height):
+    show = MusicShow(64, height, random.Random(1))
+    _run(show, _cue(castle="red", rate=0), 2)
+    wipe = _cue(title="drop", start=2, end=20, castle="blue", rate=0, effects=("wipe_down",))
+    top_dx, top_dy, _ = min((p for p in show.castle_pixels if p[2] == "W"), key=lambda p: p[1])
+    low_dx, low_dy, _ = max((p for p in show.castle_pixels if p[2] == "W"), key=lambda p: p[1])
+    top = (show.castle_x + top_dx, show.castle_y + top_dy)
+    low = (show.castle_x + low_dx, show.castle_y + low_dy)
+    _run(show, wipe, music_show.WIPE_S * 0.45, start=2)
+    show.flash = [0.0, 0.0, 0.0]
+    frame = show.frame_pixels()
+    assert frame[top][2] > frame[top][0], "blue at the top"
+    assert frame[low][0] > frame[low][2], "still red at the base"
+    _run(show, wipe, music_show.WIPE_S * 0.6, start=2 + music_show.WIPE_S * 0.45)
+    show.flash = [0.0, 0.0, 0.0]
+    frame = show.frame_pixels()
+    assert frame[low][2] > frame[low][0], "blue all the way down"
