@@ -233,6 +233,7 @@ def test_happily_ever_afters_v2_overlay_parses_onto_v1():
     assert v2.end == parse_score("happily-ever-after", data).end
     assert {c.title for c in v2.cues if c.stage != "castle" or c.actors} <= set(overlay["overlays"])
     assert v2.cue_at(540).stage == "ghost", "Friend Like Me (Genie)"
+    assert v2.cue_at(490).stage_at(490) == "castle", "the mash-up's bits are projected on the castle"
 
 
 # ---- mouth tracks (<show>.<version>.lips.json) ----

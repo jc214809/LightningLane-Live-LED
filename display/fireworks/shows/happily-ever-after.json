@@ -976,8 +976,23 @@
             "Mike",
             "Sulley"
           ],
-          "look": "In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts",
+          "look": "In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts. The castle stays up throughout, turning with each bit: green (Bare Necessities), pink (Ralph, 480.3), blue (Baymax, Zootopia and Inside Out, 486.3), Monsters, Inc. teal and purple (Mike and Sulley, 505.5)",
           "rate": 1.1,
+          "castle": "jungle",
+          "castle_changes": [
+            {
+              "at": 480.3,
+              "castle": "pink"
+            },
+            {
+              "at": 486.3,
+              "castle": "blue"
+            },
+            {
+              "at": 505.5,
+              "castle": "monsters"
+            }
+          ],
           "palette": [
             "#FF8FC8",
             "#7FB2FF",
