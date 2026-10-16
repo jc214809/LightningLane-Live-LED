@@ -2631,7 +2631,7 @@ Here are the details for this segment based on the video:
 ### 6.2 Love Is an Open Door
 
 - **Audio:** 576-607 s (9:36-10:07, 31 s) · **Video:** `--start 9:46 --end 10:17`
-- **Our score now:** Olaf stays in the centre window to about 582 (video 9:52), then no characters; pink and violet only on the castle, the bursts in the sky gold (some green-gold); gold comet fans from the sides from about 585. Characters: Olaf.
+- **Our score now:** Olaf stays in the centre window to about 582 (video 9:52), then no characters; pink and violet only on the castle, the bursts in the sky gold (some green-gold); gold comet fans from the sides from about 585; no heart shells; gold comets (video 9:48), a gold chrysanthemum (10:00), gold fans (10:06-10:12). Characters: Olaf.
 - **Checked by eye (2026-10-14):** the sky bursts are gold (some green-gold), with the pink and violet only on the castle, as Gemini says. No Anna or Hans anywhere (checked by eye and in frames 9:44-10:15): the figure in the centre window at 9:46-9:52, which Gemini took for them, is Olaf carrying on from 6.1; after that the castle has no characters. Gold comet fans fire from the sides from about 10:05.
 
 **Your notes for this scene:**
@@ -2829,7 +2829,7 @@ Here is the detailed breakdown of the segment from **10:10 to 10:36**:
 ### 6.4 You'll Be in My Heart
 
 - **Audio:** 623-639 s (10:23-10:39, 16 s) · **Video:** `--start 10:33 --end 10:49`
-- **Our score now:** Magenta, lavender and gold; families on the centre tower's right side: Kala and baby Tarzan, Riley and her family, Dory; pink, violet and white with comets from the terraces. Characters: Kala, Tarzan, Riley, Dory.
+- **Our score now:** Magenta, lavender and gold; families on the centre tower's right side: Kala and baby Tarzan, Riley and her family, Dory; pink, violet and white with comets from the terraces; a nearly dark sky, no heart shells. Characters: Kala, Tarzan, Riley, Dory.
 - **V2:** stage ghost; actors dumbo (Dumbo flies across, flapping his ears).
 - **Checked by eye (2026-10-14):** correct that it opens with Kala and baby Tarzan and that the sky is quiet. It's a montage of families on the right side of the tall centre tower, not just two vignettes in the gate: Simba and Nala, then Tarzan, then Riley and her family (Inside Out), Dory (the blue shape at about 10:41, which Gemini took for Dumbo), and others. No Dumbo or Mrs. Jumbo seen.
 
@@ -2943,7 +2943,7 @@ Here is the detailed breakdown of the segment from **10:10 to 10:36**:
 ### 6.5 Princess garden
 
 - **Audio:** 639-668 s (10:39-11:08, 29 s) · **Video:** `--start 10:49 --end 11:18`
-- **Our score now:** No princesses in the real show: the families' pink and red castle carries on, pink comets from the sides, gold palms and willows, a red peony; it turns royal blue at about 646 (video 11:06). Characters: none.
+- **Our score now:** No princesses in the real show: the families' pink and red castle carries on, pink comets from the sides, gold palms and willows, a red peony; it turns royal blue at about 646 (video 11:06); no heart shells; pink comets from the sides and a red peony (10:51), a white chrysanthemum (10:57), gold (11:03-11:09). Characters: none.
 - **V2:** stage ghost; actors princess_garden (four couples meet in turn, a heart floating up between each).
 - **Checked by eye (2026-10-14):** no princesses at all: not Cinderella and Charming (Gemini) nor Tiana, Naveen, Ariel, Eric, Belle and Beast (our score). In frames: the castle stays pink and red with gold accents to about 11:05 (the same look as 6.4's family montage), pink comets from the sides at about 10:50, gold palms and willows, a red peony at about 11:04; then royal blue from about 11:06 with gold willows, into Tangled's purple and gold at 11:18.
 
@@ -3151,7 +3151,7 @@ Here is the detailed breakdown of the segment:
 ### 6.7 I See the Light (lanterns)
 
 - **Audio:** 697-724 s (11:37-12:04, 27 s) · **Video:** `--start 11:47 --end 12:14`
-- **Our score now:** A quiet sky full of lanterns, sparse gold willows. Characters: Rapunzel, Flynn.
+- **Our score now:** A quiet sky full of lanterns, sparse gold willows; a white chrysanthemum as it ends (video 12:03). Characters: Rapunzel, Flynn.
 - **V2:** stage ghost; actors lantern_boat (she lets her own lantern go).
 
 **Your notes for this scene:**

@@ -1238,18 +1238,57 @@
           "characters": [
             "Olaf"
           ],
-          "look": "Olaf stays in the centre window to about 582 (video 9:52), then no characters; pink and violet only on the castle, the bursts in the sky gold (some green-gold); gold comet fans from the sides from about 585",
+          "look": "Olaf stays in the centre window to about 582 (video 9:52), then no characters; pink and violet only on the castle, the bursts in the sky gold (some green-gold); gold comet fans from the sides from about 585; no heart shells; gold comets (video 9:48), a gold chrysanthemum (10:00), gold fans (10:06-10:12)",
           "rate": 0.8,
           "castle": "pink",
           "palette": [
             "#FFD36B",
             "#D8E060"
           ],
-          "shapes": {
-            "heart": 0.25
-          },
           "effects": [
             "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 578.0,
+              "kind": "comet",
+              "colour": "#FFD36B",
+              "side": "left"
+            },
+            {
+              "at": 578.5,
+              "kind": "comet",
+              "colour": "#FFD36B",
+              "side": "left"
+            },
+            {
+              "at": 589.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.1,
+              "style": "peony"
+            },
+            {
+              "at": 596.0,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            },
+            {
+              "at": 597.0,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            },
+            {
+              "at": 601.5,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            },
+            {
+              "at": 602.3,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            }
           ]
         },
         {
@@ -1270,9 +1309,6 @@
             "#D8E060",
             "#FF8FC8"
           ],
-          "shapes": {
-            "star": 0.2
-          },
           "effects": [
             "starfield",
             "moon_rise",
@@ -1324,39 +1360,80 @@
             "Riley",
             "Dory"
           ],
-          "look": "Magenta, lavender and gold; families on the centre tower's right side: Kala and baby Tarzan, Riley and her family, Dory; pink, violet and white with comets from the terraces",
-          "rate": 0.8,
+          "look": "Magenta, lavender and gold; families on the centre tower's right side: Kala and baby Tarzan, Riley and her family, Dory; pink, violet and white with comets from the terraces; a nearly dark sky, no heart shells",
+          "rate": 0.3,
           "castle": "pink",
           "palette": [
             "#FF6FB0",
             "#B58CFF",
             "#FFFFFF"
           ],
-          "shapes": {
-            "heart": 0.4
-          },
           "effects": [
             "comet_fan"
-          ]
+          ],
+          "hits": []
         },
         {
           "start": 639,
           "end": 668,
           "title": "Princess garden",
           "characters": [],
-          "look": "No princesses in the real show: the families' pink and red castle carries on, pink comets from the sides, gold palms and willows, a red peony; it turns royal blue at about 646 (video 11:06)",
+          "look": "No princesses in the real show: the families' pink and red castle carries on, pink comets from the sides, gold palms and willows, a red peony; it turns royal blue at about 646 (video 11:06); no heart shells; pink comets from the sides and a red peony (10:51), a white chrysanthemum (10:57), gold (11:03-11:09)",
           "rate": 0.9,
           "castle": "pink",
           "palette": [
             "#FFD36B",
             "#FF6FB0"
           ],
-          "shapes": {
-            "heart": 0.15
-          },
           "effects": [
             "waterfalls",
             "willow"
+          ],
+          "hits": [
+            {
+              "at": 640.5,
+              "kind": "comet",
+              "colour": "#FF6FB0",
+              "side": "left"
+            },
+            {
+              "at": 640.9,
+              "kind": "comet",
+              "colour": "#FF6FB0",
+              "side": "right"
+            },
+            {
+              "at": 641.3,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 647.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.55,
+              "y": 0.1,
+              "style": "peony"
+            },
+            {
+              "at": 652.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.4,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 658.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "willow"
+            }
           ]
         },
         {
@@ -1379,6 +1456,14 @@
             "lanterns"
           ],
           "hits": [
+            {
+              "at": 671.0,
+              "kind": "shell",
+              "colour": "#FF6FB0",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
             {
               "at": 678.0,
               "kind": "shell",
@@ -1493,7 +1578,7 @@
             "Rapunzel",
             "Flynn"
           ],
-          "look": "A quiet sky full of lanterns, sparse gold willows",
+          "look": "A quiet sky full of lanterns, sparse gold willows; a white chrysanthemum as it ends (video 12:03)",
           "rate": 0.15,
           "castle": "blue",
           "palette": [
@@ -1502,6 +1587,16 @@
           "effects": [
             "lanterns",
             "willow"
+          ],
+          "hits": [
+            {
+              "at": 712.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            }
           ]
         }
       ]
