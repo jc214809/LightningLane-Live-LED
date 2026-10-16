@@ -853,7 +853,7 @@ Here is the detailed breakdown of the segment for your LED matrix recreation:
 ### 3.3 When You Wish Upon a Star (fanfare)
 
 - **Audio:** 171-192 s (2:51-3:12, 21 s) · **Video:** `--start 3:01 --end 3:22`
-- **Our score now:** Brass fanfare: a fan of white and gold comets, gold chrysanthemums, green and white glitter. Characters: Ray.
+- **Our score now:** The castle bright blue as the fanfare plays: a fan of white comets off the rooftops (video 3:05), blue searchlights, white and ice-blue bursts, a green willow at the end. Characters: Ray.
 - **V2:** stage castle; actors ray (Ray drifts over and circles the spire).
 - **Checked by eye (2026-10-14):** Ray isn't clearly visible; keeping him in 3.3's first seconds is fine but not required.
 
@@ -943,7 +943,7 @@ Here is the detailed breakdown of the segment:
 ### 3.4 Part of Your World
 
 - **Audio:** 192-215 s (3:12-3:35, 23 s) · **Video:** `--start 3:22 --end 3:45`
-- **Our score now:** Underwater turquoise and navy, glowing bubbles, sparse gold willows dripping over the spires. Characters: Ariel.
+- **Our score now:** Blue castle: a red peony over the spire (video 3:23), then big gold chrysanthemums, a white one, and gold and white comet fans off both sides (3:39-3:42). Characters: Ariel.
 - **Checked (2026-10-13):** Gemini's answer below says 3:22-3:30 is the end of Moana's song; it can't be, Moana's is at 5:36 onward. Treat its start-of-scene claim (3:31) as unchecked.
 
 **Your notes for this scene:**
@@ -1038,7 +1038,7 @@ Here is the detailed breakdown of the segment:
 ### 3.5 Out There
 
 - **Audio:** 215-256 s (3:35-4:16, 41 s) · **Video:** `--start 3:45 --end 4:26`
-- **Our score now:** Notre Dame: gothic stone, a glowing rose window, royal-blue roofs, the bells ringing; Quasimodo; magenta and ruby peonies, gold and white brocade. Characters: Quasimodo.
+- **Our score now:** Notre Dame by night: the castle icy blue, the bells ringing, the sky mostly dark under purple searchlights; a red peony on "Out there" (video 4:07) and a big white chrysanthemum on the last note (4:25). Characters: Quasimodo.
 - **Checked by lyrics (Whisper on our audio, 2026-10-13):** this is **"Out There"** (*The Hunchback of Notre Dame*), not Part of Your World: "Out there… strolling by the Seine, taste the morning air… just one day and then I swear I'll be content" from audio 215 s, its last "Out there!" at 254 s. Gemini's answer below (Quasimodo, the Notre Dame rose window) agrees. The score's title, characters and look for this scene are wrong.
 - **Checked by eye (2026-10-14):** Quasimodo, confirmed. No doves anywhere: drop them.
 
@@ -1142,7 +1142,7 @@ Here is the detailed breakdown of the segment:
 ### 3.6 When You Wish Upon a Star (interlude)
 
 - **Audio:** 256-268 s (4:16-4:28, 12 s) · **Video:** `--start 4:26 --end 4:38`
-- **Our score now:** The castle glows; magenta and pink comet fans fire from across the base from 4:27, then a gold crown with white over the spire. Characters: none.
+- **Our score now:** A wall of pink and violet fountains across the whole castle (video 4:27-4:33), then gold chrysanthemums climbing over the spire. Characters: none.
 
 **Your notes for this scene:**
 
@@ -1232,7 +1232,7 @@ Here is the detailed breakdown of the segment:
 ### 3.7 Touch the Sky
 
 - **Audio:** 268-303 s (4:28-5:03, 35 s) · **Video:** `--start 4:38 --end 5:13`
-- **Our score now:** Merida's Highlands: emerald and teal castle, Celtic knotwork; her arrow flies at 277 (video 4:47); gold willow, emerald and white strobes, red and gold comets. Characters: Merida.
+- **Our score now:** Merida's Highlands: emerald and teal castle, Celtic knotwork; her arrow flies at 277 (video 4:47); gold willow, emerald and white strobes, red and gold comets; a gold canopy as Merida speaks (4:38), a white chrysanthemum (4:54), white comet fans (5:06). Characters: Merida.
 - **V2:** stage ghost; actors merida (fewer fireworks, so her arrow shows; Merida says her line at the bottom left, then on "touch the sky" shoots an arrow into a bullseye firework (64x64)).
 - **Checked by eye (2026-10-14):** Merida fires her arrow here (video 4:47).
 

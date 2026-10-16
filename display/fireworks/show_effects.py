@@ -749,6 +749,38 @@ class Smoke(_Particles):
                 life, life, rng.choice(((150, 90, 220), (90, 120, 255), (200, 120, 255), (230, 170, 60)))]
 
 
+class GroundFountains(_Particles):
+    """A wall of fountains spraying up from the ground all along the board's foot, in the scene's
+    colours (the When You Wish interlude's pink fountains across the whole castle)."""
+    cap = 260
+    chance = 1.0
+    COUNT = 7  # fountains across the board
+
+    def step(self, active):
+        if active and len(self.parts) < self.cap:
+            for _ in range(self.s):  # twice as many on a 64-row board
+                self.parts.append(self.spawn())
+        super().step(active)
+        for p in self.parts:
+            p[3] += 0.02 * self.s  # arcs over and falls back
+
+    def spawn(self):
+        show, rng = self.show, self.rng
+        k = rng.randrange(self.COUNT)
+        x = (k + 0.5) * show.width / self.COUNT + rng.uniform(-1, 1)
+        life = rng.randint(30, 45)
+        return [x, show.height - 1.0, rng.uniform(-0.15, 0.15) * self.s, -rng.uniform(0.7, 1.0) * self.s, life, life,
+                show._colour()]
+
+    def _draw(self, put):
+        # Bright streaks, 2x2 on a 64-row board like the castle, fading only near the end.
+        for x, y, _, _, life, max_life, rgb in self.parts:
+            f = min(1.0, 2.0 * life / max_life)
+            for dx in range(self.s):
+                for dy in range(self.s):
+                    put(x + dx, y + dy, tuple(int(c * f) for c in rgb))
+
+
 class Fountains(_Particles):
     """Gold and white fountains spraying up from the castle's rooftops and showering down over it
     (Friend Like Me's roof fountains)."""
@@ -1004,6 +1036,7 @@ EFFECTS = {
     "balloons": Balloons,
     "te_fiti": TeFiti,
     "fountains": Fountains,
+    "ground_fountains": GroundFountains,
     "snow": Snow,
     "flame_jets": FlameJets,
     "keyhole_glow": KeyholeGlow,

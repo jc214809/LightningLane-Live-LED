@@ -252,6 +252,16 @@ def test_party_searchlights_change_colour():
     assert beams.colours() != first
 
 
+def test_ground_fountains_spray_up_all_along_the_foot_in_the_scenes_colours():
+    show = MusicShow(64, 32, random.Random(16))
+    fountains = show.extras["ground_fountains"]
+    _run(show, _cue(effects=("ground_fountains",)), 1.0)
+    assert {p[6] for p in fountains.parts} <= {(255, 0, 0)}, "the scene's palette"
+    xs = [p[0] for p in fountains.parts]
+    assert min(xs) < 16 and max(xs) > 48, "across the whole board, not just the castle"
+    assert any(p[3] < 0 for p in fountains.parts), "spraying up"
+
+
 def test_comet_fans_rise_from_the_castles_foot_and_spread_out():
     show = MusicShow(64, 32, random.Random(16))
     _run(show, _cue(effects=("comet_fan",)), 1 / 30)
