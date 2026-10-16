@@ -38,6 +38,7 @@ CASTLE_LOOKS = {
     "monsters": {"W": (70, 200, 200), "R": (130, 70, 210)},  # That's What Friends Are For
     "ice": {"W": (170, 210, 255), "R": (120, 90, 220)},  # Olaf
     "crimson": {"W": (130, 30, 45), "R": (40, 40, 90)},  # the Emperor: crimson on dark navy
+    "lavender": {"W": (230, 160, 235), "R": (60, 75, 225)},  # Can You Feel the Love Tonight: pink-lavender, blue roofs
 }
 _STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}

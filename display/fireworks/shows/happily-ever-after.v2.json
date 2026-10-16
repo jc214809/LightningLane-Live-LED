@@ -16,7 +16,7 @@
     "I See the Light": {"stage": "ghost", "actors": ["lantern_boat"], "note": "Rapunzel and Flynn's boat drifts in among the lanterns"},
     "I See the Light (lanterns)": {"stage": "ghost", "actors": ["lantern_boat"], "note": "she lets her own lantern go"},
     "Embers": {"actors": ["mufasa"], "note": "Mufasa's face fades in among the stars over the spire"},
-    "Can You Feel the Love Tonight": {"stage": "off", "actors": ["walle"], "note": "WALL-E floats across the stars"},
+    "Can You Feel the Love Tonight": {"stage": "off", "stage_changes": [{"after": 7.0, "stage": "castle"}], "actors": ["walle"], "note": "WALL-E floats across the stars, then the castle comes back pink and lavender, Simba and Nala on its centre tower (video 10:24)"},
     "You'll Be in My Heart": {"stage": "ghost", "actors": ["dumbo"], "note": "Dumbo flies across, flapping his ears"}
   }
 }

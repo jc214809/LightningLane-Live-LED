@@ -1316,9 +1316,15 @@
             "Simba",
             "Nala"
           ],
-          "look": "Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29)",
+          "look": "Starry indigo, the castle deep blue; WALL-E and EVE among the constellations; at about 614 (video 10:24) the castle turns pink and lavender under blue roofs (the real show's small Simba and Nala picture on the centre tower is left out); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29), pink peonies at 10:31",
           "rate": 0.9,
-          "castle": "purple",
+          "castle": "blue",
+          "castle_changes": [
+            {
+              "at": 614.0,
+              "castle": "lavender"
+            }
+          ],
           "palette": [
             "#FFD36B",
             "#D8E060",
@@ -1327,7 +1333,6 @@
           "effects": [
             "starfield",
             "moon_rise",
-            "savanna",
             "willow"
           ],
           "hits": [

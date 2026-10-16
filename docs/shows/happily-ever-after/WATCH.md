@@ -2725,8 +2725,9 @@ Here is the breakdown of the "Love Is an Open Door" sequence:
 ### 6.3 Can You Feel the Love Tonight
 
 - **Audio:** 607-623 s (10:07-10:23, 16 s) · **Video:** `--start 10:17 --end 10:33`
-- **Our score now:** Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29). Characters: WALL-E, EVE, Simba, Nala.
+- **Our score now:** Starry indigo, the castle deep blue; WALL-E and EVE among the constellations; at about 614 (video 10:24) the castle turns pink and lavender under blue roofs (the real show's small Simba and Nala picture on the centre tower is left out); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29), pink peonies at 10:31. Characters: WALL-E, EVE, Simba, Nala.
 - **V2:** stage off; actors walle (WALL-E floats across the stars).
+- **Checked by eye (2026-10-16):** no amber castle or acacia trees after all. The castle is deep blue to about 10:23, turns pink and lavender under blue roofs at about 10:24 (audio 614), and from about 10:26 a small sunset-coloured picture of Simba and Nala sits on the centre tower, left of the spire. The savanna effect is gone; the Simba and Nala picture was tried and left out (2026-10-16).
 - **Checked by eye (2026-10-14):** WALL-E and EVE are both there (Gemini's answer says they aren't; it's wrong), and so is Simba and Nala's savanna: the castle turns amber with black acacia-tree silhouettes on the lower walls from about 10:25.
 
 **Your notes for this scene:**

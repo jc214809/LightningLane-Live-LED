@@ -55,14 +55,15 @@ def test_walle_floats_across_on_the_board_from_left_to_right(height):
         xs.append(left)
     assert xs[0] <= -actor.w + 1, "starts off the left edge"
     assert xs[-1] >= 64, "off the right edge by the scene's end"
+    assert actor.top_left(WallEFloats.CROSS_S)[0] >= 64, "off it before the castle comes back"
     assert xs == sorted(xs), "always drifting right"
-    _, _, mid = _play(height, START + 9.5)
+    _, _, mid = _play(height, START + WallEFloats.CROSS_S / 2)
     assert len(_him(mid)) > 150, "his whole sprite mid-crossing"
 
 
 def test_walle_bobs_and_arcs():
     actor = WallEFloats(MusicShow(64, 64, random.Random(3)))
-    tops = [actor.top_left(e)[1] for e in (0.0, 9.5, 19.0)]
+    tops = [actor.top_left(e)[1] for e in (0.0, actor.CROSS_S / 2, actor.CROSS_S)]
     assert tops[1] < tops[0] - 5 and tops[1] < tops[2] - 5, "rises toward the middle of the crossing"
     assert actor.top_left(0.65)[1] != actor.top_left(1.95)[1], "bobs"
 
@@ -74,7 +75,7 @@ def test_walle_squirts_specks_behind_him():
 
 
 def test_walle_draws_nothing_when_inactive_and_his_specks_fade():
-    show, actor, _ = _play(64, START + 10.3)
+    show, actor, _ = _play(64, START + WallEFloats.CROSS_S / 2)
     cue = _scene()
     out = _frame(show, actor, cue, END + 0.1, active=False)
     assert not _him(out)
