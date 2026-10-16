@@ -2349,5 +2349,5 @@
     "end": 1359,
     "note": "Separate track after the show; not part of it."
   },
-  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (music_show.EFFECTS: its own plus show_effects.EFFECTS), palette (replaces the section's), hits ([{at: show seconds, kind: score.HIT_KINDS, colour, and x, y, style for a shell or side for a comet}]: one firework at a set moment)."
+  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (music_show.EFFECTS: its own plus show_effects.EFFECTS), palette (replaces the section's), hits ([{at: show seconds, kind: score.HIT_KINDS, colour, and x, y, style for a shell or side for a comet}]: one firework at a set moment), castle_changes ([{at: show seconds, castle: a CASTLE_LOOKS key}]: the castle turns again mid-scene)."
 }

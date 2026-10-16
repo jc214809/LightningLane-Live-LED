@@ -60,10 +60,28 @@ class Cue(NamedTuple):
     stage: str = "castle"  # one of STAGES
     actors: Tuple[str, ...] = ()  # show_actors.ACTORS keys, drawn in front of everything
     hits: Tuple[Hit, ...] = ()  # set-moment fireworks, by time
+    castle_changes: Tuple[Tuple[float, str], ...] = ()  # (show seconds, CASTLE_LOOKS key) after the start's
+    stage_changes: Tuple[Tuple[float, str], ...] = ()  # (show seconds, one of STAGES) after the start's
 
     def progress(self, t):
         """0..1 through this scene at t seconds into the show."""
         return progress(t, self.start, self.end)
+
+    def castle_at(self, t):
+        """The castle's look at t seconds into the show: the scene's, or its latest change by then."""
+        return _latest(self.castle, self.castle_changes, t)
+
+    def stage_at(self, t):
+        """The stage at t seconds into the show: the scene's, or its latest change by then."""
+        return _latest(self.stage, self.stage_changes, t)
+
+
+def _latest(first, changes, t):
+    for at, value in changes:
+        if t < at:
+            break
+        first = value
+    return first
 
 
 class Lips(NamedTuple):
@@ -127,6 +145,23 @@ def _hits(scene):
     return tuple(sorted(hits))
 
 
+def _changes(title, entries, key, known, start, end, relative=False):
+    """(show seconds, value) pairs, by time, from a scene's [{when: seconds, key: value}] list: `when` is
+    "at" (show seconds), or "after" (seconds into the scene) if relative."""
+    when, offset = ("after", start) if relative else ("at", 0.0)
+    changes = []
+    for entry in entries:
+        if set(entry) != {when, key}:
+            raise ValueError(f"{title}: a change is {{{when!r}, {key!r}}}, not {entry}")
+        at = offset + float(entry[when])
+        if entry[key] not in known:
+            raise ValueError(f"{title}: unknown {key} {entry[key]!r}")
+        if not start < at < end:
+            raise ValueError(f"{title}: a change at {at} is outside the scene")
+        changes.append((at, entry[key]))
+    return tuple(sorted(changes))
+
+
 def _cue(section, scene):
     palette = _palette(scene.get("palette", section["palette"]))
     rate = float(scene.get("rate", section["intensity"] / _EVERYDAY_INTENSITY))
@@ -140,13 +175,16 @@ def _cue(section, scene):
     effects = frozenset(scene.get("effects", ()))
     if not effects <= EFFECTS:
         raise ValueError(f"unknown effects {sorted(effects - EFFECTS)}")
-    return Cue(section["id"], scene["title"], float(scene["start"]), float(scene["end"]),
-               palette, max(0.0, rate), castle, shapes, effects, hits=_hits(scene))
+    start, end = float(scene["start"]), float(scene["end"])
+    castle_changes = _changes(scene["title"], scene.get("castle_changes", ()), "castle", CASTLE_LOOKS, start, end)
+    return Cue(section["id"], scene["title"], start, end, palette, max(0.0, rate), castle, shapes, effects,
+               hits=_hits(scene), castle_changes=castle_changes)
 
 
 def _overlay(cue, extra):
-    """The cue with a version's additions for its scene: {"stage", "actors", "rate"}, each optional."""
-    unknown = set(extra) - {"stage", "actors", "rate", "note"}
+    """The cue with a version's additions for its scene: {"stage", "stage_changes", "actors", "rate"}, each
+    optional; stage_changes are [{"after": seconds into the scene, "stage": ...}], so they move with it."""
+    unknown = set(extra) - {"stage", "stage_changes", "actors", "rate", "note"}
     if unknown:
         raise ValueError(f"{cue.title}: unknown overlay keys {sorted(unknown)}")
     stage = extra.get("stage", cue.stage)
@@ -158,10 +196,12 @@ def _overlay(cue, extra):
     missing = [a for a in actors if a not in ACTORS]
     if missing:
         raise ValueError(f"{cue.title}: unknown actors {missing}")
-    if stage == "off" and cue.effects & CASTLE_EFFECTS:
+    stage_changes = _changes(cue.title, extra.get("stage_changes", ()), "stage", STAGES, cue.start, cue.end,
+                             relative=True)
+    if "off" in {stage, *(s for _, s in stage_changes)} and cue.effects & CASTLE_EFFECTS:
         raise ValueError(f"{cue.title}: the castle is off, but {sorted(cue.effects & CASTLE_EFFECTS)} draw on it")
     rate = max(0.0, float(extra.get("rate", cue.rate)))
-    return cue._replace(stage=stage, actors=tuple(actors), rate=rate)
+    return cue._replace(stage=stage, stage_changes=stage_changes, actors=tuple(actors), rate=rate)
 
 
 def parse_score(name, data, overlay=None):

@@ -242,19 +242,24 @@ class MusicShow:
             self.palette = list(cue.palette)
             self.shapes = cue.shapes
             self.effects = cue.effects
-            if cue.castle != self.castle_look:
-                # The castle turns once the wishing star lands; otherwise as the scene starts.
-                when = cue.start + WISH_LANDS_AT * (cue.end - cue.start) if "wishing_star" in cue.effects else t
-                self.castle_from = self._castle_now()
-                self.castle_to = {**_CASTLE_COLORS, **CASTLE_LOOKS.get(cue.castle, {})}
-                self.castle_change_t = when
-                self.castle_look = cue.castle
-                self.castle_wipe = "wipe_down" in cue.effects
-            if cue.stage != self.stage:
-                self.stage_from = self.castle_level()
-                self.stage_to = STAGE_LEVELS[cue.stage]
-                self.stage_change_t = t
-                self.stage = cue.stage
+        # A scene's look and stage are set as it starts, and again at each of its timed changes.
+        look = cue.castle_at(t)
+        if look != self.castle_look:
+            # The castle turns once the wishing star lands; otherwise as the scene starts or changes.
+            starting = look == cue.castle
+            wish = starting and "wishing_star" in cue.effects
+            when = cue.start + WISH_LANDS_AT * (cue.end - cue.start) if wish else t
+            self.castle_from = self._castle_now()
+            self.castle_to = {**_CASTLE_COLORS, **CASTLE_LOOKS.get(look, {})}
+            self.castle_change_t = when
+            self.castle_look = look
+            self.castle_wipe = starting and "wipe_down" in cue.effects
+        stage = cue.stage_at(t)
+        if stage != self.stage:
+            self.stage_from = self.castle_level()
+            self.stage_to = STAGE_LEVELS[stage]
+            self.stage_change_t = t
+            self.stage = stage
         flying = "tink" in self.effects and t < cue.start + TINK_FLY_S
         self.rate = cue.rate * (TINK_RATE if flying else 1.0)
         # The white flash on the show's last hit: its scene starts on the hit.

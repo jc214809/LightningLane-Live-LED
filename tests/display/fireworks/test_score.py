@@ -115,6 +115,9 @@ def test_a_missing_score_is_none(tmp_path):
     json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "x": 1.5}])),
     json.dumps(_show(hits=[{"at": 5, "kind": "comet", "colour": "#FF0000", "side": "up"}])),
     json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "when": 3}])),
+    json.dumps(_show(castle_changes=[{"at": 5, "castle": "plaid"}])),
+    json.dumps(_show(castle_changes=[{"at": 12, "castle": "gold"}])),  # past the scene's end
+    json.dumps(_show(castle_changes=[{"after": 5, "castle": "gold"}])),  # V1 times are show seconds
 ])
 def test_a_broken_score_is_logged_and_none(tmp_path, data):
     (tmp_path / "show.json").write_text(data)
@@ -135,6 +138,13 @@ def test_a_scenes_hits_are_read_in_time_order(tmp_path):
     hits = load_score("show", shows_dir=str(tmp_path)).cue_at(1).hits
     assert hits == (Hit(5.0, "shell", (255, 0, 0), 0.3, 0.25, "willow", "right"),
                     Hit(7.0, "roof_fan", (255, 255, 255)))
+
+
+def test_a_scenes_castle_changes_at_its_timed_moments(tmp_path):
+    (tmp_path / "show.json").write_text(json.dumps(_show(castle="green", castle_changes=[
+        {"at": 7, "castle": "blue"}, {"at": 4, "castle": "pink"}])))
+    cue = load_score("show", shows_dir=str(tmp_path)).cue_at(1)
+    assert [cue.castle_at(t) for t in (0, 3.9, 4, 6.9, 7, 9.9)] == ["green", "green", "pink", "pink", "blue", "blue"]
 
 
 def test_shows_dir_is_next_to_the_module_not_the_cwd():
@@ -168,6 +178,14 @@ def test_an_overlay_adds_a_stage_actors_and_rate_to_its_scene_only(tmp_path, mon
     assert v2.cues[1]._replace(stage="castle", actors=(), rate=v1.cues[1].rate) == v1.cues[1]
 
 
+def test_an_overlays_stage_changes_count_from_its_scenes_start(tmp_path):
+    _write(tmp_path, _two_scenes(), {"overlays": {"two": {"stage": "off", "stage_changes": [
+        {"after": 4.5, "stage": "castle"}]}}})
+    two = load_score("show", shows_dir=str(tmp_path), version="v2").cues[1]
+    assert two.stage_changes == ((14.5, "castle"),)
+    assert [two.stage_at(t) for t in (10, 14.4, 14.5, 19)] == ["off", "off", "castle", "castle"]
+
+
 def test_without_an_overlay_file_v2_plays_v1(tmp_path):
     _write(tmp_path, _two_scenes())
     assert load_score("show", shows_dir=str(tmp_path), version="v2") == load_score("show", shows_dir=str(tmp_path))
@@ -179,6 +197,9 @@ def test_without_an_overlay_file_v2_plays_v1(tmp_path):
     {"overlays": {"two": {"actors": ["nobody"]}}},
     {"overlays": {"two": {"actors": "genie"}}},
     {"overlays": {"two": {"costume": "red"}}},
+    {"overlays": {"two": {"stage_changes": [{"after": 3, "stage": "aside"}]}}},
+    {"overlays": {"two": {"stage_changes": [{"after": 12, "stage": "off"}]}}},  # past the scene's end
+    {"overlays": {"two": {"stage_changes": [{"at": 13, "stage": "off"}]}}},  # overlay times are seconds in
     {"scenes": {}},
     "{not json",
 ])
@@ -195,6 +216,9 @@ def test_a_broken_overlay_is_logged_and_v1_plays(tmp_path, overlay, monkeypatch)
 def test_the_castle_cant_be_off_in_a_scene_whose_effects_draw_on_it(tmp_path, effect):
     _write(tmp_path, _two_scenes(effects=[effect]), {"overlays": {"two": {"stage": "off"}}})
     assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage == "castle", "fell back to v1"
+    _write(tmp_path, _two_scenes(effects=[effect]),
+           {"overlays": {"two": {"stage_changes": [{"after": 5, "stage": "off"}]}}})
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage_changes == (), "fell back to v1"
     _write(tmp_path, _two_scenes(effects=[effect]), {"overlays": {"two": {"stage": "ghost"}}})
     assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage == "ghost"
 

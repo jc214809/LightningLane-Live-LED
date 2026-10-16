@@ -371,6 +371,34 @@ def test_the_castle_fades_to_a_ghost_then_off_and_back(height):
     assert _castle_max(show) == full
 
 
+def test_a_timed_stage_change_brings_the_castle_back_mid_scene():
+    show = MusicShow(64, 32, random.Random(22))
+    show.set_cue(_cue(rate=0), 0)
+    full = _castle_max(show)
+    scene = _cue(title="stars then castle", start=10, end=30, rate=0)._replace(
+        stage="off", stage_changes=((20.0, "castle"),))
+    show.set_cue(scene, 10)
+    show.set_cue(scene, 10 + music_show.CASTLE_FADE_S)
+    assert _castle_max(show) == 0
+    show.set_cue(scene, 20)
+    show.set_cue(scene, 20 + music_show.CASTLE_FADE_S)
+    assert _castle_max(show) == full
+
+
+def test_a_timed_castle_change_fades_to_the_new_look_mid_scene():
+    show = MusicShow(64, 64, random.Random(23))
+    scene = _cue(start=0, end=20, rate=0, castle="green", effects=("wipe_down",))._replace(
+        castle_changes=((10.0, "pink"),))
+    show.set_cue(scene, 0)
+    show.set_cue(scene, music_show.WIPE_S + 1)
+    green = _castle_rgb(show)
+    show.set_cue(scene, 10)
+    assert not show.castle_wipe, "only the scene's own look wipes down"
+    assert _castle_rgb(show) == green, "starts from the green"
+    show.set_cue(scene, 10 + music_show.CASTLE_FADE_S)
+    assert _castle_rgb(show) == tuple(int(c * 0.75) for c in CASTLE_LOOKS["pink"]["W"])
+
+
 def test_fireworks_show_through_a_ghost_castle():
     show = MusicShow(64, 32, random.Random(21))
     ghost = _cue(rate=0)._replace(stage="ghost")
