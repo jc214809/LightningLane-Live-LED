@@ -40,7 +40,7 @@ def test_every_cue_uses_known_looks_shapes_and_effects(hea):
     (100, "Theme chorus", 2.2, "red", {"gold_trace"}),
     (130, "Theme chorus (gold canopy)", 1.6, "blue", {"willow", "wipe_down"}),
     (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
-    (230, "Out There", 1.0, "stone", {"bells"}),
+    (230, "Out There", 0.35, "blue", {"bells"}),
     (270, "Touch the Sky", 0.9, "jungle", {"comet_fan", "willow"}),
     (400, "Aladdin: a best friend by your side", 0, "blue", {"smoke"}),
     (700, "I See the Light (lanterns)", 0.15, "blue", {"lanterns", "willow"}),

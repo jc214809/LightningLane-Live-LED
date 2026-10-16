@@ -304,19 +304,52 @@
           "characters": [
             "Ray"
           ],
-          "look": "Brass fanfare: a fan of white and gold comets, gold chrysanthemums, green and white glitter",
-          "rate": 1.0,
+          "look": "The castle bright blue as the fanfare plays: a fan of white comets off the rooftops (video 3:05), blue searchlights, white and ice-blue bursts, a green willow at the end",
+          "rate": 0.8,
           "castle": "blue",
           "palette": [
             "#FFFFFF",
-            "#FFD36B",
-            "#3EC300"
+            "#9CC8FF",
+            "#FFD36B"
           ],
-          "shapes": {
-            "star": 0.3
-          },
           "effects": [
             "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 174.3,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 175.0,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 186.5,
+              "kind": "shell",
+              "colour": "#9CC8FF",
+              "x": 0.35,
+              "y": 0.22,
+              "style": "peony"
+            },
+            {
+              "at": 187.2,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.6,
+              "y": 0.2,
+              "style": "peony"
+            },
+            {
+              "at": 190.6,
+              "kind": "shell",
+              "colour": "#3EE060",
+              "x": 0.55,
+              "y": 0.15,
+              "style": "willow"
+            }
           ]
         },
         {
@@ -326,16 +359,69 @@
           "characters": [
             "Ariel"
           ],
-          "look": "Underwater turquoise and navy, glowing bubbles, sparse gold willows dripping over the spires",
-          "rate": 0.45,
+          "look": "Blue castle: a red peony over the spire (video 3:23), then big gold chrysanthemums, a white one, and gold and white comet fans off both sides (3:39-3:42)",
+          "rate": 0.5,
           "castle": "blue",
           "palette": [
             "#FFD36B",
-            "#3BB3E0"
+            "#FFFFFF"
           ],
           "effects": [
-            "bubbles",
             "willow"
+          ],
+          "hits": [
+            {
+              "at": 193.0,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 197.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.45,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 201.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.18,
+              "style": "willow"
+            },
+            {
+              "at": 205.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.55,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 208.6,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 209.4,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            },
+            {
+              "at": 211.6,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 212.4,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            }
           ]
         },
         {
@@ -345,17 +431,50 @@
           "characters": [
             "Quasimodo"
           ],
-          "look": "Notre Dame: gothic stone, a glowing rose window, royal-blue roofs, the bells ringing; Quasimodo; magenta and ruby peonies, gold and white brocade",
-          "rate": 1.0,
-          "castle": "stone",
+          "look": "Notre Dame by night: the castle icy blue, the bells ringing, the sky mostly dark under purple searchlights; a red peony on \"Out there\" (video 4:07) and a big white chrysanthemum on the last note (4:25)",
+          "rate": 0.35,
+          "castle": "blue",
           "palette": [
-            "#FF2E88",
-            "#C1121F",
-            "#FFD36B",
-            "#FFFFFF"
+            "#E0242F",
+            "#FFFFFF",
+            "#FFD36B"
           ],
           "effects": [
             "bells"
+          ],
+          "hits": [
+            {
+              "at": 237.2,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 237.8,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.62,
+              "y": 0.2,
+              "style": "peony"
+            },
+            {
+              "at": 254.6,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 255.2,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.4,
+              "y": 0.18,
+              "style": "willow"
+            }
           ]
         },
         {
@@ -363,7 +482,7 @@
           "end": 268,
           "title": "When You Wish Upon a Star (interlude)",
           "characters": [],
-          "look": "The castle glows; magenta and pink comet fans fire from across the base from 4:27, then a gold crown with white over the spire",
+          "look": "A wall of pink and violet fountains across the whole castle (video 4:27-4:33), then gold chrysanthemums climbing over the spire",
           "rate": 1.0,
           "castle": "pastel",
           "palette": [
@@ -371,64 +490,9 @@
             "#9C6ADE"
           ],
           "effects": [
-            "comet_fan"
+            "ground_fountains"
           ],
           "hits": [
-            {
-              "at": 256.6,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
-            {
-              "at": 257.3,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
-            {
-              "at": 258.0,
-              "kind": "roof_fan",
-              "colour": "#9C6ADE"
-            },
-            {
-              "at": 258.7,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
-            {
-              "at": 259.4,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
-            {
-              "at": 260.1,
-              "kind": "roof_fan",
-              "colour": "#9C6ADE"
-            },
-            {
-              "at": 260.8,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
-            {
-              "at": 261.5,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
-            {
-              "at": 262.2,
-              "kind": "roof_fan",
-              "colour": "#9C6ADE"
-            },
-            {
-              "at": 262.9,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
-            {
-              "at": 263.6,
-              "kind": "roof_fan",
-              "colour": "#FF2EC8"
-            },
             {
               "at": 264.5,
               "kind": "shell",
@@ -436,6 +500,22 @@
               "x": 0.5,
               "y": 0.2,
               "style": "peony"
+            },
+            {
+              "at": 265.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.4,
+              "y": 0.15,
+              "style": "willow"
+            },
+            {
+              "at": 266.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.62,
+              "y": 0.12,
+              "style": "willow"
             }
           ]
         },
@@ -446,7 +526,7 @@
           "characters": [
             "Merida"
           ],
-          "look": "Merida's Highlands: emerald and teal castle, Celtic knotwork; her arrow flies at 277 (video 4:47); gold willow, emerald and white strobes, red and gold comets",
+          "look": "Merida's Highlands: emerald and teal castle, Celtic knotwork; her arrow flies at 277 (video 4:47); gold willow, emerald and white strobes, red and gold comets; a gold canopy as Merida speaks (4:38), a white chrysanthemum (4:54), white comet fans (5:06)",
           "rate": 0.9,
           "castle": "jungle",
           "palette": [
@@ -458,6 +538,42 @@
           "effects": [
             "comet_fan",
             "willow"
+          ],
+          "hits": [
+            {
+              "at": 268.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "willow"
+            },
+            {
+              "at": 283.6,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.6,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 284.2,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.4,
+              "y": 0.2,
+              "style": "peony"
+            },
+            {
+              "at": 295.6,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 296.4,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            }
           ]
         }
       ]
