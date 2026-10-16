@@ -2234,17 +2234,16 @@
           "end": 1042.2,
           "title": "Happily Ever After (reprise)",
           "characters": [],
-          "look": "Gold scrollwork, the keyhole beams; gold comets crossing over the spires, gold and white spotlights",
+          "look": "The stained-glass hero mosaic stays on the castle as the reprise begins; white comets arc up and cross over the spire (video 17:15-17:27), no searchlights",
           "rate": 0.4,
-          "castle": "gold",
+          "castle": "stained_glass",
           "palette": [
             "#FFD36B",
             "#FFFFFF"
           ],
           "effects": [
             "keyhole_glow",
-            "crossing_comets",
-            "searchlights_gold"
+            "crossing_comets"
           ]
         },
         {
@@ -2254,7 +2253,7 @@
           "characters": [
             "Tinker Bell"
           ],
-          "look": "Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple; then a dense glitter barrage fills the sky, orange, then green, pink and orange again",
+          "look": "Tink takes off from the spire; red, gold, green and cyan; gold palms, red strobes, lime and purple; then a dense glitter barrage fills the sky, orange, then green, pink and orange again; gold comet fans off the rooftops as Tink takes off (17:34), no shaped shells",
           "rate": 2.4,
           "palette": [
             "#FF6A2A",
@@ -2263,12 +2262,20 @@
             "#E0242F",
             "#FFD36B"
           ],
-          "shapes": {
-            "mickey": 0.1,
-            "star": 0.1
-          },
           "effects": [
             "tink"
+          ],
+          "hits": [
+            {
+              "at": 1042.4,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            },
+            {
+              "at": 1043.1,
+              "kind": "roof_fan",
+              "colour": "#FFD36B"
+            }
           ]
         },
         {
@@ -2276,7 +2283,7 @@
           "end": 1087,
           "title": "You Can Fly (gold arcs)",
           "characters": [],
-          "look": "Gold comets arching over the spire",
+          "look": "Gold comets arching over the spire; white comet fans off the rooftops (video 18:15)",
           "rate": 1.2,
           "palette": [
             "#FFD36B",
@@ -2284,6 +2291,23 @@
           ],
           "effects": [
             "crossing_comets"
+          ],
+          "hits": [
+            {
+              "at": 1083.6,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 1084.4,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 1085.2,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            }
           ]
         },
         {
