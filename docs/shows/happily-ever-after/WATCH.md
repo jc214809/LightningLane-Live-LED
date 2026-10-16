@@ -4173,8 +4173,8 @@ Here is the breakdown of the "Go the Distance / Castle Rebuilds" segment of *Hap
 
 ### 8.3 Go the Distance
 
-- **Audio:** 915-976 s (15:15-16:16, 61 s) · **Video:** `--start 15:26 --end 16:27`
-- **Our score now:** Stained-glass hero windows in gold (from about 954): Mulan, Aurora and Aladdin lower left, Cinderella over the gate, Tarzan (no Jane) lower right, Elsa and Anna, Merida and Woody up the towers, Tiana near the top; gold and white willows and peonies, side comet plumes, rainbow comets. Characters: Hercules, Megara, Tarzan, Mulan, Merida, Aurora, Aladdin, Cinderella, Elsa, Anna, Woody, Tiana, Mickey.
+- **Audio:** 915-948 s (15:15-15:48, 33 s) · **Video:** `--start 15:26 --end 15:59`
+- **Our score now:** The rebuilt castle blue, big gold chrysanthemums over the spire (video 15:29-15:46) as the pyro resumes. Characters: Hercules, Megara, Tarzan, Mulan, Merida, Aurora, Aladdin, Cinderella, Elsa, Anna, Woody, Tiana, Mickey.
 - **Checked by eye (2026-10-15):** no Jane. From the user's screenshot of the stained-glass hero mosaic (gold frames, blue roofs, gold willows overhead): lower left Mulan, Aurora, Aladdin; Cinderella with Gus over the gate; lower right Tarzan (long hair, alone) and Aurora again; Mickey far right; up the centre Elsa and Anna left of the spire, Merida and Woody on the right-hand tower, Tiana near the top. Not seen at 15:24: the mosaic comes later in the scene (Gemini: from about 16:04).
 
 **Your notes for this scene:**
@@ -4309,10 +4309,23 @@ Here is the breakdown of the "Go the Distance / Castle Rebuilds" segment of *Hap
 
 </details>
 
+### 8.3a Go the Distance (hero mosaic)
+
+- **Audio:** 948-976 s (15:48-16:16, 28 s) · **Video:** `--start 15:59 --end 16:27`
+- **Our score now:** On "I can go the distance" (video 15:59) the castle turns to the stained-glass hero mosaic; gold chrysanthemums, red comets and a white chrysanthemum (16:06). Characters: Hercules, Megara, Tarzan, Mulan, Merida, Aurora, Aladdin, Cinderella, Elsa, Anna, Woody, Tiana, Mickey.
+
+**Your notes for this scene:**
+
+> _(add what to look for; sent after the base prompt)_
+
+**Answers** (newest first):
+
+_None yet._
+
 ### 8.4 Go the Distance (gold canopy)
 
 - **Audio:** 976-992 s (16:16-16:32, 16 s) · **Video:** `--start 16:27 --end 16:43`
-- **Our score now:** Smiley and ring shells, green side comets, a gold willow canopy. Characters: none.
+- **Our score now:** No smiley shells: white comet fans off the rooftops (video 16:28), red and gold bursts (16:32-16:36), a huge gold canopy (16:40). Characters: none.
 
 **Your notes for this scene:**
 

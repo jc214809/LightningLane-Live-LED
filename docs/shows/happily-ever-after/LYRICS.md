@@ -134,6 +134,7 @@ scene each line starts in, numbered as in [WATCH.md](WATCH.md).
 | 902.5 | 15:13.6 | Where the crowds would cheer when they see my face |
 | 908.1 | 15:19.2 | And a voice keeps saying this is where I'm meant to be |
 | **915** | **15:26.1** | **8.3 Go the Distance** |
+| **948** | **15:59.1** | **8.3a Go the Distance (hero mosaic)** |
 | 948.0 | 15:59.1 | I will beat the odds, I can go the distance, I will blaze the world, |
 | 958.4 | 16:09.6 | Fearless, proud, and strong, I will please the gods. |
 | 964.5 | 16:15.6 | I can go the distance till I find my hero's welcome rise. |

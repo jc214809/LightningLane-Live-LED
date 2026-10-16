@@ -2026,9 +2026,6 @@
           "look": "Cyan, royal blue and gold columns; Hercules in gold light; the keyhole glows; sky nearly dark",
           "rate": 0.15,
           "castle": "blue",
-          "shapes": {
-            "star": 0.3
-          },
           "effects": [
             "starfield",
             "keyhole_glow"
@@ -2036,7 +2033,7 @@
         },
         {
           "start": 915,
-          "end": 976,
+          "end": 948,
           "title": "Go the Distance",
           "characters": [
             "Hercules",
@@ -2053,12 +2050,87 @@
             "Tiana",
             "Mickey"
           ],
-          "look": "Stained-glass hero windows in gold (from about 954): Mulan, Aurora and Aladdin lower left, Cinderella over the gate, Tarzan (no Jane) lower right, Elsa and Anna, Merida and Woody up the towers, Tiana near the top; gold and white willows and peonies, side comet plumes, rainbow comets",
+          "look": "The rebuilt castle blue, big gold chrysanthemums over the spire (video 15:29-15:46) as the pyro resumes",
+          "rate": 1.6,
+          "castle": "blue",
+          "effects": [
+            "willow",
+            "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 918.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.45,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 925.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.55,
+              "y": 0.1,
+              "style": "peony"
+            },
+            {
+              "at": 935.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            }
+          ]
+        },
+        {
+          "start": 948,
+          "end": 976,
+          "title": "Go the Distance (hero mosaic)",
+          "characters": [
+            "Hercules",
+            "Megara",
+            "Tarzan",
+            "Mulan",
+            "Merida",
+            "Aurora",
+            "Aladdin",
+            "Cinderella",
+            "Elsa",
+            "Anna",
+            "Woody",
+            "Tiana",
+            "Mickey"
+          ],
+          "look": "On \"I can go the distance\" (video 15:59) the castle turns to the stained-glass hero mosaic; gold chrysanthemums, red comets and a white chrysanthemum (16:06)",
           "rate": 1.6,
           "castle": "stained_glass",
           "effects": [
             "willow",
             "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 954.4,
+              "kind": "comet",
+              "colour": "#E0242F",
+              "side": "left"
+            },
+            {
+              "at": 954.8,
+              "kind": "comet",
+              "colour": "#E0242F",
+              "side": "right"
+            },
+            {
+              "at": 955.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -2066,14 +2138,55 @@
           "end": 992,
           "title": "Go the Distance (gold canopy)",
           "characters": [],
-          "look": "Smiley and ring shells, green side comets, a gold willow canopy",
+          "look": "No smiley shells: white comet fans off the rooftops (video 16:28), red and gold bursts (16:32-16:36), a huge gold canopy (16:40)",
           "rate": 1.4,
           "castle": "stained_glass",
-          "shapes": {
-            "smiley": 0.25
-          },
           "effects": [
             "willow"
+          ],
+          "hits": [
+            {
+              "at": 976.8,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 977.6,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 981.0,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.35,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 981.5,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.6,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 985.0,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.45,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 988.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.1,
+              "style": "curtain"
+            }
           ]
         }
       ]
