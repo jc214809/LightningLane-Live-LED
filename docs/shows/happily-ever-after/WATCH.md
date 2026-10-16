@@ -31,6 +31,8 @@ Gemini's busy and quota errors on both free Flash models, and files the answer h
 (`save_answer.py`). Gemini's free tier allows roughly a dozen scenes a day (it resets at midnight
 Pacific); a scene that still fails is reported and left for later. Anything checked by eye or against
 our audio goes in a **Checked** line under the scene's details, above the answers it corrects.
+After changing the score, `python3 docs/shows/happily-ever-after/sync_headers.py` brings every scene's heading,
+windows and **Our score now** back in line with it (answers, checks and notes stay as they are).
 
 ## Base prompt
 
@@ -478,7 +480,7 @@ To make this segment unmistakably authentic on small pixel displays:
 ### 2.1 Theme chorus
 
 - **Audio:** 98-128 s (1:38-2:08, 30 s) · **Video:** `--start 1:48 --end 2:18`
-- **Our score now:** The show's first fireworks on the chorus: a red castle, its design traced in running gold magic; red and gold peonies, then a red, gold and white strobe barrage. Characters: none.
+- **Our score now:** The show's first fireworks on the chorus: the castle red under blue roofs, its design traced in running gold magic; white comet fans off the rooftops, big gold and white chrysanthemums, a gold willow, red fans and a red peony. Characters: none.
 - **Checked by eye (2026-10-14):** the castle is red with gold magic tracing its design. Which fireworks (comet pairs and willows, or a strobe barrage) doesn't matter much.
 
 **Your notes for this scene:**
@@ -576,7 +578,7 @@ To make this segment unmistakably authentic on small pixel displays:
 ### 2.2 Theme chorus (gold canopy)
 
 - **Audio:** 128-137 s (2:08-2:17, 9 s) · **Video:** `--start 2:18 --end 2:27`
-- **Our score now:** On the chorus drop the castle fades slowly to blue from the spire down to its base; a huge gold palm and willow canopy, a gold brocade crown fading to smoke. Characters: none.
+- **Our score now:** On the chorus drop the castle fades slowly to blue from the spire down to its base; a huge gold willow canopy over the spire, white comet fans firing off both sides, a gold brocade crown fading to smoke. Characters: none.
 - **Checked by eye (2026-10-14):** on the chorus drop the castle fades slowly from its previous colours to blue, starting at the top and working down to the base (not a blue top over a gold base).
 
 **Your notes for this scene:**
