@@ -169,11 +169,6 @@ class FanfareSearchlights(Searchlights):
                         put(ox + math.cos(a) * j + w, oy + math.sin(a) * j, beam)
 
 
-class GoldSearchlights(Searchlights):
-    """Yellow and cyan (the reprise)."""
-    COLOURS = ((255, 210, 70), (90, 220, 255))
-
-
 class GreenSearchlights(Searchlights):
     """Green (Trashin' the Camp, and the villains' crossing beams)."""
     COLOURS = ((90, 255, 60), (40, 200, 90))
@@ -1027,7 +1022,6 @@ class FlameJets(Effect):
 EFFECTS = {
     "searchlights": Searchlights,
     "searchlights_fanfare": FanfareSearchlights,
-    "searchlights_gold": GoldSearchlights,
     "searchlights_green": GreenSearchlights,
     "searchlights_teal": TealSearchlights,
     "searchlights_party": PartySearchlights,

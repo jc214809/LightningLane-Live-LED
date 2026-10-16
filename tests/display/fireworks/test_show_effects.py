@@ -150,7 +150,6 @@ def test_the_keyhole_stays_open_into_the_next_scene_that_keeps_it():
 
 @pytest.mark.parametrize("name, colours", [
     ("searchlights", show_effects.Searchlights.COLOURS),
-    ("searchlights_gold", show_effects.GoldSearchlights.COLOURS),
     ("searchlights_green", show_effects.GreenSearchlights.COLOURS),
     ("searchlights_teal", show_effects.TealSearchlights.COLOURS),
 ])
