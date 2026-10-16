@@ -837,6 +837,24 @@
           "effects": [],
           "hits": [
             {
+              "at": 413.2,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 413.9,
+              "kind": "roof_fan",
+              "colour": "#FFFFFF"
+            },
+            {
+              "at": 420.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
               "at": 424.4,
               "kind": "roof_fan",
               "colour": "#FFFFFF"
@@ -871,6 +889,16 @@
           "effects": [
             "searchlights_green",
             "comet_fan"
+          ],
+          "hits": [
+            {
+              "at": 440.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -881,15 +909,28 @@
             "Timon",
             "Pumbaa"
           ],
-          "look": "Timon and Pumbaa in sunset yellow, orange and red; red and gold shells",
-          "castle": "sunset",
+          "look": "A teal-green flash on the change (video 7:37), then the castle magenta-pink under a nearly empty sky",
+          "castle": "pink",
           "palette": [
-            "#E0242F",
+            "#FF2EC8",
             "#FFD36B"
           ],
-          "shapes": {
-            "lion": 0.4
-          }
+          "hits": [
+            {
+              "at": 446.2,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 446.5,
+              "kind": "shell",
+              "colour": "#3EE060",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            }
+          ],
+          "rate": 0.4
         },
         {
           "start": 459.3,
@@ -907,6 +948,16 @@
           ],
           "effects": [
             "blocks"
+          ],
+          "hits": [
+            {
+              "at": 464.8,
+              "kind": "shell",
+              "colour": "#3EE060",
+              "x": 0.55,
+              "y": 0.12,
+              "style": "willow"
+            }
           ]
         },
         {
@@ -935,6 +986,48 @@
           ],
           "effects": [
             "searchlights_party"
+          ],
+          "hits": [
+            {
+              "at": 482.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.4,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 488.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.6,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 494.0,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.35,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 506.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 512.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.6,
+              "y": 0.18,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -942,16 +1035,31 @@
           "end": 527,
           "title": "That's What Friends Are For",
           "characters": [],
-          "look": "The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells",
-          "rate": 0.6,
+          "look": "The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise",
+          "rate": 0.4,
           "castle": "monsters",
           "palette": [
             "#FFD36B",
             "#FFFFFF"
           ],
-          "shapes": {
-            "door": 0.35
-          }
+          "hits": [
+            {
+              "at": 515.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.4,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 519.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.6,
+              "y": 0.15,
+              "style": "peony"
+            }
+          ]
         },
         {
           "start": 527,
@@ -960,21 +1068,47 @@
           "characters": [
             "Genie"
           ],
-          "look": "Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, gold chrysanthemums; red and green comet fans from the roofs (video 9:17), then a green curtain hanging over the castle on the last big note (9:21)",
+          "look": "Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, gold chrysanthemums; red and green comet fans from the roofs (video 9:17), then a green curtain hanging over the castle on the last big note (9:21); purple castle, big gold and white chrysanthemums (video 9:03-9:08), ice-blue comet fans (9:13)",
           "rate": 1.6,
-          "castle": "gold",
+          "castle": "purple",
           "palette": [
             "#FF2EC8",
             "#3EC300",
             "#FFD36B"
           ],
-          "shapes": {
-            "mickey": 0.1
-          },
           "effects": [
             "searchlights_party"
           ],
           "hits": [
+            {
+              "at": 533.0,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 537.6,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.35,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 538.3,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.65,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 542.8,
+              "kind": "roof_fan",
+              "colour": "#9CC8FF"
+            },
             {
               "at": 546.3,
               "kind": "roof_fan",
@@ -1004,7 +1138,7 @@
           ],
           "look": "Genie's big finish: dense magenta, red and green comets fanning out from both sides of the castle, one fan a beat, to his \"Ha!\"",
           "rate": 2.2,
-          "castle": "gold",
+          "castle": "purple",
           "palette": [
             "#FF2EC8",
             "#E0242F",

@@ -1982,7 +1982,7 @@ To convey this segment instantly on a 64x32 or 64x64 matrix:
 ### 5.4 Hakuna Matata
 
 - **Audio:** 446-459.3 s (7:26-7:39, 13.3 s) · **Video:** `--start 7:36 --end 7:49`
-- **Our score now:** Timon and Pumbaa in sunset yellow, orange and red; red and gold shells. Characters: Timon, Pumbaa.
+- **Our score now:** A teal-green flash on the change (video 7:37), then the castle magenta-pink under a nearly empty sky. Characters: Timon, Pumbaa.
 - **To check by eye and ear:** Gemini's answer below says this isn't Hakuna Matata but The Bare Necessities (Mowgli and Baloo, to 7:36) then *Tangled*'s "I've Got a Dream" (the Corona sun, Pascal at the gate, from 7:39). Unconfirmed: Whisper on our split-out vocals (audio 425-465) hears only "oh, oh" scat, no lyrics either way, and Gemini has misplaced Tangled once already (4.3).
 - **Checked by eye (2026-10-14):** it is Hakuna Matata (Gemini's Bare Necessities here is wrong), and it runs until Toy Story starts at about video 7:50.
 
@@ -2232,7 +2232,7 @@ _Watched by Claude from frames (one every 2 s, plus close crops of the castle), 
 ### 5.7 That's What Friends Are For
 
 - **Audio:** 514-527 s (8:34-8:47, 13 s) · **Video:** `--start 8:44 --end 8:57`
-- **Our score now:** The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells. Characters: none.
+- **Our score now:** The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise. Characters: none.
 - **V2:** stage castle; actors mike (Mike peeks over the left turret, then the right).
 - **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it: its stonework animates, with no characters. Sulley and Mike belong at the end of 5.6, not here.
 
@@ -2332,7 +2332,7 @@ To capture this 13-second moment on a 64x32 or 64x64 matrix:
 ### 5.8 Friend Like Me (Genie)
 
 - **Audio:** 527-554 s (8:47-9:14, 27 s) · **Video:** `--start 8:57 --end 9:24`
-- **Our score now:** Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, gold chrysanthemums; red and green comet fans from the roofs (video 9:17), then a green curtain hanging over the castle on the last big note (9:21). Characters: Genie.
+- **Our score now:** Genie in neon, the castle a pulsing marquee; crossing magenta, green and gold comets, gold chrysanthemums; red and green comet fans from the roofs (video 9:17), then a green curtain hanging over the castle on the last big note (9:21); purple castle, big gold and white chrysanthemums (video 9:03-9:08), ice-blue comet fans (9:13). Characters: Genie.
 - **V2:** stage ghost; actors genie (Genie circles the spire; half V1's fireworks, so bursts don't sit on him).
 - **Checked by eye (2026-10-14):** Gemini is right: at about 9:17 red and green comets fan outward from both sides of the castle, then on the last big note (about 9:21) a green shell's sparks hang over the castle like a curtain. Ours has ring shells instead.
 
