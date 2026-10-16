@@ -193,9 +193,10 @@ class PartySearchlights(Searchlights):
 
 
 class KeyholeGlow(Effect):
-    """The castle's doorway glows gold, pulsing (from PULSE of full to full)."""
+    """The castle's doorway glows gold, shimmering gently (from PULSE of full to full), as the real
+    gate glows steadily."""
     COLOUR = GOLD
-    PULSE = 0.1
+    PULSE = 0.8
 
     def __init__(self, show):
         super().__init__(show)
@@ -328,8 +329,9 @@ class KeyholeMagic(Effect):
                     break
                 prev = out.get(xy, (0, 0, 0))
                 out[xy] = tuple(int(p + (g - p) * k) for p, g in zip(prev, self.LIT))
-            for xy in self.door:
-                out[xy] = tuple(int(c * strength) for c in self.BLAZE)
+            for xy in self.door:  # blazes, then fades back to whatever lights the gate underneath
+                prev = out.get(xy, (0, 0, 0))
+                out[xy] = tuple(int(p + (g - p) * strength) for p, g in zip(prev, self.BLAZE))
         for x, y, life in self.sparkles:
             put(x, y, tuple(int(c * life / 12) for c in (255, 250, 220)))
 
@@ -507,6 +509,79 @@ class GoldStream(_Particles):
         band = (show.t * 8) % (show.width + 20) - 10
         colours = [GOLD, WHITE] + ([(220, 40, 40)] if self.progress() > 0.5 else [])
         return [band + rng.uniform(-6, 6), -1.0, 0.15, rng.uniform(0.3, 0.6) * self.s, 50, 50, rng.choice(colours)]
+
+
+class WallSparkles(_Particles):
+    """Gold magic twinkling over the castle's walls, drifting slowly up (the theme song, where the
+    real show's gold ribbons swirl on the castle itself)."""
+    front = True
+    cap = 40
+
+    def __init__(self, show):
+        super().__init__(show)
+        self.cells = [(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels
+                      if kind == "W"]
+
+    @property
+    def chance(self):
+        return 1.0 if self.big else 0.6
+
+    def spawn(self):
+        rng = self.rng
+        x, y = rng.choice(self.cells)
+        life = rng.randint(20, 35)
+        return [float(x), float(y), rng.uniform(-0.04, 0.04) * self.s, -rng.uniform(0.03, 0.08) * self.s, life, life,
+                rng.choice(((255, 240, 160), (255, 250, 215)))]
+
+    def _draw(self, put):
+        # Pale and bright to show against the warm walls, and 2x2 on a 64-row board, like its castle.
+        for x, y, _, _, life, max_life, rgb in self.parts:
+            f = math.sin(math.pi * life / max_life)  # twinkles in and out
+            for dx in range(self.s):
+                for dy in range(self.s):
+                    put(x + dx, y + dy, tuple(int(c * f) for c in rgb))
+
+
+class GoldBurst(Effect):
+    """A burst of gold magic out of the gate over the lower castle as its scene starts (video 1:13, on
+    "...unfold"), fading over LIFE frames. Once per run of scenes that keep it."""
+    LIFE = 45
+    COUNT = 30
+
+    def __init__(self, show):
+        super().__init__(show)
+        self.door, self.centre = _door(show)
+        self.fired = False
+        self.sparks = []  # [x, y, vx, vy, life]
+
+    def step(self, active):
+        if not active:
+            self.fired = False
+        elif not self.fired:
+            self.fired = True
+            cx, cy = self.centre
+            for _ in range(self.COUNT * self.s):
+                a = self.rng.uniform(math.pi, 2 * math.pi)  # outward and up, over the walls
+                v = self.rng.uniform(0.2, 0.7) * self.s
+                self.sparks.append([cx, cy, math.cos(a) * v, math.sin(a) * v * 0.6, self.LIFE])
+        for p in self.sparks:
+            p[0] += p[2]
+            p[1] += p[3]
+            p[2] *= 0.94
+            p[3] *= 0.94
+            p[4] -= 1
+        self.sparks = [p for p in self.sparks if p[4] > 0]
+
+    def draw_front(self, put, out, active):
+        for x, y, _, _, life in self.sparks:
+            f = life / self.LIFE
+            for dx in range(self.s):
+                for dy in range(self.s):
+                    put(x + dx, y + dy, tuple(int(c * f) for c in (255, 245, 190)))
+        if self.sparks:
+            f = max(p[4] for p in self.sparks) / self.LIFE
+            for xy in self.door:
+                put(*xy, tuple(int(c * f) for c in (255, 235, 150)))
 
 
 class Starfield(_Level):
@@ -975,6 +1050,8 @@ EFFECTS = {
     "keyhole_magic": KeyholeMagic,
     "gold_trace": GoldTrace,
     "gold_stream": GoldStream,
+    "wall_sparkles": WallSparkles,
+    "gold_burst": GoldBurst,
     "starfield": Starfield,
     "evening_star": EveningStar,
     "bubbles": Bubbles,

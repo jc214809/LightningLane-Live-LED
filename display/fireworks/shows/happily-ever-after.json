@@ -70,12 +70,13 @@
           "end": 63,
           "title": "Happily Ever After theme song",
           "characters": [],
-          "look": "Gold ribbons swirl, the keyhole glows; still no fireworks",
+          "look": "Gold sparkles fall through the sky and twinkle over the castle walls, the gate glowing steadily; still no fireworks",
           "rate": 0,
           "castle": "amber",
           "effects": [
             "keyhole_magic",
             "gold_stream",
+            "wall_sparkles",
             "keyhole_glow"
           ]
         },
@@ -84,12 +85,13 @@
           "end": 98,
           "title": "Theme song builds",
           "characters": [],
-          "look": "Red, purple and gold filigree on the castle, yellow and cyan searchlights; still no fireworks",
+          "look": "On \"...unfold\" (video 1:13) a burst of gold magic out of the gate over the lower castle; then red, purple and gold filigree on the castle, yellow and cyan searchlights; still no fireworks",
           "rate": 0,
           "castle": "royal",
           "effects": [
             "searchlights_gold",
-            "keyhole_glow"
+            "keyhole_glow",
+            "gold_burst"
           ]
         }
       ]
