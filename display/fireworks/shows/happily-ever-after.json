@@ -1621,12 +1621,30 @@
             "Emperor of China",
             "Mulan"
           ],
-          "look": "\"The flower that blooms in adversity...\": the Emperor's praise of Mulan, both in the gate; dark navy and crimson; two lone shells, a pink and green ring then a big gold willow; no gong",
-          "rate": 0.3,
+          "look": "\"The flower that blooms in adversity...\": the Emperor's praise of Mulan, both in the gate; dark navy and crimson; two lone shells, a pink and green ring then a big gold willow; no gong; two lone shells: a white chrysanthemum (video 12:21) and a gold willow (12:26)",
+          "rate": 0,
           "castle": "crimson",
           "palette": [
             "#E0242F",
             "#FFD36B"
+          ],
+          "hits": [
+            {
+              "at": 730.8,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.55,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 735.8,
+              "kind": "shell",
+              "colour": "#FFD36B",
+              "x": 0.45,
+              "y": 0.15,
+              "style": "willow"
+            }
           ]
         },
         {
@@ -1638,12 +1656,44 @@
             "Scar",
             "Hades"
           ],
-          "look": "Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts",
+          "look": "Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts; a red rocket, then red peonies (12:40, 12:45)",
           "rate": 1.4,
           "castle": "green",
           "effects": [
             "bolts",
             "searchlights_green"
+          ],
+          "hits": [
+            {
+              "at": 745.6,
+              "kind": "comet",
+              "colour": "#E0242F",
+              "side": "left"
+            },
+            {
+              "at": 749.8,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.45,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 754.8,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.6,
+              "y": 0.18,
+              "style": "peony"
+            },
+            {
+              "at": 755.4,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.35,
+              "y": 0.2,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -1654,11 +1704,57 @@
             "The Incredibles",
             "Omnidroid"
           ],
-          "look": "The Incredibles fight a giant robot from about 12:44 (video); lightning",
+          "look": "The Incredibles fight a giant robot from about 12:44 (video); lightning; the castle blue and purple; big red peonies (12:55), then white chrysanthemums (13:00-13:04)",
           "rate": 1.2,
-          "castle": "green",
+          "castle": "purple",
           "effects": [
             "bolts"
+          ],
+          "hits": [
+            {
+              "at": 763.8,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.45,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 764.4,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.6,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 768.8,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 772.8,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.45,
+              "y": 0.1,
+              "style": "peony"
+            },
+            {
+              "at": 773.4,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.6,
+              "y": 0.15,
+              "style": "peony"
+            }
+          ],
+          "palette": [
+            "#E0242F",
+            "#FFFFFF"
           ]
         },
         {
@@ -1671,7 +1767,7 @@
             "Aladdin",
             "Jafar"
           ],
-          "look": "Scar and Simba fight (777, video 13:07), then Aladdin and Jafar as the snake (799, video 13:30); the castle cracks and burns; flame jets on the terraces; red, orange and gold",
+          "look": "Scar and Simba fight (777, video 13:07), then Aladdin and Jafar as the snake (799, video 13:30); the castle cracks and burns; flame jets on the terraces; red, orange and gold; red comet fans off the rooftops (13:14), red peonies (13:19, 13:29)",
           "rate": 1.4,
           "castle": "fire",
           "palette": [
@@ -1681,6 +1777,47 @@
           ],
           "effects": [
             "flame_jets"
+          ],
+          "hits": [
+            {
+              "at": 782.8,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 783.6,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 784.4,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 788.0,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 798.0,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.6,
+              "y": 0.15,
+              "style": "peony"
+            },
+            {
+              "at": 798.6,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.4,
+              "y": 0.12,
+              "style": "peony"
+            }
           ]
         },
         {
@@ -1690,7 +1827,7 @@
           "characters": [
             "Maleficent"
           ],
-          "look": "Maleficent after the snake: her green dragon fire along the ground; emerald shells and lime comets",
+          "look": "Maleficent after the snake: her green dragon fire along the ground; emerald shells and lime comets; green comet fans firing off both sides",
           "rate": 2.2,
           "castle": "fire",
           "palette": [
@@ -1700,6 +1837,38 @@
           "effects": [
             "flame_jets",
             "green_fire"
+          ],
+          "hits": [
+            {
+              "at": 806.6,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 807.4,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 808.2,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 809.0,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 809.8,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            },
+            {
+              "at": 810.6,
+              "kind": "roof_fan",
+              "colour": "#3EE060"
+            }
           ]
         },
         {
@@ -1707,7 +1876,7 @@
           "end": 837,
           "title": "He's a Pirate (red and gold)",
           "characters": [],
-          "look": "Dense red chrysanthemums and gold willow fans",
+          "look": "Dense red chrysanthemums and gold willow fans; red fans and a white chrysanthemum (13:46), white and red (13:53)",
           "rate": 1.8,
           "castle": "fire",
           "palette": [
@@ -1717,6 +1886,42 @@
           "effects": [
             "flame_jets",
             "willow"
+          ],
+          "hits": [
+            {
+              "at": 813.3,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 814.0,
+              "kind": "roof_fan",
+              "colour": "#E0242F"
+            },
+            {
+              "at": 815.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.12,
+              "style": "peony"
+            },
+            {
+              "at": 822.0,
+              "kind": "shell",
+              "colour": "#FFFFFF",
+              "x": 0.5,
+              "y": 0.1,
+              "style": "peony"
+            },
+            {
+              "at": 822.6,
+              "kind": "shell",
+              "colour": "#E0242F",
+              "x": 0.35,
+              "y": 0.15,
+              "style": "peony"
+            }
           ]
         },
         {
