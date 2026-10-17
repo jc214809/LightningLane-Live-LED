@@ -128,6 +128,7 @@ class GenieOrbit(Actor):
 # One module each under actors/, building on actors/base.py.
 from display.fireworks.actors.baymax import BaymaxInflates  # noqa: E402
 from display.fireworks.actors.canoe import CanoeSails  # noqa: E402
+from display.fireworks.actors.castle_mouth import CastleSings  # noqa: E402
 from display.fireworks.actors.dumbo import DumboFlies  # noqa: E402
 from display.fireworks.actors.lantern_boat import LanternBoat  # noqa: E402
 from display.fireworks.actors.memory_orbs import MemoryOrbs  # noqa: E402
@@ -159,4 +160,5 @@ ACTORS = {
     "lantern_boat": LanternBoat,
     "memory_orbs": MemoryOrbs,
     "mike_sulley": MikeAndSulley,
+    "castle_sings": CastleSings,
 }

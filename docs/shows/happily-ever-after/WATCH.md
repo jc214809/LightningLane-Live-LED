@@ -2232,8 +2232,8 @@ _Watched by Claude from frames (one every 2 s, plus close crops of the castle), 
 ### 5.7 That's What Friends Are For
 
 - **Audio:** 514-527 s (8:34-8:47, 13 s) · **Video:** `--start 8:44 --end 8:57`
-- **Our score now:** The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise. Characters: none.
-- **V2:** stage castle; no actors (Mike moved to the end of 5.6, with Sulley).
+- **Our score now:** The castle itself sings it: its doorway sings the words like a mouth and the whole castle stretches with it, on salmon walls with blue linework under blue roofs (video 8:44-8:58); two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise. Characters: none.
+- **V2:** stage castle; actors castle_sings (the castle sings: its doorway is the mouth, on its own mouth track, and the whole castle stretches taller and thinner as it opens).
 - **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it: its stonework animates, with no characters. Sulley and Mike belong at the end of 5.6, not here.
 
 **Your notes for this scene:**

@@ -36,6 +36,7 @@ CASTLE_LOOKS = {
     "pastel": {"W": (210, 170, 245), "R": (90, 210, 215)},  # When You Wish: lavender and turquoise
     "sunset": {"W": (255, 175, 60), "R": (225, 70, 40)},  # Hakuna Matata
     "monsters": {"W": (240, 200, 40), "R": (50, 70, 220)},  # Mike and Sulley: scream-canister yellow, blue roofs
+    "friends": {"W": (235, 130, 110), "R": (50, 70, 220)},  # That's What Friends Are For: salmon, blue roofs
     "ice": {"W": (170, 210, 255), "R": (120, 90, 220)},  # Olaf
     "crimson": {"W": (130, 30, 45), "R": (40, 40, 90)},  # the Emperor: crimson on dark navy
     "lavender": {"W": (230, 160, 235), "R": (60, 75, 225)},  # Can You Feel the Love Tonight: pink-lavender, blue roofs
@@ -196,6 +197,9 @@ class MusicShow:
         self.frames_to_next_launch = 0
 
         self.castle_pixels, cw, ch = castle_sprite(height)
+        # A reshaped castle for the frame (an actor's: the castle singing stretches), drawn in its place;
+        # None draws castle_pixels. Same origin, so dy can go above 0 when it's taller.
+        self.castle_shape = None
         self.castle_x, self.castle_y = (width - cw) // 2, height - ch
         self.castle_w, self.castle_h = cw, ch
         sx, sy, _ = min((p for p in self.castle_pixels if p[2] == "G"), key=lambda p: p[1])
@@ -598,10 +602,10 @@ class MusicShow:
                     finals[("W", i)] = glowing(base) if "W" in _LIT_KINDS else base
             if shown < 1:
                 finals = {k: dim(rgb) for k, rgb in finals.items()}
-            key = (tuple(sorted((str(k), rgb) for k, rgb in finals.items())), shown < 1)
+            key = (tuple(sorted((str(k), rgb) for k, rgb in finals.items())), shown < 1, id(self.castle_shape))
             if key != self._castle_key:
                 layer = {}
-                for dx, dy, kind in self.castle_pixels:
+                for dx, dy, kind in self.castle_shape or self.castle_pixels:
                     x, y = self.castle_x + dx, self.castle_y + dy
                     if 0 <= x < width and 0 <= y < height:
                         if kind == "W" and glass:
@@ -615,7 +619,7 @@ class MusicShow:
             else:
                 out.update(self._castle_layer)
         else:
-            for dx, dy, kind in (self.castle_pixels if shown > 0.01 else ()):
+            for dx, dy, kind in ((self.castle_shape or self.castle_pixels) if shown > 0.01 else ()):
                 x, y = self.castle_x + dx, self.castle_y + dy
                 if not (0 <= x < width and 0 <= y < height):
                     continue

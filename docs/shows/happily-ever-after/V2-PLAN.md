@@ -92,7 +92,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Mash-up: Zootopia (482-493) | off | Judy, Nick | Sheet (`nick and judy.jpg`, 15x33 and 18x40) | Stand side by side under a neon skyline (Code). Too tall for 64x32 as is: 64x64 only, or cut at the knees there. |
 | Mash-up: Inside Out (494-513) | off | Joy, Sadness | Sheet (`inside_out.jpg`, about 17x25) | Joy and Sadness each roll a memory orb (Code: a glowing yellow and blue ball) in from their side. |
 | Mash-up: Monsters, Inc. (505.5-511) | castle | Mike, Sulley | Built (`mike_sulley`): `Sulley.jpg` 26x33 and `Mike_waving.png` shrunk to 27x25 on 64x64, a small redrawn pair on 64x32 | Pop up side by side over the gate, as in the real show's window there; they blink, Mike waves. The castle wears the real colours (yellow scream-canister walls, blue roofs). |
-| That's What Friends Are For (514-527) | castle | none | | The castle sings it. Mike's turret peeks (built first) were dropped: he's in the mash-up now. |
+| That's What Friends Are For (514-527) | castle | The castle | Built (`castle_sings`) | The castle sings it: its doorway is the mouth, on its own lip track, and the whole castle stretches taller and thinner as it opens; salmon walls under blue roofs. Mike's turret peeks (built first) were dropped: he's in the mash-up now. |
 | Friend Like Me, Genie (527-554) | ghost | Genie | Have | Loops round the sky in the party searchlights, trailing smoke. |
 | Genie finale (554-563) | castle | Genie | Have | Dives back into the lamp as the roof fountains go. |
 | Olaf's line (563-576) | ghost | Olaf | Have | Stands at the base and waves while the snow rises. |
