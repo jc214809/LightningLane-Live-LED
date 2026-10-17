@@ -96,6 +96,7 @@ keep the one where the size holds steady.
 | [Baby_Yoda.jpg](Baby_Yoda.jpg) | Grogu | 38 x 32 | Tight | Yes | |
 | [mike.jpg](mike.jpg) | Mike Wazowski | 35 x 30 | Tight | Yes | Built: `mike` (drawn in code) |
 | [Sulley.jpg](Sulley.jpg) | Sulley | 26 x 33 | No (1 row over) | Yes | |
+| [Mike_waving.png](Mike_waving.png) | Mike Wazowski waving, with a toothy grin (the "PB" logo top left isn't part of him) | 33 x 30 | Yes | Yes | Pattern mode: drag a box round him, leaving out the logo. The show draws him shrunk to 27 x 25 (display/fireworks/actors/monsters.py) |
 | [Ralph.jpg](Ralph.jpg) | Wreck-It Ralph | 25 x 34 | No (2 rows over, both outline) | Yes | `ralph`, from this pattern ([CHARACTERS.md](../../display/CHARACTERS.md#scorecard)) |
 | [Sally and Jack pair.png](<Sally and Jack pair.png>) | Sally leaning on Jack, one piece | 43 x 39 | No (shortened to 32 rows on the board) | Yes | `jack_sally`: the walk-in and kiss |
 | [Zero.jpg](Zero.jpg) | Zero | 38 x 34 | No (2 rows over, both outline) | Yes | `jack_sally`, floating across |

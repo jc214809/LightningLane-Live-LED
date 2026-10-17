@@ -590,6 +590,9 @@ for 64x32 as is (a one-row trim would fit); fits 64x64.
 Questions: a roar over the screen, or with Mike (#3) and Boo (#35); his purple spots need to
 stay distinct from his blue at this size.
 
+Drawn for the synced show (not yet a ride transition): `display/fireworks/actors/monsters.py` has
+him 1x from `Sulley.jpg` on 64x64 (27x34 as charted) and a 12x15 redraw for 64x32, with Mike.
+
 **49. Tiana.** Reference: [Tiana.jpg](docs/references/Tiana.jpg), kissing the frog, 74x86:
 fits neither board as is; it would need a redraw at about half size.
 

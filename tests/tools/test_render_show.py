@@ -204,8 +204,10 @@ def test_each_character_is_listed_once_under_the_scene_it_first_shows_in():
     v2 = load_score("happily-ever-after", version="v2")
     cast = tool.cast(v2)
     mash = v2.cue_at(490)
-    assert [c["name"] for c in cast[mash.title]] == ["Ralph", "Baymax", "Joy and Sadness's memory orbs"]
-    assert [c["start"] for c in cast[mash.title]] == [mash.start + 7, mash.start + 13, mash.start + 25]
+    assert [c["name"] for c in cast[mash.title]] == ["Ralph", "Baymax", "Joy and Sadness's memory orbs",
+                                                     "Mike and Sulley"]
+    assert [c["start"] for c in cast[mash.title]] == [mash.start + 7, mash.start + 13, mash.start + 25,
+                                                      mash.start + 32.2]
     assert cast["Friend Like Me (Genie)"] == [{"name": "Genie", "start": 527.0}]
     assert cast["Friend Like Me (finale)"] == [], "Genie carries on from the scene before"
     named = [c for listed in cast.values() for c in listed]

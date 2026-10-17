@@ -12,7 +12,7 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 | How Far I'll Go (climax) | Moana's canoe | One crossing once the water is up; on 64x64 the toy's canoe (red spiral sail, outrigger) with Moana (princes sheet) aboard |
 | You've Got a Friend in Me | Buzz and Woody | Buzz flies across, Woody waves from the ground |
 | Friendship mash-up | Ralph, Baymax, memory orbs | Ralph smashes bricks, Baymax inflates, Joy's and Sadness's orbs. The Zootopia skyline was built and cut (nobody knew what it was) |
-| That's What Friends Are For | Mike | Peeks over a turret, then the other |
+| Friendship mash-up, its end | Mike, Sulley | Pop up side by side over the gate (505.5-511); Mike waves |
 | Friend Like Me, and its finale | Genie | Circles the spire, lip-synced, sings on through the finale |
 | Olaf | Olaf | Pops up and waves, grinning; on 64x64 a straighter skull and lip-synced; melts as he says his line (body first, his face after his last word) into a puddle |
 | Princess garden | Cinderella and Charming, Tiana and frog Naveen, Ariel and Eric, Belle and the Beast | Princes sheet, 1x on both boards: one couple a quarter of the scene, walking in to meet, a heart floating up; Naveen hops; Ariel sits on a rock (tail only on the sheet); Charming's and Eric's hair lifted for the LEDs |
@@ -91,8 +91,8 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Mash-up: Big Hero 6 (474-481) | off | Baymax, Hiro | Have / Sheet (`Hiro and Baymax.jpg`, about 16x20) | Baymax inflates up from the bottom and waves; Hiro fist-bumps him. |
 | Mash-up: Zootopia (482-493) | off | Judy, Nick | Sheet (`nick and judy.jpg`, 15x33 and 18x40) | Stand side by side under a neon skyline (Code). Too tall for 64x32 as is: 64x64 only, or cut at the knees there. |
 | Mash-up: Inside Out (494-513) | off | Joy, Sadness | Sheet (`inside_out.jpg`, about 17x25) | Joy and Sadness each roll a memory orb (Code: a glowing yellow and blue ball) in from their side. |
-| That's What Friends Are For (514-527) | castle | Mike | Have | Pops up from behind a turret, blinks (his ride reveal). |
-| | | Sulley | Sheet (`Monsters_Inc.jpg` 18x25; `Sulley.jpg` 26x33 on 64x64) | Steps out of a door beside the castle while Mike pops up. |
+| Mash-up: Monsters, Inc. (505.5-511) | castle | Mike, Sulley | Built (`mike_sulley`): `Sulley.jpg` 26x33 and `Mike_waving.png` shrunk to 27x25 on 64x64, a small redrawn pair on 64x32 | Pop up side by side over the gate, as in the real show's window there; they blink, Mike waves. The castle wears the real colours (yellow scream-canister walls, blue roofs). |
+| That's What Friends Are For (514-527) | castle | none | | The castle sings it. Mike's turret peeks (built first) were dropped: he's in the mash-up now. |
 | Friend Like Me, Genie (527-554) | ghost | Genie | Have | Loops round the sky in the party searchlights, trailing smoke. |
 | Genie finale (554-563) | castle | Genie | Have | Dives back into the lamp as the roof fountains go. |
 | Olaf's line (563-576) | ghost | Olaf | Have | Stands at the base and waves while the snow rises. |

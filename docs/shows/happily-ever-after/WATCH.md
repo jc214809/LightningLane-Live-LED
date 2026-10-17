@@ -2188,7 +2188,7 @@ Here is the breakdown of this section of *Happily Ever After*:
 
 - **Audio:** 473.3-514 s (7:53-8:34, 40.7 s) · **Video:** `--start 8:03 --end 8:44`
 - **Our score now:** In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts. The castle stays up throughout, turning with each bit: green (Bare Necessities), pink (Ralph, 480.3), blue (Baymax, Zootopia and Inside Out, 486.3), Monsters, Inc. teal and purple (Mike and Sulley, 505.5). Characters: Baloo, Ralph, Hiro, Baymax, Judy, Nick, Joy, Sadness, Mike, Sulley.
-- **V2:** stage off; actors ralph, baymax, memory_orbs (Ralph smashes bricks (0-14 s in), Baymax inflates and waves (15-22), Joy's and Sadness's memory orbs (35-54)).
+- **V2:** stage castle; actors ralph, baymax, memory_orbs, mike_sulley (Ralph smashes bricks (7-13 s in), Baymax inflates and waves (13-19.5), Joy's and Sadness's memory orbs (25-34.5), Mike and Sulley pop up over the gate (32.2-37.7)).
 - **Checked by eye (2026-10-14):** in order: Toy Story (from 7:50); the castle turns green for Bare Necessities, with the Jungle Book characters dancing (about 8:04); the castle turns pink and Wreck-It Ralph appears (about 8:12); back to blue-topped towers for Baymax in his super suit with Hiro (about 8:16); Nick and Judy at the bottom, in the gate, then a doughnut rolls over the castle and chases them off (Zootopia); the whole castle fills with Inside Out's memory orbs, with Joy and Sadness (about 8:30); then Mike and Sulley, surrounded by scream canisters (about 8:36). Vanellope wasn't mentioned.
 
 **Your notes for this scene:**
@@ -2233,7 +2233,7 @@ _Watched by Claude from frames (one every 2 s, plus close crops of the castle), 
 
 - **Audio:** 514-527 s (8:34-8:47, 13 s) · **Video:** `--start 8:44 --end 8:57`
 - **Our score now:** The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise. Characters: none.
-- **V2:** stage castle; actors mike (Mike peeks over the left turret, then the right).
+- **V2:** stage castle; no actors (Mike moved to the end of 5.6, with Sulley).
 - **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it: its stonework animates, with no characters. Sulley and Mike belong at the end of 5.6, not here.
 
 **Your notes for this scene:**

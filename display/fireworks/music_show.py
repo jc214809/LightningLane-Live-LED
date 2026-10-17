@@ -35,7 +35,7 @@ CASTLE_LOOKS = {
     "red": {"W": (215, 35, 40), "R": (60, 90, 230)},  # the theme chorus, its design traced in gold, blue roofs
     "pastel": {"W": (210, 170, 245), "R": (90, 210, 215)},  # When You Wish: lavender and turquoise
     "sunset": {"W": (255, 175, 60), "R": (225, 70, 40)},  # Hakuna Matata
-    "monsters": {"W": (70, 200, 200), "R": (130, 70, 210)},  # That's What Friends Are For
+    "monsters": {"W": (240, 200, 40), "R": (50, 70, 220)},  # Mike and Sulley: scream-canister yellow, blue roofs
     "ice": {"W": (170, 210, 255), "R": (120, 90, 220)},  # Olaf
     "crimson": {"W": (130, 30, 45), "R": (40, 40, 90)},  # the Emperor: crimson on dark navy
     "lavender": {"W": (230, 160, 235), "R": (60, 75, 225)},  # Can You Feel the Love Tonight: pink-lavender, blue roofs
