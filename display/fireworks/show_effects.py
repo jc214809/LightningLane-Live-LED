@@ -877,42 +877,6 @@ class MoonRise(_Level):
                     put(x, y, rgb)
 
 
-class Savanna(_Level):
-    """Can You Feel the Love Tonight's Pride Lands, from FROM of the way through the scene (video 10:25):
-    the castle's walls and roofs warm to amber and two black acacia trees stand on its lower walls. Drawn
-    only as far as the castle is shown, so it's gone with the castle off."""
-    FROM = 0.45
-    AMBER = (255, 150, 50)
-    ACACIA = ["#######", ".#####.", "...#...", "...#..."]
-
-    def __init__(self, show):
-        super().__init__(show)
-        self.cells = [(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels
-                      if kind in ("W", "R")]
-        th = len(self.ACACIA) * self.s
-        self.trees = []
-        for at in (0.12, 0.70):
-            left, top = show.castle_x + int(show.castle_w * at), show.height - th
-            self.trees += [(left + col * self.s + ox, top + row * self.s + oy)
-                           for row, line in enumerate(self.ACACIA) for col, c in enumerate(line) if c == "#"
-                           for oy in range(self.s) for ox in range(self.s)]
-
-    def step(self, active):
-        super().step(active and self.progress() >= self.FROM)
-
-    def draw_front(self, put, out, active):
-        k = self.level * self.show.castle_level()
-        if k <= 0.01:
-            return
-        warm = 0.8 * k
-        for xy in self.cells:
-            prev = out.get(xy, (0, 0, 0))
-            out[xy] = tuple(int(p + (a - p) * warm) for p, a in zip(prev, self.AMBER))
-        for xy in self.trees:
-            if xy in out:
-                out[xy] = tuple(int(c * (1 - k)) for c in out[xy])
-
-
 class Waterfalls(_Particles):
     """Two waterfalls of blue, pink and white either side of the castle (the princess garden)."""
     chance = 0.9
@@ -1051,7 +1015,6 @@ EFFECTS = {
     "blocks": Blocks,
     "moon_rise": MoonRise,
     "waterfalls": Waterfalls,
-    "savanna": Savanna,
     "bolts": Bolts,
     "green_fire": GreenFire,
 }

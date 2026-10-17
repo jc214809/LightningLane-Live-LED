@@ -10,11 +10,11 @@ class WallEFloats(Actor):
     Can You Feel the Love Tonight: WALL-E (his ride-reveal art, 1x on both boards) floats across the
     starry sky as in the film's space dance, alone since EVE has no art yet. He drifts in off the left
     edge, rises on a slow arc to the middle of the board and sinks again with a gentle bob, and is off
-    the right edge by the scene's end (CROSS_S). Every couple of seconds he gives his fire extinguisher
-    a squirt: a short burst of white specks puffs out behind him and fades.
+    the right edge by CROSS_S, before the castle comes back (7 s in). Every couple of seconds he
+    gives his fire extinguisher a squirt: a short burst of white specks puffs out behind him and fades.
     """
     NAME = "WALL-E"
-    CROSS_S = 15.0  # edge to edge; the scene is 16 s
+    CROSS_S = 6.5  # edge to edge, gone before the castle comes back 7 s in
     BOB_S = 2.6  # one bob
     SQUIRT_S = 2.2  # one squirt every this many seconds...
     SQUIRT_ON_S = 0.5  # ...lasting this long

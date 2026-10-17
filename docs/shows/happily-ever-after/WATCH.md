@@ -2187,8 +2187,8 @@ Here is the breakdown of this section of *Happily Ever After*:
 ### 5.6 Friendship mash-up
 
 - **Audio:** 473.3-514 s (7:53-8:34, 40.7 s) · **Video:** `--start 8:03 --end 8:44`
-- **Our score now:** In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts. Characters: Baloo, Ralph, Hiro, Baymax, Judy, Nick, Joy, Sadness, Mike, Sulley.
-- **V2:** stage off; actors ralph, baymax, memory_orbs (Ralph smashes bricks (0-14 s in), Baymax inflates and waves (15-22), Joy's and Sadness's memory orbs (35-54)).
+- **Our score now:** In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts. The castle stays up throughout, turning with each bit: green (Bare Necessities), pink (Ralph, 480.3), blue (Baymax, Zootopia and Inside Out, 486.3), Monsters, Inc. teal and purple (Mike and Sulley, 505.5). Characters: Baloo, Ralph, Hiro, Baymax, Judy, Nick, Joy, Sadness, Mike, Sulley.
+- **V2:** stage castle; actors ralph, baymax, memory_orbs, mike_sulley (Ralph smashes bricks (7-13 s in), Baymax inflates and waves (13-19.5), Joy's and Sadness's memory orbs (25-34.5), Mike and Sulley pop up over the gate (32.2-37.7)).
 - **Checked by eye (2026-10-14):** in order: Toy Story (from 7:50); the castle turns green for Bare Necessities, with the Jungle Book characters dancing (about 8:04); the castle turns pink and Wreck-It Ralph appears (about 8:12); back to blue-topped towers for Baymax in his super suit with Hiro (about 8:16); Nick and Judy at the bottom, in the gate, then a doughnut rolls over the castle and chases them off (Zootopia); the whole castle fills with Inside Out's memory orbs, with Joy and Sadness (about 8:30); then Mike and Sulley, surrounded by scream canisters (about 8:36). Vanellope wasn't mentioned.
 
 **Your notes for this scene:**
@@ -2232,8 +2232,8 @@ _Watched by Claude from frames (one every 2 s, plus close crops of the castle), 
 ### 5.7 That's What Friends Are For
 
 - **Audio:** 514-527 s (8:34-8:47, 13 s) · **Video:** `--start 8:44 --end 8:57`
-- **Our score now:** The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise. Characters: none.
-- **V2:** stage castle; actors mike (Mike peeks over the left turret, then the right).
+- **Our score now:** The castle itself sings it: its doorway sings the words like a mouth and the whole castle stretches with it, on salmon walls with blue linework under blue roofs (video 8:44-8:58); two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise. Characters: none.
+- **V2:** stage castle; actors castle_sings (the castle sings: its doorway is the mouth, on its own mouth track, and the whole castle stretches taller and thinner as it opens).
 - **Checked by eye (2026-10-14):** it comes right after Mike and Sulley, and the castle itself sings it: its stonework animates, with no characters. Sulley and Mike belong at the end of 5.6, not here.
 
 **Your notes for this scene:**
@@ -2725,8 +2725,9 @@ Here is the breakdown of the "Love Is an Open Door" sequence:
 ### 6.3 Can You Feel the Love Tonight
 
 - **Audio:** 607-623 s (10:07-10:23, 16 s) · **Video:** `--start 10:17 --end 10:33`
-- **Our score now:** Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29). Characters: WALL-E, EVE, Simba, Nala.
+- **Our score now:** Starry indigo, the castle deep blue; WALL-E and EVE among the constellations; at about 614 (video 10:24) the castle turns pink and lavender under blue roofs (the real show's small Simba and Nala picture on the centre tower is left out); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29), pink peonies at 10:31. Characters: WALL-E, EVE, Simba, Nala.
 - **V2:** stage off; actors walle (WALL-E floats across the stars).
+- **Checked by eye (2026-10-16):** no amber castle or acacia trees after all. The castle is deep blue to about 10:23, turns pink and lavender under blue roofs at about 10:24 (audio 614), and from about 10:26 a small sunset-coloured picture of Simba and Nala sits on the centre tower, left of the spire. The savanna effect is gone; the Simba and Nala picture was tried and left out (2026-10-16).
 - **Checked by eye (2026-10-14):** WALL-E and EVE are both there (Gemini's answer says they aren't; it's wrong), and so is Simba and Nala's savanna: the castle turns amber with black acacia-tree silhouettes on the lower walls from about 10:25.
 
 **Your notes for this scene:**
@@ -3343,10 +3344,11 @@ Here is the detailed analysis of this segment of the show:
 
 </details>
 
-### 7.2 Villains attack
+### 7.2 Mulan's battle
 
 - **Audio:** 742-760 s (12:22-12:40, 18 s) · **Video:** `--start 12:32 --end 12:50`
-- **Our score now:** Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts; a red rocket, then red peonies (12:40, 12:45). Characters: Ursula, Scar, Hades.
+- **Our score now:** Not villains: Mulan fights the Huns in the window over the gate, the Fa family's red dragon in the gate; the lower walls fire orange, the upper towers icy blue (the avalanche), the sky dark but for a lone red rocket behind the spire (video 12:36); at about 749.8 (12:40, on the first red peony) the castle flashes teal-green with a red streak up the spire, and by 752 it's blue below, orange above, for the Incredibles; red peonies (12:40, 12:45). Characters: Mulan.
+- **Checked by eye (2026-10-16):** no villains: it's Mulan's battle. Close-ups of the centre window (12:35-12:39) show Mulan in armour swinging her sword, the Fa family's red dragon fills the gate, the lower walls burn orange and the upper towers are icy blue (the avalanche). The castle flips to teal-green with a red streak up the spire at about 12:40-12:42 (audio 749.8-752), then the Incredibles start. Re-scored as "Mulan's battle".
 - **Checked by eye (2026-10-14):** couldn't tell which villains are here; still open. In frames: 12:32-12:40 the lower castle glows red-orange like fire, the upper towers icy blue-white, with a round glowing red emblem over the gate (maybe still Mulan: the Huns' attack?); about 12:42 the castle flips to teal-green with a red streak up the spire; from about 12:44 orange towers, and the Incredibles' silver robot fills the centre by 12:46-12:48.
 
 **Your notes for this scene:**

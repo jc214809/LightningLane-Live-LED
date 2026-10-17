@@ -608,4 +608,13 @@ show's clock, not by frames, and share the board with fireworks and the castle.
   rather than spilling into the next; a fade must end inside its slot (Ariel's first didn't).
 - **Tests per actor:** placement and bounds on both boards, the key moments by the clock, "follows the
   clock, not the frames" (30 fps and 7 fps land on the same frame), nothing drawn when inactive.
-
+- **Show the user several references side by side, on the board.** Mike and Sulley went through
+  five mocks (a sheet pair, two web finds, the user's charts, a cross-stitch photo), each over the
+  castle at board size; picking from those beat describing them. Watch relative size: a pair can be
+  right alone and wrong together (Mike as tall as Sulley).
+- **Shrink a chart by dropping repeated rows and columns, not by resampling.** Mike went from 33x30
+  to 27x25 by deleting rows and columns from his body's middle, the eye's inside and the legs: the
+  outline, shading, glint and teeth all survived, where resampling would have blurred them.
+- **A photo of a stitched or beaded piece needs a hand transcription.** `analyze_reference.py` read a
+  silver tin behind a cross-stitch as colours; a numbered grid drawn over the enlarged photo made it
+  quick to copy by hand.

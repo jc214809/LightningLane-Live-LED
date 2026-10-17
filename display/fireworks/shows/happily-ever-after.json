@@ -976,8 +976,23 @@
             "Mike",
             "Sulley"
           ],
-          "look": "In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts",
+          "look": "In order (video times): Bare Necessities, the castle green with the Jungle Book characters dancing (8:04); Ralph on a pink castle (8:12); Baymax in his super suit with Hiro, blue towers (8:16); Nick and Judy in the gate, chased off by a rolling doughnut; Inside Out's memory orbs filling the castle, Joy and Sadness (8:30); Mike and Sulley among scream canisters (8:36); multicolour searchlights, steady pastel bursts. The castle stays up throughout, turning with each bit: green (Bare Necessities), pink (Ralph, 480.3), blue (Baymax, Zootopia and Inside Out, 486.3), Monsters, Inc. teal and purple (Mike and Sulley, 505.5)",
           "rate": 1.1,
+          "castle": "jungle",
+          "castle_changes": [
+            {
+              "at": 480.3,
+              "castle": "pink"
+            },
+            {
+              "at": 486.3,
+              "castle": "blue"
+            },
+            {
+              "at": 505.5,
+              "castle": "monsters"
+            }
+          ],
           "palette": [
             "#FF8FC8",
             "#7FB2FF",
@@ -1035,9 +1050,9 @@
           "end": 527,
           "title": "That's What Friends Are For",
           "characters": [],
-          "look": "The castle itself sings it, its stonework coming alive; two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise",
+          "look": "The castle itself sings it: its doorway sings the words like a mouth and the whole castle stretches with it, on salmon walls with blue linework under blue roofs (video 8:44-8:58); two red and gold peonies on the opening hit; soft gold shells; small gold bursts on the bass line (video 8:45, 8:49), a dark sky otherwise",
           "rate": 0.4,
-          "castle": "monsters",
+          "castle": "friends",
           "palette": [
             "#FFD36B",
             "#FFFFFF"
@@ -1301,9 +1316,15 @@
             "Simba",
             "Nala"
           ],
-          "look": "Starry indigo; WALL-E and EVE among the constellations, then Simba and Nala as the castle warms to amber with black acacia trees on its lower walls (video 10:25); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29)",
+          "look": "Starry indigo, the castle deep blue; WALL-E and EVE among the constellations; at about 614 (video 10:24) the castle turns pink and lavender under blue roofs (the real show's small Simba and Nala picture on the centre tower is left out); gold willows building to a gold canopy (green-gold at 10:23, the canopy at 10:29), pink peonies at 10:31",
           "rate": 0.9,
-          "castle": "purple",
+          "castle": "blue",
+          "castle_changes": [
+            {
+              "at": 614.0,
+              "castle": "lavender"
+            }
+          ],
           "palette": [
             "#FFD36B",
             "#D8E060",
@@ -1312,7 +1333,6 @@
           "effects": [
             "starfield",
             "moon_rise",
-            "savanna",
             "willow"
           ],
           "hits": [
@@ -1650,18 +1670,26 @@
         {
           "start": 742,
           "end": 760,
-          "title": "Villains attack",
+          "title": "Mulan's battle",
           "characters": [
-            "Ursula",
-            "Scar",
-            "Hades"
+            "Mulan"
           ],
-          "look": "Electric lime, toxic purple and blood red; crossing green searchlights, crackling green comets, red bursts; a red rocket, then red peonies (12:40, 12:45)",
-          "rate": 1.4,
-          "castle": "green",
-          "effects": [
-            "bolts",
-            "searchlights_green"
+          "look": "Not villains: Mulan fights the Huns in the window over the gate, the Fa family's red dragon in the gate; the lower walls fire orange, the upper towers icy blue (the avalanche), the sky dark but for a lone red rocket behind the spire (video 12:36); at about 749.8 (12:40, on the first red peony) the castle flashes teal-green with a red streak up the spire, and by 752 it's blue below, orange above, for the Incredibles; red peonies (12:40, 12:45)",
+          "rate": 0.3,
+          "palette": [
+            "#E0242F",
+            "#FFD36B"
+          ],
+          "castle": "fire",
+          "castle_changes": [
+            {
+              "at": 749.8,
+              "castle": "monsters"
+            },
+            {
+              "at": 752.0,
+              "castle": "purple"
+            }
           ],
           "hits": [
             {
@@ -2349,5 +2377,5 @@
     "end": 1359,
     "note": "Separate track after the show; not part of it."
   },
-  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (music_show.EFFECTS: its own plus show_effects.EFFECTS), palette (replaces the section's), hits ([{at: show seconds, kind: score.HIT_KINDS, colour, and x, y, style for a shell or side for a comet}]: one firework at a set moment)."
+  "cue_note": "Optional per scene, read by display/fireworks/score.py: rate (launches against the everyday show, 0 is dark; default the section's intensity / 0.6), castle (music_show.CASTLE_LOOKS), shapes ({music_show.SHAPES key: chance}), effects (music_show.EFFECTS: its own plus show_effects.EFFECTS), palette (replaces the section's), hits ([{at: show seconds, kind: score.HIT_KINDS, colour, and x, y, style for a shell or side for a comet}]: one firework at a set moment), castle_changes ([{at: show seconds, castle: a CASTLE_LOOKS key}]: the castle turns again mid-scene)."
 }

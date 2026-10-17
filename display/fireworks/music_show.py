@@ -35,9 +35,11 @@ CASTLE_LOOKS = {
     "red": {"W": (215, 35, 40), "R": (60, 90, 230)},  # the theme chorus, its design traced in gold, blue roofs
     "pastel": {"W": (210, 170, 245), "R": (90, 210, 215)},  # When You Wish: lavender and turquoise
     "sunset": {"W": (255, 175, 60), "R": (225, 70, 40)},  # Hakuna Matata
-    "monsters": {"W": (70, 200, 200), "R": (130, 70, 210)},  # That's What Friends Are For
+    "monsters": {"W": (240, 200, 40), "R": (50, 70, 220)},  # Mike and Sulley: scream-canister yellow, blue roofs
+    "friends": {"W": (235, 130, 110), "R": (50, 70, 220)},  # That's What Friends Are For: salmon, blue roofs
     "ice": {"W": (170, 210, 255), "R": (120, 90, 220)},  # Olaf
     "crimson": {"W": (130, 30, 45), "R": (40, 40, 90)},  # the Emperor: crimson on dark navy
+    "lavender": {"W": (230, 160, 235), "R": (60, 75, 225)},  # Can You Feel the Love Tonight: pink-lavender, blue roofs
 }
 _STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}
@@ -195,6 +197,9 @@ class MusicShow:
         self.frames_to_next_launch = 0
 
         self.castle_pixels, cw, ch = castle_sprite(height)
+        # A reshaped castle for the frame (an actor's: the castle singing stretches), drawn in its place;
+        # None draws castle_pixels. Same origin, so dy can go above 0 when it's taller.
+        self.castle_shape = None
         self.castle_x, self.castle_y = (width - cw) // 2, height - ch
         self.castle_w, self.castle_h = cw, ch
         sx, sy, _ = min((p for p in self.castle_pixels if p[2] == "G"), key=lambda p: p[1])
@@ -242,19 +247,24 @@ class MusicShow:
             self.palette = list(cue.palette)
             self.shapes = cue.shapes
             self.effects = cue.effects
-            if cue.castle != self.castle_look:
-                # The castle turns once the wishing star lands; otherwise as the scene starts.
-                when = cue.start + WISH_LANDS_AT * (cue.end - cue.start) if "wishing_star" in cue.effects else t
-                self.castle_from = self._castle_now()
-                self.castle_to = {**_CASTLE_COLORS, **CASTLE_LOOKS.get(cue.castle, {})}
-                self.castle_change_t = when
-                self.castle_look = cue.castle
-                self.castle_wipe = "wipe_down" in cue.effects
-            if cue.stage != self.stage:
-                self.stage_from = self.castle_level()
-                self.stage_to = STAGE_LEVELS[cue.stage]
-                self.stage_change_t = t
-                self.stage = cue.stage
+        # A scene's look and stage are set as it starts, and again at each of its timed changes.
+        look = cue.castle_at(t)
+        if look != self.castle_look:
+            # The castle turns once the wishing star lands; otherwise as the scene starts or changes.
+            starting = look == cue.castle
+            wish = starting and "wishing_star" in cue.effects
+            when = cue.start + WISH_LANDS_AT * (cue.end - cue.start) if wish else t
+            self.castle_from = self._castle_now()
+            self.castle_to = {**_CASTLE_COLORS, **CASTLE_LOOKS.get(look, {})}
+            self.castle_change_t = when
+            self.castle_look = look
+            self.castle_wipe = starting and "wipe_down" in cue.effects
+        stage = cue.stage_at(t)
+        if stage != self.stage:
+            self.stage_from = self.castle_level()
+            self.stage_to = STAGE_LEVELS[stage]
+            self.stage_change_t = t
+            self.stage = stage
         flying = "tink" in self.effects and t < cue.start + TINK_FLY_S
         self.rate = cue.rate * (TINK_RATE if flying else 1.0)
         # The white flash on the show's last hit: its scene starts on the hit.
@@ -592,10 +602,10 @@ class MusicShow:
                     finals[("W", i)] = glowing(base) if "W" in _LIT_KINDS else base
             if shown < 1:
                 finals = {k: dim(rgb) for k, rgb in finals.items()}
-            key = (tuple(sorted((str(k), rgb) for k, rgb in finals.items())), shown < 1)
+            key = (tuple(sorted((str(k), rgb) for k, rgb in finals.items())), shown < 1, id(self.castle_shape))
             if key != self._castle_key:
                 layer = {}
-                for dx, dy, kind in self.castle_pixels:
+                for dx, dy, kind in self.castle_shape or self.castle_pixels:
                     x, y = self.castle_x + dx, self.castle_y + dy
                     if 0 <= x < width and 0 <= y < height:
                         if kind == "W" and glass:
@@ -609,7 +619,7 @@ class MusicShow:
             else:
                 out.update(self._castle_layer)
         else:
-            for dx, dy, kind in (self.castle_pixels if shown > 0.01 else ()):
+            for dx, dy, kind in ((self.castle_shape or self.castle_pixels) if shown > 0.01 else ()):
                 x, y = self.castle_x + dx, self.castle_y + dy
                 if not (0 <= x < width and 0 <= y < height):
                     continue

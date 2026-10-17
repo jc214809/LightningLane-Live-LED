@@ -102,7 +102,8 @@ Every boundary, ours against the video:
   stretch to go on). It also saw no jellyfish, but sunlight beams through water, bioluminescent
   bubbles, and magenta/ruby peonies on the climax.
 - **To Die For isn't its own scene.** Villains (green/purple/red, Ursula, Scar, Hades, green
-  searchlights) run 742-777, then the castle burns.
+  searchlights) run 742-777, then the castle burns. (Checked by eye 2026-10-16: wrong. 742-750 is
+  Mulan's battle, 750-752 a teal flash, then the Incredibles fight the Omnidroid; see WATCH.md 7.2.)
 - **He's a Pirate** also has real flame jets on the castle terraces (audio ~779, 789, 833, 839), an
   emerald-green barrage mid-scene (~806-812), and a ruby-red and white finale (837-847).
 - **Mufasa talks until ~889** ("Look inside yourself... Remember who you are"), sky empty, castle
@@ -192,8 +193,10 @@ Times are audio seconds ((video − 10.19) / 1.001). Colours as Gemini named the
 **Adversity (724-855)**
 - 724-742 The Emperor ("The flower that blooms in adversity is the most rare and beautiful of
   all"), a gong, brass. Castle dark navy, charcoal, deep crimson; low crimson and gold comets.
-- 742-777 Villains: lime green, toxic purple, blood red; Ursula's tentacles, Scar, Hades; green
-  searchlights crossing; crackling green comet fans, whistlers, sharp red bursts.
+- 742-760 Mulan's battle (the score had villains; checked by eye 2026-10-16): Mulan fights the Huns
+  in the window over the gate, the Fa family's red dragon in the gate, the lower walls fire orange
+  and the upper towers icy blue (the avalanche); a teal-green flash at 750-752; a dark sky, a red
+  rocket, red peonies. 760-777 the Incredibles and the Omnidroid.
 - 777-855 He's a Pirate: the castle cracks and burns in red and orange; terrace flame jets; green
   shells and lime comets (806-812), dense red chrysanthemums and gold willow fans (814-827), a
   ruby-red and white perimeter finale (837-847), smoke.

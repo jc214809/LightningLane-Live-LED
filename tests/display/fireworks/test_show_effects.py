@@ -326,7 +326,7 @@ def test_stained_glass_tiles_the_walls_in_colour():
     assert len(walls) >= 4
 
 
-@pytest.mark.parametrize("look", ["jungle", "pink"])
+@pytest.mark.parametrize("look", ["jungle", "pink", "lavender"])
 def test_new_castle_looks_change_the_walls(look):
     show, frame = _frame((), castle=look, seconds=3)
     dx, dy, _ = next(p for p in show.castle_pixels if p[2] == "W")
@@ -338,7 +338,7 @@ def test_every_scene_in_the_show_has_a_look():
     assert plain == []
 
 
-# ---- the castle's own looks: the keyhole's magic, the gold trace, the savanna ----
+# ---- the castle's own looks: the keyhole's magic, the gold trace ----
 
 def _wall(show, low=True):
     """A wall LED near the castle's bottom (or top) on the board."""
@@ -416,21 +416,3 @@ def test_the_gold_trace_climbs_both_sides_of_the_outline_to_the_spire(height):
     heads = [side[i] for side, i in trace.heads()]
     assert len(heads) == 2 * len(trace.PHASES)
     assert all(frame[xy] == trace.HEAD for xy in heads)
-
-
-def test_the_savanna_warms_the_castle_only_late_in_its_scene_and_not_with_the_castle_off():
-    show = MusicShow(64, 32, random.Random(1))
-    show.stars = []
-    savanna = show.extras["savanna"]
-    cue = _cue(start=0, end=20, effects=("savanna",), castle="purple")
-    _run(show, cue, 8)
-    assert savanna.level == 0
-    _run(show, cue, 8, start=8)
-    assert savanna.level == 1
-    frame = show.frame_pixels()
-    r, g, b = frame[_wall(show)]
-    assert r > b + 60, "amber walls"
-    assert any(frame.get(xy) == (0, 0, 0) for xy in savanna.trees), "black acacia trees"
-    off = MusicShow(64, 32, random.Random(1))
-    _run(off, cue._replace(stage="off"), 16)
-    assert not any(off.frame_pixels().get(xy) for xy in off.extras["savanna"].cells)

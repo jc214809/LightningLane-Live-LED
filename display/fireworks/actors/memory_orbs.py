@@ -1,67 +1,53 @@
-import math
-
 from display.fireworks.actors.base import Actor
 
-JOY = (255, 210, 40)
-SADNESS = (40, 110, 255)
-
-
-def _ease_out(p):
-    p = max(0.0, min(1.0, p))
-    return 1 - (1 - p) ** 3
+# The five emotions' colours: Joy, Sadness, Anger, Fear, Disgust.
+EMOTIONS = ((255, 210, 40), (40, 110, 255), (235, 40, 35), (165, 80, 230), (60, 210, 70))
 
 
 class MemoryOrbs(Actor):
     """
-    Friendship mash-up, elapsed 25-34.5 s (the real show's Inside Out, its orbs filling the castle at
-    video 8:30): two Inside Out memory orbs, Joy's yellow rolling in from the
-    left and Sadness's blue from the right along the bottom (a shine highlight turns as they roll). They
-    meet in the middle, bump apart a little and settle touching, then float up together glowing and fade
-    out over the last 3 s. Placed by the clock: positions are functions of (elapsed - START_S) s.
+    Friendship mash-up, elapsed START_S-END_S (the real show's Inside Out, video 8:30-8:35): the castle
+    fills up with memory orbs, as the real one's windows and towers do. Small round orbs in the five
+    emotions' colours (2x2 LEDs on 64x32, 3x3 on 64x64) drop in and pile up row by row from the
+    castle's base to its spire over FILL_S, each slot inside the castle's own pixels (the doorway left
+    clear), then they fade out by END_S, just as Mike and Sulley pop up. Drawn over the castle, only as
+    far as it shows. Placed by the clock: each orb's fall is a function of (elapsed - START_S) s.
     """
-    NAME = "Joy and Sadness's memory orbs"
-    START_S, END_S = 25.0, 34.5
+    NAME = "Inside Out's memory orbs"
+    START_S, END_S = 25.0, 32.2  # audio 498.3-505.5
     ENTERS_S = START_S
-    ROLL_S, BUMP_S, RISE_FROM_S, FADE_S = 4.0, 0.8, 5.5, 3.0
+    FILL_S = 5.7  # all landed by 504.0
+    DROP_S = 0.35  # each one's fall into its slot...
+    DROP_ROWS = 6  # ...from this many orb sizes above it
+    FADE_S = 1.2  # gone by END_S
 
     def __init__(self, show):
         super().__init__(show)
-        self.r = 5 if self.big else 3
-        r = self.r
-        self.ground = show.height - 1 - r  # centre y when resting on the bottom edge
-        self.top = int(show.height * 0.38)
-        self.mid = show.width / 2.0
-        # (dx, dy, distance) over the orb plus a 2px glow ring, worked out once.
-        self.disc = [(dx, dy, math.hypot(dx, dy)) for dy in range(-r - 2, r + 3) for dx in range(-r - 2, r + 3)
-                     if math.hypot(dx, dy) <= r + 2]
+        self.size = 3 if self.big else 2
+        n = self.size
+        inside = {(show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels if kind != "D"}
+        base = show.castle_y + show.castle_h  # the row under the castle
+        slots = []
+        for top in range(base - n, show.castle_y - 1, -n):
+            row = [left for left in range(show.castle_x, show.castle_x + show.castle_w - n + 1, n)
+                   if all((left + i, top + j) in inside for i in range(n) for j in range(n))]
+            self.rng.shuffle(row)  # each row fills in a random order
+            slots += [(left, top) for left in row]
+        step = self.FILL_S / max(1, len(slots))
+        # (left, top, rgb, landing s): bottom rows first, so the castle fills from its base up.
+        self.orbs = [(left, top, self.rng.choice(EMOTIONS), (i + 1) * step) for i, (left, top) in enumerate(slots)]
+        # The orb's look: lit from the top left, a highlight there and a shade at the bottom right, so it
+        # reads as a glowing ball (dimmed corners made a 3x3 one a "+").
+        if n == 3:
+            self.shade = {(0, 0): 1.45, (1, 0): 1.15, (0, 1): 1.15, (2, 1): 0.8, (1, 2): 0.8, (2, 2): 0.6}
+        else:
+            self.shade = {(0, 0): 1.35, (1, 1): 0.7}
 
     def local(self, e):
         return e - self.START_S if self.START_S <= e < self.END_S else None
 
-    def gap(self, t):
-        """How far each orb's centre is from the middle at t s in."""
-        r = self.r
-        touch = r + 0.5
-        if t < self.ROLL_S:
-            start = self.mid + r + 1
-            return start + (touch - start) * _ease_out(t / self.ROLL_S)
-        b = t - self.ROLL_S
-        if b < self.BUMP_S:
-            return touch + 2.0 * math.sin(math.pi * b / self.BUMP_S)
-        return touch
-
-    def centres(self, t):
-        """((joy x, y), (sadness x, y)) at t s in."""
-        d = self.gap(t)
-        rise = (t - self.RISE_FROM_S) / (self.END_S - self.START_S - self.RISE_FROM_S - 1.0)
-        y = self.ground + (self.top - self.ground) * (1 - math.cos(math.pi * max(0.0, min(1.0, rise)))) / 2
-        if rise > 0:
-            y += 0.6 * math.sin((t - self.RISE_FROM_S) * 2.4)
-        return (self.mid - d, y), (self.mid + d, y)
-
     def fade(self, t):
-        span = self.END_S - self.START_S
-        return max(0.0, min(1.0, (span - t) / self.FADE_S, t / 0.3))
+        return max(0.0, min(1.0, (self.END_S - self.START_S - t) / self.FADE_S))
 
     def draw(self, put, out, active):
         if not active:
@@ -69,35 +55,22 @@ class MemoryOrbs(Actor):
         t = self.local(self.elapsed())
         if t is None:
             return
-        g = self.fade(t)
-        if g <= 0:
+        g = self.fade(t) * self.show.castle_level()
+        if g <= 0.01:
             return
-        pulse = 0.85 + 0.15 * math.sin(t * 3.0)
-        for (cx, cy), rgb, sign in zip(self.centres(t), (JOY, SADNESS), (1, -1)):
-            # Rolling: the shine turns with the distance covered; afloat it drifts slowly round.
-            angle = sign * (cx - self.mid) / self.r - math.pi * 0.75 + 0.6 * max(0.0, t - self.RISE_FROM_S)
-            self._orb(out, cx, cy, rgb, angle, g, pulse)
-
-    def _orb(self, out, cx, cy, rgb, angle, g, pulse):
-        r = self.r
-        w, h = self.show.width, self.show.height
-        ox, oy = int(round(cx)), int(round(cy))
-        sx = ox + int(round(math.cos(angle) * r * 0.5))
-        sy = oy + int(round(math.sin(angle) * r * 0.5))
-        for dx, dy, d in self.disc:
-            x, y = ox + dx, oy + dy
-            if not (0 <= x < w and 0 <= y < h):
-                continue
-            if d <= r - 0.6:
-                k = (1.0 - 0.45 * d / r) * pulse
-                col = tuple(min(255, int(c * k + 70 * (1 - d / r))) for c in rgb)
-            elif d <= r + 0.4:
-                col = tuple(int(c * 0.45) for c in rgb)  # darker rim
-            else:
-                k = 0.22 * (r + 2 - d) / 1.6 * pulse  # glow, added over what's behind
-                under = out.get((x, y), (0, 0, 0))
-                out[(x, y)] = tuple(min(255, int(u + c * k * g)) for u, c in zip(under, rgb))
-                continue
-            out[(x, y)] = tuple(int(c * g) for c in col)
-        if 0 <= sx < w and 0 <= sy < h:
-            out[(sx, sy)] = tuple(int(255 * g) for _ in range(3))
+        n, w, h = self.size, self.show.width, self.show.height
+        for left, top, rgb, lands in self.orbs:
+            falling = lands - t
+            if falling >= self.DROP_S:
+                continue  # not dropped yet; the rest of its row and those above it land later
+            # Falling under gravity: from DROP_ROWS sizes up to its slot, landing at `lands`.
+            k = max(0.0, falling / self.DROP_S)
+            y0 = top - round(self.DROP_ROWS * n * k * k)
+            for i in range(n):
+                for j in range(n):
+                    x, y = left + i, y0 + j
+                    if 0 <= x < w and 0 <= y < h:
+                        shade = self.shade.get((i, j), 1.0)
+                        # Brightening also lifts toward white, so Joy's yellow and Anger's red still get a shine.
+                        lift = max(0.0, shade - 1.0) * 255
+                        out[(x, y)] = tuple(min(255, int((c * min(shade, 1.0) + lift) * g)) for c in rgb)
