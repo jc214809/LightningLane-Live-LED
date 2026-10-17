@@ -186,6 +186,13 @@ def test_an_overlays_stage_changes_count_from_its_scenes_start(tmp_path):
     assert [two.stage_at(t) for t in (10, 14.4, 14.5, 19)] == ["off", "off", "castle", "castle"]
 
 
+def test_an_overlays_effects_replace_its_scenes(tmp_path):
+    _write(tmp_path, _two_scenes(effects=["blocks", "snow"]), {"overlays": {"two": {"effects": ["snow"]}}})
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].effects == {"snow"}
+    _write(tmp_path, _two_scenes(effects=["blocks"]), {"overlays": {"two": {"effects": []}}})
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].effects == frozenset()
+
+
 def test_without_an_overlay_file_v2_plays_v1(tmp_path):
     _write(tmp_path, _two_scenes())
     assert load_score("show", shows_dir=str(tmp_path), version="v2") == load_score("show", shows_dir=str(tmp_path))
@@ -197,6 +204,8 @@ def test_without_an_overlay_file_v2_plays_v1(tmp_path):
     {"overlays": {"two": {"actors": ["nobody"]}}},
     {"overlays": {"two": {"actors": "genie"}}},
     {"overlays": {"two": {"costume": "red"}}},
+    {"overlays": {"two": {"effects": ["glitter"]}}},
+    {"overlays": {"two": {"effects": "blocks"}}},
     {"overlays": {"two": {"stage_changes": [{"after": 3, "stage": "aside"}]}}},
     {"overlays": {"two": {"stage_changes": [{"after": 12, "stage": "off"}]}}},  # past the scene's end
     {"overlays": {"two": {"stage_changes": [{"at": 13, "stage": "off"}]}}},  # overlay times are seconds in
@@ -233,6 +242,8 @@ def test_happily_ever_afters_v2_overlay_parses_onto_v1():
     assert v2.end == parse_score("happily-ever-after", data).end
     assert {c.title for c in v2.cues if c.stage != "castle" or c.actors} <= set(overlay["overlays"])
     assert v2.cue_at(540).stage == "ghost", "Friend Like Me (Genie)"
+    assert "blocks" in parse_score("happily-ever-after", data).cue_at(465).effects
+    assert v2.cue_at(465).effects == frozenset(), "Toy Story's blocks are buzz_woody's, on the castle"
     assert v2.cue_at(490).stage_at(490) == "castle", "the mash-up's bits are projected on the castle"
     love = v2.cue_at(610)
     assert love.stage_at(610) == "off", "WALL-E's starry sky"

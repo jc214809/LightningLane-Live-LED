@@ -10,7 +10,7 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 | Touch the Sky | Merida | 64x64 only (`Brave.jpg`, hair trimmed, a mouth added): says her line lip-synced, then on "touch the sky" shoots an arrow into a bullseye firework that shatters; the scene's rate 0.6 so the arrow shows |
 | Touch the Sky / Up | The Up house | Rises from behind the castle on its balloons, drifts off right |
 | How Far I'll Go (climax) | Moana's canoe | One crossing once the water is up; on 64x64 the toy's canoe (red spiral sail, outrigger) with Moana (princes sheet) aboard |
-| You've Got a Friend in Me | Buzz and Woody | Buzz flies across, Woody waves from the ground |
+| You've Got a Friend in Me | Buzz and Woody | Woody slides in and waves as alphabet blocks fill the castle, slides off, then Buzz flies through and knocks them down |
 | Friendship mash-up | Ralph, Baymax, memory orbs | Ralph smashes bricks, Baymax inflates, Joy's and Sadness's orbs. The Zootopia skyline was built and cut (nobody knew what it was) |
 | Friendship mash-up, its end | Mike, Sulley | Pop up side by side over the gate (505.5-511); Mike waves |
 | Friend Like Me, and its finale | Genie | Circles the spire, lip-synced, sings on through the finale |
@@ -85,7 +85,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Friend Like Me intro (412-428) | off | Aladdin, Genie | Have (`genie`) | Genie bursts out of Aladdin's lamp, the way his ride reveal already does. |
 | Trashin' the Camp (428-446) | castle | Terk | Lead | Swings across on a vine (same pendulum as Quasimodo). |
 | Hakuna Matata (446-453, 7 s) | castle | Timon, Pumbaa | Timon: Sheet (`Simba and Timon chart.jpg` 32x25); Pumbaa: none | March along the castle's base, left to right; Timon alone, swinging his stick, until Pumbaa turns up. |
-| You've Got a Friend in Me (453-459, 6 s) | castle | Woody, Buzz | Have (`aliens` 14x18) | Buzz shoots across the sky, Woody waves from the ground beside the blocks. |
+| You've Got a Friend in Me (453-459, 6 s) | castle | Woody, Buzz | Have (Woody: `Woody - New.jpg` chibi 19x26, waving; Buzz: `Buzz flying 64x64 grid.png` 40x26, mirrored) | One at a time: Woody slides in and waves while ABC blocks stack up over the castle (projected on it, as in the real show; V1's blocks beside it dropped with the overlay's `effects: []`), slides off by 6 s; Buzz flies through from 7 s, right to left, and knocks them down. |
 | Mash-up: Wreck-It (459-473) | off | Ralph | Have | Smashes falling 8-bit bricks (two-fist pose `UP_ART`). |
 | | | Vanellope | Sheet (`Vanellope kart.jpg`) | Zips across in her kart, glitching. |
 | Mash-up: Big Hero 6 (474-481) | off | Baymax, Hiro | Have / Sheet (`Hiro and Baymax.jpg`, about 16x20) | Baymax inflates up from the bottom and waves; Hiro fist-bumps him. |
