@@ -2081,7 +2081,7 @@ To convey this segment instantly on a 64x32 or 64x64 matrix:
 
 - **Audio:** 459.3-473.3 s (7:39-7:53, 14 s) · **Video:** `--start 7:49 --end 8:03`
 - **Our score now:** Toy Story from video 7:50: Woody and Buzz on Andy's cloud wallpaper, the castle in primary-coloured blocks; red and yellow bursts. Characters: Woody, Buzz.
-- **V2:** stage castle; actors buzz_woody (Buzz flies across, Woody waves from the ground).
+- **V2:** stage castle; actors buzz_woody (Woody slides in and waves while alphabet blocks fill the castle, slides off, then Buzz flies through and knocks them down); V1's blocks beside the castle dropped.
 - **Checked by eye (2026-10-14):** Toy Story starts at about video 7:50. Bare Necessities comes after it, in the green part of 5.6.
 
 **Your notes for this scene:**

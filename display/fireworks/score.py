@@ -182,9 +182,10 @@ def _cue(section, scene):
 
 
 def _overlay(cue, extra):
-    """The cue with a version's additions for its scene: {"stage", "stage_changes", "actors", "rate"}, each
-    optional; stage_changes are [{"after": seconds into the scene, "stage": ...}], so they move with it."""
-    unknown = set(extra) - {"stage", "stage_changes", "actors", "rate", "note"}
+    """The cue with a version's additions for its scene: {"stage", "stage_changes", "actors", "rate",
+    "effects"}, each optional; stage_changes are [{"after": seconds into the scene, "stage": ...}], so they
+    move with it; effects replaces the scene's (an actor drawing the same thing its own way)."""
+    unknown = set(extra) - {"stage", "stage_changes", "actors", "rate", "effects", "note"}
     if unknown:
         raise ValueError(f"{cue.title}: unknown overlay keys {sorted(unknown)}")
     stage = extra.get("stage", cue.stage)
@@ -196,12 +197,18 @@ def _overlay(cue, extra):
     missing = [a for a in actors if a not in ACTORS]
     if missing:
         raise ValueError(f"{cue.title}: unknown actors {missing}")
+    effects = extra.get("effects", cue.effects)
+    if not all(isinstance(e, str) for e in effects) or isinstance(effects, str):
+        raise ValueError(f"{cue.title}: effects should be a list of names, not {effects!r}")
+    effects = frozenset(effects)
+    if not effects <= EFFECTS:
+        raise ValueError(f"{cue.title}: unknown effects {sorted(effects - EFFECTS)}")
     stage_changes = _changes(cue.title, extra.get("stage_changes", ()), "stage", STAGES, cue.start, cue.end,
                              relative=True)
-    if "off" in {stage, *(s for _, s in stage_changes)} and cue.effects & CASTLE_EFFECTS:
-        raise ValueError(f"{cue.title}: the castle is off, but {sorted(cue.effects & CASTLE_EFFECTS)} draw on it")
+    if "off" in {stage, *(s for _, s in stage_changes)} and effects & CASTLE_EFFECTS:
+        raise ValueError(f"{cue.title}: the castle is off, but {sorted(effects & CASTLE_EFFECTS)} draw on it")
     rate = max(0.0, float(extra.get("rate", cue.rate)))
-    return cue._replace(stage=stage, stage_changes=stage_changes, actors=tuple(actors), rate=rate)
+    return cue._replace(stage=stage, stage_changes=stage_changes, actors=tuple(actors), rate=rate, effects=effects)
 
 
 def parse_score(name, data, overlay=None):

@@ -618,3 +618,19 @@ show's clock, not by frames, and share the board with fireworks and the castle.
 - **A photo of a stitched or beaded piece needs a hand transcription.** `analyze_reference.py` read a
   silver tin behind a cross-stitch as colours; a numbered grid drawn over the enlarged photo made it
   quick to copy by hand.
+- **Readable beats in proportion.** Woody first reused the claw scene's 14x18 art and was lost in a
+  corner of the 64x64 castle. A bigger chart (a 19x26 chibi, copied cell for cell, not scaled) standing
+  in front of the castle's edge reads at a glance; the user wanted him visible, not to scale. Black
+  outlines stay black: over the lit castle they read as an outline, not a gap.
+- **An actor's own randomness gets its own generator.** Every actor is built with the show, V1's
+  too, so shuffling with `show.rng` in `__init__` moved every V1 firework (the Toy Story blocks did,
+  caught by a V1 frame hash). Seed a private `random.Random` for layouts, and hash V1's frames before
+  and after any actor change.
+- **Fill the castle by projecting, not by fitting.** Blocks that had to sit wholly inside the castle
+  left it nearly empty (crenellations and towers break every slot); a grid over its outline, each
+  block at least half on it and drawn only on its pixels while standing, fills it and keeps the
+  silhouette and doorway. Loosened, they're drawn whole.
+- **One big character at a time beats two small ones.** Woody and Buzz shared the scene at 14x18
+  and 15x13, both hard to read; at full size (Woody 21x26, Buzz flying 40x26) they'd crowd the board together, so Woody has the
+  first half (the blocks fill) and Buzz the second (the knock-down). On 64x32 Buzz is taller than the
+  castle, which is fine when he's alone: he hits every block.
