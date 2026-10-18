@@ -739,7 +739,7 @@ def test_main_watches_every_show_for_the_sound_badges(monkeypatch):
     settings, shows = watched[0]
     assert settings == disney.SoundSettings(True, "plughw:1,0")
     assert ["happily-ever-after", "fireworks"] in shows
-    assert len(shows) == len(disney.known_shows()), "the parties' shows too"
+    assert shows == [["happily-ever-after", "fireworks"]], "only shows with a synced score are meant to have music"
 
 
 def disney_driver_modes():

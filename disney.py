@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 import logging
 import threading
@@ -12,7 +13,7 @@ from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from display.fireworks.music_show import render_music_show
-from display.fireworks.score import load_score
+from display.fireworks.score import SHOWS_DIR, load_score
 from cli import arguments, board_preset, describe, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
@@ -152,7 +153,10 @@ def main():
     set_forced_show(config.get("force_show"))
     global sound, show_version_setting
     sound = sound_settings(config)
-    watch_sound(sound, [show_clips(show) for show in known_shows()])
+    # Only a show with a synced score is meant to have music; the others play silent fireworks, so a
+    # missing clip for them isn't a problem to badge.
+    watch_sound(sound, [show_clips(show) for show in known_shows()
+                        if os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))])
     show_version_setting = show_version(config)
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
