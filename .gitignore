@@ -9,6 +9,4 @@ __pycache__/
 .coverage
 logs/
 .DS_Store
-README.md
 .claude/settings.local.json
-!docs/references/README.md
