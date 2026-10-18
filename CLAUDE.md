@@ -16,6 +16,9 @@ pytest tests/api/test_disney_api.py::test_function_name
 # Check version
 python3 version.py
 
+# Set up a whole board (LLL, Peloton-LED or MLB): see what it would do without changing anything
+bash board-setup.sh --dry-run --answers board.txt   # KEY=value lines; --help lists them
+
 # Install for development (the app plus the test tools), on Python 3.11 like the boards
 uv venv --python 3.11 .venv && uv pip install --python .venv -r requirements-dev.txt
 
@@ -129,3 +132,4 @@ Display rules:
 - `LLL-install.sh` installs with `pip install --upgrade --prefer-binary`. `--upgrade` keeps the boards current (plain `pip install -r` never moves a package that meets its floor). `--prefer-binary` matters on the 32-bit boards (`armhf`: PlutoPi, ZeroPi), whose piwheels builds lag PyPI; without it pip compiles a newer numpy on a Pi Zero, which takes hours or runs out of memory. The caps in `requirements.txt` keep upgrades compatible.
 - Pillow is capped `<12`: the boards' rgbmatrix `SetImage` reads `ImagingCore.unsafe_ptrs`, which Pillow 12 removed, so the first image drawn (the weather icon) crashes the service into a restart loop. The emulator and tests don't touch that path, so check on a real board before raising the cap.
 - macOS has no GNU `timeout`; use `perl -e 'alarm N; exec "python3", @ARGV' disney.py ...` for time-boxed runs.
+- `board-setup.sh` is tested in `--dry-run` by `tests/tools/test_board_setup.py`, under macOS's bash 3.2 as well as CI's: no associative arrays, `mapfile` or `${x,,}`; it reads system files through `$ROOT` (`BOARD_SETUP_ROOT`) and changes things only through `run`/`in_dir`/`write_file`, so a dry run touches nothing. Peloton-LED and MLB are other repos: it calls their installers and never copies their files, so re-read their installers when they change.
