@@ -84,7 +84,7 @@ def unit(out, name):
 
 
 def test_lll_runs_from_its_checkout_with_no_panel_flags_and_stops_the_other_apps(board):
-    out = board.ok(BOARD_NAME="Disneypi", APP="lll", LED_ROWS=64, EXTRA_ARGS="--led-brightness=85")
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll", PANEL_OPTIONS="yes", LED_ROWS=64, EXTRA_ARGS="--led-brightness=85")
     service = unit(out, "LightningLane-Live-LED.service")
     checkout = board.home / "LightningLane-Live-LED"
     assert f"WorkingDirectory={checkout}" in service
@@ -132,7 +132,7 @@ def test_a_branch_that_isnt_a_plain_name_is_refused(board, branch):
 
 def test_lll_on_a_board_missing_from_boards_json_gets_the_panel_in_config_json(board):
     board.checkout("LightningLane-Live-LED", {"boards.json": json.dumps({"Disneypi": {}})})
-    out = board.ok(BOARD_NAME="NewPi", APP="lll", LED_ROWS=64, LED_SLOWDOWN_GPIO=4)
+    out = board.ok(BOARD_NAME="NewPi", APP="lll", PANEL_OPTIONS="yes", LED_ROWS=64, LED_SLOWDOWN_GPIO=4)
     assert "config.json-example" in out and "chmod 600" in out
     assert ('matrix={"led_rows": 64, "led_cols": 64, "led_gpio_mapping": "adafruit-hat-pwm", '
             '"led_slowdown_gpio": 4}') in out
@@ -158,7 +158,7 @@ def test_no_usb_speaker_says_so_and_sets_nothing(board):
 def test_peloton_gets_this_boards_flags_through_a_drop_in_before_its_installer_starts_it(board):
     checkout = board.checkout("Peloton-LED", {
         "packaging/systemd/peloton-led.service": f"[Service]\nUser=peloton-led\nExecStart={PELOTON_EXEC}\n"})
-    out = board.ok(BOARD_NAME="ZeroPi", APP="peloton", PELOTON_AUTO_TOKEN="yes")
+    out = board.ok(BOARD_NAME="ZeroPi", APP="peloton", PANEL_OPTIONS="yes", PELOTON_AUTO_TOKEN="yes")
     drop_in = unit(out, "peloton-led.service.d/board.conf")
     assert drop_in.splitlines() == [
         "[Service]", "ExecStart=",
@@ -169,12 +169,26 @@ def test_peloton_gets_this_boards_flags_through_a_drop_in_before_its_installer_s
 
 
 def test_mlb_runs_upstream_with_the_panel_flags_and_answers_its_one_question(board):
-    out = board.ok(BOARD_NAME="ZeroPi", APP="mlb", EXTRA_ARGS="--led-brightness=80")
+    out = board.ok(BOARD_NAME="ZeroPi", APP="mlb", PANEL_OPTIONS="yes", EXTRA_ARGS="--led-brightness=80")
     checkout = board.home / "mlb-led-scoreboard"
     assert f"git clone --branch master https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard.git {checkout}" in out
     assert f"(cd {checkout} && printf 'y\\n' | bash install.sh )" in out
     assert (f"ExecStart={checkout}/venv/bin/python3 {checkout}/main.py --led-gpio-mapping=adafruit-hat-pwm "
             "--led-rows=32 --led-cols=64 --led-slowdown-gpio=2 --led-brightness=80") in unit(out, "mlb-led-scoreboard.service")
+
+
+def test_panel_options_are_left_to_each_apps_config_unless_asked_for(board):
+    board.checkout("LightningLane-Live-LED", {"boards.json": json.dumps({"Disneypi": {}})})
+    board.checkout("Peloton-LED", {
+        "packaging/systemd/peloton-led.service": f"[Service]\nExecStart={PELOTON_EXEC}\n"})
+    out = board.ok(BOARD_NAME="NewPi", APP="lll", LED_ROWS=64, EXTRA_ARGS="--led-brightness=85")
+    assert "left to the app's own config" in out
+    assert "matrix=" not in out and "--led-rows" not in out and "ARGS=--led-brightness" not in out
+    out = board.ok(BOARD_NAME="ZeroPi", APP="peloton")
+    assert "board.conf" not in out
+    out = board.ok(BOARD_NAME="ZeroPi", APP="mlb")
+    assert "--led-" not in unit(out, "mlb-led-scoreboard.service")
+    assert f"main.py\n" in unit(out, "mlb-led-scoreboard.service") + "\n"
 
 
 def test_a_new_hostname_is_set_and_written_to_hosts(board):
@@ -241,7 +255,7 @@ def test_a_blank_password_keeps_the_saved_network(board):
 @pytest.mark.parametrize("answers, message", [
     ("COLOR=red\n", "unknown key COLOR"),
     ("APP=nba\n", "APP=nba isn't one of: lll peloton mlb"),
-    ("LED_ROWS=16\n", "LED_ROWS=16 isn't one of: 32 64"),
+    ("PANEL_OPTIONS=yes\nLED_ROWS=16\n", "LED_ROWS=16 isn't one of: 32 64"),
     ("BOARD_NAME=my_pi\n", "not a usable hostname"),
     ("just words\n", "not KEY=value"),
 ])
