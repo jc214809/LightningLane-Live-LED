@@ -34,8 +34,8 @@ LightningLane-Live-LED is a Python application designed to fetch and display wai
 
 ## Installation
 
-### Hardware Assembly
-For users interested in physical hardware setup, please refer to the [inspiration project MLB-LED-Scoreboard](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard).
+### Hardware
+The parts, how they fit together, each board's settings, and optional sound and a power button are in [docs/hardware/README.md](docs/hardware/README.md). For step-by-step assembly, see the [inspiration project MLB-LED-Scoreboard](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard), which runs on the same hardware.
 
 If you'd like to see support for another set of board dimensions, or have design suggestions for an existing one, feel free to file an issue!
 

@@ -22,6 +22,9 @@ uv venv --python 3.11 .venv && uv pip install --python .venv -r requirements-dev
 # Rebuild the sprite editor after changing any character art (a test fails until you do)
 python3 tools/build_sprite_editor.py
 
+# Redraw docs/hardware's wiring diagrams after editing tools/draw_wiring.py (a test fails until you do)
+python3 tools/draw_wiring.py
+
 # Measure a new reference image for docs/references/README.md (a test fails until it has a row)
 python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [--lines] [--cell PX] [--art]
 

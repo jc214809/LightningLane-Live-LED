@@ -23,31 +23,45 @@ The Pi's pins run at 3.3 V. Green and red rings light at that voltage. Blue and 
 
 ## Wiring
 
-Four wires to free pins on the Pi's header. The RGB Matrix Bonnet doesn't use any of them (see
-Adafruit's [Bonnet pinouts](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/pinouts)).
-The power supply's two wires stay as they are.
+Four wires to the Bonnet's **breakout pads**: the labelled row of pads just under its 40-pin header.
+They carry the Pi's pins, so nothing has to be soldered to the Pi itself. The power supply's two
+wires stay as they are. The [wiring diagrams](README.md#wiring-diagrams) show it with everything
+else on the board.
 
 ```
- button switch ──► GPIO 3   (header pin 5)    shutdown, and wake from shutdown
- button switch ──► GND      (header pin 6)
- button LED +  ──► GPIO 25  (header pin 22)   on while Linux runs
- button LED −  ──► GND      (header pin 9)
+ button switch ──► SCL pad  (GPIO 3)    shutdown, and wake from shutdown
+ button switch ──► GND pad
+ button LED +  ──► 25 pad   (GPIO 25)   on while Linux runs
+ button LED −  ──► GND pad  (the same pad: both ground wires go in it)
 
- Header pins, seen from above with the SD card on the left:
+ The breakout row, as printed on the Bonnet. A signal under a pad marks one of the Bonnet's own;
+ the 5V and GND pads sit below the first three (both ground wires go in GND):
 
-   pin 1  3V3   ● ●  5V    pin 2
-   pin 3  GPIO2 ● ●  5V    pin 4
-   pin 5  GPIO3 ● ●  GND   pin 6     ◄── button switch
-   pin 7  GPIO4 ● ●  GPIO14
-   pin 9  GND   ● ●  GPIO15          ◄── LED −  (pin 9)
-          ...
-   pin 21 GPIO9 ● ●  GPIO25 pin 22   ◄── LED +  (pin 22)
+     SDA SCL  TX  RX  4   17  18  27  22  23  24  25  MO  MI CLK CE0 CE1  5   6   12  13  16  19  20  21
+      ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●   ●
+                      OE CLK      C   A   B2  E                           R1  B1  R2  G1  G2      D  LAT
+ 5V   ●   ●   ● GND
+          ▲                                       ▲
+       switch                                  LED +
 ```
 
-The Bonnet sits on the header, so solder the wires to the Pi's header pins from underneath. On a Pi
-Zero the joints are on the bottom of the board, and the numbering is mirrored from below.
+What each pad does:
 
-GPIO 3 is the I2C clock pin. These boards don't use I2C, but if `dtparam=i2c_arm=on` is in
+- **SCL, GPIO 3: shutdown and wake.** A shut-down Pi still watches this one pin, and shorting it
+  to ground boots it again. That's why one button can do both. No other pin wakes the Pi.
+- **25, GPIO 25: the light.** Linux turns it on at boot and off once the shutdown has finished,
+  so a dark light means it's safe to unplug. Any free pad would work; 25 is one the Bonnet doesn't use.
+- **GND: one ground for both.** The breakout has one GND pad, and the switch's and the LED's ground
+  wires share it: twist them together and solder them into it. Every ground on the Pi is the same
+  ground, so they don't need separate pads.
+- **4 and 18: the quality jumper.** The short wire soldered between these two pads (see the
+  [hardware guide](README.md)). The button doesn't touch them.
+
+Don't solder to a pad with a signal printed under it (OE, CLK, LAT, A–E, R1–B2): the Bonnet uses
+those to drive the panel. MO, MI, CLK, CE0 and CE1 are the Pi's SPI pins and are free; that CLK isn't
+the panel's.
+
+SCL, GPIO 3, is the I2C clock pin. These boards don't use I2C, but if `dtparam=i2c_arm=on` is in
 `config.txt`, the button won't work.
 
 ## Setup
