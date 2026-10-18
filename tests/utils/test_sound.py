@@ -213,3 +213,110 @@ def test_the_real_player_dies_with_the_app(clips, tmp_path):
     subprocess.run([sys.executable, "-c", app], cwd=repo, timeout=20)
     pid = _started_pid(pid_file)
     assert _wait_for(lambda: _gone(pid)), "the player outlived the app"
+
+
+# ---- The badges' check: what keeps the show silent, found without playing ----
+
+CARDS = textwrap.dedent("""\
+     0 [vc4hdmi        ]: vc4-hdmi - vc4-hdmi
+                          vc4-hdmi
+     1 [Device         ]: USB-Audio - USB Audio Device
+                          C-Media Electronics Inc. USB Audio Device at usb-3f980000.usb-1.4, full speed
+""")
+
+
+@pytest.fixture
+def cards(tmp_path):
+    path = tmp_path / "cards"
+    path.write_text(CARDS)
+    return str(path)
+
+
+@pytest.mark.parametrize("device, expected", [
+    (None, True),  # ALSA's default: any card will do
+    ("default", True),
+    ("plughw:1,0", True),
+    ("hw:1", True),
+    ("plughw:CARD=Device,DEV=0", True),
+    ("hw:Device", True),
+    ("plughw:2,0", False),  # unplugged
+    ("hw:CARD=Headphones", False),
+])
+def test_card_present(cards, device, expected):
+    assert sound.card_present(device, cards) is expected
+
+
+def test_no_cards_at_all(tmp_path):
+    path = tmp_path / "cards"
+    path.write_text("--- no soundcards ---\n")
+    assert sound.card_present(None, str(path)) is False
+    assert sound.card_present(None, str(tmp_path / "missing")) is False, "no ALSA at all"
+
+
+HEA = [sound.show_clips("Happily Ever After")]
+
+
+@pytest.fixture
+def players(monkeypatch):
+    installed = {"aplay", "afplay"}
+    monkeypatch.setattr(sound.shutil, "which", lambda name: f"/usr/bin/{name}" if name in installed else None)
+    return installed
+
+
+def test_problem_is_none_when_all_is_well(clips, cards, players):
+    assert sound.problem(ON, HEA, str(clips), "linux", cards) is None
+
+
+def test_problem_is_none_with_sound_off(tmp_path, players):
+    assert sound.problem(SoundSettings(False), HEA, str(tmp_path), "linux", str(tmp_path / "missing")) is None
+
+
+def test_no_music_when_a_show_has_no_clip(tmp_path, cards, players):
+    assert sound.problem(ON, HEA, str(tmp_path), "linux", cards) == sound.NO_MUSIC
+    (tmp_path / "happily-ever-after.wav").write_bytes(b"RIFF")
+    assert sound.problem(ON, HEA, str(tmp_path), "linux", cards) is None
+    party = HEA + [sound.show_clips("Boo-to-You Parade")]
+    assert sound.problem(ON, party, str(tmp_path), "linux", cards) == sound.NO_MUSIC, "every show needs one"
+
+
+def test_cant_play_without_aplay(clips, cards, players):
+    players.discard("aplay")
+    assert sound.problem(ON, HEA, str(clips), "linux", cards) == sound.CANT_PLAY
+
+
+def test_cant_play_without_the_configured_card(tmp_path, cards, players):
+    unplugged = SoundSettings(True, "plughw:2,0")
+    assert sound.problem(unplugged, HEA, str(tmp_path), "linux", cards) == sound.CANT_PLAY, "wins over no music"
+
+
+def test_a_mac_needs_only_afplay(clips, tmp_path, players):
+    assert sound.problem(ON, HEA, str(clips), "darwin", str(tmp_path / "missing")) is None
+    players.discard("afplay")
+    assert sound.problem(ON, HEA, str(clips), "darwin") == sound.CANT_PLAY
+
+
+def test_current_problem_is_none_until_watched():
+    assert sound.current_problem() is None
+
+
+def test_current_problem_rechecks_once_a_minute_and_logs_changes(monkeypatch):
+    found = [sound.NO_MUSIC]
+    monkeypatch.setattr(sound, "problem", lambda settings, shows: found[0])
+    monkeypatch.setattr(sound, "find_clip", lambda names: None)
+    logged = []
+    monkeypatch.setattr(sound.debug, "warning", logged.append)
+    monkeypatch.setattr(sound.debug, "info", logged.append)
+    clock = [100.0]
+    sound.watch(ON, HEA)
+
+    assert sound.current_problem(lambda: clock[0]) == sound.NO_MUSIC
+    assert len(logged) == 1 and "happily-ever-after" in logged[0]
+    found[0] = None  # the clip was copied in
+    clock[0] += 30
+    assert sound.current_problem(lambda: clock[0]) == sound.NO_MUSIC, "not rechecked every frame"
+    clock[0] += 30
+    assert sound.current_problem(lambda: clock[0]) is None
+    assert logged[-1] == "Sound problem fixed; badge off."
+    clock[0] += 60
+    sound.current_problem(lambda: clock[0])
+    assert len(logged) == 2, "logged on a change, not every check"

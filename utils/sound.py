@@ -15,6 +15,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from contextlib import contextmanager
 from datetime import datetime
 
@@ -22,6 +23,8 @@ from utils import debug
 
 # Relative to the working directory, so run the app from the repo root.
 SOUNDS_DIR = "sounds"
+# ALSA's list of sound cards on a Pi: " 1 [Device         ]: USB-Audio - ...", one per card.
+CARDS_FILE = "/proc/asound/cards"
 
 
 def clip_name(title):
@@ -108,3 +111,81 @@ def playing(names, settings, now=None):
     finally:
         if process is not None:
             _stop(process)
+
+
+# ---- What's keeping the show silent, for the badges in display/sound_badges.py ----
+
+NO_MUSIC = "no music"  # sound is on, but a show has no clip in sounds/
+CANT_PLAY = "can't play"  # no player, or no sound card for the configured device
+CHECK_EVERY_S = 60
+
+_CARD_LINE = re.compile(r"^\s*(\d+)\s+\[\s*([^\]\s]+)\s*\]")
+
+
+def show_clips(show):
+    """The clips a show plays, in order of preference: its own, then the generic fireworks music."""
+    return [clip_name(show), "fireworks"]
+
+
+def card_present(device, cards_file=CARDS_FILE):
+    """True if ALSA lists the card device names ("plughw:1,0", "hw:CARD=Device,DEV=0"), or any
+    card for the default device (None, "default", or one naming no card)."""
+    try:
+        with open(cards_file) as f:
+            cards = [m.groups() for m in map(_CARD_LINE.match, f) if m]
+    except OSError:
+        return False
+    card = device.partition(":")[2].split(",")[0] if device else ""
+    card = card[len("CARD="):] if card.startswith("CARD=") else card
+    if not card:
+        return bool(cards)
+    return any(card in (index, name) for index, name in cards)
+
+
+def problem(settings, shows, sounds_dir=None, platform=sys.platform, cards_file=CARDS_FILE):
+    """CANT_PLAY, NO_MUSIC or None, without playing anything. shows is a list of show_clips lists.
+    Quiet hours don't count: the badge is there to get it fixed before the show."""
+    if not settings.enabled:
+        return None
+    player = player_command("", settings.device, platform)[0]
+    if shutil.which(player) is None or (platform != "darwin" and not card_present(settings.device, cards_file)):
+        return CANT_PLAY
+    if any(find_clip(names, sounds_dir) is None for names in shows):
+        return NO_MUSIC
+    return None
+
+
+_watched = None  # (settings, shows), from watch()
+_found = None
+_checked_at = None
+
+
+def watch(settings, shows):
+    """Check settings and shows for current_problem() from now on; the app calls it once at start-up."""
+    global _watched, _found, _checked_at
+    _watched, _found, _checked_at = (settings, shows), None, None
+
+
+def current_problem(clock=time.monotonic):
+    """The watched problem, rechecked at most every CHECK_EVERY_S: it's asked every frame. Logged
+    when it changes, so a fix (a clip copied in, the sound card plugged back) clears it."""
+    global _found, _checked_at
+    if _watched is None:
+        return None
+    now = clock()
+    if _checked_at is None or now - _checked_at >= CHECK_EVERY_S:
+        _checked_at = now
+        settings, shows = _watched
+        found = problem(settings, shows)
+        if found != _found:
+            if found == CANT_PLAY:
+                debug.warning("Sound is on but can't play: no player installed or no sound card for "
+                              f"{settings.device or 'the default device'}. Showing the speaker badge.")
+            elif found == NO_MUSIC:
+                missing = [names[0] for names in shows if find_clip(names) is None]
+                debug.warning(f"Sound is on but {SOUNDS_DIR}/ has no music for {', '.join(missing)} "
+                              f"(nor {shows[0][-1]}.wav). Showing the music badge.")
+            else:
+                debug.info("Sound problem fixed; badge off.")
+            _found = found
+    return _found

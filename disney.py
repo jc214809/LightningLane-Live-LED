@@ -28,7 +28,7 @@ from utils.trips import active_trip, parse_trips
 from utils import debug
 from utils.config import (SoundSettings, debug_enabled, load_config, show_version, sound_settings, websocket_protocol,
                           websocket_settings)
-from utils.sound import clip_name, playing
+from utils.sound import clip_name, playing, show_clips, watch as watch_sound
 
 # Configure logging
 logger = logging.getLogger("disney-lll")
@@ -152,6 +152,7 @@ def main():
     set_forced_show(config.get("force_show"))
     global sound, show_version_setting
     sound = sound_settings(config)
+    watch_sound(sound, [show_clips(show) for show in known_shows()])
     show_version_setting = show_version(config)
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
@@ -287,7 +288,7 @@ def play_show(matrix, show, theme, start, now):
     """Play show, which started at start: its whole synced show if it has a score, else the castle
     fireworks in theme until FIREWORKS_SHOW_S after start; with its sound if config.json turns it on."""
     score = load_score(clip_name(show), version=show_version_setting)
-    with playing([clip_name(show), "fireworks"], sound, now):
+    with playing(show_clips(show), sound, now):
         if score:
             # The whole show from its first note, with the music, however late the board cut in.
             debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
