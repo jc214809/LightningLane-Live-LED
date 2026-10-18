@@ -720,6 +720,28 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
     assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64")]
 
 
+def test_main_watches_every_show_for_the_sound_badges(monkeypatch):
+    class _Watched(Exception):
+        pass
+
+    watched = []
+
+    def watch(settings, shows):
+        watched.append((settings, shows))
+        raise _Watched  # stop main() before the matrix and its endless loop
+
+    monkeypatch.setattr(disney.sys, "argv", ["disney.py"])
+    monkeypatch.setattr(disney, "load_config", lambda: {"sound": {"device": "plughw:1,0"}})
+    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
+    monkeypatch.setattr(disney, "watch_sound", watch)
+    with pytest.raises(_Watched):
+        disney.main()
+    settings, shows = watched[0]
+    assert settings == disney.SoundSettings(True, "plughw:1,0")
+    assert ["happily-ever-after", "fireworks"] in shows
+    assert len(shows) == len(disney.known_shows()), "the parties' shows too"
+
+
 def disney_driver_modes():
     return type("DriverMode", (), {"SOFTWARE_EMULATION": "SOFTWARE_EMULATION", "HARDWARE": "HARDWARE"})
 

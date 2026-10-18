@@ -78,6 +78,19 @@ def test_network_badge_is_drawn_over_every_frame_while_offline():
     assert matrix.frames[-1][(56, 31)] == (0, 0, 255), "screen untouched outside the badge"
 
 
+def test_sound_badge_is_drawn_over_every_frame_beside_the_network_one(monkeypatch):
+    import display.sound_badges as sound_badges
+    from updater.shared import note_network_result
+    from utils.sound import NO_MUSIC
+    monkeypatch.setattr(sound_badges, "current_problem", lambda: NO_MUSIC)
+    note_network_result(False)
+    matrix = FakeMatrix()
+    animation.show_screen(matrix, fill((0, 0, 255)), 1)
+    assert all(frame[(0, 31)] == (255, 0, 0) for frame in matrix.frames), "bottom-left, over every frame"
+    assert all(frame[(63, 31)] == (255, 0, 0) for frame in matrix.frames), "with the network badge too"
+    assert matrix.frames[-1][(9, 31)] == (0, 0, 255), "screen untouched outside the badge"
+
+
 def test_first_screen_wipes_in_from_black():
     matrix = FakeMatrix()
     animation.show_screen(matrix, fill((255, 0, 0)), 2)
