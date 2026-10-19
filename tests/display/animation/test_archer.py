@@ -109,3 +109,41 @@ def test_nothing_is_drawn_off_the_board_on_either_size(height):
     for step in range(int(archer.duration * 30) + 1):
         for x, y in _frame(archer, step / 30):
             assert 0 <= x < 64 and 0 <= y < height
+
+
+def _face():
+    cells = {(x, y): k for y, row in enumerate(Archer.ART) for x, k in enumerate(row)}
+    eyes = sorted(x for (x, y), k in cells.items() if k == "e")
+    return cells, eyes
+
+
+def test_she_has_a_face_two_blue_eyes_ringed_by_skin_with_brows_and_a_mouth_below():
+    cells, eyes = _face()
+    assert len(eyes) == 2 and eyes[1] - eyes[0] >= 2, "two eyes with skin between"
+    skin = {"F", "h"}
+    for (x, y), k in cells.items():
+        if k == "e":
+            assert cells[(x - 1, y)] in skin | {"w", "E"} and cells[(x, y - 1)] in skin | {"R"}
+    eye_rows = {y for (x, y), k in cells.items() if k in "eE"}
+    mouth_rows = {y for (x, y), k in cells.items() if k == "m"}
+    brow_rows = {y for (x, y), k in cells.items() if k == "R" and y < min(eye_rows) and cells[(x, y + 1)] in skin | {"w"}}
+    assert mouth_rows and min(mouth_rows) > max(eye_rows), "the mouth is below the eyes"
+    assert brow_rows and max(brow_rows) < min(eye_rows), "brows above them"
+
+
+def test_her_nose_sits_between_her_eyes_and_mouth_with_skin_under_it():
+    cells, eyes = _face()
+    (nx, ny), = [p for p, k in cells.items() if k == "n"]
+    eye_rows = {y for (x, y), k in cells.items() if k in "eE"}
+    mouth = [(x, y) for (x, y), k in cells.items() if k == "m"]
+    assert max(eye_rows) < ny < min(y for _, y in mouth)
+    assert eyes[0] < nx < eyes[1] + 1, "between the eyes"
+    assert cells[(nx, ny + 1)] == "F", "a row of skin, or nose and mouth close into a kiss"
+    assert _distance(Archer.COLORS["n"], Archer.COLORS["F"]) > 100
+
+
+def test_the_eyes_and_mouth_show_against_her_skin():
+    skin = Archer.COLORS["F"]
+    for key in ("e", "E", "m", "p"):
+        assert _distance(Archer.COLORS[key], skin) > 100, key
+    assert _distance(Archer.COLORS["E"], Archer.COLORS["e"]) > 60, "the pupil against the iris"

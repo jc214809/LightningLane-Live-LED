@@ -10,7 +10,7 @@ class ArcherReveal:
     An archer rises from the bottom of the board at full draw over a black screen, holds her aim, and
     looses: the string snaps straight and rings, she rocks back a pixel, and the arrow flies out across
     the board, the new screen appearing behind it with a fading white trail. Then she sinks away and
-    leaves the ride screen uncovered. 64x64 only (disney.py keeps her off shorter boards): at 31x54 she
+    leaves the ride screen uncovered. 64x64 only (disney.py keeps her off shorter boards): at 31x57 she
     fills the board's height. The string and the arrow are drawn in code, from the cells the art had
     them in, so they can move; every other cell is the user's art as drawn (docs/references/Archer.png).
     Everything is a function of t, so a slow board stays on the clock.
@@ -19,8 +19,10 @@ class ArcherReveal:
     SCALE = 1
     # docs/references/Archer.png, less its arrow and string (both drawn in code; where the string ran
     # through her hair and face the neighbouring cell fills in, and her arrow's row is outline). '.'
-    # empty, K outline, N D T her cloak (shadow, mid, light), O R S P her hair and the bow, F h her skin,
-    # Y y the gold of her sleeves, b q her quiver, z her boots.
+    # empty, K outline, N D T her dress (shadow, base, light), O R P her hair and the bow, F h her skin,
+    # w e E her eyes (a glint, light and dark blue), p her cheeks, n her nose, m her mouth (her face is
+    # three rows taller than the art's, which had none, so her hair and bow sit higher; a row of skin
+    # keeps the nose off the mouth), Y y the gold of her sleeves, b q her quiver, z her boots.
     ART = [
         "..................K............",
         ".................KOK...........",
@@ -36,64 +38,71 @@ class ArcherReveal:
         "......KYYRYORRORRKKKKRK.KOOK...",
         ".....KRRRROOORRRROORRRKK.KPK...",
         ".K..KKRRROOOOOROOOOORKKRKKPPK..",
-        "KYKKRRYYORRRRRROOOSSRRORK.KPK..",
-        "KRRYRYYOROOROROOOSSSORRKK.KPK..",
-        ".KYRRYORRORRhhhhSOOSRORORKKPPK.",
-        "..KKYRORORRhhhhhOSSOORRORSSKPK.",
-        "...KRRRRORhFFFFFSOOSOSROROSKK..",
-        "..KROORRRhFFFFFFKSSOOSOSSSSKFK.",
-        ".KKKKKKKKKFKKFFKOSSOOSSKKKKFKFK",
+        "KYKKRRYYORRRRRROOORRRRORK.KPK..",
+        "KRRYRYYOROOROROOORRRORRKK.KPK..",
+        ".KYRRYORRORRhhhhROORRORORKKPPK.",
+        "..KKYRORORRhhhhhORROORRORRRKPK.",
+        "...KRRRRORRRFRRFROORORRORORKK..",
+        "...KRRRRORweFweFROORORRORORKK..",
+        "...KRRRROREEFEEFROORORRORORKK..",
+        "..KROORRRhpFnFpFKRROORORRRRKFK.",
+        "..KROORRRhFFFFFFKRROORORRRRKFK.",
+        ".KKKKKKKKKFKmmFKORROORRKKKKFKFK",
         "KYTTTTTTTyKFFKKKKKKKKKKKKKKFKFK",
         "KYyTTDDDDYKFFFKDDDDYDDDDDyKKKFK",
-        ".KKTDDDDDyKFFFKDDDDyDDDDDKKKSK.",
-        "...KKKKKKKNKKKKDDDDDyKKKKSSKK..",
-        ".......KNNNyyNNDDDDKKSSOSSSKSK.",
-        ".......KNNNNNNNNKKKSSOSOSSKSSK.",
-        "........KNNNNNNNK..KKOSSSKKPK..",
+        ".KKTDDDDDyKFFFKDDDDyDDDDDKKKRK.",
+        "...KKKKKKKNKKKKDDDDDyKKKKRRKK..",
+        ".......KNNNyyNNDDDDKKRRORRRKRK.",
+        ".......KNNNNNNNNKKKRRORORRKRRK.",
+        "........KNNNNNNNK..KKORRRKKPK..",
         "........KNNNNNNN.....KKKK.KPK..",
         ".........KNNNNNKK........KPPK..",
         ".........KDDDDPPP........KOK...",
         "........KKPPPPDKK.......KOOK...",
         "....KK.KPPDDDDDKK.......KOK....",
         "...KbbKPKKDDDDDDKK.....KOOK....",
-        "..KbbqKPDDDDTDDDKK.....KOK.....",
-        "..KbqKPKDDDTTDDDKK....KOOK.....",
-        "...KqqKNDDTTTTDDDKK.KKPPK......",
-        "....KqKNDDTTTTDDDDDKOOPK.......",
-        ".....KNNDTTTTTDDDDKPOKK........",
-        ".....KNDDTTTTTTDDKPPK..........",
-        "....KNNDDTTKNTTDDKPKNK.........",
-        "...KNNNDDTTKNTTTDKPKNK.........",
-        "...KNNNDDTTKNNTTDNKNNK.........",
-        "..KNNNNDDDTTKNTTDDNNDDK........",
-        "..KNNKNNDDTTKNTTTDDDDDK........",
-        ".KNNNKNNDDTTKNNTTDKNDDK........",
-        ".KNNNNKNNDDTKNNNTTKNNDDK.......",
-        "KNNNNNKNNNDTNKNNTTTKNDDK.......",
-        "KNNNNNKNNNDTTKNNNTTKNNDDK......",
-        "KNNNNNNKNNNDTKNNNDTTKNNNK......",
-        ".KKKNNNKNNNNDTKNNNNTTKKK.......",
+        "..KbbqKPDDDDDDDDKK.....KOK.....",
+        "..KbqKPKDDDDDDDDKK....KOOK.....",
+        "...KqqKNDDDDDDDDDKK.KKPPK......",
+        "....KqKNDDDDDDDDDDDKOOPK.......",
+        ".....KNNDDDDDDDDDDKPOKK........",
+        ".....KNDDDDDDDDDDKPPK..........",
+        "....KNNDDDDKNDDDDKPKNK.........",
+        "...KNNNDDDDKNDDDDKPKNK.........",
+        "...KNNNDDDDKNNDDDNKNNK.........",
+        "..KNNNNDDDDDKNDDDDNNDDK........",
+        "..KNNKNNDDDDKNDDDDDDDDK........",
+        ".KNNNKNNDDDDKNNDDDKNDDK........",
+        ".KNNNNKNNDDDKNNNDDKNNDDK.......",
+        "KNNNNNKNNNDDNKNNDDDKNDDK.......",
+        "KNNNNNKNNNDDDKNNNDDKNNDDK......",
+        "KNNNNNNKNNNDDKNNNDDDKNNNK......",
+        ".KKKNNNKNNNNDDKNNNNDDKKK.......",
         "....KKKKKKNNNNKKKKKKKzK........",
         ".....KzzzzKKKK...KzzzzzK.......",
         ".....KKKKK.......KKKKKK........",
     ]
     COLORS = {
-        "K": (25, 22, 42), "N": (36, 42, 70), "D": (37, 59, 90), "T": (43, 92, 110),
-        "O": (255, 157, 66), "R": (211, 99, 69), "S": (158, 52, 57), "P": (239, 121, 90),
-        "F": (238, 206, 153), "h": (214, 168, 124), "Y": (255, 255, 148), "y": (255, 239, 101),
+        "K": (25, 22, 42), "N": (20, 100, 100), "D": (0, 150, 138), "T": (70, 200, 178),
+        "O": (255, 127, 62), "R": (226, 91, 69), "P": (239, 121, 90),
+        "F": (242, 228, 214), "h": (226, 190, 160), "Y": (255, 215, 90), "y": (255, 239, 141),
         "b": (186, 116, 93), "q": (158, 85, 86), "z": (81, 48, 70),
+        "w": (255, 255, 255), "e": (38, 137, 202), "E": (1, 101, 179), "p": (250, 175, 170), "m": (200, 90, 95),
+        "n": (205, 140, 115),
     }
 
     LEFT = 1  # her art's first column on the board: room for the rock back
     # Where the string ran, per art row: the column it was drawn in at full draw (the rows behind her
-    # hand, 21 to 23, keep the nock's). It runs from the bow's tips (rest, TIP_COL) to the nock, a V.
+    # hand, 24 to 26, keep the nock's). It runs from the bow's tips (rest, TIP_COL) to the nock, a V.
     STRING_COLS = {
-        5: 18, 6: 18, 7: 17, 8: 17, 9: 17, 10: 17, 11: 16, 12: 16, 13: 16, 14: 16, 15: 15, 16: 15, 17: 15,
-        18: 15, 19: 14, 20: 14, 21: 14, 22: 14, 23: 14, 24: 14, 25: 14, 26: 15, 27: 15, 28: 15, 29: 16,
-        30: 16, 31: 16, 32: 16, 33: 17, 34: 17, 35: 17, 36: 18, 37: 18,
+        5: 18, 6: 18, 7: 17, 8: 17, 9: 17, 10: 17, 11: 16, 12: 16,
+        13: 16, 14: 16, 15: 15, 16: 15, 17: 15, 18: 15, 19: 15, 20: 15,
+        21: 14, 22: 14, 23: 14, 24: 14, 25: 14, 26: 14, 27: 14, 28: 14,
+        29: 15, 30: 15, 31: 15, 32: 16, 33: 16, 34: 16, 35: 16, 36: 17,
+        37: 17, 38: 17, 39: 18, 40: 18,
     }
     TIP_COL = 18
-    NOCK = (14, 21)       # art (col, row) of the arrow's tail at full draw
+    NOCK = (14, 24)       # art (col, row) of the arrow's tail at full draw
     HAND_COLS = (27, 29)  # the bow hand: the arrow passes behind it
     ARROW_LEN = 20
     STRING_RGB = (255, 255, 255)
@@ -163,7 +172,7 @@ class ArcherReveal:
         out = {}
         for row, col in self.STRING_COLS.items():
             x = self.TIP_COL - int(round(pull * (self.TIP_COL - col)))
-            if x == self.NOCK[0] and 21 <= row <= 23:
+            if x == self.NOCK[0] and 24 <= row <= 26:
                 continue  # behind her hand
             out[(self.LEFT + x + dx, self.top + row + dy)] = self.STRING_RGB
         return out
