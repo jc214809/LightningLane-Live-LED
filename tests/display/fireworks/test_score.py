@@ -193,6 +193,13 @@ def test_an_overlays_effects_replace_its_scenes(tmp_path):
     assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].effects == frozenset()
 
 
+def test_a_scene_knows_which_version_was_applied(tmp_path):
+    _write(tmp_path, _two_scenes())
+    (tmp_path / "show.v2.json").write_text(json.dumps({"overlays": {"two": {"stage": "off"}}}))
+    assert load_score("show", shows_dir=str(tmp_path)).version == "v1"
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").version == "v2"
+
+
 def test_without_an_overlay_file_v2_plays_v1(tmp_path):
     _write(tmp_path, _two_scenes())
     assert load_score("show", shows_dir=str(tmp_path), version="v2") == load_score("show", shows_dir=str(tmp_path))

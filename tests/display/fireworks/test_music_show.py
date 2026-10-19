@@ -260,10 +260,49 @@ def test_each_scene_logs_how_fast_the_board_kept_up(clock, monkeypatch):
     slow = clock(0.25)  # 4 fps
     logged = []
     monkeypatch.setattr(music_show.debug, "info", logged.append)
+    monkeypatch.setattr(music_show.system_stats, "describe", lambda: "load 1.0, 60°C")
     render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=slow)
     rates = [line for line in logged if "fps" in line]
-    assert rates == ["test one: 4.0 fps (aiming for 30), slowest frame 250 ms",
-                     "test two: 4.0 fps (aiming for 30), slowest frame 250 ms"], "each scene, the last one too"
+    assert len(rates) == 2, "each scene, the last one too"
+    for line, title in zip(rates, ("one", "two")):
+        assert line.startswith(f"test {title}: 4.0 fps (aiming for 30), slowest frame 250 ms (build 0 / push 250), "
+                               "8 late, ")
+        assert line.endswith(", load 1.0, 60°C")
+        assert " px, CPU show " in line and " / process " in line
+
+
+def test_a_scenes_log_counts_only_the_frames_past_their_slot(clock, monkeypatch):
+    quick = clock(0.01)
+    logged = []
+    monkeypatch.setattr(music_show.debug, "info", logged.append)
+    render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=quick)
+    assert all(", 0 late, " in line for line in logged if "fps" in line)
+
+
+def test_a_scenes_log_reports_cpu_of_the_show_thread_against_the_process(clock, monkeypatch):
+    quick = clock(0.01)
+    logged = []
+    monkeypatch.setattr(music_show.debug, "info", logged.append)
+    monkeypatch.setattr(music_show.system_stats, "describe", lambda: "")
+    cpu = {"thread": 0.0, "process": 0.0}
+
+    def thread_time():  # a second of the show thread per 4s scene check, twice that for the whole process
+        cpu["thread"] += 0.5
+        cpu["process"] += 1.0
+        return cpu["thread"]
+    monkeypatch.setattr(music_show.time, "thread_time", thread_time)
+    monkeypatch.setattr(music_show.time, "process_time", lambda: cpu["process"])
+    render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=quick)
+    first = next(line for line in logged if "test one" in line and "fps" in line)
+    assert "CPU show 25% / process 50%" in first, "0.5s and 1s of CPU over the scene's 2s"
+    assert not first.endswith(", "), "no board state, no trailing comma"
+
+
+def test_the_start_line_says_which_version_plays(clock, monkeypatch):
+    logged = []
+    monkeypatch.setattr(music_show.debug, "info", logged.append)
+    render_music_show(FakeMatrix(), _score()._replace(version="v2"), rng=random.Random(0), clock=clock(0.01))
+    assert logged[0].startswith("Playing the test show (v2) for 4s")
 
 
 def test_building_the_show_doesnt_put_the_picture_behind_the_music(clock, monkeypatch):
