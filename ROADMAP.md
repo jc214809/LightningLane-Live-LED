@@ -85,7 +85,7 @@ Put a ✅ in the Done column when a character ships.
 | 61 | ✅ | Yoda vs Darth Vader | DHS: Galaxy's Edge, Star Tours | Yoda stays small, hops in and leaps into each of his attacks | Wipe over the old screen (`saber_duel_yoda`, picked by `saber_duel`) |
 | 62 | ✅ | Rey vs Kylo Ren | DHS: Galaxy's Edge, Star Tours | the same fight; Kylo's crossguard blade crackles | Wipe over the old screen (`saber_duel_kylo`, picked by `saber_duel`) |
 | 63 | ✅ | Kevin and Dug (Up) | a surprise anywhere | Kevin struts across with Dug chasing behind her; his balloons lift him slowly higher as he goes, and he floats off the right edge up high while she stays on the ground | Over the finished screen (`kevin`, `over_screen`) |
-| 64 | ✅ | Merida, the archer (Brave) | a surprise anywhere, 64x64 only | rises at full draw, looses: the string snaps and rings, the arrow flies across and the new ride appears behind it; she sinks away. Next: the same art in Happily Ever After's Touch the Sky, leaning back to shoot the bullseye (and, if she can lower her bow while she talks, her lip-synced line) | Own reveal behind the arrow (`archer`) |
+| 64 | ✅ | Merida, the archer (Brave) | a surprise anywhere, 64x64 only | rises at full draw, looses: the string snaps and rings, the arrow flies across and the new ride appears behind it; she sinks away. Also Happily Ever After's Touch the Sky (V2): the same art, posed and baked (`merida_poses.py`) | Own reveal behind the arrow (`archer`) |
 
 ### Notes per character
 

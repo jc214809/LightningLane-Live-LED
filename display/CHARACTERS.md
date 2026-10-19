@@ -606,6 +606,17 @@ show's clock, not by frames, and share the board with fireworks and the castle.
   timestamps, not from the scene's edges.
 - **Fit the scene, not the other way round.** A move longer than its scene (Olaf's melt) starts earlier
   rather than spilling into the next; a fade must end inside its slot (Ariel's first didn't).
+- **A transition's art can play a show part, posed.** Touch the Sky's Merida is the archer's art taken
+  apart into layers (skirt, body, bow arm, bow), patched for poses the art doesn't draw (her hand on her
+  hip, a wider face for a 5 px mouth) and turned with `pixels.rotate_cells` (RotSprite: outlines stay
+  1px at any angle). Turning is milliseconds a sprite in Python, far too slow for a Pi Zero, so
+  `tools/build_merida_poses.py` bakes every frame and the actor only stamps one. Lessons from her mocks:
+  a lean back reads as a curve, not a hinge (waist a third, chest the rest, head nearer level, hips
+  forward); a release needs the string to snap and the hand to fly back, or the arrow "just pops off";
+  draw a nocked arrow last and edge it dark, or her arm and hair hide it; when a prop moves, draw what
+  was behind it (her skirt under the bow's foot); an outline pass must never paint over another layer's
+  cells; a gap between an arm and a body reads as a hole in the dress. Her tests check every baked frame
+  for a whole skirt and a mouth.
 - **Tests per actor:** placement and bounds on both boards, the key moments by the clock, "follows the
   clock, not the frames" (30 fps and 7 fps land on the same frame), nothing drawn when inactive.
 - **Show the user several references side by side, on the board.** Mike and Sulley went through
