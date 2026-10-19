@@ -84,10 +84,11 @@ class ShowSettings(NamedTuple):
     enabled: bool = True
     # "default": the castle fireworks for five minutes; "v1" or "v2": a scored show's whole synced version
     version: str = "default"
+    force: bool = False  # play it once at start-up whatever the schedule, for checking it on a board
 
 
 def show_settings(config):
-    """config.json's "shows": a list of {"name", "enabled", "version"}, one per fireworks show (all but
+    """config.json's "shows": a list of {"name", "enabled", "version", "force"}, one per fireworks show (all but
     name optional), as {name: ShowSettings}. A show not listed is enabled and "default". A bad field is
     warned about and takes its default."""
     section = config.get("shows")
@@ -112,8 +113,28 @@ def show_settings(config):
             debug.warning(f'config.json "shows": {name!r} "version" should be "default", "v1" or "v2", '
                           f'not {version!r}; using "default".')
             version = "default"
-        shows[name] = ShowSettings(enabled, version)
+        force = entry.get("force", False)
+        if not isinstance(force, bool):
+            debug.warning(f'config.json "shows": {name!r} "force" should be true or false, not {force!r}; using false.')
+            force = False
+        shows[name] = ShowSettings(enabled, version, force)
     return shows
+
+
+def forced_show_name(config):
+    """The show to play once at start-up, for checking it on a board: the first "shows" entry with
+    "force": true, else the old top-level "force_show" (still read, with a warning), else None."""
+    forced = [name for name, show in show_settings(config).items() if show.force]
+    if len(forced) > 1:
+        debug.warning(f'config.json "shows": more than one show has "force": true; playing {forced[0]!r} only.')
+    if forced:
+        return forced[0]
+    legacy = config.get("force_show")
+    if legacy:
+        debug.warning(f'config.json "force_show" has moved: set "force": true on its entry in "shows" '
+                      f'(like {{"name": {legacy!r}, "force": true}}). Playing {legacy!r} for now.')
+        return legacy
+    return None
 
 
 class SoundSettings(NamedTuple):

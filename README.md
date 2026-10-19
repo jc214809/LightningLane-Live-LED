@@ -332,7 +332,7 @@ The board can play the fireworks soundtrack while its castle fireworks run. For 
   ]
   ```
   Only `name` is required. A show not listed, or listed without a field, is `enabled` and `"default"`. `"version": "default"` is the castle fireworks (no title) for five minutes from the showtime, with `sounds/fireworks.wav` if there is one. `"v1"` or `"v2"` plays a scored show's whole synced version in that look, about 18 minutes for Happily Ever After, with its own music (`sounds/happily-ever-after.wav`). `"enabled": false` means the board never cuts in for that show. Only Happily Ever After has a score so far; the party shows are always the default.
-- To hear a show now instead of waiting for showtime, set `"force_show": "Happily Ever After"` (or a party's show, like `"Disney's Not-So-Spooky Spectacular"`) and restart the service: the board plays it once at start-up, with its sound, then carries on as usual. Restart again to replay it, and set it back to `""` when done.
+- To hear a show now instead of waiting for showtime, add `"force": true` to its entry in `shows` (like `{"name": "Happily Ever After", "version": "v2", "force": true}`, or a party's show, like `{"name": "Disney's Not-So-Spooky Spectacular", "force": true}`) and restart the service: the board plays it once at start-up, with its sound, then carries on as usual. Restart again to replay it, and remove `"force"` when done. The old top-level `"force_show": "<name>"` still works, with a warning.
 
 ## Sources and Credits
 This project relies on:
