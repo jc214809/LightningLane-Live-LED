@@ -259,6 +259,7 @@ keep the one where the size holds steady.
 | [Rapunzel with pan.jpg](<Rapunzel with pan.jpg>) | Rapunzel with her frying pan (a numbered 40 x 40 bead chart; size read off its axes) | 19 x 25 (29 x 25 with the pan) | Yes | Yes (2x too) | Detection misses the chart's grid: Pattern mode's Calibrate |
 | [elsa.jpg](elsa.jpg) | Elsa with a snowflake (a numbered 40 x 40 bead chart; size read off its axes) | 15 x 25 (28 x 25 with the snowflake) | Yes | Yes (2x too) | Detection misses the chart's grid: Pattern mode's Calibrate |
 | [Brave2.jpg](Brave2.jpg) | Merida with two arrows (a numbered 40 x 40 bead chart; size read off its axes) | 21 x 30 (30 x 30 with the arrows) | Tight | Yes (2x too) | Detection misses the chart's grid: Pattern mode's Calibrate |
+| [Archer.png](Archer.png) | An archer with wild orange hair at full draw (the user's pixel art, a 64 x 64 canvas) | 36 x 54 (31 x 54 without its arrow) | No (22 rows over) | Yes (1x, 54 of 64 rows) | Built: `archer`, cell for cell less the arrow and string, which are drawn in code; 64x64 only |
 | [Ursula.jpg](Ursula.jpg) | Ursula, tentacles spread | 37 x 38 | No (6 rows over) | Yes | Pattern mode reads it |
 | [Scar.jpg](Scar.jpg) | Scar, a chibi (studded bricks) | 24 x 27 | Yes | Yes (2x too) | Pattern mode reads it |
 | [Rafiki.jpg](Rafiki.jpg) | Rafiki with his staff (studded bricks) | 27 x 27 | Yes | Yes (2x too) | Pattern mode reads it |

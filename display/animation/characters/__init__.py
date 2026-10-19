@@ -3,6 +3,7 @@ Every transition by name. disney.py picks from these.
 """
 
 from display.animation.characters.aliens import AliensReveal, AliensToysReveal
+from display.animation.characters.archer import ArcherReveal
 from display.animation.characters.army_men import ArmyMenReveal
 from display.animation.characters.baymax import BaymaxReveal
 from display.animation.characters.bluey import GranniesReveal, KeepyUppyReveal
@@ -80,4 +81,5 @@ TRANSITIONS = {
     "saber_duel_obiwan": ObiWanDuelReveal,
     "saber_duel_yoda": YodaDuelReveal,
     "saber_duel_kylo": KyloReyDuelReveal,
+    "archer": ArcherReveal,
 }

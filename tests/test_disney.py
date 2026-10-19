@@ -10,8 +10,8 @@ import display.animation as disney_animation
 # ---- Helper/Fake Classes ----
 
 class FakeMatrix:
-    def __init__(self):
-        self.width, self.height = 64, 32
+    def __init__(self, width=64, height=32):
+        self.width, self.height = width, height
         self.clear_count = 0
         self.rendered_attractions = []
 
@@ -276,9 +276,17 @@ def test_each_surprise_visitor_turns_up_on_their_own_roll(monkeypatch, screens, 
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
     park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
     monkeypatch.setattr(disney.random, "random", lambda: _roll_for(visitor))
-    disney.loop_through_attractions(FakeMatrix(), park)
+    disney.loop_through_attractions(FakeMatrix(64, 64), park)
     assert screens[-1]["transition"] == visitor
     assert visitor in disney_animation.TRANSITIONS
+
+
+def test_the_archer_is_a_plain_wipe_on_a_64x32_board(monkeypatch, screens):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: _roll_for("archer"))
+    disney.loop_through_attractions(FakeMatrix(64, 32), park)
+    assert screens[-1]["transition"] == "wipe", "she's 54 rows tall"
 
 
 def test_ride_visitors_are_characters():

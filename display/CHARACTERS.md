@@ -634,3 +634,18 @@ show's clock, not by frames, and share the board with fireworks and the castle.
   and 15x13, both hard to read; at full size (Woody 21x26, Buzz flying 40x26) they'd crowd the board together, so Woody has the
   first half (the blocks fill) and Buzz the second (the knock-down). On 64x32 Buzz is taller than the
   castle, which is fine when he's alone: he hits every block.
+
+## The Archer (`archer`): what worked
+
+- **Lift a moving part out of the user's art and draw it in code.** Her art was already at full draw, so
+  the arrow and the string came out (the arrow was a translucent row over her outline) and are drawn
+  from the cells they were in: at full draw they match the art exactly, and they move from there. Where
+  the string ran through her hair and face, the neighbouring cell fills in.
+- **The string's snap is a V that straightens and rings.** Each row's column is scaled between the
+  bow's tips and the nock (`tension`: 1 drawn, 0 straight, then a decaying cosine), so one number
+  gives the snap, the overshoot and the settle; the arrow's tail speeds up over 0.15s, not a constant.
+- **Uncover behind the arrow's tail, scaled to the board,** so the reveal starts at column 0 and ends
+  with the arrow's exit: starting at the tail's column made the screen jump in behind her.
+- **A figure 54 of 64 rows tall is 64x64 only.** disney.py's `TALL_ONLY` gives a short board the plain
+  wipe. The slice is still taken from the 13% budget, so the Army Men were trimmed to 0.5%.
+

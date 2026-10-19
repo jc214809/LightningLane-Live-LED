@@ -60,17 +60,21 @@ PARK_REVEALS = ("tink", "buzz")
 # Forky waddles in, spots the old ride (TRASH!) and dives through the bottom of the board,
 # taking it down the hole after him.
 # Kevin struts across with Dug chasing her, his balloons lifting him higher as he goes.
+# An archer rises at full draw, looses an arrow across the board and sinks away, the new ride
+# uncovered behind the arrow (64x64 boards only; the Army Men were trimmed again to make room).
 # Surprises may fill up to 13% of ride screens.
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
-SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side": 0.012, "army_men": 0.010,
-             "mike": 0.008, "tron": 0.008,
+SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side": 0.012, "army_men": 0.005,
+             "mike": 0.008, "tron": 0.008, "archer": 0.005,
              "olaf": 0.005, "goofy": 0.008,
              "luxo_ball": 0.005, "mcqueen": 0.005, "mater": 0.005,
              "chip_dale": 0.005, "tigger": 0.005, "stitch_surf": 0.005,
              "ralph": 0.005, "grannies": 0.005,
              "keepy_uppy": 0.001, "pooh": 0.005, "forky": 0.005,
              "kevin": 0.005}
+# Visitors too tall for a 64x32 board: there the roll gives the plain wipe.
+TALL_ONLY = ("archer",)
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge, and a red and
 # a blue lightsaber clash over its rides and Star Tours, then sweep apart to the next; on the
@@ -379,6 +383,8 @@ def loop_through_attractions(matrix, park, parks=()):
                 f"From: {ride.get('updateSource') or 'none yet'}")
             surprise = (forced_surprise or _ride_visitor(ride.get("name", ""), ride.get("waitTime"))
                         or _surprise(random.random()))
+            if surprise in TALL_ONLY and matrix.height < 64:
+                surprise = "wipe"
             if surprise != "wipe":
                 debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
