@@ -167,6 +167,21 @@ def test_the_final_flash_whites_out_the_board_once_then_fades():
     assert show.white < 0.02, "fades, and doesn't fire again"
 
 
+def test_a_fading_flash_lifts_each_channel_to_its_level_and_keeps_brighter_ones():
+    show = MusicShow(64, 32, random.Random(12))
+    show.set_cue(_cue(start=0, end=6, rate=0, castle="blue"), 5.0)
+    base = show.frame_pixels()
+    assert any(max(rgb) > 200 for rgb in base.values()), "the castle has pixels brighter than the flash's level"
+    show.white = 0.5
+    level = int(255 * 0.5)
+    lifted = show.frame_pixels()
+    assert len(lifted) == 64 * 32
+    for x in range(64):
+        for y in range(32):
+            expected = tuple(max(c, level) for c in base.get((x, y), (0, 0, 0)))
+            assert lifted[(x, y)] == expected
+
+
 def test_the_fire_castle_flickers():
     show = MusicShow(64, 32, random.Random(13))
     show.set_cue(_cue(rate=0, castle="fire"), 0)
