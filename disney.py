@@ -27,8 +27,8 @@ from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
 from utils import debug
-from utils.config import (SoundSettings, debug_enabled, load_config, show_version, sound_settings, websocket_protocol,
-                          websocket_settings)
+from utils.config import (ShowSettings, SoundSettings, debug_enabled, load_config, show_settings, sound_settings,
+                          websocket_protocol, websocket_settings)
 from utils.sound import clip_name, playing, show_clips, watch as watch_sound
 
 # Configure logging
@@ -104,8 +104,9 @@ forced_surprise = None
 forced_show = None
 # config.json "sound", read once at start-up.
 sound = SoundSettings()
-# config.json "show_version": which version of a synced show plays, read once at start-up.
-show_version_setting = "v1"
+# config.json "shows", read once at start-up: {clip name: ShowSettings}; a show not in it is enabled and
+# default. See show_setting().
+show_settings_by_clip = {}
 FIREWORKS_SHOW_S = 5 * 60
 _shows_played = set()
 
@@ -151,13 +152,14 @@ def main():
 
     set_forced_surprise(config.get("force_surprise"))
     set_forced_show(config.get("force_show"))
-    global sound, show_version_setting
+    global sound, show_settings_by_clip
     sound = sound_settings(config)
-    # Only a show with a synced score is meant to have music; the others play silent fireworks, so a
-    # missing clip for them isn't a problem to badge.
+    show_settings_by_clip = {clip_name(name): setting for name, setting in show_settings(config).items()}
+    # Only a show played in full, with a synced score, is meant to have music; the others play the
+    # castle fireworks (and the generic clip, if there is one), so a missing clip isn't a problem to badge.
     watch_sound(sound, [show_clips(show) for show in known_shows()
-                        if os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))])
-    show_version_setting = show_version(config)
+                        if show_setting(show).enabled and show_setting(show).version != "default"
+                        and os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))])
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
@@ -269,17 +271,24 @@ def initialize_park_information_screen(matrix, park):
     debug.info(f"Rendering {park['name']} Title Screen. | Weather: {park.get('weather')}")
     show_screen(matrix, _static(render_park_information_screen, park), 8, transition=random.choice(PARK_REVEALS))
 
+def show_setting(show):
+    """A show's ShowSettings from config.json's "shows": enabled and "default" (the castle fireworks for
+    FIREWORKS_SHOW_S) unless it says otherwise; "v1" or "v2" plays a scored show's whole synced version."""
+    return show_settings_by_clip.get(clip_name(show), ShowSettings())
+
 def play_fireworks_show_if_due(matrix, parks, now=None):
     """
     If the fireworks show a park runs tonight (from its schedule: see special_events.fireworks_show)
     started in the last FIREWORKS_SHOW_S seconds, play the castle fireworks in that show's theme,
     without the title, until that window ends (or, for a show with a score in display/fireworks/shows/,
-    its whole synced show, in config.json's show_version: see music_show.py), with the show's sound (sounds/<show>.wav, else
+    its whole synced show, in the version config.json's "shows" sets: see music_show.py), with the show's sound (sounds/<show>.wav, else
     sounds/fireworks.wav) if config.json turns sound on. Each performance plays once. Returns True if it played.
     """
     now = now or datetime.now(timezone.utc)
     for park in parks:
         show, theme = fireworks_show(park, now)
+        if not show_setting(show).enabled:
+            continue
         start = show_start_due([park], show, FIREWORKS_SHOW_S, now)
         if start is None or (show, start) in _shows_played:
             continue
@@ -289,10 +298,14 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
     return False
 
 def play_show(matrix, show, theme, start, now):
-    """Play show, which started at start: its whole synced show if it has a score, else the castle
-    fireworks in theme until FIREWORKS_SHOW_S after start; with its sound if config.json turns it on."""
-    score = load_score(clip_name(show), version=show_version_setting)
-    with playing(show_clips(show), sound, now):
+    """Play show, which started at start: its whole synced show if its version isn't "default" and it has a score,
+    else the castle fireworks in theme until FIREWORKS_SHOW_S after start; with its sound if config.json
+    turns it on. A disabled show only gets here when forced."""
+    version = show_setting(show).version
+    full = version != "default"
+    score = load_score(clip_name(show), version=version) if full else None
+    # A default-length show has no music of its own (a synced one's clip is the whole show): the generic clip, if any.
+    with playing(show_clips(show) if full else ["fireworks"], sound, now):
         if score:
             # The whole show from its first note, with the music, however late the board cut in.
             debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
