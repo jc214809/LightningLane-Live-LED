@@ -648,4 +648,10 @@ show's clock, not by frames, and share the board with fireworks and the castle.
   with the arrow's exit: starting at the tail's column made the screen jump in behind her.
 - **A figure 54 of 64 rows tall is 64x64 only.** disney.py's `TALL_ONLY` gives a short board the plain
   wipe. The slice is still taken from the 13% budget, so the Army Men were trimmed to 0.5%.
-
+- **"Anime" shading is many tones in thin streaks.** The user's art read as anime next to ours: five
+  hair shades with flecks, and light streaks down the skirt. Ours are a base, a shadow and one small
+  highlight; merging the hair's darkest red and the skirt's streaks into their neighbours did it, in
+  the character's own colours (the show's Merida's teal and flame).
+- **No room for a face? Add rows, don't shrink the features.** Her face was four rows of skin. Copying
+  the face's own row three times pushed her hair and bow up and made room for brows, two eyes with a
+  glint, a nose between pink cheeks, and a mouth a skin row below the nose.
