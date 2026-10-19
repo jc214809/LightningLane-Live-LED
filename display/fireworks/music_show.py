@@ -14,7 +14,7 @@ from display.fireworks import show_actors, show_effects
 from display.fireworks.fireworks import (_CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE,
                                          castle_sprite)
 from display.motion import ease_out, smooth
-from utils import debug
+from utils import debug, system_stats
 
 # Castle colours by look, over the everyday ones; a scene's "castle" names one. Only the walls (W)
 # and roofs (R) change: windows, gold and the door keep theirs.
@@ -670,21 +670,36 @@ class MusicShow:
 
 def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
     """Play the score's show on the matrix from its first second to its end, following the clock. Logs
-    each scene's frame rate and slowest frame as it ends, to see how a board keeps up."""
+    each scene's frame rate and slowest frame as it ends, to see how a board keeps up: where the slowest
+    frame's time went (building the picture or pushing it to the panel), how many frames ran past their
+    slot, the busiest frame's pixel count, how much CPU the show thread used against the whole process
+    (the difference is the other threads), and the board's own state (system_stats)."""
     # The music started just before this call: count from here, so the time spent building the show
     # (its characters draw their poses up front) doesn't put the picture behind the music.
     t0 = clock()
     show = MusicShow(matrix.width, matrix.height, rng, score.lips)
     canvas = frame_canvas(matrix)
     frame_time = 1.0 / fps
-    debug.info(f"Playing the {score.name} show for {score.end:.0f}s (ready in {(clock() - t0) * 1000:.0f} ms).")
+    debug.info(f"Playing the {score.name} show ({score.version}) for {score.end:.0f}s "
+               f"(ready in {(clock() - t0) * 1000:.0f} ms).")
     cue = None
-    frames, slowest, scene_start = 0, 0.0, 0.0
+    frames, late, most_pixels, scene_start = 0, 0, 0, 0.0
+    slowest, slowest_build = 0.0, 0.0
+    cpu_thread, cpu_process = time.thread_time(), time.process_time()
 
     def log_scene(t):
+        nonlocal cpu_thread, cpu_process
+        thread, process = time.thread_time(), time.process_time()
         if cue is not None and t > scene_start:
-            debug.info(f"{score.name} {cue.title}: {frames / (t - scene_start):.1f} fps "
-                       f"(aiming for {fps}), slowest frame {slowest * 1000:.0f} ms")
+            wall = t - scene_start
+            board = system_stats.describe()
+            debug.info(f"{score.name} {cue.title}: {frames / wall:.1f} fps "
+                       f"(aiming for {fps}), slowest frame {slowest * 1000:.0f} ms "
+                       f"(build {slowest_build * 1000:.0f} / push {(slowest - slowest_build) * 1000:.0f}), "
+                       f"{late} late, {most_pixels} px, "
+                       f"CPU show {(thread - cpu_thread) / wall:.0%} / process {(process - cpu_process) / wall:.0%}"
+                       + (f", {board}" if board else ""))
+        cpu_thread, cpu_process = thread, process
 
     while True:
         start = clock()
@@ -695,17 +710,24 @@ def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
         if now is not cue:
             log_scene(t)
             cue = now
-            frames, slowest, scene_start = 0, 0.0, t
+            frames, late, most_pixels, scene_start = 0, 0, 0, t
+            slowest, slowest_build = 0.0, 0.0
             debug.info(f"{score.name} {t:.0f}s: {cue.title}")  # once a scene, to check the sync by ear
         show.set_cue(cue, t)
         show.step()
+        pixels = show.frame_pixels()
+        built = clock()
         canvas.Clear()
-        for (x, y), (r, g, b) in show.frame_pixels().items():
+        for (x, y), (r, g, b) in pixels.items():
             canvas.SetPixel(x, y, r, g, b)
         canvas = present(matrix, canvas)
         spent = clock() - start
         frames += 1
-        slowest = max(slowest, spent)
+        most_pixels = max(most_pixels, len(pixels))
+        if spent > frame_time:
+            late += 1
+        if spent > slowest:
+            slowest, slowest_build = spent, built - start
         remaining = frame_time - spent
         if remaining > 0:
             time.sleep(remaining)

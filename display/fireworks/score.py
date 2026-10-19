@@ -103,6 +103,7 @@ class Score(NamedTuple):
     end: float
     cues: Tuple[Cue, ...]
     lips: Optional[Dict[str, Lips]] = None  # by show_actors.ACTORS name
+    version: str = "v1"  # the overlay that was applied, for the logs
 
     def cue_at(self, t):
         """The scene playing at t seconds; the last one past the end, the first one before 0."""
@@ -287,4 +288,4 @@ def load_score(name, shows_dir=None, version="v1"):
     except _LOAD_ERRORS as e:
         debug.warning(f"Can't use {name}'s {version} ({overlay_path}): {e!r}; playing v1.")
         return score
-    return score._replace(lips=_load_lips(name, version, shows_dir))
+    return score._replace(lips=_load_lips(name, version, shows_dir), version=version)
