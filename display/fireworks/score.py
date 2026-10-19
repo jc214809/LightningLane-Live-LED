@@ -3,7 +3,7 @@ A fireworks show's score: what the castle fireworks do at each second of the sou
 display/fireworks/shows/<show>.json (the show's clip_name, like its sound). Each scene there may add
 cues to its section's palette and intensity; see the file's cue_note.
 
-A later version of a show (config.json's "show_version", like "v2") is an overlay on that timeline:
+A later version of a show (a config.json "shows" entry's "version", like "v2") is an overlay on that timeline:
 <show>.<version>.json adds a stage and characters to scenes named by title, so re-timing V1 moves it too.
 <show>.<version>.lips.json, made by tools/lip_sync.py, holds the mouth tracks of the characters who sing.
 """

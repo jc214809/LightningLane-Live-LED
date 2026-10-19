@@ -324,6 +324,14 @@ The board can play the fireworks soundtrack while its castle fireworks run. For 
 - `device`: the ALSA device to play on, like `"plughw:1,0"` (`aplay -l` lists them). `null` uses the default, which is usually the USB card once the onboard audio is off.
 - `quiet_hours`: no sound between these times, in the board's local time. Leave it out for no quiet hours. A broken value turns sound off.
 - Set the volume on the Pi with `alsamixer`.
+- `shows` lists the fireworks shows you want to change, one entry per show:
+  ```json
+  "shows": [
+    {"name": "Happily Ever After", "enabled": true, "version": "v2"},
+    {"name": "Disney's Not-So-Spooky Spectacular", "enabled": false}
+  ]
+  ```
+  Only `name` is required. A show not listed, or listed without a field, is `enabled` and `"default"`. `"version": "default"` is the castle fireworks (no title) for five minutes from the showtime, with `sounds/fireworks.wav` if there is one. `"v1"` or `"v2"` plays a scored show's whole synced version in that look, about 18 minutes for Happily Ever After, with its own music (`sounds/happily-ever-after.wav`). `"enabled": false` means the board never cuts in for that show. Only Happily Ever After has a score so far; the party shows are always the default.
 - To hear a show now instead of waiting for showtime, set `"force_show": "Happily Ever After"` (or a party's show, like `"Disney's Not-So-Spooky Spectacular"`) and restart the service: the board plays it once at start-up, with its sound, then carries on as usual. Restart again to replay it, and set it back to `""` when done.
 
 ## Sources and Credits
