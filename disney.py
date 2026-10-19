@@ -27,7 +27,7 @@ from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
 from utils import debug
-from utils.config import (ShowSettings, SoundSettings, debug_enabled, load_config, show_settings, sound_settings,
+from utils.config import (ShowSettings, SoundSettings, debug_enabled, forced_show_name, load_config, show_settings, sound_settings,
                           websocket_protocol, websocket_settings)
 from utils.sound import clip_name, playing, show_clips, watch as watch_sound
 
@@ -98,7 +98,8 @@ RIDE_VISITORS = {
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
 # character on a real board; leave it unset otherwise.
 forced_surprise = None
-# config.json "force_show": a fireworks show's name ("Happily Ever After"), played once at start-up
+# config.json "shows" entry with "force": true (or the old "force_show"): a fireworks show's name
+# ("Happily Ever After"), played once at start-up
 # whatever the schedule says, with its sound. For checking a show on a real board; leave it unset
 # otherwise. (show, theme) once validated.
 forced_show = None
@@ -151,7 +152,7 @@ def main():
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
     set_forced_surprise(config.get("force_surprise"))
-    set_forced_show(config.get("force_show"))
+    set_forced_show(forced_show_name(config))
     global sound, show_settings_by_clip
     sound = sound_settings(config)
     show_settings_by_clip = {clip_name(name): setting for name, setting in show_settings(config).items()}
@@ -325,7 +326,7 @@ def known_shows():
     return shows
 
 def set_forced_show(name):
-    """Validate config.json's force_show, matched loosely (case, apostrophes); an unknown name is
+    """Validate the forced show's name (config.forced_show_name), matched loosely (case, apostrophes); an unknown name is
     ignored, not fatal."""
     global forced_show
     forced_show = None
@@ -334,14 +335,15 @@ def set_forced_show(name):
     shows = known_shows()
     match = next((show for show in shows if clip_name(show) == clip_name(str(name))), None)
     if match is None:
-        debug.warning(f"force_show {name!r} isn't a show the board plays; ignoring it. "
+        debug.warning(f"Forced show {name!r} isn't a show the board plays; ignoring it. "
                       f"Choices: {', '.join(shows)}")
         return
     forced_show = (match, shows[match])
-    debug.warning(f"force_show is set: {match} plays at start-up. Remove it from config.json when done testing.")
+    debug.warning(f"{match} is forced: it plays at start-up. Remove \"force\" from its entry in config.json's "
+                  f"\"shows\" when done testing.")
 
 def play_forced_show(matrix, now=None):
-    """Play config.json's force_show now, from its start, if it's set. Returns True if it played."""
+    """Play the forced show now, from its start, if it's set. Returns True if it played."""
     if forced_show is None:
         return False
     now = now or datetime.now(timezone.utc)

@@ -4,7 +4,7 @@ import pytest
 
 from datetime import time
 
-from utils.config import (ShowSettings, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, sound_settings,
+from utils.config import (ShowSettings, forced_show_name, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, sound_settings,
                           weather_api_key, websocket_protocol, websocket_settings)
 
 
@@ -125,6 +125,8 @@ HEA = "Happily Ever After"
     # bad fields take their defaults; a show without a name is skipped
     ({"shows": [{"name": HEA, "enabled": "yes", "version": "v3"}]}, {HEA: ShowSettings()}),
     ({"shows": [{"name": HEA, "version": "full"}]}, {HEA: ShowSettings()}),
+    ({"shows": [{"name": HEA, "force": True}]}, {HEA: ShowSettings(True, "default", True)}),
+    ({"shows": [{"name": HEA, "force": "yes"}]}, {HEA: ShowSettings()}),
     ({"shows": [{"name": ""}, {"enabled": False}, "Happily Ever After", 5]}, {}),
     ({"shows": {HEA: "v2"}}, {}),
     ({"shows": None}, {}),
@@ -132,3 +134,20 @@ HEA = "Happily Ever After"
 def test_show_settings(config, expected, monkeypatch):
     monkeypatch.setattr("utils.config.debug.warning", lambda message: None)
     assert show_settings(config) == expected
+
+
+@pytest.mark.parametrize("config, expected", [
+    ({}, None),
+    ({"shows": [{"name": HEA}]}, None),
+    ({"shows": [{"name": "Other"}, {"name": HEA, "force": True}]}, HEA),
+    ({"shows": [{"name": "Other", "force": True}, {"name": HEA, "force": True}]}, "Other"),  # the first, with a warning
+    ({"force_show": HEA}, HEA),  # the old top-level key still works, with a warning
+    ({"force_show": ""}, None),
+    ({"force_show": HEA, "shows": [{"name": "Other", "force": True}]}, "Other"),  # the new place wins
+])
+def test_forced_show_name(config, expected, monkeypatch):
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    assert forced_show_name(config) == expected
+    assert bool(warnings) == (config.get("force_show") == HEA and expected == HEA or
+                              len([s for s in config.get("shows", []) if s.get("force")]) > 1)
