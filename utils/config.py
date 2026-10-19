@@ -77,17 +77,43 @@ def websocket_protocol(config):
     return protocol
 
 
-SHOW_VERSIONS = ("v1", "v2")
+SHOW_VERSIONS = ("default", "v1", "v2")
 
 
-def show_version(config):
-    """config.json's "show_version": which version of a synced fireworks show plays, "v1" (the
-    default: castle and fireworks) or "v2" (characters too; display/fireworks/score.py)."""
-    version = config.get("show_version", "v1")
-    if version not in SHOW_VERSIONS:
-        debug.warning(f'config.json "show_version" should be "v1" or "v2", not {version!r}; using "v1".')
-        return "v1"
-    return version
+class ShowSettings(NamedTuple):
+    enabled: bool = True
+    # "default": the castle fireworks for five minutes; "v1" or "v2": a scored show's whole synced version
+    version: str = "default"
+
+
+def show_settings(config):
+    """config.json's "shows": a list of {"name", "enabled", "version"}, one per fireworks show (all but
+    name optional), as {name: ShowSettings}. A show not listed is enabled and "default". A bad field is
+    warned about and takes its default."""
+    section = config.get("shows")
+    if section is None:
+        return {}
+    if not isinstance(section, list):
+        debug.warning('config.json "shows" should be a list of {"name": ..., "enabled": ..., "version": ...}; '
+                      'ignoring it.')
+        return {}
+    shows = {}
+    for entry in section:
+        name = entry.get("name") if isinstance(entry, dict) else None
+        if not isinstance(name, str) or not name.strip():
+            debug.warning(f'config.json "shows": skipping {entry!r}, which has no "name".')
+            continue
+        enabled = entry.get("enabled", True)
+        if not isinstance(enabled, bool):
+            debug.warning(f'config.json "shows": {name!r} "enabled" should be true or false, not {enabled!r}; using true.')
+            enabled = True
+        version = entry.get("version", "default")
+        if version not in SHOW_VERSIONS:
+            debug.warning(f'config.json "shows": {name!r} "version" should be "default", "v1" or "v2", '
+                          f'not {version!r}; using "default".')
+            version = "default"
+        shows[name] = ShowSettings(enabled, version)
+    return shows
 
 
 class SoundSettings(NamedTuple):

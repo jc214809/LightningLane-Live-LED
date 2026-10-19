@@ -4,7 +4,7 @@ import pytest
 
 from datetime import time
 
-from utils.config import (SoundSettings, debug_enabled, has_api_key, load_config, show_version, sound_settings,
+from utils.config import (ShowSettings, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, sound_settings,
                           weather_api_key, websocket_protocol, websocket_settings)
 
 
@@ -113,12 +113,22 @@ def test_a_bad_sound_device_falls_back_to_the_default(device):
     assert sound_settings({"sound": {"device": device}}) == SoundSettings(True, None, None)
 
 
+HEA = "Happily Ever After"
+
+
 @pytest.mark.parametrize("config, expected", [
-    ({}, "v1"),
-    ({"show_version": "v1"}, "v1"),
-    ({"show_version": "v2"}, "v2"),
-    ({"show_version": "V2"}, "v1"),  # unknown values fall back, with a warning
-    ({"show_version": 2}, "v1"),
+    ({}, {}),
+    ({"shows": []}, {}),
+    ({"shows": [{"name": HEA}]}, {HEA: ShowSettings(True, "default")}),
+    ({"shows": [{"name": HEA, "enabled": False, "version": "v2"}, {"name": "Other", "version": "v1"}]},
+     {HEA: ShowSettings(False, "v2"), "Other": ShowSettings(True, "v1")}),
+    # bad fields take their defaults; a show without a name is skipped
+    ({"shows": [{"name": HEA, "enabled": "yes", "version": "v3"}]}, {HEA: ShowSettings()}),
+    ({"shows": [{"name": HEA, "version": "full"}]}, {HEA: ShowSettings()}),
+    ({"shows": [{"name": ""}, {"enabled": False}, "Happily Ever After", 5]}, {}),
+    ({"shows": {HEA: "v2"}}, {}),
+    ({"shows": None}, {}),
 ])
-def test_show_version(config, expected):
-    assert show_version(config) == expected
+def test_show_settings(config, expected, monkeypatch):
+    monkeypatch.setattr("utils.config.debug.warning", lambda message: None)
+    assert show_settings(config) == expected

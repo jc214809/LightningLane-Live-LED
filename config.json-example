@@ -43,7 +43,7 @@
     "emulated": null,
     "drop_privileges": null
   },
-  "show_version": "v1",
+  "shows": [],
   "force_surprise": "",
   "force_show": "",
   "debug": false

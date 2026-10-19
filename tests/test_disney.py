@@ -502,8 +502,8 @@ def test_fireworks_play_the_shows_sound_until_they_end(monkeypatch):
     monkeypatch.setattr(disney, "sound", disney.SoundSettings(True))
     now = HEA_START + timedelta(seconds=8)
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
-    assert events == [("sound", ["happily-ever-after", "fireworks"], disney.SoundSettings(True), now),
-                      "start", "fireworks", "stop"]
+    assert events == [("sound", ["fireworks"], disney.SoundSettings(True), now),
+                      "start", "fireworks", "stop"], "a default-length show plays only the generic clip"
 
 
 def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypatch):
@@ -523,6 +523,7 @@ def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypa
     monkeypatch.setattr(disney, "render_castle_fireworks", lambda *a, **k: events.append("random fireworks"))
     monkeypatch.setattr(disney, "render_music_show", lambda matrix, score: events.append(("synced", score.name)))
     monkeypatch.setattr(disney, "_shows_played", set())
+    monkeypatch.setattr(disney, "show_settings_by_clip", {"happily-ever-after": disney.ShowSettings(True, "v1")})
     # The real score: Happily Ever After has one in display/fireworks/shows/.
     late = HEA_START + timedelta(seconds=90)
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=late) is True
@@ -535,9 +536,34 @@ def test_the_synced_show_plays_in_the_configured_version(monkeypatch):
     monkeypatch.setattr(disney, "load_score", lambda name, version: asked.append((name, version)))
     monkeypatch.setattr(disney, "render_castle_fireworks", lambda *a, **k: None)
     monkeypatch.setattr(disney, "_shows_played", set())
-    monkeypatch.setattr(disney, "show_version_setting", "v2")
+    monkeypatch.setattr(disney, "show_settings_by_clip",
+                        {"happily-ever-after": disney.ShowSettings(True, "v2")})
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=5))
     assert asked == [("happily-ever-after", "v2")]
+
+
+def test_a_show_is_short_by_default_even_with_a_score(fireworks_played, monkeypatch):
+    asked = []
+    monkeypatch.setattr(disney, "load_score", lambda name, **kwargs: asked.append(name))
+    monkeypatch.setattr(disney, "show_settings_by_clip", {})
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=8))
+    assert fireworks_played == [(disney.FIREWORKS_SHOW_S - 8, False, None)]
+    assert asked == [], "the score isn't even loaded"
+
+
+def test_a_disabled_show_never_cuts_in_and_the_others_still_do(fireworks_played, monkeypatch):
+    monkeypatch.setattr(disney, "show_settings_by_clip", {"happily-ever-after": disney.ShowSettings(False)})
+    assert not disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=8))
+    assert fireworks_played == []
+    parks = _mk_tonight("2026-09-26")  # a party night: its own show, not set to off
+    assert disney.play_fireworks_show_if_due(FakeMatrix(), parks, now=SPOOKY_START + timedelta(seconds=2))
+
+
+def test_show_setting_matches_loosely_and_defaults_to_enabled_and_default(monkeypatch):
+    full = disney.ShowSettings(True, "v2")
+    monkeypatch.setattr(disney, "show_settings_by_clip", {"disneys-not-so-spooky-spectacular": full})
+    assert disney.show_setting("Disney's Not-So-Spooky Spectacular") == full
+    assert disney.show_setting("Happily Ever After") == disney.ShowSettings(True, "default")
 
 
 def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played):
@@ -720,7 +746,13 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
     assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64")]
 
 
-def test_main_watches_every_show_for_the_sound_badges(monkeypatch):
+@pytest.mark.parametrize("shows, expected", [
+    ([], []),  # every show is the default five-minute show, so none is meant to have its own music
+    ([{"name": "Happily Ever After", "version": "v2"}], [["happily-ever-after", "fireworks"]]),
+    ([{"name": "Happily Ever After", "version": "v1", "enabled": False}], []),
+    ([{"name": "Disney's Not-So-Spooky Spectacular", "version": "v2"}], []),  # no score, so no music of its own
+])
+def test_main_watches_the_full_scored_shows_for_the_sound_badges(monkeypatch, shows, expected):
     class _Watched(Exception):
         pass
 
@@ -731,15 +763,14 @@ def test_main_watches_every_show_for_the_sound_badges(monkeypatch):
         raise _Watched  # stop main() before the matrix and its endless loop
 
     monkeypatch.setattr(disney.sys, "argv", ["disney.py"])
-    monkeypatch.setattr(disney, "load_config", lambda: {"sound": {"device": "plughw:1,0"}})
+    monkeypatch.setattr(disney, "load_config", lambda: {"sound": {"device": "plughw:1,0"}, "shows": shows})
     monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
     monkeypatch.setattr(disney, "watch_sound", watch)
     with pytest.raises(_Watched):
         disney.main()
     settings, shows = watched[0]
     assert settings == disney.SoundSettings(True, "plughw:1,0")
-    assert ["happily-ever-after", "fireworks"] in shows
-    assert shows == [["happily-ever-after", "fireworks"]], "only shows with a synced score are meant to have music"
+    assert shows == expected
 
 
 def disney_driver_modes():
@@ -787,6 +818,7 @@ def test_force_show_plays_the_whole_synced_show_with_its_music_now(monkeypatch):
     monkeypatch.setattr(disney, "render_castle_fireworks", lambda *a, **k: events.append("random fireworks"))
     monkeypatch.setattr(disney, "render_music_show", lambda matrix, score: events.append(("synced", score.name)))
     monkeypatch.setattr(disney.debug, "warning", lambda message: None)
+    monkeypatch.setattr(disney, "show_settings_by_clip", {"happily-ever-after": disney.ShowSettings(True, "v1")})
     now = datetime(2026, 10, 13, 18, 0, tzinfo=timezone.utc)  # nowhere near showtime
     disney.set_forced_show("Happily Ever After")
     try:
