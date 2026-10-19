@@ -661,10 +661,15 @@ class MusicShow:
 
         if self.white > 0.02:
             level = int(255 * min(1.0, self.white))
+            # Every pixel at least `level` on each channel. Written as plain loops, not a tuple(max(...)
+            # for ...) per pixel: this is the biggest frame of the show, and the Pi's build time was in it.
+            for pos, (r, g, b) in out.items():
+                out[pos] = (r if r > level else level, g if g > level else level, b if b > level else level)
+            blank = (level, level, level)
             for y in range(self.height):
                 for x in range(self.width):
-                    prev = out.get((x, y), (0, 0, 0))
-                    out[(x, y)] = tuple(max(c, level) for c in prev)
+                    if (x, y) not in out:
+                        out[(x, y)] = blank
         return out
 
 
