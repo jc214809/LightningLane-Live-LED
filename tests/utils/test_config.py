@@ -2,8 +2,10 @@ import json
 
 import pytest
 
-from utils.config import (debug_enabled, has_api_key, load_config, weather_api_key, websocket_protocol,
-                          websocket_settings)
+from datetime import time
+
+from utils.config import (ShowSettings, forced_show_name, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, sound_settings,
+                          weather_api_key, websocket_protocol, websocket_settings)
 
 
 def test_load_config(tmp_path):
@@ -81,3 +83,71 @@ def test_websocket_settings(config, expected):
 ])
 def test_websocket_protocol(config, expected):
     assert websocket_protocol(config) == expected
+
+
+@pytest.mark.parametrize("config, expected", [
+    ({}, SoundSettings(False, None, None)),  # no section: a board without a speaker stays silent
+    ({"sound": {}}, SoundSettings(True, None, None)),  # enabled defaults to true, like websocket
+    ({"sound": {"enabled": False}}, SoundSettings(False, None, None)),
+    ({"sound": {"enabled": True, "device": "plughw:1,0"}}, SoundSettings(True, "plughw:1,0", None)),
+    ({"sound": {"quiet_hours": {"start": "22:00", "end": "08:00"}}},
+     SoundSettings(True, None, (time(22, 0), time(8, 0)))),
+    ({"sound": {"device": None, "quiet_hours": None}}, SoundSettings(True, None, None)),
+])
+def test_sound_settings(config, expected):
+    assert sound_settings(config) == expected
+
+
+@pytest.mark.parametrize("section", [
+    "on", {"enabled": "yes"},
+    # A broken quiet_hours turns sound off rather than risk playing in the night.
+    {"quiet_hours": {"start": "22:00"}}, {"quiet_hours": {"start": "10pm", "end": "8am"}},
+    {"quiet_hours": "22:00-08:00"}, {"quiet_hours": {"start": 22, "end": 8}},
+])
+def test_bad_sound_settings_turn_sound_off(section):
+    assert sound_settings({"sound": section}).enabled is False
+
+
+@pytest.mark.parametrize("device", ["", "  ", 1])
+def test_a_bad_sound_device_falls_back_to_the_default(device):
+    assert sound_settings({"sound": {"device": device}}) == SoundSettings(True, None, None)
+
+
+HEA = "Happily Ever After"
+
+
+@pytest.mark.parametrize("config, expected", [
+    ({}, {}),
+    ({"shows": []}, {}),
+    ({"shows": [{"name": HEA}]}, {HEA: ShowSettings(True, "default")}),
+    ({"shows": [{"name": HEA, "enabled": False, "version": "v2"}, {"name": "Other", "version": "v1"}]},
+     {HEA: ShowSettings(False, "v2"), "Other": ShowSettings(True, "v1")}),
+    # bad fields take their defaults; a show without a name is skipped
+    ({"shows": [{"name": HEA, "enabled": "yes", "version": "v3"}]}, {HEA: ShowSettings()}),
+    ({"shows": [{"name": HEA, "version": "full"}]}, {HEA: ShowSettings()}),
+    ({"shows": [{"name": HEA, "force": True}]}, {HEA: ShowSettings(True, "default", True)}),
+    ({"shows": [{"name": HEA, "force": "yes"}]}, {HEA: ShowSettings()}),
+    ({"shows": [{"name": ""}, {"enabled": False}, "Happily Ever After", 5]}, {}),
+    ({"shows": {HEA: "v2"}}, {}),
+    ({"shows": None}, {}),
+])
+def test_show_settings(config, expected, monkeypatch):
+    monkeypatch.setattr("utils.config.debug.warning", lambda message: None)
+    assert show_settings(config) == expected
+
+
+@pytest.mark.parametrize("config, expected", [
+    ({}, None),
+    ({"shows": [{"name": HEA}]}, None),
+    ({"shows": [{"name": "Other"}, {"name": HEA, "force": True}]}, HEA),
+    ({"shows": [{"name": "Other", "force": True}, {"name": HEA, "force": True}]}, "Other"),  # the first, with a warning
+    ({"force_show": HEA}, HEA),  # the old top-level key still works, with a warning
+    ({"force_show": ""}, None),
+    ({"force_show": HEA, "shows": [{"name": "Other", "force": True}]}, "Other"),  # the new place wins
+])
+def test_forced_show_name(config, expected, monkeypatch):
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    assert forced_show_name(config) == expected
+    assert bool(warnings) == (config.get("force_show") == HEA and expected == HEA or
+                              len([s for s in config.get("shows", []) if s.get("force")]) > 1)

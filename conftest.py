@@ -14,6 +14,15 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def _no_sound_watch():
+    # The sound badge's watch is process-wide too; main() sets it.
+    import utils.sound as sound
+    sound._watched = sound._found = sound._checked_at = None
+    yield
+    sound._watched = sound._found = sound._checked_at = None
+
+
+@pytest.fixture(autouse=True)
 def _network_ok():
     # The network flag is process-wide; a test that fails a fetch would otherwise
     # leave the badge drawn over every later test's frames.

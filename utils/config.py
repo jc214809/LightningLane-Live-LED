@@ -5,6 +5,8 @@ without a restart. Feature-specific sections (trip_countdown, force_surprise) ar
 the code that validates them (utils/trips.py, disney.py).
 """
 import json
+from datetime import time
+from typing import NamedTuple, Optional, Tuple
 
 from utils import debug
 
@@ -73,3 +75,102 @@ def websocket_protocol(config):
         debug.warning(f'config.json "websocket.protocol" should be "legacy" or "preview", not {protocol!r}; using "legacy".')
         return "legacy"
     return protocol
+
+
+SHOW_VERSIONS = ("default", "v1", "v2")
+
+
+class ShowSettings(NamedTuple):
+    enabled: bool = True
+    # "default": the castle fireworks for five minutes; "v1" or "v2": a scored show's whole synced version
+    version: str = "default"
+    force: bool = False  # play it once at start-up whatever the schedule, for checking it on a board
+
+
+def show_settings(config):
+    """config.json's "shows": a list of {"name", "enabled", "version", "force"}, one per fireworks show (all but
+    name optional), as {name: ShowSettings}. A show not listed is enabled and "default". A bad field is
+    warned about and takes its default."""
+    section = config.get("shows")
+    if section is None:
+        return {}
+    if not isinstance(section, list):
+        debug.warning('config.json "shows" should be a list of {"name": ..., "enabled": ..., "version": ...}; '
+                      'ignoring it.')
+        return {}
+    shows = {}
+    for entry in section:
+        name = entry.get("name") if isinstance(entry, dict) else None
+        if not isinstance(name, str) or not name.strip():
+            debug.warning(f'config.json "shows": skipping {entry!r}, which has no "name".')
+            continue
+        enabled = entry.get("enabled", True)
+        if not isinstance(enabled, bool):
+            debug.warning(f'config.json "shows": {name!r} "enabled" should be true or false, not {enabled!r}; using true.')
+            enabled = True
+        version = entry.get("version", "default")
+        if version not in SHOW_VERSIONS:
+            debug.warning(f'config.json "shows": {name!r} "version" should be "default", "v1" or "v2", '
+                          f'not {version!r}; using "default".')
+            version = "default"
+        force = entry.get("force", False)
+        if not isinstance(force, bool):
+            debug.warning(f'config.json "shows": {name!r} "force" should be true or false, not {force!r}; using false.')
+            force = False
+        shows[name] = ShowSettings(enabled, version, force)
+    return shows
+
+
+def forced_show_name(config):
+    """The show to play once at start-up, for checking it on a board: the first "shows" entry with
+    "force": true, else the old top-level "force_show" (still read, with a warning), else None."""
+    forced = [name for name, show in show_settings(config).items() if show.force]
+    if len(forced) > 1:
+        debug.warning(f'config.json "shows": more than one show has "force": true; playing {forced[0]!r} only.')
+    if forced:
+        return forced[0]
+    legacy = config.get("force_show")
+    if legacy:
+        debug.warning(f'config.json "force_show" has moved: set "force": true on its entry in "shows" '
+                      f'(like {{"name": {legacy!r}, "force": true}}). Playing {legacy!r} for now.')
+        return legacy
+    return None
+
+
+class SoundSettings(NamedTuple):
+    enabled: bool = False
+    device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card
+    quiet_hours: Optional[Tuple[time, time]] = None  # (start, end) in the board's local time
+
+
+def sound_settings(config):
+    """config.json's "sound" section: {"enabled": true, "device": null,
+    "quiet_hours": {"start": "22:00", "end": "08:00"}}. Without the section the board stays silent.
+    A bad quiet_hours turns sound off rather than risk playing in the night."""
+    section = config.get("sound")
+    if section is None:
+        return SoundSettings()
+    if not isinstance(section, dict):
+        debug.warning('config.json "sound" should be {"enabled": true, ...}; sound is off.')
+        return SoundSettings()
+
+    enabled = section.get("enabled", True)
+    if not isinstance(enabled, bool):
+        debug.warning(f'config.json "sound.enabled" should be true or false, not {enabled!r}; sound is off.')
+        return SoundSettings()
+    device = section.get("device")
+    if device is not None and not (isinstance(device, str) and device.strip()):
+        debug.warning(f'config.json "sound.device" should be an ALSA device like "plughw:1,0", not {device!r}; '
+                      'using the default.')
+        device = None
+
+    quiet = section.get("quiet_hours")
+    quiet_hours = None
+    if quiet is not None:
+        try:
+            quiet_hours = (time.fromisoformat(quiet["start"]), time.fromisoformat(quiet["end"]))
+        except (TypeError, KeyError, ValueError):
+            debug.warning(f'config.json "sound.quiet_hours" should be {{"start": "22:00", "end": "08:00"}}, '
+                          f'not {quiet!r}; sound is off.')
+            return SoundSettings()
+    return SoundSettings(enabled, device, quiet_hours)

@@ -1,0 +1,22 @@
+{
+  "note": "Happily Ever After V2: characters share the spotlight (docs/shows/happily-ever-after/V2-PLAN.md). An overlay on happily-ever-after.json's scenes, by title, read by display/fireworks/score.py when config.json's show_version is \"v2\". Per scene, each optional: stage (castle, ghost: dimmed for characters to stand in front of, off: gone), actors (display/fireworks/show_actors.ACTORS), rate (replaces the scene's), note.",
+  "overlays": {
+    "Down in New Orleans (prologue)": {"stage": "ghost", "actors": ["ray"], "note": "Ray loops a figure-eight by the evening star"},
+    "When You Wish Upon a Star (fanfare)": {"actors": ["ray"], "note": "Ray drifts over and circles the spire"},
+    "Touch the Sky": {"stage": "ghost", "actors": ["merida"], "rate": 0.6, "note": "fewer fireworks, so her arrow shows; the archer's Merida, full size bottom left (waist up on 64x32): says her line holding her planted bow, tosses it up, catches it, draws and leans back; on \"touch\" lets go and the arrow flies into a bullseye firework"},
+    "Princess garden": {"stage": "ghost", "actors": ["princess_garden"], "note": "four couples meet in turn, a heart floating up between each"},
+    "Touch the Sky / Up": {"stage": "ghost", "actors": ["up_house"], "note": "Carl's house rises from behind the castle on its balloons"},
+    "How Far I'll Go (climax)": {"stage": "off", "actors": ["canoe"], "note": "Moana's canoe sails across once the castle goes"},
+    "You've Got a Friend in Me": {"stage": "castle", "actors": ["buzz_woody"], "effects": [], "note": "one toy at a time: Woody slides in and waves while alphabet blocks fill the castle (the actor's, in place of V1's blocks beside it), slides off by 6 s, then Buzz flies through from 7 s and knocks them down"},
+    "Friendship mash-up": {"stage": "castle", "actors": ["ralph", "baymax", "memory_orbs", "mike_sulley"], "note": "at the real show's moments: Ralph smashes bricks (7-13 s in, video 8:12), Baymax inflates and waves (13-19.5, video 8:16), memory orbs in the five emotions' colours fill the castle from its base up (25-32.2, video 8:30), Mike and Sulley over the gate (32.2-37.7, video 8:36)"},
+    "That's What Friends Are For": {"stage": "castle", "actors": ["castle_sings"], "note": "the castle sings: its doorway is the mouth, on its own mouth track, and the whole castle stretches taller and thinner as it opens"},
+    "Friend Like Me (Genie)": {"stage": "ghost", "actors": ["genie"], "rate": 0.8, "note": "Genie circles the spire; half V1's fireworks, so bursts don't sit on him"},
+    "Friend Like Me (finale)": {"actors": ["genie"], "note": "he sings on to 563, round the full castle and its fountains"},
+    "Olaf: some people are worth melting for": {"stage": "ghost", "actors": ["olaf"], "note": "Olaf pops up and waves in the snow"},
+    "I See the Light": {"stage": "ghost", "actors": ["lantern_boat"], "note": "Rapunzel and Flynn's boat drifts in among the lanterns"},
+    "I See the Light (lanterns)": {"stage": "ghost", "actors": ["lantern_boat"], "note": "she lets her own lantern go"},
+    "Embers": {"actors": ["mufasa"], "note": "Mufasa's face fades in among the stars over the spire"},
+    "Can You Feel the Love Tonight": {"stage": "off", "stage_changes": [{"after": 7.0, "stage": "castle"}], "actors": ["walle"], "note": "WALL-E floats across the stars, then the castle comes back pink and lavender, Simba and Nala on its centre tower (video 10:24)"},
+    "You'll Be in My Heart": {"stage": "ghost", "actors": ["dumbo"], "note": "Dumbo flies across, flapping his ears"}
+  }
+}

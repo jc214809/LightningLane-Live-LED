@@ -20,7 +20,7 @@ PELOTON_UNIT=peloton-led.service
 MLB_UNIT=mlb-led-scoreboard.service
 UNIT_DIR="$ROOT/etc/systemd/system"
 
-ANSWER_KEYS="BOARD_NAME APP LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO EXTRA_ARGS LLL_BRANCH
+ANSWER_KEYS="BOARD_NAME APP PANEL_OPTIONS LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO EXTRA_ARGS LLL_BRANCH
 PELOTON_AUTO_TOKEN WIFI2 WIFI2_IFACE WIFI2_NAME WIFI2_SSID WIFI2_HIDDEN POWER_BUTTON SPEAKER"
 ANSWERED=" "
 DRY_RUN=false
@@ -32,7 +32,7 @@ usage() {
 Usage: sudo bash board-setup.sh [--answers FILE] [--branch NAME] [--yes] [--dry-run] [-h]
 
   --answers FILE  KEY=value lines (# comments) answering questions ahead, e.g. APP=lll.
-                  Keys: BOARD_NAME APP LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO
+                  Keys: BOARD_NAME APP PANEL_OPTIONS LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO
                   EXTRA_ARGS LLL_BRANCH PELOTON_AUTO_TOKEN WIFI2 WIFI2_IFACE WIFI2_NAME
                   WIFI2_SSID WIFI2_HIDDEN POWER_BUTTON SPEAKER. The Wi-Fi password is never in it: it's
                   asked (or, with stdin not a terminal, read from its first line), and a blank
@@ -120,11 +120,18 @@ collect_answers() {
     ask BOARD_NAME "Hostname (boards.json picks LightningLane-Live-LED's settings by it)" "$(hostname -s 2>/dev/null || hostname)"
     [[ "$BOARD_NAME" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]] || die "not a usable hostname: $BOARD_NAME"
     ask APP "App to run (lll = LightningLane-Live-LED, peloton = Peloton-LED, mlb = MLB-LED-Scoreboard)" lll lll peloton mlb
-    ask LED_ROWS "Panel rows" 32 32 64
-    ask LED_COLS "Panel columns" 64 64
-    ask LED_GPIO_MAPPING "GPIO mapping (adafruit-hat-pwm needs the Bonnet's GPIO 4-18 jumper soldered)" adafruit-hat-pwm adafruit-hat-pwm adafruit-hat regular
-    ask LED_SLOWDOWN_GPIO "GPIO slowdown (2 on a Pi Zero, 4 on a Pi 4)" 2 0 1 2 3 4
-    ask EXTRA_ARGS "Extra app flags, like --led-brightness=85 (none)" ""
+    # Each app can keep these in its own config (LLL: boards.json or config.json's matrix), so by
+    # default they aren't asked and no flags go in the service.
+    ask PANEL_OPTIONS "Set the panel options (size, GPIO mapping, slowdown, extra flags) in the service? (yes/no; no leaves them to the app's own config)" no yes no
+    if [[ "$PANEL_OPTIONS" == yes ]]; then
+        ask LED_ROWS "Panel rows" 32 32 64
+        ask LED_COLS "Panel columns" 64 64
+        ask LED_GPIO_MAPPING "GPIO mapping (adafruit-hat-pwm needs the Bonnet's GPIO 4-18 jumper soldered)" adafruit-hat-pwm adafruit-hat-pwm adafruit-hat regular
+        ask LED_SLOWDOWN_GPIO "GPIO slowdown (2 on a Pi Zero, 4 on a Pi 4)" 2 0 1 2 3 4
+        ask EXTRA_ARGS "Extra app flags, like --led-brightness=85 (none)" ""
+    else
+        EXTRA_ARGS=""
+    fi
     case "$APP" in
         lll) ask LLL_BRANCH "LightningLane-Live-LED branch" develop-beta
              [[ "$LLL_BRANCH" =~ ^[A-Za-z0-9._/-]+$ && "$LLL_BRANCH" != -* ]] || die "not a branch name: $LLL_BRANCH"
@@ -150,6 +157,15 @@ collect_answers() {
     ask POWER_BUTTON "Power button on GPIO 3 with its light on GPIO 25 (docs/hardware/POWER.md)? (yes/no)" no yes no
 }
 
+panel_summary() {
+    if [[ "$PANEL_OPTIONS" == yes ]]; then
+        echo "  Panel         ${LED_COLS}x$LED_ROWS, $LED_GPIO_MAPPING, slowdown $LED_SLOWDOWN_GPIO"
+        echo "  Extra flags   ${EXTRA_ARGS:-none}"
+    else
+        echo "  Panel         left to the app's own config"
+    fi
+}
+
 show_summary() {
     cat <<EOF
 
@@ -157,8 +173,7 @@ Board setup
   Hostname      $BOARD_NAME (now $(hostname -s 2>/dev/null || hostname))
   User          $BOARD_USER ($BOARD_HOME)
   App           $APP${LLL_BRANCH:+ (branch $LLL_BRANCH)}
-  Panel         ${LED_COLS}x$LED_ROWS, $LED_GPIO_MAPPING, slowdown $LED_SLOWDOWN_GPIO
-  Extra flags   ${EXTRA_ARGS:-none}
+$(panel_summary)
   Second Wi-Fi  $WIFI2${WIFI2_SSID:+ ($WIFI2_SSID on $WIFI2_IFACE)}
   Power button  $POWER_BUTTON
 EOF
@@ -293,7 +308,8 @@ give_back() {
     run chown -R "$BOARD_USER:$(id -gn "$BOARD_USER")" "$1"
 }
 
-matrix_flags() {
+matrix_flags() {  # empty when the panel options are left to the app's config
+    [[ "$PANEL_OPTIONS" == yes ]] || return 0
     echo "--led-gpio-mapping=$LED_GPIO_MAPPING --led-rows=$LED_ROWS --led-cols=$LED_COLS --led-slowdown-gpio=$LED_SLOWDOWN_GPIO${EXTRA_ARGS:+ $EXTRA_ARGS}"
 }
 
@@ -341,10 +357,12 @@ if overrides:
     print("  note: config.json's matrix section overrides boards.json with "
           + ", ".join(f"{k}={v}" for k, v in overrides.items()) + " (left as is)")
 CONFIG
-    else
+    elif [[ "$PANEL_OPTIONS" == yes ]]; then
         matrix="{\"led_rows\": $LED_ROWS, \"led_cols\": $LED_COLS, \"led_gpio_mapping\": \"$LED_GPIO_MAPPING\", \"led_slowdown_gpio\": $LED_SLOWDOWN_GPIO}"
         echo "  boards.json has no $BOARD_NAME: putting the panel settings in config.json's matrix section"
         echo "  (or add a boards.json entry for it and commit it, like the other boards)"
+    else
+        echo "  panel options: left to boards.json / config.json's matrix section"
     fi
     if [[ "$SPEAKER" == yes ]]; then
         device="$(usb_speaker)"
@@ -430,10 +448,12 @@ install_peloton() {
     checkout "$PELOTON_REPO" "$dir" main
     # Its unit runs a 64x64 panel on adafruit-hat; a drop-in adds this board's flags (the last
     # one of a flag wins), written first so its installer starts the service with them.
-    exec_start="$(sed -n 's/^ExecStart=//p' "$dir/packaging/systemd/$PELOTON_UNIT" 2>/dev/null || true)"
-    exec_start="${exec_start:-<ExecStart from $dir/packaging/systemd/$PELOTON_UNIT>}"
-    printf '[Service]\nExecStart=\nExecStart=%s %s\n' "$exec_start" "$(matrix_flags)" \
-        | write_file "$UNIT_DIR/$PELOTON_UNIT.d/board.conf" 644
+    if [[ "$PANEL_OPTIONS" == yes ]]; then
+        exec_start="$(sed -n 's/^ExecStart=//p' "$dir/packaging/systemd/$PELOTON_UNIT" 2>/dev/null || true)"
+        exec_start="${exec_start:-<ExecStart from $dir/packaging/systemd/$PELOTON_UNIT>}"
+        printf '[Service]\nExecStart=\nExecStart=%s %s\n' "$exec_start" "$(matrix_flags)" \
+            | write_file "$UNIT_DIR/$PELOTON_UNIT.d/board.conf" 644
+    fi
     [[ "$PELOTON_AUTO_TOKEN" == yes ]] && flags=(--auto-token)
     in_dir "$dir" bash peloton-install.sh ${flags[@]+"${flags[@]}"}
 }
@@ -451,7 +471,7 @@ install_mlb() {
         (cd "$dir" && printf 'y\n' | bash install.sh ${flags[@]+"${flags[@]}"})
     fi
     give_back "$dir"
-    app_unit "MLB LED Scoreboard" "$dir" "$dir/venv/bin/python3 $dir/main.py $(matrix_flags)" \
+    app_unit "MLB LED Scoreboard" "$dir" "$dir/venv/bin/python3 $dir/main.py$(flags=$(matrix_flags); echo "${flags:+ $flags}")" \
         | write_file "$UNIT_DIR/$MLB_UNIT" 644
 }
 
@@ -471,6 +491,7 @@ start_service() {
 }
 
 main() {
+    PANEL_OPTIONS=no LED_ROWS=32 LED_COLS=64 LED_GPIO_MAPPING=adafruit-hat-pwm LED_SLOWDOWN_GPIO=2 EXTRA_ARGS=""
     LLL_BRANCH="" SPEAKER=no PELOTON_AUTO_TOKEN=no WIFI2_SSID="" WIFI2_IFACE="" WIFI2_PSK=""
     while (($#)); do
         case "$1" in

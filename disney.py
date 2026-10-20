@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 import logging
 import threading
@@ -11,12 +12,14 @@ import driver
 from display.park.park_details import render_park_information_screen
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
+from display.fireworks.music_show import render_music_show
+from display.fireworks.score import SHOWS_DIR, load_score
 from cli import arguments, board_preset, describe, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen
-from utils.special_events import active_party, fireworks_show
+from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, fireworks_show
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
@@ -24,7 +27,9 @@ from display.countdown.countdown import render_countdown_to_disney
 from utils.trips import active_trip, parse_trips
 
 from utils import debug
-from utils.config import debug_enabled, load_config, websocket_protocol, websocket_settings
+from utils.config import (ShowSettings, SoundSettings, debug_enabled, forced_show_name, load_config, show_settings, sound_settings,
+                          websocket_protocol, websocket_settings)
+from utils.sound import clip_name, playing, show_clips, watch as watch_sound
 
 # Configure logging
 logger = logging.getLogger("disney-lll")
@@ -55,17 +60,21 @@ PARK_REVEALS = ("tink", "buzz")
 # Forky waddles in, spots the old ride (TRASH!) and dives through the bottom of the board,
 # taking it down the hole after him.
 # Kevin struts across with Dug chasing her, his balloons lifting him higher as he goes.
+# An archer rises at full draw, looses an arrow across the board and sinks away, the new ride
+# uncovered behind the arrow (64x64 boards only; the Army Men were trimmed again to make room).
 # Surprises may fill up to 13% of ride screens.
 # Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
 # four visits an hour.
-SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side": 0.012, "army_men": 0.010,
-             "mike": 0.008, "tron": 0.008,
+SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side": 0.012, "army_men": 0.005,
+             "mike": 0.008, "tron": 0.008, "archer": 0.005,
              "olaf": 0.005, "goofy": 0.008,
              "luxo_ball": 0.005, "mcqueen": 0.005, "mater": 0.005,
              "chip_dale": 0.005, "tigger": 0.005, "stitch_surf": 0.005,
              "ralph": 0.005, "grannies": 0.005,
              "keepy_uppy": 0.001, "pooh": 0.005, "forky": 0.005,
              "kevin": 0.005}
+# Visitors too tall for a 64x32 board: there the roll gives the plain wipe.
+TALL_ONLY = ("archer",)
 # Visitors who only turn up on their own rides, and how often on those rides. Matched by
 # a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge, and a red and
 # a blue lightsaber clash over its rides and Star Tours, then sweep apart to the next; on the
@@ -93,6 +102,16 @@ RIDE_VISITORS = {
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
 # character on a real board; leave it unset otherwise.
 forced_surprise = None
+# config.json "shows" entry with "force": true (or the old "force_show"): a fireworks show's name
+# ("Happily Ever After"), played once at start-up
+# whatever the schedule says, with its sound. For checking a show on a real board; leave it unset
+# otherwise. (show, theme) once validated.
+forced_show = None
+# config.json "sound", read once at start-up.
+sound = SoundSettings()
+# config.json "shows", read once at start-up: {clip name: ShowSettings}; a show not in it is enabled and
+# default. See show_setting().
+show_settings_by_clip = {}
 FIREWORKS_SHOW_S = 5 * 60
 _shows_played = set()
 
@@ -137,6 +156,15 @@ def main():
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
     set_forced_surprise(config.get("force_surprise"))
+    set_forced_show(forced_show_name(config))
+    global sound, show_settings_by_clip
+    sound = sound_settings(config)
+    show_settings_by_clip = {clip_name(name): setting for name, setting in show_settings(config).items()}
+    # Only a show played in full, with a synced score, is meant to have music; the others play the
+    # castle fireworks (and the generic clip, if there is one), so a missing clip isn't a problem to badge.
+    watch_sound(sound, [show_clips(show) for show in known_shows()
+                        if show_setting(show).enabled and show_setting(show).version != "default"
+                        and os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))])
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
@@ -168,6 +196,7 @@ def main():
 
     last_trip_shown = None
     try:
+        play_forced_show(matrix)
         while True:
             play_fireworks_show_if_due(matrix, parks_data)
             render_logo(matrix)
@@ -247,25 +276,84 @@ def initialize_park_information_screen(matrix, park):
     debug.info(f"Rendering {park['name']} Title Screen. | Weather: {park.get('weather')}")
     show_screen(matrix, _static(render_park_information_screen, park), 8, transition=random.choice(PARK_REVEALS))
 
+def show_setting(show):
+    """A show's ShowSettings from config.json's "shows": enabled and "default" (the castle fireworks for
+    FIREWORKS_SHOW_S) unless it says otherwise; "v1" or "v2" plays a scored show's whole synced version."""
+    return show_settings_by_clip.get(clip_name(show), ShowSettings())
+
 def play_fireworks_show_if_due(matrix, parks, now=None):
     """
     If the fireworks show a park runs tonight (from its schedule: see special_events.fireworks_show)
     started in the last FIREWORKS_SHOW_S seconds, play the castle fireworks in that show's theme,
-    without the title, until that window ends. Each performance plays once. Returns True if it played.
+    without the title, until that window ends (or, for a show with a score in display/fireworks/shows/,
+    its whole synced show, in the version config.json's "shows" sets: see music_show.py), with the show's sound (sounds/<show>.wav, else
+    sounds/fireworks.wav) if config.json turns sound on. Each performance plays once. Returns True if it played.
     """
     now = now or datetime.now(timezone.utc)
     for park in parks:
         show, theme = fireworks_show(park, now)
+        if not show_setting(show).enabled:
+            continue
         start = show_start_due([park], show, FIREWORKS_SHOW_S, now)
         if start is None or (show, start) in _shows_played:
             continue
         _shows_played.add((show, start))
-        remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
-        debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
-        render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
-        forget_screen(matrix)
+        play_show(matrix, show, theme, start, now)
         return True
     return False
+
+def play_show(matrix, show, theme, start, now):
+    """Play show, which started at start: its whole synced show if its version isn't "default" and it has a score,
+    else the castle fireworks in theme until FIREWORKS_SHOW_S after start; with its sound if config.json
+    turns it on. A disabled show only gets here when forced."""
+    version = show_setting(show).version
+    full = version != "default"
+    score = load_score(clip_name(show), version=version) if full else None
+    # A default-length show has no music of its own (a synced one's clip is the whole show): the generic clip, if any.
+    with playing(show_clips(show) if full else ["fireworks"], sound, now):
+        if score:
+            # The whole show from its first note, with the music, however late the board cut in.
+            debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
+            render_music_show(matrix, score)
+        else:
+            remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
+            debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
+            render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
+    forget_screen(matrix)
+
+def known_shows():
+    """{show name: fireworks theme} for every show the board can play: the nightly one and each party's."""
+    shows = {NIGHTLY_FIREWORKS[0]: NIGHTLY_FIREWORKS[1]}
+    for event in SPECIAL_EVENTS.values():
+        if event.get("fireworks_show"):
+            shows[event["fireworks_show"]] = event.get("fireworks_theme")
+    return shows
+
+def set_forced_show(name):
+    """Validate the forced show's name (config.forced_show_name), matched loosely (case, apostrophes); an unknown name is
+    ignored, not fatal."""
+    global forced_show
+    forced_show = None
+    if not name:
+        return
+    shows = known_shows()
+    match = next((show for show in shows if clip_name(show) == clip_name(str(name))), None)
+    if match is None:
+        debug.warning(f"Forced show {name!r} isn't a show the board plays; ignoring it. "
+                      f"Choices: {', '.join(shows)}")
+        return
+    forced_show = (match, shows[match])
+    debug.warning(f"{match} is forced: it plays at start-up. Remove \"force\" from its entry in config.json's "
+                  f"\"shows\" when done testing.")
+
+def play_forced_show(matrix, now=None):
+    """Play the forced show now, from its start, if it's set. Returns True if it played."""
+    if forced_show is None:
+        return False
+    now = now or datetime.now(timezone.utc)
+    show, theme = forced_show
+    play_show(matrix, show, theme, now, now)
+    return True
 
 def set_forced_surprise(name):
     """Validate config.json's force_surprise; an unknown name is ignored, not fatal."""
@@ -295,6 +383,8 @@ def loop_through_attractions(matrix, park, parks=()):
                 f"From: {ride.get('updateSource') or 'none yet'}")
             surprise = (forced_surprise or _ride_visitor(ride.get("name", ""), ride.get("waitTime"))
                         or _surprise(random.random()))
+            if surprise in TALL_ONLY and matrix.height < 64:
+                surprise = "wipe"
             if surprise != "wipe":
                 debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)

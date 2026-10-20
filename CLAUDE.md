@@ -25,11 +25,25 @@ uv venv --python 3.11 .venv && uv pip install --python .venv -r requirements-dev
 # Rebuild the sprite editor after changing any character art (a test fails until you do)
 python3 tools/build_sprite_editor.py
 
+# Rebake Merida's Touch the Sky poses after changing merida_poses.py or the archer's art (a test fails until you do)
+python3 tools/build_merida_poses.py
+
 # Redraw docs/hardware's wiring diagrams after editing tools/draw_wiring.py (a test fails until you do)
 python3 tools/draw_wiring.py
 
 # Measure a new reference image for docs/references/README.md (a test fails until it has a row)
-python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [--lines] [--art]
+python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [--lines] [--cell PX] [--art]
+
+# Record the synced show as the boards draw it, then compare it with the real show in tools/show_sync_checker.html
+python3 tools/render_show.py [--recording] [--version v2]
+
+# Loop part of the synced show live in the emulator, with its music (audio seconds; run from a folder whose emulator_config.json sets the port)
+python3 tools/loop_show.py 0 98 [--rows 64] [--sound] [--version v1]
+
+# Lip-sync a singing show character (demucs in its own venv: install lines atop the tool)
+python3 tools/lip_sync.py genie 525 565 --model htdemucs --close 549.82 --mute 542.6-545.0 --mute 553.7-559.7   # --close: an m inside a held note; --mute FROM-TO: someone else sings (the backup singers, per the lyric sheet)
+python3 tools/lip_sync.py merida 268 276.3 --model htdemucs
+python3 tools/lip_sync.py mufasa 849 889 --close 869.97 --close 871.70 --close 877.88 --close 882.3 --close 882.75 --from-mix 881.95-883.4   # --from-mix: his echoing last "Remember"
 ```
 
 - **Python:** 3.11 is the target everywhere (`.python-version`, pyproject's `requires-python`, CI) because it's Raspberry Pi OS Bookworm's. CI also runs 3.13, the next OS's (Trixie). When the boards move, raise all three together.
@@ -86,6 +100,7 @@ Layered defenses in `updater/ws_legacy.py` (which asks for the `legacy` subproto
 - **Landmarks** (`display/landmarks/`, one file each, `Landmark` base in `scene.py`): play before each park title for their `SCREEN_S`, matched loosely on the park name by `landmark_for()`; a party can swap in its own (`active_party()`). `PLAYS_UNDER_WIPE` landmarks keep animating while the wipe uncovers them.
 - **Ride screen** (`display/attractions/attraction_info.py`): long names scroll; the wait drops into spare rows (`wait_drop`); DOWN rides pulse red with a full bar. It draws 2px word spaces (`SPACE_PX`): wrap, measure and draw text through `wrap_text`/`get_text_width`/`draw_text` with `space_px` so all three agree.
 - **Network badge:** `present()` stamps a red "!" (`display/network.py`) while `updater/shared.py:network_issues()` is set, driven by `note_network_result()`. Tests reset the flag in the root `conftest.py`.
+- **Sound badges:** `present()` also stamps one bottom-left (`display/sound_badges.py`) while sound is enabled and `utils/sound.py:current_problem()` finds one, a 9x9 red square like the network one: a white note and X when a show has no clip in `sounds/`, a white speaker and X when there's no player or no ALSA card for `sound.device` (`/proc/asound/cards`; that one wins). Always on, quiet hours too, so it's fixed before the show. `main()` calls `watch()` with every `known_shows()`; the check reruns at most once a minute and logs only changes.
 
 Display rules:
 - A transition that takes the old screen (`wants_prev`) must paint every pixel of it, black included: `show_screen` has already drawn the new screen underneath, and it bleeds through otherwise. Add each new one to `test_new_screen_never_shows_through_the_old_screens_dark_pixels`.
@@ -94,6 +109,8 @@ Display rules:
 - Call `forget_screen()` after anything that bypasses `show_screen`, so the next sweep doesn't redraw a stale screen.
 - `over_screen` transitions play over a finished screen and let it keep animating underneath.
 - Fireworks: the castle is `_CASTLE_ART`, doubled on 64-row boards; `_BIG_CASTLE_ROW_PATCH` adjusts only the doubled one.
+- Synced shows: a show with a score in `display/fireworks/shows/<clip_name>.json` plays whole, in time with its music, through `display/fireworks/music_show.py` (its own copy of the fireworks simulation, so the everyday ones don't change; `score.py` reads the file). Scene looks are one class each in `show_effects.py`, turned on by name in a scene's `effects`; add one there and in `EFFECTS`. A single firework at a set moment (a rooftop fan, one shell, one comet) is a scene's `hits` (`score.Hit`), not an effect. A look change mid-scene is its `castle_changes` (show seconds); a V2 stage change mid-scene is the overlay's `stage_changes` (seconds into the scene). What the real show does (timeline, colours, where ours is off) is in `docs/shows/<clip_name>/README.md`; start there for improvements. To study the real show further, `docs/shows/happily-ever-after/WATCH.md` has a `/watch` section per scene: "watch scene 4.3" means `bash docs/shows/happily-ever-after/watch-scenes.sh 4.3` (it builds the question, runs the skill on that scene's video window, and saves the answer under it, newest first). It follows the clock, not frames, so a slow board stays with the music. `render_music_show` logs each scene's fps, where the slowest frame's time went (build/push), late frames, pixel count, show-thread vs process CPU and the board's load/temperature/clock/throttle flags (`utils/system_stats.py`): `journalctl -u LightningLane-Live-LED.service | grep log_scene` after a run says why a scene dipped. To check a change against the real show, re-run `tools/render_show.py` and open `tools/show_sync_checker.html` (recording and render side by side, scene marks to paste back).
+- Show versions: V2 (a `config.json` `shows` entry's `version`) is an overlay, `shows/<clip_name>.v2.json`, adding a `stage` (`castle`/`ghost`/`off`: the castle dims or goes) and `actors` to V1 scenes by title (`effects` replaces a scene's, when an actor redraws one); a bad or missing overlay plays V1. Characters are one class each in `show_actors.py` (registered in `ACTORS`), placed by the clock; one who sings reads its mouth track (`score.Lips`, from `<clip_name>.v2.lips.json`, made by `tools/lip_sync.py` from demucs-split vocals; a bad file only stills the mouths). Plan and progress: `docs/shows/happily-ever-after/V2-PLAN.md`. Render with `--version v2` and open the checker with `?show=<clip_name>.v2`; serve it over http with Range support (`npx http-server`), or the videos won't seek.
 
 ### Driver abstraction
 
@@ -101,11 +118,12 @@ Display rules:
 
 ### Configuration
 
-`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `force_surprise`, `debug`.
+`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `matrix` (overrides the board's `boards.json` preset, see Driver), `sound` (`enabled`, `device`, `quiet_hours`; played by `utils/sound.py:playing()` from the gitignored `sounds/`, during the fireworks show), `shows` (a list of `{name, enabled, version, force}`; a show not listed is enabled and `"default"`: the five-minute castle fireworks, with only `sounds/fireworks.wav` for sound; `"v1"`/`"v2"` plays a scored show's whole synced version, with its own clip; `"force": true` plays it once at start-up whatever the schedule, for checking a show and its sound on a board; read by `utils/config.py:show_settings`/`forced_show_name`, applied in `disney.py:show_setting`; the old top-level `show_version` is gone and `force_show` is only a warned-about fallback), `force_surprise`, `debug`.
 
 ### Testing
 
 - `tests/stubs/conftest.py` intercepts `config.json` reads with a dummy config and stubs the `driver` module, so tests run without hardware. Stubs for `aiohttp`, `requests` and `pyowm` live in `tests/stubs/` and mirror the real libraries' names and exceptions; check real-library behaviour separately when upgrading one.
+- App code logs through `utils/debug` (logger `disney-lll`), which pytest's `caplog` doesn't see: check a warning with `monkeypatch.setattr(module.debug, "warning", warnings.append)`. `tools/` scripts use plain `logging`, so `caplog` works there.
 - Animation tests mirror the package (`tests/display/animation/`, one file per module or character); shared fakes (`FakeCanvas`, `FakeMatrix`, …) in `support.py`; its `conftest.py` stubs `graphics` by patching `animation.drawing`. Landmark tests do the same in `tests/display/landmarks/`.
 
 ### Gotchas

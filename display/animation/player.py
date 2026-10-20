@@ -6,6 +6,7 @@ previous screen away and reveals the next with a transition from TRANSITIONS.
 import time
 
 from display.network import draw_if_offline
+from display.sound_badges import draw_if_sound_problem
 from utils import debug
 
 from display.animation.characters import TRANSITIONS
@@ -27,8 +28,9 @@ def frame_canvas(matrix):
 
 def present(matrix, canvas):
     """Show canvas and keep the returned back buffer for the next frame."""
-    # Every frame on the board passes through here, so the badge sits on top of all of them.
+    # Every frame on the board passes through here, so the badges sit on top of all of them.
     draw_if_offline(canvas)
+    draw_if_sound_problem(canvas)
     _canvases[id(matrix)] = matrix.SwapOnVSync(canvas)
     return _canvases[id(matrix)]
 

@@ -53,11 +53,11 @@ curl -fsSLO https://raw.githubusercontent.com/jc214809/LightningLane-Live-LED/de
 sudo bash board-setup.sh
 ```
 
-It asks everything first (hostname, app, panel size, GPIO mapping and slowdown, extra flags, a second Wi-Fi network such as a phone hotspot, the [power button](docs/hardware/POWER.md)), shows a summary, then clones the app into your home folder and runs the app's own installer, sets up the matrix tuning (`snd_bcm2835` off, `isolcpus=3`), writes the app's systemd service, and stops the other two apps' services, since only one app can drive the panel. Re-run it to update a board or switch apps; on a board it has already set up, it skips the slow matrix-driver build.
+It asks everything first (hostname, app, whether to set the panel options here (size, GPIO mapping and slowdown, extra flags; the default is no, since each app keeps them in its own config), a second Wi-Fi network such as a phone hotspot, the [power button](docs/hardware/POWER.md)), shows a summary, then clones the app into your home folder and runs the app's own installer, sets up the matrix tuning (`snd_bcm2835` off, `isolcpus=3`), writes the app's systemd service, and stops the other two apps' services, since only one app can drive the panel. Re-run it to update a board or switch apps; on a board it has already set up, it skips the slow matrix-driver build.
 
 - **Older service files:** a board set up by hand often has its own `LightningLane-Live-LED.service` (in `/lib` or `/etc`, with the panel flags in it), which would keep it on those flags instead of `boards.json`. The script moves them to `/var/backups/board-setup/<date>/` (never deletes them) and prints the flags each one ran with, so you can check them against the board's `boards.json` entry. It also points out any `config.json` `matrix` settings, which override `boards.json`, but leaves them alone.
-- **This app:** the service carries no panel flags. If `boards.json` has no entry for the hostname, the panel settings go in `config.json`'s `matrix` section instead (or add an entry for the board and commit it). A new `config.json` is copied from the example: fill in your keys afterwards.
-- **Peloton-LED:** its own installer puts it in `/opt/peloton-led` and asks for the riders; this script adds the board's panel flags in a drop-in, `/etc/systemd/system/peloton-led.service.d/board.conf`.
+- **This app:** the service carries no panel flags. If you said yes to the panel options and `boards.json` has no entry for the hostname, they go in `config.json`'s `matrix` section instead (or add an entry for the board and commit it). A new `config.json` is copied from the example: fill in your keys afterwards.
+- **Peloton-LED:** its own installer puts it in `/opt/peloton-led` and asks for the riders; if you chose to set the panel options here, this script adds them in a drop-in, `/etc/systemd/system/peloton-led.service.d/board.conf`.
 - `--branch develop-sound` installs this app from another branch (the default is `develop-beta`; the branch question asks it too).
 - `--answers board.txt` answers questions ahead with `KEY=value` lines (`APP=lll`, `LED_ROWS=64`, ...; `--help` lists the keys). `--dry-run` prints everything it would do and changes nothing. The Wi-Fi password is never stored in the answers file or put on a command line.
 
@@ -306,6 +306,33 @@ The current weather at each park comes from OpenWeatherMap, which requires an AP
 You can find the signup page for OpenWeatherMap at [https://home.openweathermap.org/users/sign_up](https://home.openweathermap.org/users/sign_up). Once logged in, you'll find an `API keys` tab where you'll find a default key was already created for you. You can copy this key and paste it into the `config.json` under `"weather"`, `"apikey"`.
 
 There's nothing else to set: each park's location comes from the ThemeParks Wiki data.
+
+### Sound
+The board can play the fireworks soundtrack while its castle fireworks run. For Happily Ever After it plays the whole show, about 18 minutes, with the fireworks following the music: each part's colours, quiet moments, a wishing star, rising lanterns, the castle on fire, and a white flash on the last note. On a Pi this needs a **USB sound card** (with an OTG adapter on a Pi Zero) and a powered speaker. The Pi's own audio can't be used: it shares hardware with the LED matrix, and the installer turns it off. I2S amp boards clash with the RGB Matrix Bonnet's pins. An emulator run on a Mac plays through the Mac's speakers. Parts lists and hook-up diagrams (a plug-in USB speaker, or a small speaker and amp built into the case) are in [docs/hardware/SOUND.md](docs/hardware/SOUND.md). A power button on the back that shuts the Pi down safely and starts it again is in [docs/hardware/POWER.md](docs/hardware/POWER.md).
+
+1. Put WAV files in `sounds/` (see `sounds/README.md` for the names). They're gitignored, so copy them to each board.
+2. Turn sound on in `config.json`:
+
+```json
+"sound": {
+  "enabled": true,
+  "device": null,
+  "quiet_hours": {"start": "22:00", "end": "08:00"}
+}
+```
+
+- `device`: the ALSA device to play on, like `"plughw:1,0"` (`aplay -l` lists them). `null` uses the default, which is usually the USB card once the onboard audio is off.
+- `quiet_hours`: no sound between these times, in the board's local time. Leave it out for no quiet hours. A broken value turns sound off.
+- Set the volume on the Pi with `alsamixer`.
+- `shows` lists the fireworks shows you want to change, one entry per show:
+  ```json
+  "shows": [
+    {"name": "Happily Ever After", "enabled": true, "version": "v2"},
+    {"name": "Disney's Not-So-Spooky Spectacular", "enabled": false}
+  ]
+  ```
+  Only `name` is required. A show not listed, or listed without a field, is `enabled` and `"default"`. `"version": "default"` is the castle fireworks (no title) for five minutes from the showtime, with `sounds/fireworks.wav` if there is one. `"v1"` or `"v2"` plays a scored show's whole synced version in that look, about 18 minutes for Happily Ever After, with its own music (`sounds/happily-ever-after.wav`). `"enabled": false` means the board never cuts in for that show. Only Happily Ever After has a score so far; the party shows are always the default.
+- To hear a show now instead of waiting for showtime, add `"force": true` to its entry in `shows` (like `{"name": "Happily Ever After", "version": "v2", "force": true}`, or a party's show, like `{"name": "Disney's Not-So-Spooky Spectacular", "force": true}`) and restart the service: the board plays it once at start-up, with its sound, then carries on as usual. Restart again to replay it, and remove `"force"` when done. The old top-level `"force_show": "<name>"` still works, with a warning.
 
 ## Sources and Credits
 This project relies on:
