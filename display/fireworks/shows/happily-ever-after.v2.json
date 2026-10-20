@@ -3,7 +3,7 @@
   "overlays": {
     "Down in New Orleans (prologue)": {"stage": "ghost", "actors": ["ray"], "note": "Ray loops a figure-eight by the evening star"},
     "When You Wish Upon a Star (fanfare)": {"actors": ["ray"], "note": "Ray drifts over and circles the spire"},
-    "Touch the Sky": {"stage": "ghost", "actors": ["merida"], "rate": 0.6, "note": "fewer fireworks, so her arrow shows; the archer's Merida, full size bottom left (64x64): says her line holding her planted bow, tosses it up, catches it, draws and leans back; on \"touch\" lets go and the arrow flies into a bullseye firework"},
+    "Touch the Sky": {"stage": "ghost", "actors": ["merida"], "rate": 0.6, "note": "fewer fireworks, so her arrow shows; the archer's Merida, full size bottom left (waist up on 64x32): says her line holding her planted bow, tosses it up, catches it, draws and leans back; on \"touch\" lets go and the arrow flies into a bullseye firework"},
     "Princess garden": {"stage": "ghost", "actors": ["princess_garden"], "note": "four couples meet in turn, a heart floating up between each"},
     "Touch the Sky / Up": {"stage": "ghost", "actors": ["up_house"], "note": "Carl's house rises from behind the castle on its balloons"},
     "How Far I'll Go (climax)": {"stage": "off", "actors": ["canoe"], "note": "Moana's canoe sails across once the castle goes"},

@@ -1,5 +1,7 @@
 import random
 
+import pytest
+
 from display.animation.characters.archer import ArcherReveal as Archer
 from display.fireworks.actors import merida_poses as poses
 from display.fireworks.actors.merida import MeridaShoots
@@ -48,23 +50,25 @@ def test_merida_rises_full_size_at_the_bottom_left_and_stands_there():
     assert not _her(gone), "sunk away by her scene's end"
 
 
-def test_she_sinks_away_two_seconds_after_the_hit():
-    actor, _ = _at(START + 1)
+@pytest.mark.parametrize("height", [64, 32])
+def test_she_sinks_away_two_seconds_after_the_hit(height):
+    actor, _ = _at(START + 1, height)
     leave = actor.hit_s + MeridaShoots.LEAVE_S
-    _, standing = _at(START + leave - 0.05)
-    _, sinking = _at(START + leave + MeridaShoots.ENTER_S / 2)
-    _, gone = _at(START + leave + MeridaShoots.ENTER_S + 0.05)
+    _, standing = _at(START + leave - 0.05, height)
+    _, sinking = _at(START + leave + MeridaShoots.ENTER_S / 2, height)
+    _, gone = _at(START + leave + MeridaShoots.ENTER_S + 0.05, height)
     assert len(_her(sinking)) < len(_her(standing)), "going down"
     assert gone == {}, "off the board (the bullseye's sparks long done)"
-    assert _at(START + 32)[1] == {}, "and stays gone for the rest of her scene"
+    assert _at(START + 32, height)[1] == {}, "and stays gone for the rest of her scene"
 
 
-def test_she_stays_on_the_board_all_scene():
-    show = MusicShow(64, 64, random.Random(4))
+@pytest.mark.parametrize("height", [64, 32])
+def test_she_stays_on_the_board_all_scene(height):
+    show = MusicShow(64, height, random.Random(4))
     actor, cue = MeridaShoots(show), _scene()
     for i in range(int((END - START) * 10)):
         out = _frame(show, actor, cue, START + i / 10)
-        assert all(0 <= x < 64 and 0 <= y < 64 for x, y in out)
+        assert all(0 <= x < 64 and 0 <= y < height for x, y in out)
 
 
 def test_every_frame_she_shows_is_baked():
@@ -87,12 +91,15 @@ def test_a_frame_missing_from_the_bake_is_built_once_with_a_warning(monkeypatch)
     assert len(warnings) == 1 and "build_merida_poses" in warnings[0]
 
 
-def test_on_64x32_she_stays_off():
-    _, out = _at(START + 5, height=32)
-    assert out == {}
-    actor, _ = _at(START + 5)
-    _, shot = _at((START + actor.LOOSE_S + START + actor.hit_s) / 2, height=32)
-    assert shot == {}
+def test_on_64x32_she_stands_waist_up():
+    small, out = _at(START + 5, height=32)
+    actor, big = _at(START + 5)
+    dress = {MeridaShoots.COLORS[k] for k in "DNTy"}
+    assert max(y for (x, y), rgb in out.items() if rgb in dress) == 31, "her waist on the bottom row"
+    up = actor.top - small.top
+    assert up == 9 and {(x, y + up) for x, y in out} <= set(big), "the same Merida, 1x: her legs below the board"
+    face = MeridaShoots.COLORS["e"]  # her eyes
+    assert any(rgb == face for rgb in out.values()), "her face on the board"
 
 
 def test_she_mouths_her_line_by_the_clock():
@@ -112,35 +119,37 @@ def test_the_nocked_arrow_shows_while_she_aims():
         assert sum(rgb == shaft for rgb in out.values()) >= 8, f"{t}: the arrow's hidden"
 
 
-def test_on_touch_her_arrow_flies_off_the_string_fast_into_the_bullseye_and_it_shatters():
-    actor, before = _at(START + MeridaShoots.TARGET_S - 0.1)
+@pytest.mark.parametrize("height", [64, 32])
+def test_on_touch_her_arrow_flies_off_the_string_fast_into_the_bullseye_and_it_shatters(height):
+    actor, before = _at(START + MeridaShoots.TARGET_S - 0.1, height)
     cx, cy = actor.target
     gold = MeridaShoots.RINGS[0][1]
     assert (cx, cy) not in before, "no target before its burst"
     assert actor.hit_s - actor.LOOSE_S < 0.25, "the archer's speed, not a drift"
-    _, hanging = _at(START + MeridaShoots.LOOSE_S - 0.05)
+    _, hanging = _at(START + MeridaShoots.LOOSE_S - 0.05, height)
     r, g, b = hanging[(cx, cy)]
     assert r > 150 and g > 3 * b, "its gold centre (twinkling)"
-    actor, leaving = _at(START + MeridaShoots.LOOSE_S + 0.01)
+    actor, leaving = _at(START + MeridaShoots.LOOSE_S + 0.01, height)
     assert actor.arrow_tail(actor.elapsed()) < 1, "it leaves from where it sat on the string"
-    actor, hit = _at(START + actor.hit_s - 0.005)
+    actor, hit = _at(START + actor.hit_s - 0.005, height)
     d = actor.arrow_tail(actor.elapsed())
     (nx, ny), (ux, uy) = actor.nock, actor.aim
     head = (nx + ux * (d + Archer.ARROW_LEN - 1), ny + uy * (d + Archer.ARROW_LEN - 1))
     assert abs(head[0] - (cx + 0.5)) <= 1.5 and abs(head[1] - (cy + 0.5)) <= 1.5, "it strikes the centre"
     assert hit.get((int(head[0]), int(head[1]))) == Archer.TIP_RGB
-    _, shattered = _at(START + actor.hit_s + 0.4)
+    _, shattered = _at(START + actor.hit_s + 0.4, height)
     ring = {(x, y) for x in range(cx - 4, cx + 5) for y in range(cy - 4, cy + 5)}
     assert gold not in [shattered.get(xy) for xy in ring], "the target's gone"
-    assert any(abs(x - cx) > 5 and y < 40 for x, y in shattered if x > 36), "its sparks fly out"
-    _, after = _at(START + actor.hit_s + MeridaShoots.SHATTER_S + 0.1)
+    assert any(abs(x - cx) > 5 for x, y in shattered if x > 36), "its sparks fly out"
+    _, after = _at(START + actor.hit_s + MeridaShoots.SHATTER_S + 0.1, height)
     assert all(x < 40 for x, _ in after), "then only Merida again"
 
 
-def test_the_bullseye_sits_on_her_aim_high_on_the_right():
-    actor, _ = _at(START + 1)
+@pytest.mark.parametrize("height, rows", [(64, (8, 26)), (32, (4, 20))])
+def test_the_bullseye_sits_on_her_aim_high_on_the_right(height, rows):
+    actor, _ = _at(START + 1, height)
     cx, cy = actor.target
-    assert cx == MeridaShoots.TARGET_X and 8 <= cy <= 26
+    assert cx == MeridaShoots.TARGET_X and rows[0] <= cy <= rows[1]
     (nx, ny), (ux, uy) = actor.nock, actor.aim
     k = (cx + 0.5 - nx) / ux
     assert abs(ny + uy * k - (cy + 0.5)) <= 0.5

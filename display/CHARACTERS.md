@@ -615,7 +615,8 @@ show's clock, not by frames, and share the board with fireworks and the castle.
   forward); a release needs the string to snap and the hand to fly back, or the arrow "just pops off";
   draw a nocked arrow last and edge it dark, or her arm and hair hide it; when a prop moves, draw what
   was behind it (her skirt under the bow's foot); an outline pass must never paint over another layer's
-  cells; a gap between an arm and a body reads as a hole in the dress. Her tests check every baked frame
+  cells; a gap between an arm and a body reads as a hole in the dress. On 64x32 she stands waist up (her
+  waist on the bottom row): everything she does happens above it, so the same frames play, just lower. Her tests check every baked frame
   for a whole skirt and a mouth.
 - **Tests per actor:** placement and bounds on both boards, the key moments by the clock, "follows the
   clock, not the frames" (30 fps and 7 fps land on the same frame), nothing drawn when inactive.

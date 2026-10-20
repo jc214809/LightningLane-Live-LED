@@ -10,8 +10,8 @@ from utils import debug
 
 class MeridaShoots(Actor):
     """
-    Touch the Sky: Merida, the archer's art full size at the bottom left (64x64 only, as 64x32 is too short
-    for her), rises in her first ENTER_S and says her line, "Your destiny lies within you...", to the
+    Touch the Sky: Merida, the archer's art full size at the bottom left (on 64x32, too short for her, from
+    the waist up: her waist on the bottom row, and all she does happens above it), rises in her first ENTER_S and says her line, "Your destiny lies within you...", to the
     score's mouth track, holding her bow by its top, its foot planted at her side, her other hand on her
     hip. Then she tosses it up, catches it, draws and leans back to aim; on "chase the wind" a firework
     bursts into a bullseye high on the right (TARGET_S) and hangs there; on "touch" (LOOSE_S) she lets go:
@@ -39,7 +39,8 @@ class MeridaShoots(Actor):
 
     def __init__(self, show):
         super().__init__(show)
-        self.top = show.height - poses.H
+        self.top = show.height - poses.H if self.big else show.height - 1 - poses.WAIST
+        self.rise = show.height - self.top  # the rows of her the board shows: how far she rises and sinks
         if MeridaShoots._frames is None:
             MeridaShoots._frames = poses.load()
         self.built = {}  # frames missing from the bake, built once (slow) if ever needed
@@ -76,7 +77,7 @@ class MeridaShoots(Actor):
         LEAVE_S after the hit (or in her scene's last ENTER_S, if that comes first)."""
         gone = min(self.hit_s + self.LEAVE_S + self.ENTER_S, self.scene_s())
         p = min(1.0, e / self.ENTER_S, max(0.0, (gone - e) / self.ENTER_S))
-        return int(math.floor(poses.H * (1 - ease_out(max(0.0, p))) + 0.5))
+        return int(math.floor(self.rise * (1 - ease_out(max(0.0, p))) + 0.5))
 
     def frame(self, key):
         """A pose packed as {"x", "y", "rows"}: baked, or built (and kept) if the bake lacks it."""
@@ -87,12 +88,12 @@ class MeridaShoots(Actor):
         return packed
 
     def draw(self, put, out, active):
-        if not active or not self.big:
+        if not active:
             return
         e = self.elapsed()
         self.draw_target(out, e)
         dy = self.drop(e)
-        if dy < poses.H:
+        if dy < self.rise:
             f = self.frame(poses.frame_key(e, self.mouth("merida")))
             stamp(out, f["rows"], self.COLORS, self.LEFT + f["x"], self.top + f["y"] + dy, 1,
                   self.show.width, self.show.height)
