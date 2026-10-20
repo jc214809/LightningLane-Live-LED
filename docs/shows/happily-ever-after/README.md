@@ -144,7 +144,7 @@ Times are audio seconds ((video − 10.19) / 1.001). Colours as Gemini named the
 - 256-268 When You Wish interlude: castle lavender, pink and turquoise; magenta/purple comets fan
   left and right (257-262), then a lull.
 - 268-303 Touch the Sky (Brave; titled Out There until its lyrics were checked): Merida's "Your
-  destiny lies within you" (265-271), the song from 276. Gemini described bells, gothic stone, moss, rose windows, Quasimodo swinging across the towers,
+  destiny lies within you" (265-271), the song from 276. (V2's Merida lets go on "touch", 295.36.) Gemini described bells, gothic stone, moss, rose windows, Quasimodo swinging across the towers,
   white doves along the spires (289-302). Gold willow, one red comet high over the spire (277-280),
   emerald and white strobes (280-290), a fan of red/gold comets and ruby peonies (291-300).
 

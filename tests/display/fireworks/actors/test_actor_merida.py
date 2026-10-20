@@ -2,6 +2,8 @@ import random
 
 import pytest
 
+from display.animation.characters.archer import ArcherReveal as Archer
+from display.fireworks.actors import merida_poses as poses
 from display.fireworks.actors.merida import MeridaShoots
 from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue, Lips
@@ -30,62 +32,127 @@ def _at(t, height=64, lips=None):
 
 
 def _her(out):
-    return {xy for xy, rgb in out.items() if rgb in MeridaShoots.COLORS.values()}
+    dress = {MeridaShoots.COLORS[k] for k in "DNT"}
+    return {xy for xy, rgb in out.items() if rgb in dress}
 
 
-def test_merida_rises_at_the_bottom_left_and_stands_there():
+def test_merida_rises_full_size_at_the_bottom_left_and_stands_there():
     _, early = _at(START + 0.1)
     actor, standing = _at(START + 5)
     her = _her(standing)
     assert len(_her(early)) < len(her), "still rising"
-    assert max(y for _, y in her) == 63 and min(x for x, _ in her) == 0, "bottom left"
-    assert max(x for x, _ in her) < 26, "left of the castle's middle"
-    assert all(0 <= x < 64 and 0 <= y < 64 for x, y in standing)
+    boots = MeridaShoots.COLORS["z"]
+    assert max(y for (x, y), rgb in standing.items() if rgb == boots) == 62 and max(y for _, y in standing) == 63, \
+        "her boots (and their outline) on the bottom rows"
+    assert min(x for x, _ in her) <= MeridaShoots.LEFT + 1, "at the left"
+    assert max(y for _, y in standing) - min(y for _, y in standing) == 47, "full size: hair to boots, 1x"
     _, gone = _at(END - 0.001)
     assert not _her(gone), "sunk away by her scene's end"
 
 
-def test_on_64x32_she_stays_off():
-    _, out = _at(START + 5, height=32)
-    assert out == {}
-    _, shot = _at(START + MeridaShoots.HIT_S - 0.3, height=32)
-    assert shot == {}
+@pytest.mark.parametrize("height", [64, 32])
+def test_she_sinks_away_two_seconds_after_the_hit(height):
+    actor, _ = _at(START + 1, height)
+    leave = actor.hit_s + MeridaShoots.LEAVE_S
+    _, standing = _at(START + leave - 0.05, height)
+    _, sinking = _at(START + leave + MeridaShoots.ENTER_S / 2, height)
+    _, gone = _at(START + leave + MeridaShoots.ENTER_S + 0.05, height)
+    assert len(_her(sinking)) < len(_her(standing)), "going down"
+    assert gone == {}, "off the board (the bullseye's sparks long done)"
+    assert _at(START + 32, height)[1] == {}, "and stays gone for the rest of her scene"
+
+
+@pytest.mark.parametrize("height", [64, 32])
+def test_she_stays_on_the_board_all_scene(height):
+    show = MusicShow(64, height, random.Random(4))
+    actor, cue = MeridaShoots(show), _scene()
+    for i in range(int((END - START) * 10)):
+        out = _frame(show, actor, cue, START + i / 10)
+        assert all(0 <= x < 64 and 0 <= y < height for x, y in out)
+
+
+def test_every_frame_she_shows_is_baked():
+    show = MusicShow(64, 64, random.Random(5))
+    actor = MeridaShoots(show)
+    assert actor.built == {}
+    for i in range(0, int((END - START) * 30)):
+        actor.frame(poses.frame_key(i / 30, i % 3))
+    assert actor.built == {}, "nothing had to be built on the board"
+
+
+def test_a_frame_missing_from_the_bake_is_built_once_with_a_warning(monkeypatch):
+    from display.fireworks.actors import merida as module
+    warnings = []
+    monkeypatch.setattr(module.debug, "warning", warnings.append)
+    monkeypatch.setattr(MeridaShoots, "_frames", {})
+    actor = MeridaShoots(MusicShow(64, 64, random.Random(6)))
+    first = actor.frame("held")
+    assert first == poses.pack(poses.build("held")) and actor.frame("held") is first
+    assert len(warnings) == 1 and "build_merida_poses" in warnings[0]
+
+
+def test_on_64x32_she_stands_waist_up():
+    small, out = _at(START + 5, height=32)
+    actor, big = _at(START + 5)
+    dress = {MeridaShoots.COLORS[k] for k in "DNTy"}
+    assert max(y for (x, y), rgb in out.items() if rgb in dress) == 31, "her waist on the bottom row"
+    up = actor.top - small.top
+    assert up == 9 and {(x, y + up) for x, y in out} <= set(big), "the same Merida, 1x: her legs below the board"
+    face = MeridaShoots.COLORS["e"]  # her eyes
+    assert any(rgb == face for rgb in out.values()), "her face on the board"
 
 
 def test_she_mouths_her_line_by_the_clock():
     track = "0" * 15 + "1" * 15 + "2" * 15  # a second each of closed, half, open
     lips = {"merida": Lips(START + 5, 15.0, track)}
-    actor = None
-    mouths = []
-    for t in (5.5, 6.5, 7.5):
-        actor, out = _at(START + t, lips=lips)
-        mouths.append({xy for xy, rgb in out.items() if rgb == MeridaShoots.COLORS["D"]})
+    inside = MeridaShoots.COLORS["X"]
+    mouths = [{xy for xy, rgb in _at(START + t, lips=lips)[1].items() if rgb == inside} for t in (5.5, 6.5, 7.5)]
     assert len(mouths[0]) == 0 < len(mouths[1]) < len(mouths[2]), "shut (her smile), then half, then open"
     _, smiling = _at(START + 5.5, lips=lips)
     assert MeridaShoots.COLORS["m"] in smiling.values(), "a closed smile"
 
 
-def test_on_touch_the_sky_her_arrow_hits_the_bullseye_and_it_shatters():
-    cx, cy = MeridaShoots.TARGET
+def test_the_nocked_arrow_shows_while_she_aims():
+    shaft = MeridaShoots.COLORS["a"]
+    for t in (poses.DRAW + 0.1, poses.LEAN_AT + 0.4, MeridaShoots.LOOSE_S - 0.05):
+        _, out = _at(START + t)
+        assert sum(rgb == shaft for rgb in out.values()) >= 8, f"{t}: the arrow's hidden"
+
+
+@pytest.mark.parametrize("height", [64, 32])
+def test_on_touch_her_arrow_flies_off_the_string_fast_into_the_bullseye_and_it_shatters(height):
+    actor, before = _at(START + MeridaShoots.TARGET_S - 0.1, height)
+    cx, cy = actor.target
     gold = MeridaShoots.RINGS[0][1]
-    _, before = _at(START + MeridaShoots.TARGET_S - 0.1)
     assert (cx, cy) not in before, "no target before its burst"
-    _, hanging = _at(START + MeridaShoots.LOOSE_S - 0.1)
+    assert actor.hit_s - actor.LOOSE_S < 0.25, "the archer's speed, not a drift"
+    _, hanging = _at(START + MeridaShoots.LOOSE_S - 0.05, height)
     r, g, b = hanging[(cx, cy)]
     assert r > 150 and g > 3 * b, "its gold centre (twinkling)"
-    actor, flying = _at(START + (MeridaShoots.LOOSE_S + MeridaShoots.HIT_S) / 2)
-    (x, y), _ = actor.arrow_at(actor.elapsed())
-    assert actor.nock[0] < x < cx and flying.get((round(x), round(y))) == MeridaShoots.TIP, "in flight, toward it"
-    actor, hit = _at(START + MeridaShoots.HIT_S - 0.01)
-    (x, y), _ = actor.arrow_at(actor.elapsed())
-    assert abs(x - cx) <= 1 and abs(y - cy) <= 1, "it strikes the centre"
-    _, shattered = _at(START + MeridaShoots.HIT_S + 0.4)
+    actor, leaving = _at(START + MeridaShoots.LOOSE_S + 0.01, height)
+    assert actor.arrow_tail(actor.elapsed()) < 1, "it leaves from where it sat on the string"
+    actor, hit = _at(START + actor.hit_s - 0.005, height)
+    d = actor.arrow_tail(actor.elapsed())
+    (nx, ny), (ux, uy) = actor.nock, actor.aim
+    head = (nx + ux * (d + Archer.ARROW_LEN - 1), ny + uy * (d + Archer.ARROW_LEN - 1))
+    assert abs(head[0] - (cx + 0.5)) <= 1.5 and abs(head[1] - (cy + 0.5)) <= 1.5, "it strikes the centre"
+    assert hit.get((int(head[0]), int(head[1]))) == Archer.TIP_RGB
+    _, shattered = _at(START + actor.hit_s + 0.4, height)
     ring = {(x, y) for x in range(cx - 4, cx + 5) for y in range(cy - 4, cy + 5)}
     assert gold not in [shattered.get(xy) for xy in ring], "the target's gone"
-    assert any(abs(x - cx) > 4 or abs(y - cy) > 4 for x, y in shattered if (x, y) not in _her(shattered)), \
-        "its sparks fly out"
-    _, after = _at(START + MeridaShoots.HIT_S + MeridaShoots.SHATTER_S + 0.1)
-    assert set(after) == set(_at(START + 20)[1]), "then only Merida again"
+    assert any(abs(x - cx) > 5 for x, y in shattered if x > 36), "its sparks fly out"
+    _, after = _at(START + actor.hit_s + MeridaShoots.SHATTER_S + 0.1, height)
+    assert all(x < 40 for x, _ in after), "then only Merida again"
+
+
+@pytest.mark.parametrize("height, rows", [(64, (8, 26)), (32, (4, 20))])
+def test_the_bullseye_sits_on_her_aim_high_on_the_right(height, rows):
+    actor, _ = _at(START + 1, height)
+    cx, cy = actor.target
+    assert cx == MeridaShoots.TARGET_X and rows[0] <= cy <= rows[1]
+    (nx, ny), (ux, uy) = actor.nock, actor.aim
+    k = (cx + 0.5 - nx) / ux
+    assert abs(ny + uy * k - (cy + 0.5)) <= 0.5
 
 
 def test_merida_follows_the_clock_not_the_frames():
@@ -94,10 +161,10 @@ def test_merida_follows_the_clock_not_the_frames():
         show = MusicShow(64, 64, random.Random(2))
         actor, cue = MeridaShoots(show), _scene()
         i = 0
-        while START + i / fps <= START + MeridaShoots.LOOSE_S + 0.4:
-            out = _frame(show, actor, cue, START + i / fps)
+        while START + i / fps <= START + MeridaShoots.LOOSE_S + 0.1:
+            _frame(show, actor, cue, START + i / fps)
             i += 1
-        frames.append(_frame(show, actor, cue, START + MeridaShoots.LOOSE_S + 0.4))
+        frames.append(_frame(show, actor, cue, START + MeridaShoots.LOOSE_S + 0.1))
     assert frames[0] == frames[1]
 
 

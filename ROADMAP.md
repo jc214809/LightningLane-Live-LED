@@ -16,7 +16,7 @@ Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf 
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
 Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
 (`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), Rex (`rex`), and the
-Aliens and the claw (`aliens`), Forky (`forky`), the lightsaber clash (`saber_clash`), the lightsaber duels (`saber_duel`: Luke, Obi-Wan or Yoda against Vader, or Rey against Kylo Ren), and Kevin with Dug and his balloons (`kevin`).
+Aliens and the claw (`aliens`), Forky (`forky`), the lightsaber clash (`saber_clash`), the lightsaber duels (`saber_duel`: Luke, Obi-Wan or Yoda against Vader, or Rey against Kylo Ren), Kevin with Dug and his balloons (`kevin`), and Merida the archer (`archer`, 64x64 only).
 
 Put a ✅ in the Done column when a character ships.
 
@@ -85,6 +85,7 @@ Put a ✅ in the Done column when a character ships.
 | 61 | ✅ | Yoda vs Darth Vader | DHS: Galaxy's Edge, Star Tours | Yoda stays small, hops in and leaps into each of his attacks | Wipe over the old screen (`saber_duel_yoda`, picked by `saber_duel`) |
 | 62 | ✅ | Rey vs Kylo Ren | DHS: Galaxy's Edge, Star Tours | the same fight; Kylo's crossguard blade crackles | Wipe over the old screen (`saber_duel_kylo`, picked by `saber_duel`) |
 | 63 | ✅ | Kevin and Dug (Up) | a surprise anywhere | Kevin struts across with Dug chasing behind her; his balloons lift him slowly higher as he goes, and he floats off the right edge up high while she stays on the ground | Over the finished screen (`kevin`, `over_screen`) |
+| 64 | ✅ | Merida, the archer (Brave) | a surprise anywhere, 64x64 only | rises at full draw, looses: the string snaps and rings, the arrow flies across and the new ride appears behind it; she sinks away. Also Happily Ever After's Touch the Sky (V2): the same art, posed and baked (`merida_poses.py`) | Own reveal behind the arrow (`archer`) |
 
 ### Notes per character
 
