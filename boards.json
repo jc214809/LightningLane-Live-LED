@@ -29,7 +29,8 @@
     "led_rows": 64,
     "led_cols": 64,
     "led_gpio_mapping": "adafruit-hat-pwm",
-    "led_slowdown_gpio": 2
+    "led_slowdown_gpio": 2,
+    "led_pixel_mapper": "Rotate:90"
   },
   "Joels-MacBook-Pro": {
     "led_rows": 64,
