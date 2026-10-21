@@ -51,6 +51,19 @@ def test_blank_name_is_no_name():
     assert parse_trips(config)[0].name is None
 
 
+def test_the_example_configs_trips_all_parse():
+    # config.json-example is what boards start from: every trip in it must be readable.
+    import json
+    import os
+    example = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "config.json-example")
+    with open(example) as f:
+        config = json.load(f)
+    entries = config["trip_countdown"]["trip_dates"]
+    trips = parse_trips(config)
+    assert len(trips) == len(entries)
+    assert any(t.end and t.name for t in trips) and any(t.end is None for t in trips), "shows both forms"
+
+
 def test_legacy_single_trip_date():
     assert parse_trips({"trip_countdown": {"trip_date": "2026-11-10"}}) == [Trip(date(2026, 11, 10))]
     assert parse_trips({"trip_countdown": {}}) == []

@@ -307,6 +307,26 @@ You can find the signup page for OpenWeatherMap at [https://home.openweathermap.
 
 There's nothing else to set: each park's location comes from the ThemeParks Wiki data.
 
+### Trip Countdown
+The countdown plays after the castle intro. List your trips in `config.json`:
+
+```json
+"trip_countdown": {
+  "enabled": true,
+  "trip_dates": [
+    {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"},
+    "2027-06-01"
+  ]
+}
+```
+
+- Each trip is either `{"start", "end", "name"}` (`end` and `name` optional) or just a start date. Dates are `YYYY-MM-DD`.
+- The board shows one trip at a time: the trip under way, otherwise the next one. A later trip doesn't appear until the one before it has finished.
+- Before a trip: `N DAYS TO <name>`, then `DISNEY TOMORROW` the day before and `IT'S DISNEY DAY!` on the first day. A name too wide for the board shows as `DISNEY`.
+- **With an end date:** `DAY 2 OF 6` and so on through the last day, then `WELCOME HOME!` for 2 days, then the next trip.
+- **With only a start date:** `HAVE A MAGICAL TRIP!` for 7 days after the start, then the next trip. Give a trip an end date to have the board count its days and move on when it's over.
+- A trip the board can't read (a bad date, an end before the start) is skipped, with a warning in the log. The startup log lists the trips it read (`Configured trips: ...`).
+
 ### Sound
 The board can play the fireworks soundtrack while its castle fireworks run. For Happily Ever After it plays the whole show, about 18 minutes, with the fireworks following the music: each part's colours, quiet moments, a wishing star, rising lanterns, the castle on fire, and a white flash on the last note. On a Pi this needs a **USB sound card** (with an OTG adapter on a Pi Zero) and a powered speaker. The Pi's own audio can't be used: it shares hardware with the LED matrix, and the installer turns it off. I2S amp boards clash with the RGB Matrix Bonnet's pins. An emulator run on a Mac plays through the Mac's speakers. Parts lists and hook-up diagrams (a plug-in USB speaker, or a small speaker and amp built into the case) are in [docs/hardware/SOUND.md](docs/hardware/SOUND.md). A power button on the back that shuts the Pi down safely and starts it again is in [docs/hardware/POWER.md](docs/hardware/POWER.md).
 
