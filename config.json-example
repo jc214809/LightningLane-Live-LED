@@ -8,8 +8,8 @@
   "trip_countdown": {
     "enabled": true,
     "trip_dates": [
-      "2025-06-25",
-      {"start": "2025-12-01", "end": "2025-12-06", "name": "Fall Trip"}
+      {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"},
+      "2027-06-01"
     ]
   },
   "sound": {
@@ -43,7 +43,9 @@
     "emulated": null,
     "drop_privileges": null
   },
-  "shows": [],
+  "shows": [
+    {"name": "Happily Ever After", "enabled": true, "version": "default"}
+  ],
   "force_surprise": "",
   "debug": false
 }
