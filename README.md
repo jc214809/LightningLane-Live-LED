@@ -59,6 +59,7 @@ It asks everything first (hostname, app, whether to set the panel options here (
 - **This app:** the service carries no panel flags. If you said yes to the panel options and `boards.json` has no entry for the hostname, they go in `config.json`'s `matrix` section instead (or add an entry for the board and commit it). A new `config.json` is copied from the example: fill in your keys afterwards.
 - **Peloton-LED:** its own installer puts it in `/opt/peloton-led` and asks for the riders; if you chose to set the panel options here, this script adds them in a drop-in, `/etc/systemd/system/peloton-led.service.d/board.conf`.
 - `--branch develop-sound` installs this app from another branch (the default is `develop-beta`; the branch question asks it too).
+- **Wi-Fi setup hotspot (every board, every app):** it installs [comitup](https://davesteele.github.io/comitup/). When no Wi-Fi the board knows is in range, the board opens a hotspot named after it, `<hostname>-setup` (e.g. `Disneypi-setup`), with no password. Join it from a phone, pick your network on the page that opens (or browse to http://10.41.0.1/), and the board joins it. While the hotspot is up, this app's screen says `Wi-Fi setup`, `Join` and the hotspot's name. The hotspot is open, so anyone nearby can join it and see the Wi-Fi password typed into that page, but only while the board is in setup. Networks the board already has are kept and always tried first. It needs NetworkManager (Raspberry Pi OS Bookworm or later): an older board is skipped. `LLL-install.sh` sets it up too (`-w` skips it); `sudo bash board-setup.sh --wifi-setup-only` does just this.
 - `--answers board.txt` answers questions ahead with `KEY=value` lines (`APP=lll`, `LED_ROWS=64`, ...; `--help` lists the keys). `--dry-run` prints everything it would do and changes nothing. The Wi-Fi password is never stored in the answers file or put on a command line.
 
 Reboot afterwards if it says so (boot settings changed).
@@ -102,13 +103,14 @@ It will also install the following python libraries that are required for certai
 Additional flags are available for customizing your install:
 
 ```
--a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m -v).
+-a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m -v -w).
 -c, --skip-config       Skip updating JSON configuration files. (Currently no effect: the installer never changes config.json.)
 -m, --skip-matrix       Skip building matrix driver dependency. Video display will default to emulator mode.
 -p, --skip-python       Skip Python 3 installation. Requires manual Python 3 setup if not already installed.
 
 -v, --no-venv           Do not create a virtual environment for the dependencies.
 -e, --emulator-only     Do not install dependencies under sudo. Skips building matrix dependencies (equivalent to -m)
+-w, --skip-wifi-setup   Skip the Wi-Fi setup hotspot (see board-setup.sh above). Linux only; -e skips it too.
 -d, --driver            Specify a branch name or commit SHA for the rpi-rgb-led-matrix library. (Default: master)
 
 -f, --force             Try to skip most errors and force install. May be able to recover from previous installer errors.
