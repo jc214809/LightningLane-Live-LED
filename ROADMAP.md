@@ -969,3 +969,11 @@ Not done:
   chunks disagreed there; the score follows the more detailed one.
 - The real show's projected characters (Mufasa in the clouds, Hercules, the stained-glass heroes)
   aren't drawn: that's the character batches above.
+
+## 14. A settings page in setup mode
+
+The Wi-Fi setup hotspot (comitup, built 2026-10-21) only picks the Wi-Fi network. Next: a page for
+`config.json` (API keys, trip dates, parks, sound) so a board can be set up with no SSH at all.
+Served while the hotspot is up (comitup's `web_service` key runs a systemd service only then), or
+on the home network too, behind something better than an open page.
+
