@@ -19,7 +19,7 @@ from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen
-from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, fireworks_show
+from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, dated_landmark, fireworks_show
 from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
@@ -268,9 +268,11 @@ def _static(render, *args):
 
 def initialize_park_information_screen(matrix, park):
     party = active_party(park)
-    landmark = landmark_for(park.get("name"), party)
+    dated = dated_landmark(park)
+    landmark = landmark_for(park.get("name"), party, dated)
     if landmark:
-        debug.info(f"Rendering {park['name']} landmark{f' for the {party} party' if party else ''}.")
+        why = f" for today ({dated})" if dated else f" for the {party} party" if party else ""
+        debug.info(f"Rendering {park['name']} landmark{why}.")
         scene = landmark(matrix.width, matrix.height, park=park)
         show_screen(matrix, landmark_screen(scene), scene.SCREEN_S)
     debug.info(f"Rendering {park['name']} Title Screen. | Weather: {park.get('weather')}")

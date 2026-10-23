@@ -969,3 +969,14 @@ Not done:
   chunks disagreed there; the score follows the more detailed one.
 - The real show's projected characters (Mufasa in the clouds, Hercules, the stained-glass heroes)
   aren't drawn: that's the character batches above.
+
+## 14. runDisney race-day landmarks
+
+The Wine & Dine 5K (2026-10-23, Marie, `WineAndDine5KLandmark`) is built. The same weekend's other
+medals have themes and no landmark yet; reference: `docs/references/Wine and Dine 2026 medals.png`.
+Add each as a landmark plus a `DATED_LANDMARKS` entry (EPCOT, race date):
+- 10K: the Three Caballeros (Panchito on the medal).
+- Half marathon: the Mary Poppins penguin waiters.
+- Two Course Challenge (10K + half): Grumpy.
+Other runDisney weekends (Princess, Marathon, Springtime Surprise) would work the same way; their
+dates change every year, so the entries need updating before each race.

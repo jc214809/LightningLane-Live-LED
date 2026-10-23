@@ -515,6 +515,28 @@ early characters above, and mostly for process reasons. Read this before redoing
   `SCREEN_S`, once, in order.
 - Variants and random picks: both motions get picked; only the intended burst shapes appear.
 
+### The Wine & Dine 5K (`WineAndDine5KLandmark`)
+
+Marie for the runDisney 5K, picked from four concepts (medal, Eiffel Tower, toast, finish line) and
+then four layouts of the toast. What helped:
+
+- **Find a pattern, don't draw from promo art.** My Marie traced from the medal graphic read as a
+  generic cat. Google Images (in Chrome: "marie aristocats perler bead pattern", "... pixel art
+  sprite") found Pixilart and BraceletBook charts that web search never shows. `analyze_reference.py`
+  read them cell for cell; an outline-on-white chart needs its outside flood-filled away.
+- **Pastels go white on LEDs.** The art's pastel pink bow and ears were indistinguishable from her
+  fur; deepened pinks fixed it. A black outline vanishes on a black night sky (use a grey rim there);
+  on the purple Paris sky a black one reads, and it's what the user picked.
+- **Check props against what they sit on.** Pale glasses disappeared on her white fur at 2x; they
+  only work off her body (or with a dark rim).
+- **64x64 wanted the space filled.** The 1x peeking Marie left 64x64 mostly empty, so it got a
+  different, taller Marie (48 rows) and a bigger title instead of the same art.
+- **Bigger title fonts:** `landmark_screen` only draws the 4x6 title font, so this scene bakes its
+  title (9x18B "5K", 5x8 "Wine & Dine") into pixels in `build()` from the BDF files via
+  `capture._glyphs`.
+- **A day the API can't name:** races run before the park opens and never appear in the park data,
+  so `utils/special_events.py` `DATED_LANDMARKS` swaps a landmark in by the park's local date.
+
 ### Before redoing Spaceship Earth
 
 The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders
