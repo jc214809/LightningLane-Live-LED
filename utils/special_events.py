@@ -5,6 +5,9 @@ The schedule only ever says "Special Ticketed Event"; what names the party is th
 attraction list, which carries entities like "... at Mickey's Not-So-Scary Halloween Party".
 Deluxe Extended Evening Hours is the exception: the schedule names it itself.
 To add a party, add an entry to SPECIAL_EVENTS.
+
+Days the park data can't name at all (a runDisney race is run before the park opens) are in
+DATED_LANDMARKS, matched by the park's local date. To add one, add an entry there.
 """
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -34,6 +37,13 @@ SPECIAL_EVENTS = {
     # Named by the schedule entry's own description rather than by the park's entities.
     "extended_evening": {"schedule": "extended evening", "star_rgb": (255, 215, 0)},
 }
+
+# A park's own landmark for one day, by its local date: race days the park data never mentions.
+# "park" is matched loosely on the park's name, like display/landmarks LANDMARKS; "landmark" is a
+# class name there. Add a day by adding an entry.
+DATED_LANDMARKS = [
+    {"date": "2026-10-23", "park": "epcot", "landmark": "WineAndDine5KLandmark"},  # Wine & Dine 5K, the Aristocats
+]
 
 # A special event we can't name gets a white star.
 DEFAULT_STAR_RGB = (255, 255, 255)
@@ -74,6 +84,16 @@ def _local_today(park, now):
         debug.warning(f"{park.get('name')}: unknown timezone {park.get('timezone')!r}; using UTC for special events.")
         tz = timezone.utc
     return now.astimezone(tz).strftime("%Y-%m-%d")
+
+
+def dated_landmark(park, now=None):
+    """The DATED_LANDMARKS class name for this park today (its local date), or None."""
+    today = _local_today(park, now or datetime.now(timezone.utc))
+    name = (park.get("name") or "").lower()
+    for entry in DATED_LANDMARKS:
+        if entry["date"] == today and entry["park"] in name:
+            return entry["landmark"]
+    return None
 
 
 def special_event_now(park, now=None):

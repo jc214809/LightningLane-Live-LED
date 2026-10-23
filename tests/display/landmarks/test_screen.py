@@ -38,6 +38,18 @@ def test_every_special_events_landmark_exists():
         assert isinstance(cls, type) and issubclass(cls, landmarks.Landmark), key
 
 
+def test_a_dated_landmark_wins_over_the_park_and_a_party():
+    assert landmarks.landmark_for("EPCOT", None, "WineAndDine5KLandmark") is landmarks.WineAndDine5KLandmark
+    assert landmarks.landmark_for("Magic Kingdom", "halloween", "WineAndDine5KLandmark") is landmarks.WineAndDine5KLandmark
+    assert landmarks.landmark_for("EPCOT", None, None) is landmarks.SpaceshipEarthLandmark
+
+
+def test_every_dated_landmark_exists():
+    for entry in landmarks.DATED_LANDMARKS:
+        cls = landmarks.landmark_for("Anywhere", None, entry["landmark"])
+        assert isinstance(cls, type) and issubclass(cls, landmarks.Landmark), entry
+
+
 def test_an_event_without_a_landmark_keeps_the_parks_own():
     assert landmarks.landmark_for("Magic Kingdom", "christmas") is landmarks.CastleLandmark
     assert landmarks.landmark_for("EPCOT", "extended_evening") is landmarks.SpaceshipEarthLandmark

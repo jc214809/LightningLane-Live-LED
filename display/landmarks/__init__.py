@@ -2,7 +2,8 @@
 Short animated landmark scenes shown before each park's title screen.
 
 Split by landmark: scene.py (the Landmark base), castle.py, spaceship_earth.py,
-tower_of_terror.py, tree_of_life.py, pumpkins.py (the Halloween-party jack-o'-lanterns), and
+tower_of_terror.py, tree_of_life.py, pumpkins.py (the Halloween-party jack-o'-lanterns),
+wine_and_dine.py (the Wine & Dine 5K's Marie, for its race day), and
 screen.py (landmark_for and landmark_screen). Everything is re-exported here, so
 `from display import landmarks` and `landmarks.X` work as they did when this was one file.
 """
@@ -36,6 +37,10 @@ from display.landmarks.pumpkins import (  # noqa: F401
     FriendlyJackOLanternLandmark,
 )
 
+from display.landmarks.wine_and_dine import (  # noqa: F401
+    WineAndDine5KLandmark,
+)
+
 from display.landmarks.screen import (  # noqa: F401
     LANDMARKS,
     landmark_for,
@@ -45,4 +50,4 @@ from display.landmarks.screen import (  # noqa: F401
 # Shared objects the tests patch attributes of (graphics.DrawText, loaded_fonts[...]).
 from driver import graphics  # noqa: F401,E402
 from display.display import loaded_fonts  # noqa: F401,E402
-from utils.special_events import SPECIAL_EVENTS  # noqa: F401,E402  (tests check every party's landmark exists)
+from utils.special_events import DATED_LANDMARKS, SPECIAL_EVENTS  # noqa: F401,E402  (tests check every party's and day's landmark exists)
