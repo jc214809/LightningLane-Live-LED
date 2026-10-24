@@ -43,6 +43,7 @@ SPECIAL_EVENTS = {
 # class name there. Add a day by adding an entry.
 DATED_LANDMARKS = [
     {"date": "2026-10-23", "park": "epcot", "landmark": "WineAndDine5KLandmark"},  # Wine & Dine 5K, the Aristocats
+    {"date": "2026-10-24", "park": "epcot", "landmark": "ThreeCaballeros10KLandmark"},  # Wine & Dine 10K
 ]
 
 # A special event we can't name gets a white star.

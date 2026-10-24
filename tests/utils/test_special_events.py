@@ -149,12 +149,13 @@ def test_a_party_named_after_hours_colours_the_star():
     assert fireworks_show(mk(party("2026-09-27"), seasonal="christmas"), now) == NIGHTLY_FIREWORKS
 
 
-def test_the_wine_and_dine_5k_is_epcots_landmark_on_race_day_only():
+def test_the_wine_and_dine_races_are_epcots_landmarks_on_their_race_days_only():
     epcot = {"name": "EPCOT", "timezone": ET}
     assert dated_landmark(epcot, et("2026-10-23 09:00")) == "WineAndDine5KLandmark"
     assert dated_landmark(epcot, et("2026-10-23 23:30")) == "WineAndDine5KLandmark", "UTC is already the 24th"
     assert dated_landmark(epcot, et("2026-10-22 23:30")) is None, "UTC is already the 23rd"
-    assert dated_landmark(epcot, et("2026-10-24 09:00")) is None
+    assert dated_landmark(epcot, et("2026-10-24 09:00")) == "ThreeCaballeros10KLandmark", "the 10K, the next day"
+    assert dated_landmark(epcot, et("2026-10-25 09:00")) is None
     assert dated_landmark(mk(), et("2026-10-23 09:00")) is None, "only EPCOT"
 
 
