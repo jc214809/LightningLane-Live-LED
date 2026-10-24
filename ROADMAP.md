@@ -972,11 +972,15 @@ Not done:
 
 ## 14. runDisney race-day landmarks
 
-The Wine & Dine 5K (2026-10-23, Marie, `WineAndDine5KLandmark`) is built. The same weekend's other
-medals have themes and no landmark yet; reference: `docs/references/Wine and Dine 2026 medals.png`.
-Add each as a landmark plus a `DATED_LANDMARKS` entry (EPCOT, race date):
-- 10K: the Three Caballeros (Panchito on the medal).
+The Wine & Dine 5K (2026-10-23, Marie, `WineAndDine5KLandmark`) and 10K (2026-10-24, the Three
+Caballeros, `ThreeCaballeros10KLandmark`) are built. The same weekend's other medals have themes and no
+landmark yet; reference: `docs/references/Wine and Dine 2026 medals.png`. Add each as a landmark plus a
+`DATED_LANDMARKS` entry (EPCOT, race date):
 - Half marathon: the Mary Poppins penguin waiters.
 - Two Course Challenge (10K + half): Grumpy.
 Other runDisney weekends (Princess, Marathon, Springtime Surprise) would work the same way; their
 dates change every year, so the entries need updating before each race.
+
+Later for the Caballeros: the Gran Fiesta Tour poster (`docs/references/Gran Fiesta Tour EPCOT poster.png`)
+has them riding the striped magic serape over the Mexico pavilion, which would suit a ride-screen
+surprise on Gran Fiesta Tour all year. The 10K's sprites could be reused.

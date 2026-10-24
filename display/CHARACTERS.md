@@ -537,6 +537,25 @@ then four layouts of the toast. What helped:
 - **A day the API can't name:** races run before the park opens and never appear in the park data,
   so `utils/special_events.py` `DATED_LANDMARKS` swaps a landmark in by the park's local date.
 
+### The Wine & Dine 10K (`ThreeCaballeros10KLandmark`)
+
+José, Panchito (centre stage) and Donald under a gold 10K; each hops in turn, then all three as
+confetti falls. It took many rounds; what finally worked, and what didn't:
+
+- **Traced renders, kept as traced.** The sprites the user picked came from the Disney wiki's
+  transparent renders (DuckTales 2017 Panchito and José, a classic Donald), downsampled by alpha
+  silhouette and colour vote with the black line art kept (a cell that's 30%+ line stays black),
+  then snapped to saturated LED colours. Line art kept was the step that made Donald read as Donald.
+- **Small edits on top, not redraws.** Donald's cap became a sombrero (centred on his head: the user
+  checks symmetry) and his raised arm was slanted out clear of the brim. Edits to traced art are
+  quick to judge; my own redraws of whole characters weren't.
+- **What didn't land:** hand-drawn characters from scratch (read as penguins or generic birds),
+  a shaded game sprite beside traced cartoon art (styles clashed), runners on sliding sprites (two
+  run frames still looked like floating), and auto-shaded heads (shading turned faces to mud).
+  A pixel chart (José on graph paper) and the flat Gran Fiesta Tour poster style looked promising.
+- **Mock up many options at once, side by side.** The user picked from sheets of four (layouts,
+  styles, ideas) far faster than from one version at a time.
+
 ### Before redoing Spaceship Earth
 
 The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders
