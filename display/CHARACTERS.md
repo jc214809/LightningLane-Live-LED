@@ -556,6 +556,35 @@ confetti falls. It took many rounds; what finally worked, and what didn't:
 - **Mock up many options at once, side by side.** The user picked from sheets of four (layouts,
   styles, ideas) far faster than from one version at a time.
 
+### The Wine & Dine half marathon (`PenguinWaitersHalfLandmark`, `GrumpyTwoCourseLandmark`)
+
+Two screens, picked at random each showing (a `DATED_LANDMARKS` entry can list several): three Mary
+Poppins penguin waiters flap and hop in turn, or Grumpy (the Two Course Challenge's medal, finishing
+the same day), arms folded, taps a foot and gives one grudging hop. Each names its own race in gold under
+"Wine & Dine": "Half Marathon", and "Challenge" with its distance, 19.3 (the user's calls; Grumpy
+isn't running just the half). What was new:
+
+- **Not everything traces.** There is no clean penguin render on the Disney wikis. The race poster
+  was too small (black penguins on navy; the beaks snapped to Big Ben's gold), and the 1964 film frame
+  has them overlapping and cut off at the waist. Hand-drawn penguins in the poster's pose worked: a
+  penguin is simple shapes, unlike the Caballeros. The user asked for them taller and slimmer than the
+  first round's (about 40 x 15 on 64x64, 20 x 10 on 64x32), filling the board under the title.
+- **A painted render loses the face; an outlined one keeps it.** Grumpy from a painted render traced
+  to a blur. A render with bold black outlines (the Disney wiki's arms-folded one) kept them once a
+  cell needed only 18% line to stay black (thin outlines miss the 30% the Caballeros used); brows
+  and eyes still got a small hand edit. The user picked it over a cross-stitch chart of him leaning on
+  a pickaxe, which filled 64x64 but kept little of his face.
+- **Reading a scanned cross-stitch chart:** `analyze_reference.py` turned the (untilted) scan 16.7
+  degrees until given `--no-turn`, and its pale pink beard read as background. Reading it by hand
+  worked: fit the grid from the line pattern, call a near-white cell beard only when its middle is
+  tinted, and black where backstitch crosses a cell (darker than its own fill, not just dark: dark
+  brown fill isn't a line).
+- **Props and backdrops that didn't make it:** a wine glass on a tray and the poster's Big Ben and
+  London skyline (which also swallowed the penguins' black backs).
+- **"HALF MARATHON" in 5x8 is exactly 64 px of ink:** it fits 64x64 edge to edge, with its shadow
+  clipped (`penguin_waiters.title_pixels`). On 64x32 it splits into corner pairs, or stacks down the
+  side beside a character too tall for the corners.
+
 ### Before redoing Spaceship Earth
 
 The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders

@@ -155,7 +155,9 @@ def test_the_wine_and_dine_races_are_epcots_landmarks_on_their_race_days_only():
     assert dated_landmark(epcot, et("2026-10-23 23:30")) == "WineAndDine5KLandmark", "UTC is already the 24th"
     assert dated_landmark(epcot, et("2026-10-22 23:30")) is None, "UTC is already the 23rd"
     assert dated_landmark(epcot, et("2026-10-24 09:00")) == "ThreeCaballeros10KLandmark", "the 10K, the next day"
-    assert dated_landmark(epcot, et("2026-10-25 09:00")) is None
+    half = ["PenguinWaitersHalfLandmark", "GrumpyTwoCourseLandmark"]
+    assert dated_landmark(epcot, et("2026-10-25 09:00"), choose=lambda names: names) == half, "the half, the day after"
+    assert dated_landmark(epcot, et("2026-10-26 09:00")) is None
     assert dated_landmark(mk(), et("2026-10-23 09:00")) is None, "only EPCOT"
 
 
@@ -165,6 +167,12 @@ def test_dated_landmarks_match_park_names_loosely_and_survive_missing_fields():
     assert dated_landmark({"name": "EPCOT"}, when) == "WineAndDine5KLandmark", "no timezone: UTC's date"
     assert dated_landmark({}, when) is None
     assert dated_landmark({"name": None}, when) is None
+
+
+def test_a_day_that_lists_several_landmarks_picks_one_each_showing():
+    epcot = {"name": "EPCOT", "timezone": ET}
+    picks = {dated_landmark(epcot, et("2026-10-25 09:00")) for _ in range(60)}
+    assert picks == {"PenguinWaitersHalfLandmark", "GrumpyTwoCourseLandmark"}
 
 
 def test_every_dated_landmark_entry_is_a_real_date():
