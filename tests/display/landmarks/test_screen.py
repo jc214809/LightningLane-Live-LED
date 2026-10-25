@@ -46,8 +46,10 @@ def test_a_dated_landmark_wins_over_the_park_and_a_party():
 
 def test_every_dated_landmark_exists():
     for entry in landmarks.DATED_LANDMARKS:
-        cls = landmarks.landmark_for("Anywhere", None, entry["landmark"])
-        assert isinstance(cls, type) and issubclass(cls, landmarks.Landmark), entry
+        names = entry["landmark"] if isinstance(entry["landmark"], list) else [entry["landmark"]]
+        for name in names:
+            cls = landmarks.landmark_for("Anywhere", None, name)
+            assert isinstance(cls, type) and issubclass(cls, landmarks.Landmark), entry
 
 
 def test_an_event_without_a_landmark_keeps_the_parks_own():

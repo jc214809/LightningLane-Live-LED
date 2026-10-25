@@ -14,6 +14,8 @@ from display.landmarks.tree_of_life import TreeOfLifeLandmark
 from display.landmarks.pumpkins import FriendlyJackOLanternLandmark, ScaryJackOLanternLandmark  # looked up by class name for parties (landmark_for)
 from display.landmarks.wine_and_dine import WineAndDine5KLandmark  # looked up by class name for its race day (landmark_for)
 from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # likewise
+from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # likewise
+from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # likewise
 
 
 LANDMARKS = {
