@@ -3,10 +3,9 @@ The Halloween-party jack-o'-lanterns: the scary one (triangle eyes, toothy grin)
 the friendly Mickey one built on it, which replaces Magic Kingdom's castle on party days.
 """
 
-from datetime import datetime
 import math
 
-from utils.special_events import special_event_now
+from utils.special_events import special_event_hours
 
 from display.landmarks.scene import Landmark
 from display.motion import ramp, smooth
@@ -274,14 +273,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
 
     def _party_hours(self):
         """The special event's (start, end) like ("7PM", "12AM"), from the park's schedule, or None."""
-        event = special_event_now(self.park) if self.park else None
-        times = []
-        for key in ("openingTime", "closingTime"):
-            try:
-                times.append(datetime.fromisoformat(event[key]).strftime("%I%p").lstrip("0"))
-            except (TypeError, KeyError, ValueError):
-                return None
-        return tuple(times)
+        return special_event_hours(self.park)
 
     def title(self, t):
         lit = self._lit(t)

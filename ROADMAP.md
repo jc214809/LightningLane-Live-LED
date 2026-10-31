@@ -179,6 +179,8 @@ Other references, unused:
 
 **7. Santa Goofy / Mickey in a Santa hat (Christmas party, Jollywood Nights).** The hat's red
 and white would echo the green/red/white holiday star on the park-hours screen.
+Partly done: the Christmas party's landmark (`SantaTrainLandmark`) has Santa-hat Mickey, Donald and
+Goofy riding Santa's train, bobbing, blinking and (on 64x64) waving. Still open: the 64x32 waves, a cameo on the ride screens, and anything for Jollywood Nights.
 
 **8. Remy.** Scurries along the bottom edge with a chef-hat hop. Caveat: a small grey rat is
 Figment's original "purple blob" problem all over again. It only works close-up and large,
@@ -970,10 +972,23 @@ Not done:
 - The real show's projected characters (Mufasa in the clouds, Hercules, the stained-glass heroes)
   aren't drawn: that's the character batches above.
 
-## 14. A settings page in setup mode
+## 14. runDisney race-day landmarks
+
+The whole Wine & Dine 2026 weekend is built: the 5K (2026-10-23, Marie, `WineAndDine5KLandmark`), the
+10K (2026-10-24, the Three Caballeros, `ThreeCaballeros10KLandmark`) and the half marathon (2026-10-25:
+three penguin waiters, `PenguinWaitersHalfLandmark`, or Grumpy for the Two Course Challenge, which
+finishes the same day, `GrumpyTwoCourseLandmark`, picked at random each showing; the penguins' screen says
+"Half Marathon", Grumpy's "Challenge 19.3"). Each is a landmark plus a `DATED_LANDMARKS` entry (EPCOT, race date; a list of landmarks
+picks one at random). Other runDisney weekends (Princess, Marathon, Springtime Surprise) would work the same way; their
+dates change every year, so the entries need updating before each race.
+
+Later for the Caballeros: the Gran Fiesta Tour poster (`docs/references/Gran Fiesta Tour EPCOT poster.png`)
+has them riding the striped magic serape over the Mexico pavilion, which would suit a ride-screen
+surprise on Gran Fiesta Tour all year. The 10K's sprites could be reused.
+
+## 15. A settings page in setup mode
 
 The Wi-Fi setup hotspot (comitup, built 2026-10-21) only picks the Wi-Fi network. Next: a page for
 `config.json` (API keys, trip dates, parks, sound) so a board can be set up with no SSH at all.
 Served while the hotspot is up (comitup's `web_service` key runs a systemd service only then), or
 on the home network too, behind something better than an open page.
-

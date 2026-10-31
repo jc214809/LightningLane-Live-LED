@@ -89,6 +89,21 @@ def test_party_night_swaps_the_castle_for_the_partys_landmark(monkeypatch, scree
     assert [cls.__name__ for cls in shown] == ["FriendlyJackOLanternLandmark", "CastleLandmark"]
 
 
+def test_race_day_swaps_epcots_landmark_for_the_races(monkeypatch, screens):
+    import utils.special_events as special_events
+    monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
+    shown = []
+    real_landmark_screen = disney.landmark_screen
+    monkeypatch.setattr(disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene))
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    monkeypatch.setattr(special_events, "DATED_LANDMARKS",
+                        [{"date": today, "park": "epcot", "landmark": "WineAndDine5KLandmark"}])
+    disney.initialize_park_information_screen(FakeMatrix(), {"name": "EPCOT"})
+    disney.initialize_park_information_screen(FakeMatrix(), {"name": "Magic Kingdom"})
+    assert [cls.__name__ for cls in shown] == ["WineAndDine5KLandmark", "CastleLandmark"]
+    assert screens[0]["hold"] == 5.0
+
+
 def test_parks_without_a_landmark_go_straight_to_the_title(monkeypatch, screens):
     monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
     disney.initialize_park_information_screen(FakeMatrix(), {"name": "Cedar Point"})

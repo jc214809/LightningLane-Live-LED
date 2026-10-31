@@ -515,6 +515,116 @@ early characters above, and mostly for process reasons. Read this before redoing
   `SCREEN_S`, once, in order.
 - Variants and random picks: both motions get picked; only the intended burst shapes appear.
 
+### The Wine & Dine 5K (`WineAndDine5KLandmark`)
+
+Marie for the runDisney 5K, picked from four concepts (medal, Eiffel Tower, toast, finish line) and
+then four layouts of the toast. What helped:
+
+- **Find a pattern, don't draw from promo art.** My Marie traced from the medal graphic read as a
+  generic cat. Google Images (in Chrome: "marie aristocats perler bead pattern", "... pixel art
+  sprite") found Pixilart and BraceletBook charts that web search never shows. `analyze_reference.py`
+  read them cell for cell; an outline-on-white chart needs its outside flood-filled away.
+- **Pastels go white on LEDs.** The art's pastel pink bow and ears were indistinguishable from her
+  fur; deepened pinks fixed it. A black outline vanishes on a black night sky (use a grey rim there);
+  on the purple Paris sky a black one reads, and it's what the user picked.
+- **Check props against what they sit on.** Pale glasses disappeared on her white fur at 2x; they
+  only work off her body (or with a dark rim).
+- **64x64 wanted the space filled.** The 1x peeking Marie left 64x64 mostly empty, so it got a
+  different, taller Marie (48 rows) and a bigger title instead of the same art.
+- **Bigger title fonts:** `landmark_screen` only draws the 4x6 title font, so this scene bakes its
+  title (9x18B "5K", 5x8 "Wine & Dine") into pixels in `build()` from the BDF files via
+  `capture._glyphs`.
+- **A day the API can't name:** races run before the park opens and never appear in the park data,
+  so `utils/special_events.py` `DATED_LANDMARKS` swaps a landmark in by the park's local date.
+
+### The Wine & Dine 10K (`ThreeCaballeros10KLandmark`)
+
+José, Panchito (centre stage) and Donald under a gold 10K; each hops in turn, then all three as
+confetti falls. It took many rounds; what finally worked, and what didn't:
+
+- **Traced renders, kept as traced.** The sprites the user picked came from the Disney wiki's
+  transparent renders (DuckTales 2017 Panchito and José, a classic Donald), downsampled by alpha
+  silhouette and colour vote with the black line art kept (a cell that's 30%+ line stays black),
+  then snapped to saturated LED colours. Line art kept was the step that made Donald read as Donald.
+- **Small edits on top, not redraws.** Donald's cap became a sombrero (centred on his head: the user
+  checks symmetry) and his raised arm was slanted out clear of the brim. Edits to traced art are
+  quick to judge; my own redraws of whole characters weren't.
+- **What didn't land:** hand-drawn characters from scratch (read as penguins or generic birds),
+  a shaded game sprite beside traced cartoon art (styles clashed), runners on sliding sprites (two
+  run frames still looked like floating), and auto-shaded heads (shading turned faces to mud).
+  A pixel chart (José on graph paper) and the flat Gran Fiesta Tour poster style looked promising.
+- **Mock up many options at once, side by side.** The user picked from sheets of four (layouts,
+  styles, ideas) far faster than from one version at a time.
+
+### The Wine & Dine half marathon (`PenguinWaitersHalfLandmark`, `GrumpyTwoCourseLandmark`)
+
+Two screens, picked at random each showing (a `DATED_LANDMARKS` entry can list several): three Mary
+Poppins penguin waiters flap and hop in turn, or Grumpy (the Two Course Challenge's medal, finishing
+the same day), arms folded, taps a foot and gives one grudging hop. Each names its own race in gold under
+"Wine & Dine": "Half Marathon", and "Challenge" with its distance, 19.3 (the user's calls; Grumpy
+isn't running just the half). What was new:
+
+- **Not everything traces.** There is no clean penguin render on the Disney wikis. The race poster
+  was too small (black penguins on navy; the beaks snapped to Big Ben's gold), and the 1964 film frame
+  has them overlapping and cut off at the waist. Hand-drawn penguins in the poster's pose worked: a
+  penguin is simple shapes, unlike the Caballeros. The user asked for them taller and slimmer than the
+  first round's (about 40 x 15 on 64x64, 20 x 10 on 64x32), filling the board under the title.
+- **A painted render loses the face; an outlined one keeps it.** Grumpy from a painted render traced
+  to a blur. A render with bold black outlines (the Disney wiki's arms-folded one) kept them once a
+  cell needed only 18% line to stay black (thin outlines miss the 30% the Caballeros used); brows
+  and eyes still got a small hand edit. The user picked it over a cross-stitch chart of him leaning on
+  a pickaxe, which filled 64x64 but kept little of his face.
+- **Reading a scanned cross-stitch chart:** `analyze_reference.py` turned the (untilted) scan 16.7
+  degrees until given `--no-turn`, and its pale pink beard read as background. Reading it by hand
+  worked: fit the grid from the line pattern, call a near-white cell beard only when its middle is
+  tinted, and black where backstitch crosses a cell (darker than its own fill, not just dark: dark
+  brown fill isn't a line).
+- **Props and backdrops that didn't make it:** a wine glass on a tray and the poster's Big Ben and
+  London skyline (which also swallowed the penguins' black backs).
+- **"HALF MARATHON" in 5x8 is exactly 64 px of ink:** it fits 64x64 edge to edge, with its shadow
+  clipped (`penguin_waiters.title_pixels`). On 64x32 it splits into corner pairs, or stacks down the
+  side beside a character too tall for the corners.
+
+### The Very Merry Christmas Party (`SantaTrainLandmark`)
+
+Santa drives a steam engine across a snowy night pulling Mickey, a gift car, Donald, a tree car, Goofy and
+Pluto, in place of the castle on party nights. 258 px long on 64x64, so it drives the whole screen instead of
+posing. What was new:
+
+- **Copy real charts; don't draw characters.** Two hand-drawn Donalds were rejected outright ("does not
+  look like Donald at all"), and so were Tsum Tsum heads and 10px mini heads. Every rider that stuck came
+  from a real chart, cleaned up: backstitch outlines put back as pixels, a Santa hat in place of a sailor
+  cap, Donald's bill recoloured, Pluto mirrored to face the way the train drives.
+- **Riders need bodies.** Heads on a car's rim looked like they floated; seated riders in Christmas
+  sweaters with their gloves on the rim fixed it. Only four of the eight tried fit at a readable size.
+- **Halve by majority, not by stride.** Every other pixel (`row[::2]`) jumbled Santa's face and the
+  cowcatcher; each 2x2 block's most common colour kept both. Wheels still turned to mush either way, so
+  the half train stamps a clean 4x3 wheel at each halved wheel position. The 64x32 riders are the DIY Candy
+  mini heads rather than halved ones.
+- **Long sprites: index by column.** The frame walks only the train columns on the board, not all ~9000
+  pixels, so a slow board isn't paying for the cars off screen.
+- **End on something to read.** A billboard car as wide as the board goes on last; the train brakes evenly
+  to a stop with it filling the screen and holds 4s, so the screen is about 13.4s. Its lettering is dark on a
+  light sign, so `_text_pixels(..., shadow=False)`; tonight's hours come from `special_event_hours` (shared
+  with the pumpkin), and without them it says the name alone. The wheels roll by distance travelled, not
+  time, so they stop when the train does.
+- **Smoke is puffed, not painted.** A smoke cloud drawn into the engine just rode along with it. Puffs leave
+  the stack every `PUFF_S`, each staying where it was puffed (so they trail as the train pulls ahead),
+  growing and fading as they rise off the top.
+- **White near the wheels reads as noise.** Static rim shine and chassis-corner highlights looked like
+  stray pixels on a moving train; the wheel rows carry no white (held by a test), only the 64x32 rim spot.
+  The dark under the cars is opaque sky, or snowflakes fall through between the wheels.
+- **Gaps in a rider are background.** White or outline colour where the chart had nothing (the top of
+  Pluto's head) reads as part of him; the user wants the board off there, the night showing through.
+- **The riders move, and new limbs come from the user.** Bob (riders sink 1px into the car, rippling down the
+  train), blinks, Pluto's tail wag and panting all work by patching the existing art (`rider_patch`). Every
+  invented waving arm was rejected, four rounds over; what worked was asking exact questions (which hand,
+  how high, does the arm show, how it moves) and then letting the user draw Santa's frames in the sprite
+  editor (landmarks list art for it in `EDITOR_SPRITES`). Santa's arm was his red sleeve inside the window,
+  not the white block beside the cab: ask what a shape is before animating it. 64x32 has no waves yet.
+- **Keep mock code out of /tmp's reach.** A cleanup deleted the first train mock's art mid-design; the
+  parts had to be recovered from a pickled render.
+
 ### Before redoing Spaceship Earth
 
 The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders

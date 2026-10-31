@@ -3,8 +3,9 @@ from datetime import datetime, timezone
 import pytest
 
 from utils.special_events import (
-    DEFAULT_STAR_RGB, HOLIDAY_STAR, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, fireworks_show, is_special, seasonal_event,
-    special_event_now, star_rgb,
+    DATED_LANDMARKS, DEFAULT_STAR_RGB, HOLIDAY_STAR, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, dated_landmark,
+    fireworks_show, is_special, seasonal_event,
+    special_event_hours, special_event_now, star_rgb,
 )
 
 ET = "America/New_York"
@@ -146,3 +147,54 @@ def test_a_party_named_after_hours_colours_the_star():
     now = et("2026-09-27 20:00")
     assert star_rgb(mk(party("2026-09-27"), seasonal="after_hours"), now) == SPECIAL_EVENTS["after_hours"]["star_rgb"]
     assert fireworks_show(mk(party("2026-09-27"), seasonal="christmas"), now) == NIGHTLY_FIREWORKS
+
+
+def test_the_wine_and_dine_races_are_epcots_landmarks_on_their_race_days_only():
+    epcot = {"name": "EPCOT", "timezone": ET}
+    assert dated_landmark(epcot, et("2026-10-23 09:00")) == "WineAndDine5KLandmark"
+    assert dated_landmark(epcot, et("2026-10-23 23:30")) == "WineAndDine5KLandmark", "UTC is already the 24th"
+    assert dated_landmark(epcot, et("2026-10-22 23:30")) is None, "UTC is already the 23rd"
+    assert dated_landmark(epcot, et("2026-10-24 09:00")) == "ThreeCaballeros10KLandmark", "the 10K, the next day"
+    half = ["PenguinWaitersHalfLandmark", "GrumpyTwoCourseLandmark"]
+    assert dated_landmark(epcot, et("2026-10-25 09:00"), choose=lambda names: names) == half, "the half, the day after"
+    assert dated_landmark(epcot, et("2026-10-26 09:00")) is None
+    assert dated_landmark(mk(), et("2026-10-23 09:00")) is None, "only EPCOT"
+
+
+def test_dated_landmarks_match_park_names_loosely_and_survive_missing_fields():
+    when = datetime(2026, 10, 23, 15, tzinfo=timezone.utc)
+    assert dated_landmark({"name": "Epcot", "timezone": ET}, when) == "WineAndDine5KLandmark"
+    assert dated_landmark({"name": "EPCOT"}, when) == "WineAndDine5KLandmark", "no timezone: UTC's date"
+    assert dated_landmark({}, when) is None
+    assert dated_landmark({"name": None}, when) is None
+
+
+def test_a_day_that_lists_several_landmarks_picks_one_each_showing():
+    epcot = {"name": "EPCOT", "timezone": ET}
+    picks = {dated_landmark(epcot, et("2026-10-25 09:00")) for _ in range(60)}
+    assert picks == {"PenguinWaitersHalfLandmark", "GrumpyTwoCourseLandmark"}
+
+
+def test_every_dated_landmark_entry_is_a_real_date():
+    for entry in DATED_LANDMARKS:
+        datetime.strptime(entry["date"], "%Y-%m-%d")
+        assert entry["park"] == entry["park"].lower(), "matched against a lower-cased park name"
+
+
+def test_special_event_hours_reads_tonights_start_and_end():
+    now = et("2026-12-05 18:00")
+    assert special_event_hours(mk(party("2026-12-05", closes_date="2026-12-06")), now) == ("7PM", "12AM")
+    assert special_event_hours(mk(party("2026-12-05", opens="18:00", closes="23:00")), now) == ("6PM", "11PM")
+    assert special_event_hours(mk(party("2026-12-05", opens="18:57", closes="23:59")), now) == ("7PM", "12AM"), \
+        "a minute to midnight is midnight"
+
+
+@pytest.mark.parametrize("park", [
+    mk(),  # no party tonight
+    mk(party("2026-12-04")),  # last night's, over
+    mk(dict(party("2026-12-05"), closingTime="soon")),  # a bad time
+    mk({k: v for k, v in party("2026-12-05").items() if k != "openingTime"}),  # a missing one
+    None,
+])
+def test_special_event_hours_is_none_without_a_usable_party(park):
+    assert special_event_hours(park, et("2026-12-05 18:00")) is None

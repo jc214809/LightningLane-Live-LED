@@ -5,8 +5,12 @@ The schedule only ever says "Special Ticketed Event"; what names the party is th
 attraction list, which carries entities like "... at Mickey's Not-So-Scary Halloween Party".
 Deluxe Extended Evening Hours is the exception: the schedule names it itself.
 To add a party, add an entry to SPECIAL_EVENTS.
+
+Days the park data can't name at all (a runDisney race is run before the park opens) are in
+DATED_LANDMARKS, matched by the park's local date. To add one, add an entry there.
 """
-from datetime import datetime, timezone
+import random
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from utils import debug
@@ -24,9 +28,14 @@ SPECIAL_EVENTS = {
         "fireworks_show": "Disney's Not-So-Spooky Spectacular",  # plays the castle fireworks when it starts
         "fireworks_theme": "halloween",  # display/fireworks/fireworks.py THEMES
     },
+    # Its match string is the event's published name: it isn't in the live data yet.
+    "christmas": {
+        "match": "very merry christmas party",
+        "star_rgb": HOLIDAY_STAR,
+        "landmark": "SantaTrainLandmark",  # display/landmarks/santa_train.py
+    },
     # The rest have no landmark or fireworks of their own yet; they just colour the star.
     # Their match strings are the events' published names: none is in the live data today.
-    "christmas": {"match": "very merry christmas party", "star_rgb": HOLIDAY_STAR},
     "jollywood": {"match": "jollywood nights", "star_rgb": HOLIDAY_STAR},
     # Last: Magic Kingdom lists "... at Disney After Hours" all through party season, so every
     # more specific party above has to win over it.
@@ -34,6 +43,16 @@ SPECIAL_EVENTS = {
     # Named by the schedule entry's own description rather than by the park's entities.
     "extended_evening": {"schedule": "extended evening", "star_rgb": (255, 215, 0)},
 }
+
+# A park's own landmark for one day, by its local date: race days the park data never mentions.
+# "park" is matched loosely on the park's name, like display/landmarks LANDMARKS; "landmark" is a
+# class name there, or a list of them to pick one from at random each showing. Add a day by adding an entry.
+DATED_LANDMARKS = [
+    {"date": "2026-10-23", "park": "epcot", "landmark": "WineAndDine5KLandmark"},  # Wine & Dine 5K, the Aristocats
+    {"date": "2026-10-24", "park": "epcot", "landmark": "ThreeCaballeros10KLandmark"},  # Wine & Dine 10K
+    # The half marathon and the Two Course Challenge (10K + half) finish the same day.
+    {"date": "2026-10-25", "park": "epcot", "landmark": ["PenguinWaitersHalfLandmark", "GrumpyTwoCourseLandmark"]},
+]
 
 # A special event we can't name gets a white star.
 DEFAULT_STAR_RGB = (255, 255, 255)
@@ -76,6 +95,18 @@ def _local_today(park, now):
     return now.astimezone(tz).strftime("%Y-%m-%d")
 
 
+def dated_landmark(park, now=None, choose=random.choice):
+    """The DATED_LANDMARKS class name for this park today (its local date), or None. An entry that
+    lists several gives one of them, picked by choose (at random)."""
+    today = _local_today(park, now or datetime.now(timezone.utc))
+    name = (park.get("name") or "").lower()
+    for entry in DATED_LANDMARKS:
+        if entry["date"] == today and entry["park"] in name:
+            landmark = entry["landmark"]
+            return choose(landmark) if isinstance(landmark, list) else landmark
+    return None
+
+
 def special_event_now(park, now=None):
     """The schedule entry for a special event the park holds today (its local date), or one
     running now; None if there isn't one. The second case is a party that runs past midnight:
@@ -92,6 +123,22 @@ def special_event_now(park, now=None):
         if start and end and start.tzinfo and end.tzinfo and start <= now < end:
             return event
     return None
+
+
+def special_event_hours(park, now=None):
+    """Tonight's special event's (start, end) like ("7PM", "12AM"), from the park's schedule, or None.
+    Hours only: a time a few minutes short of the hour (a 23:59 close) reads as that hour."""
+    event = special_event_now(park, now) if park else None
+    times = []
+    for key in ("openingTime", "closingTime"):
+        try:
+            when = datetime.fromisoformat(event[key])
+        except (TypeError, KeyError, ValueError):
+            return None
+        if when.minute >= 55:
+            when += timedelta(minutes=60 - when.minute)
+        times.append(when.strftime("%I%p").lstrip("0"))
+    return tuple(times)
 
 
 def _event_key(park, entry):

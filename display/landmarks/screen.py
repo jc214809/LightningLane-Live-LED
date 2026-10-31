@@ -12,6 +12,11 @@ from display.landmarks.spaceship_earth import SpaceshipEarthLandmark
 from display.landmarks.tower_of_terror import TowerOfTerrorLandmark
 from display.landmarks.tree_of_life import TreeOfLifeLandmark
 from display.landmarks.pumpkins import FriendlyJackOLanternLandmark, ScaryJackOLanternLandmark  # looked up by class name for parties (landmark_for)
+from display.landmarks.wine_and_dine import WineAndDine5KLandmark  # looked up by class name for its race day (landmark_for)
+from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # likewise
+from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # likewise
+from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # likewise
+from display.landmarks.santa_train import SantaTrainLandmark  # looked up by class name for its party (landmark_for)
 
 
 LANDMARKS = {
@@ -22,9 +27,12 @@ LANDMARKS = {
 }
 
 
-def landmark_for(park_name, party=None):
-    """The landmark scene class for a park, matched loosely on its name, or None. A party
+def landmark_for(park_name, party=None, dated=None):
+    """The landmark scene class for a park, matched loosely on its name, or None. A dated landmark
+    (a class name from utils/special_events.py dated_landmark, for a race day) wins; then a party
     (a SPECIAL_EVENTS key the park is holding today) swaps in that party's own landmark, if it has one."""
+    if dated:
+        return globals()[dated]
     if SPECIAL_EVENTS.get(party, {}).get("landmark"):
         return globals()[SPECIAL_EVENTS[party]["landmark"]]
     name = (park_name or "").lower()
