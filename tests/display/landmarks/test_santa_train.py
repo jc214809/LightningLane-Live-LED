@@ -141,7 +141,7 @@ def test_a_frame_fills_the_board_and_draws_the_train_over_the_snow(w, h):
         assert len(frame) == w * h
         assert set(frame) == {(x, y) for x in range(w) for y in range(h)}
         left = scene.train_x(t)
-        over = {(left + x, y): rgb for x, y, rgb in scene.spin[scene.spin_step(t)]}
+        over = {(left + x, y): rgb for x, y, rgb in scene.rider_pixels(t) + scene.spin[scene.spin_step(t)]}
         bulbs = {(left + x, y) for x, y in scene.bulbs}
         for x in range(max(0, left), min(w, left + scene.train_w)):
             for y, rgb in scene.columns[x - left]:
@@ -169,7 +169,7 @@ def test_no_snow_or_stars_show_under_the_cars_between_the_wheels(w, h):
     assert under, "the cars have dark under them"
     for t in [scene.drive_s * k / 40 for k in range(40)]:
         frame, left = scene.frame(t), scene.train_x(t)
-        over = {(x + left, y) for x, y, _ in scene.spin[scene.spin_step(t)]}
+        over = {(x + left, y) for x, y, _ in scene.rider_pixels(t) + scene.spin[scene.spin_step(t)]}
         for x, y in under:
             if 0 <= x + left < w and (x + left, y) not in over:
                 assert frame[(x + left, y)] == st.SKY_RGB, (t, x, y)
@@ -293,3 +293,85 @@ def test_it_plays_after_the_wipe():
 
 def test_the_christmas_party_finds_it():
     assert landmarks.landmark_for("Magic Kingdom", "christmas") is st.SantaTrainLandmark
+
+
+def _states(scene):
+    """{rider kind: set of rider_state()s} over the drive, every frame at 30 fps."""
+    big, out = scene.height >= 64, {}
+    for f in range(int(scene.drive_s * 30)):
+        t = f / 30
+        for i, (_, _, kind, blinks) in enumerate(scene.riders):
+            out.setdefault(kind, set()).add(
+                st.rider_state(kind, big, t, scene.travelled(t), len(scene.riders) - i, blinks))
+    return out
+
+
+@pytest.mark.parametrize("w, h", BOARDS)
+def test_the_riders_bob_blink_and_pluto_wags_and_pants(w, h):
+    states = _states(_scene(w, h))
+    assert set(states) == {"pluto", "goofy", "donald", "mickey", "santa"}
+    for kind in ("pluto", "goofy", "donald", "mickey"):
+        assert {s[0] for s in states[kind]} == {False, True}, f"{kind} bobs"
+        assert {s[1] for s in states[kind]} == {False, True}, f"{kind} blinks"
+    assert {s[3] for s in states["pluto"]} == {0, 1, 2} and {s[4] for s in states["pluto"]} == {False, True}
+    assert {s[0] for s in states["santa"]} == {False}, "Santa drives; he doesn't bob"
+
+
+def test_on_64x64_mickey_waves_then_rests_and_santa_waves_the_whole_time():
+    states = _states(_scene(64, 64))
+    assert {s[2] for s in states["mickey"]} == {None, 0, 1}
+    assert {s[2] for s in states["santa"]} == {0, 1}
+
+
+def test_64x32_has_no_waves_yet():
+    states = _states(_scene(64, 32))
+    assert {s[2] for kind in states for s in states[kind]} == {None}
+
+
+@pytest.mark.parametrize("w, h", BOARDS)
+def test_poses_change_only_the_riders_never_their_cars(w, h):
+    scene = _scene(w, h)
+    big = h >= 64
+    for _, piece, kind, _ in scene.riders:
+        if kind == "santa":
+            continue
+        for state in _states(scene)[kind]:
+            posed = st.rider_patch(piece, kind, big, state)
+            assert len(posed) == len(piece) and {len(r) for r in posed} == {len(piece[0])}
+            assert posed[st.RIM_ROW[big]:] == piece[st.RIM_ROW[big]:], (kind, state)
+            assert set("".join(posed)) - {"."} <= set(st.COLORS)
+
+
+def test_santas_wave_frames_fit_his_cab_and_change_only_his_arm_side():
+    x0, y0 = st.SANTA_WAVE_AT
+    assert len(st.SANTA_WAVE_64) == 2
+    for frame in st.SANTA_WAVE_64:
+        assert {len(r) for r in frame} == {len(st.SANTA_WAVE_64[0][0])}
+        assert y0 + len(frame) <= len(st.ENGINE_64) and x0 + len(frame[0]) <= len(st.ENGINE_64[0])
+        assert set("".join(frame)) - {"."} <= set(st.COLORS)
+        cab = [row[x0:x0 + len(frame[0])] for row in st.ENGINE_64[y0:y0 + len(frame)]]
+        assert frame[:4] == cab[:4] and frame[-3:] == cab[-3:], "the roof and floor stay as drawn"
+
+
+@pytest.mark.parametrize("w, h", BOARDS)
+def test_the_riders_settle_once_the_train_stops(w, h):
+    scene = _scene(w, h)
+    bobs = {st.rider_state("goofy", h >= 64, t, scene.travelled(t), 3, [])[0]
+            for t in [scene.drive_s + k / 10 for k in range(30)]}
+    assert len(bobs) == 1, "no bobbing on a stopped train"
+
+
+def test_the_64x64_car_wheels_are_even_left_and_right():
+    for piece in st.TRAIN_64[:-1]:  # the cars; the engine's drivers are drawn their own way
+        for cx, _, r in st.wheels(piece, True):
+            def run(row):  # the rim's pixels on a row, this wheel's only
+                return [x for x, ch in enumerate(piece[row]) if ch in "SI" and abs(x - cx) <= r + 1]
+            bottom, above = run(-1), run(-2)
+            assert min(bottom) + max(bottom) == min(above) + max(above), "centred under the rim: no stray pixel"
+
+
+def test_the_64x32_wheels_have_nothing_grey_sticking_up_above_them():
+    for piece in st.TRAIN_32:
+        for cx, _, _ in st.wheels(piece, False):
+            above = piece[-4][int(cx - 1.5):int(cx + 1.5) + 1]
+            assert not set(above) & set("SW"), "the car's edge is its own colour over a wheel"

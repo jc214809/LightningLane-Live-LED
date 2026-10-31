@@ -616,6 +616,12 @@ posing. What was new:
   The dark under the cars is opaque sky, or snowflakes fall through between the wheels.
 - **Gaps in a rider are background.** White or outline colour where the chart had nothing (the top of
   Pluto's head) reads as part of him; the user wants the board off there, the night showing through.
+- **The riders move, and new limbs come from the user.** Bob (riders sink 1px into the car, rippling down the
+  train), blinks, Pluto's tail wag and panting all work by patching the existing art (`rider_patch`). Every
+  invented waving arm was rejected, four rounds over; what worked was asking exact questions (which hand,
+  how high, does the arm show, how it moves) and then letting the user draw Santa's frames in the sprite
+  editor (landmarks list art for it in `EDITOR_SPRITES`). Santa's arm was his red sleeve inside the window,
+  not the white block beside the cab: ask what a shape is before animating it. 64x32 has no waves yet.
 - **Keep mock code out of /tmp's reach.** A cleanup deleted the first train mock's art mid-design; the
   parts had to be recovered from a pickled render.
 

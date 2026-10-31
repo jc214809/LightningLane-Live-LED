@@ -180,7 +180,7 @@ Other references, unused:
 **7. Santa Goofy / Mickey in a Santa hat (Christmas party, Jollywood Nights).** The hat's red
 and white would echo the green/red/white holiday star on the park-hours screen.
 Partly done: the Christmas party's landmark (`SantaTrainLandmark`) has Santa-hat Mickey, Donald and
-Goofy riding Santa's train. A cameo on the ride screens, and anything for Jollywood Nights, is still open.
+Goofy riding Santa's train, bobbing, blinking and (on 64x64) waving. Still open: the 64x32 waves, a cameo on the ride screens, and anything for Jollywood Nights.
 
 **8. Remy.** Scurries along the bottom edge with a chef-hat hop. Caveat: a small grey rat is
 Figment's original "purple blob" problem all over again. It only works close-up and large,
