@@ -10,7 +10,7 @@ Days the park data can't name at all (a runDisney race is run before the park op
 DATED_LANDMARKS, matched by the park's local date. To add one, add an entry there.
 """
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from utils import debug
@@ -28,9 +28,14 @@ SPECIAL_EVENTS = {
         "fireworks_show": "Disney's Not-So-Spooky Spectacular",  # plays the castle fireworks when it starts
         "fireworks_theme": "halloween",  # display/fireworks/fireworks.py THEMES
     },
+    # Its match string is the event's published name: it isn't in the live data yet.
+    "christmas": {
+        "match": "very merry christmas party",
+        "star_rgb": HOLIDAY_STAR,
+        "landmark": "SantaTrainLandmark",  # display/landmarks/santa_train.py
+    },
     # The rest have no landmark or fireworks of their own yet; they just colour the star.
     # Their match strings are the events' published names: none is in the live data today.
-    "christmas": {"match": "very merry christmas party", "star_rgb": HOLIDAY_STAR},
     "jollywood": {"match": "jollywood nights", "star_rgb": HOLIDAY_STAR},
     # Last: Magic Kingdom lists "... at Disney After Hours" all through party season, so every
     # more specific party above has to win over it.
@@ -118,6 +123,22 @@ def special_event_now(park, now=None):
         if start and end and start.tzinfo and end.tzinfo and start <= now < end:
             return event
     return None
+
+
+def special_event_hours(park, now=None):
+    """Tonight's special event's (start, end) like ("7PM", "12AM"), from the park's schedule, or None.
+    Hours only: a time a few minutes short of the hour (a 23:59 close) reads as that hour."""
+    event = special_event_now(park, now) if park else None
+    times = []
+    for key in ("openingTime", "closingTime"):
+        try:
+            when = datetime.fromisoformat(event[key])
+        except (TypeError, KeyError, ValueError):
+            return None
+        if when.minute >= 55:
+            when += timedelta(minutes=60 - when.minute)
+        times.append(when.strftime("%I%p").lstrip("0"))
+    return tuple(times)
 
 
 def _event_key(park, entry):

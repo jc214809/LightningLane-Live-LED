@@ -26,6 +26,7 @@ def test_landmark_for_matches_park_names_loosely(name, cls):
 
 def test_a_party_swaps_in_its_own_landmark():
     assert landmarks.landmark_for("Magic Kingdom", "halloween") is landmarks.FriendlyJackOLanternLandmark
+    assert landmarks.landmark_for("Magic Kingdom", "christmas") is landmarks.SantaTrainLandmark
     assert landmarks.landmark_for("Magic Kingdom", None) is landmarks.CastleLandmark
     assert landmarks.landmark_for("Magic Kingdom", "not-a-party") is landmarks.CastleLandmark
 
@@ -53,7 +54,7 @@ def test_every_dated_landmark_exists():
 
 
 def test_an_event_without_a_landmark_keeps_the_parks_own():
-    assert landmarks.landmark_for("Magic Kingdom", "christmas") is landmarks.CastleLandmark
+    assert landmarks.landmark_for("Hollywood Studios", "jollywood") is landmarks.TowerOfTerrorLandmark
     assert landmarks.landmark_for("EPCOT", "extended_evening") is landmarks.SpaceshipEarthLandmark
 
 
