@@ -800,6 +800,60 @@ def disney_driver_modes():
     return type("DriverMode", (), {"SOFTWARE_EMULATION": "SOFTWARE_EMULATION", "HARDWARE": "HARDWARE"})
 
 
+# ---- Wi-Fi setup ----
+
+def test_no_setup_hotspot_carries_straight_on(monkeypatch, screens):
+    monkeypatch.setattr(disney, "hotspot_name", lambda: None)
+    assert disney.show_wifi_setup_while_needed(FakeMatrix()) is False
+    assert screens == []
+
+
+def test_the_setup_screen_stays_up_until_the_board_joins_a_network(monkeypatch, screens):
+    states = iter(["Disneypi-setup", "Disneypi-setup", "Disneypi-setup", None])
+    monkeypatch.setattr(disney, "hotspot_name", lambda: next(states))
+    drawn = []
+    monkeypatch.setattr(disney, "render_wifi_setup", lambda canvas, name: drawn.append(name))
+    assert disney.show_wifi_setup_while_needed(FakeMatrix()) is True
+    assert drawn == ["Disneypi-setup"], "drawn once, not on every check"
+    assert screens == [{"hold": disney.WIFI_SETUP_CHECK_S, "transition": "wipe", "animating": False}]
+
+
+def test_a_renamed_hotspot_redraws_the_screen(monkeypatch, screens):
+    states = iter(["OldPi-setup", "NewPi-setup", None])
+    monkeypatch.setattr(disney, "hotspot_name", lambda: next(states))
+    drawn = []
+    monkeypatch.setattr(disney, "render_wifi_setup", lambda canvas, name: drawn.append(name))
+    disney.show_wifi_setup_while_needed(FakeMatrix())
+    assert drawn == ["OldPi-setup", "NewPi-setup"]
+
+
+def test_main_shows_the_setup_screen_before_it_needs_the_network(monkeypatch):
+    class _Fetched(Exception):
+        pass
+
+    calls = []
+    monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
+    monkeypatch.setattr(disney, "load_config", lambda: {})
+    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
+    monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
+    monkeypatch.setattr(disney.driver, "set_mode", lambda mode: None, raising=False)
+    monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)
+    monkeypatch.setattr(disney.driver, "hardware_load_failed", False, raising=False)
+    monkeypatch.setattr(disney.driver, "RGBMatrix", lambda options: FakeMatrix())
+    monkeypatch.setattr(disney, "led_matrix_options", lambda args: None)
+    monkeypatch.setattr(disney, "initialize_fonts", lambda height: None)
+    monkeypatch.setattr(disney, "show_wifi_setup_while_needed", lambda matrix: calls.append("wifi setup"))
+
+    def fetch(names):
+        calls.append("fetch parks")
+        raise _Fetched
+
+    monkeypatch.setattr(disney, "resolve_parks_from_config", fetch)
+    with pytest.raises(_Fetched):
+        disney.main()
+    assert calls == ["wifi setup", "fetch parks"]
+
+
 # ---- force_show ----
 
 def test_force_show_matches_a_known_show_loosely(monkeypatch):

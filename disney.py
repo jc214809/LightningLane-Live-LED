@@ -24,7 +24,9 @@ from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
 from display.countdown.countdown import render_countdown_to_disney
+from display.wifi_setup import render_wifi_setup
 from utils.trips import active_trip, parse_trips
+from utils.wifi_setup import hotspot_name
 
 from utils import debug
 from utils.config import (ShowSettings, SoundSettings, debug_enabled, forced_show_name, load_config, show_settings, sound_settings,
@@ -113,6 +115,8 @@ sound = SoundSettings()
 # default. See show_setting().
 show_settings_by_clip = {}
 FIREWORKS_SHOW_S = 5 * 60
+# How often the Wi-Fi setup screen checks whether the board has joined a network.
+WIFI_SETUP_CHECK_S = 5
 _shows_played = set()
 
 def start_live_updaters(config, disney_park_list, update_interval, parks_data):
@@ -183,6 +187,8 @@ def main():
 
     matrix = driver.RGBMatrix(options=led_matrix_options(command_line_args))
     initialize_fonts(matrix.height)
+    # With no Wi-Fi the parks can't be fetched, so this comes first.
+    show_wifi_setup_while_needed(matrix)
 
     park_names = config.get('parks', [])
     disney_park_list = resolve_parks_from_config(park_names)
@@ -198,6 +204,7 @@ def main():
     try:
         play_forced_show(matrix)
         while True:
+            show_wifi_setup_while_needed(matrix)
             play_fireworks_show_if_due(matrix, parks_data)
             render_logo(matrix)
             last_trip_shown = play_trip_countdown(matrix, config, last_trip_shown)
@@ -219,6 +226,23 @@ def main():
         debug.error(traceback.format_exc())
     finally:
         matrix.Clear()
+
+def show_wifi_setup_while_needed(matrix):
+    """While comitup's setup hotspot is up (no known Wi-Fi in range), show how to join it, until
+    the board is on a network. Returns whether it showed."""
+    name = hotspot_name()
+    if not name:
+        return False
+    debug.info(f"No known Wi-Fi: showing the setup screen for the {name} hotspot.")
+    while name:
+        show_screen(matrix, _static(render_wifi_setup, name), WIFI_SETUP_CHECK_S)
+        shown = name
+        while name == shown:  # the screen stays up; only a new name redraws it
+            time.sleep(WIFI_SETUP_CHECK_S)
+            name = hotspot_name()
+    debug.info("Wi-Fi setup hotspot down; carrying on.")
+    return True
+
 
 def log_configured_trips(config):
     trips = parse_trips(config)

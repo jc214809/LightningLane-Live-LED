@@ -8,24 +8,27 @@ SKIP_CONFIG=false
 SKIP_MATRIX=false
 NO_SUDO=false
 SKIP_VENV=false
+SKIP_WIFI_SETUP=false
 DRIVER_SHA=master
 FORCE=false
 
 usage() {
     cat <<USAGE
     Usage: ./LLL-install.sh [-a | --skip-all] [-c | --skip-config] [-m | --skip-matrix]
-                        [-p | --skip-python] [-v | --no-venv] [-e | --emulator-only]
+                        [-p | --skip-python] [-v | --no-venv] [-e | --emulator-only] [-w | --skip-wifi-setup]
                         [-d <branch_or_commit> | --driver <branch_or_commit>]
                         [-f | --force] [-h | --help]
 
     Options:
-        -a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m).
+        -a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m -v -w).
         -c, --skip-config       Skip updating JSON configuration files.
         -m, --skip-matrix       Skip building matrix driver dependency. Video display will default to emulator mode.
         -p, --skip-python       Skip Python 3 installation. Requires manual Python 3 setup if not already installed.
 
         -v, --no-venv           Do not create a virtual environment for the dependencies.
         -e, --emulator-only     Do not install dependencies under sudo. Skips building matrix dependencies (equivalent to -m)
+        -w, --skip-wifi-setup   Skip the Wi-Fi setup hotspot (comitup: with no known Wi-Fi in range, the board opens
+                                a <hostname>-setup hotspot, with no password, whose page puts it on a network).
         -d, --driver            Specify a branch name or commit SHA for the rpi-rgb-led-matrix library. (Defaults to "$DRIVER_SHA")
 
         -f, --force             Try to skip most errors and force install. May be able to recover from previous installer errors.
@@ -54,11 +57,16 @@ while [ $# -gt 0 ]; do
         SKIP_MATRIX=true
         SKIP_PYTHON=true
         SKIP_VENV=true
+        SKIP_WIFI_SETUP=true
         shift
         ;;
     -e | --emulator-only)
         SKIP_MATRIX=true
         NO_SUDO=true
+        shift
+        ;;
+    -w | --skip-wifi-setup)
+        SKIP_WIFI_SETUP=true
         shift
         ;;
     -v | --no-venv)
@@ -149,6 +157,16 @@ if [ "$NO_SUDO" = false ]; then
     sudo "$PYTHON" -m pip install --upgrade --prefer-binary -r requirements.txt
 else
     "$PYTHON" -m pip install --upgrade --prefer-binary -r requirements.txt
+fi
+
+if [ "$SKIP_WIFI_SETUP" = false ] && [ "$NO_SUDO" = false ] && [ "$(uname -s)" = Linux ]; then
+    echo
+    echo "------------------------------------"
+    echo "  Wi-Fi setup hotspot (comitup)"
+    echo "------------------------------------"
+    # board-setup.sh's own step, shared so the two can't drift. The app doesn't need it, so a
+    # failure is reported and the install carries on.
+    sudo bash board-setup.sh --wifi-setup-only || echo "WARNING: the Wi-Fi setup hotspot wasn't set up; re-run, or: sudo bash board-setup.sh --wifi-setup-only"
 fi
 
 if [ "$SKIP_MATRIX" = false ]; then

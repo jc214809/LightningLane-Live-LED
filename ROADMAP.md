@@ -985,3 +985,10 @@ dates change every year, so the entries need updating before each race.
 Later for the Caballeros: the Gran Fiesta Tour poster (`docs/references/Gran Fiesta Tour EPCOT poster.png`)
 has them riding the striped magic serape over the Mexico pavilion, which would suit a ride-screen
 surprise on Gran Fiesta Tour all year. The 10K's sprites could be reused.
+
+## 15. A settings page in setup mode
+
+The Wi-Fi setup hotspot (comitup, built 2026-10-21) only picks the Wi-Fi network. Next: a page for
+`config.json` (API keys, trip dates, parks, sound) so a board can be set up with no SSH at all.
+Served while the hotspot is up (comitup's `web_service` key runs a systemd service only then), or
+on the home network too, behind something better than an open page.
