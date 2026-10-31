@@ -585,6 +585,46 @@ isn't running just the half). What was new:
   clipped (`penguin_waiters.title_pixels`). On 64x32 it splits into corner pairs, or stacks down the
   side beside a character too tall for the corners.
 
+### The Very Merry Christmas Party (`SantaTrainLandmark`)
+
+Santa drives a steam engine across a snowy night pulling Mickey, a gift car, Donald, a tree car, Goofy and
+Pluto, in place of the castle on party nights. 258 px long on 64x64, so it drives the whole screen instead of
+posing. What was new:
+
+- **Copy real charts; don't draw characters.** Two hand-drawn Donalds were rejected outright ("does not
+  look like Donald at all"), and so were Tsum Tsum heads and 10px mini heads. Every rider that stuck came
+  from a real chart, cleaned up: backstitch outlines put back as pixels, a Santa hat in place of a sailor
+  cap, Donald's bill recoloured, Pluto mirrored to face the way the train drives.
+- **Riders need bodies.** Heads on a car's rim looked like they floated; seated riders in Christmas
+  sweaters with their gloves on the rim fixed it. Only four of the eight tried fit at a readable size.
+- **Halve by majority, not by stride.** Every other pixel (`row[::2]`) jumbled Santa's face and the
+  cowcatcher; each 2x2 block's most common colour kept both. Wheels still turned to mush either way, so
+  the half train stamps a clean 4x3 wheel at each halved wheel position. The 64x32 riders are the DIY Candy
+  mini heads rather than halved ones.
+- **Long sprites: index by column.** The frame walks only the train columns on the board, not all ~9000
+  pixels, so a slow board isn't paying for the cars off screen.
+- **End on something to read.** A billboard car as wide as the board goes on last; the train brakes evenly
+  to a stop with it filling the screen and holds 4s, so the screen is about 13.4s. Its lettering is dark on a
+  light sign, so `_text_pixels(..., shadow=False)`; tonight's hours come from `special_event_hours` (shared
+  with the pumpkin), and without them it says the name alone. The wheels roll by distance travelled, not
+  time, so they stop when the train does.
+- **Smoke is puffed, not painted.** A smoke cloud drawn into the engine just rode along with it. Puffs leave
+  the stack every `PUFF_S`, each staying where it was puffed (so they trail as the train pulls ahead),
+  growing and fading as they rise off the top.
+- **White near the wheels reads as noise.** Static rim shine and chassis-corner highlights looked like
+  stray pixels on a moving train; the wheel rows carry no white (held by a test), only the 64x32 rim spot.
+  The dark under the cars is opaque sky, or snowflakes fall through between the wheels.
+- **Gaps in a rider are background.** White or outline colour where the chart had nothing (the top of
+  Pluto's head) reads as part of him; the user wants the board off there, the night showing through.
+- **The riders move, and new limbs come from the user.** Bob (riders sink 1px into the car, rippling down the
+  train), blinks, Pluto's tail wag and panting all work by patching the existing art (`rider_patch`). Every
+  invented waving arm was rejected, four rounds over; what worked was asking exact questions (which hand,
+  how high, does the arm show, how it moves) and then letting the user draw Santa's frames in the sprite
+  editor (landmarks list art for it in `EDITOR_SPRITES`). Santa's arm was his red sleeve inside the window,
+  not the white block beside the cab: ask what a shape is before animating it. 64x32 has no waves yet.
+- **Keep mock code out of /tmp's reach.** A cleanup deleted the first train mock's art mid-design; the
+  parts had to be recovered from a pickled render.
+
 ### Before redoing Spaceship Earth
 
 The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders

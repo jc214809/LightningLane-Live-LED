@@ -16,6 +16,7 @@ from display.landmarks.wine_and_dine import WineAndDine5KLandmark  # looked up b
 from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # likewise
 from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # likewise
 from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # likewise
+from display.landmarks.santa_train import SantaTrainLandmark  # looked up by class name for its party (landmark_for)
 
 
 LANDMARKS = {
