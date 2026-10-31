@@ -120,6 +120,36 @@ def test_import_reads_json_bare_rows_and_art_without_colors():
 
 
 @needs_node
+def test_a_paste_gives_its_image_or_the_address_of_one():
+    result = _run_core("""
+        // A stand-in for a paste event's clipboardData: its items and its text by type.
+        const paste = (items, text = {}) => ({ items, getData: type => text[type] || "" });
+        const file = type => ({ kind: "file", type, getAsFile: () => "the " + type + " file" });
+        console.log(JSON.stringify([
+          pastedImage(paste([{ kind: "string", type: "text/html" }, file("image/png")])),
+          pastedImage(paste([file("application/pdf")])),
+          pastedImage(paste([], { "text/html": '<p><img alt="x" src="https://a.example/c.png?w=1&amp;h=2"></p>' })),
+          pastedImage(paste([], { "text/uri-list": "# a comment\\r\\nhttps://a.example/d.jpg" })),
+          pastedImage(paste([], { "text/plain": "  https://a.example/e.gif \\n" })),
+          pastedImage(paste([], { "text/plain": "just some words" })),
+          pastedImage(paste([], { "text/plain": "javascript:alert(1)" })),
+          pastedImage(paste([])),
+          pastedImage({ getData: () => "" }),
+        ]));""")
+    assert result == [
+        {"file": "the image/png file"},  # an image beats the HTML copied with it
+        None,  # a file that isn't an image
+        {"url": "https://a.example/c.png?w=1&h=2"},  # the <img> in copied HTML, its &amp; undone
+        {"url": "https://a.example/d.jpg"},  # a uri-list's comment line skipped
+        {"url": "https://a.example/e.gif"},
+        None,  # text that isn't a link
+        None,  # only http(s) links are fetched
+        None,
+        None,  # no items at all (an older browser)
+    ]
+
+
+@needs_node
 def test_contrast_check_catches_a_feature_lost_in_its_outline():
     """Slinky's first nose: dark on the muzzle, but touching an outline it matched."""
     result = _run_core("""
