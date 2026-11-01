@@ -14,7 +14,7 @@ from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from display.fireworks.music_show import render_music_show
 from display.fireworks.score import SHOWS_DIR, load_score
-from cli import arguments, board_preset, describe, led_matrix_options
+from cli import arguments, board_preset, board_type, describe, led_matrix_options
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
@@ -157,8 +157,11 @@ def main():
     # starts, and --emulated must switch the driver before the matrix is built.
     config = load_config()
     board_name, board = board_preset()
-    command_line_args = arguments(matrix=config.get("matrix"), board=board, board_name=board_name)
-    debug.info(describe(command_line_args, matrix=config.get("matrix"), board=board, board_name=board_name))
+    preset_name, preset, preset_why = board_type(config.get("pi_model"), board, config.get("matrix"))
+    command_line_args = arguments(matrix=config.get("matrix"), board=board, board_name=board_name,
+                                  preset=preset, preset_name=preset_name)
+    debug.info(describe(command_line_args, matrix=config.get("matrix"), board=board, board_name=board_name,
+                        preset=preset, preset_name=preset_name, preset_why=preset_why))
     if command_line_args.emulated:
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 

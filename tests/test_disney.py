@@ -755,18 +755,23 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
         raise _Built  # stop main() before its endless loop
 
     monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
-    monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}})
+    monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}, "pi_model": "pi4"})
     monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
+    picked = []
+    monkeypatch.setattr(disney, "board_type", lambda *args: picked.append(args) or (
+        "pi4-64x32", {"led_rows": 32, "led_cols": 32, "led_slowdown_gpio": 4}, "picked in config.json"))
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
     monkeypatch.setattr(disney.driver, "set_mode", lambda mode: calls.append(("set_mode", mode)), raising=False)
     monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)
     monkeypatch.setattr(disney.driver, "hardware_load_failed", False, raising=False)
     monkeypatch.setattr(disney.driver, "RGBMatrix", build_matrix)
-    monkeypatch.setattr(disney, "led_matrix_options", lambda args: f"rows={args.led_rows} cols={args.led_cols}")
+    monkeypatch.setattr(disney, "led_matrix_options",
+                        lambda args: f"rows={args.led_rows} cols={args.led_cols} slowdown={args.led_slowdown_gpio}")
     with pytest.raises(_Built):
         disney.main()
-    # cols from the board's preset, rows from config over the preset
-    assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64")]
+    # slowdown from the Pi preset, cols from the board's entry over it, rows from config over both
+    assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64 slowdown=4")]
+    assert picked == [("pi4", {"led_rows": 32, "led_cols": 64}, {"led_rows": 64})]
 
 
 @pytest.mark.parametrize("shows, expected", [

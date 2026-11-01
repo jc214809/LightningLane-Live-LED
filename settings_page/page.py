@@ -3,14 +3,15 @@ them), the PIN page, and the notices after a save. Everything is inline (styles,
 lines of script), since a phone on the setup hotspot has no internet to fetch anything from. It
 works without JavaScript; the script adds trip rows and the "unsaved changes" state.
 """
+import json
 from html import escape
 
 import cli
-from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, show_names, surprise_names, trip_rows
-from utils.config import SHOW_VERSIONS, WS_PROTOCOLS
+from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_names, surprise_names, trip_rows
+from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
 # What a save says, by Settings.restart_app's outcome.
-SAVED = ("restarted", "saved", "failed")
+SAVED = ("restarted", "saved", "failed", "volume", "volume_failed")
 
 STYLE = """
 :root {
@@ -115,6 +116,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 .pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
 .pair span { color: var(--text-3); font-size: 13px; }
 .below { margin-top: 8px; }
+.volume { display: flex; gap: 12px; align-items: center; }
+.volume input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.volume input[type=number] { width: 5.5em; flex: none; }
+.buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.volume-status:empty { display: none; }
+.volume-status[data-ok="false"] { color: var(--bad); }
 .pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 12px;
   font-weight: 550; background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
 .pill.ok { color: var(--good); background: var(--good-bg); border-color: var(--good-line); }
@@ -280,9 +287,20 @@ CHARACTER_NAMES = {
 
 SECTIONS = (  # id, nav title, icon
     ("live", "Live updates", "live"), ("weather", "Weather", "cloud"), ("parks", "Parks", "pin"), ("trips", "Trip countdown", "calendar"),
-    ("sound", "Sound", "sound"), ("display", "Display", "sun"), ("shows", "Fireworks shows", "sparkle"),
+    ("sound", "Sound", "sound"), ("panel", "Panel", "board"), ("display", "Display", "sun"),
+    ("shows", "Fireworks shows", "sparkle"),
     ("testing", "Testing", "flask"), ("advanced", "Advanced", "sliders"),
 )
+
+# The Panel card's settings, the ones the presets set, with their labels; the rest are under
+# Advanced. Rows and columns are the Panel size dropdown's.
+PANEL_SETTINGS = {"led_pixel_mapper": "Rotation", "led_gpio_mapping": "GPIO mapping",
+                  "led_slowdown_gpio": "GPIO slowdown", "led_pwm_lsb_nanoseconds": "PWM timing (ns)"}
+SIZE_SETTINGS = ("led_rows", "led_cols")
+# Rotation's choices: --led-pixel-mapper values. A saved one not here is offered as it is.
+ROTATIONS = (("Rotate:180", "Upside down (Rotate:180)"), ("Rotate:90", "A quarter turn (Rotate:90)"),
+             ("Rotate:270", "Three quarters (Rotate:270)"), ("Mirror:H", "Mirrored left to right (Mirror:H)"),
+             ("Mirror:V", "Mirrored top to bottom (Mirror:V)"))
 
 SCRIPT = """
 const form = document.getElementById('settings');
@@ -359,10 +377,52 @@ const custom = document.getElementById('custom-device');
 const showCustom = () => { custom.hidden = device.value !== 'custom'; };
 device.addEventListener('change', showCustom);
 showCustom();
+// Volume: the slider and the box follow each other; the buttons ask the board without leaving the page.
+const volume = document.getElementById('sound_volume');
+const volumeSlider = document.getElementById('volume_slider');
+const volumeStatus = document.getElementById('volume-status');
+volumeSlider.addEventListener('input', () => { volume.value = volumeSlider.value; });
+volume.addEventListener('input', () => { if (volume.value !== '') volumeSlider.value = volume.value; });
+document.querySelectorAll('button[name=volume_action]').forEach(button => button.addEventListener('click', async e => {
+  // The rest of the form goes along (for the speaker picked) but stays unsaved.
+  const data = new URLSearchParams(new FormData(form));
+  data.set('volume_action', button.value);
+  button.disabled = true;
+  delete volumeStatus.dataset.ok;
+  volumeStatus.textContent = button.value === 'test' ? 'Playing\u2026' : 'Setting\u2026';
+  try {
+    const reply = await fetch('/volume', {method: 'POST', body: data, headers: {Accept: 'application/json'}});
+    const result = await reply.json();  // a signed-out page gets HTML back, and lands in catch
+    volumeStatus.textContent = result.message;
+    volumeStatus.dataset.ok = result.ok;
+  } catch {
+    volumeStatus.textContent = "That didn't reach the board: reload the page and try again.";
+    volumeStatus.dataset.ok = false;
+  } finally {
+    button.disabled = false;
+  }
+}));
 const scheduleOn = document.getElementById('brightness_schedule');
 const showSchedule = () => { document.getElementById('schedule').hidden = !scheduleOn.checked; };
 scheduleOn.addEventListener('change', showSchedule);
 showSchedule();
+// A blank panel setting is the preset's for the chosen Pi model and size (page.py's
+// _panel_defaults does the same): say what that is, and follow a new model or size.
+const piModel = document.getElementById('pi_model');
+const panelSize = document.getElementById('panel_size');
+const boardDefaults = JSON.parse(document.getElementById('board-defaults')?.textContent || '{}');
+const defaultText = value => value === undefined || value === null || value === ''
+  ? 'Board default' : `Board default: ${value === true ? 'On' : value === false ? 'Off' : value}`;
+function showBoardDefaults() {
+  const model = piModel.value === 'auto' ? boardDefaults.auto_model : piModel.value;
+  const size = panelSize.value || boardDefaults.auto_size;
+  const defaults = boardDefaults.presets[`${model}-${size}`] || boardDefaults.own;
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const text = defaultText(defaults[el.dataset.key]);
+    if (el.tagName === 'SELECT') el.options[0].textContent = text; else el.placeholder = text;
+  });
+}
+[piModel, panelSize].forEach(el => el?.addEventListener('change', showBoardDefaults));
 const links = [...document.querySelectorAll('.toc a')];
 const spy = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
@@ -415,6 +475,11 @@ def notices(problems=(), saved=None):
         html += _notice("good", "<strong>Saved.</strong> The board is restarting with the new settings.")
     elif saved == "saved":
         html += _notice("good", "<strong>Saved.</strong> Restart the app for the new settings.")
+    elif saved == "volume":
+        html += _notice("good", "<strong>Saved.</strong> The speaker is at the new volume now; no restart needed.")
+    elif saved == "volume_failed":
+        html += _notice("bad", "<strong>Saved, but the speaker didn't change.</strong> The board's log says why; "
+                               "the next show tries again.", "alert")
     elif saved == "failed":
         html += _notice("bad", "<strong>Saved, but the app didn't restart.</strong> Unplug the board and plug it "
                                "back in to use the new settings.", "alert")
@@ -494,10 +559,51 @@ def _park_chip(name, unknown=False):
             f'aria-label="Remove {label}">{icon("x")}</label></li>')
 
 
-def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=()):
+def _json_for_script(value):
+    """JSON to put inside a <script>: a "<" escaped, so "</script>" in a value can't end it."""
+    return json.dumps(value).replace("<", "\\u003c")
+
+
+def _default_text(value):
+    """What a blank panel field leaves the board with; the script's defaultText() says the same."""
+    if value is None or value == "":
+        return "Board default"
+    return f"Board default: {'On' if value is True else 'Off' if value is False else value}"
+
+
+def _matrix_field(key, label, help_text, options, switch, value, default):
+    """A config.json "matrix" setting's row: blank is the board's default, which it names."""
+    name, blank = f"matrix_{key}", _default_text(default)
+    data = f' data-key="{key}"'
+    if key == "led_pixel_mapper":
+        choices = list(ROTATIONS) + ([(value, value)] if value and value not in dict(ROTATIONS) else [])
+        control = _options(name, [("", blank)] + choices, value or "", data)
+        help_text = "Which way up the panel is mounted, for a board that shows upside down or sideways."
+    elif switch:
+        chosen = "" if value is None else ("true" if value else "false")
+        control = _options(name, [("", blank), ("true", "On"), ("false", "Off")], chosen, data)
+    elif options:
+        chosen = "" if value is None else str(value)
+        control = _options(name, [("", blank)] + [(str(o), str(o) or "None") for o in options], chosen, data)
+    else:
+        control = _input(name, "" if value is None else value,
+                         extra=f' class="mono" placeholder="{_attr(blank)}"{data}')
+    return _field(name, label, control, help_text or "")
+
+
+def _panel_defaults(board_types, model, size):
+    """What blank panel fields leave the board with for the chosen model and size ("auto" and ""
+    being Automatic's); the script's showBoardDefaults() does the same."""
+    model = board_types.auto_model if model == cli.AUTO else model
+    return board_types.defaults.get(f"{model}-{size or board_types.auto_size}", board_types.own)
+
+
+def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),
+                  board_types=None):
     """The settings form, filled from config. sound_cards: ALSA device names for the dropdown.
     note: why config.json couldn't be read, if it couldn't. park_names: [(name, destination)]
-    for the park picker's suggestions, [] when the list hasn't loaded."""
+    for the park picker's suggestions, [] when the list hasn't loaded. board_types: form.BoardTypes,
+    the Pi model and Panel size dropdowns and what blank fields get; None leaves them off."""
     ws = config.get("websocket") if isinstance(config.get("websocket"), dict) else {}
     sound = config.get("sound") if isinstance(config.get("sound"), dict) else {}
     countdown = config.get("trip_countdown") if isinstance(config.get("trip_countdown"), dict) else {}
@@ -562,10 +668,26 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
                         + [("custom", "Other device…")], "custom" if custom else device)
                + f'<div class="below" id="custom-device"><label class="mini" for="sound_device_custom">ALSA device'
                  f'</label>{custom_input}</div>')
+    volume = sound.get("volume", "")
+    volume_control = (
+        '<div class="volume">'
+        f'<input type="range" id="volume_slider" class="js-only" min="0" max="100" '
+        f'value="{_attr(volume if volume != "" else DEFAULT_VOLUME)}" aria-label="Volume slider" hidden>'
+        + _input("sound_volume", volume, "number", f' min="0" max="100" inputmode="numeric" placeholder="{DEFAULT_VOLUME}"')
+        # Plain buttons, not submits: Enter in any field must still mean Save.
+        + '</div><div class="below buttons js-only" hidden>'
+        f'<button type="button" class="secondary" name="volume_action" value="set">{icon("check")}Set volume</button>'
+        f'<button type="button" class="secondary" name="volume_action" value="test">{icon("sound")}Play test sound'
+        '</button></div>'
+        '<p class="hint volume-status" id="volume-status" role="status" aria-live="polite"></p>')
     sound_html = _section("sound", "Sound", "The fireworks music, from a speaker on the board.", (
         _switch("sound_enabled", "Play the fireworks music", sound.get("enabled", False),
                 "Needs a speaker, and the music in the sounds folder.")
         + _field("sound_device", "Speaker", speaker)
+        + _field("sound_volume", "Volume", volume_control,
+                 f"0 to 100, set before each show. Blank is {DEFAULT_VOLUME}: louder can draw more power than "
+                 "the Pi can spare and slow the show down. Set volume saves just this, with no restart; "
+                 "Play test sound plays a few seconds at it without saving.")
         + _field("quiet_start", "Quiet hours",
                  f'<div class="pair">{quiet_inputs}</div>',
                  "No music between these times. Leave both blank for none.")
@@ -579,11 +701,15 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     def scheduled(key, label, value, start_key, start_label, start):
         return (f'<div><label class="mini" for="{key}">{label}</label>{_input(key, value, "number", level)}</div>'
                 f'<div><label class="mini" for="{start_key}">{start_label}</label>{_input(start_key, start, "time")}</div>')
+    chosen_model, chosen_size = config.get("pi_model") or cli.AUTO, panel_size(matrix)
+    if board_types is not None and chosen_model not in dict(board_types.models):
+        chosen_model = cli.AUTO
+    defaults = _panel_defaults(board_types, chosen_model, chosen_size) if board_types else {}
     display = _section("display", "Display", "How bright the LED panel is, all day or by the time of day.", (
         _field(f"matrix_{BRIGHTNESS}", "Brightness",
                _input(f"matrix_{BRIGHTNESS}", "" if brightness is None else brightness, "number",
-                      level + ' placeholder="Board default"'),
-               "1 to 100. Blank uses the board's own setting. A schedule, when on, takes over from it.")
+                      f'{level} placeholder="{_attr(_default_text(defaults.get(BRIGHTNESS)))}" data-key="{BRIGHTNESS}"'),
+               "1 to 100. Blank uses the one for this Pi and panel (see Panel). A schedule, when on, takes over from it.")
         + _switch("brightness_schedule", "Day and night brightness", schedule is not None,
                   "Dim the board at night, by the board's clock.")
         + '<div class="schedule-wrap" id="schedule">'
@@ -621,29 +747,37 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
                           "plays a show once each time the app starts; turn it off when you're done.")
     ), "sparkle")
 
-    panel = ""
-    for key, help_text, options, switch, _ in cli.matrix_settings():
-        if key == BRIGHTNESS:
-            continue
-        value = matrix.get(key)
-        label = key.removeprefix("led_").replace("_", " ").capitalize()
-        name = f"matrix_{key}"
-        if switch:
-            chosen = "" if value is None else ("true" if value else "false")
-            control = _options(name, [("", "Board default"), ("true", "On"), ("false", "Off")], chosen)
-        elif options:
-            chosen = "" if value is None else str(value)
-            control = _options(name, [("", "Board default")] + [(str(o), str(o) or "None") for o in options], chosen)
-        else:
-            control = _input(name, "" if value is None else value, extra=' class="mono" placeholder="Board default"')
-        panel += _field(name, label, control, help_text or "")
+    settings = {key: (help_text, options, switch) for key, help_text, options, switch, _ in cli.matrix_settings()}
+    panel_fields = "".join(_matrix_field(key, label, *settings[key], matrix.get(key), defaults.get(key))
+                           for key, label in PANEL_SETTINGS.items())
+    board_type = ""
+    if board_types:
+        for_script = {"auto_model": board_types.auto_model, "auto_size": board_types.auto_size,
+                      "presets": board_types.defaults, "own": board_types.own}
+        board_type = (_field("pi_model", "Pi model", _options("pi_model", board_types.models, chosen_model),
+                             "Which Raspberry Pi drives the panel. Automatic goes by this board's boards.json "
+                             "entry, or else the Pi itself.")
+                      + _field("panel_size", "Panel size", _options("panel_size", board_types.sizes, chosen_size),
+                               "Columns x rows, as on the panel's label.")
+                      + f'<script type="application/json" id="board-defaults">{_json_for_script(for_script)}</script>')
+    panel_html = _section("panel", "Panel", "Which Pi and panel this is, and which way up it's mounted.", (
+        board_type
+        + _notice("info", "The Pi model and size set the rest to what works best. Each one left blank shows "
+                          "that greyed out; set one to change just that one, like Rotation for a board mounted "
+                          "upside down.")
+        + panel_fields
+    ), "board")
+    panel = "".join(_matrix_field(key, key.removeprefix("led_").replace("_", " ").capitalize(), help_text, options,
+                                  switch, matrix.get(key), defaults.get(key))
+                    for key, (help_text, options, switch) in settings.items()
+                    if key != BRIGHTNESS and key not in PANEL_SETTINGS and key not in SIZE_SETTINGS)
     advanced = (
         '<details class="card" id="advanced"><summary class="card-head">'
         f'<span class="card-icon">{icon("sliders")}</span><div><h2>Advanced</h2>'
         '<p>Panel hardware. Most boards never need these.</p></div>'
         f'<span class="chev">{icon("chevron")}</span></summary><div class="card-body">'
         + _notice("warn", "The wrong panel settings can leave the board dark or flickering. Blank leaves each one to "
-                          "the board's own settings (boards.json).")
+                          "the Pi model and size's preset and the board's boards.json entry. Size, rotation and timing are in Panel.")
         + panel
         + "</div></details>")
     testing = _section("testing", "Testing", "For checking the board; turn them off when you're done.", (
@@ -665,7 +799,7 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
           'and the app restarts to use them.</p></div>'
         + top
         + f'<form method="post" action="/save" id="settings"><div class="stack">'
-          f'{live}{weather_html}{park_html}{trips}{sound_html}{display}{shows}{testing}{advanced}</div>'
+          f'{live}{weather_html}{park_html}{trips}{sound_html}{panel_html}{display}{shows}{testing}{advanced}</div>'
         + '<div class="savebar"><div class="savebar-in"><div class="status" id="save-status"><span class="dot"></span>'
           '<span>Saved keys stay as they are unless you replace them</span></div>'
           f'<button type="submit" class="primary" id="save">{icon("save")}<span>Save and restart</span></button>'

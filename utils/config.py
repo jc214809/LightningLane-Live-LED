@@ -137,16 +137,21 @@ def forced_show_name(config):
     return None
 
 
+# A USB speaker draws on the Pi's 5V rail; near full volume it under-volted Disneypi (a Pi 4), 80% didn't.
+DEFAULT_VOLUME = 80
+
+
 class SoundSettings(NamedTuple):
     enabled: bool = False
     device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card
     quiet_hours: Optional[Tuple[time, time]] = None  # (start, end) in the board's local time
+    volume: int = DEFAULT_VOLUME  # percent, set with amixer before each clip
 
 
 def sound_settings(config):
-    """config.json's "sound" section: {"enabled": true, "device": null,
+    """config.json's "sound" section: {"enabled": true, "device": null, "volume": 80,
     "quiet_hours": {"start": "22:00", "end": "08:00"}}. Without the section the board stays silent.
-    A bad quiet_hours turns sound off rather than risk playing in the night."""
+    A bad quiet_hours turns sound off rather than risk playing in the night; a bad volume is 80."""
     section = config.get("sound")
     if section is None:
         return SoundSettings()
@@ -164,6 +169,13 @@ def sound_settings(config):
                       'using the default.')
         device = None
 
+    volume = section.get("volume")
+    if volume is None:
+        volume = DEFAULT_VOLUME
+    elif isinstance(volume, bool) or not isinstance(volume, int) or not 0 <= volume <= 100:
+        debug.warning(f'config.json "sound.volume" should be 0 to 100, not {volume!r}; using {DEFAULT_VOLUME}.')
+        volume = DEFAULT_VOLUME
+
     quiet = section.get("quiet_hours")
     quiet_hours = None
     if quiet is not None:
@@ -173,7 +185,7 @@ def sound_settings(config):
             debug.warning(f'config.json "sound.quiet_hours" should be {{"start": "22:00", "end": "08:00"}}, '
                           f'not {quiet!r}; sound is off.')
             return SoundSettings()
-    return SoundSettings(enabled, device, quiet_hours)
+    return SoundSettings(enabled, device, quiet_hours, volume)
 
 
 class BrightnessSchedule(NamedTuple):

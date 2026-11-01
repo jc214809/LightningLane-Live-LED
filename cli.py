@@ -3,7 +3,8 @@ The command line: the rgbmatrix library's --led-* flags plus our own (--emulated
 mlb-led-scoreboard's cli.py: disney.py parses it once, then switches the driver to the emulator
 if asked, so importing the driver never reads sys.argv. As upstream, config.json's "matrix"
 section can hold the same settings ({"led_rows": 64, ...}), and boards.json holds each board's,
-keyed by hostname. Precedence: command line, config.json's matrix, the board's preset, defaults.
+keyed by hostname, and a preset for each Pi model and panel size. Precedence: command line,
+config.json's matrix, the board's boards.json entry, the Pi preset, defaults.
 """
 import argparse
 import json
@@ -20,39 +21,153 @@ SUPPORTED_ROWS = (32, 64)
 BOARDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boards.json")
 
 
-def board_preset(hostname=None, path=BOARDS_FILE):
-    """(name, settings) for this machine from boards.json, matched on the hostname ignoring
-    case, or (None, None) when it has no entry or there's no file. Exits on a broken file."""
-    hostname = (hostname or socket.gethostname()).split(".")[0].lower()
+# boards.json's "presets": the best settings for each Pi model and panel size, keyed
+# "<model>-<cols>x<rows>". The model is config.json's "pi_model" (the settings page's Pi model),
+# else the one in the board's boards.json "preset", else the Pi's own; the size is config.json's
+# matrix rows and columns (the page's Panel size), else the board's entry's, else its preset's.
+PRESETS = "presets"
+PRESET = "preset"
+AUTO = "auto"
+# What /proc/device-tree/model starts with, for each model with presets. "Raspberry Pi 4" covers the 400.
+PI_MODELS = (("Raspberry Pi 4", "pi4"), ("Raspberry Pi 3", "pi3"), ("Raspberry Pi Zero 2", "pizero2w"))
+MODEL_NAMES = {"pi4": "Pi 4", "pi3": "Pi 3", "pizero2w": "Pi Zero 2 W"}
+MODEL_FILE = "/proc/device-tree/model"
+# rpi-rgb-led-matrix can't drive the Pi 5's GPIO (it goes through the RP1 chip), so it has no preset.
+UNSUPPORTED_MODELS = ("Raspberry Pi 5",)
+DEFAULT_SIZE = "64x32"  # the parser's 32 rows, at the 64 columns every board has
+
+
+def _boards(path):
+    """boards.json as a dict, {} with no file. Exits on a broken file."""
     try:
         with open(path) as f:
             boards = json.load(f)
     except FileNotFoundError:
-        return None, None
+        return {}
     except ValueError as e:
         sys.exit(f"{os.path.basename(path)} isn't valid JSON: {e}")
     if not isinstance(boards, dict):
         sys.exit(f'{os.path.basename(path)} should map hostnames to settings, like {{"Disneypi": {{"led_rows": 64}}}}')
-    for name, settings in boards.items():
-        if name.lower() == hostname:
+    return boards
+
+
+def board_preset(hostname=None, path=BOARDS_FILE):
+    """(name, settings) for this machine from boards.json, matched on the hostname ignoring
+    case, or (None, None) when it has no entry or there's no file. Exits on a broken file."""
+    hostname = (hostname or socket.gethostname()).split(".")[0].lower()
+    for name, settings in _boards(path).items():
+        if name != PRESETS and name.lower() == hostname:
             return name, settings
     return None, None
 
 
-def arguments(argv=None, matrix=None, board=None, board_name=None):
-    """Parsed flags: the board's preset from boards.json (`board`), then config.json's "matrix"
-    section (`matrix`), then the command line (argv, default sys.argv[1:]); each overrides the one
-    before. Exits with a usage message on an unknown flag or setting, or a value the boards can't
-    use; under unittest, test runners' own flags on sys.argv are ignored instead."""
+def presets(path=BOARDS_FILE):
+    """boards.json's presets, {key: settings}, in the file's order."""
+    found = _boards(path).get(PRESETS) or {}
+    return found if isinstance(found, dict) else {}
+
+
+def preset_label(key):
+    """"pi4-64x64" -> "Pi 4 · 64x64"; a key not in that shape as it is."""
+    model, _, size = key.partition("-")
+    return f"{MODEL_NAMES[model]} · {size}" if model in MODEL_NAMES and size else key
+
+
+def pi_model(path=MODEL_FILE):
+    """(model key or None, the model as the Pi names it, or None off a Pi)."""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            text = f.read().strip("\0\n ")
+    except OSError:
+        return None, None
+    return next((key for prefix, key in PI_MODELS if text.startswith(prefix)), None), text
+
+
+def preset_size(key):
+    """A preset key's panel size: "pi4-64x32" -> "64x32"."""
+    return key.partition("-")[2]
+
+
+def pick_model(choice=None, board=None, model=None):
+    """(model key or None, why): config.json's "pi_model" (choice) unless it's automatic, else the
+    model of the board's boards.json preset, else the detected one (model)."""
+    if choice and choice != AUTO:
+        return choice, "picked in config.json"
+    if (board or {}).get(PRESET):
+        return board[PRESET].partition("-")[0], "boards.json entry"
+    if model is not None:
+        return model, f"detected {MODEL_NAMES.get(model, model)}"
+    return None, None
+
+
+def pick_size(board=None, matrix=None):
+    """(panel size like "64x32", why): config.json's matrix rows and columns, over the board's
+    boards.json entry's, over its preset's size, over 64x32."""
+    board, matrix = board or {}, matrix or {}
+    cols, _, rows = (preset_size(board.get(PRESET) or "") or DEFAULT_SIZE).partition("x")
+    why = "boards.json entry" if board.get(PRESET) else "default"
+    for where, settings in (("boards.json entry", board), ("picked in config.json", matrix)):
+        if settings.get("led_cols") or settings.get("led_rows"):
+            cols, rows, why = settings.get("led_cols") or cols, settings.get("led_rows") or rows, where
+    return f"{cols}x{rows}", why
+
+
+def pick_preset(choice=None, board=None, matrix=None, model=None, available=()):
+    """(preset key or None, why the model): pick_model's model at pick_size's size. None with no
+    model, or no preset for that model and size."""
+    model, why = pick_model(choice, board, model)
+    if model is None:
+        return None, None
+    key = f"{model}-{pick_size(board, matrix)[0]}"
+    return (key, why) if key in available else (None, None)
+
+
+def no_preset_reason(model_text):
+    """Why a board with no pick and no boards.json preset has no preset, from pi_model()'s text."""
+    if model_text and model_text.startswith(UNSUPPORTED_MODELS):
+        return f"{model_text} isn't supported by the LED driver"
+    return f"no preset for {model_text}" if model_text else "not a Pi"
+
+
+def board_type(choice=None, board=None, matrix=None, path=BOARDS_FILE, model_file=MODEL_FILE):
+    """(preset key, its settings, why) for disney.main: choice is config.json's "pi_model".
+    (None, None, why) with no preset (why says what was found: a Pi 5, or not a Pi). Exits when
+    config.json names an unknown model or the board's entry an unknown preset."""
+    available = presets(path)
+    if choice and choice != AUTO and choice not in MODEL_NAMES:
+        sys.exit(f'config.json "pi_model" is "{choice}", not one of {", ".join((AUTO,) + tuple(MODEL_NAMES))}')
+    named = (board or {}).get(PRESET)
+    if named and named not in available:
+        sys.exit(f'boards.json entry names preset "{named}", which boards.json doesn\'t have '
+                 f'(it has {", ".join(available)})')
+    model, model_text = pi_model(model_file)
+    key, why = pick_preset(choice, board, matrix, model, available)
+    if key is None:
+        return None, None, no_preset_reason(model_text)
+    return key, available[key], why
+
+
+def arguments(argv=None, matrix=None, board=None, board_name=None, preset=None, preset_name=None):
+    """Parsed flags: the Pi preset (`preset`, from board_type), then the board's boards.json entry
+    (`board`), then config.json's "matrix" section (`matrix`), then the command line (argv, default
+    sys.argv[1:]); each overrides the one before. Exits with a usage message on an unknown flag or
+    setting, or a value the boards can't use; under unittest, test runners' own flags on sys.argv
+    are ignored instead."""
     parser = _make_parser()
-    preset = _matrix_tokens(parser, board, f'boards.json "{board_name}"')
-    from_config = _matrix_tokens(parser, matrix, 'config.json "matrix"')
+    tokens = (_matrix_tokens(parser, preset, f'boards.json preset "{preset_name}"')
+              + _matrix_tokens(parser, _own_settings(board), f'boards.json "{board_name}"')
+              + _matrix_tokens(parser, matrix, 'config.json "matrix"'))
     if argv is None and "unittest" in sys.modules:
-        parsed, _ = parser.parse_known_args(preset + from_config + sys.argv[1:])
+        parsed, _ = parser.parse_known_args(tokens + sys.argv[1:])
     else:
-        parsed = parser.parse_args(preset + from_config + list(sys.argv[1:] if argv is None else argv))
+        parsed = parser.parse_args(tokens + list(sys.argv[1:] if argv is None else argv))
     _check_sizes(parser, parsed)
     return parsed
+
+
+def _own_settings(board):
+    """A boards.json entry less its "preset" name: the settings it sets itself."""
+    return {k: v for k, v in (board or {}).items() if k != PRESET} if isinstance(board, dict) else board
 
 
 def _check_sizes(parser, parsed):
@@ -85,10 +200,11 @@ def matrix_problem(matrix):
     return None
 
 
-def describe(parsed, argv=None, matrix=None, board=None, board_name=None):
-    """One line for the startup log: which preset applies, then each setting that isn't at its
-    default and what set it (command line, config, or the board's preset), by the same
-    precedence as arguments()."""
+def describe(parsed, argv=None, matrix=None, board=None, board_name=None, preset=None, preset_name=None,
+             preset_why=None):
+    """One line for the startup log: which boards.json entry and Pi preset apply, then each setting
+    that isn't at its default and what set it (command line, config, the board's entry or the
+    preset), by the same precedence as arguments()."""
     parser = _make_parser()
     by_flag = parser._option_string_actions
     from_command_line = {by_flag[token.split("=", 1)[0]].dest
@@ -99,14 +215,19 @@ def describe(parsed, argv=None, matrix=None, board=None, board_name=None):
             return "command line"
         if (matrix or {}).get(dest) is not None:
             return "config"
-        return f"board {board_name}" if (board or {}).get(dest) is not None else "default"
+        if (board or {}).get(dest) is not None:
+            return f"board {board_name}"
+        return f"preset {preset_name}" if (preset or {}).get(dest) is not None else "default"
 
     changed = [f"{action.dest}={getattr(parsed, action.dest)} ({source(action.dest)})"
                for action in parser._actions
                if action.option_strings and action.dest != "help"
                and getattr(parsed, action.dest, action.default) != action.default]
-    preset = f"boards.json preset {board_name}" if board_name else "no boards.json preset for this hostname"
-    return f"Board settings ({preset}): " + (", ".join(changed) + "; the rest default" if changed else "all default")
+    entry = f"boards.json entry {board_name}" if board_name else "no boards.json entry for this hostname"
+    pi = (f"preset {preset_name} ({preset_label(preset_name)}, {preset_why})" if preset_name
+          else f"no preset ({preset_why})" if preset_why else "no preset")
+    return (f"Board settings ({entry}; {pi}): "
+            + (", ".join(changed) + "; the rest default" if changed else "all default"))
 
 
 def _matrix_tokens(parser, matrix, where):

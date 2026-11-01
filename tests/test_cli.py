@@ -333,14 +333,14 @@ def test_describe_lists_changed_settings_and_where_each_came_from():
     argv = ["--led-rows=64", "--led-gpio-mapping", "adafruit-hat-pwm", "--emulated"]
     matrix = {"led_cols": 64, "led_brightness": 100, "led_slowdown_gpio": 4}
     line = describe(arguments(argv, matrix=matrix), argv, matrix=matrix)
-    assert line == ("Board settings (no boards.json preset for this hostname): "
+    assert line == ("Board settings (no boards.json entry for this hostname; no preset): "
                     "led_rows=64 (command line), led_cols=64 (config), "
                     "led_gpio_mapping=adafruit-hat-pwm (command line), led_slowdown_gpio=4 (config), "
                     "emulated=True (command line); the rest default"), "brightness 100 is the default: not listed"
 
 
 def test_describe_with_everything_default():
-    assert describe(arguments([]), []) == "Board settings (no boards.json preset for this hostname): all default"
+    assert describe(arguments([]), []) == "Board settings (no boards.json entry for this hostname; no preset): all default"
 
 
 def test_describe_credits_the_command_line_when_both_set_it():
@@ -388,7 +388,7 @@ def test_config_overrides_the_board_preset_and_the_command_line_overrides_both()
     parsed = arguments(argv, matrix=matrix, board=board, board_name="PlutoPi")
     assert (parsed.led_rows, parsed.led_brightness, parsed.led_slowdown_gpio) == (64, 60, 4)
     line = describe(parsed, argv, matrix=matrix, board=board, board_name="PlutoPi")
-    assert line.startswith("Board settings (boards.json preset PlutoPi): ")
+    assert line.startswith("Board settings (boards.json entry PlutoPi; no preset): ")
     assert "led_rows=64 (board PlutoPi)" in line
     assert "led_brightness=60 (config)" in line
     assert "led_slowdown_gpio=4 (command line)" in line
@@ -400,14 +400,143 @@ def test_a_bad_preset_names_its_board_in_the_error(capsys):
     assert 'boards.json "PlutoPi" has no setting "led_row"' in capsys.readouterr().err
 
 
-def test_every_board_in_the_repos_boards_json_parses():
+def test_every_board_and_preset_in_the_repos_boards_json_parses():
     # A typo here would stop a board at its next update; catch it before it's pushed.
     with open(BOARDS_FILE) as f:
         boards = _json.load(f)
-    assert boards, "boards.json lists the boards"
+    available = boards.pop(PRESETS)
+    assert boards and available, "boards.json lists the boards and the presets"
+    for key, settings in available.items():
+        parsed = arguments([], preset=settings, preset_name=key)
+        assert key == f"{key.partition('-')[0]}-{parsed.led_cols}x{parsed.led_rows}", "named for its size"
+        assert key.partition("-")[0] in MODEL_NAMES, key
     for name, settings in boards.items():
-        parsed = arguments([], board=settings, board_name=name)
-        assert parsed.led_rows == settings["led_rows"], name
+        key, preset, _ = board_type(None, settings, path=BOARDS_FILE, model_file="/nonexistent")
+        parsed = arguments([], board=settings, board_name=name, preset=preset, preset_name=key)
+        assert parsed.led_rows in (32, 64), name
+
+
+def test_every_model_has_presets_for_both_sizes():
+    keys = set(presets())
+    for model in MODEL_NAMES:
+        assert {f"{model}-64x64", f"{model}-64x32"} <= keys, model
+
+
+# -----------------------------------------------------------------------------
+# Pi presets: picked in config.json, named by the board's entry, or found from the Pi's model
+# -----------------------------------------------------------------------------
+from cli import (MODEL_NAMES, PRESETS, board_type, describe as _describe, pi_model, pick_model,  # noqa: E402
+                 pick_preset, pick_size, preset_label, presets)
+
+_PRESETS = {"pi4-64x64": {"led_rows": 64, "led_cols": 64, "led_slowdown_gpio": 4, "led_pwm_lsb_nanoseconds": 200},
+            "pi4-64x32": {"led_rows": 32, "led_cols": 64, "led_slowdown_gpio": 4},
+            "pizero2w-64x32": {"led_rows": 32, "led_cols": 64, "led_slowdown_gpio": 2}}
+
+
+def _model_file(tmp_path, text):
+    path = tmp_path / "model"
+    path.write_bytes(text.encode() + b"\0")  # the device tree ends it with a NUL
+    return str(path)
+
+
+@pytest.mark.parametrize("text, model", [
+    ("Raspberry Pi 4 Model B Rev 1.5", "pi4"),
+    ("Raspberry Pi 400 Rev 1.0", "pi4"),
+    ("Raspberry Pi 3 Model B Plus Rev 1.3", "pi3"),
+    ("Raspberry Pi Zero 2 W Rev 1.0", "pizero2w"),
+    ("Raspberry Pi Zero W Rev 1.1", None),
+    ("Raspberry Pi 5 Model B Rev 1.0", None),
+])
+def test_pi_model_reads_the_device_tree(tmp_path, text, model):
+    assert pi_model(_model_file(tmp_path, text)) == (model, text)
+
+
+def test_pi_model_off_a_pi_is_none(tmp_path):
+    assert pi_model(str(tmp_path / "missing")) == (None, None)
+
+
+def test_the_model_picked_in_config_wins_over_the_boards_entry_and_the_detected_one():
+    assert pick_model("pizero2w", {"preset": "pi4-64x64"}, "pi4") == ("pizero2w", "picked in config.json")
+    assert pick_model("auto", {"preset": "pi4-64x64"}, "pizero2w") == ("pi4", "boards.json entry")
+    assert pick_model(None, None, "pi4") == ("pi4", "detected Pi 4")
+    assert pick_model(None, None, None) == (None, None)
+
+
+def test_the_size_is_configs_then_the_boards_entry_then_its_preset_then_64x32():
+    assert pick_size() == ("64x32", "default")
+    assert pick_size({"preset": "pi4-64x64"}) == ("64x64", "boards.json entry")
+    assert pick_size({"preset": "pi4-64x64", "led_rows": 32}) == ("64x32", "boards.json entry")
+    assert pick_size({"preset": "pi4-64x64"}, {"led_rows": 32, "led_cols": 64}) == ("64x32", "picked in config.json")
+    assert pick_size(None, {"led_rows": 64, "led_cols": None}) == ("64x64", "picked in config.json")
+
+
+def test_the_preset_is_the_model_at_the_size():
+    assert pick_preset("pizero2w", {"preset": "pi4-64x64"}, {"led_rows": 32}, "pi4", _PRESETS) == \
+        ("pizero2w-64x32", "picked in config.json")
+    assert pick_preset(None, {"preset": "pi4-64x64"}, {"led_rows": 32}, None, _PRESETS) == \
+        ("pi4-64x32", "boards.json entry"), "a size picked in config keeps the board's model"
+    assert pick_preset(None, None, None, "pi4", _PRESETS) == ("pi4-64x32", "detected Pi 4")
+
+
+def test_no_model_or_no_preset_for_the_pair_means_no_preset():
+    assert pick_preset(None, None, None, None, _PRESETS) == (None, None)
+    assert pick_preset(None, None, {"led_rows": 64}, "pizero2w", _PRESETS) == (None, None)
+
+
+def test_board_type_says_why_there_is_no_preset(tmp_path):
+    path = _boards_file(tmp_path, {"presets": _PRESETS})
+    assert board_type(path=path, model_file=str(tmp_path / "missing")) == (None, None, "not a Pi")
+    pi5 = _model_file(tmp_path, "Raspberry Pi 5 Model B Rev 1.0")
+    assert board_type(path=path, model_file=pi5) == \
+        (None, None, "Raspberry Pi 5 Model B Rev 1.0 isn't supported by the LED driver")
+    zero = _model_file(tmp_path, "Raspberry Pi Zero W Rev 1.1")
+    assert board_type(path=path, model_file=zero)[2] == "no preset for Raspberry Pi Zero W Rev 1.1"
+
+
+def test_board_type_detects_the_model(tmp_path):
+    path = _boards_file(tmp_path, {"presets": _PRESETS})
+    pi4 = _model_file(tmp_path, "Raspberry Pi 4 Model B Rev 1.5")
+    assert board_type(matrix={"led_rows": 64}, path=path, model_file=pi4) == \
+        ("pi4-64x64", _PRESETS["pi4-64x64"], "detected Pi 4")
+
+
+def test_an_unknown_model_in_config_or_preset_in_boards_json_stops_the_app(tmp_path):
+    path = _boards_file(tmp_path, {"presets": _PRESETS})
+    with pytest.raises(SystemExit, match='"pi_model" is "pi9"'):
+        board_type("pi9", path=path, model_file=str(tmp_path / "missing"))
+    with pytest.raises(SystemExit, match='names preset "pi4-64x48"'):
+        board_type(None, {"preset": "pi4-64x48"}, path=path, model_file=str(tmp_path / "missing"))
+
+
+def test_a_board_named_presets_is_not_a_hostname_match(tmp_path):
+    assert board_preset("presets", _boards_file(tmp_path, {"presets": _PRESETS})) == (None, None)
+
+
+def test_the_preset_is_overridden_by_the_board_then_config_then_the_command_line():
+    preset = _PRESETS["pi4-64x64"]
+    board = {"preset": "pi4-64x64", "led_pixel_mapper": "Rotate:180", "led_slowdown_gpio": 3}
+    matrix = {"led_brightness": 60}
+    parsed = arguments(["--led-rows=32"], matrix=matrix, board=board, board_name="PlutoPi",
+                       preset=preset, preset_name="pi4-64x64")
+    assert (parsed.led_rows, parsed.led_cols, parsed.led_slowdown_gpio, parsed.led_pwm_lsb_nanoseconds,
+            parsed.led_pixel_mapper, parsed.led_brightness) == (32, 64, 3, 200, "Rotate:180", 60)
+    line = _describe(parsed, ["--led-rows=32"], matrix=matrix, board=board, board_name="PlutoPi",
+                     preset=preset, preset_name="pi4-64x64", preset_why="boards.json entry")
+    assert line.startswith("Board settings (boards.json entry PlutoPi; preset pi4-64x64 (Pi 4 · 64x64, "
+                           "boards.json entry)): ")
+    assert "led_cols=64 (preset pi4-64x64)" in line
+    assert "led_pwm_lsb_nanoseconds=200 (preset pi4-64x64)" in line
+    assert "led_slowdown_gpio=3 (board PlutoPi)" in line
+
+
+def test_describe_says_why_there_is_no_preset():
+    line = _describe(arguments([]), [], preset_why="Raspberry Pi 5 Model B isn't supported by the LED driver")
+    assert "no preset (Raspberry Pi 5 Model B isn't supported by the LED driver)" in line
+
+
+def test_preset_labels():
+    assert preset_label("pizero2w-64x32") == "Pi Zero 2 W · 64x32"
+    assert preset_label("custom") == "custom"
 
 
 def test_matrix_problem_names_what_would_stop_the_app_and_none_for_good_settings():

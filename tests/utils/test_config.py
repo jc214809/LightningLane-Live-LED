@@ -176,3 +176,17 @@ def test_a_bad_brightness_schedule_is_warned_about_and_ignored(monkeypatch, sect
     monkeypatch.setattr(config_module.debug, "warning", warnings.append)
     assert config_module.brightness_schedule({"brightness_schedule": section}) is None
     assert len(warnings) == 1 and problem in warnings[0]
+
+
+@pytest.mark.parametrize("volume, expected", [(None, 80), (0, 0), (65, 65), (100, 100)])
+def test_sound_volume_defaults_to_80(volume, expected):
+    assert sound_settings({"sound": {"volume": volume}}).volume == expected
+
+
+@pytest.mark.parametrize("volume", [101, -1, "80", 80.5, True])
+def test_a_bad_sound_volume_is_80_with_a_warning(monkeypatch, volume):
+    from utils import config as config_module
+    warnings = []
+    monkeypatch.setattr(config_module.debug, "warning", warnings.append)
+    assert sound_settings({"sound": {"volume": volume}}).volume == 80
+    assert "sound.volume" in warnings[0]
