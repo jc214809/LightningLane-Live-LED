@@ -8,7 +8,7 @@
 #   sudo bash board-setup.sh                      # asks
 #   sudo bash board-setup.sh --answers board.txt  # KEY=value lines skip those questions
 #   bash board-setup.sh --dry-run ...             # prints what it would do, changes nothing
-#   sudo bash board-setup.sh --wifi-setup-only    # just the Wi-Fi setup hotspot (LLL-install.sh's)
+#   sudo bash board-setup.sh --wifi-setup-only    # just the Wi-Fi setup hotspot and settings page (LLL-install.sh's)
 set -Eeuo pipefail
 
 ROOT="${BOARD_SETUP_ROOT:-}"   # tests: a folder standing in for / (system files are read from it)
@@ -20,6 +20,7 @@ MLB_REPO=https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard.git
 LLL_UNIT=LightningLane-Live-LED.service
 PELOTON_UNIT=peloton-led.service
 MLB_UNIT=mlb-led-scoreboard.service
+SETTINGS_UNIT=lll-settings.service  # LightningLane-Live-LED's settings page (settings_page/server.py)
 UNIT_DIR="$ROOT/etc/systemd/system"
 # comitup: with no known Wi-Fi in range, it opens a hotspot whose page puts the board on a network.
 COMITUP_SOURCE_DEB=https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb
@@ -50,7 +51,8 @@ Usage: sudo bash board-setup.sh [--answers FILE] [--branch NAME] [--yes] [--dry-
   --yes           Don't ask: unanswered questions take their defaults, and no confirmation.
   --dry-run       Print the commands and files it would write; change nothing.
   --wifi-setup-only
-                  Only install or update the Wi-Fi setup hotspot (comitup), with no questions.
+                  Only install or update the Wi-Fi setup hotspot (comitup), with no questions,
+                  and, run from LightningLane-Live-LED's folder, its settings page.
 USAGE
 }
 
@@ -505,6 +507,19 @@ install_lll() {
     unit="$(app_unit "LightningLane-Live-LED" "$dir" "$dir/venv/bin/python3 $dir/disney.py \$ARGS" "\"ARGS=$EXTRA_ARGS\"")"
     retire_old_units "$LLL_UNIT" "$unit"
     write_file "$UNIT_DIR/$LLL_UNIT" 644 <<<"$unit"
+    setup_settings_page "$dir"
+}
+
+setup_settings_page() {  # setup_settings_page DIR: LightningLane-Live-LED's settings page, its own service
+    # Its own service, so a config.json that stops the app can still be fixed from it. Root, as the
+    # app: it writes config.json and restarts the app.
+    local dir=$1 python=$1/venv/bin/python3
+    say "Settings page: config.json from a browser at http://$BOARD_NAME.local:8080 (or 10.41.0.1:8080 on the setup hotspot)"
+    [[ -x "$python" ]] || python=/usr/bin/python3
+    write_file "$UNIT_DIR/$SETTINGS_UNIT" 644 <<<"$(app_unit "LightningLane-Live-LED settings page" "$dir" "$python -m settings_page.server")"
+    run systemctl daemon-reload
+    run systemctl enable "$SETTINGS_UNIT"
+    run systemctl restart "$SETTINGS_UNIT"  # for an update's new code
 }
 
 retire_old_units() {  # retire_old_units UNIT CONTENT: move older copies of UNIT out of systemd's way
@@ -576,6 +591,10 @@ start_service() {
             run systemctl disable --now "$other"
         fi
     done
+    # LightningLane-Live-LED's settings page goes with it.
+    if [[ "$unit" != "$LLL_UNIT" && -f "$UNIT_DIR/$SETTINGS_UNIT" ]]; then
+        run systemctl disable --now "$SETTINGS_UNIT"
+    fi
     run systemctl enable "$unit"
     run systemctl restart "$unit"
 }
@@ -606,6 +625,8 @@ main() {
         BOARD_NAME="$(hostname -s 2>/dev/null || hostname)"
         export DEBIAN_FRONTEND=noninteractive
         setup_wifi_hotspot
+        # LLL-install.sh runs this from the app's folder; the settings page is part of setup mode.
+        [[ -d "$SCRIPT_DIR/settings_page" ]] && setup_settings_page "$SCRIPT_DIR"
         return
     fi
     if [[ "$DRY_RUN" == true ]]; then

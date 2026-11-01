@@ -174,3 +174,43 @@ def sound_settings(config):
                           f'not {quiet!r}; sound is off.')
             return SoundSettings()
     return SoundSettings(enabled, device, quiet_hours)
+
+
+class BrightnessSchedule(NamedTuple):
+    day: int  # 1 to 100, as --led-brightness
+    night: int
+    day_start: time  # the board's local time
+    night_start: time
+
+
+BRIGHTNESS_SCHEDULE_KEYS = {"day", "night", "day_start", "night_start"}
+
+
+def parse_brightness_schedule(section):
+    """(BrightnessSchedule or None, what's wrong or None) for config.json's "brightness_schedule", shaped
+    as Peloton-LED's: null for one brightness all day, else
+    {"day": 80, "night": 15, "day_start": "07:00", "night_start": "22:00"}."""
+    if section is None:
+        return None, None
+    if not isinstance(section, dict) or set(section) != BRIGHTNESS_SCHEDULE_KEYS:
+        return None, "needs day, night, day_start and night_start"
+    for key in ("day", "night"):
+        value = section[key]
+        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 100:
+            return None, f'"{key}" should be 1 to 100, not {value!r}'
+    starts = []
+    for key in ("day_start", "night_start"):
+        try:
+            starts.append(time.fromisoformat(section[key]))
+        except (TypeError, ValueError):
+            return None, f'"{key}" should be a time like "07:00", not {section[key]!r}'
+    return BrightnessSchedule(section["day"], section["night"], *starts), None
+
+
+def brightness_schedule(config):
+    """config.json's "brightness_schedule" (see parse_brightness_schedule), or None. A bad one is warned
+    about and leaves the board at one brightness all day."""
+    schedule, problem = parse_brightness_schedule(config.get("brightness_schedule"))
+    if problem:
+        debug.warning(f'config.json "brightness_schedule" {problem}; keeping one brightness all day.')
+    return schedule

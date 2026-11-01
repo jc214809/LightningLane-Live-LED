@@ -32,3 +32,18 @@ def name_lines(font, name, width):
             line += ch
         lines.append(line)
     return lines
+
+
+SETTINGS_TITLE = "Settings"
+# comitup's hotspot address, and the settings server's port (settings_page/server.py).
+SETTINGS_ADDRESS = "10.41.0.1:8080"
+
+
+def render_settings_address(canvas):
+    """The Wi-Fi setup screen's second page: where a phone on the hotspot finds the settings page."""
+    width = canvas.width - 2 * MARGIN
+    title = _fitting_font([loaded_fonts[f] for f in TITLE_FONTS], [SETTINGS_TITLE], width)
+    font = _fitting_font([loaded_fonts[f] for f in NAME_FONTS], [SETTINGS_ADDRESS], width)
+    rows = [(title, color_dict["gold"], SETTINGS_TITLE), (loaded_fonts["info"], color_dict["white"], "Browse to"),
+            (font, color_dict["wait"], SETTINGS_ADDRESS)]
+    _stack(canvas, (MARGIN, 0, width, canvas.height), rows)

@@ -101,6 +101,31 @@ def test_lll_runs_from_its_checkout_with_no_panel_flags_and_stops_the_other_apps
         "systemctl restart LightningLane-Live-LED.service")
 
 
+def test_lll_gets_its_settings_page_as_its_own_service_from_the_checkout(board):
+    checkout = board.checkout("LightningLane-Live-LED", {"venv/bin/python3": ""})
+    (checkout / "venv/bin/python3").chmod(0o755)
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    service = unit(out, "lll-settings.service")
+    assert f"WorkingDirectory={checkout}" in service
+    assert f"ExecStart={checkout}/venv/bin/python3 -m settings_page.server" in service
+    assert "Restart=always" in service
+    assert "http://Disneypi.local:8080" in out
+    steps = ["systemctl enable lll-settings.service", "systemctl restart lll-settings.service",
+             "systemctl restart LightningLane-Live-LED.service"]
+    at = [out.index(step) for step in steps]
+    assert at == sorted(at)
+    assert "disable --now lll-settings.service" not in out
+
+
+@pytest.mark.parametrize("app", ["peloton", "mlb"])
+def test_another_app_stops_lights_settings_page_if_it_has_one(board, app):
+    board.checkout("Peloton-LED", {"packaging/systemd/peloton-led.service": f"[Service]\nExecStart={PELOTON_EXEC}\n"})
+    assert "lll-settings.service" not in board.ok(BOARD_NAME="ZeroPi", APP=app)
+    (board.root / "etc/systemd/system").mkdir(parents=True, exist_ok=True)
+    (board.root / "etc/systemd/system/lll-settings.service").write_text("[Service]\n")
+    assert "+ systemctl disable --now lll-settings.service" in board.ok(BOARD_NAME="ZeroPi", APP=app)
+
+
 def test_lll_on_a_board_it_has_set_up_updates_and_skips_apt_and_the_driver_build(board):
     checkout = board.checkout("LightningLane-Live-LED", {
         "venv/bin/python3": "", "submodules/matrix/Makefile": "", "config.json": "{}",
@@ -361,6 +386,10 @@ def test_wifi_setup_only_asks_nothing_and_does_only_that(board):
     assert "Wi-Fi setup hotspot (comitup): an open MickeyPi-setup" in out
     assert "dpkg -i" in out
     assert "Board setup" not in out and "git clone" not in out and "LightningLane-Live-LED.service" not in out
+    # LLL-install.sh runs it from the app's folder: the settings page comes with setup mode
+    service = unit(out, "lll-settings.service")
+    assert f"WorkingDirectory={ROOT}" in service and " -m settings_page.server" in service
+    assert "systemctl restart lll-settings.service" in out
 
 
 def test_wifi_setup_only_needs_the_pi_and_sudo(board):

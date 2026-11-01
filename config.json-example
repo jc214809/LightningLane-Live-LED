@@ -43,6 +43,7 @@
     "emulated": null,
     "drop_privileges": null
   },
+  "brightness_schedule": null,
   "shows": [
     {"name": "Happily Ever After", "enabled": true, "version": "default"}
   ],

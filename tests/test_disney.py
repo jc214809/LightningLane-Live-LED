@@ -808,23 +808,26 @@ def test_no_setup_hotspot_carries_straight_on(monkeypatch, screens):
     assert screens == []
 
 
-def test_the_setup_screen_stays_up_until_the_board_joins_a_network(monkeypatch, screens):
-    states = iter(["Disneypi-setup", "Disneypi-setup", "Disneypi-setup", None])
+def test_the_setup_screen_takes_turns_with_the_settings_address_until_the_board_joins_a_network(monkeypatch, screens):
+    # the first check, then WIFI_SETUP_PAGE_CHECKS (2) per page
+    states = iter(["Disneypi-setup"] * 5 + [None])
     monkeypatch.setattr(disney, "hotspot_name", lambda: next(states))
     drawn = []
     monkeypatch.setattr(disney, "render_wifi_setup", lambda canvas, name: drawn.append(name))
+    monkeypatch.setattr(disney, "render_settings_address", lambda canvas: drawn.append("settings"))
     assert disney.show_wifi_setup_while_needed(FakeMatrix()) is True
-    assert drawn == ["Disneypi-setup"], "drawn once, not on every check"
-    assert screens == [{"hold": disney.WIFI_SETUP_CHECK_S, "transition": "wipe", "animating": False}]
+    assert drawn == ["Disneypi-setup", "settings", "Disneypi-setup"], "each page drawn once, not on every check"
+    assert screens == [{"hold": disney.WIFI_SETUP_CHECK_S, "transition": "wipe", "animating": False}] * 3
 
 
-def test_a_renamed_hotspot_redraws_the_screen(monkeypatch, screens):
-    states = iter(["OldPi-setup", "NewPi-setup", None])
+def test_a_renamed_hotspot_redraws_the_screen_from_its_first_page(monkeypatch, screens):
+    states = iter(["OldPi-setup", "OldPi-setup", "OldPi-setup", "NewPi-setup", None])
     monkeypatch.setattr(disney, "hotspot_name", lambda: next(states))
     drawn = []
     monkeypatch.setattr(disney, "render_wifi_setup", lambda canvas, name: drawn.append(name))
+    monkeypatch.setattr(disney, "render_settings_address", lambda canvas: drawn.append("settings"))
     disney.show_wifi_setup_while_needed(FakeMatrix())
-    assert drawn == ["OldPi-setup", "NewPi-setup"]
+    assert drawn == ["OldPi-setup", "settings", "NewPi-setup"]
 
 
 def test_main_shows_the_setup_screen_before_it_needs_the_network(monkeypatch):
