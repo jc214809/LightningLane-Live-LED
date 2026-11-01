@@ -12,3 +12,4 @@ logs/
 .claude/settings.local.json
 sounds/*
 !sounds/README.md
+park_names.json

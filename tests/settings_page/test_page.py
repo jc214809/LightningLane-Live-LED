@@ -63,3 +63,26 @@ def test_schedule_values_are_marked_as_suggestions_until_one_is_saved():
     assert "Not set up yet" in settings_page({}, [])
     saved = {"day": 60, "night": 5, "day_start": "08:30", "night_start": "21:00"}
     assert "Not set up yet" not in settings_page({"brightness_schedule": saved}, [])
+
+
+def test_parks_are_chips_in_order_with_suggestions_from_the_list():
+    names = [("EPCOT", "Walt Disney World® Resort"), ("Magic Kingdom", "Walt Disney World® Resort")]
+    html = settings_page({"parks": ["Magic Kingdom", "EPCOT", "Old Park"]}, [], park_names=names)
+    chips = re.findall(r'<li class="park-chip( unknown)?"[^>]*><input type="hidden" name="park" value="([^"]*)">', html)
+    assert chips == [("", "Magic Kingdom"), ("", "EPCOT"), (" unknown", "Old Park"), ("", "")], \
+        "saved order, a name not on the list marked, then the template's"
+    assert 'name="park_remove" value="Old Park"' in html
+    assert '<datalist id="park-names"><option value="EPCOT">Walt Disney World® Resort</option>' in html
+    assert 'id="park_add" name="park_add" value="" list="park-names"' in html
+
+
+def test_with_no_park_list_the_picker_says_so_and_marks_nothing():
+    html = settings_page({"parks": ["Old Park"]}, [])
+    assert "hasn&#x27;t loaded yet" in html or "hasn't loaded yet" in html
+    assert 'class="park-chip unknown"' not in html and '<datalist id="park-names"></datalist>' in html
+
+
+def test_no_parks_saved_shows_walt_disney_worlds_four():
+    from settings_page.form import WDW_PARKS
+    html = settings_page({}, [])
+    assert re.findall(r'name="park" value="([^"]+)"', html) == list(WDW_PARKS)

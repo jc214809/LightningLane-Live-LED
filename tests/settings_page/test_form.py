@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from settings_page.form import WDW_PARKS, apply_form, masked, show_names, trip_rows
+from settings_page.form import apply_form, masked, show_names, trip_rows
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -28,7 +28,7 @@ def form_for(config, **changes):
     ws, sound = config["websocket"], config["sound"]
     form = {
         "ws_protocol": [ws["protocol"]], "themeparks_key": [""], "weather_key": [""],
-        "park": [p for p in config["parks"] if p in WDW_PARKS], "parks_other": [""],
+        "park": list(config["parks"]), "park_add": [""],
         "sound_device": [sound["device"] or ""], "sound_device_custom": [""],
         "quiet_start": [sound["quiet_hours"]["start"]], "quiet_end": [sound["quiet_hours"]["end"]],
         "matrix_led_brightness": [""], "force_surprise": [""],
@@ -88,12 +88,38 @@ def test_an_unknown_protocol_is_refused():
     assert "Live update protocol" in problems[0]
 
 
-def test_parks_keep_the_pages_order_then_others_as_typed_and_one_is_needed():
-    new, _ = apply_form(CONFIG, form_for(CONFIG, park=["Animal Kingdom", "Magic Kingdom"],
-                                         parks_other="Cedar Point,  Kings Island ,,Magic Kingdom"))
-    assert new["parks"] == ["Magic Kingdom", "Animal Kingdom", "Cedar Point", "Kings Island"]
-    _, problems = apply_form(CONFIG, form_for(CONFIG, park=[]))
+PARK_NAMES = [("Animal Kingdom", "Walt Disney World® Resort"), ("Cedar Point", "Cedar Point"),
+              ("EPCOT", "Walt Disney World® Resort"), ("Kings Island", "Kings Island"),
+              ("Magic Kingdom", "Walt Disney World® Resort")]
+
+
+def test_parks_keep_the_chips_order_then_the_added_ones_and_one_is_needed():
+    new, problems = apply_form(CONFIG, form_for(CONFIG, park=["Animal Kingdom", "Magic Kingdom"],
+                                                park_add="cedar point,  Kings   Island ,,MAGIC kingdom"), PARK_NAMES)
+    assert problems == []
+    assert new["parks"] == ["Animal Kingdom", "Magic Kingdom", "Cedar Point", "Kings Island"], \
+        "the chips' order, then the added, named as listed, no repeats"
+    _, problems = apply_form(CONFIG, form_for(CONFIG, park=[]), PARK_NAMES)
     assert problems == ["Pick at least one park."]
+
+
+def test_a_ticked_park_x_removes_it():
+    new, _ = apply_form(CONFIG, form_for(CONFIG, park_remove="Magic Kingdom"), PARK_NAMES)
+    assert new["parks"] == ["EPCOT"]
+
+
+def test_a_name_thats_not_on_themeparks_wiki_is_refused_wherever_it_came_from():
+    _, problems = apply_form(CONFIG, form_for(CONFIG, park_add="Epcot Center"), PARK_NAMES)
+    assert problems == ["'Epcot Center' isn't a ThemeParks.wiki park: pick one from the list."]
+    new, problems = apply_form({**CONFIG, "parks": ["EPCOT", "Old Park"]},
+                               form_for({**CONFIG, "parks": ["EPCOT", "Old Park"]}), PARK_NAMES)
+    assert problems == ["'Old Park' isn't a ThemeParks.wiki park: pick one from the list."]
+    assert new["parks"] == ["EPCOT", "Old Park"], "kept on the page to be removed"
+
+
+def test_with_no_park_list_yet_names_are_taken_as_typed():
+    new, problems = apply_form(CONFIG, form_for(CONFIG, park_add="Somewhere New"))
+    assert problems == [] and new["parks"] == ["Magic Kingdom", "EPCOT", "Somewhere New"]
 
 
 def test_trips_are_saved_as_the_app_reads_them_and_blank_or_removed_rows_dropped():
