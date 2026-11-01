@@ -129,19 +129,30 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 .switch:checked::after { transform: translateX(18px); }
 .switch:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); }
 
-/* Park tiles */
-.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 16px 0 4px; }
-@media (max-width: 420px) { .tiles { grid-template-columns: 1fr; } }
-.tile { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px;
-  border: 1px solid var(--border-strong); background: var(--surface); cursor: pointer; font-weight: 550;
-  transition: border-color .15s, background .15s; }
-.tile input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.tick { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border-strong); display: grid;
-  place-items: center; color: transparent; flex: none; transition: all .15s; }
-.tick svg { width: 13px; height: 13px; stroke-width: 3; }
-.tile:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
-.tile:has(input:checked) .tick { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.tile:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+/* Park chips, numbered in the order the board shows them */
+.park-chips { list-style: none; margin: 0; padding: 16px 0 4px; display: flex; flex-wrap: wrap; gap: 8px;
+  counter-reset: park; }
+.park-chip { counter-increment: park; display: inline-flex; align-items: center; gap: 6px; height: 36px;
+  padding: 0 4px 0 6px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent-soft);
+  color: var(--text); font-weight: 550; max-width: 100%; }
+.park-chip::before { content: counter(park); width: 22px; height: 22px; border-radius: 50%; display: grid;
+  place-items: center; flex: none; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 650; }
+.park-chip.unknown { border-color: var(--bad-line); background: var(--bad-bg); color: var(--bad); }
+.park-chip.unknown::before { background: var(--bad); }
+.park-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The X ticks the park's remove box, as a trip's does: gone from the page, and from config.json on save. */
+.park-chip:has(.chip-x input:checked) { display: none; }
+.chip-btn, .chip-x { position: relative; width: 28px; height: 28px; padding: 0; border-radius: 50%; display: grid;
+  place-items: center; color: var(--text-3); background: transparent; cursor: pointer; flex: none; }
+.chip-btn:hover { color: var(--accent); background: var(--surface); }
+.chip-x:hover { color: var(--bad); background: var(--surface); }
+.chip-btn svg, .chip-x svg { width: 15px; height: 15px; }
+.chip-x input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chip-x:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); }
+.park-chip:first-child .chip-btn { display: none; }
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; min-width: 0; }
+.field-error { color: var(--bad); font-size: 13px; margin-top: 6px; }
 
 /* Trips */
 .schedule { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 4px 0 8px; }
@@ -248,6 +259,7 @@ ICONS = {
     "chevron": '<path d="m6 9 6 6 6-6"/>',
     "plus": '<path d="M12 5v14M5 12h14"/>',
     "x": '<path d="M18 6 6 18M6 6l12 12"/>',
+    "left": '<path d="m15 18-6-6 6-6"/>',
     "board": '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01'
              'M6 13h.01M10 13h.01M14 13h.01M18 13h.01"/>',
     "cloud": '<path d="M17.5 19H7a5 5 0 1 1 1.02-9.9A6 6 0 0 1 19.5 11a4 4 0 0 1-2 8z"/>',
@@ -299,6 +311,49 @@ document.getElementById('add-trip').addEventListener('click', () => {
   trips.appendChild(row);
   trips.querySelector('.trip:last-child input[type=text]').focus();
 });
+const parkList = document.getElementById('park-chips');
+const parkAdd = document.getElementById('park_add');
+const parkError = document.getElementById('park-error');
+// Lower-case name to the name as listed; empty when the list hasn't loaded, and then names go as typed.
+const parkNames = new Map([...document.querySelectorAll('#park-names option')].map(o => [o.value.toLowerCase(), o.value]));
+const changed = () => form.dispatchEvent(new Event('input'));
+const parkProblem = text => { parkError.textContent = text; parkError.hidden = !text; };
+function addPark() {
+  const typed = parkAdd.value.trim().replace(/\\s+/g, ' ');
+  if (!typed) return;
+  const name = parkNames.size ? parkNames.get(typed.toLowerCase()) : typed;
+  if (!name) return parkProblem(`"${typed}" isn't a ThemeParks.wiki park: pick one from the list.`);
+  const chosen = [...parkList.querySelectorAll('input[name=park]')].map(i => i.value.toLowerCase());
+  if (chosen.includes(name.toLowerCase())) return parkProblem(`${name} is already on the board.`);
+  const chip = document.getElementById('park-chip').content.cloneNode(true);
+  chip.querySelector('input[name=park]').value = name;
+  chip.querySelector('input[name=park_remove]').value = name;
+  chip.querySelector('.park-name').textContent = name;
+  chip.querySelectorAll('[aria-label]').forEach(el => { el.setAttribute('aria-label', el.getAttribute('aria-label') + ' ' + name); });
+  parkList.appendChild(chip);
+  parkAdd.value = '';
+  parkProblem('');
+  changed();
+}
+parkAdd.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addPark(); } });
+// Picking a suggestion adds it straight away; typing waits for Enter or Add, as a typed name can be
+// the start of a longer one.
+parkAdd.addEventListener('input', e => {
+  parkProblem('');
+  if (e.inputType === 'insertReplacementText' || e.inputType === undefined) addPark();
+});
+document.getElementById('park-add-btn').addEventListener('click', addPark);
+parkList.addEventListener('change', e => {  // with the script, a removed park leaves the page, so it can be added back
+  if (e.target.name === 'park_remove' && e.target.checked) { e.target.closest('.park-chip').remove(); parkAdd.focus(); }
+});
+parkList.addEventListener('click', e => {
+  const move = e.target.closest('.chip-btn');
+  if (!move) return;
+  const chip = move.closest('.park-chip');
+  if (chip.previousElementSibling) { parkList.insertBefore(chip, chip.previousElementSibling); changed(); }
+  (chip.querySelector('.chip-btn:not([hidden])') || move).focus();
+});
+document.querySelectorAll('.js-only').forEach(el => { el.hidden = false; });
 const device = document.getElementById('sound_device');
 const custom = document.getElementById('custom-device');
 const showCustom = () => { custom.hidden = device.value !== 'custom'; };
@@ -427,9 +482,22 @@ def _trip(index, start="", end="", name=""):
             f'{_input(f"trip_end_{i}", end, "date")}</div>{remove}</div>')
 
 
-def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None):
+def _park_chip(name, unknown=False):
+    """One chosen park: posted as "park" in page order. The X is a checkbox, so removing works
+    without the script; the arrow (script only) moves it one place earlier."""
+    label = _attr(name)
+    title = ' title="Not a ThemeParks.wiki park name"' if unknown else ""
+    return (f'<li class="park-chip{" unknown" if unknown else ""}"{title}><input type="hidden" name="park" value="{label}">'
+            f'<span class="park-name">{escape(name)}</span>'
+            f'<button type="button" class="chip-btn js-only" hidden aria-label="Move earlier: {label}">{icon("left")}</button>'
+            f'<label class="chip-x" title="Remove"><input type="checkbox" name="park_remove" value="{label}" '
+            f'aria-label="Remove {label}">{icon("x")}</label></li>')
+
+
+def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=()):
     """The settings form, filled from config. sound_cards: ALSA device names for the dropdown.
-    note: why config.json couldn't be read, if it couldn't."""
+    note: why config.json couldn't be read, if it couldn't. park_names: [(name, destination)]
+    for the park picker's suggestions, [] when the list hasn't loaded."""
     ws = config.get("websocket") if isinstance(config.get("websocket"), dict) else {}
     sound = config.get("sound") if isinstance(config.get("sound"), dict) else {}
     countdown = config.get("trip_countdown") if isinstance(config.get("trip_countdown"), dict) else {}
@@ -454,16 +522,23 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
         _key_field("weather_key", "OpenWeatherMap API key", weather.get("apikey"), "From openweathermap.org.")
     ), "cloud")
 
-    others = [p for p in parks if p not in WDW_PARKS]
-    tiles = "".join(
-        f'<label class="tile" for="park_{i}"><input type="checkbox" id="park_{i}" name="park" value="{_attr(p)}"'
-        f'{" checked" if p in parks else ""}><span class="tick">{icon("check")}</span>{escape(p)}</label>'
-        for i, p in enumerate(WDW_PARKS))
+    known = {name.lower() for name, _ in park_names}
+    chips = "".join(_park_chip(p, bool(known) and p.lower() not in known) for p in parks if isinstance(p, str))
+    suggestions = "".join(f'<option value="{_attr(n)}">{escape(d)}</option>' for n, d in park_names)
+    add_input = _input("park_add", extra=' list="park-names" autocomplete="off" placeholder="Start typing a park" '
+                                         'aria-describedby="park-error"')
+    add = (f'<div class="add-row">{add_input}'
+           f'<button type="button" class="secondary js-only" id="park-add-btn" hidden>{icon("plus")}Add</button></div>'
+           f'<datalist id="park-names">{suggestions}</datalist>'
+           '<p class="field-error" id="park-error" role="alert" hidden></p>')
     park_html = _section("parks", "Parks", "Which parks the board cycles through, in this order.", (
-        f'<div class="tiles">{tiles}</div>'
-        + _field("parks_other", "Other parks", _input("parks_other", ", ".join(others),
-                                                      extra=' placeholder="Cedar Point, Kings Island"'),
-                 "Any other ThemeParks.wiki park, by name, separated by commas.")
+        f'<ol class="park-chips" id="park-chips" aria-label="Parks, in order">{chips}</ol>'
+        + f'<template id="park-chip">{_park_chip("")}</template>'
+        + _field("park_add", "Add a park", add,
+                 "Any park on ThemeParks.wiki: start typing and pick it from the list. It goes on the end; "
+                 "the arrow moves a park earlier." if park_names else
+                 "The list of parks hasn't loaded yet (the board needs the internet for it): type the name "
+                 "exactly as ThemeParks.wiki has it.")
     ), "pin")
 
     rows = trip_rows(config)

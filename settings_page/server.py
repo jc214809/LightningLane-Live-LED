@@ -4,7 +4,7 @@ lll-settings.service from the app's folder, as root (it writes config.json and r
 Its own service, not part of disney.py, so a config.json that stops the app can still be fixed
 here. While comitup's setup hotspot is up, anyone on it gets the page (they're in the room, with
 the board); on the home network it asks for the PIN the board shows (pins.py). Standard library
-only, so it runs on any board the app runs on.
+and certifi (the app's own requirement) only, so it runs on any board the app runs on.
 """
 import argparse
 import json
@@ -22,6 +22,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from settings_page import page
 from settings_page.form import apply_form
+from settings_page.park_names import ParkNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
 from utils import debug
 from utils.config import CONFIG_FILE
@@ -35,15 +36,19 @@ SOUND_CARDS = "/proc/asound/cards"
 MAX_BODY = 64 * 1024
 COOKIE = "lll_settings"
 RESTART_TIMEOUT_S = 30
+PARK_NAMES_FILE = "park_names.json"
 
 
 class Settings:
-    """What the handlers share: where config.json is, the PIN gate, and one save at a time."""
+    """What the handlers share: where config.json is, the PIN gate, the park names (kept in
+    park_names.json beside config.json), and one save at a time."""
 
     def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
-                 state_file=None, cards_file=SOUND_CARDS):
+                 state_file=None, cards_file=SOUND_CARDS, park_names=None):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
         self.gate = gate or PinGate()
+        self.park_names = park_names or ParkNames(
+            os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE))
         self.state_file = state_file
         self.save_lock = threading.Lock()
 
@@ -185,7 +190,8 @@ class Handler(BaseHTTPRequestHandler):
     def _page(self, problems=(), saved=None, config=None):
         loaded, problem = self.settings.load()
         return page.settings_page(config if config is not None else loaded, self.settings.sound_cards(),
-                                  self._in_setup(), problems, saved, board_name(), problem)
+                                  self._in_setup(), problems, saved, board_name(), problem,
+                                  self.settings.park_names.names())
 
     # --- routes
 
@@ -222,7 +228,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._redirect("/")
         with self.settings.save_lock:
             config, _ = self.settings.load()
-            new, problems = apply_form(config, form)
+            new, problems = apply_form(config, form, self.settings.park_names.names())
             if problems:
                 debug.info(f"Settings page: not saved: {'; '.join(problems)}")
                 return self._send(400, self._page(problems, config=new))
@@ -257,7 +263,9 @@ def main(argv=None):
     # rotating one file lose lines.
     if debug.file_handler is not None:
         debug.logger.removeHandler(debug.file_handler)
-    server = make_server(Settings(args.config, restart_unit=args.restart_unit), port=args.port)
+    settings = Settings(args.config, restart_unit=args.restart_unit)
+    settings.park_names.refresh_if_due()  # at boot, so the list is ready before anyone opens the page
+    server = make_server(settings, port=args.port)
     debug.info(f"Settings page on port {args.port}, for {os.path.abspath(args.config)}.")
     server.serve_forever()
 

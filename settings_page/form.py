@@ -78,10 +78,10 @@ def _date_text(value):
         return str(value)
 
 
-def apply_form(config, form):
+def apply_form(config, form, park_names=()):
     """(the config to save, [problems]) from the posted form: {field: [values]}, as
     urllib.parse.parse_qs(..., keep_blank_values=True) gives it. With any problem, nothing
-    should be saved."""
+    should be saved. park_names: park_names.ParkNames.names(), the names a park may have."""
     new = copy.deepcopy(config)
     problems = []
 
@@ -111,9 +111,18 @@ def apply_form(config, form):
     if one("weather_key"):
         section("weather")["apikey"] = one("weather_key")
 
-    # Parks, in the page's order then the others as typed
-    parks = [p for p in WDW_PARKS if p in form.get("park", [])]
-    parks += [p.strip() for p in one("parks_other").split(",") if p.strip() and p.strip() not in parks]
+    # Parks: the chips in order, less any ticked to remove, then the added one(s), named as the
+    # list has them. With no list (never fetched), names can't be checked, so they're taken as typed.
+    known = {name.lower(): name for name, _ in park_names}
+    removed = {p.strip().lower() for p in form.get("park_remove", [])}
+    parks = []
+    for typed in [p for p in form.get("park", []) if p.strip().lower() not in removed] + one("park_add").split(","):
+        typed = " ".join(typed.split())
+        if not typed or typed.lower() in (p.lower() for p in parks):
+            continue
+        if known and typed.lower() not in known:
+            problems.append(f"{typed!r} isn't a ThemeParks.wiki park: pick one from the list.")
+        parks.append(known.get(typed.lower(), typed))
     if not parks:
         problems.append("Pick at least one park.")
     new["parks"] = parks

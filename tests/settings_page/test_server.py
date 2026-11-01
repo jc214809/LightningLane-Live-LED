@@ -3,6 +3,7 @@ temp folder. The file is "board-config.json": tests/stubs/conftest.py fakes ever
 import json
 import os
 import threading
+import time
 import urllib.error
 import urllib.request
 from http.cookiejar import CookieJar
@@ -11,6 +12,7 @@ from urllib.parse import urlencode
 import pytest
 
 import settings_page.server as server
+from settings_page.park_names import ParkNames
 from settings_page.pins import PinGate
 from settings_page.server import Settings, make_server
 
@@ -37,13 +39,22 @@ class Board:
                               " 1 [Device         ]: USB-Audio - USB Audio Device\n")
         self.gate = PinGate(str(tmp_path / "pin"))
         self.restarts = []
-        self.settings = Settings(str(self.config), self.gate, state_file=str(self.state), cards_file=str(self.cards))
+        # A fresh list on disk, so nothing is fetched
+        names = tmp_path / "park_names.json"
+        names.write_text(json.dumps({"fetched": time.time(), "parks": [["EPCOT", "Walt Disney World® Resort"],
+                                                                      ["Cedar Point", "Cedar Point"]]}))
+        self.settings = Settings(str(self.config), self.gate, state_file=str(self.state), cards_file=str(self.cards),
+                                 park_names=ParkNames(str(names), fetch=self.no_fetch))
         monkeypatch.setattr(self.settings, "restart_app", lambda: self.restarts.append(1) or "restarted")
         self.httpd = make_server(self.settings, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
         threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
         self.jar = CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar), NoRedirect)
+
+    @staticmethod
+    def no_fetch():
+        raise AssertionError("the list was fresh: no fetch")
 
     def hotspot(self, client_on_it=True):
         """comitup's hotspot is up, and this test's browser (127.0.0.1) counts as on it or not."""
@@ -118,6 +129,22 @@ def test_problems_are_shown_and_nothing_is_saved(board):
     status, _, html = board.request("/save", dict(SAVE, park=[]))
     assert status == 400 and "Not saved." in html and "Pick at least one park." in html
     assert board.saved() == CONFIG and board.restarts == []
+
+
+def test_the_park_picker_suggests_the_cached_names_and_refuses_others(board):
+    board.sign_in()
+    html = board.request("/")[2]
+    assert '<option value="Cedar Point">Cedar Point</option>' in html
+    status, _, html = board.request("/save", dict(SAVE, park_add="Cedar Pointe"))
+    assert status == 400 and "&#x27;Cedar Pointe&#x27; isn&#x27;t a ThemeParks.wiki park" in html
+    assert board.saved() == CONFIG
+    assert board.request("/save", dict(SAVE, park_add="cedar point"))[0] == 303
+    assert board.saved()["parks"] == ["EPCOT", "Cedar Point"]
+
+
+def test_the_park_list_is_kept_beside_config_json(tmp_path):
+    settings = Settings(str(tmp_path / "board-config.json"))
+    assert settings.park_names.path == str(tmp_path / "park_names.json")
 
 
 def test_on_the_setup_hotspot_no_pin_is_needed(board):
