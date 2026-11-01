@@ -9,9 +9,15 @@ CONFIG = {"trip_countdown": {"enabled": True, "trip_dates": [
 def test_every_trip_has_an_x_in_its_corner_that_ticks_its_remove_box():
     html = settings_page(CONFIG, [])
     xs = re.findall(r'<label class="trip-x" for="(trip_remove_\w+)"[^>]*><input type="checkbox" id="\1" name="\1"', html)
-    # the two saved trips, the blank one, and the template "Add a trip" copies
-    assert xs == ["trip_remove_0", "trip_remove_1", "trip_remove_2", "trip_remove_N"]
+    # the two saved trips and the template "Add a trip" copies
+    assert xs == ["trip_remove_0", "trip_remove_1", "trip_remove_N"]
     assert "Remove</label>" not in html, "no Remove button left"
+
+
+def test_a_blank_trip_row_only_when_there_are_no_trips():
+    assert 'id="trip_start_2"' not in settings_page(CONFIG, []), "two trips: Add a trip, no blank row"
+    html = settings_page({}, [])
+    assert 'id="trip_start_0" name="trip_start_0" value=""' in html and 'id="trip_start_1"' not in html
 
 
 def test_the_surprise_is_a_dropdown_of_characters_with_the_saved_one_chosen():

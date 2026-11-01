@@ -470,7 +470,7 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     trips = _section("trips", "Trip countdown", "Days to go until your next trip, between the parks.", (
         _switch("trips_enabled", "Show the countdown", countdown.get("enabled", False))
         + '<div class="trips" id="trip-list">' + "".join(_trip(i, *row) for i, row in enumerate(rows))
-        + _trip(len(rows)) + "</div>"
+        + ("" if rows else _trip(0)) + "</div>"  # a blank row to start from only when there are no trips
         + f'<template id="trip-row">{_trip("N")}</template>'
         + f'<p style="margin-top:12px"><button type="button" class="ghost" id="add-trip">{icon("plus")}Add a trip'
           f'</button></p>'
