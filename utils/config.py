@@ -5,6 +5,8 @@ without a restart. Feature-specific sections (trip_countdown, force_surprise) ar
 the code that validates them (utils/trips.py, disney.py).
 """
 import json
+import os
+import shutil
 from datetime import time
 from typing import NamedTuple, Optional, Tuple
 
@@ -18,6 +20,29 @@ def load_config(file_path=CONFIG_FILE):
     """Load the configuration from a JSON file."""
     with open(file_path, 'r') as file:
         return json.load(file)
+
+
+def save_config(config, path=CONFIG_FILE):
+    """Write config.json whole or not at all, keeping the last one as config.json.bak, with the
+    old file's owner and mode (the user's, 600, as board-setup.sh made it), even when run as root."""
+    temp = path + ".new"
+    try:
+        old = os.stat(path)
+    except FileNotFoundError:
+        old = None
+    fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, old.st_mode & 0o777 if old else 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
+        f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    if old:
+        try:
+            os.chown(temp, old.st_uid, old.st_gid)
+        except PermissionError:  # not root (a dev machine): it's ours already
+            pass
+        shutil.copy2(path, path + ".bak")
+    os.replace(temp, path)
 
 
 def debug_enabled(config):

@@ -90,9 +90,9 @@ def test_lll_runs_from_its_checkout_with_no_panel_flags_and_stops_the_other_apps
     assert f"WorkingDirectory={checkout}" in service
     assert f"ExecStart={checkout}/venv/bin/python3 {checkout}/disney.py $ARGS" in service
     assert 'Environment="ARGS=--led-brightness=85"' in service
-    assert "--led-rows" not in service  # boards.json has the board's settings
+    assert "--led-rows" not in service  # config.json has the board's settings
     assert "ExecStartPre" not in service  # the old script's, under [Unit], where systemd ignores it
-    assert "boards.json has Disneypi" in out
+    assert 'matrix={"led_rows": 64, "led_cols": 64' in out
     assert f"git clone --branch develop-beta https://github.com/jc214809/LightningLane-Live-LED.git {checkout}" in out
     assert f"(cd {checkout} && bash LLL-install.sh -w)" in out  # the full install, less the Wi-Fi setup (done here)
     for other in ("peloton-led.service", "mlb-led-scoreboard.service"):
@@ -128,8 +128,7 @@ def test_another_app_stops_lights_settings_page_if_it_has_one(board, app):
 
 def test_lll_on_a_board_it_has_set_up_updates_and_skips_apt_and_the_driver_build(board):
     checkout = board.checkout("LightningLane-Live-LED", {
-        "venv/bin/python3": "", "submodules/matrix/Makefile": "", "config.json": "{}",
-        "boards.json": json.dumps({"MickeyPi": {"led_rows": 64}})})
+        "venv/bin/python3": "", "submodules/matrix/Makefile": "", "config.json": "{}"})
     (checkout / "venv/bin/python3").chmod(0o755)
     out = board.ok(BOARD_NAME="MickeyPi", APP="lll", LLL_BRANCH="develop-sound")
     assert f"git -C {checkout} checkout develop-sound" in out
@@ -155,8 +154,7 @@ def test_a_branch_that_isnt_a_plain_name_is_refused(board, branch):
     assert "apt-get" not in result.stdout
 
 
-def test_lll_on_a_board_missing_from_boards_json_gets_the_panel_in_config_json(board):
-    board.checkout("LightningLane-Live-LED", {"boards.json": json.dumps({"Disneypi": {}})})
+def test_lll_panel_answers_go_in_config_json(board):
     out = board.ok(BOARD_NAME="NewPi", APP="lll", PANEL_OPTIONS="yes", LED_ROWS=64, LED_SLOWDOWN_GPIO=4)
     assert "config.json-example" in out and "chmod 600" in out
     assert ('matrix={"led_rows": 64, "led_cols": 64, "led_gpio_mapping": "adafruit-hat-pwm", '
@@ -203,11 +201,11 @@ def test_mlb_runs_upstream_with_the_panel_flags_and_answers_its_one_question(boa
 
 
 def test_panel_options_are_left_to_each_apps_config_unless_asked_for(board):
-    board.checkout("LightningLane-Live-LED", {"boards.json": json.dumps({"Disneypi": {}})})
     board.checkout("Peloton-LED", {
         "packaging/systemd/peloton-led.service": f"[Service]\nExecStart={PELOTON_EXEC}\n"})
     out = board.ok(BOARD_NAME="NewPi", APP="lll", LED_ROWS=64, EXTRA_ARGS="--led-brightness=85")
     assert "left to the app's own config" in out
+    assert "panel options: the Pi model's; set the size and rotation at http://NewPi.local:8080" in out
     assert "matrix=" not in out and "--led-rows" not in out and "ARGS=--led-brightness" not in out
     out = board.ok(BOARD_NAME="ZeroPi", APP="peloton")
     assert "board.conf" not in out
@@ -425,7 +423,7 @@ def test_without_dry_run_it_needs_the_pi_and_sudo(board):
     assert result.stdout == ""
 
 
-def test_old_service_files_are_retired_to_a_backup_so_the_board_follows_boards_json(board):
+def test_old_service_files_are_retired_to_a_backup_so_the_board_follows_its_config(board):
     """A hand-made board's own units (PlutoPi has both, with its flags in them) are moved, never deleted."""
     flags = 'Environment="ARGS=--led-rows=32 --led-pixel-mapper=Rotate:180 --led-brightness=85"'
     for folder in ("lib/systemd/system", "etc/systemd/system/LightningLane-Live-LED.service.d"):
@@ -460,10 +458,10 @@ def test_our_own_service_file_unchanged_on_a_rerun_is_left_alone(board):
     assert "unchanged: " in out
 
 
-def test_config_json_matrix_settings_that_override_boards_json_are_pointed_out_not_removed(board):
+def test_a_boards_own_config_json_matrix_is_left_alone(board):
     board.checkout("LightningLane-Live-LED", {
-        "boards.json": json.dumps({"PlutoPi": {"led_rows": 32}}),
         "config.json": json.dumps({"matrix": {"led_brightness": 85, "led_rows": None}})})
     out = board.ok(BOARD_NAME="PlutoPi", APP="lll")
-    assert "config.json's matrix section overrides boards.json with led_brightness=85 (left as is)" in out
     assert "set in" not in out
+
+

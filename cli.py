@@ -2,14 +2,10 @@
 The command line: the rgbmatrix library's --led-* flags plus our own (--emulated). Laid out as
 mlb-led-scoreboard's cli.py: disney.py parses it once, then switches the driver to the emulator
 if asked, so importing the driver never reads sys.argv. As upstream, config.json's "matrix"
-section can hold the same settings ({"led_rows": 64, ...}), and boards.json holds each board's,
-keyed by hostname, and a preset for each Pi model and panel size. Precedence: command line,
-config.json's matrix, the board's boards.json entry, the Pi preset, defaults.
+section holds the same settings ({"led_rows": 64, ...}): each board's own, set on the settings page.
+Precedence: command line, config.json's matrix, the Pi model's defaults (MODEL_DEFAULTS), the driver's.
 """
 import argparse
-import json
-import os
-import socket
 import sys
 
 import driver
@@ -17,60 +13,22 @@ from utils import debug
 
 # Fonts and layouts exist for these board heights only (display/display.py's initialize_fonts).
 SUPPORTED_ROWS = (32, 64)
-# Every board's settings, keyed by hostname; next to this file, so it's found from any cwd.
-BOARDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boards.json")
-
-
-# boards.json's "presets": the best settings for each Pi model and panel size, keyed
-# "<model>-<cols>x<rows>". The model is config.json's "pi_model" (the settings page's Pi model),
-# else the one in the board's boards.json "preset", else the Pi's own; the size is config.json's
-# matrix rows and columns (the page's Panel size), else the board's entry's, else its preset's.
-PRESETS = "presets"
-PRESET = "preset"
 AUTO = "auto"
-# What /proc/device-tree/model starts with, for each model with presets. "Raspberry Pi 4" covers the 400.
-PI_MODELS = (("Raspberry Pi 4", "pi4"), ("Raspberry Pi 3", "pi3"), ("Raspberry Pi Zero 2", "pizero2w"))
+# What works best on each Pi model, with the Adafruit bonnet every board has: the defaults under
+# config.json's matrix. The model is config.json's "pi_model" (the settings page's Pi model), else
+# the one the Pi reports.
+BONNET = {"led_gpio_mapping": "adafruit-hat-pwm", "led_brightness": 100}  # any Pi, a model we know or not
+MODEL_DEFAULTS = {
+    "pi4": {**BONNET, "led_slowdown_gpio": 4, "led_pwm_lsb_nanoseconds": 200},
+    "pi3": {**BONNET, "led_slowdown_gpio": 2},
+    "pizero2w": {**BONNET, "led_slowdown_gpio": 2},
+}
 MODEL_NAMES = {"pi4": "Pi 4", "pi3": "Pi 3", "pizero2w": "Pi Zero 2 W"}
+# What /proc/device-tree/model starts with, for each. "Raspberry Pi 4" covers the 400.
+PI_MODELS = (("Raspberry Pi 4", "pi4"), ("Raspberry Pi 3", "pi3"), ("Raspberry Pi Zero 2", "pizero2w"))
 MODEL_FILE = "/proc/device-tree/model"
-# rpi-rgb-led-matrix can't drive the Pi 5's GPIO (it goes through the RP1 chip), so it has no preset.
+# rpi-rgb-led-matrix can't drive the Pi 5's GPIO (it goes through the RP1 chip).
 UNSUPPORTED_MODELS = ("Raspberry Pi 5",)
-DEFAULT_SIZE = "64x32"  # the parser's 32 rows, at the 64 columns every board has
-
-
-def _boards(path):
-    """boards.json as a dict, {} with no file. Exits on a broken file."""
-    try:
-        with open(path) as f:
-            boards = json.load(f)
-    except FileNotFoundError:
-        return {}
-    except ValueError as e:
-        sys.exit(f"{os.path.basename(path)} isn't valid JSON: {e}")
-    if not isinstance(boards, dict):
-        sys.exit(f'{os.path.basename(path)} should map hostnames to settings, like {{"Disneypi": {{"led_rows": 64}}}}')
-    return boards
-
-
-def board_preset(hostname=None, path=BOARDS_FILE):
-    """(name, settings) for this machine from boards.json, matched on the hostname ignoring
-    case, or (None, None) when it has no entry or there's no file. Exits on a broken file."""
-    hostname = (hostname or socket.gethostname()).split(".")[0].lower()
-    for name, settings in _boards(path).items():
-        if name != PRESETS and name.lower() == hostname:
-            return name, settings
-    return None, None
-
-
-def presets(path=BOARDS_FILE):
-    """boards.json's presets, {key: settings}, in the file's order."""
-    found = _boards(path).get(PRESETS) or {}
-    return found if isinstance(found, dict) else {}
-
-
-def preset_label(key):
-    """"pi4-64x64" -> "Pi 4 · 64x64"; a key not in that shape as it is."""
-    model, _, size = key.partition("-")
-    return f"{MODEL_NAMES[model]} · {size}" if model in MODEL_NAMES and size else key
 
 
 def pi_model(path=MODEL_FILE):
@@ -83,79 +41,38 @@ def pi_model(path=MODEL_FILE):
     return next((key for prefix, key in PI_MODELS if text.startswith(prefix)), None), text
 
 
-def preset_size(key):
-    """A preset key's panel size: "pi4-64x32" -> "64x32"."""
-    return key.partition("-")[2]
-
-
-def pick_model(choice=None, board=None, model=None):
+def pick_model(choice=None, detected=None, detected_text=None):
     """(model key or None, why): config.json's "pi_model" (choice) unless it's automatic, else the
-    model of the board's boards.json preset, else the detected one (model)."""
+    detected one; with neither, why says what was found (a Pi 5, another Pi, or not a Pi)."""
     if choice and choice != AUTO:
         return choice, "picked in config.json"
-    if (board or {}).get(PRESET):
-        return board[PRESET].partition("-")[0], "boards.json entry"
-    if model is not None:
-        return model, f"detected {MODEL_NAMES.get(model, model)}"
-    return None, None
+    if detected is not None:
+        return detected, "detected"
+    if detected_text and detected_text.startswith(UNSUPPORTED_MODELS):
+        return None, f"{detected_text} isn't supported by the LED driver"
+    return None, f"no defaults for {detected_text}" if detected_text else "not a Pi"
 
 
-def pick_size(board=None, matrix=None):
-    """(panel size like "64x32", why): config.json's matrix rows and columns, over the board's
-    boards.json entry's, over its preset's size, over 64x32."""
-    board, matrix = board or {}, matrix or {}
-    cols, _, rows = (preset_size(board.get(PRESET) or "") or DEFAULT_SIZE).partition("x")
-    why = "boards.json entry" if board.get(PRESET) else "default"
-    for where, settings in (("boards.json entry", board), ("picked in config.json", matrix)):
-        if settings.get("led_cols") or settings.get("led_rows"):
-            cols, rows, why = settings.get("led_cols") or cols, settings.get("led_rows") or rows, where
-    return f"{cols}x{rows}", why
-
-
-def pick_preset(choice=None, board=None, matrix=None, model=None, available=()):
-    """(preset key or None, why the model): pick_model's model at pick_size's size. None with no
-    model, or no preset for that model and size."""
-    model, why = pick_model(choice, board, model)
+def model_defaults(choice=None, model_file=MODEL_FILE):
+    """(model key or None, its defaults, why) for disney.main. A Pi we don't know still gets the
+    bonnet's; off a Pi (the emulator) nothing. Exits when config.json names an unknown model."""
+    if choice and choice != AUTO and choice not in MODEL_DEFAULTS:
+        sys.exit(f'config.json "pi_model" is "{choice}", not one of {", ".join((AUTO,) + tuple(MODEL_DEFAULTS))}')
+    detected, text = pi_model(model_file)
+    model, why = pick_model(choice, detected, text)
     if model is None:
-        return None, None
-    key = f"{model}-{pick_size(board, matrix)[0]}"
-    return (key, why) if key in available else (None, None)
+        return None, (BONNET if text else {}), why
+    return model, MODEL_DEFAULTS[model], why
 
 
-def no_preset_reason(model_text):
-    """Why a board with no pick and no boards.json preset has no preset, from pi_model()'s text."""
-    if model_text and model_text.startswith(UNSUPPORTED_MODELS):
-        return f"{model_text} isn't supported by the LED driver"
-    return f"no preset for {model_text}" if model_text else "not a Pi"
-
-
-def board_type(choice=None, board=None, matrix=None, path=BOARDS_FILE, model_file=MODEL_FILE):
-    """(preset key, its settings, why) for disney.main: choice is config.json's "pi_model".
-    (None, None, why) with no preset (why says what was found: a Pi 5, or not a Pi). Exits when
-    config.json names an unknown model or the board's entry an unknown preset."""
-    available = presets(path)
-    if choice and choice != AUTO and choice not in MODEL_NAMES:
-        sys.exit(f'config.json "pi_model" is "{choice}", not one of {", ".join((AUTO,) + tuple(MODEL_NAMES))}')
-    named = (board or {}).get(PRESET)
-    if named and named not in available:
-        sys.exit(f'boards.json entry names preset "{named}", which boards.json doesn\'t have '
-                 f'(it has {", ".join(available)})')
-    model, model_text = pi_model(model_file)
-    key, why = pick_preset(choice, board, matrix, model, available)
-    if key is None:
-        return None, None, no_preset_reason(model_text)
-    return key, available[key], why
-
-
-def arguments(argv=None, matrix=None, board=None, board_name=None, preset=None, preset_name=None):
-    """Parsed flags: the Pi preset (`preset`, from board_type), then the board's boards.json entry
-    (`board`), then config.json's "matrix" section (`matrix`), then the command line (argv, default
+def arguments(argv=None, matrix=None, defaults=None, model=None):
+    """Parsed flags: the Pi model's defaults (`defaults`, from model_defaults; `model` names it in
+    errors), then config.json's "matrix" section (`matrix`), then the command line (argv, default
     sys.argv[1:]); each overrides the one before. Exits with a usage message on an unknown flag or
     setting, or a value the boards can't use; under unittest, test runners' own flags on sys.argv
     are ignored instead."""
     parser = _make_parser()
-    tokens = (_matrix_tokens(parser, preset, f'boards.json preset "{preset_name}"')
-              + _matrix_tokens(parser, _own_settings(board), f'boards.json "{board_name}"')
+    tokens = (_matrix_tokens(parser, defaults, f"the {MODEL_NAMES.get(model, 'Pi')} defaults")
               + _matrix_tokens(parser, matrix, 'config.json "matrix"'))
     if argv is None and "unittest" in sys.modules:
         parsed, _ = parser.parse_known_args(tokens + sys.argv[1:])
@@ -163,11 +80,6 @@ def arguments(argv=None, matrix=None, board=None, board_name=None, preset=None, 
         parsed = parser.parse_args(tokens + list(sys.argv[1:] if argv is None else argv))
     _check_sizes(parser, parsed)
     return parsed
-
-
-def _own_settings(board):
-    """A boards.json entry less its "preset" name: the settings it sets itself."""
-    return {k: v for k, v in (board or {}).items() if k != PRESET} if isinstance(board, dict) else board
 
 
 def _check_sizes(parser, parsed):
@@ -185,6 +97,12 @@ def matrix_settings():
             for action in _make_parser()._actions if action.option_strings and action.dest != "help"]
 
 
+def matrix_defaults():
+    """Each config.json "matrix" key's driver default, for the settings page."""
+    return {action.dest: action.default for action in _make_parser()._actions
+            if action.option_strings and action.dest != "help"}
+
+
 def matrix_problem(matrix):
     """What's wrong with a config.json "matrix" section, by arguments()'s checks (which exit the
     app), or None. For the settings page, which mustn't save a config the app won't start with."""
@@ -200,38 +118,33 @@ def matrix_problem(matrix):
     return None
 
 
-def describe(parsed, argv=None, matrix=None, board=None, board_name=None, preset=None, preset_name=None,
-             preset_why=None):
-    """One line for the startup log: which boards.json entry and Pi preset apply, then each setting
-    that isn't at its default and what set it (command line, config, the board's entry or the
-    preset), by the same precedence as arguments()."""
+def describe(parsed, argv=None, matrix=None, defaults=None, model=None, why=None):
+    """One line for the startup log: the Pi model and why, then each setting that isn't at the
+    driver's default and what set it (command line, config, or the model's defaults), by the same
+    precedence as arguments()."""
     parser = _make_parser()
     by_flag = parser._option_string_actions
     from_command_line = {by_flag[token.split("=", 1)[0]].dest
                          for token in (sys.argv[1:] if argv is None else argv) if token.split("=", 1)[0] in by_flag}
+    name = MODEL_NAMES.get(model, "Pi")
 
     def source(dest):
         if dest in from_command_line:
             return "command line"
         if (matrix or {}).get(dest) is not None:
             return "config"
-        if (board or {}).get(dest) is not None:
-            return f"board {board_name}"
-        return f"preset {preset_name}" if (preset or {}).get(dest) is not None else "default"
+        return f"{name} default" if (defaults or {}).get(dest) is not None else "default"
 
     changed = [f"{action.dest}={getattr(parsed, action.dest)} ({source(action.dest)})"
                for action in parser._actions
                if action.option_strings and action.dest != "help"
                and getattr(parsed, action.dest, action.default) != action.default]
-    entry = f"boards.json entry {board_name}" if board_name else "no boards.json entry for this hostname"
-    pi = (f"preset {preset_name} ({preset_label(preset_name)}, {preset_why})" if preset_name
-          else f"no preset ({preset_why})" if preset_why else "no preset")
-    return (f"Board settings ({entry}; {pi}): "
-            + (", ".join(changed) + "; the rest default" if changed else "all default"))
+    pi = f"{name}, {why}" if model else f"no Pi model: {why}" if why else "no Pi model"
+    return f"Board settings ({pi}): " + (", ".join(changed) + "; the rest default" if changed else "all default")
 
 
 def _matrix_tokens(parser, matrix, where):
-    """A settings object (config.json's "matrix", a boards.json preset; `where` names it in
+    """A settings object (config.json's "matrix", a model's defaults; `where` names it in
     errors) as flags, checked by the same parser as the command line (types, choices) and put
     before it, so later ones override it. Keys are the flags' names with underscores, as in
     mlb-led-scoreboard: "led_gpio_mapping" for --led-gpio-mapping."""

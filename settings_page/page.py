@@ -292,8 +292,8 @@ SECTIONS = (  # id, nav title, icon
     ("testing", "Testing", "flask"), ("advanced", "Advanced", "sliders"),
 )
 
-# The Panel card's settings, the ones the presets set, with their labels; the rest are under
-# Advanced. Rows and columns are the Panel size dropdown's.
+# The Panel card's settings, the ones a Pi model sets (and rotation), with their labels; the rest
+# are under Advanced. Rows and columns are the Panel size dropdown's.
 PANEL_SETTINGS = {"led_pixel_mapper": "Rotation", "led_gpio_mapping": "GPIO mapping",
                   "led_slowdown_gpio": "GPIO slowdown", "led_pwm_lsb_nanoseconds": "PWM timing (ns)"}
 SIZE_SETTINGS = ("led_rows", "led_cols")
@@ -406,23 +406,17 @@ const scheduleOn = document.getElementById('brightness_schedule');
 const showSchedule = () => { document.getElementById('schedule').hidden = !scheduleOn.checked; };
 scheduleOn.addEventListener('change', showSchedule);
 showSchedule();
-// A blank panel setting is the preset's for the chosen Pi model and size (page.py's
-// _panel_defaults does the same): say what that is, and follow a new model or size.
+// A blank panel setting says the Pi model's default (page.py's panel texts, per model): follow
+// a new pick of model.
 const piModel = document.getElementById('pi_model');
-const panelSize = document.getElementById('panel_size');
-const boardDefaults = JSON.parse(document.getElementById('board-defaults')?.textContent || '{}');
-const defaultText = value => value === undefined || value === null || value === ''
-  ? 'Board default' : `Board default: ${value === true ? 'On' : value === false ? 'Off' : value}`;
-function showBoardDefaults() {
-  const model = piModel.value === 'auto' ? boardDefaults.auto_model : piModel.value;
-  const size = panelSize.value || boardDefaults.auto_size;
-  const defaults = boardDefaults.presets[`${model}-${size}`] || boardDefaults.own;
+const panelData = JSON.parse(document.getElementById('panel-blanks')?.textContent || '{}');
+piModel?.addEventListener('change', () => {
+  const blanks = panelData.blanks[piModel.value === 'auto' ? panelData.auto : piModel.value] || {};
   document.querySelectorAll('[data-key]').forEach(el => {
-    const text = defaultText(defaults[el.dataset.key]);
+    const text = blanks[el.dataset.key] || 'Default';
     if (el.tagName === 'SELECT') el.options[0].textContent = text; else el.placeholder = text;
   });
-}
-[piModel, panelSize].forEach(el => el?.addEventListener('change', showBoardDefaults));
+});
 const links = [...document.querySelectorAll('.toc a')];
 const spy = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
@@ -564,16 +558,9 @@ def _json_for_script(value):
     return json.dumps(value).replace("<", "\\u003c")
 
 
-def _default_text(value):
-    """What a blank panel field leaves the board with; the script's defaultText() says the same."""
-    if value is None or value == "":
-        return "Board default"
-    return f"Board default: {'On' if value is True else 'Off' if value is False else value}"
-
-
-def _matrix_field(key, label, help_text, options, switch, value, default):
-    """A config.json "matrix" setting's row: blank is the board's default, which it names."""
-    name, blank = f"matrix_{key}", _default_text(default)
+def _matrix_field(key, label, help_text, options, switch, value, blank="Default"):
+    """A config.json "matrix" setting's row; blank, it says what the board gets (blank)."""
+    name = f"matrix_{key}"
     data = f' data-key="{key}"'
     if key == "led_pixel_mapper":
         choices = list(ROTATIONS) + ([(value, value)] if value and value not in dict(ROTATIONS) else [])
@@ -591,19 +578,12 @@ def _matrix_field(key, label, help_text, options, switch, value, default):
     return _field(name, label, control, help_text or "")
 
 
-def _panel_defaults(board_types, model, size):
-    """What blank panel fields leave the board with for the chosen model and size ("auto" and ""
-    being Automatic's); the script's showBoardDefaults() does the same."""
-    model = board_types.auto_model if model == cli.AUTO else model
-    return board_types.defaults.get(f"{model}-{size or board_types.auto_size}", board_types.own)
-
-
 def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),
-                  board_types=None):
+                  panel=None):
     """The settings form, filled from config. sound_cards: ALSA device names for the dropdown.
     note: why config.json couldn't be read, if it couldn't. park_names: [(name, destination)]
-    for the park picker's suggestions, [] when the list hasn't loaded. board_types: form.BoardTypes,
-    the Pi model and Panel size dropdowns and what blank fields get; None leaves them off."""
+    for the park picker's suggestions, [] when the list hasn't loaded. panel: form.PanelChoices,
+    the Pi model and Panel size dropdowns and what blank fields say; None leaves them off."""
     ws = config.get("websocket") if isinstance(config.get("websocket"), dict) else {}
     sound = config.get("sound") if isinstance(config.get("sound"), dict) else {}
     countdown = config.get("trip_countdown") if isinstance(config.get("trip_countdown"), dict) else {}
@@ -701,15 +681,14 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     def scheduled(key, label, value, start_key, start_label, start):
         return (f'<div><label class="mini" for="{key}">{label}</label>{_input(key, value, "number", level)}</div>'
                 f'<div><label class="mini" for="{start_key}">{start_label}</label>{_input(start_key, start, "time")}</div>')
-    chosen_model, chosen_size = config.get("pi_model") or cli.AUTO, panel_size(matrix)
-    if board_types is not None and chosen_model not in dict(board_types.models):
-        chosen_model = cli.AUTO
-    defaults = _panel_defaults(board_types, chosen_model, chosen_size) if board_types else {}
+    chosen_model = config.get("pi_model") if config.get("pi_model") in cli.MODEL_DEFAULTS else cli.AUTO
+    blanks = (panel.blanks.get(panel.auto_model if chosen_model == cli.AUTO else chosen_model, {})
+              if panel else {})
     display = _section("display", "Display", "How bright the LED panel is, all day or by the time of day.", (
         _field(f"matrix_{BRIGHTNESS}", "Brightness",
                _input(f"matrix_{BRIGHTNESS}", "" if brightness is None else brightness, "number",
-                      f'{level} placeholder="{_attr(_default_text(defaults.get(BRIGHTNESS)))}" data-key="{BRIGHTNESS}"'),
-               "1 to 100. Blank uses the one for this Pi and panel (see Panel). A schedule, when on, takes over from it.")
+                      f'{level} placeholder="{_attr(blanks.get(BRIGHTNESS, "Default"))}" data-key="{BRIGHTNESS}"'),
+               "1 to 100. Blank uses the Pi model's (see Panel). A schedule, when on, takes over from it.")
         + _switch("brightness_schedule", "Day and night brightness", schedule is not None,
                   "Dim the board at night, by the board's clock.")
         + '<div class="schedule-wrap" id="schedule">'
@@ -748,27 +727,26 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     ), "sparkle")
 
     settings = {key: (help_text, options, switch) for key, help_text, options, switch, _ in cli.matrix_settings()}
-    panel_fields = "".join(_matrix_field(key, label, *settings[key], matrix.get(key), defaults.get(key))
+    panel_fields = "".join(_matrix_field(key, label, *settings[key], matrix.get(key), blanks.get(key, "Default"))
                            for key, label in PANEL_SETTINGS.items())
-    board_type = ""
-    if board_types:
-        for_script = {"auto_model": board_types.auto_model, "auto_size": board_types.auto_size,
-                      "presets": board_types.defaults, "own": board_types.own}
-        board_type = (_field("pi_model", "Pi model", _options("pi_model", board_types.models, chosen_model),
-                             "Which Raspberry Pi drives the panel. Automatic goes by this board's boards.json "
-                             "entry, or else the Pi itself.")
-                      + _field("panel_size", "Panel size", _options("panel_size", board_types.sizes, chosen_size),
-                               "Columns x rows, as on the panel's label.")
-                      + f'<script type="application/json" id="board-defaults">{_json_for_script(for_script)}</script>')
+    model_and_size = ""
+    if panel:
+        for_script = {"auto": panel.auto_model, "blanks": panel.blanks}
+        model_and_size = (
+            _field("pi_model", "Pi model", _options("pi_model", panel.models, chosen_model),
+                   "Which Raspberry Pi drives the panel: it sets the defaults below. Automatic is the one "
+                   "this board reports.")
+            + _field("panel_size", "Panel size", _options("panel_size", panel.sizes, panel_size(matrix)),
+                     "Columns x rows, as on the panel's label.")
+            + f'<script type="application/json" id="panel-blanks">{_json_for_script(for_script)}</script>')
     panel_html = _section("panel", "Panel", "Which Pi and panel this is, and which way up it's mounted.", (
-        board_type
-        + _notice("info", "The Pi model and size set the rest to what works best. Each one left blank shows "
-                          "that greyed out; set one to change just that one, like Rotation for a board mounted "
-                          "upside down.")
+        model_and_size
+        + _notice("info", "Each setting left blank is the Pi model's default, shown greyed out. Set one to "
+                          "customise this board, like Rotation for a panel mounted upside down; clear it to go back.")
         + panel_fields
     ), "board")
-    panel = "".join(_matrix_field(key, key.removeprefix("led_").replace("_", " ").capitalize(), help_text, options,
-                                  switch, matrix.get(key), defaults.get(key))
+    advanced_fields = "".join(_matrix_field(key, key.removeprefix("led_").replace("_", " ").capitalize(), help_text,
+                                            options, switch, matrix.get(key), blanks.get(key, "Default"))
                     for key, (help_text, options, switch) in settings.items()
                     if key != BRIGHTNESS and key not in PANEL_SETTINGS and key not in SIZE_SETTINGS)
     advanced = (
@@ -777,8 +755,8 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
         '<p>Panel hardware. Most boards never need these.</p></div>'
         f'<span class="chev">{icon("chevron")}</span></summary><div class="card-body">'
         + _notice("warn", "The wrong panel settings can leave the board dark or flickering. Blank leaves each one to "
-                          "the Pi model and size's preset and the board's boards.json entry. Size, rotation and timing are in Panel.")
-        + panel
+                          "the Pi model's default. Size, rotation and timing are in Panel.")
+        + advanced_fields
         + "</div></details>")
     testing = _section("testing", "Testing", "For checking the board; turn them off when you're done.", (
         _switch("debug", "Debug logging", config.get("debug", False), "More detail in the board's log.")

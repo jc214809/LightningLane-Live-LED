@@ -756,10 +756,9 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
 
     monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}, "pi_model": "pi4"})
-    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
     picked = []
-    monkeypatch.setattr(disney, "board_type", lambda *args: picked.append(args) or (
-        "pi4-64x32", {"led_rows": 32, "led_cols": 32, "led_slowdown_gpio": 4}, "picked in config.json"))
+    monkeypatch.setattr(disney, "model_defaults", lambda choice: picked.append(choice) or (
+        "pi4", {"led_rows": 32, "led_cols": 64, "led_slowdown_gpio": 4}, "picked in config.json"))
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
     monkeypatch.setattr(disney.driver, "set_mode", lambda mode: calls.append(("set_mode", mode)), raising=False)
     monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)
@@ -769,9 +768,9 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
                         lambda args: f"rows={args.led_rows} cols={args.led_cols} slowdown={args.led_slowdown_gpio}")
     with pytest.raises(_Built):
         disney.main()
-    # slowdown from the Pi preset, cols from the board's entry over it, rows from config over both
+    # slowdown and cols from the Pi model's defaults, rows from config over them
     assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64 slowdown=4")]
-    assert picked == [("pi4", {"led_rows": 32, "led_cols": 64}, {"led_rows": 64})]
+    assert picked == ["pi4"]
 
 
 @pytest.mark.parametrize("shows, expected", [
@@ -792,7 +791,7 @@ def test_main_watches_the_full_scored_shows_for_the_sound_badges(monkeypatch, sh
 
     monkeypatch.setattr(disney.sys, "argv", ["disney.py"])
     monkeypatch.setattr(disney, "load_config", lambda: {"sound": {"device": "plughw:1,0"}, "shows": shows})
-    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
+    monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
     monkeypatch.setattr(disney, "watch_sound", watch)
     with pytest.raises(_Watched):
         disney.main()
@@ -842,7 +841,7 @@ def test_main_shows_the_setup_screen_before_it_needs_the_network(monkeypatch):
     calls = []
     monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {})
-    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
+    monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
     monkeypatch.setattr(disney.driver, "set_mode", lambda mode: None, raising=False)
     monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)

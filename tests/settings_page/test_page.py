@@ -89,17 +89,9 @@ def test_no_parks_saved_shows_walt_disney_worlds_four():
     assert re.findall(r'name="park" value="([^"]+)"', html) == list(WDW_PARKS)
 
 
-from settings_page.form import BoardTypes  # noqa: E402
+from settings_page.form import panel_choices  # noqa: E402
 
-TYPES = BoardTypes(
-    [("auto", "Automatic (Pi Zero 2 W, boards.json entry)"), ("pi4", "Pi 4"), ("pizero2w", "Pi Zero 2 W")],
-    [("", "Automatic (64x32, boards.json entry)"), ("64x64", "64x64"), ("64x32", "64x32")],
-    "pizero2w", "64x32",
-    {"pi4-64x64": {"led_rows": 64, "led_slowdown_gpio": 4, "led_brightness": 100, "led_pixel_mapper": "Rotate:180"},
-     "pi4-64x32": {"led_rows": 32, "led_slowdown_gpio": 4, "led_brightness": 100, "led_pixel_mapper": "Rotate:180"},
-     "pizero2w-64x32": {"led_rows": 32, "led_slowdown_gpio": 2, "led_brightness": 90,
-                        "led_pixel_mapper": "Rotate:180"}},
-    {"led_pixel_mapper": "Rotate:180"})
+PANEL = panel_choices({}, "pizero2w", "Raspberry Pi Zero 2 W Rev 1.0")
 
 
 def _card(html, sid):
@@ -112,21 +104,21 @@ def _select(html, name):
     return re.search(rf'<select id="{name}" name="{name}"[^>]*>(.*?)</select>', html).group(1)
 
 
-def test_pi_model_and_panel_size_head_the_panel_card_with_the_saved_ones_or_automatic_chosen():
-    html = settings_page({}, [], board_types=TYPES)
-    assert _select(html, "pi_model").startswith('<option value="auto" selected>Automatic (Pi Zero 2 W, boards.json entry)')
-    assert _select(html, "panel_size").startswith('<option value="" selected>Automatic (64x32, boards.json entry)')
+def test_pi_model_and_panel_size_head_the_panel_card_with_the_saved_ones_chosen():
+    html = settings_page({}, [], panel=PANEL)
+    assert _select(html, "pi_model").startswith('<option value="auto" selected>Automatic (Pi Zero 2 W)</option>')
+    assert '<option value="64x32" selected>' in _select(html, "panel_size"), "unset: the driver's 64x32"
     panel = _card(html, "panel")
     assert panel.index('id="pi_model"') < panel.index('id="panel_size"') < panel.index('id="matrix_led_pixel_mapper"')
-    html = settings_page({"pi_model": "pi4", "matrix": {"led_rows": 64, "led_cols": 64}}, [], board_types=TYPES)
+    html = settings_page({"pi_model": "pi4", "matrix": {"led_rows": 64, "led_cols": 64}}, [], panel=PANEL)
     assert '<option value="pi4" selected>' in _select(html, "pi_model")
     assert '<option value="64x64" selected>' in _select(html, "panel_size")
-    assert 'id="pi_model"' not in settings_page({}, []), "no board types: no dropdowns"
-    assert '<option value="auto" selected>' in settings_page({"pi_model": "pi9"}, [], board_types=TYPES)
+    assert 'id="pi_model"' not in settings_page({}, []), "no choices: no dropdowns"
+    assert '<option value="auto" selected>' in settings_page({"pi_model": "pi9"}, [], panel=PANEL)
 
 
-def test_the_presets_settings_are_in_panel_size_is_its_dropdown_and_the_rest_under_advanced():
-    html = settings_page({}, [], board_types=TYPES)
+def test_the_models_settings_are_in_panel_size_is_its_dropdown_and_the_rest_under_advanced():
+    html = settings_page({}, [], panel=PANEL)
     panel, advanced = _card(html, "panel"), _card(html, "advanced")
     for key in ("led_pixel_mapper", "led_gpio_mapping", "led_slowdown_gpio", "led_pwm_lsb_nanoseconds"):
         assert f'id="matrix_{key}"' in panel and f'id="matrix_{key}"' not in advanced, key
@@ -135,32 +127,29 @@ def test_the_presets_settings_are_in_panel_size_is_its_dropdown_and_the_rest_und
     assert 'id="matrix_led_chain"' in advanced and 'id="matrix_led_brightness"' not in advanced
 
 
-def test_blank_fields_name_the_value_for_the_chosen_model_and_size():
-    html = settings_page({}, [], board_types=TYPES)  # Automatic: Pi Zero 2 W at 64x32
-    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Board default: 2</option>', html)
-    assert 'placeholder="Board default: 90" data-key="led_brightness"' in html
-    html = settings_page({"pi_model": "pi4", "matrix": {"led_rows": 64, "led_cols": 64}}, [], board_types=TYPES)
-    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Board default: 4</option>', html)
-    assert re.search(r'id="matrix_led_pixel_mapper"[^>]*><option value="" selected>Board default: Rotate:180</option>',
+def test_blank_fields_say_the_chosen_models_default():
+    html = settings_page({}, [], panel=PANEL)  # Automatic: Pi Zero 2 W
+    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Pi Zero 2 W default: 2</option>',
                      html)
-    html = settings_page({"pi_model": "pizero2w", "matrix": {"led_rows": 64}}, [], board_types=TYPES)
-    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Board default</option>', html), \
-        "no preset for that pair: only the board's own settings"
-    assert 'placeholder="Board default" data-key="led_brightness"' in settings_page({}, [])
+    assert 'placeholder="Default: 130" data-key="led_pwm_lsb_nanoseconds"' in html
+    assert 'placeholder="Pi Zero 2 W default: 100" data-key="led_brightness"' in html
+    html = settings_page({"pi_model": "pi4"}, [], panel=PANEL)
+    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Pi 4 default: 4</option>', html)
+    assert 'placeholder="Default" data-key="led_brightness"' in settings_page({}, [])
 
 
-def test_the_page_carries_the_presets_for_the_script():
-    html = settings_page({}, [], board_types=TYPES)
-    data = json.loads(re.search(r'<script type="application/json" id="board-defaults">(.*?)</script>', html).group(1))
-    assert data == {"auto_model": "pizero2w", "auto_size": "64x32", "presets": TYPES.defaults, "own": TYPES.own}
-    evil = TYPES._replace(own={"led_pixel_mapper": "</script><b>"})
-    assert "</script><b>" not in settings_page({}, [], board_types=evil)
+def test_the_page_carries_each_models_blanks_for_the_script():
+    html = settings_page({}, [], panel=PANEL)
+    data = json.loads(re.search(r'<script type="application/json" id="panel-blanks">(.*?)</script>', html).group(1))
+    assert data == {"auto": "pizero2w", "blanks": PANEL.blanks}
+    evil = PANEL._replace(blanks={"pizero2w": {"led_pixel_mapper": "</script><b>"}})
+    assert "</script><b>" not in settings_page({}, [], panel=evil)
 
 
 def test_rotation_is_a_dropdown_that_keeps_a_custom_saved_mapper():
-    html = settings_page({"matrix": {"led_pixel_mapper": "Rotate:180"}}, [], board_types=TYPES)
+    html = settings_page({"matrix": {"led_pixel_mapper": "Rotate:180"}}, [], panel=PANEL)
     assert '<option value="Rotate:180" selected>Upside down (Rotate:180)</option>' in html
-    html = settings_page({"matrix": {"led_pixel_mapper": "U-mapper;Rotate:90"}}, [], board_types=TYPES)
+    html = settings_page({"matrix": {"led_pixel_mapper": "U-mapper;Rotate:90"}}, [], panel=PANEL)
     assert '<option value="U-mapper;Rotate:90" selected>U-mapper;Rotate:90</option>' in html
 
 

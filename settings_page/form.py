@@ -9,7 +9,7 @@ import copy
 import os
 import re
 from datetime import time
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 import cli
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS, has_api_key, parse_brightness_schedule
@@ -51,43 +51,50 @@ def surprise_names(path=_CHARACTERS):
     return []
 
 
-class BoardTypes(NamedTuple):
+class PanelChoices(NamedTuple):
     models: list  # (value, text) for the Pi model dropdown, Automatic first
-    sizes: list  # (value, text) for the Panel size dropdown, Automatic ("") first
-    auto_model: Optional[str]  # what Automatic is on this board: a model key, or None
-    auto_size: str  # and its size, like "64x32"
-    defaults: dict  # each preset key -> {matrix key: what the board gets with that field blank}
-    own: dict  # the board's own boards.json settings: the defaults with no preset
+    sizes: list  # (value, text) for the Panel size dropdown
+    auto_model: str  # what Automatic is on this board: a model key, or "" for none
+    blanks: dict  # model key ("" for none) -> {matrix key: what that field says when left blank}
 
 
 PANEL_SIZES = ("64x64", "64x32")
 
 
-def board_types(config, board, model, model_text, available):
-    """The Pi model and Panel size dropdowns. Automatic says what it is on this board now
-    (cli.pick_model: the board's boards.json preset's model, else the Pi's own; cli.pick_size: the
-    board's entry's size, else 64x32), and each preset carries what blank panel fields leave the
-    board with (the preset, then the board's own boards.json entry). model, model_text: cli.pi_model()."""
+def panel_choices(config, detected, detected_text):
+    """The Pi model and Panel size dropdowns, and what each blank panel field says for each model
+    ("Pi 4 default: 4", or the driver's "Default: 130"). Automatic says what it is on this board
+    (cli.pick_model). detected, detected_text: cli.pi_model()."""
     matrix = config.get("matrix") if isinstance(config.get("matrix"), dict) else {}
-    own = {k: v for k, v in (board or {}).items() if k != cli.PRESET}
-    auto_model, why = cli.pick_model(None, board, model)
-    auto = (f"{cli.MODEL_NAMES.get(auto_model, auto_model)}, {why}" if auto_model
-            else f"none: {cli.no_preset_reason(model_text)}")
-    models = [m for m in cli.MODEL_NAMES if any(k.startswith(m + "-") for k in available)]
-    auto_size, size_why = cli.pick_size(board, None)
+    auto_model, why = cli.pick_model(None, detected, detected_text)
+    auto = cli.MODEL_NAMES[auto_model] if auto_model else f"none: {why}"
     sizes = list(PANEL_SIZES)
-    saved = panel_size(matrix)
-    if saved and saved not in sizes:  # a size set by hand, like 128x32: offered as it is
-        sizes.append(saved)
-    return BoardTypes([(cli.AUTO, f"Automatic ({auto})")] + [(m, cli.MODEL_NAMES[m]) for m in models],
-                      [("", f"Automatic ({auto_size}, {size_why})")] + [(z, z) for z in sizes],
-                      auto_model, auto_size, {k: {**v, **own} for k, v in available.items()}, own)
+    if panel_size(matrix) not in sizes:  # a size set by hand, like 128x32: offered as it is
+        sizes.append(panel_size(matrix))
+    driver = cli.matrix_defaults()
+
+    def texts(name, defaults):
+        """What each blank field says: the model's default, named for it, else the driver's."""
+        found = {}
+        for key, value in driver.items():
+            if key in defaults:
+                found[key] = f"{f'{name} default' if name else 'Default'}: {_shown(defaults[key])}"
+            else:
+                found[key] = f"Default: {_shown(value)}" if value not in (None, "") else "Default"
+        return found
+    blanks = {model: texts(cli.MODEL_NAMES[model], defaults) for model, defaults in cli.MODEL_DEFAULTS.items()}
+    blanks[""] = texts(None, cli.BONNET if detected_text else {})  # a Pi we don't know gets the bonnet's
+    return PanelChoices([(cli.AUTO, f"Automatic ({auto})")] + [(m, n) for m, n in cli.MODEL_NAMES.items()],
+                        [(z, z) for z in sizes], auto_model or "", blanks)
+
+
+def _shown(value):
+    return "On" if value is True else "Off" if value is False else value
 
 
 def panel_size(matrix):
-    """config.json's matrix size as "64x32", or "" when it leaves the size to the board."""
-    rows, cols = matrix.get("led_rows"), matrix.get("led_cols")
-    return f"{cols or 64}x{rows or 32}" if rows or cols else ""
+    """config.json's matrix size as "64x32"; 64 columns and 32 rows (the driver's) where unset."""
+    return f"{matrix.get('led_cols') or 64}x{matrix.get('led_rows') or 32}"
 
 
 def show_names(config):
@@ -134,11 +141,10 @@ def volume_from_form(form):
     return None, f"Volume should be 0 to 100, not {text!r}."
 
 
-def apply_form(config, form, park_names=(), models=()):
+def apply_form(config, form, park_names=()):
     """(the config to save, [problems]) from the posted form: {field: [values]}, as
     urllib.parse.parse_qs(..., keep_blank_values=True) gives it. With any problem, nothing
-    should be saved. park_names: park_names.ParkNames.names(), the names a park may have;
-    models: the Pi models that can be picked (those with presets)."""
+    should be saved. park_names: park_names.ParkNames.names(), the names a park may have."""
     new = copy.deepcopy(config)
     problems = []
 
@@ -249,26 +255,23 @@ def apply_form(config, form, park_names=(), models=()):
         problems.append("Only one show can be forced to play at start-up.")
     new["shows"] = shows
 
-    # The panel: the Pi model, size and the settings their preset sets in the Panel card, the
-    # rest under Advanced. Blank (Automatic) leaves each to the preset and boards.json.
+    # The panel: the Pi model, size and the settings the model sets in the Panel card, the rest
+    # under Advanced. A blank setting is the Pi model's default (or the driver's).
     if "pi_model" in form:
         model = one("pi_model", cli.AUTO)
         if model == cli.AUTO:
             new.pop("pi_model", None)
-        elif model in models:
+        elif model in cli.MODEL_DEFAULTS:
             new["pi_model"] = model
         else:
-            problems.append(f"Pi model: {model!r} isn't one of {', '.join(cli.MODEL_NAMES.get(m, m) for m in models)}.")
+            problems.append(f"Pi model: {model!r} isn't one of {', '.join(cli.MODEL_NAMES.values())}.")
     matrix = section("matrix")
     if "panel_size" in form:
-        size = one("panel_size")
-        found = re.fullmatch(r"(\d+)x(\d+)", size)
-        if not size:
-            matrix["led_cols"] = matrix["led_rows"] = None
-        elif found:
+        found = re.fullmatch(r"(\d+)x(\d+)", one("panel_size"))
+        if found:
             matrix["led_cols"], matrix["led_rows"] = int(found.group(1)), int(found.group(2))
         else:
-            problems.append(f"Panel size should be like 64x32, not {size!r}.")
+            problems.append(f"Panel size should be like 64x32, not {one('panel_size')!r}.")
     for key, _, _, switch, number in cli.matrix_settings():
         field = f"matrix_{key}"
         if field not in form:

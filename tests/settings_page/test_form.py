@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from settings_page.form import (apply_form, board_types, chosen_device, masked, show_names, trip_rows,
+from settings_page.form import (apply_form, chosen_device, masked, panel_choices, show_names, trip_rows,
                                 volume_from_form)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -251,24 +251,18 @@ def test_volume_is_saved_as_a_number_blank_means_the_default_and_bad_is_refused(
         assert problems == [f"Volume should be 0 to 100, not {bad!r}."]
 
 
-PRESETS = {"pi4-64x64": {"led_rows": 64}, "pi4-64x32": {"led_rows": 32}, "pizero2w-64x32": {"led_rows": 32}}
-MODELS = ("pi4", "pizero2w")
-
-
 def test_pi_model_is_saved_auto_removes_it_and_an_unknown_one_is_refused():
-    new, problems = apply_form(CONFIG, form_for(CONFIG, pi_model="pi4"), models=MODELS)
+    new, problems = apply_form(CONFIG, form_for(CONFIG, pi_model="pi4"))
     assert problems == [] and new["pi_model"] == "pi4"
-    assert "pi_model" not in apply_form(new, form_for(new, pi_model="auto"), models=MODELS)[0]
-    assert apply_form(new, form_for(new), models=MODELS)[0]["pi_model"] == "pi4", "not posted: kept"
-    _, problems = apply_form(CONFIG, form_for(CONFIG, pi_model="pi5"), models=MODELS)
-    assert problems == ["Pi model: 'pi5' isn't one of Pi 4, Pi Zero 2 W."]
+    assert "pi_model" not in apply_form(new, form_for(new, pi_model="auto"))[0]
+    assert apply_form(new, form_for(new))[0]["pi_model"] == "pi4", "not posted: kept"
+    _, problems = apply_form(CONFIG, form_for(CONFIG, pi_model="pi5"))
+    assert problems == ["Pi model: 'pi5' isn't one of Pi 4, Pi 3, Pi Zero 2 W."]
 
 
-def test_panel_size_sets_rows_and_columns_and_automatic_clears_them():
+def test_panel_size_sets_rows_and_columns():
     new, problems = apply_form(CONFIG, form_for(CONFIG, panel_size="64x32"))
     assert problems == [] and (new["matrix"]["led_cols"], new["matrix"]["led_rows"]) == (64, 32)
-    new, _ = apply_form(new, form_for(new, panel_size=""))
-    assert (new["matrix"]["led_cols"], new["matrix"]["led_rows"]) == (None, None)
     _, problems = apply_form(CONFIG, form_for(CONFIG, panel_size="big"))
     assert problems == ["Panel size should be like 64x32, not 'big'."]
     _, problems = apply_form(CONFIG, form_for(CONFIG, panel_size="64x48"))
@@ -276,34 +270,33 @@ def test_panel_size_sets_rows_and_columns_and_automatic_clears_them():
     assert apply_form(CONFIG, form_for(CONFIG))[0]["matrix"]["led_rows"] == 64, "not posted: kept"
 
 
-def test_the_dropdowns_say_what_automatic_is_on_this_board():
-    types = board_types(CONFIG, None, "pi4", "Raspberry Pi 4 Model B Rev 1.5", PRESETS)
-    assert types.models == [("auto", "Automatic (Pi 4, detected Pi 4)"), ("pi4", "Pi 4"), ("pizero2w", "Pi Zero 2 W")]
-    assert types.sizes == [("", "Automatic (64x32, default)"), ("64x64", "64x64"), ("64x32", "64x32")]
-    assert (types.auto_model, types.auto_size) == ("pi4", "64x32")
-    types = board_types({}, {"preset": "pizero2w-64x64"}, "pi4", "x", PRESETS)
-    assert types.models[0][1] == "Automatic (Pi Zero 2 W, boards.json entry)"
-    assert types.sizes[0][1] == "Automatic (64x64, boards.json entry)"
-    assert board_types({}, None, None, "Raspberry Pi 5 Model B Rev 1.0", PRESETS).models[0][1] == \
+def test_the_pi_model_dropdown_says_what_automatic_is_on_this_pi():
+    choices = panel_choices(CONFIG, "pi4", "Raspberry Pi 4 Model B Rev 1.5")
+    assert choices.models == [("auto", "Automatic (Pi 4)"), ("pi4", "Pi 4"), ("pi3", "Pi 3"),
+                              ("pizero2w", "Pi Zero 2 W")]
+    assert choices.auto_model == "pi4"
+    assert panel_choices({}, None, "Raspberry Pi 5 Model B Rev 1.0").models[0][1] == \
         "Automatic (none: Raspberry Pi 5 Model B Rev 1.0 isn't supported by the LED driver)"
-    assert board_types({}, None, None, None, {}).models == [("auto", "Automatic (none: not a Pi)")]
+    assert panel_choices({}, None, None).models[0] == ("auto", "Automatic (none: not a Pi)")
 
 
-def test_a_hand_set_size_is_offered_as_it_is():
-    sizes = board_types({"matrix": {"led_cols": 128, "led_rows": 32}}, None, None, None, PRESETS).sizes
-    assert sizes[-1] == ("128x32", "128x32")
+def test_panel_size_offers_both_sizes_and_a_hand_set_one():
+    assert panel_choices({}, None, None).sizes == [("64x64", "64x64"), ("64x32", "64x32")]
+    assert panel_choices({"matrix": {"led_cols": 128, "led_rows": 32}}, None, None).sizes[-1] == ("128x32", "128x32")
 
 
-def test_each_presets_defaults_are_the_preset_then_the_boards_own_entry():
-    board = {"preset": "pizero2w-64x32", "led_pixel_mapper": "Rotate:180"}
-    types = board_types({}, board, "pi4", "x", PRESETS)
-    assert types.defaults == {"pi4-64x64": {"led_rows": 64, "led_pixel_mapper": "Rotate:180"},
-                              "pi4-64x32": {"led_rows": 32, "led_pixel_mapper": "Rotate:180"},
-                              "pizero2w-64x32": {"led_rows": 32, "led_pixel_mapper": "Rotate:180"}}
-    assert types.own == {"led_pixel_mapper": "Rotate:180"}
+def test_blank_fields_say_each_models_default_or_the_drivers():
+    blanks = panel_choices({}, "pi4", "Raspberry Pi 4 Model B Rev 1.5").blanks
+    assert blanks["pi4"]["led_slowdown_gpio"] == "Pi 4 default: 4"
+    assert blanks["pi4"]["led_pwm_lsb_nanoseconds"] == "Pi 4 default: 200"
+    assert blanks["pizero2w"]["led_pwm_lsb_nanoseconds"] == "Default: 130", "the driver's, not the model's"
+    assert blanks["pizero2w"]["led_pixel_mapper"] == "Default", "no rotation"
+    assert blanks["pi3"]["led_show_refresh"] == "Default: Off"
+    assert blanks[""]["led_gpio_mapping"] == "Default: adafruit-hat-pwm", "a Pi we don't know: the bonnet's"
+    assert panel_choices({}, None, None).blanks[""]["led_gpio_mapping"] == "Default", "the emulator: the driver's"
 
 
-def test_rotation_from_the_dropdown_is_saved_and_blank_goes_back_to_the_preset():
+def test_rotation_from_the_dropdown_is_saved_and_blank_goes_back_to_the_default():
     new, problems = apply_form(CONFIG, form_for(CONFIG, matrix_led_pixel_mapper="Rotate:180"))
     assert problems == [] and new["matrix"]["led_pixel_mapper"] == "Rotate:180"
     assert apply_form(new, form_for(new, matrix_led_pixel_mapper=""))[0]["matrix"]["led_pixel_mapper"] is None

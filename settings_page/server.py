@@ -22,11 +22,11 @@ from urllib.parse import parse_qs, urlsplit
 
 import cli
 from settings_page import page
-from settings_page.form import apply_form, board_types, chosen_device, volume_from_form
+from settings_page.form import apply_form, chosen_device, panel_choices, volume_from_form
 from settings_page.park_names import ParkNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
 from utils import debug
-from utils.config import CONFIG_FILE, sound_settings
+from utils.config import CONFIG_FILE, save_config, sound_settings
 from utils.sound import play_test, set_volume
 from utils.wifi_setup import hotspot_name
 
@@ -46,10 +46,9 @@ class Settings:
     park_names.json beside config.json), and one save at a time."""
 
     def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
-                 state_file=None, cards_file=SOUND_CARDS, park_names=None,
-                 boards_file=cli.BOARDS_FILE, model_file=cli.MODEL_FILE):
+                 state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
-        self.boards_file, self.model_file = boards_file, model_file
+        self.model_file = model_file
         self.gate = gate or PinGate()
         self.park_names = park_names or ParkNames(
             os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE))
@@ -73,27 +72,8 @@ class Settings:
         return config, None
 
     def save(self, config):
-        """Write config.json whole or not at all, keeping the last one as config.json.bak, with the
-        old file's owner and mode (the user's, 600, as board-setup.sh made it)."""
-        path = self.config_path
-        temp = path + ".new"
-        try:
-            old = os.stat(path)
-        except FileNotFoundError:
-            old = None
-        fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, old.st_mode & 0o777 if old else 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=2)
-            f.write("\n")
-            f.flush()
-            os.fsync(f.fileno())
-        if old:
-            try:
-                os.chown(temp, old.st_uid, old.st_gid)
-            except PermissionError:  # not root (a dev machine): it's ours already
-                pass
-            shutil.copy2(path, path + ".bak")
-        os.replace(temp, path)
+        """config.json, written whole with a .bak and its owner and mode kept (utils.config.save_config)."""
+        save_config(config, self.config_path)
 
     def restart_app(self):
         """"restarted", "saved" (nothing to restart: no unit set, or no systemd) or "failed" (logged).
@@ -113,17 +93,9 @@ class Settings:
         debug.info(f"Settings page: restarted {self.restart_unit}.")
         return "restarted"
 
-    def board_types(self, config):
-        """The Pi model and Panel size dropdowns for this board (form.board_types). A broken
-        boards.json, which would stop the app, only leaves Automatic here."""
-        try:
-            _, board = cli.board_preset(path=self.boards_file)
-            available = cli.presets(self.boards_file)
-        except SystemExit as e:
-            debug.warning(f"Settings page: {e}")
-            board, available = None, {}
-        model, model_text = cli.pi_model(self.model_file)
-        return board_types(config, board, model, model_text, available)
+    def panel_choices(self, config):
+        """The Pi model and Panel size dropdowns for this Pi (form.panel_choices)."""
+        return panel_choices(config, *cli.pi_model(self.model_file))
 
     def set_volume(self, config):
         """Set the speaker to config's volume now, as the app does before each show: "volume" if
@@ -252,7 +224,7 @@ class Handler(BaseHTTPRequestHandler):
         config = config if config is not None else loaded
         return page.settings_page(config, self.settings.sound_cards(), self._in_setup(), problems, saved,
                                   board_name(), problem, self.settings.park_names.names(),
-                                  self.settings.board_types(config))
+                                  self.settings.panel_choices(config))
 
     # --- routes
 
@@ -303,8 +275,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._volume(form)
         with self.settings.save_lock:
             config, _ = self.settings.load()
-            models = [value for value, _ in self.settings.board_types(config).models[1:]]
-            new, problems = apply_form(config, form, self.settings.park_names.names(), models)
+            new, problems = apply_form(config, form, self.settings.park_names.names())
             if problems:
                 debug.info(f"Settings page: not saved: {'; '.join(problems)}")
                 return self._send(400, self._page(problems, config=new))

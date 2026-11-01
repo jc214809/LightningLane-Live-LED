@@ -44,13 +44,11 @@ class Board:
         names = tmp_path / "park_names.json"
         names.write_text(json.dumps({"fetched": time.time(), "parks": [["EPCOT", "Walt Disney World® Resort"],
                                                                       ["Cedar Point", "Cedar Point"]]}))
-        self.boards = tmp_path / "boards.json"
-        self.boards.write_text(json.dumps({"presets": {"pi4-64x64": {"led_rows": 64}, "pi4-64x32": {"led_rows": 32}}}))
         self.model = tmp_path / "model"
         self.model.write_bytes(b"Raspberry Pi 4 Model B Rev 1.5\0")
         self.settings = Settings(str(self.config), self.gate, state_file=str(self.state), cards_file=str(self.cards),
                                  park_names=ParkNames(str(names), fetch=self.no_fetch),
-                                 boards_file=str(self.boards), model_file=str(self.model))
+                                 model_file=str(self.model))
         monkeypatch.setattr(self.settings, "restart_app", lambda: self.restarts.append(1) or "restarted")
         self.httpd = make_server(self.settings, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
@@ -247,27 +245,16 @@ def test_no_sound_cards_file_means_an_empty_list(tmp_path):
     assert Settings(cards_file=str(tmp_path / "none")).sound_cards() == []
 
 
-def test_the_pi_model_dropdown_lists_boards_jsons_models_and_saves_a_pick(board):
+def test_the_pi_model_and_size_are_picked_from_the_pi_and_saved(board):
     board.sign_in()
     html = board.request("/")[2]
-    assert '<option value="auto" selected>Automatic (Pi 4, detected Pi 4)</option><option value="pi4">Pi 4</option>' \
-        '</select>' in html, "only the models boards.json has presets for"
-    assert board.request("/save", dict(SAVE, pi_model="pi4", panel_size="64x64"))[0] == 303
+    assert '<option value="auto" selected>Automatic (Pi 4)</option>' in html
+    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Pi 4 default: 4</option>', html)
+    assert board.request("/save", dict(SAVE, pi_model="pizero2w", panel_size="64x64"))[0] == 303
     saved = board.saved()
-    assert saved["pi_model"] == "pi4" and (saved["matrix"]["led_cols"], saved["matrix"]["led_rows"]) == (64, 64)
-    status, _, html = board.request("/save", dict(SAVE, pi_model="pi3"))
-    assert status == 400 and "Pi model: &#x27;pi3&#x27; isn&#x27;t one of Pi 4." in html
-
-
-def test_a_broken_boards_json_leaves_only_automatic_and_the_page_up(board, monkeypatch):
-    warnings = []
-    monkeypatch.setattr(server.debug, "warning", warnings.append)
-    board.boards.write_text("{not json")
-    board.sign_in()
-    status, _, html = board.request("/")
-    assert status == 200
-    assert re.search(r'<select id="pi_model" name="pi_model"><option value="auto" selected>[^<]*</option></select>', html)
-    assert "isn't valid JSON" in warnings[0]
+    assert saved["pi_model"] == "pizero2w" and (saved["matrix"]["led_cols"], saved["matrix"]["led_rows"]) == (64, 64)
+    status, _, html = board.request("/save", dict(SAVE, pi_model="pi5"))
+    assert status == 400 and "Pi model: &#x27;pi5&#x27; isn&#x27;t one of" in html
 
 
 def test_a_volume_only_save_sets_the_speaker_now_without_a_restart(board, monkeypatch):
