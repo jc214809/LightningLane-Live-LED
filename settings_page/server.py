@@ -146,7 +146,7 @@ class Handler(BaseHTTPRequestHandler):
     def _same_origin(self):
         """A form posted from another site (a page open in the same browser) is turned away."""
         origin = self.headers.get("Origin")
-        return origin is None or urlsplit(origin).netloc == self.headers.get("Host")
+        return origin is None or urlsplit(origin).netloc.lower() == (self.headers.get("Host") or "").lower()
 
     # --- responses
 
@@ -157,7 +157,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Frame-Options", "DENY")
-        self.send_header("Referrer-Policy", "no-referrer")
+        # Not no-referrer: with it, browsers send "Origin: null" with the page's own forms, which
+        # _same_origin then turns away.
+        self.send_header("Referrer-Policy", "same-origin")
         for name, value in headers:
             self.send_header(name, value)
         self.end_headers()

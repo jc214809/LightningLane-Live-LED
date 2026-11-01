@@ -139,6 +139,17 @@ def test_a_form_posted_from_another_site_is_turned_away(board):
     assert status == 403 and board.saved() == CONFIG
 
 
+def test_the_pages_own_forms_are_let_in_as_a_browser_posts_them(board):
+    # A browser sends the page's origin with its forms, unless the page's referrer policy is
+    # no-referrer: then it sends "Origin: null", which is turned away (a board said "Not allowed").
+    status, headers, _ = board.request("/")
+    assert headers["Referrer-Policy"] == "same-origin"
+    host = board.url.removeprefix("http://")
+    status, headers, _ = board.request("/pin/show", {}, {"Origin": "http://" + host.upper()})
+    assert status == 303 and headers["Location"] == "/?shown"
+    assert board.request("/pin/show", {}, {"Origin": "null"})[0] == 403
+
+
 def test_a_broken_config_can_still_be_fixed_from_the_page(board):
     board.hotspot()
     board.config.write_text("{not json")
