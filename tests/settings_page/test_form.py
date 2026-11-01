@@ -4,7 +4,8 @@ import os
 
 import pytest
 
-from settings_page.form import apply_form, masked, show_names, trip_rows
+from settings_page.form import (apply_form, chosen_device, masked, panel_choices, show_names, trip_rows,
+                                volume_from_form)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -236,3 +237,75 @@ def test_the_brightness_schedule_is_saved_as_peloton_leds_or_null():
     assert problems == ['Day and night brightness: "night" should be 1 to 100, not 0.']
     _, problems = apply_form(CONFIG, form_for(CONFIG, **dict(fields, brightness_schedule="on", day_start="")))
     assert problems == ['Day and night brightness: "day_start" should be a time like "07:00", not \'\'.']
+
+
+def test_volume_is_saved_as_a_number_blank_means_the_default_and_bad_is_refused():
+    new, problems = apply_form(CONFIG, form_for(CONFIG, sound_volume="65"))
+    assert problems == [] and new["sound"]["volume"] == 65
+    saved = copy.deepcopy(CONFIG)
+    saved["sound"]["volume"] = 70
+    assert "volume" not in apply_form(saved, form_for(saved, sound_volume=""))[0]["sound"]
+    assert apply_form(saved, form_for(saved))[0]["sound"]["volume"] == 70, "not posted: left alone"
+    for bad in ("101", "-5", "loud"):
+        _, problems = apply_form(CONFIG, form_for(CONFIG, sound_volume=bad))
+        assert problems == [f"Volume should be 0 to 100, not {bad!r}."]
+
+
+def test_pi_model_is_saved_auto_removes_it_and_an_unknown_one_is_refused():
+    new, problems = apply_form(CONFIG, form_for(CONFIG, pi_model="pi4"))
+    assert problems == [] and new["pi_model"] == "pi4"
+    assert "pi_model" not in apply_form(new, form_for(new, pi_model="auto"))[0]
+    assert apply_form(new, form_for(new))[0]["pi_model"] == "pi4", "not posted: kept"
+    _, problems = apply_form(CONFIG, form_for(CONFIG, pi_model="pi5"))
+    assert problems == ["Pi model: 'pi5' isn't one of Pi 4, Pi 3, Pi Zero 2 W."]
+
+
+def test_panel_size_sets_rows_and_columns():
+    new, problems = apply_form(CONFIG, form_for(CONFIG, panel_size="64x32"))
+    assert problems == [] and (new["matrix"]["led_cols"], new["matrix"]["led_rows"]) == (64, 32)
+    _, problems = apply_form(CONFIG, form_for(CONFIG, panel_size="big"))
+    assert problems == ["Panel size should be like 64x32, not 'big'."]
+    _, problems = apply_form(CONFIG, form_for(CONFIG, panel_size="64x48"))
+    assert "--led-rows must be one of (32, 64)" in problems[0], "checked like the app does"
+    assert apply_form(CONFIG, form_for(CONFIG))[0]["matrix"]["led_rows"] == 64, "not posted: kept"
+
+
+def test_the_pi_model_dropdown_says_what_automatic_is_on_this_pi():
+    choices = panel_choices(CONFIG, "pi4", "Raspberry Pi 4 Model B Rev 1.5")
+    assert choices.models == [("auto", "Automatic (Pi 4)"), ("pi4", "Pi 4"), ("pi3", "Pi 3"),
+                              ("pizero2w", "Pi Zero 2 W")]
+    assert choices.auto_model == "pi4"
+    assert panel_choices({}, None, "Raspberry Pi 5 Model B Rev 1.0").models[0][1] == \
+        "Automatic (none: Raspberry Pi 5 Model B Rev 1.0 isn't supported by the LED driver)"
+    assert panel_choices({}, None, None).models[0] == ("auto", "Automatic (none: not a Pi)")
+
+
+def test_panel_size_offers_both_sizes_and_a_hand_set_one():
+    assert panel_choices({}, None, None).sizes == [("64x64", "64x64"), ("64x32", "64x32")]
+    assert panel_choices({"matrix": {"led_cols": 128, "led_rows": 32}}, None, None).sizes[-1] == ("128x32", "128x32")
+
+
+def test_blank_fields_say_each_models_default_or_the_drivers():
+    blanks = panel_choices({}, "pi4", "Raspberry Pi 4 Model B Rev 1.5").blanks
+    assert blanks["pi4"]["led_slowdown_gpio"] == "Pi 4 default: 4"
+    assert blanks["pi4"]["led_pwm_lsb_nanoseconds"] == "Pi 4 default: 200"
+    assert blanks["pizero2w"]["led_pwm_lsb_nanoseconds"] == "Default: 130", "the driver's, not the model's"
+    assert blanks["pizero2w"]["led_pixel_mapper"] == "Default", "no rotation"
+    assert blanks["pi3"]["led_show_refresh"] == "Default: Off"
+    assert blanks[""]["led_gpio_mapping"] == "Default: adafruit-hat-pwm", "a Pi we don't know: the bonnet's"
+    assert panel_choices({}, None, None).blanks[""]["led_gpio_mapping"] == "Default", "the emulator: the driver's"
+
+
+def test_rotation_from_the_dropdown_is_saved_and_blank_goes_back_to_the_default():
+    new, problems = apply_form(CONFIG, form_for(CONFIG, matrix_led_pixel_mapper="Rotate:180"))
+    assert problems == [] and new["matrix"]["led_pixel_mapper"] == "Rotate:180"
+    assert apply_form(new, form_for(new, matrix_led_pixel_mapper=""))[0]["matrix"]["led_pixel_mapper"] is None
+
+
+def test_the_volume_buttons_read_the_forms_volume_and_speaker():
+    assert volume_from_form({"sound_volume": ["35"]}) == (35, None)
+    assert volume_from_form({"sound_volume": [""]}) == (80, None) and volume_from_form({}) == (80, None)
+    assert volume_from_form({"sound_volume": ["120"]}) == (None, "Volume should be 0 to 100, not '120'.")
+    assert chosen_device({"sound_device": ["plughw:CARD=Device,DEV=0"]}) == "plughw:CARD=Device,DEV=0"
+    assert chosen_device({"sound_device": ["custom"], "sound_device_custom": [" hw:2,0 "]}) == "hw:2,0"
+    assert chosen_device({"sound_device": [""]}) is None and chosen_device({}) is None

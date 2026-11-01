@@ -15,11 +15,13 @@
   "sound": {
     "enabled": false,
     "device": null,
+    "volume": 80,
     "quiet_hours": {"start": "22:00", "end": "08:00"}
   },
   "weather": {
     "apikey": "<API_KEY_HERE>"
   },
+  "pi_model": "auto",
   "matrix": {
     "led_rows": null,
     "led_cols": null,

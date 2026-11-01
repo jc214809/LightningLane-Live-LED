@@ -1,3 +1,4 @@
+import json
 import re
 
 from settings_page.page import settings_page
@@ -86,3 +87,84 @@ def test_no_parks_saved_shows_walt_disney_worlds_four():
     from settings_page.form import WDW_PARKS
     html = settings_page({}, [])
     assert re.findall(r'name="park" value="([^"]+)"', html) == list(WDW_PARKS)
+
+
+from settings_page.form import panel_choices  # noqa: E402
+
+PANEL = panel_choices({}, "pizero2w", "Raspberry Pi Zero 2 W Rev 1.0")
+
+
+def _card(html, sid):
+    """One card's HTML: a section, or the Advanced <details>."""
+    start = html.index(f'id="{sid}"')
+    return html[start:html.index("</details>" if sid == "advanced" else "</section>", start)]
+
+
+def _select(html, name):
+    return re.search(rf'<select id="{name}" name="{name}"[^>]*>(.*?)</select>', html).group(1)
+
+
+def test_pi_model_and_panel_size_head_the_panel_card_with_the_saved_ones_chosen():
+    html = settings_page({}, [], panel=PANEL)
+    assert _select(html, "pi_model").startswith('<option value="auto" selected>Automatic (Pi Zero 2 W)</option>')
+    assert '<option value="64x32" selected>' in _select(html, "panel_size"), "unset: the driver's 64x32"
+    panel = _card(html, "panel")
+    assert panel.index('id="pi_model"') < panel.index('id="panel_size"') < panel.index('id="matrix_led_pixel_mapper"')
+    html = settings_page({"pi_model": "pi4", "matrix": {"led_rows": 64, "led_cols": 64}}, [], panel=PANEL)
+    assert '<option value="pi4" selected>' in _select(html, "pi_model")
+    assert '<option value="64x64" selected>' in _select(html, "panel_size")
+    assert 'id="pi_model"' not in settings_page({}, []), "no choices: no dropdowns"
+    assert '<option value="auto" selected>' in settings_page({"pi_model": "pi9"}, [], panel=PANEL)
+
+
+def test_the_models_settings_are_in_panel_size_is_its_dropdown_and_the_rest_under_advanced():
+    html = settings_page({}, [], panel=PANEL)
+    panel, advanced = _card(html, "panel"), _card(html, "advanced")
+    for key in ("led_pixel_mapper", "led_gpio_mapping", "led_slowdown_gpio", "led_pwm_lsb_nanoseconds"):
+        assert f'id="matrix_{key}"' in panel and f'id="matrix_{key}"' not in advanced, key
+    for key in ("led_rows", "led_cols"):
+        assert f'id="matrix_{key}"' not in html, "the Panel size dropdown sets them"
+    assert 'id="matrix_led_chain"' in advanced and 'id="matrix_led_brightness"' not in advanced
+
+
+def test_blank_fields_say_the_chosen_models_default():
+    html = settings_page({}, [], panel=PANEL)  # Automatic: Pi Zero 2 W
+    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Pi Zero 2 W default: 2</option>',
+                     html)
+    assert 'placeholder="Default: 130" data-key="led_pwm_lsb_nanoseconds"' in html
+    assert 'placeholder="Pi Zero 2 W default: 100" data-key="led_brightness"' in html
+    html = settings_page({"pi_model": "pi4"}, [], panel=PANEL)
+    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Pi 4 default: 4</option>', html)
+    assert 'placeholder="Default" data-key="led_brightness"' in settings_page({}, [])
+
+
+def test_the_page_carries_each_models_blanks_for_the_script():
+    html = settings_page({}, [], panel=PANEL)
+    data = json.loads(re.search(r'<script type="application/json" id="panel-blanks">(.*?)</script>', html).group(1))
+    assert data == {"auto": "pizero2w", "blanks": PANEL.blanks}
+    evil = PANEL._replace(blanks={"pizero2w": {"led_pixel_mapper": "</script><b>"}})
+    assert "</script><b>" not in settings_page({}, [], panel=evil)
+
+
+def test_rotation_is_a_dropdown_that_keeps_a_custom_saved_mapper():
+    html = settings_page({"matrix": {"led_pixel_mapper": "Rotate:180"}}, [], panel=PANEL)
+    assert '<option value="Rotate:180" selected>Upside down (Rotate:180)</option>' in html
+    html = settings_page({"matrix": {"led_pixel_mapper": "U-mapper;Rotate:90"}}, [], panel=PANEL)
+    assert '<option value="U-mapper;Rotate:90" selected>U-mapper;Rotate:90</option>' in html
+
+
+def test_volume_shows_the_saved_one_or_80_as_a_placeholder():
+    html = settings_page({"sound": {"volume": 65}}, [])
+    assert re.search(r'<input type="number" id="sound_volume" name="sound_volume" value="65"[^>]*placeholder="80"', html)
+    assert 'id="sound_volume" name="sound_volume" value=""' in settings_page({}, [])
+
+
+def test_volume_has_a_slider_and_buttons_that_never_take_enter_from_save():
+    html = settings_page({"sound": {"volume": 65}}, [])
+    assert re.search(r'<input type="range" id="volume_slider" class="js-only" min="0" max="100" value="65"', html)
+    assert 'value="80" aria-label="Volume slider"' in settings_page({}, []), "blank: the slider sits at 80"
+    for action in ("set", "test"):
+        assert f'<button type="button" class="secondary" name="volume_action" value="{action}">' in html
+    form = html[html.index('<form method="post" action="/save"'):]
+    first_submit = re.search(r'<button type="submit"[^>]*>', form).group(0)
+    assert 'id="save"' in first_submit, "Enter in a field presses the first submit button: it must be Save"

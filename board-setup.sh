@@ -132,12 +132,12 @@ ask() {  # ask VAR QUESTION DEFAULT [CHOICE...]: answers file, else prompt, else
 }
 
 collect_answers() {
-    ask BOARD_NAME "Hostname (boards.json picks LightningLane-Live-LED's settings by it)" "$(hostname -s 2>/dev/null || hostname)"
+    ask BOARD_NAME "Hostname (the board's name on the network, and its settings page's)" "$(hostname -s 2>/dev/null || hostname)"
     [[ "$BOARD_NAME" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]] || die "not a usable hostname: $BOARD_NAME"
     hotspot_name_fits "$BOARD_NAME" || die "$BOARD_NAME is too long: its Wi-Fi setup hotspot, $BOARD_NAME$HOTSPOT_SUFFIX, would be over Wi-Fi's 32 letters"
     ask APP "App to run (lll = LightningLane-Live-LED, peloton = Peloton-LED, mlb = MLB-LED-Scoreboard)" lll lll peloton mlb
-    # Each app can keep these in its own config (LLL: boards.json or config.json's matrix), so by
-    # default they aren't asked and no flags go in the service.
+    # Each app can keep these in its own config (LLL: config.json's matrix, from its settings page),
+    # so by default they aren't asked and no flags go in the service.
     ask PANEL_OPTIONS "Set the panel options (size, GPIO mapping, slowdown, extra flags) in the service? (yes/no; no leaves them to the app's own config)" no yes no
     if [[ "$PANEL_OPTIONS" == yes ]]; then
         ask LED_ROWS "Panel rows" 32 32 64
@@ -429,31 +429,14 @@ usb_speaker() {  # the first USB sound card's ALSA name, by name so it survives 
 }
 
 lll_config() {
-    # config.json from the example if missing, plus a "matrix" section when boards.json has no
-    # entry for this hostname, and the speaker. Only the keys it sets change.
-    local dir=$1 boards=$1/boards.json in_boards matrix="" device=""
-    [[ -f "$boards" ]] || boards="$SCRIPT_DIR/boards.json"
-    in_boards="$(python3 -c 'import json,sys; print(sys.argv[2] in json.load(open(sys.argv[1])))' "$boards" "$BOARD_NAME" 2>/dev/null || echo False)"
-    if [[ "$in_boards" == True ]]; then
-        echo "  boards.json has $BOARD_NAME; its settings come from there"
-        # config.json's matrix section overrides boards.json: say so, but leave the user's config alone
-        python3 - "$dir/config.json" <<'CONFIG' 2>/dev/null || true
-import json, sys
-try:
-    matrix = json.load(open(sys.argv[1], encoding="utf-8")).get("matrix") or {}
-except (OSError, ValueError):
-    sys.exit()
-overrides = {k: v for k, v in matrix.items() if v is not None}
-if overrides:
-    print("  note: config.json's matrix section overrides boards.json with "
-          + ", ".join(f"{k}={v}" for k, v in overrides.items()) + " (left as is)")
-CONFIG
-    elif [[ "$PANEL_OPTIONS" == yes ]]; then
+    # config.json from the example if missing, plus the panel answers in its "matrix" section (the
+    # Pi's model gives the rest) and the speaker. Only the keys it sets change.
+    local dir=$1 matrix="" device=""
+    if [[ "$PANEL_OPTIONS" == yes ]]; then
         matrix="{\"led_rows\": $LED_ROWS, \"led_cols\": $LED_COLS, \"led_gpio_mapping\": \"$LED_GPIO_MAPPING\", \"led_slowdown_gpio\": $LED_SLOWDOWN_GPIO}"
-        echo "  boards.json has no $BOARD_NAME: putting the panel settings in config.json's matrix section"
-        echo "  (or add a boards.json entry for it and commit it, like the other boards)"
+        echo "  panel settings: in config.json's matrix section"
     else
-        echo "  panel options: left to boards.json / config.json's matrix section"
+        echo "  panel options: the Pi model's; set the size and rotation at http://$BOARD_NAME.local:8080"
     fi
     if [[ "$SPEAKER" == yes ]]; then
         device="$(usb_speaker)"
@@ -502,7 +485,7 @@ install_lll() {
     in_dir "$dir" bash LLL-install.sh ${flags[@]+"${flags[@]}"} -w
     give_back "$dir"
     lll_config "$dir"
-    # No panel flags: boards.json (or config.json's matrix) has them.
+    # No panel flags: the Pi's model and config.json's matrix give them.
     local unit
     unit="$(app_unit "LightningLane-Live-LED" "$dir" "$dir/venv/bin/python3 $dir/disney.py \$ARGS" "\"ARGS=$EXTRA_ARGS\"")"
     retire_old_units "$LLL_UNIT" "$unit"
@@ -525,8 +508,8 @@ setup_settings_page() {  # setup_settings_page DIR: LightningLane-Live-LED's set
 retire_old_units() {  # retire_old_units UNIT CONTENT: move older copies of UNIT out of systemd's way
     # Boards set up by hand have their own service file, often with the panel flags in it, in /lib
     # or /etc (and sometimes overrides in UNIT.d/). Any of them would keep a board on its old flags
-    # instead of boards.json, so each goes to a dated backup folder, never deleted, with the flags
-    # it ran with printed so they can be checked against boards.json. Ours, unchanged, stays.
+    # instead of its config.json, so each goes to a dated backup folder, never deleted, with the
+    # flags it ran with printed so they can be checked on the settings page. Ours, unchanged, stays.
     local unit=$1 content=$2 backup old disabled=false
     backup="$ROOT/var/backups/board-setup/$(date +%Y%m%d-%H%M%S)"
     for old in "$ROOT/lib/systemd/system/$unit" "$UNIT_DIR/$unit" "$UNIT_DIR/$unit.d"; do

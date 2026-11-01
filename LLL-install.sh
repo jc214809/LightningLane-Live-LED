@@ -256,5 +256,13 @@ if [ "$SKIP_CONFIG" = true ]; then
 #    echo
 fi
 
+# boards.json is gone: move this board's panel size and rotation from it into config.json (once;
+# it only fills settings config.json leaves unset). The Pi's model gives the rest.
+if [ -f "./config.json" ]; then
+    echo "------------------------------------"
+    echo "  Checking the panel settings"
+    echo "------------------------------------"
+    "$PYTHON" -m utils.migrate_boards config.json || echo "Couldn't move them: set the panel on the settings page."
+fi
 
 echo "Installation finished!"

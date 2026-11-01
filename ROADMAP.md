@@ -994,3 +994,14 @@ setup hotspot (`10.41.0.1:8080`, the Wi-Fi setup screen's second page); on the h
 for a PIN the board shows on request. Not comitup's `web_service`: comitup stops that one while the
 hotspot is up (its own page has port 80). To check on a board: that port 8080 is reachable from a
 phone on the hotspot, the PIN overlay, and the restart after a save.
+
+Since then: a park picker (#191); Pi model defaults with each board's own panel settings in its
+config.json, in place of boards.json, and a volume set live with a test sound (#192).
+
+## 16. Send the settings page's PIN by Pushover
+
+An optional way to sign in to the settings page from a board you can't see (like DonaldPi): with a
+`pushover` section in `config.json` (user key and app token, entered on the page and masked like the
+other keys), the sign-in page gets "Send the PIN to my phone" next to "Show a PIN". It still shows
+on the LED too. Limit it to one send a minute (anyone on the Wi-Fi can open the sign-in page) and
+never log the PIN. Without the keys, the page stays as it is.

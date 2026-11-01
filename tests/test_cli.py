@@ -314,7 +314,7 @@ def test_null_in_config_leaves_the_setting_unset():
 
 def test_the_example_configs_matrix_section_lists_every_setting_and_overrides_nothing():
     # Every setting is listed, all null: a board's config.json copied from the example must not
-    # override its boards.json preset (config wins over the preset).
+    # override its Pi model's defaults (config wins over them).
     import json
     import os
     from cli import _make_parser
@@ -324,23 +324,23 @@ def test_the_example_configs_matrix_section_lists_every_setting_and_overrides_no
     every_setting = {a.dest for a in _make_parser()._actions if a.option_strings and a.dest != "help"}
     assert set(matrix) == every_setting
     assert all(value is None for value in matrix.values())
-    preset = {"led_rows": 64, "led_gpio_mapping": "adafruit-hat-pwm"}
-    assert vars(arguments([], matrix=matrix, board=preset, board_name="Disneypi")) == \
-        vars(arguments([], board=preset, board_name="Disneypi"))
+    defaults = {"led_slowdown_gpio": 4, "led_gpio_mapping": "adafruit-hat-pwm"}
+    assert vars(arguments([], matrix=matrix, defaults=defaults, model="pi4")) == \
+        vars(arguments([], defaults=defaults, model="pi4"))
 
 
 def test_describe_lists_changed_settings_and_where_each_came_from():
     argv = ["--led-rows=64", "--led-gpio-mapping", "adafruit-hat-pwm", "--emulated"]
     matrix = {"led_cols": 64, "led_brightness": 100, "led_slowdown_gpio": 4}
     line = describe(arguments(argv, matrix=matrix), argv, matrix=matrix)
-    assert line == ("Board settings (no boards.json preset for this hostname): "
+    assert line == ("Board settings (no Pi model): "
                     "led_rows=64 (command line), led_cols=64 (config), "
                     "led_gpio_mapping=adafruit-hat-pwm (command line), led_slowdown_gpio=4 (config), "
                     "emulated=True (command line); the rest default"), "brightness 100 is the default: not listed"
 
 
 def test_describe_with_everything_default():
-    assert describe(arguments([]), []) == "Board settings (no boards.json preset for this hostname): all default"
+    assert describe(arguments([]), []) == "Board settings (no Pi model): all default"
 
 
 def test_describe_credits_the_command_line_when_both_set_it():
@@ -351,63 +351,97 @@ def test_describe_credits_the_command_line_when_both_set_it():
 
 
 # -----------------------------------------------------------------------------
-# boards.json: each board's settings, picked by hostname
+# Pi model defaults: picked in config.json, or the model the Pi reports
 # -----------------------------------------------------------------------------
-import json as _json  # noqa: E402
-
-from cli import BOARDS_FILE, board_preset  # noqa: E402
+from cli import BONNET, MODEL_DEFAULTS, MODEL_NAMES, model_defaults, pi_model, pick_model  # noqa: E402
 
 
-def _boards_file(tmp_path, boards):
-    path = tmp_path / "boards.json"
-    path.write_text(boards if isinstance(boards, str) else _json.dumps(boards))
+def _model_file(tmp_path, text):
+    path = tmp_path / "model"
+    path.write_bytes(text.encode() + b"\0")  # the device tree ends it with a NUL
     return str(path)
 
 
-def test_board_preset_matches_the_hostname_ignoring_case_and_domain(tmp_path):
-    path = _boards_file(tmp_path, {"Disneypi": {"led_rows": 64}, "ZeroPi": {"led_rows": 32}})
-    assert board_preset("disneypi", path) == ("Disneypi", {"led_rows": 64})
-    assert board_preset("ZeroPi.local", path) == ("ZeroPi", {"led_rows": 32})
+@pytest.mark.parametrize("text, model", [
+    ("Raspberry Pi 4 Model B Rev 1.5", "pi4"),
+    ("Raspberry Pi 400 Rev 1.0", "pi4"),
+    ("Raspberry Pi 3 Model B Plus Rev 1.3", "pi3"),
+    ("Raspberry Pi Zero 2 W Rev 1.0", "pizero2w"),
+    ("Raspberry Pi Zero W Rev 1.1", None),
+    ("Raspberry Pi 5 Model B Rev 1.0", None),
+])
+def test_pi_model_reads_the_device_tree(tmp_path, text, model):
+    assert pi_model(_model_file(tmp_path, text)) == (model, text)
 
 
-def test_a_machine_without_a_preset_or_a_file_gets_none(tmp_path):
-    assert board_preset("Joels-MacBook-Pro", _boards_file(tmp_path, {"Disneypi": {}})) == (None, None)
-    assert board_preset("Disneypi", str(tmp_path / "missing.json")) == (None, None)
+def test_pi_model_off_a_pi_is_none(tmp_path):
+    assert pi_model(str(tmp_path / "missing")) == (None, None)
 
 
-@pytest.mark.parametrize("contents", ["{not json", '["Disneypi"]'])
-def test_a_broken_boards_file_stops_the_app(tmp_path, contents):
+def test_the_model_picked_in_config_wins_over_the_detected_one():
+    assert pick_model("pizero2w", "pi4", "Raspberry Pi 4") == ("pizero2w", "picked in config.json")
+    assert pick_model("auto", "pi4", "Raspberry Pi 4") == ("pi4", "detected")
+    assert pick_model(None, "pi4", "Raspberry Pi 4") == ("pi4", "detected")
+
+
+@pytest.mark.parametrize("text, why", [
+    (None, "not a Pi"),
+    ("Raspberry Pi 5 Model B Rev 1.0", "Raspberry Pi 5 Model B Rev 1.0 isn't supported by the LED driver"),
+    ("Raspberry Pi Zero W Rev 1.1", "no defaults for Raspberry Pi Zero W Rev 1.1"),
+])
+def test_with_no_model_why_says_what_was_found(text, why):
+    assert pick_model(None, None, text) == (None, why)
+
+
+def test_model_defaults_detects_the_model(tmp_path):
+    assert model_defaults(None, _model_file(tmp_path, "Raspberry Pi 4 Model B Rev 1.5")) == \
+        ("pi4", MODEL_DEFAULTS["pi4"], "detected")
+    assert model_defaults("pizero2w", _model_file(tmp_path, "Raspberry Pi 4 Model B Rev 1.5")) == \
+        ("pizero2w", MODEL_DEFAULTS["pizero2w"], "picked in config.json")
+
+
+def test_a_pi_we_dont_know_still_gets_the_bonnets_mapping_and_the_emulator_nothing(tmp_path):
+    model, defaults, why = model_defaults(None, _model_file(tmp_path, "Raspberry Pi Zero W Rev 1.1"))
+    assert (model, defaults) == (None, BONNET) and defaults["led_gpio_mapping"] == "adafruit-hat-pwm"
+    assert model_defaults(None, str(tmp_path / "missing")) == (None, {}, "not a Pi")
+
+
+def test_an_unknown_model_in_config_stops_the_app(tmp_path):
+    with pytest.raises(SystemExit, match='"pi_model" is "pi9"'):
+        model_defaults("pi9", str(tmp_path / "missing"))
+
+
+def test_every_models_defaults_parse_and_name_a_model():
+    assert set(MODEL_DEFAULTS) == set(MODEL_NAMES)
+    for model, defaults in MODEL_DEFAULTS.items():
+        parsed = arguments([], defaults=defaults, model=model)
+        assert parsed.led_gpio_mapping == "adafruit-hat-pwm", model
+    assert arguments([], defaults=MODEL_DEFAULTS["pi4"], model="pi4").led_slowdown_gpio == 4
+
+
+def test_config_overrides_the_models_defaults_and_the_command_line_overrides_both():
+    defaults = MODEL_DEFAULTS["pi4"]
+    matrix = {"led_pixel_mapper": "Rotate:180", "led_slowdown_gpio": 3, "led_rows": 64}
+    argv = ["--led-rows=32"]
+    parsed = arguments(argv, matrix=matrix, defaults=defaults, model="pi4")
+    assert (parsed.led_rows, parsed.led_slowdown_gpio, parsed.led_pwm_lsb_nanoseconds, parsed.led_pixel_mapper) == \
+        (32, 3, 200, "Rotate:180")
+    line = describe(parsed, argv, matrix=matrix, defaults=defaults, model="pi4", why="detected")
+    assert line.startswith("Board settings (Pi 4, detected): ")
+    assert "led_pwm_lsb_nanoseconds=200 (Pi 4 default)" in line
+    assert "led_slowdown_gpio=3 (config)" in line and "led_pixel_mapper=Rotate:180 (config)" in line
+    assert "led_rows" not in line, "32 from the command line is the driver's default again"
+
+
+def test_describe_says_why_there_is_no_model():
+    line = describe(arguments([]), [], why="Raspberry Pi 5 Model B isn't supported by the LED driver")
+    assert line == "Board settings (no Pi model: Raspberry Pi 5 Model B isn't supported by the LED driver): all default"
+
+
+def test_a_bad_default_names_the_model_in_the_error(capsys):
     with pytest.raises(SystemExit):
-        board_preset("Disneypi", _boards_file(tmp_path, contents))
-
-
-def test_config_overrides_the_board_preset_and_the_command_line_overrides_both():
-    board = {"led_rows": 64, "led_cols": 64, "led_brightness": 85, "led_slowdown_gpio": 2}
-    matrix = {"led_brightness": 60, "led_slowdown_gpio": 3}
-    argv = ["--led-slowdown-gpio", "4"]
-    parsed = arguments(argv, matrix=matrix, board=board, board_name="PlutoPi")
-    assert (parsed.led_rows, parsed.led_brightness, parsed.led_slowdown_gpio) == (64, 60, 4)
-    line = describe(parsed, argv, matrix=matrix, board=board, board_name="PlutoPi")
-    assert line.startswith("Board settings (boards.json preset PlutoPi): ")
-    assert "led_rows=64 (board PlutoPi)" in line
-    assert "led_brightness=60 (config)" in line
-    assert "led_slowdown_gpio=4 (command line)" in line
-
-
-def test_a_bad_preset_names_its_board_in_the_error(capsys):
-    with pytest.raises(SystemExit):
-        arguments([], board={"led_row": 64}, board_name="PlutoPi")
-    assert 'boards.json "PlutoPi" has no setting "led_row"' in capsys.readouterr().err
-
-
-def test_every_board_in_the_repos_boards_json_parses():
-    # A typo here would stop a board at its next update; catch it before it's pushed.
-    with open(BOARDS_FILE) as f:
-        boards = _json.load(f)
-    assert boards, "boards.json lists the boards"
-    for name, settings in boards.items():
-        parsed = arguments([], board=settings, board_name=name)
-        assert parsed.led_rows == settings["led_rows"], name
+        arguments([], defaults={"led_row": 64}, model="pi4")
+    assert 'the Pi 4 defaults has no setting "led_row"' in capsys.readouterr().err
 
 
 def test_matrix_problem_names_what_would_stop_the_app_and_none_for_good_settings():

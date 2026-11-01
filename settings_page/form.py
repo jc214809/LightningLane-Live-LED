@@ -9,9 +9,10 @@ import copy
 import os
 import re
 from datetime import time
+from typing import NamedTuple
 
 import cli
-from utils.config import SHOW_VERSIONS, WS_PROTOCOLS, has_api_key, parse_brightness_schedule
+from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS, has_api_key, parse_brightness_schedule
 from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS
 from utils.trips import parse_date
 
@@ -50,6 +51,52 @@ def surprise_names(path=_CHARACTERS):
     return []
 
 
+class PanelChoices(NamedTuple):
+    models: list  # (value, text) for the Pi model dropdown, Automatic first
+    sizes: list  # (value, text) for the Panel size dropdown
+    auto_model: str  # what Automatic is on this board: a model key, or "" for none
+    blanks: dict  # model key ("" for none) -> {matrix key: what that field says when left blank}
+
+
+PANEL_SIZES = ("64x64", "64x32")
+
+
+def panel_choices(config, detected, detected_text):
+    """The Pi model and Panel size dropdowns, and what each blank panel field says for each model
+    ("Pi 4 default: 4", or the driver's "Default: 130"). Automatic says what it is on this board
+    (cli.pick_model). detected, detected_text: cli.pi_model()."""
+    matrix = config.get("matrix") if isinstance(config.get("matrix"), dict) else {}
+    auto_model, why = cli.pick_model(None, detected, detected_text)
+    auto = cli.MODEL_NAMES[auto_model] if auto_model else f"none: {why}"
+    sizes = list(PANEL_SIZES)
+    if panel_size(matrix) not in sizes:  # a size set by hand, like 128x32: offered as it is
+        sizes.append(panel_size(matrix))
+    driver = cli.matrix_defaults()
+
+    def texts(name, defaults):
+        """What each blank field says: the model's default, named for it, else the driver's."""
+        found = {}
+        for key, value in driver.items():
+            if key in defaults:
+                found[key] = f"{f'{name} default' if name else 'Default'}: {_shown(defaults[key])}"
+            else:
+                found[key] = f"Default: {_shown(value)}" if value not in (None, "") else "Default"
+        return found
+    blanks = {model: texts(cli.MODEL_NAMES[model], defaults) for model, defaults in cli.MODEL_DEFAULTS.items()}
+    blanks[""] = texts(None, cli.BONNET if detected_text else {})  # a Pi we don't know gets the bonnet's
+    return PanelChoices([(cli.AUTO, f"Automatic ({auto})")] + [(m, n) for m, n in cli.MODEL_NAMES.items()],
+                        [(z, z) for z in sizes], auto_model or "", blanks)
+
+
+def _shown(value):
+    return "On" if value is True else "Off" if value is False else value
+
+
+def panel_size(matrix):
+    """config.json's matrix size as "64x32"; 64 columns and 32 rows (the driver's) where unset."""
+    return f"{matrix.get('led_cols') or 64}x{matrix.get('led_rows') or 32}"
+
+
 def show_names(config):
     """Every show the board plays (the nightly one, then each party's), then any others config.json lists."""
     names = [NIGHTLY_FIREWORKS[0]] + [e["fireworks_show"] for e in SPECIAL_EVENTS.values() if e.get("fireworks_show")]
@@ -76,6 +123,22 @@ def _date_text(value):
         return parse_date(value).isoformat() if value else ""
     except (TypeError, ValueError):
         return str(value)
+
+
+def chosen_device(form):
+    """The speaker the form picks: one from the list, one typed under Other device, or None."""
+    one = lambda name: (form.get(name) or [""])[0].strip()
+    return (one("sound_device_custom") if one("sound_device") == "custom" else one("sound_device")) or None
+
+
+def volume_from_form(form):
+    """(volume, problem) from the form's Volume: blank is DEFAULT_VOLUME."""
+    text = (form.get("sound_volume") or [""])[0].strip()
+    if not text:
+        return DEFAULT_VOLUME, None
+    if re.fullmatch(r"\d+", text) and int(text) <= 100:
+        return int(text), None
+    return None, f"Volume should be 0 to 100, not {text!r}."
 
 
 def apply_form(config, form, park_names=()):
@@ -151,8 +214,15 @@ def apply_form(config, form, park_names=()):
     # Sound
     sound = section("sound")
     sound["enabled"] = checked("sound_enabled")
-    device = one("sound_device")
-    sound["device"] = (one("sound_device_custom") if device == "custom" else device) or None
+    sound["device"] = chosen_device(form)
+    if "sound_volume" in form:  # the page always posts it; a form without it leaves the volume alone
+        volume, problem = volume_from_form(form)
+        if problem:
+            problems.append(problem)
+        elif one("sound_volume"):
+            sound["volume"] = volume
+        else:
+            sound.pop("volume", None)
     quiet = one("quiet_start"), one("quiet_end")
     if any(quiet):
         try:
@@ -185,8 +255,23 @@ def apply_form(config, form, park_names=()):
         problems.append("Only one show can be forced to play at start-up.")
     new["shows"] = shows
 
-    # The panel: brightness up front, the rest under Advanced. Blank leaves it to the board's preset.
+    # The panel: the Pi model, size and the settings the model sets in the Panel card, the rest
+    # under Advanced. A blank setting is the Pi model's default (or the driver's).
+    if "pi_model" in form:
+        model = one("pi_model", cli.AUTO)
+        if model == cli.AUTO:
+            new.pop("pi_model", None)
+        elif model in cli.MODEL_DEFAULTS:
+            new["pi_model"] = model
+        else:
+            problems.append(f"Pi model: {model!r} isn't one of {', '.join(cli.MODEL_NAMES.values())}.")
     matrix = section("matrix")
+    if "panel_size" in form:
+        found = re.fullmatch(r"(\d+)x(\d+)", one("panel_size"))
+        if found:
+            matrix["led_cols"], matrix["led_rows"] = int(found.group(1)), int(found.group(2))
+        else:
+            problems.append(f"Panel size should be like 64x32, not {one('panel_size')!r}.")
     for key, _, _, switch, number in cli.matrix_settings():
         field = f"matrix_{key}"
         if field not in form:

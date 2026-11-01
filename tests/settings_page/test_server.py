@@ -2,6 +2,7 @@
 temp folder. The file is "board-config.json": tests/stubs/conftest.py fakes every "config.json"."""
 import json
 import os
+import re
 import threading
 import time
 import urllib.error
@@ -43,8 +44,11 @@ class Board:
         names = tmp_path / "park_names.json"
         names.write_text(json.dumps({"fetched": time.time(), "parks": [["EPCOT", "Walt Disney World® Resort"],
                                                                       ["Cedar Point", "Cedar Point"]]}))
+        self.model = tmp_path / "model"
+        self.model.write_bytes(b"Raspberry Pi 4 Model B Rev 1.5\0")
         self.settings = Settings(str(self.config), self.gate, state_file=str(self.state), cards_file=str(self.cards),
-                                 park_names=ParkNames(str(names), fetch=self.no_fetch))
+                                 park_names=ParkNames(str(names), fetch=self.no_fetch),
+                                 model_file=str(self.model))
         monkeypatch.setattr(self.settings, "restart_app", lambda: self.restarts.append(1) or "restarted")
         self.httpd = make_server(self.settings, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
@@ -239,3 +243,87 @@ def test_no_systemd_or_no_unit_just_saves(monkeypatch, tmp_path):
 
 def test_no_sound_cards_file_means_an_empty_list(tmp_path):
     assert Settings(cards_file=str(tmp_path / "none")).sound_cards() == []
+
+
+def test_the_pi_model_and_size_are_picked_from_the_pi_and_saved(board):
+    board.sign_in()
+    html = board.request("/")[2]
+    assert '<option value="auto" selected>Automatic (Pi 4)</option>' in html
+    assert re.search(r'id="matrix_led_slowdown_gpio"[^>]*><option value="" selected>Pi 4 default: 4</option>', html)
+    assert board.request("/save", dict(SAVE, pi_model="pizero2w", panel_size="64x64"))[0] == 303
+    saved = board.saved()
+    assert saved["pi_model"] == "pizero2w" and (saved["matrix"]["led_cols"], saved["matrix"]["led_rows"]) == (64, 64)
+    status, _, html = board.request("/save", dict(SAVE, pi_model="pi5"))
+    assert status == 400 and "Pi model: &#x27;pi5&#x27; isn&#x27;t one of" in html
+
+
+def test_a_volume_only_save_sets_the_speaker_now_without_a_restart(board, monkeypatch):
+    set_to = []
+    monkeypatch.setattr(server, "set_volume", lambda settings: set_to.append(settings.volume) or True)
+    board.sign_in()
+    status, headers, _ = board.request("/save", SAVE)  # trips change: a restart
+    assert headers["Location"] == "/?saved=restarted" and board.restarts == [1]
+    status, headers, _ = board.request("/save", dict(SAVE, sound_volume="55"))
+    assert status == 303 and headers["Location"] == "/?saved=volume"
+    assert set_to == [55] and board.restarts == [1], "no second restart"
+    assert board.saved()["sound"]["volume"] == 55
+    assert "no restart needed" in board.request("/?saved=volume")[2]
+    monkeypatch.setattr(server, "set_volume", lambda settings: False)
+    assert board.request("/save", dict(SAVE, sound_volume="60"))[1]["Location"] == "/?saved=volume_failed"
+    assert "the speaker didn't change" in board.request("/?saved=volume_failed")[2]
+
+
+def test_volume_only_is_true_only_when_nothing_else_changed():
+    old = {"sound": {"enabled": True, "volume": 80}, "parks": ["EPCOT"]}
+    assert server.volume_only(old, {"sound": {"enabled": True, "volume": 50}, "parks": ["EPCOT"]})
+    assert server.volume_only(old, {"sound": {"enabled": True}, "parks": ["EPCOT"]}), "back to the default"
+    assert not server.volume_only(old, old)
+    assert not server.volume_only(old, {"sound": {"enabled": False, "volume": 50}, "parks": ["EPCOT"]})
+    assert not server.volume_only(old, {"sound": {"enabled": True, "volume": 50}, "parks": ["MK"]})
+    assert not server.volume_only({}, {})
+
+
+def _volume(board, **fields):
+    status, _, body = board.request("/volume", dict(SAVE, **fields), {"Accept": "application/json"})
+    return status, json.loads(body)
+
+
+def test_set_volume_sets_the_speaker_and_saves_only_the_volume_with_no_restart(board, monkeypatch):
+    set_to = []
+    monkeypatch.setattr(server, "set_volume", lambda settings: set_to.append((settings.volume, settings.device)) or True)
+    board.sign_in()
+    status, reply = _volume(board, volume_action="set", sound_volume="45", sound_device="plughw:CARD=Device,DEV=0",
+                            park="Cedar Point")
+    assert status == 200 and reply == {"ok": True, "message": "Volume set to 45% and saved."}
+    assert set_to == [(45, "plughw:CARD=Device,DEV=0")], "on the speaker the form picks"
+    assert board.saved() == dict(CONFIG, sound={"volume": 45}), "the parks and the rest stay as saved"
+    assert board.restarts == []
+
+
+def test_set_volume_says_when_the_speaker_didnt_change_or_the_volume_is_bad(board, monkeypatch):
+    monkeypatch.setattr(server, "set_volume", lambda settings: False)
+    board.sign_in()
+    assert _volume(board, volume_action="set", sound_volume="45")[1] == \
+        {"ok": False, "message": "Saved 45%, but the speaker didn't change: the board's log says why."}
+    assert _volume(board, volume_action="set", sound_volume="loud")[1] == \
+        {"ok": False, "message": "Volume should be 0 to 100, not 'loud'."}
+    assert board.saved()["sound"] == {"volume": 45}
+
+
+def test_a_test_sound_plays_at_the_forms_volume_and_saves_nothing(board, monkeypatch):
+    played = []
+    monkeypatch.setattr(server, "play_test",
+                        lambda settings: played.append((settings.volume, settings.device)) or (True, "Played a chime at 30%."))
+    board.sign_in()
+    assert _volume(board, volume_action="test", sound_volume="30") == (200, {"ok": True, "message": "Played a chime at 30%."})
+    assert played == [(30, None)] and board.saved() == CONFIG and board.restarts == []
+
+
+def test_the_volume_buttons_need_sign_in_and_a_known_action(board):
+    status, headers, _ = board.request("/volume", dict(SAVE, volume_action="set", sound_volume="45"))
+    assert status == 303 and headers["Location"] == "/", "signed out: back to the PIN"
+    assert board.saved() == CONFIG
+    board.sign_in()
+    assert _volume(board, volume_action="louder") == (400, {"ok": False, "message": "That isn't a volume button."})
+    status, _, _ = board.request("/volume", dict(SAVE, volume_action="set"), {"Origin": "http://evil.example"})
+    assert status == 403 and board.saved() == CONFIG

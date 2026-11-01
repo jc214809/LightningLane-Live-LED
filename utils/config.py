@@ -5,6 +5,8 @@ without a restart. Feature-specific sections (trip_countdown, force_surprise) ar
 the code that validates them (utils/trips.py, disney.py).
 """
 import json
+import os
+import shutil
 from datetime import time
 from typing import NamedTuple, Optional, Tuple
 
@@ -18,6 +20,29 @@ def load_config(file_path=CONFIG_FILE):
     """Load the configuration from a JSON file."""
     with open(file_path, 'r') as file:
         return json.load(file)
+
+
+def save_config(config, path=CONFIG_FILE):
+    """Write config.json whole or not at all, keeping the last one as config.json.bak, with the
+    old file's owner and mode (the user's, 600, as board-setup.sh made it), even when run as root."""
+    temp = path + ".new"
+    try:
+        old = os.stat(path)
+    except FileNotFoundError:
+        old = None
+    fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, old.st_mode & 0o777 if old else 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
+        f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    if old:
+        try:
+            os.chown(temp, old.st_uid, old.st_gid)
+        except PermissionError:  # not root (a dev machine): it's ours already
+            pass
+        shutil.copy2(path, path + ".bak")
+    os.replace(temp, path)
 
 
 def debug_enabled(config):
@@ -137,16 +162,21 @@ def forced_show_name(config):
     return None
 
 
+# A USB speaker draws on the Pi's 5V rail; near full volume it under-volted Disneypi (a Pi 4), 80% didn't.
+DEFAULT_VOLUME = 80
+
+
 class SoundSettings(NamedTuple):
     enabled: bool = False
     device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card
     quiet_hours: Optional[Tuple[time, time]] = None  # (start, end) in the board's local time
+    volume: int = DEFAULT_VOLUME  # percent, set with amixer before each clip
 
 
 def sound_settings(config):
-    """config.json's "sound" section: {"enabled": true, "device": null,
+    """config.json's "sound" section: {"enabled": true, "device": null, "volume": 80,
     "quiet_hours": {"start": "22:00", "end": "08:00"}}. Without the section the board stays silent.
-    A bad quiet_hours turns sound off rather than risk playing in the night."""
+    A bad quiet_hours turns sound off rather than risk playing in the night; a bad volume is 80."""
     section = config.get("sound")
     if section is None:
         return SoundSettings()
@@ -164,6 +194,13 @@ def sound_settings(config):
                       'using the default.')
         device = None
 
+    volume = section.get("volume")
+    if volume is None:
+        volume = DEFAULT_VOLUME
+    elif isinstance(volume, bool) or not isinstance(volume, int) or not 0 <= volume <= 100:
+        debug.warning(f'config.json "sound.volume" should be 0 to 100, not {volume!r}; using {DEFAULT_VOLUME}.')
+        volume = DEFAULT_VOLUME
+
     quiet = section.get("quiet_hours")
     quiet_hours = None
     if quiet is not None:
@@ -173,7 +210,7 @@ def sound_settings(config):
             debug.warning(f'config.json "sound.quiet_hours" should be {{"start": "22:00", "end": "08:00"}}, '
                           f'not {quiet!r}; sound is off.')
             return SoundSettings()
-    return SoundSettings(enabled, device, quiet_hours)
+    return SoundSettings(enabled, device, quiet_hours, volume)
 
 
 class BrightnessSchedule(NamedTuple):

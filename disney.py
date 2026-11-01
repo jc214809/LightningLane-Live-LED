@@ -14,7 +14,7 @@ from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from display.fireworks.music_show import render_music_show
 from display.fireworks.score import SHOWS_DIR, load_score
-from cli import arguments, board_preset, describe, led_matrix_options
+from cli import arguments, describe, led_matrix_options, model_defaults
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
@@ -156,9 +156,9 @@ def main():
     # Settings first, as in mlb-led-scoreboard: a bad flag or matrix setting exits before anything
     # starts, and --emulated must switch the driver before the matrix is built.
     config = load_config()
-    board_name, board = board_preset()
-    command_line_args = arguments(matrix=config.get("matrix"), board=board, board_name=board_name)
-    debug.info(describe(command_line_args, matrix=config.get("matrix"), board=board, board_name=board_name))
+    model, defaults, why = model_defaults(config.get("pi_model"))
+    command_line_args = arguments(matrix=config.get("matrix"), defaults=defaults, model=model)
+    debug.info(describe(command_line_args, matrix=config.get("matrix"), defaults=defaults, model=model, why=why))
     if command_line_args.emulated:
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
