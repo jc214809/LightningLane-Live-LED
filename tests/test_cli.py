@@ -29,8 +29,10 @@ class DummyRGBMatrixOptions:
         self.gpio_slowdown = None
         self.disable_hardware_pulsing = None
 
-# Ensure driver.RGBMatrixOptions is available.
-import driver
+# Ensure driver.RGBMatrixOptions is available, on the driver cli has: another test module may have
+# swapped sys.modules["driver"] since cli was first imported (settings_page imports it too).
+import cli
+driver = cli.driver
 if not hasattr(driver, "RGBMatrixOptions"):
     driver.RGBMatrixOptions = DummyRGBMatrixOptions
 
@@ -406,3 +408,23 @@ def test_every_board_in_the_repos_boards_json_parses():
     for name, settings in boards.items():
         parsed = arguments([], board=settings, board_name=name)
         assert parsed.led_rows == settings["led_rows"], name
+
+
+def test_matrix_problem_names_what_would_stop_the_app_and_none_for_good_settings():
+    from cli import matrix_problem
+    assert matrix_problem({"led_rows": 64, "led_brightness": 80, "led_show_refresh": True, "led_cols": None}) is None
+    assert matrix_problem({}) is None
+    assert "--led-rows must be one of (32, 64)" in matrix_problem({"led_rows": 48})
+    assert "must be positive" in matrix_problem({"led_cols": 0})
+    assert "invalid choice" in matrix_problem({"led_gpio_mapping": "nope"})
+    assert 'has no setting "led_colour"' in matrix_problem({"led_colour": 1})
+
+
+def test_matrix_settings_lists_every_flag_with_its_kind():
+    from cli import matrix_settings
+    settings = {key: rest for key, *rest in matrix_settings()}
+    assert "help" not in settings and "led_rows" in settings
+    _, choices, switch, number = settings["led_gpio_mapping"]
+    assert choices == ["regular", "adafruit-hat", "adafruit-hat-pwm"] and not switch and not number
+    assert settings["led_show_refresh"][2] is True
+    assert settings["led_brightness"][3] is True

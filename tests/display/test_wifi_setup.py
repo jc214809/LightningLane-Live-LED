@@ -77,3 +77,22 @@ def test_the_longest_hotspot_name_still_fits_on_a_64x32_board():
     assert "".join(r["text"] for r in rows[2:]) == name
     for row in rows:
         assert row["right"] <= 64 and row["top"] >= 0 and row["y"] < 32, row
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_the_second_page_gives_the_settings_pages_address_all_on_the_board(height):
+    canvas = FakeCanvas(64, height)
+    wifi_setup.loaded_fonts.update(FONTS[height])
+    wifi_setup.render_settings_address(canvas)
+    rows = canvas.text
+    assert [(r["text"], r["color"]) for r in rows] == [
+        ("Settings", "gold"), ("Browse to", "white"), ("10.41.0.1:8080", "blue")]
+    for row in rows:
+        assert 0 <= row["x"] and row["right"] <= 64 and 0 <= row["top"] and row["y"] < height, row
+
+
+def test_the_address_is_the_hotspots_and_the_servers_port():
+    from settings_page.server import HOTSPOT_NETWORK, PORT
+    from ipaddress import ip_address
+    host, port = wifi_setup.SETTINGS_ADDRESS.split(":")
+    assert ip_address(host) in HOTSPOT_NETWORK and int(port) == PORT

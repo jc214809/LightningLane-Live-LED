@@ -32,3 +32,23 @@ def _network_ok():
     yield
     shared._network_issues = False
     shared.note_live_feed_down()
+
+
+@pytest.fixture(autouse=True)
+def _no_brightness_schedule():
+    # main() sets the schedule process-wide; the next test's canvases would follow it.
+    import utils.brightness as brightness
+    brightness.use(None)
+    yield
+    brightness.use(None)
+
+
+@pytest.fixture(autouse=True)
+def _no_settings_pin(tmp_path, monkeypatch):
+    # The PIN overlay reads a /run file every second and caches it process-wide: point it at a file
+    # that isn't there, so a board running the tests never draws its own PIN into them.
+    import utils.settings_pin as settings_pin
+    monkeypatch.setattr(settings_pin, "PIN_FILE", str(tmp_path / "no-pin"))
+    settings_pin._cache.update(at=None, pin=None, expires=0.0)
+    yield
+    settings_pin._cache.update(at=None, pin=None, expires=0.0)

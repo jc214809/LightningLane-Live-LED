@@ -151,3 +151,28 @@ def test_forced_show_name(config, expected, monkeypatch):
     assert forced_show_name(config) == expected
     assert bool(warnings) == (config.get("force_show") == HEA and expected == HEA or
                               len([s for s in config.get("shows", []) if s.get("force")]) > 1)
+
+
+# ---- brightness_schedule ----
+
+def test_brightness_schedule_is_read_as_peloton_leds():
+    from datetime import time
+    from utils.config import BrightnessSchedule, brightness_schedule
+    config = {"brightness_schedule": {"day": 80, "night": 15, "day_start": "07:00", "night_start": "22:00"}}
+    assert brightness_schedule(config) == BrightnessSchedule(80, 15, time(7), time(22))
+    assert brightness_schedule({}) is None and brightness_schedule({"brightness_schedule": None}) is None
+
+
+@pytest.mark.parametrize("section, problem", [
+    ({"day": 80}, "needs day, night, day_start and night_start"),
+    ("bright", "needs day, night, day_start and night_start"),
+    ({"day": 0, "night": 15, "day_start": "07:00", "night_start": "22:00"}, '"day" should be 1 to 100'),
+    ({"day": 80, "night": True, "day_start": "07:00", "night_start": "22:00"}, '"night" should be 1 to 100'),
+    ({"day": 80, "night": 15, "day_start": "7am", "night_start": "22:00"}, '"day_start" should be a time'),
+])
+def test_a_bad_brightness_schedule_is_warned_about_and_ignored(monkeypatch, section, problem):
+    import utils.config as config_module
+    warnings = []
+    monkeypatch.setattr(config_module.debug, "warning", warnings.append)
+    assert config_module.brightness_schedule({"brightness_schedule": section}) is None
+    assert len(warnings) == 1 and problem in warnings[0]

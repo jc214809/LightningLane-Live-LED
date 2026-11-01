@@ -60,6 +60,7 @@ It asks everything first (hostname, app, whether to set the panel options here (
 - **Peloton-LED:** its own installer puts it in `/opt/peloton-led` and asks for the riders; if you chose to set the panel options here, this script adds them in a drop-in, `/etc/systemd/system/peloton-led.service.d/board.conf`.
 - `--branch develop-sound` installs this app from another branch (the default is `develop-beta`; the branch question asks it too).
 - **Wi-Fi setup hotspot (every board, every app):** it installs [comitup](https://davesteele.github.io/comitup/). When no Wi-Fi the board knows is in range, the board opens a hotspot named after it, `<hostname>-setup` (e.g. `Disneypi-setup`), with no password. Join it from a phone, pick your network on the page that opens (or browse to http://10.41.0.1/), and the board joins it. While the hotspot is up, this app's screen says `Wi-Fi setup`, `Join` and the hotspot's name. The hotspot is open, so anyone nearby can join it and see the Wi-Fi password typed into that page, but only while the board is in setup. Networks the board already has are kept and always tried first. It needs NetworkManager (Raspberry Pi OS Bookworm or later): an older board is skipped. `LLL-install.sh` sets it up too (`-w` skips it); `sudo bash board-setup.sh --wifi-setup-only` does just this.
+- **Settings page (LightningLane-Live-LED):** every `config.json` setting (API keys, parks, trips, sound, brightness, shows, and the panel under Advanced) from a browser, so a board can be set up with no SSH. On the setup hotspot, browse to http://10.41.0.1:8080 (the Wi-Fi setup screen shows it next): no password, since you're with the board. On the home network, browse to `http://<hostname>.local:8080` and press **Show a PIN on the board**: the board shows a 4-digit PIN for two minutes, and typing it in signs that browser in for an hour (five wrong tries use a PIN up). Saved API keys show only their last four letters; leave a key blank to keep it. Saving checks everything first, keeps the old file as `config.json.bak`, and restarts the app. It runs as its own service, `lll-settings.service`, so it works even when a bad `config.json` stops the app; `journalctl -u lll-settings.service` has its log. `--wifi-setup-only` from the app's folder (so `LLL-install.sh`) installs it too.
 - `--answers board.txt` answers questions ahead with `KEY=value` lines (`APP=lll`, `LED_ROWS=64`, ...; `--help` lists the keys). `--dry-run` prints everything it would do and changes nothing. The Wi-Fi password is never stored in the answers file or put on a command line.
 
 Reboot afterwards if it says so (boot settings changed).
@@ -213,6 +214,12 @@ Each board's settings live in `boards.json`, keyed by the Pi's hostname, and a b
 ```
 
 Settings are named like the flags with underscores. A board's `config.json` can override its preset in a `"matrix"` section of the same shape (`config.json-example` lists every setting as `null`, which overrides nothing), and a flag on the command line overrides both. Switches like `led_show_refresh` take `true` or `false`. An unknown name or a bad value stops the app with a message, like a bad flag. The startup log shows the result: `Board settings (boards.json preset PlutoPi): led_cols=64 (board PlutoPi), ...`.
+
+To dim the board at night, add a `brightness_schedule` to `config.json`, shaped as Peloton-LED's (`null`, the default, keeps one brightness all day). It takes over from `led_brightness` while the app runs, by the board's clock, with brightness from 1 to 100; a day that runs past midnight works too. A broken schedule is warned about and ignored. The settings page sets it under Display.
+
+```json
+"brightness_schedule": {"day": 80, "night": 15, "day_start": "07:00", "night_start": "22:00"}
+```
 
 ### Waveshare P5 64×32 panel
 

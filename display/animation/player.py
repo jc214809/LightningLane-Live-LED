@@ -6,8 +6,10 @@ previous screen away and reveals the next with a transition from TRANSITIONS.
 import time
 
 from display.network import draw_if_offline
+from display.settings_pin import draw_if_pin_shown
 from display.sound_badges import draw_if_sound_problem
-from utils import debug
+from utils import brightness, debug
+from utils.settings_pin import shown_pin
 
 from display.animation.characters import TRANSITIONS
 from display.animation.drawing import _blackout, _edge
@@ -16,6 +18,8 @@ from display.animation.motion import COVER_S, FPS, ease_out
 
 _canvases = {}
 _last_screen = {}
+# How often a screen holding still checks whether the settings PIN came or went.
+PIN_CHECK_S = 1.0
 
 
 def frame_canvas(matrix):
@@ -23,7 +27,16 @@ def frame_canvas(matrix):
     key = id(matrix)
     if key not in _canvases:
         _canvases[key] = matrix.CreateFrameCanvas()
-    return _canvases[key]
+    return _brightened(_canvases[key])
+
+
+def _brightened(canvas):
+    """The canvas at the brightness schedule's level (utils/brightness.py), if there is one. rgbmatrix
+    applies brightness per canvas as pixels are drawn, so it's set on each canvas before drawing."""
+    level = brightness.current()
+    if level is not None and getattr(canvas, "brightness", level) != level:
+        canvas.brightness = level
+    return canvas
 
 
 def present(matrix, canvas):
@@ -31,8 +44,9 @@ def present(matrix, canvas):
     # Every frame on the board passes through here, so the badges sit on top of all of them.
     draw_if_offline(canvas)
     draw_if_sound_problem(canvas)
+    draw_if_pin_shown(canvas)
     _canvases[id(matrix)] = matrix.SwapOnVSync(canvas)
-    return _canvases[id(matrix)]
+    return _brightened(_canvases[id(matrix)])
 
 
 def forget_screen(matrix):
@@ -72,7 +86,15 @@ def run_frames(matrix, draw_frame, duration_s, fps=FPS, play_s=0.0):
         i += 1
         if not animating:
             spent = animated_s()
-            time.sleep(max(0.0, duration_s + behind - (time.monotonic() - began)))
+            # Slept a second at a time, so the settings PIN shows (and goes) while a screen holds still.
+            pin, t = shown_pin(), (i - 1) / fps  # the frame just drawn
+            while (left := duration_s + behind - (time.monotonic() - began)) > 0:
+                time.sleep(min(left, PIN_CHECK_S))
+                if shown_pin() != pin:
+                    pin = shown_pin()
+                    canvas.Clear()
+                    draw_frame(canvas, t)
+                    canvas = present(matrix, canvas)
             return drawn, spent
         remaining = frame_time - (time.monotonic() - start)
         if remaining > 0:

@@ -986,9 +986,11 @@ Later for the Caballeros: the Gran Fiesta Tour poster (`docs/references/Gran Fie
 has them riding the striped magic serape over the Mexico pavilion, which would suit a ride-screen
 surprise on Gran Fiesta Tour all year. The 10K's sprites could be reused.
 
-## 15. A settings page in setup mode
+## 15. ~~A settings page in setup mode~~ Built (2026-10-31, untested on a Pi)
 
-The Wi-Fi setup hotspot (comitup, built 2026-10-21) only picks the Wi-Fi network. Next: a page for
-`config.json` (API keys, trip dates, parks, sound) so a board can be set up with no SSH at all.
-Served while the hotspot is up (comitup's `web_service` key runs a systemd service only then), or
-on the home network too, behind something better than an open page.
+`settings_page/`: every `config.json` setting in a browser, from its own service
+(`lll-settings.service`, port 8080), so a broken config can still be fixed. Open to anyone on the
+setup hotspot (`10.41.0.1:8080`, the Wi-Fi setup screen's second page); on the home network it asks
+for a PIN the board shows on request. Not comitup's `web_service`: comitup stops that one while the
+hotspot is up (its own page has port 80). To check on a board: that port 8080 is reachable from a
+phone on the hotspot, the PIN overlay, and the restart after a save.

@@ -51,11 +51,38 @@ def arguments(argv=None, matrix=None, board=None, board_name=None):
         parsed, _ = parser.parse_known_args(preset + from_config + sys.argv[1:])
     else:
         parsed = parser.parse_args(preset + from_config + list(sys.argv[1:] if argv is None else argv))
+    _check_sizes(parser, parsed)
+    return parsed
+
+
+def _check_sizes(parser, parsed):
     if parsed.led_rows not in SUPPORTED_ROWS:
         parser.error(f"--led-rows must be one of {SUPPORTED_ROWS}, not {parsed.led_rows}")
     if min(parsed.led_cols, parsed.led_chain, parsed.led_parallel) <= 0:
         parser.error("--led-cols, --led-chain and --led-parallel must be positive")
-    return parsed
+
+
+def matrix_settings():
+    """config.json "matrix" keys, for the settings page: (key, help, choices or None, is a switch,
+    takes a number) for each flag, in the parser's order."""
+    return [(action.dest, action.help, list(action.choices) if action.choices is not None else None,
+             action.nargs == 0, action.type is int)
+            for action in _make_parser()._actions if action.option_strings and action.dest != "help"]
+
+
+def matrix_problem(matrix):
+    """What's wrong with a config.json "matrix" section, by arguments()'s checks (which exit the
+    app), or None. For the settings page, which mustn't save a config the app won't start with."""
+    parser = _make_parser()
+
+    def fail(message):
+        raise ValueError(message)
+    parser.error = fail  # argparse reports bad types and choices through it too
+    try:
+        _check_sizes(parser, parser.parse_args(_matrix_tokens(parser, matrix, 'config.json "matrix"')))
+    except ValueError as e:
+        return str(e)
+    return None
 
 
 def describe(parsed, argv=None, matrix=None, board=None, board_name=None):
