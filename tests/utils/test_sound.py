@@ -125,6 +125,7 @@ def test_a_guard_that_hangs_is_killed(clips, monkeypatch):
     process = FakeProcess(["sh"], hangs=True)
     monkeypatch.setattr(sound.subprocess, "Popen", lambda command, **kwargs: process)
     monkeypatch.setattr(sound.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(sound, "set_volume", lambda settings: True)  # amixer would go through the fake Popen
     with sound.playing(["fireworks"], ON, EVENING):
         pass
     assert process.stdin.closed and process.killed
