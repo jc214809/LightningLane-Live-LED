@@ -3,7 +3,8 @@ lll-settings.service from the app's folder, as root (it writes config.json and r
 
 Its own service, not part of disney.py, so a config.json that stops the app can still be fixed
 here. While comitup's setup hotspot is up, anyone on it gets the page (they're in the room, with
-the board); on the home network it asks for the PIN the board shows (pins.py). Standard library
+the board); on the home network it asks for the PIN the board shows (pins.py), which Pushover can
+also send to a phone (pushover.py). Standard library
 and certifi (the app's own requirement) only, so it runs on any board the app runs on.
 """
 import argparse
@@ -21,12 +22,12 @@ from ipaddress import ip_address, ip_network
 from urllib.parse import parse_qs, urlsplit
 
 import cli
-from settings_page import page
+from settings_page import page, pushover
 from settings_page.form import apply_form, chosen_device, panel_choices, volume_from_form
 from settings_page.park_names import ParkNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
 from utils import debug
-from utils.config import CONFIG_FILE, save_config, sound_settings
+from utils.config import CONFIG_FILE, pushover_keys, save_config, sound_settings
 from utils.sound import play_test, set_volume
 from utils.wifi_setup import hotspot_name
 
@@ -43,12 +44,13 @@ PARK_NAMES_FILE = "park_names.json"
 
 class Settings:
     """What the handlers share: where config.json is, the PIN gate, the park names (kept in
-    park_names.json beside config.json), and one save at a time."""
+    park_names.json beside config.json), and one save at a time. send_pushover: pushover.send_pin."""
 
     def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
-                 state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE):
+                 state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE,
+                 send_pushover=pushover.send_pin):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
-        self.model_file = model_file
+        self.model_file, self.send_pushover = model_file, send_pushover
         self.gate = gate or PinGate()
         self.park_names = park_names or ParkNames(
             os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE))
@@ -92,6 +94,17 @@ class Settings:
             return "failed"
         debug.info(f"Settings page: restarted {self.restart_unit}.")
         return "restarted"
+
+    def pushover_keys(self):
+        """config.json's Pushover keys, or None: the sign-in page offers to send the PIN only with them."""
+        return pushover_keys(self.load()[0])
+
+    def send_pin(self):
+        """The sign-in page's Send button: PinGate.send_pin's outcome, or "off" with no keys."""
+        keys = self.pushover_keys()
+        if not keys:
+            return "off"
+        return self.gate.send_pin(lambda pin, left: self.send_pushover(keys, pin, board_name(), left))
 
     def panel_choices(self, config):
         """The Pi model and Panel size dropdowns for this Pi (form.panel_choices)."""
@@ -232,10 +245,12 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         if url.path != "/":
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
-        query = parse_qs(url.query, keep_blank_values=True)  # "?wrong", "?shown"
+        query = parse_qs(url.query, keep_blank_values=True)  # "?wrong", "?shown", "?sent=..."
         if not self._allowed():
+            sent = query.get("sent", [None])[0]
             return self._send(200, page.pin_page(PIN_SHOWN_S if "shown" in query else None, "wrong" in query,
-                                                 board_name()))
+                                                 board_name(), bool(self.settings.pushover_keys()),
+                                                 sent if sent in page.SENT else None))
         saved = query.get("saved", [None])[0]
         self._send(200, self._page(saved=saved if saved in page.SAVED else None))
 
@@ -261,6 +276,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/pin/show":
             self.settings.gate.show_pin()
             return self._redirect("/?shown")
+        if path == "/pin/send":
+            outcome = self.settings.send_pin()
+            return self._redirect("/" if outcome == "off" else f"/?sent={outcome}")
         if path == "/pin":
             token = self.settings.gate.try_pin((form.get("pin") or [""])[0])
             if not token:

@@ -12,6 +12,7 @@ from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
 # What a save says, by Settings.restart_app's outcome.
 SAVED = ("restarted", "saved", "failed", "volume", "volume_failed")
+SENT = ("sent", "wait", "used", "failed")  # pins.PinGate.send_pin's outcomes
 
 STYLE = """
 :root {
@@ -270,6 +271,7 @@ ICONS = {
     "board": '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01'
              'M6 13h.01M10 13h.01M14 13h.01M18 13h.01"/>',
     "cloud": '<path d="M17.5 19H7a5 5 0 1 1 1.02-9.9A6 6 0 0 1 19.5 11a4 4 0 0 1-2 8z"/>',
+    "phone": '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
     "wifi": '<path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>',
     "save": '<path d="M20 6 9 17l-5-5"/>',
 }
@@ -286,7 +288,8 @@ CHARACTER_NAMES = {
 }
 
 SECTIONS = (  # id, nav title, icon
-    ("live", "Live updates", "live"), ("weather", "Weather", "cloud"), ("parks", "Parks", "pin"), ("trips", "Trip countdown", "calendar"),
+    ("live", "Live updates", "live"), ("weather", "Weather", "cloud"), ("phone", "PIN by Pushover", "phone"),
+    ("parks", "Parks", "pin"), ("trips", "Trip countdown", "calendar"),
     ("sound", "Sound", "sound"), ("panel", "Panel", "board"), ("display", "Display", "sun"),
     ("shows", "Fireworks shows", "sparkle"),
     ("testing", "Testing", "flask"), ("advanced", "Advanced", "sliders"),
@@ -590,6 +593,7 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     matrix = config.get("matrix") if isinstance(config.get("matrix"), dict) else {}
     parks = config.get("parks") if isinstance(config.get("parks"), list) else list(WDW_PARKS)
     weather = config.get("weather") if isinstance(config.get("weather"), dict) else {}
+    push = config.get("pushover") if isinstance(config.get("pushover"), dict) else {}
 
     top = (f"{notices(problems, saved)}"
            + (_notice("warn", f"<strong>Setup mode.</strong> Anyone who joins <strong>{escape(hotspot)}</strong> can "
@@ -607,6 +611,13 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     weather_html = _section("weather", "Weather", "The temperature and conditions on each park's screen.", (
         _key_field("weather_key", "OpenWeatherMap API key", weather.get("apikey"), "From openweathermap.org.")
     ), "cloud")
+    phone = _section("phone", "PIN by Pushover", "Optional: sign in from a board you can't see.", (
+        _key_field("pushover_user", "Pushover user key", push.get("user_key"), "On your pushover.net dashboard.")
+        + _key_field("pushover_token", "Pushover app token", push.get("app_token"),
+                     "Make an app on pushover.net for the board.")
+        + _switch("pushover_enabled", "Send the PIN to my phone", push.get("enabled", True),
+                  "With both keys, the sign-in page can send its PIN to your phone (it still shows on the board).")
+    ), "phone")
 
     known = {name.lower() for name, _ in park_names}
     chips = "".join(_park_chip(p, bool(known) and p.lower() not in known) for p in parks if isinstance(p, str))
@@ -777,7 +788,7 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
           'and the app restarts to use them.</p></div>'
         + top
         + f'<form method="post" action="/save" id="settings"><div class="stack">'
-          f'{live}{weather_html}{park_html}{trips}{sound_html}{panel_html}{display}{shows}{testing}{advanced}</div>'
+          f'{live}{weather_html}{phone}{park_html}{trips}{sound_html}{panel_html}{display}{shows}{testing}{advanced}</div>'
         + '<div class="savebar"><div class="savebar-in"><div class="status" id="save-status"><span class="dot"></span>'
           '<span>Saved keys stay as they are unless you replace them</span></div>'
           f'<button type="submit" class="primary" id="save">{icon("save")}<span>Save and restart</span></button>'
@@ -785,11 +796,20 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     return document("Board settings", body, SCRIPT)
 
 
-def pin_page(shown_s=None, wrong=False, board=None):
-    """The sign-in page on the home network. shown_s: a PIN is on the board for this long."""
+def pin_page(shown_s=None, wrong=False, board=None, phone=False, sent=None):
+    """The sign-in page on the home network. shown_s: a PIN is on the board for this long.
+    phone: offer to send it by Pushover; sent: how that went, one of SENT."""
     status = ""
     if wrong:
         status = _notice("bad", "That isn't the PIN on the board. Try again, or ask for a new one.", "alert")
+    elif sent == "sent":
+        status = _notice("good", "The PIN is on its way to your phone. It's on the board too.")
+    elif sent == "wait":
+        status = _notice("warn", "A PIN went out less than a minute ago: check your phone, or try again in a minute.")
+    elif sent == "used":
+        status = _notice("bad", "That PIN is out of tries. Ask for a new one in a couple of minutes.", "alert")
+    elif sent == "failed":
+        status = _notice("bad", "Couldn't send the PIN (the board's log says why), but it's on the board.", "alert")
     elif shown_s:
         status = _notice("good", f"The PIN is on the board for the next {max(1, round(shown_s / 60))} "
                                  f"minute{'s' if shown_s > 90 else ''}.")
@@ -799,9 +819,12 @@ def pin_page(shown_s=None, wrong=False, board=None):
           '<h1>Sign in to this board</h1><p>To change this board\'s settings, type in the PIN it shows.</p>'
         + status
         + '<div class="step"><span class="step-n">1</span><div class="step-body"><strong>Show a PIN</strong>'
-          '<p>It appears on the LED board for two minutes.</p>'
-          f'<form method="post" action="/pin/show"><button type="submit" class="secondary">{icon("board")}'
-          'Show a PIN on the board</button></form></div></div>'
+          f'<p>It appears on the LED board for two minutes{" and can go to your phone" if phone else ""}.</p>'
+          f'<div class="buttons"><form method="post" action="/pin/show"><button type="submit" class="secondary">'
+          f'{icon("board")}Show a PIN on the board</button></form>'
+        + (f'<form method="post" action="/pin/send"><button type="submit" class="secondary">{icon("phone")}'
+           'Send the PIN to my phone</button></form>' if phone else "")
+        + '</div></div></div>'
         + '<div class="step"><span class="step-n">2</span><div class="step-body"><label for="pin"><strong>Type it in'
           '</strong></label><p>You stay signed in on this browser for an hour.</p>'
           '<form method="post" action="/pin"><input type="text" id="pin" name="pin" class="pin" inputmode="numeric" '

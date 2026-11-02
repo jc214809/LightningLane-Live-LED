@@ -73,6 +73,25 @@ def test_saved_keys_show_only_their_last_letters_and_a_blank_keeps_them():
     assert new["weather"]["apikey"] == "owm-new"
 
 
+def test_pushover_keys_are_saved_kept_when_blank_and_left_out_until_typed():
+    new, problems = apply_form(CONFIG, form_for(CONFIG, pushover_user="", pushover_token="", pushover_enabled="on"))
+    assert problems == [] and "pushover" not in new, "nothing typed: no section"
+    new, problems = apply_form(CONFIG, form_for(CONFIG, pushover_user=" u-1 ", pushover_token="t-2",
+                                                pushover_enabled="on"))
+    assert problems == [] and new["pushover"] == {"user_key": "u-1", "app_token": "t-2", "enabled": True}
+    again, problems = apply_form(new, form_for(new, pushover_user="", pushover_token=""))
+    assert problems == [] and again["pushover"] == {"user_key": "u-1", "app_token": "t-2", "enabled": False}
+    untouched, _ = apply_form(new, form_for(new))
+    assert untouched["pushover"] == new["pushover"], "a form without the Pushover fields leaves it alone"
+
+
+def test_sending_the_pin_with_one_key_is_refused_unless_its_off():
+    _, problems = apply_form(CONFIG, form_for(CONFIG, pushover_user="u-1", pushover_token="", pushover_enabled="on"))
+    assert problems == ["Sending the PIN needs both a Pushover user key and an app token (or turn it off)."]
+    new, problems = apply_form(CONFIG, form_for(CONFIG, pushover_user="u-1", pushover_token=""))
+    assert problems == [] and new["pushover"] == {"user_key": "u-1", "enabled": False}
+
+
 def test_live_updates_on_with_no_key_is_refused():
     config = copy.deepcopy(CONFIG)
     config["websocket"]["api_key"] = "<THEMEPARKS_API_KEY_HERE>"
