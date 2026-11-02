@@ -188,3 +188,9 @@ def test_every_send_outcome_says_something_different():
     plain = pin_page(phone=True)
     assert all(pin_page(phone=True, sent=outcome) != plain for outcome in SENT)
     assert len({pin_page(phone=True, sent=outcome) for outcome in SENT}) == len(SENT)
+
+
+def test_signed_in_the_top_bar_has_sign_out_but_not_on_the_hotspot():
+    assert 'action="/signout"' in settings_page({}, [])
+    assert 'action="/signout"' not in settings_page({}, [], hotspot="Disneypi-setup")
+    assert 'action="/signout"' not in pin_page() and "Signed out." in pin_page(signed_out=True)

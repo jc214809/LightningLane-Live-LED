@@ -155,6 +155,7 @@ def test_on_the_setup_hotspot_no_pin_is_needed(board):
     board.hotspot()
     status, _, html = board.request("/")
     assert 'action="/save"' in html and "Setup mode" in html and "Disneypi-setup" in html
+    assert 'action="/signout"' not in html, "no PIN session to end"
     assert board.request("/save", SAVE)[0] == 303
     assert board.saved()["trip_countdown"]["trip_dates"]
 
@@ -353,3 +354,17 @@ def test_with_pushover_keys_the_sign_in_page_sends_the_pin_to_a_phone(board, mon
 
 def test_an_unknown_send_outcome_in_the_address_shows_nothing(board):
     assert board.request("/?sent=<b>hi</b>")[2] == board.request("/")[2]
+
+
+def test_signing_out_clears_the_cookie_and_the_session_so_the_page_asks_for_a_pin_again(board):
+    board.sign_in()
+    token = next(c.value for c in board.jar if c.name == server.COOKIE)
+    status, _, html = board.request("/")
+    assert 'action="/signout"' in html and "Signed in" in html
+    status, headers, _ = board.request("/signout", {})
+    assert status == 303 and headers["Location"] == "/?signedout"
+    assert "Max-Age=0" in headers["Set-Cookie"] and "HttpOnly" in headers["Set-Cookie"]
+    assert not list(board.jar) and not board.gate.signed_in(token), "the old cookie is no good even if kept"
+    status, _, html = board.request("/?signedout")
+    assert "Signed out." in html and 'action="/save"' not in html
+    assert board.request("/save", SAVE)[0] == 303 and board.saved() == CONFIG, "nothing saved"

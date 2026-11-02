@@ -245,12 +245,12 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         if url.path != "/":
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
-        query = parse_qs(url.query, keep_blank_values=True)  # "?wrong", "?shown", "?sent=..."
+        query = parse_qs(url.query, keep_blank_values=True)  # "?wrong", "?shown", "?sent=...", "?signedout"
         if not self._allowed():
             sent = query.get("sent", [None])[0]
             return self._send(200, page.pin_page(PIN_SHOWN_S if "shown" in query else None, "wrong" in query,
                                                  board_name(), bool(self.settings.pushover_keys()),
-                                                 sent if sent in page.SENT else None))
+                                                 sent if sent in page.SENT else None, "signedout" in query))
         saved = query.get("saved", [None])[0]
         self._send(200, self._page(saved=saved if saved in page.SAVED else None))
 
@@ -285,6 +285,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._redirect("/?wrong")
             return self._redirect("/", [("Set-Cookie", f"{COOKIE}={token}; Max-Age={SESSION_S}; Path=/; "
                                                        f"HttpOnly; SameSite=Strict")])
+        if path == "/signout":
+            self.settings.gate.sign_out(self._token())
+            return self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; "
+                                                                 f"SameSite=Strict")])
         if path not in ("/save", "/volume"):
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
         if not self._allowed():

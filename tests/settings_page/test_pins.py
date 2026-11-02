@@ -57,6 +57,17 @@ def test_the_right_pin_signs_in_for_an_hour_and_comes_off_the_board(gate, clock)
     assert not gate.signed_in(token)
 
 
+def test_signing_out_ends_only_that_session(gate, clock):
+    gate.show_pin()
+    first = gate.try_pin(board_pin(gate)[0])
+    gate.show_pin()
+    second = gate.try_pin(board_pin(gate)[0])
+    gate.sign_out(first)
+    assert not gate.signed_in(first) and gate.signed_in(second)
+    gate.sign_out(first)
+    gate.sign_out(None)  # no cookie, or one already gone: nothing to do
+
+
 def test_a_pin_runs_out(gate, clock):
     gate.show_pin()
     pin = board_pin(gate)[0]
