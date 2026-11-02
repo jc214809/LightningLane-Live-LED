@@ -87,6 +87,12 @@ class PinGate:
             debug.info("Settings page: signed in with the PIN.")
             return token
 
+    def sign_out(self, token):
+        """End this browser's session, if it has one."""
+        with self._lock:
+            if self._sessions.pop(token, None) is not None:
+                debug.info("Settings page: signed out.")
+
     def signed_in(self, token):
         with self._lock:
             return bool(token) and self._sessions.get(token, 0) > self.clock()

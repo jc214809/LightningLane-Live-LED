@@ -60,6 +60,8 @@ a { color: var(--accent); }
 .chip svg { width: 14px; height: 14px; }
 .chip.warn { color: var(--warn); background: var(--warn-bg); border-color: var(--warn-line); }
 .chip.good { color: var(--good); background: var(--good-bg); border-color: var(--good-line); }
+.topbar form { margin: 0; }
+.topbar button { height: 28px; padding: 0 10px; font-size: 13px; }
 @media (max-width: 520px) { .brand-sub, .chip.board { display: none; } }
 
 /* Layout */
@@ -439,12 +441,14 @@ def document(title, body, script=""):
             f'<body>{body}{f"<script>{script}</script>" if script else ""}</body></html>')
 
 
-def _topbar(board=None, mode=None):
-    """mode: ("warn" or "good", text) for the badge on the right."""
+def _topbar(board=None, mode=None, sign_out=False):
+    """mode: ("warn" or "good", text) for the badge on the right. sign_out: a Sign out button after it."""
     chips = f'<span class="chip board">{icon("board")}{escape(board)}</span>' if board else ""
     if mode:
         kind, text = mode
         chips += f'<span class="chip {kind}">{icon("wifi" if kind == "warn" else "lock")}{escape(text)}</span>'
+    if sign_out:
+        chips += '<form method="post" action="/signout"><button type="submit" class="ghost">Sign out</button></form>'
     return (f'<header class="topbar"><div class="topbar-in"><div class="brand"><span class="mark">{icon("bolt")}</span>'
             f'<div><div class="brand-name">LightningLane Live LED</div><div class="brand-sub">Board settings</div>'
             f'</div></div><div class="top-meta">{chips}</div></div></header>')
@@ -782,7 +786,7 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     toc = "".join(f'<a href="#{sid}">{icon(glyph)}{escape(title)}</a>' for sid, title, glyph in SECTIONS)
     mode = ("warn", "Setup mode") if hotspot else ("good", "Signed in")
     body = (
-        _topbar(board, mode)
+        _topbar(board, mode, sign_out=not hotspot)  # on the hotspot there's no PIN session to end
         + f'<div class="shell"><nav class="toc" aria-label="Sections">{toc}</nav><main>'
         + '<div class="page-head"><h1>Settings</h1><p>Changes are checked, saved to the board\'s config.json, '
           'and the app restarts to use them.</p></div>'
@@ -796,11 +800,13 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     return document("Board settings", body, SCRIPT)
 
 
-def pin_page(shown_s=None, wrong=False, board=None, phone=False, sent=None):
+def pin_page(shown_s=None, wrong=False, board=None, phone=False, sent=None, signed_out=False):
     """The sign-in page on the home network. shown_s: a PIN is on the board for this long.
-    phone: offer to send it by Pushover; sent: how that went, one of SENT."""
+    phone: offer to send it by Pushover; sent: how that went, one of SENT. signed_out: just signed out."""
     status = ""
-    if wrong:
+    if signed_out:
+        status = _notice("good", "Signed out. This browser needs a new PIN to change settings.")
+    elif wrong:
         status = _notice("bad", "That isn't the PIN on the board. Try again, or ask for a new one.", "alert")
     elif sent == "sent":
         status = _notice("good", "The PIN is on its way to your phone. It's on the board too.")
