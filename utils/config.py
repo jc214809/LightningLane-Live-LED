@@ -89,6 +89,16 @@ def websocket_settings(config):
     return True, api_key
 
 
+def pushover_keys(config):
+    """(user_key, app_token) from config.json's "pushover" section, for sending the settings
+    page's PIN to a phone, or None: no section, turned off, or a key missing or a placeholder."""
+    section = config.get("pushover")
+    if not isinstance(section, dict) or section.get("enabled", True) is not True:
+        return None
+    user, token = section.get("user_key"), section.get("app_token")
+    return (user.strip(), token.strip()) if has_api_key(user) and has_api_key(token) else None
+
+
 WS_PROTOCOLS = ("legacy", "preview")
 
 

@@ -1,7 +1,7 @@
 import json
 import re
 
-from settings_page.page import settings_page
+from settings_page.page import SENT, pin_page, settings_page
 
 CONFIG = {"trip_countdown": {"enabled": True, "trip_dates": [
     {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"}, "2027-06-01"]}}
@@ -168,3 +168,23 @@ def test_volume_has_a_slider_and_buttons_that_never_take_enter_from_save():
     form = html[html.index('<form method="post" action="/save"'):]
     first_submit = re.search(r'<button type="submit"[^>]*>', form).group(0)
     assert 'id="save"' in first_submit, "Enter in a field presses the first submit button: it must be Save"
+
+
+def test_pushover_is_its_own_card_after_weather_with_masked_keys():
+    html = settings_page({"pushover": {"user_key": "u-secret-abcd", "app_token": "t-secret-wxyz"}}, [])
+    assert html.index('id="weather"') < html.index('id="phone"') < html.index('id="pushover_user"') < html.index(
+        'id="pushover_token"') < html.index('id="pushover_enabled"') < html.index('id="parks"')
+    assert "abcd" in html and "wxyz" in html and "secret" not in html
+    assert 'id="pushover_enabled" name="pushover_enabled" checked' in html
+
+
+def test_the_sign_in_page_offers_to_send_the_pin_only_with_pushover():
+    assert 'action="/pin/send"' not in pin_page()
+    html = pin_page(phone=True)
+    assert html.index('action="/pin/show"') < html.index('action="/pin/send"') < html.index('action="/pin"')
+
+
+def test_every_send_outcome_says_something_different():
+    plain = pin_page(phone=True)
+    assert all(pin_page(phone=True, sent=outcome) != plain for outcome in SENT)
+    assert len({pin_page(phone=True, sent=outcome) for outcome in SENT}) == len(SENT)

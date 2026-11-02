@@ -21,6 +21,11 @@
   "weather": {
     "apikey": "<API_KEY_HERE>"
   },
+  "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+  },
   "pi_model": "auto",
   "matrix": {
     "led_rows": null,

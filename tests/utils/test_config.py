@@ -4,7 +4,7 @@ import pytest
 
 from datetime import time
 
-from utils.config import (ShowSettings, forced_show_name, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, sound_settings,
+from utils.config import (ShowSettings, forced_show_name, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, pushover_keys, sound_settings,
                           weather_api_key, websocket_protocol, websocket_settings)
 
 
@@ -48,6 +48,20 @@ def test_weather_api_key(config, expected):
 def test_has_api_key_is_false_without_a_real_key(api_key):
     # The server closes keyless connections (3000 "Authentication timeout"), so these poll REST instead.
     assert not has_api_key(api_key)
+
+
+@pytest.mark.parametrize("section, expected", [
+    ({"user_key": " u-1 ", "app_token": "t-2"}, ("u-1", "t-2")),
+    ({"user_key": "u-1", "app_token": "t-2", "enabled": True}, ("u-1", "t-2")),
+    ({"user_key": "u-1", "app_token": "t-2", "enabled": False}, None),
+    ({"user_key": "u-1", "app_token": "t-2", "enabled": "yes"}, None),
+    ({"user_key": "u-1"}, None),
+    ({"user_key": "<PUSHOVER_USER_KEY>", "app_token": "t-2"}, None),
+    ("u-1", None),
+    (None, None),
+])
+def test_pushover_keys_need_both_real_keys_and_not_turned_off(section, expected):
+    assert pushover_keys({} if section is None else {"pushover": section}) == expected
 
 
 def test_has_api_key_is_true_for_a_real_key():

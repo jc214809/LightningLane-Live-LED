@@ -327,3 +327,29 @@ def test_the_volume_buttons_need_sign_in_and_a_known_action(board):
     assert _volume(board, volume_action="louder") == (400, {"ok": False, "message": "That isn't a volume button."})
     status, _, _ = board.request("/volume", dict(SAVE, volume_action="set"), {"Origin": "http://evil.example"})
     assert status == 403 and board.saved() == CONFIG
+
+
+def test_with_pushover_keys_the_sign_in_page_sends_the_pin_to_a_phone(board, monkeypatch):
+    assert "/pin/send" not in board.request("/")[2], "no keys: the page stays as it was"
+    assert board.request("/pin/send", {})[1]["Location"] == "/", "and the button does nothing"
+    board.config.write_text(json.dumps(dict(CONFIG, pushover={"user_key": "u-1", "app_token": "t-2"})))
+    sent, logs = [], []
+    board.settings.send_pushover = lambda keys, pin, name, left: sent.append((keys, pin, left))
+    for level in ("log", "info", "warning", "error"):  # the request log and the gate's
+        monkeypatch.setattr(server.debug, level, logs.append)
+    status, _, html = board.request("/")
+    assert status == 200 and 'action="/pin/send"' in html
+    status, headers, _ = board.request("/pin/send", {})
+    assert status == 303 and headers["Location"] == "/?sent=sent"
+    with open(board.gate.pin_file) as f:
+        pin = f.read().split()[0]
+    assert len(sent) == 1 and sent[0][:2] == (("u-1", "t-2"), pin) and 0 < sent[0][2] <= server.PIN_SHOWN_S
+    assert "on its way to your phone" in board.request("/?sent=sent")[2]
+    assert board.request("/pin/send", {})[1]["Location"] == "/?sent=wait" and len(sent) == 1
+    assert not any(pin in line for line in logs)
+    status, headers, _ = board.request("/pin", {"pin": pin})
+    assert status == 303 and "Set-Cookie" in headers, "the sent PIN signs in"
+
+
+def test_an_unknown_send_outcome_in_the_address_shows_nothing(board):
+    assert board.request("/?sent=<b>hi</b>")[2] == board.request("/")[2]

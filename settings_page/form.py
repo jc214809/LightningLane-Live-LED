@@ -12,7 +12,8 @@ from datetime import time
 from typing import NamedTuple
 
 import cli
-from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS, has_api_key, parse_brightness_schedule
+from utils.config import (DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS, has_api_key, parse_brightness_schedule,
+                          pushover_keys)
 from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS
 from utils.trips import parse_date
 
@@ -173,6 +174,17 @@ def apply_form(config, form, park_names=()):
         problems.append("Live updates need a ThemeParks.wiki API key (or turn them off).")
     if one("weather_key"):
         section("weather")["apikey"] = one("weather_key")
+
+    # Pushover, for sending the sign-in PIN to a phone: kept out of config.json until a key is typed
+    if "pushover_user" in form:  # the page always posts it; a form without it leaves Pushover alone
+        typed = {key: one(field) for key, field in (("user_key", "pushover_user"), ("app_token", "pushover_token"))
+                 if one(field)}
+        if typed or isinstance(new.get("pushover"), dict):
+            pushover = section("pushover")
+            pushover.update(typed)
+            pushover["enabled"] = checked("pushover_enabled")
+            if pushover["enabled"] and not pushover_keys(new):
+                problems.append("Sending the PIN needs both a Pushover user key and an app token (or turn it off).")
 
     # Parks: the chips in order, less any ticked to remove, then the added one(s), named as the
     # list has them. With no list (never fetched), names can't be checked, so they're taken as typed.

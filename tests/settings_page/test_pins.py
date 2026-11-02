@@ -1,7 +1,7 @@
 import pytest
 
 import settings_page.pins as pins
-from settings_page.pins import PIN_SHOWN_S, SESSION_S, TRIES_PER_PIN, PinGate
+from settings_page.pins import PIN_SHOWN_S, SEND_EVERY_S, SESSION_S, TRIES_PER_PIN, PinGate
 
 
 class Clock:
@@ -107,3 +107,59 @@ def test_a_pin_file_that_cant_be_written_is_logged_not_raised(tmp_path, clock, m
     gate = PinGate(str(tmp_path / "missing-folder" / "pin"), clock)
     gate.show_pin()
     assert len(errors) == 1 and "can't put the PIN on the board" in errors[0]
+
+
+class Sends:
+    """A fake pushover.send_pin with the keys bound: records (pin, seconds left), or raises."""
+    def __init__(self, error=None):
+        self.sent, self.error = [], error
+
+    def __call__(self, pin, left):
+        if self.error:
+            raise self.error
+        self.sent.append((pin, left))
+
+
+def test_sending_puts_the_pin_on_the_board_and_sends_the_same_one(gate, clock):
+    send = Sends()
+    assert gate.send_pin(send) == "sent"
+    assert send.sent == [(board_pin(gate)[0], PIN_SHOWN_S)]
+
+
+def test_one_send_a_minute_whoever_presses_it(gate, clock):
+    send = Sends()
+    gate.send_pin(send)
+    clock.now += SEND_EVERY_S - 1
+    assert gate.send_pin(send) == "wait" and len(send.sent) == 1
+    clock.now += 1
+    assert gate.send_pin(send) == "sent"
+    assert send.sent[1] == (send.sent[0][0], PIN_SHOWN_S - SEND_EVERY_S), "the PIN that's up, with its time left"
+
+
+def test_a_failed_send_is_logged_without_the_pin_counts_toward_the_limit_and_leaves_it_on_the_board(
+        gate, clock, monkeypatch):
+    errors = []
+    monkeypatch.setattr(pins.debug, "error", errors.append)
+    assert gate.send_pin(Sends(OSError("no route to host"))) == "failed"
+    pin = board_pin(gate)[0]
+    assert len(errors) == 1 and "no route to host" in errors[0] and pin not in errors[0]
+    assert gate.send_pin(Sends()) == "wait"
+
+
+def test_a_pin_out_of_tries_isnt_sent(gate, clock):
+    gate.show_pin()
+    pin = board_pin(gate)[0]
+    for _ in range(TRIES_PER_PIN):
+        gate.try_pin("1111" if pin != "1111" else "2222")
+    send = Sends()
+    assert gate.send_pin(send) == "used" and send.sent == []
+
+
+def test_after_someone_signs_in_the_next_ask_gets_a_new_pin(gate, clock):
+    """Not the used one, which isn't on the board any more."""
+    gate.show_pin()
+    gate.try_pin(board_pin(gate)[0])
+    clock.now += 10
+    assert gate.show_pin() == PIN_SHOWN_S
+    pin = board_pin(gate)[0]
+    assert gate.try_pin(pin)

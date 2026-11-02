@@ -998,10 +998,14 @@ phone on the hotspot, the PIN overlay, and the restart after a save.
 Since then: a park picker (#191); Pi model defaults with each board's own panel settings in its
 config.json, in place of boards.json, and a volume set live with a test sound (#192).
 
-## 16. Send the settings page's PIN by Pushover
+## 16. ~~Send the settings page's PIN by Pushover~~ Built (2026-11-01, untested on a Pi)
 
 An optional way to sign in to the settings page from a board you can't see (like DonaldPi): with a
 `pushover` section in `config.json` (user key and app token, entered on the page and masked like the
 other keys), the sign-in page gets "Send the PIN to my phone" next to "Show a PIN". It still shows
 on the LED too. Limit it to one send a minute (anyone on the Wi-Fi can open the sign-in page) and
 never log the PIN. Without the keys, the page stays as it is.
+
+Built as `settings_page/pushover.py` and `PinGate.send_pin`, with a "PIN by Pushover" card (its
+switch turns sending off without clearing the keys). The message's `ttl` deletes it from the phone
+when the PIN runs out. To check on a board: a real send from DonaldPi's sign-in page.
