@@ -74,6 +74,13 @@ def main(argv=None, updater=None, euid=os.geteuid):
         outcome = updater.update(args.channel, dry_run=args.command == "check")
     print(f"{outcome.result}: {outcome.message}")
     usual_boot = args.command == "recover" and outcome.result == NOTHING_TO_UNDO
+    if args.command != "check" and not usual_boot:  # the settings page's Updates card shows it
+        try:
+            updater.state.save_outcome({"command": args.command, "channel": getattr(args, "channel", None),
+                                        "result": outcome.result, "message": outcome.message,
+                                        "ok": outcome.ok, "at": updater.clock()})
+        except OSError as e:
+            debug.warning(f"Couldn't keep the outcome for the settings page: {e}")
     return 0 if outcome.ok or usual_boot else 1
 
 

@@ -1048,5 +1048,17 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
   even one stopped while checking health; a failed rollback is left for a person, not retried each
   boot) and `/usr/local/bin/lll-rollback`, with the settings page, for versions that have the updater.
 
+- The Updates card: built (2026-11-04, untested on a Pi), first on the settings page and outside its
+  form. It shows what's installed and the last update, rollback or boot recovery's outcome
+  (`outcome.json` beside `state.json`, written by `self_update`'s command line, since a refused
+  update leaves no phase). Check is a dry run in the settings process (Releases or Beta; kept 10
+  min), listing what's in the update: the version change, the PRs merged since what's installed
+  (`Board.what_changed`, from git's merge commits, leaving out the develop-beta → main release
+  merges; commit subjects when there are none) and whether pip runs. Update now (after a check found one) and Roll back (confirmed: it puts back config.json) run
+  `systemd-run --unit=lll-update --collect`, so systemd refuses a second. While one runs, the page
+  polls `/update/status`, reloads when it's done, and Save is refused (a rollback would undo it).
+  The channel isn't saved: it's the last check's, else the last update's. The PIN session doesn't
+  survive the settings page's restart, so a browser signs in again after an update.
+
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
-`lll-rollback` (done) → the Updates card → TinyPi before merging.
+`lll-rollback` (done) → the Updates card (done) → TinyPi before merging.

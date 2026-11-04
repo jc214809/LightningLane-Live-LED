@@ -257,6 +257,7 @@ def test_only_flags_set_now_block(env):
 def test_a_check_says_what_it_would_do_and_changes_nothing(env):
     outcome = env.updater.update(RELEASES, dry_run=True)
     assert outcome.result == "would_update" and outcome.ok and "v2.2.0" in outcome.message
+    assert outcome.target.ref == "v2.2.0" and outcome.target.sha, "what it found, for the settings page"
     assert env.board.calls == [("fetch",)]
     assert not os.path.exists(env.state.path)
 

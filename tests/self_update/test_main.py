@@ -48,6 +48,27 @@ def test_commands(tmp_path, capsys, argv, asked):
     assert capsys.readouterr().out == "updated: updated to v2.2.0 (2222222)\n"
 
 
+def test_update_rollback_and_recovery_keep_their_outcome_for_the_settings_page(tmp_path, capsys):
+    updater = FakeUpdater(tmp_path, Outcome("rolled_back", "rolled back to 2.1.0: it crashed", ok=False))
+    cli.main(["update", "--channel", "beta"], updater=updater, euid=ROOT)
+    assert updater.state.load_outcome() == {"command": "update", "channel": "beta", "result": "rolled_back",
+                                            "message": "rolled back to 2.1.0: it crashed", "ok": False, "at": 1030.0}
+    updater.outcome = Outcome("blocked", "an update or rollback is already running")
+    cli.main(["rollback"], updater=updater, euid=ROOT)
+    assert updater.state.load_outcome()["command"] == "rollback" and updater.state.load_outcome()["channel"] is None
+
+
+def test_a_check_or_a_boot_with_nothing_to_recover_leaves_the_last_outcome(tmp_path, capsys):
+    updater = FakeUpdater(tmp_path, Outcome("would_update", "would update to v2.2.0 (2222222)"))
+    cli.main(["check"], updater=updater, euid=ROOT)
+    assert updater.state.load_outcome() is None
+    updater.outcome = Outcome("nothing_to_undo", "no unfinished update (last: updated)")
+    cli.main(["recover"], updater=updater, euid=ROOT)
+    assert updater.state.load_outcome() is None
+    cli.main(["rollback"], updater=updater, euid=ROOT)
+    assert updater.state.load_outcome()["result"] == "nothing_to_undo", "asked by hand: it says so"
+
+
 def test_a_failure_exits_1(tmp_path, capsys):
     updater = FakeUpdater(tmp_path, Outcome("rolled_back", "rolled back to 2.1.0: it crashed", ok=False))
     assert cli.main(["update"], updater=updater, euid=ROOT) == 1
