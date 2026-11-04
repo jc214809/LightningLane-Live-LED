@@ -48,6 +48,13 @@ class State:
             found["good"] = []
         return found
 
+    def unreadable(self):
+        """Whether state.json may be there but can't be read: the folder is root's (0700), so as
+        anyone else load() would say idle whatever happened."""
+        if os.path.isdir(self.folder):
+            return not os.access(self.folder, os.R_OK | os.X_OK)
+        return not os.access(os.path.dirname(self.folder) or ".", os.X_OK)
+
     def save(self, state):
         """Write state.json whole or not at all, flushed to disk: it's what a power cut leaves."""
         self._write(self.path, state)

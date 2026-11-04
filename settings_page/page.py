@@ -13,7 +13,7 @@ from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_n
 from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
 from self_update.github import FAILED, PASSED, REPO, RUNNING
-from self_update.update import BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, WOULD_UPDATE
+from self_update.update import BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, WOULD_UPDATE, name_of
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
 # What a save says, by Settings.restart_app's outcome.
@@ -1021,9 +1021,9 @@ def updates_card(view, started=None):
     if old and view["phase"] not in ("idle", "rolled_back"):
         # The exact commit (and branch) from before the update, whatever channel is picked above.
         # Plain text: the hint escapes it.
-        sha = str(old.get("sha") or "?")[:7]
-        back_to = (f"Beta {sha} on {BETA_BRANCH}" if old.get("branch") == BETA_BRANCH else
-                   f"{old.get('version')} ({sha})" + (f" on {old['branch']}" if old.get("branch") else ""))
+        # A point taken before rollback points had a channel: on develop-beta, it was a Beta.
+        back_to = name_of({**old, "channel": BETA} if old.get("branch") == BETA_BRANCH else old) \
+            + (f" on {old['branch']}" if old.get("branch") else "")
         body += _field("update_rollback", "Roll back",
                        _post("/update/rollback", "Roll back", "undo", "Rolling back\u2026",
                              confirm="Roll back the last update? This also puts back config.json as it was "

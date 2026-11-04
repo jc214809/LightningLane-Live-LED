@@ -7,7 +7,7 @@ from self_update import state as states
 from self_update import update as update_module
 from self_update.board import CommandFailed
 from self_update.github import GitHubError
-from self_update.update import BETA, RELEASES, Updater, newest_release, parse_version
+from self_update.update import BETA, RELEASES, Updater, channel_of, name_of, newest_release, parse_version
 from utils import heartbeat
 
 OLD, NEW, BETA_TIP = "1" * 40, "2" * 40, "3" * 40
@@ -33,7 +33,7 @@ class FakeBoard:
         self.head_sha, self.branch_name, self.dirty = OLD, "develop-beta", []
         self.refs = {"refs/tags/v2.1.0": NEW, "refs/tags/v2.2.0": NEW, BETA_TIP: BETA_TIP, NEW: NEW,
                      "refs/heads/develop-beta": OLD}
-        self.without_updater = set()
+        self.without_updater, self.tags = set(), {}
         self.requirements_changed, self.free, self.flags = False, 10 * 2**30, 0
         self.healthy, self.crashes, self.settings, self.port = True, 0, True, True
         self.n_restarts, self.skips_flag, self.fail = 0, True, {}
@@ -61,6 +61,10 @@ class FakeBoard:
 
     def file_at(self, sha, path):
         return None if sha in self.without_updater else "text"
+
+    def tags_at(self, sha):
+        self._call("tags_at", sha)
+        return self.tags.get(sha, [])
 
     def changed(self, old, new, path):
         return self.requirements_changed
@@ -167,11 +171,11 @@ def test_newest_release(tags, installed, expected):
 def test_a_release_update_switches_installs_and_checks_health(env):
     outcome = env.updater.update(RELEASES)
     assert outcome.ok and outcome.result == "updated" and "v2.2.0" in outcome.message
-    assert env.board.calls == [("fetch",), ("pip_freeze",), ("checkout", NEW, True), ("install", NEW, True),
-                               ("restart", APP), ("restart", SETTINGS)]
+    assert env.board.calls == [("fetch",), ("pip_freeze",), ("tags_at", OLD), ("checkout", NEW, True),
+                               ("install", NEW, True), ("restart", APP), ("restart", SETTINGS)]
     record = env.state.load()
     assert record["phase"] == "updated" and record["good"] == [NEW]
-    assert record["from"] == {"sha": OLD, "branch": "develop-beta", "version": "2.0.0",
+    assert record["from"] == {"sha": OLD, "branch": "develop-beta", "version": "2.0.0", "channel": "beta",
                               "requirements_changed": False, "config_saved": True}
     assert record["to"] == {"sha": NEW, "ref": "v2.2.0", "channel": "releases"}
     assert open(env.state.freeze_path).read() == "aiohttp==3.11.13\n"
@@ -298,7 +302,38 @@ def test_an_app_that_never_draws_is_rolled_back_after_the_window(env):
     assert json.loads(env.config.read_text()) == {"parks": ["Magic Kingdom"]}, "config.json as before the update"
     record = env.state.load()
     assert record["phase"] == "rolled_back" and "hasn't finished a screen" in record["reason"] and NEW not in record["good"]
-    assert env.notes and env.notes[0][0] == "Update rolled back" and "2.0.0" in env.notes[0][1]
+    assert env.notes == [("Update rolled back", "Back on Beta 1111111. Why: " + record["reason"] + ".")]
+
+
+def test_a_rollback_names_a_beta_by_its_commit_and_a_release_by_its_version(env):
+    # A Beta an earlier update installed: detached, its version.py still says the release it grew from.
+    env.board.branch_name = None
+    env.state.save({"phase": "updated", "good": [OLD], "to": {"sha": OLD, "ref": "develop-beta", "channel": "beta"}})
+    env.board.crashes = 1
+    assert "rolled back to Beta 1111111: the app crashed" in env.updater.update(RELEASES).message
+    env.board.head_sha, env.board.tags = OLD, {OLD: ["v2.0.0"]}
+    env.state.save({"phase": "updated", "good": [OLD]})
+    assert "rolled back to 2.0.0 (1111111): the app crashed" in env.updater.update(RELEASES).message
+
+
+def test_a_commits_channel(env, monkeypatch):
+    board, beta_update = env.board, {"to": {"sha": OLD, "channel": "beta"}}
+    board.tags = {OLD: ["v2.1.0"]}
+    assert channel_of(board, OLD, None, beta_update) == RELEASES, "a release tag wins"
+    board.tags = {OLD: ["nightly"]}
+    assert channel_of(board, OLD, "main", beta_update) == RELEASES, "so does the release branch"
+    assert channel_of(board, OLD, None, {"to": {"sha": OLD, "channel": "releases"}}) == RELEASES, "as installed"
+    assert channel_of(board, OLD, None, {}) == BETA, "anything else: a Beta"
+    assert channel_of(board, None, None, {}) == RELEASES and channel_of(board, None, None, beta_update) == BETA
+    warnings = []
+    monkeypatch.setattr(update_module.debug, "warning", warnings.append)
+    board.fail = {"tags_at": lambda board, sha: True}
+    assert channel_of(board, OLD, None, {}) == BETA and "tags" in warnings[0]
+
+
+def test_a_rollback_point_from_before_channels_is_named_by_its_version():
+    assert name_of({"sha": OLD, "version": "2.0.0"}) == "2.0.0 (1111111)"
+    assert name_of({"sha": OLD, "version": "2.0.0", "channel": "beta"}) == "Beta 1111111"
 
 
 def test_a_crash_loop_rolls_back_without_waiting_out_the_window(env):

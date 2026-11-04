@@ -1,4 +1,5 @@
 import json
+import os
 
 import pytest
 
@@ -56,3 +57,16 @@ def test_only_one_update_at_a_time(tmp_path):
                 pass
     with state.lock():  # released
         pass
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root reads everything")
+def test_a_folder_only_root_can_open_is_unreadable_not_idle(tmp_path):
+    state = State(str(tmp_path / "lll-update"))
+    assert not state.unreadable(), "no folder yet: never updated"
+    state.save({"phase": "updated"})
+    assert not state.unreadable()
+    os.chmod(state.folder, 0)
+    try:
+        assert state.unreadable()
+    finally:
+        os.chmod(state.folder, 0o700)

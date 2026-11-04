@@ -31,6 +31,7 @@ from utils.config import pushover_keys
 RELEASES, BETA = "releases", "beta"
 CHANNELS = (RELEASES, BETA)
 BETA_BRANCH = "develop-beta"
+RELEASE_BRANCH = "main"
 # v2.0.0 and older don't have the updater: installing one would remove the way back.
 MIN_RELEASE = (2, 1, 0)
 # Present in every version the updater may install.
@@ -83,6 +84,31 @@ def newest_release(tags, installed):
     current = parse_version(installed) or (0, 0, 0)
     found = [(v, tag) for tag in tags if (v := parse_version(tag)) and v >= MIN_RELEASE and v > current]
     return max(found)[1] if found else None
+
+
+def channel_of(board, sha, branch, record):
+    """The channel a commit came from: RELEASES on a release tag or the release branch, the channel
+    of the update (state.json's record) that installed it, else BETA (develop-beta, or a commit off it)."""
+    to = record.get("to") if isinstance(record.get("to"), dict) else {}
+    if not sha:
+        return to.get("channel") if to.get("channel") in CHANNELS else RELEASES
+    try:
+        tagged = any(parse_version(tag) for tag in board.tags_at(sha))
+    except CommandFailed as e:
+        debug.warning(f"Can't read the checkout's tags: {e}")
+        tagged = False
+    if tagged or branch == RELEASE_BRANCH:
+        return RELEASES
+    if to.get("sha") == sha and to.get("channel") in CHANNELS:
+        return to["channel"]
+    return BETA
+
+
+def name_of(old):
+    """A rollback point (state.json's "from") as people read it: a Beta by its commit (its version.py
+    still says the release it grew from, which reads like that release), else its version and commit."""
+    sha = str(old.get("sha") or "?")[:7]
+    return f"Beta {sha}" if old.get("channel") == BETA else f"{old.get('version')} ({sha})"
 
 
 class Updater:
@@ -216,8 +242,10 @@ class Updater:
         has_config = os.path.isfile(self.config_path)
         if has_config:
             shutil.copy2(self.config_path, self.state.config_path)
+        branch = self.board.branch()
         record.update(
-            {"from": {"sha": head, "branch": self.board.branch(), "version": self.installed_version,
+            {"from": {"sha": head, "branch": branch, "version": self.installed_version,
+                      "channel": channel_of(self.board, head, branch, record),
                       "requirements_changed": self.board.changed(head, target.sha, "requirements.txt"),
                       "config_saved": has_config},
              "to": {"sha": target.sha, "ref": target.ref, "channel": target.channel},
@@ -305,7 +333,7 @@ class Updater:
             problem = f"the rollback failed unexpectedly: {e}"
         bad = (record.get("to") or {}).get("sha")
         record["good"] = [sha for sha in record.get("good", []) if sha != bad]
-        name = f"{old.get('version')} ({old['sha'][:7]})"
+        name = name_of(old)
         if problem is None:
             self.state.set_phase(record, states.ROLLED_BACK)
             debug.warning(f"Rolled back to {name}: {reason}.")
