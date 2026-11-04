@@ -101,18 +101,40 @@ def test_changed_compares_one_file_between_commits(checkout):
 
 
 def test_what_changed_lists_the_pull_requests_merged_but_not_release_merges(checkout):
-    log = ("Merge pull request #201 from jc214809/feature/updates-card\x1fShow what an update brings\n\x1e\n"
-           "Merge branch 'feature/updater' into feature/update-recovery\x1f\x1e\n"
-           "Merge pull request #197 from jc214809/develop-beta\x1fRelease v2.0.0\x1e\n"
-           "Merge pull request #200 from jc214809/feature/update-recovery\x1f\nRoll back at boot\n\nMore words\x1e\n")
+    log = ("p1 p2\x1fMerge pull request #201 from jc214809/feature/updates-card\x1fShow what an update brings\n\x1e\n"
+           "p1 p2\x1fMerge branch 'feature/updater' into feature/update-recovery\x1f\x1e\n"
+           "p1 p2\x1fMerge pull request #197 from jc214809/develop-beta\x1fRelease v2.0.0\x1e\n"
+           "p1 p2\x1fMerge pull request #200 from jc214809/feature/update-recovery\x1f\nRoll back at boot\n\nMore words\x1e\n")
     board, run = _board(checkout, {("git", "log", "--merges"): log})
-    assert board.what_changed("a", "b") == [(201, "Show what an update brings"), (200, "Roll back at boot")]
-    assert run.calls[0][0] == ["git", "log", "--merges", "--format=%s%x1f%b%x1e", "a..b"]
+    assert board.what_changed("a", "b") == [(201, "Show what an update brings", None),
+                                            (200, "Roll back at boot", None)], "merges from before release notes"
+    assert run.calls[0][0] == ["git", "log", "--merges", "--format=%P%x1f%s%x1f%b%x1e", "a..b"]
+    assert len(run.calls) == 1, "the old subjects name the branch: no need to look inside"
 
 
 def test_with_no_pull_requests_what_changed_lists_the_commits(checkout):
     board, _ = _board(checkout, {("git", "log", "--merges"): "", ("git", "log", "--no-merges"): "Fix a typo\nBump it\n"})
-    assert board.what_changed("a", "b") == [(None, "Fix a typo"), (None, "Bump it")]
+    assert board.what_changed("a", "b") == [(None, "Fix a typo", None), (None, "Bump it", None)]
+
+
+def test_what_changed_reads_pr_titled_merges_with_their_release_notes(checkout):
+    log = ("m1 f1\x1fSparkle the castle (#205)\x1f## Release notes\n- The castle sparkles.\n"
+           "- So do the rides.\n\n## Summary\nNew effect\n\x1e\n"
+           "m2 f2\x1fFaster CI (#204)\x1f## Release notes\nNone\n\n## Summary\nxdist\x1e\n"
+           "m3 b3\x1fRelease v2.1.0 (#210)\x1f\x1e\n"
+           "m4 f4\x1fNo notes yet (#203)\x1f## Summary\nx\x1e\n")
+    inside = {"a..b": log, "m3..b3": "Faster CI (#204)\nMerge branch 'main'\n"}
+
+    class ByRange(Run):
+        def __call__(self, args, **kwargs):
+            self.calls.append((args, kwargs))
+            out = inside.get(args[-1], "Merge branch 'develop-beta' into feature/x\n")
+            return subprocess.CompletedProcess(args, 0, out, "")
+    run = ByRange()
+    board = Board(str(checkout), run=run, euid=lambda: 1000)
+    assert board.what_changed("a", "b") == [(205, "Sparkle the castle", ["The castle sparkles.", "So do the rides."]),
+                                            (204, "Faster CI", []), (203, "No notes yet", None)]
+    assert ["git", "log", "--merges", "--format=%s", "m3..b3"] in run.args(), "a release: it brings in PR merges"
 
 
 def test_checkout_detaches_unless_going_back_to_a_branch(checkout):

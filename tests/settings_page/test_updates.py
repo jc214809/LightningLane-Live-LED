@@ -14,7 +14,7 @@ class FakeBoard:
     def __init__(self):
         self.running, self.asked = False, []
         self.on_branch, self.tags = "develop-beta", []
-        self.log = [(201, "Show what an update brings"), (200, "Roll back at boot")]
+        self.log = [(201, "Show what an update brings", None), (200, "Roll back at boot", ["Rolls back at boot."])]
 
     def what_changed(self, old, new):
         if isinstance(self.log, Exception):
@@ -136,7 +136,7 @@ def test_a_check_is_a_dry_run_kept_for_ten_minutes(tmp_path):
     assert updates.view()["check"] == {
         "channel": "beta", "result": "would_update", "message": "would update to v2.2.0 (2222222)", "ok": True,
         "at": 1000.0, "ref": "v2.2.0", "sha": "2" * 40, "version": "2.2.0", "packages": True,
-        "changes": [[201, "Show what an update brings"], [200, "Roll back at boot"]]}
+        "changes": [[201, "Show what an update brings", None], [200, "Roll back at boot", ["Rolls back at boot."]]]}
     clock.now += upd.CHECK_FRESH_S + 1
     assert updates.view()["check"] is None
 
@@ -241,7 +241,7 @@ def test_while_it_runs_the_card_knows_what_is_being_installed(tmp_path):
     updates.start("update", "releases")
     updater.board.running = True
     to = updates.view()["to"]
-    assert to["ref"] == "v2.2.0" and to["changes"][0] == [201, "Show what an update brings"], "before its rollback point"
+    assert to["ref"] == "v2.2.0" and to["changes"][0] == [201, "Show what an update brings", None], "before its rollback point"
     updates.starting = None  # the settings page restarted mid-update: state.json still says
     updater.state.save({"phase": "checking", "to": {"ref": "v2.2.0", "sha": "2" * 40}, "good": []})
     assert updates.view()["to"] == {"ref": "v2.2.0", "sha": "2" * 40}

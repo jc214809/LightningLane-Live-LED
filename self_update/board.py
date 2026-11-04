@@ -12,6 +12,7 @@ import socket
 import subprocess
 import sys
 
+from self_update.release_notes import first_line, release_notes
 from utils.system_stats import THROTTLED_PATH
 
 GIT_TIMEOUT_S = 120
@@ -20,9 +21,13 @@ INSTALL_TIMEOUT_S = 3 * 60 * 60
 SYSTEMCTL_TIMEOUT_S = 60
 # The installer's flag for skipping pip; an installer older than the updater doesn't have it.
 SKIP_REQUIREMENTS = "--skip-requirements"
-# A pull request's merge commit; the line after is the PR's title.
+# A pull request's merge commit, as GitHub titles it: "<PR title> (#N)" with the PR's description
+# (and its release notes) as the body, since 2026-11-04; before, "Merge pull request #N from
+# owner/branch" with the PR's title as the body.
+PR_TITLED = re.compile(r"(.+) \(#(\d+)\)$")
 PR_MERGE = re.compile(r"Merge pull request #(\d+) from \S+?/(\S+)")
-# Merges of these branches carry other PRs (a release is develop-beta into main): those are listed instead.
+# Merges of these branches carry other PRs (a release is develop-beta into main): those are listed
+# instead. A PR-titled merge names no branch, so one is a release when it brings in other PRs' merges.
 RELEASE_BRANCHES = ("develop-beta", "main")
 
 
@@ -92,21 +97,31 @@ class Board:
         return self.git("diff", "--quiet", old, new, "--", path, check=False).returncode != 0
 
     def what_changed(self, old, new):
-        """What's in commit new that isn't in old, newest first: [(PR number, title)] for each pull
-        request merged, or [(None, subject)] per commit when there are none (commits made straight
-        on the branch)."""
-        merges = self.git("log", "--merges", "--format=%s%x1f%b%x1e", f"{old}..{new}").stdout
+        """What's in commit new that isn't in old, newest first: [(PR number, title, notes)] for each
+        pull request merged, or [(None, subject, None)] per commit when there are none (commits made
+        straight on the branch). notes: release_notes() of the merge's body (None without any, as in
+        merges from before them; [] for "None")."""
+        merges = self.git("log", "--merges", "--format=%P%x1f%s%x1f%b%x1e", f"{old}..{new}").stdout
         found = []
         for entry in merges.split("\x1e"):
-            subject, _, body = entry.strip().partition("\x1f")
-            merge = PR_MERGE.match(subject)
+            parents, _, rest = entry.strip().partition("\x1f")
+            subject, _, body = rest.partition("\x1f")
+            merge, titled = PR_MERGE.match(subject), PR_TITLED.match(subject)
             if merge and merge.group(2) not in RELEASE_BRANCHES:
-                title = next((line.strip() for line in body.splitlines() if line.strip()), subject)
-                found.append((int(merge.group(1)), title))
+                found.append((int(merge.group(1)), first_line(body) or merge.group(2), release_notes(body)))
+            elif titled and not merge and not self._carries_pull_requests(parents.split()):
+                found.append((int(titled.group(2)), titled.group(1).strip(), release_notes(body)))
         if found:
             return found
         commits = self.git("log", "--no-merges", "--format=%s", f"{old}..{new}").stdout
-        return [(None, line.strip()) for line in commits.splitlines() if line.strip()]
+        return [(None, line.strip(), None) for line in commits.splitlines() if line.strip()]
+
+    def _carries_pull_requests(self, parents):
+        """Whether a merge brings in other pull requests' merges: a release, not a pull request of its own."""
+        if len(parents) < 2:
+            return False
+        merged = self.git("log", "--merges", "--format=%s", f"{parents[0]}..{parents[1]}").stdout.splitlines()
+        return any(PR_MERGE.match(line) or PR_TITLED.match(line) for line in merged)
 
     def checkout(self, ref, detach=True):
         self.git("checkout", *(["--detach"] if detach else []), ref)

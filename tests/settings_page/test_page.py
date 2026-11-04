@@ -221,7 +221,10 @@ def test_a_check_that_found_one_offers_update_now_on_its_channel():
              "ok": True, "at": 0}
     html = _updates(check={**found, "ref": "develop-beta", "sha": "b" * 40}, channel="beta")
     assert '<div class="notice new" role="status">' in html
-    assert "<strong>Update available on Beta: develop-beta bbbbbbb</strong>" in html, "no version: its commit"
+    assert '<strong>Update available on Beta: Beta <span class="mono">bbbbbbb</span></strong>' in html, "its commit"
+    html = _updates(check={**found, "ref": "v9", "sha": "b" * 40, "channel": "releases"})
+    assert "<strong>Update available on Releases: v9 bbbbbbb</strong>" in html, "no version: ref and commit"
+    html = _updates(check={**found, "ref": "develop-beta", "sha": "b" * 40}, channel="beta")
     assert re.search(r'action="/update/start"[^>]*><input type="hidden" name="channel" value="beta">', html)
     assert 'class="changes"' not in html, "the check couldn't list them: no list"
     html = _updates(check={**found, "result": "current", "message": "no release newer than 2.1.0"})
@@ -257,7 +260,9 @@ def test_after_an_update_the_card_offers_a_rollback_that_warns_about_config_json
     assert re.search(r'action="/update/rollback"[^>]*data-confirm="[^"]*undoing settings saved since', html)
     assert "Back to 2.0.9 (ccccccc)" in html
     html = _updates(phase="updated", **{"from": {"version": "2.0.9", "sha": "c" * 40, "branch": "develop-beta"}})
-    assert "Back to 2.0.9 (ccccccc) on develop-beta, as before the last update" in html, "its commit, not a channel"
+    assert "Back to Beta ccccccc on develop-beta, as before the last update" in html, "its commit, not a channel"
+    html = _updates(phase="updated", **{"from": {"version": "2.0.9", "sha": "c" * 40, "branch": "main"}})
+    assert "Back to 2.0.9 (ccccccc) on main, as before the last update" in html
     assert "/update/rollback" not in _updates(phase="rolled_back", **{"from": {"version": "2.0.9", "sha": "c"}})
 
 
@@ -312,4 +317,38 @@ def test_an_update_found_lists_whats_in_it_linked_to_github():
 def test_while_it_runs_the_card_says_what_its_installing():
     html = _updates(running=True, phase="checking", status="Checking the new version works",
                     to={"ref": "develop-beta", "sha": "9" * 40, "version": "2.2.0", "changes": [[201, "Updates card"]]})
-    assert "Updating to develop-beta (9999999)" in html and "Updates card" in html
+    assert 'Updating to Beta <span class="mono">9999999</span>' in html and "Updates card" in html
+    html = _updates(running=True, phase="checking", status="x", to={"ref": "v2.2.0", "sha": "9" * 40, "version": "2.2.0"})
+    assert "Updating to 2.2.0" in html
+
+
+def test_a_beta_build_shows_as_beta_not_as_the_release_it_grew_from():
+    html = _updates(installed_channel="beta", version="2.0.0")
+    assert '<strong>Beta <span class="mono">aaaaaaa</span></strong>' in html
+    assert "A Beta (test) version on develop-beta, newer than release 2.0.0" in html
+    assert "<strong>2.0.0</strong>" not in html
+    html = _updates(installed_channel="releases", branch="main", version="2.1.0")
+    assert '<strong>2.1.0</strong> <span class="mono">aaaaaaa</span>' in html and "Beta (test)" not in html
+    found = {"channel": "beta", "result": "would_update", "message": "m", "ok": True, "at": 0,
+             "ref": "develop-beta", "sha": "b" * 40, "version": "2.0.0", "changes": []}
+    html = _updates(installed_channel="beta", check=found, channel="beta")
+    assert '<strong>Beta <span class="mono">aaaaaaa</span> \u2192 Beta <span class="mono">bbbbbbb</span></strong>' in html
+    html = _updates(installed_channel="beta", channel="releases",
+                    check={**found, "channel": "releases", "ref": "v2.1.0", "version": "2.1.0"})
+    assert '<strong>Beta <span class="mono">aaaaaaa</span> \u2192 2.1.0</strong>' in html
+
+
+def test_each_pull_request_shows_its_notes_under_its_title_and_the_behind_the_scenes_ones_together():
+    found = {"channel": "beta", "result": "would_update", "message": "m", "ok": True, "at": 0,
+             "ref": "develop-beta", "sha": "b" * 40, "changes": [
+                 [206, "Sparkle", ["The castle sparkles.", "So do <the> rides."]],
+                 [205, "Faster CI", []], [204, "Tidy tests", []],
+                 [203, "Updates card polish", None]]}
+    html = _updates(check=found, channel="beta")
+    assert ('#206</a><span>Sparkle<span class="hint note">The castle sparkles.</span>'
+            '<span class="hint note">So do &lt;the&gt; rides.</span></span></li>') in html, "notes under the title"
+    assert '#203</a><span>Updates card polish</span></li>' in html, "from before release notes: the title alone"
+    assert re.search(r"Behind the scenes, nothing you'd notice: <a [^>]*>#205</a>, <a [^>]*>#204</a></span>", html)
+    assert "Faster CI" not in html
+    html = _updates(check={**found, "changes": [[None, "Fix a typo", None]]}, channel="beta")
+    assert "<span>Fix a typo</span>" in html and "Behind the scenes" not in html
