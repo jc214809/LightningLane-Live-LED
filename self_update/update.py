@@ -265,6 +265,20 @@ class Updater:
         except states.Busy as e:
             return Outcome(BLOCKED, str(e))
 
+    def recover(self):
+        """At boot: roll back an update that stopped midway (a power cut, a crash), else do nothing.
+        A failed rollback is left for a person: retrying it every boot could loop."""
+        try:
+            with self.state.lock():
+                record = self.state.load()
+                if record["phase"] not in states.UNFINISHED or not record.get("from"):
+                    return Outcome(NOTHING_TO_UNDO, f"no unfinished update (last: {record['phase']})")
+                debug.warning(f"An update stopped midway (at {record['phase']}): rolling it back.")
+                return self._roll_back(record, f"the update stopped midway (at {record['phase']}), "
+                                               "probably a power cut")
+        except states.Busy as e:
+            return Outcome(BLOCKED, str(e))
+
     def _roll_back(self, record, reason):
         self.state.set_phase(record, states.ROLLING_BACK, reason=reason)
         old = record["from"]

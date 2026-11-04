@@ -117,13 +117,60 @@ def test_lll_gets_its_settings_page_as_its_own_service_from_the_checkout(board):
     assert "disable --now lll-settings.service" not in out
 
 
+def written(out, path):
+    """A file other than a unit that a dry run would write, from its printed copy."""
+    head = f"{path} (mode 755):\n"
+    assert head in out, out
+    lines = []
+    for line in out.split(head, 1)[1].splitlines():
+        if not line.startswith("    "):
+            break
+        lines.append(line[4:])
+    return "\n".join(lines)
+
+
+def test_lll_gets_the_updaters_boot_recovery_and_lll_rollback(board):
+    checkout = board.checkout("LightningLane-Live-LED", {"venv/bin/python3": "", "self_update/__init__.py": ""})
+    (checkout / "venv/bin/python3").chmod(0o755)
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    recover = unit(out, "lll-update-recover.service")
+    assert "Type=oneshot" in recover and "TimeoutStartSec=infinity" in recover and "Restart=" not in recover
+    assert f"WorkingDirectory={checkout}" in recover
+    assert f"ExecStart={checkout}/venv/bin/python3 -m self_update recover" in recover
+    assert "Before=" not in recover, "rolling back restarts the app: ordered before it, that would deadlock"
+    assert "+ systemctl enable lll-update-recover.service" in out
+    assert "restart lll-update-recover" not in out and "start lll-update-recover" not in out
+    command = written(out, f"{board.root}/usr/local/bin/lll-rollback")
+    assert command.startswith("#!/bin/sh\n")
+    assert f'cd "{checkout}" && exec "{checkout}/venv/bin/python3" -m self_update rollback "$@"' in command
+
+
+def test_a_version_without_the_updater_gets_no_recovery(board):
+    board.checkout("LightningLane-Live-LED")
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    assert "lll-update-recover" not in out and "lll-rollback" not in out
+
+
+def test_lll_rollback_runs_the_rollback_with_its_arguments(board, tmp_path):
+    board.checkout("LightningLane-Live-LED", {"self_update/__init__.py": ""})
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    script = tmp_path / "lll-rollback"
+    script.write_text(written(out, f"{board.root}/usr/local/bin/lll-rollback")
+                      .replace("/usr/bin/python3", "echo"))  # no venv in the fake checkout: the system python
+    result = subprocess.run(["sh", str(script), "--extra"], capture_output=True, text=True)
+    assert result.stdout == "-m self_update rollback --extra\n", result.stderr
+
+
 @pytest.mark.parametrize("app", ["peloton", "mlb"])
 def test_another_app_stops_lights_settings_page_if_it_has_one(board, app):
     board.checkout("Peloton-LED", {"packaging/systemd/peloton-led.service": f"[Service]\nExecStart={PELOTON_EXEC}\n"})
     assert "lll-settings.service" not in board.ok(BOARD_NAME="ZeroPi", APP=app)
     (board.root / "etc/systemd/system").mkdir(parents=True, exist_ok=True)
     (board.root / "etc/systemd/system/lll-settings.service").write_text("[Service]\n")
-    assert "+ systemctl disable --now lll-settings.service" in board.ok(BOARD_NAME="ZeroPi", APP=app)
+    (board.root / "etc/systemd/system/lll-update-recover.service").write_text("[Service]\n")
+    out = board.ok(BOARD_NAME="ZeroPi", APP=app)
+    assert "+ systemctl disable --now lll-settings.service" in out
+    assert "+ systemctl disable --now lll-update-recover.service" in out
 
 
 def test_lll_on_a_board_it_has_set_up_updates_and_skips_apt_and_the_driver_build(board):
@@ -388,6 +435,9 @@ def test_wifi_setup_only_asks_nothing_and_does_only_that(board):
     service = unit(out, "lll-settings.service")
     assert f"WorkingDirectory={ROOT}" in service and " -m settings_page.server" in service
     assert "systemctl restart lll-settings.service" in out
+    # and the updater's backstops, since this version has it
+    assert f" -m self_update recover" in unit(out, "lll-update-recover.service")
+    assert "lll-rollback (mode 755)" in out
 
 
 def test_wifi_setup_only_needs_the_pi_and_sudo(board):
