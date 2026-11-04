@@ -8,7 +8,7 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 |---|---|---|
 | Down in New Orleans, When You Wish fanfare | Ray | Firefly: a figure-eight by the evening star, then circles the spire |
 | Touch the Sky | Merida | The archer's art full size bottom left, waist up on 64x32 (her waist on the bottom row; settled with the user 2026-10-19, from mocks): says her line lip-synced (a wider face, a 5 px open mouth) holding her bow by its top, its foot planted at her side, her other hand on her hip; tosses it up (a turn and a half, landing string toward her), catches it, draws, leans back 20° as a curve (waist a third, chest the rest, head nearer level, hips forward), lets go on "touch": the string snaps and rings, her hand flies back past her ear then drops to her side, the arrow flies at the archer's speed into a bullseye firework that shatters; 2 s later she sinks away. Her poses are baked by `tools/build_merida_poses.py` (a Pi Zero can't rotate them live); the scene's rate 0.6 so the arrow shows |
-| Touch the Sky / Up | The Up house | Rises from behind the castle on its balloons, drifts off right |
+| Touch the Sky / Up | The Up house | From `Up house with balloons chart.png` (2026-11-03): the whole chart on 64x64, its house under code balloons on 64x32, both 1x. Floats in from the left edge, bobbing, and climbs out the top-right corner by 21.5 s (the user's pick over rising from behind the castle); kept behind the castle's roofline (also the user's pick over drawing it in front), so it passes behind the towers |
 | How Far I'll Go (climax) | Moana's canoe | One crossing once the water is up; on 64x64 the toy's canoe (red spiral sail, outrigger) with Moana (princes sheet) aboard |
 | You've Got a Friend in Me | Buzz and Woody | Woody slides in and waves as alphabet blocks fill the castle, slides off, then Buzz flies through and knocks them down |
 | Friendship mash-up | Ralph, Baymax, memory orbs | Ralph smashes bricks, Baymax inflates, Joy's and Sadness's orbs. The Zootopia skyline was built and cut (nobody knew what it was) |
@@ -76,7 +76,7 @@ yet. **Code** is a simple shape drawn in code. **None** means no art and not sim
 | Part of Your World (192-215) | off | Ariel | Sheet | Swims across on a slow sine wave through the bubbles, tail flicking (two frames). |
 | PoYW climax (215-256) | ghost | Ariel | Sheet | Rises from the bottom toward the top and reaches up (needs a "reach" frame). |
 | Touch the Sky (268-303) | castle | Merida | Sheet (`Brave2.jpg` 21x30) | Draws her bow at the side, or looses an arrow across the board. (Was planned as Out There with Quasimodo; it's Touch the Sky by its lyrics, so Quasimodo has no song here.) |
-| Touch the Sky / Up (303-325) | ghost | Up house | Code | Rises from behind the castle under a balloon cluster and drifts up and out to the right. |
+| Touch the Sky / Up (303-325) | ghost | Up house | Chart (`Up house with balloons chart.png`) | Floats in from the left edge under its balloons and climbs out the top-right corner, behind the castle's roofline. |
 | | | Dug (cameo) | Have (`kevin`) | Optional: runs along the ground after the house. |
 | How Far I'll Go (325-370) | ghost | Moana | Sheet | Sails a small canoe (Code) across the water effect. |
 | | | Gramma Tala | | The existing `stingray` effect stands in. |

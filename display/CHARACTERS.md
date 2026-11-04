@@ -336,6 +336,13 @@ sells the character, then size him to hold it.
   more with every step (height from the share of the way across, squared, so he leaves the
   ground gently), off the right edge up high while she stays on the ground.
   A bunch of small 3x3 balloons (bottom corners off, a shine pixel) reads as Up's cluster.
+- **The Up house** (HEA V2 `up_house` actor) — a grid pattern, cell for cell at 1x (24x46 with
+  its balloons). It replaced an 11x9 house drawn in code. Drop a chart's background colour where it
+  shows between strings. 46 rows is too tall for 64x32, so that board gets the charted house under
+  code balloons. A 24-row house can never clear the castle's roof. Drawing it in front of the
+  dimmed castle shows all of it, but the user kept it behind. It first rose from behind the
+  castle and hung there; the user preferred it crossing: in from the left edge, climbing out the
+  top-right corner. For a vague motion request, a path sheet of each reading settled it in one go.
 
 ## The Aliens: what worked
 

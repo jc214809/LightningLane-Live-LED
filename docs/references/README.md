@@ -137,6 +137,7 @@ keep the one where the size holds steady.
 | [Brave.jpg](Brave.jpg) | Merida with her bow | 26 x 41 | No (9 rows over) | Yes | |
 | [hei-hei.jpg](hei-hei.jpg) | Heihei | 20 x 42 | No | Yes | |
 | [Boo.jpg](Boo.jpg) | Boo | 28 x 44 | No | Yes | |
+| [Up house with balloons chart.png](<Up house with balloons chart.png>) | Carl's house from Up, on its balloons | 24 x 46 (house 24 x 24) | House only | Yes | Built: the HEA V2 `up_house` actor, cell for cell (the house alone under code balloons on 64x32) |
 | [Buzz.jpg](Buzz.jpg) | Buzz Lightyear | 40 x 46 | No | Yes | Built: `buzz` |
 | [Jack Skellington.jpg](<Jack Skellington.jpg>) | Jack Skellington, head | 42 x 46 | No | Yes | |
 | [Sally.jpg](Sally.jpg) | Sally, head | 42 x 47 | No | Yes | |
