@@ -194,3 +194,91 @@ def test_signed_in_the_top_bar_has_sign_out_but_not_on_the_hotspot():
     assert 'action="/signout"' in settings_page({}, [])
     assert 'action="/signout"' not in settings_page({}, [], hotspot="Disneypi-setup")
     assert 'action="/signout"' not in pin_page() and "Signed out." in pin_page(signed_out=True)
+
+
+UPDATES = {"version": "2.1.0", "sha": "a" * 40, "branch": "develop-beta", "running": False, "phase": "idle",
+           "status": None, "from": None, "outcome": None, "check": None, "channel": "releases"}
+
+
+def _updates(started=None, **changes):
+    return settings_page({}, [], updates={**UPDATES, **changes}, started=started)
+
+
+def test_the_updates_card_is_first_outside_the_settings_form_with_its_own_forms():
+    html = _updates()
+    assert html.index('id="updates"') < html.index('id="settings"'), "first, and not part of Save"
+    assert html.index('href="#updates"') < html.index('href="#live"')
+    assert "<strong>2.1.0</strong>" in html and "aaaaaaa" in html and "on develop-beta" in html
+    assert re.search(r'<form method="post" action="/update/check"[^>]*><select id="channel" name="channel">'
+                     r'<option value="releases" selected>Releases</option><option value="beta">Beta</option>', html)
+    assert "/update/start" not in html and "/update/rollback" not in html, "nothing found, nothing to undo"
+    assert 'id="updates"' not in settings_page({}, []), "no view: no card"
+
+
+def test_a_check_that_found_one_offers_update_now_on_its_channel():
+    found = {"channel": "beta", "result": "would_update", "message": "would update to develop-beta (bbbbbbb)",
+             "ok": True, "at": 0}
+    html = _updates(check=found, channel="beta")
+    assert "Would update to develop-beta (bbbbbbb)." in html
+    assert re.search(r'action="/update/start"[^>]*><input type="hidden" name="channel" value="beta">', html)
+    assert 'class="changes"' not in html, "the check couldn't list them: no list"
+    html = _updates(check={**found, "result": "current", "message": "no release newer than 2.1.0"})
+    assert "No release newer than 2.1.0." in html and "/update/start" not in html
+
+
+def test_after_an_update_the_card_offers_a_rollback_that_warns_about_config_json():
+    html = _updates(phase="updated", branch=None, **{"from": {"version": "2.0.9", "sha": "c" * 40}},
+                    outcome={"command": "update", "result": "updated", "message": "updated to v2.2.0 (ddddddd)",
+                             "ok": True, "at": 0})
+    assert "as installed by an update" in html
+    assert '<div class="notice good" role="status">' in html and "Last update" in html
+    assert re.search(r'action="/update/rollback"[^>]*data-confirm="[^"]*undoing settings saved since', html)
+    assert "Back to 2.0.9 (ccccccc)" in html
+    assert "/update/rollback" not in _updates(phase="rolled_back", **{"from": {"version": "2.0.9", "sha": "c"}})
+
+
+def test_a_failed_update_and_a_failed_rollback_say_so():
+    html = _updates(phase="rolled_back", outcome={"command": "update", "result": "rolled_back", "ok": False,
+                                                  "message": "rolled back to 2.1.0: the app crashed", "at": 0})
+    assert '<div class="notice bad" role="alert">' in html and "Rolled back to 2.1.0: the app crashed." in html
+    html = _updates(phase="rollback_failed", **{"from": {"version": "2.0.9", "sha": "c" * 40}})
+    assert "The last rollback failed" in html and "sudo lll-rollback" in html and "/update/rollback" in html
+    assert "stopped midway" in _updates(phase="checking", **{"from": {"version": "2.0.9", "sha": "c" * 40}})
+
+
+def test_while_one_runs_the_card_follows_it_with_the_buttons_off():
+    html = _updates(running=True, phase="switched", status="Installing the new version",
+                    **{"from": {"version": "2.0.9", "sha": "c" * 40}},
+                    outcome={"command": "update", "result": "updated", "message": "old news", "ok": True, "at": 0})
+    assert 'id="update-running"' in html and "Installing the new version" in html
+    assert "Old news" not in html and "stopped midway" not in html
+    assert re.search(r'action="/update/rollback".*?<button type="submit" class="secondary" disabled>', html)
+    assert "fetch('/update/status'" in html
+
+
+def test_starting_says_how_it_went():
+    assert "Couldn't start it" in _updates(started="failed")
+    assert "already running" in _updates(started="busy")
+    assert "<strong>Started.</strong>" in _updates(started="started")
+    assert "<strong>Started.</strong>" not in _updates(started="started", running=True, status="Saving a rollback point")
+
+
+def test_an_update_found_lists_whats_in_it_linked_to_github():
+    changes = [[200 + n, f"Change {n}"] for n in range(14, 0, -1)]
+    found = {"channel": "releases", "result": "would_update", "message": "would update to v2.2.0 (2222222)",
+             "ok": True, "at": 0, "ref": "v2.2.0", "sha": "2" * 40, "version": "2.2.0", "changes": changes,
+             "packages": True}
+    html = _updates(check=found)
+    assert "<strong>2.1.0 \u2192 2.2.0</strong>" in html
+    assert ('<li><a href="https://github.com/jc214809/LightningLane-Live-LED/pull/214" target="_blank" '
+            'rel="noopener">#214</a><span>Change 14</span></li>') in html
+    assert "Change 3<" in html and "Change 2<" not in html and "and 2 more" in html
+    assert "up to hours on a Pi Zero" in html
+    html = _updates(check={**found, "changes": [[None, "Fix <a> typo"]], "packages": False})
+    assert "<span>Fix &lt;a&gt; typo</span>" in html and "up to hours" not in html
+
+
+def test_while_it_runs_the_card_says_what_its_installing():
+    html = _updates(running=True, phase="checking", status="Checking the new version works",
+                    to={"ref": "develop-beta", "sha": "9" * 40, "version": "2.2.0", "changes": [[201, "Updates card"]]})
+    assert "Updating to develop-beta (9999999)" in html and "Updates card" in html

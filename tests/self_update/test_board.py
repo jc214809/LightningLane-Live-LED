@@ -92,6 +92,21 @@ def test_changed_compares_one_file_between_commits(checkout):
     assert board.changed("a", "b", "requirements.txt") is False
 
 
+def test_what_changed_lists_the_pull_requests_merged_but_not_release_merges(checkout):
+    log = ("Merge pull request #201 from jc214809/feature/updates-card\x1fShow what an update brings\n\x1e\n"
+           "Merge branch 'feature/updater' into feature/update-recovery\x1f\x1e\n"
+           "Merge pull request #197 from jc214809/develop-beta\x1fRelease v2.0.0\x1e\n"
+           "Merge pull request #200 from jc214809/feature/update-recovery\x1f\nRoll back at boot\n\nMore words\x1e\n")
+    board, run = _board(checkout, {("git", "log", "--merges"): log})
+    assert board.what_changed("a", "b") == [(201, "Show what an update brings"), (200, "Roll back at boot")]
+    assert run.calls[0][0] == ["git", "log", "--merges", "--format=%s%x1f%b%x1e", "a..b"]
+
+
+def test_with_no_pull_requests_what_changed_lists_the_commits(checkout):
+    board, _ = _board(checkout, {("git", "log", "--merges"): "", ("git", "log", "--no-merges"): "Fix a typo\nBump it\n"})
+    assert board.what_changed("a", "b") == [(None, "Fix a typo"), (None, "Bump it")]
+
+
 def test_checkout_detaches_unless_going_back_to_a_branch(checkout):
     board, run = _board(checkout)
     board.checkout("abc")

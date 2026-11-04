@@ -25,6 +25,21 @@ def test_a_phase_is_saved_whole(tmp_path):
     assert not list((tmp_path / "lll-update").glob("*.new"))
 
 
+@pytest.mark.parametrize("text", [None, "not json", "[]"])
+def test_no_outcome_or_a_bad_one_reads_as_none(tmp_path, text):
+    if text is not None:
+        (tmp_path / "outcome.json").write_text(text)
+    assert State(str(tmp_path)).load_outcome() is None
+
+
+def test_an_outcome_is_saved_whole_beside_the_state(tmp_path):
+    state = State(str(tmp_path / "lll-update"))
+    state.save_outcome({"command": "update", "result": "updated"})
+    assert state.load_outcome() == {"command": "update", "result": "updated"}
+    assert state.load() == {"phase": "idle", "good": []}, "state.json untouched"
+    assert not list((tmp_path / "lll-update").glob("*.new"))
+
+
 def test_good_commits_keep_the_newest_three_without_repeats():
     record = {"good": ["c", "b", "a"]}
     states.remember_good(record, "d")

@@ -6,6 +6,7 @@ over SSH), so git runs as that user: files git writes stay theirs.
 """
 import os
 import pwd
+import re
 import shutil
 import socket
 import subprocess
@@ -19,6 +20,10 @@ INSTALL_TIMEOUT_S = 3 * 60 * 60
 SYSTEMCTL_TIMEOUT_S = 60
 # The installer's flag for skipping pip; an installer older than the updater doesn't have it.
 SKIP_REQUIREMENTS = "--skip-requirements"
+# A pull request's merge commit; the line after is the PR's title.
+PR_MERGE = re.compile(r"Merge pull request #(\d+) from \S+?/(\S+)")
+# Merges of these branches carry other PRs (a release is develop-beta into main): those are listed instead.
+RELEASE_BRANCHES = ("develop-beta", "main")
 
 
 class CommandFailed(Exception):
@@ -81,6 +86,23 @@ class Board:
     def changed(self, old, new, path):
         """Whether path differs between commits old and new."""
         return self.git("diff", "--quiet", old, new, "--", path, check=False).returncode != 0
+
+    def what_changed(self, old, new):
+        """What's in commit new that isn't in old, newest first: [(PR number, title)] for each pull
+        request merged, or [(None, subject)] per commit when there are none (commits made straight
+        on the branch)."""
+        merges = self.git("log", "--merges", "--format=%s%x1f%b%x1e", f"{old}..{new}").stdout
+        found = []
+        for entry in merges.split("\x1e"):
+            subject, _, body = entry.strip().partition("\x1f")
+            merge = PR_MERGE.match(subject)
+            if merge and merge.group(2) not in RELEASE_BRANCHES:
+                title = next((line.strip() for line in body.splitlines() if line.strip()), subject)
+                found.append((int(merge.group(1)), title))
+        if found:
+            return found
+        commits = self.git("log", "--no-merges", "--format=%s", f"{old}..{new}").stdout
+        return [(None, line.strip()) for line in commits.splitlines() if line.strip()]
 
     def checkout(self, ref, detach=True):
         self.git("checkout", *(["--detach"] if detach else []), ref)

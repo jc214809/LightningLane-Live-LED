@@ -4,10 +4,15 @@ lines of script), since a phone on the setup hotspot has no internet to fetch an
 works without JavaScript; the script adds trip rows and the "unsaved changes" state.
 """
 import json
+import time
 from html import escape
 
 import cli
 from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_names, surprise_names, trip_rows
+from settings_page.updates import BUSY, START_FAILED, STARTED
+from self_update.state import ROLLBACK_FAILED, UNFINISHED
+from self_update.github import REPO
+from self_update.update import BETA, RELEASES, WOULD_UPDATE
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
 # What a save says, by Settings.restart_app's outcome.
@@ -80,6 +85,7 @@ a { color: var(--accent); }
 .page-head h1 { font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
 .page-head p { color: var(--text-2); margin-top: 4px; }
 .stack { display: grid; gap: 20px; }
+.stack.before { margin-bottom: 20px; }
 
 /* Cards */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
@@ -205,6 +211,12 @@ button, .btn { font: inherit; font-weight: 600; display: inline-flex; align-item
 .primary:disabled { opacity: .7; cursor: progress; }
 .secondary { background: var(--surface); color: var(--text); border-color: var(--border-strong); box-shadow: var(--shadow); }
 .secondary:hover { background: var(--surface-2); }
+.secondary:disabled { opacity: .55; cursor: not-allowed; }
+.changes { margin: 0 0 12px; }
+.changes ul { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+.changes li { display: flex; gap: 8px; }
+.changes li a, .changes li .mono { flex: none; min-width: 3.2em; color: var(--text-3); }
+.notice .changes { margin: 8px 0 0; }
 .ghost { background: transparent; color: var(--accent); padding: 0 10px; }
 .ghost:hover { background: var(--accent-soft); }
 button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); }
@@ -276,6 +288,8 @@ ICONS = {
     "phone": '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
     "wifi": '<path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>',
     "save": '<path d="M20 6 9 17l-5-5"/>',
+    "refresh": '<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',
+    "undo": '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
 }
 
 # Proper names for the surprise dropdown, where title case gets them wrong; the rest are title-cased.
@@ -290,7 +304,7 @@ CHARACTER_NAMES = {
 }
 
 SECTIONS = (  # id, nav title, icon
-    ("live", "Live updates", "live"), ("weather", "Weather", "cloud"), ("phone", "PIN by Pushover", "phone"),
+    ("updates", "Updates", "refresh"), ("live", "Live updates", "live"), ("weather", "Weather", "cloud"), ("phone", "PIN by Pushover", "phone"),
     ("parks", "Parks", "pin"), ("trips", "Trip countdown", "calendar"),
     ("sound", "Sound", "sound"), ("panel", "Panel", "board"), ("display", "Display", "sun"),
     ("shows", "Fireworks shows", "sparkle"),
@@ -422,6 +436,28 @@ piModel?.addEventListener('change', () => {
     if (el.tagName === 'SELECT') el.options[0].textContent = text; else el.placeholder = text;
   });
 });
+// Updates: the buttons say they're working (a check can take a while), Roll back asks first, and
+// while an update runs the page follows it, reloading once it's done. The settings page restarts
+// during an update, so a failed ask just tries again.
+document.querySelectorAll('form[data-busy]').forEach(f => f.addEventListener('submit', e => {
+  if (f.dataset.confirm && !confirm(f.dataset.confirm)) return e.preventDefault();
+  const button = f.querySelector('button[type=submit]');
+  button.disabled = true;
+  button.querySelector('span').textContent = f.dataset.busy;
+}));
+const updateRunning = document.getElementById('update-running');
+if (updateRunning) {
+  const follow = async () => {
+    try {
+      const reply = await fetch('/update/status', {headers: {Accept: 'application/json'}});
+      const now = await reply.json();
+      if (!now.running) return location.replace('/?t=' + Date.now() + '#updates');
+      document.getElementById('update-phase').textContent = now.phase;
+    } catch {}
+    setTimeout(follow, 5000);
+  };
+  setTimeout(follow, 5000);
+}
 const links = [...document.querySelectorAll('.toc a')];
 const spy = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
@@ -586,11 +622,13 @@ def _matrix_field(key, label, help_text, options, switch, value, blank="Default"
 
 
 def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),
-                  panel=None):
+                  panel=None, updates=None, started=None):
     """The settings form, filled from config. sound_cards: ALSA device names for the dropdown.
     note: why config.json couldn't be read, if it couldn't. park_names: [(name, destination)]
     for the park picker's suggestions, [] when the list hasn't loaded. panel: form.PanelChoices,
-    the Pi model and Panel size dropdowns and what blank fields say; None leaves them off."""
+    the Pi model and Panel size dropdowns and what blank fields say; None leaves them off.
+    updates: updates.Updates.view(), for the Updates card (None leaves it off); started: how
+    starting an update or rollback went, one of updates.STARTS."""
     ws = config.get("websocket") if isinstance(config.get("websocket"), dict) else {}
     sound = config.get("sound") if isinstance(config.get("sound"), dict) else {}
     countdown = config.get("trip_countdown") if isinstance(config.get("trip_countdown"), dict) else {}
@@ -791,6 +829,8 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
         + '<div class="page-head"><h1>Settings</h1><p>Changes are checked, saved to the board\'s config.json, '
           'and the app restarts to use them.</p></div>'
         + top
+        # First, and outside the settings form: its buttons post forms of their own.
+        + (f'<div class="stack before">{updates_card(updates, started)}</div>' if updates else "")
         + f'<form method="post" action="/save" id="settings"><div class="stack">'
           f'{live}{weather_html}{phone}{park_html}{trips}{sound_html}{panel_html}{display}{shows}{testing}{advanced}</div>'
         + '<div class="savebar"><div class="savebar-in"><div class="status" id="save-status"><span class="dot"></span>'
@@ -798,6 +838,131 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
           f'<button type="submit" class="primary" id="save">{icon("save")}<span>Save and restart</span></button>'
           '</div></div></form></main></div>')
     return document("Board settings", body, SCRIPT)
+
+
+def _when(at):
+    try:
+        return time.strftime("%d %b %H:%M", time.localtime(float(at)))
+    except (TypeError, ValueError, OverflowError, OSError):
+        return "?"
+
+
+def _sentence(text):
+    text = str(text or "").strip()
+    return escape(text[:1].upper() + text[1:] + ("" if text.endswith(".") else "."))
+
+
+def _short(sha):
+    return escape(str(sha)[:7]) if sha else "?"
+
+
+def _post(action, label, glyph, busy, kind="secondary", fields="", confirm=None, disabled=False):
+    """A one-button form of the Updates card. busy: the button's text while it works."""
+    extra = f' data-confirm="{_attr(confirm)}"' if confirm else ""
+    return (f'<form method="post" action="{action}" data-busy="{_attr(busy)}"{extra}>{fields}'
+            f'<button type="submit" class="{kind}"{" disabled" if disabled else ""}>{icon(glyph)}'
+            f'<span>{escape(label)}</span></button></form>')
+
+
+# What's in an update: at most this many of its pull requests, then "and N more".
+CHANGES_SHOWN = 12
+
+
+def _changes(view, found):
+    """What an update brings (updates.Updates.details): the version, its pull requests (linked to
+    GitHub) and whether pip runs. "" if the check couldn't say."""
+    changes = found.get("changes")
+    if changes is None:
+        return ""
+    version = found.get("version")
+    head = (f'<strong>{escape(str(view["version"]))} \u2192 {escape(version)}</strong>'
+            if version and version != view["version"] else f'<strong>{escape(str(version or view["version"]))}'
+            '</strong>, with changes')
+    items = ""
+    for number, title in changes[:CHANGES_SHOWN]:
+        tag = (f'<a href="https://github.com/{REPO}/pull/{int(number)}" target="_blank" rel="noopener">#{int(number)}</a>'
+               if number else '<span class="mono">\u2022</span>')
+        items += f"<li>{tag}<span>{escape(str(title))}</span></li>"
+    more = len(changes) - CHANGES_SHOWN
+    if more > 0:
+        items += f'<li><span class="mono"></span><span class="hint">and {more} more</span></li>'
+    packages = ('<p class="hint">Its Python packages change too, so it takes longer: up to hours on a Pi Zero.</p>'
+                if found.get("packages") else "")
+    return (f'<div class="changes"><p>{head}</p>'
+            + (f'<ul aria-label="What\'s in it">{items}</ul>' if items else "")
+            + f"{packages}</div>")
+
+
+def updates_card(view, started=None):
+    """The Updates card, from updates.Updates.view(): what's installed, how the last update went, a
+    channel to check, and Update now (after a check found one) and Roll back."""
+    running = view["running"]
+    top = ""
+    if started == STARTED and not running:
+        top += _notice("info", "<strong>Started.</strong> It may be finished already: reload the page to see.")
+    elif started == BUSY:
+        top += _notice("warn", "An update or rollback is already running: this one didn't start.")
+    elif started == START_FAILED:
+        top += _notice("bad", "<strong>Couldn't start it.</strong> The board's log says why.", "alert")
+    if running:
+        to = view.get("to") or {}
+        target = f' \u00b7 Updating to {escape(str(to["ref"]))} ({_short(to.get("sha"))})' if to.get("ref") else ""
+        top += _notice("info", f'<strong id="update-phase">{escape(view["status"] or "")}</strong>'
+                               f'<span id="update-running"></span>{target}'
+                               '<br>The board restarts as it updates, and so does this '
+                               'page: it comes back by itself in a few minutes (sign in again if it asks). Don\'t change '
+                               'settings until it\'s done: a rollback puts config.json back as it was before.'
+                               + _changes(view, to))
+    elif view["phase"] in UNFINISHED:
+        top += _notice("warn", f"<strong>An update stopped midway</strong> (at {escape(view['phase'])}). Roll it back "
+                               "below, or restart the board: it rolls back at boot.", "alert")
+    elif view["phase"] == ROLLBACK_FAILED:
+        top += _notice("bad", "<strong>The last rollback failed.</strong> Try Roll back again, or over SSH: "
+                              "<code>sudo lll-rollback</code>.", "alert")
+    outcome = view.get("outcome")
+    if outcome and not running:
+        name = {"update": "update", "rollback": "rollback", "recover": "rollback at boot"}.get(outcome.get("command"),
+                                                                                              "update")
+        top += _notice("good" if outcome.get("ok") else "bad",
+                       f"<strong>Last {name}</strong> ({_when(outcome.get('at'))}): {_sentence(outcome.get('message'))}",
+                       "status" if outcome.get("ok") else "alert")
+
+    where = f"on {escape(view['branch'])}" if view["branch"] else "as installed by an update"
+    installed = (f'<p><strong>{escape(str(view["version"]))}</strong> <span class="mono">{_short(view["sha"])}</span>'
+                 f'</p><p class="hint">{where}</p>')
+    channel = view["channel"]
+    check_form = (f'<form method="post" action="/update/check" data-busy="Checking\u2026" class="add-row">'
+                  + _options("channel", [(RELEASES, "Releases"), (BETA, "Beta")], channel)
+                  + f'<button type="submit" class="secondary"{" disabled" if running else ""}>{icon("refresh")}'
+                    '<span>Check</span></button></form>')
+    check = view.get("check")
+    found = ""
+    if check and not running:
+        kind = "good" if check["result"] == WOULD_UPDATE else ("info" if check["ok"] else "warn")
+        found = _notice(kind, f"<strong>{'Beta' if check['channel'] == BETA else 'Releases'}</strong> "
+                              f"({_when(check['at'])}): {_sentence(check['message'])}")
+        if check["result"] == WOULD_UPDATE:
+            found += (_changes(view, check)
+                      + '<div class="below">'
+                      + _post("/update/start", "Update now", "refresh", "Starting\u2026", "primary",
+                              f'<input type="hidden" name="channel" value="{_attr(check["channel"])}">')
+                      + '</div><p class="hint">A few minutes, longer if its Python packages change. If the new '
+                        'version doesn\'t work within 5 minutes, the board rolls back by itself.</p>')
+    body = (top
+            + _field("update_installed", "Installed", installed)
+            + _field("channel", "Check for a newer version", check_form + found,
+                     "Releases: the newest release. Beta: the newest test version whose checks passed. "
+                     "Never a downgrade: from Beta, Releases waits for a release newer than what's installed."))
+    old = view.get("from")
+    if old and view["phase"] not in ("idle", "rolled_back"):
+        back_to = f"{escape(str(old.get('version')))} ({_short(old.get('sha'))})"
+        body += _field("update_rollback", "Roll back",
+                       _post("/update/rollback", "Roll back", "undo", "Rolling back\u2026",
+                             confirm="Roll back the last update? This also puts back config.json as it was "
+                                     "before it, undoing settings saved since.", disabled=running),
+                       f"Back to {back_to}, as before the last update. This also puts back config.json as it "
+                       "was then, undoing settings saved since.")
+    return _section("updates", "Updates", "This board's version, and newer ones from GitHub.", body, "refresh")
 
 
 def pin_page(shown_s=None, wrong=False, board=None, phone=False, sent=None, signed_out=False):

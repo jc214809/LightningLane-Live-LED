@@ -63,6 +63,7 @@ class Outcome:
     result: str
     message: str
     ok: bool = None  # whether it did what was asked; by default, from the result
+    target: Target = None  # what a check found to install (WOULD_UPDATE)
 
     def __post_init__(self):
         if self.ok is None:
@@ -176,7 +177,7 @@ class Updater:
         if stop:
             return stop
         if dry_run:
-            return Outcome(WOULD_UPDATE, f"would update to {target.ref} ({target.sha[:7]})")
+            return Outcome(WOULD_UPDATE, f"would update to {target.ref} ({target.sha[:7]})", target=target)
         try:
             record = self._take_rollback_point(record, target)
         except (CommandFailed, OSError) as e:

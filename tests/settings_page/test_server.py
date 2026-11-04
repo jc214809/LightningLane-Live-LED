@@ -23,6 +23,30 @@ CONFIG = {"parks": ["EPCOT"], "websocket": {"enabled": False, "api_key": "tp-sec
 SAVE = {"park": "EPCOT", "ws_protocol": "legacy", "trip_start_0": "2027-05-05", "trip_name_0": "May"}
 
 
+class FakeUpdates:
+    """settings_page.updates.Updates without git, systemd or GitHub (tests/settings_page/test_updates.py has its own)."""
+
+    def __init__(self):
+        self.is_running, self.asked = False, []
+
+    def running(self):
+        return self.is_running
+
+    def status(self):
+        return {"running": self.is_running, "phase": "Installing the new version" if self.is_running else None}
+
+    def view(self):
+        return {"version": "2.1.0", "sha": "a" * 40, "branch": "develop-beta", "running": self.is_running,
+                "phase": "idle", "status": None, "from": None, "outcome": None, "check": None, "channel": "releases"}
+
+    def check(self, channel):
+        self.asked.append(("check", channel))
+
+    def start(self, command, channel=None):
+        self.asked.append((command, channel))
+        return "started"
+
+
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         return None
@@ -48,7 +72,7 @@ class Board:
         self.model.write_bytes(b"Raspberry Pi 4 Model B Rev 1.5\0")
         self.settings = Settings(str(self.config), self.gate, state_file=str(self.state), cards_file=str(self.cards),
                                  park_names=ParkNames(str(names), fetch=self.no_fetch),
-                                 model_file=str(self.model))
+                                 model_file=str(self.model), updates=FakeUpdates())
         monkeypatch.setattr(self.settings, "restart_app", lambda: self.restarts.append(1) or "restarted")
         self.httpd = make_server(self.settings, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
@@ -368,3 +392,37 @@ def test_signing_out_clears_the_cookie_and_the_session_so_the_page_asks_for_a_pi
     status, _, html = board.request("/?signedout")
     assert "Signed out." in html and 'action="/save"' not in html
     assert board.request("/save", SAVE)[0] == 303 and board.saved() == CONFIG, "nothing saved"
+
+
+def test_the_update_buttons_need_sign_in_and_the_pages_own_origin(board):
+    for path in ("/update/check", "/update/start", "/update/rollback"):
+        status, headers, _ = board.request(path, {"channel": "beta"})
+        assert status == 303 and headers["Location"] == "/"
+    status, _, _ = board.request("/update/rollback", {}, {"Origin": "http://evil.example"})
+    assert status == 403
+    status, _, body = board.request("/update/status")
+    assert status == 403 and json.loads(body) == {"running": False, "phase": None}
+    assert board.settings.updates.asked == []
+
+
+def test_check_update_and_roll_back_go_to_the_updates_card(board):
+    board.sign_in()
+    assert 'id="updates"' in board.request("/")[2]
+    status, headers, _ = board.request("/update/check", {"channel": "beta"})
+    assert status == 303 and headers["Location"] == "/#updates"
+    status, headers, _ = board.request("/update/start", {"channel": "beta"})
+    assert headers["Location"] == "/?update=started#updates"
+    board.request("/update/rollback", {"channel": "beta"})
+    assert board.settings.updates.asked == [("check", "beta"), ("update", "beta"), ("rollback", None)]
+    assert "<strong>Started.</strong>" in board.request("/?update=started")[2]
+    assert "<strong>Started.</strong>" not in board.request("/?update=whatever")[2]
+
+
+def test_while_an_update_runs_its_status_is_followed_and_saving_waits(board):
+    board.sign_in()
+    board.settings.updates.is_running = True
+    status, _, body = board.request("/update/status")
+    assert status == 200 and json.loads(body) == {"running": True, "phase": "Installing the new version"}
+    status, _, html = board.request("/save", SAVE)
+    assert status == 409 and "An update is running" in html and board.saved() == CONFIG and board.restarts == []
+    assert 'value="May"' in html, "what was typed stays on the page"

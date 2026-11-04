@@ -4,7 +4,8 @@ lll-settings.service from the app's folder, as root (it writes config.json and r
 Its own service, not part of disney.py, so a config.json that stops the app can still be fixed
 here. While comitup's setup hotspot is up, anyone on it gets the page (they're in the room, with
 the board); on the home network it asks for the PIN the board shows (pins.py), which Pushover can
-also send to a phone (pushover.py). Standard library
+also send to a phone (pushover.py). Its Updates card (updates.py) checks for and starts updates.
+Standard library
 and certifi (the app's own requirement) only, so it runs on any board the app runs on.
 """
 import argparse
@@ -26,6 +27,7 @@ from settings_page import page, pushover
 from settings_page.form import apply_form, chosen_device, panel_choices, volume_from_form
 from settings_page.park_names import ParkNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
+from settings_page.updates import STARTS, Updates
 from utils import debug
 from utils.config import CONFIG_FILE, pushover_keys, save_config, sound_settings
 from utils.sound import play_test, set_volume
@@ -44,17 +46,19 @@ PARK_NAMES_FILE = "park_names.json"
 
 class Settings:
     """What the handlers share: where config.json is, the PIN gate, the park names (kept in
-    park_names.json beside config.json), and one save at a time. send_pushover: pushover.send_pin."""
+    park_names.json beside config.json), one save at a time, and the Updates card's updates.Updates.
+    send_pushover: pushover.send_pin."""
 
     def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
                  state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE,
-                 send_pushover=pushover.send_pin):
+                 send_pushover=pushover.send_pin, updates=None):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
         self.model_file, self.send_pushover = model_file, send_pushover
         self.gate = gate or PinGate()
         self.park_names = park_names or ParkNames(
             os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE))
         self.state_file = state_file
+        self.updates = updates or Updates()
         self.save_lock = threading.Lock()
 
     def hotspot(self):
@@ -232,27 +236,34 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return parse_qs(self.rfile.read(length).decode("utf-8", "replace"), keep_blank_values=True)
 
-    def _page(self, problems=(), saved=None, config=None):
+    def _page(self, problems=(), saved=None, config=None, started=None):
         loaded, problem = self.settings.load()
         config = config if config is not None else loaded
         return page.settings_page(config, self.settings.sound_cards(), self._in_setup(), problems, saved,
                                   board_name(), problem, self.settings.park_names.names(),
-                                  self.settings.panel_choices(config))
+                                  self.settings.panel_choices(config), self.settings.updates.view(), started)
 
     # --- routes
 
     def do_GET(self):
         url = urlsplit(self.path)
+        if url.path == "/update/status":  # the page's script, following a running update
+            if not self._allowed():
+                return self._send_json(403, {"running": False, "phase": None})
+            return self._send_json(200, self.settings.updates.status())
         if url.path != "/":
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
-        query = parse_qs(url.query, keep_blank_values=True)  # "?wrong", "?shown", "?sent=...", "?signedout"
+        # "?wrong", "?shown", "?sent=...", "?signedout", "?saved=...", "?update=..."
+        query = parse_qs(url.query, keep_blank_values=True)
         if not self._allowed():
             sent = query.get("sent", [None])[0]
             return self._send(200, page.pin_page(PIN_SHOWN_S if "shown" in query else None, "wrong" in query,
                                                  board_name(), bool(self.settings.pushover_keys()),
                                                  sent if sent in page.SENT else None, "signedout" in query))
         saved = query.get("saved", [None])[0]
-        self._send(200, self._page(saved=saved if saved in page.SAVED else None))
+        started = query.get("update", [None])[0]
+        self._send(200, self._page(saved=saved if saved in page.SAVED else None,
+                                   started=started if started in STARTS else None))
 
     def _volume(self, form):
         """POST /volume, the page script's Volume buttons: volume_action "set" or "test"; answers
@@ -289,12 +300,18 @@ class Handler(BaseHTTPRequestHandler):
             self.settings.gate.sign_out(self._token())
             return self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; "
                                                                  f"SameSite=Strict")])
-        if path not in ("/save", "/volume"):
+        if path not in ("/save", "/volume", "/update/check", "/update/start", "/update/rollback"):
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
         if not self._allowed():
             return self._redirect("/")
         if path == "/volume":
             return self._volume(form)
+        if path.startswith("/update/"):
+            return self._update(path, (form.get("channel") or [""])[0])
+        if self.settings.updates.running():  # a rollback would put back config.json as it was, losing the save
+            loaded, _ = self.settings.load()
+            return self._send(409, self._page(["An update is running: save once it's done (see Updates)."],
+                                              config=apply_form(loaded, form, self.settings.park_names.names())[0]))
         with self.settings.save_lock:
             config, _ = self.settings.load()
             new, problems = apply_form(config, form, self.settings.park_names.names())
@@ -311,6 +328,15 @@ class Handler(BaseHTTPRequestHandler):
         # show that's playing carries on at the new volume.
         outcome = self.settings.set_volume(new) if volume_only(config, new) else self.settings.restart_app()
         self._redirect(f"/?saved={outcome}")
+
+    def _update(self, path, channel):
+        """POST /update/check, /update/start (channel) and /update/rollback, the Updates card's buttons."""
+        updates = self.settings.updates
+        if path == "/update/check":
+            updates.check(channel)
+            return self._redirect("/#updates")
+        started = updates.start("update", channel) if path == "/update/start" else updates.start("rollback")
+        self._redirect(f"/?update={started}#updates")
 
 
 def volume_only(old, new):

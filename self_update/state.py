@@ -1,5 +1,6 @@
 """The updater's state in STATE_DIR (root's, kept across reboots): state.json, the rollback point's
-pip freeze and config.json copy, and a lock so two updates never run at once.
+pip freeze and config.json copy, the last command's outcome (for the settings page), and a lock
+so two updates never run at once.
 
 state.json: "phase" (below), "from" (the rollback point: "sha", "branch" (None when detached),
 "version", "requirements_changed"), "to" (the update's "sha", "ref", "channel"), "reason" (why the
@@ -30,6 +31,7 @@ class State:
         self.path = os.path.join(folder, "state.json")
         self.freeze_path = os.path.join(folder, "pip-freeze.txt")
         self.config_path = os.path.join(folder, "config.json.before-update")
+        self.outcome_path = os.path.join(folder, "outcome.json")
 
     def load(self):
         """state.json, or a fresh state when there isn't one (or it's unreadable: logged by the caller's
@@ -48,14 +50,32 @@ class State:
 
     def save(self, state):
         """Write state.json whole or not at all, flushed to disk: it's what a power cut leaves."""
+        self._write(self.path, state)
+
+    def save_outcome(self, outcome):
+        """The last update, rollback or recovery's outcome ("command", "channel", "result", "message",
+        "ok", "at"), for the settings page. Its own file, written without the lock: a refused update
+        (another one running) has an outcome too."""
+        self._write(self.outcome_path, outcome)
+
+    def load_outcome(self):
+        """outcome.json, or None when there isn't one (or it's unreadable)."""
+        try:
+            with open(self.outcome_path, encoding="utf-8") as f:
+                found = json.load(f)
+        except (OSError, ValueError):
+            return None
+        return found if isinstance(found, dict) else None
+
+    def _write(self, path, data):
         os.makedirs(self.folder, mode=0o700, exist_ok=True)
-        temp = self.path + ".new"
+        temp = path + ".new"
         with open(temp, "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=2)
+            json.dump(data, f, indent=2)
             f.write("\n")
             f.flush()
             os.fsync(f.fileno())
-        os.replace(temp, self.path)
+        os.replace(temp, path)
 
     def set_phase(self, state, phase, **changes):
         state.update(phase=phase, **changes)
