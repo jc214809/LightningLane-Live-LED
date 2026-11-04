@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```sh
-# Run all tests / one file / one test
-pytest
+# Run all tests (in parallel, as CI does; plain pytest runs them one at a time) / one file / one test
+pytest -n auto
 pytest tests/api/test_disney_api.py
 pytest tests/api/test_disney_api.py::test_function_name
 
