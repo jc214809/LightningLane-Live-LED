@@ -1,7 +1,7 @@
 import json
 import re
 
-from settings_page.page import SENT, pin_page, settings_page
+from settings_page.page import SENT, check_result, pin_page, settings_page
 
 CONFIG = {"trip_countdown": {"enabled": True, "trip_dates": [
     {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"}, "2027-06-01"]}}
@@ -197,7 +197,8 @@ def test_signed_in_the_top_bar_has_sign_out_but_not_on_the_hotspot():
 
 
 UPDATES = {"version": "2.1.0", "sha": "a" * 40, "branch": "develop-beta", "running": False, "phase": "idle",
-           "status": None, "from": None, "outcome": None, "check": None, "channel": "releases"}
+           "status": None, "step": None, "from": None, "outcome": None, "check": None, "channel": "releases",
+           "auto_check": False}
 
 
 def _updates(started=None, **changes):
@@ -218,12 +219,33 @@ def test_the_updates_card_is_first_outside_the_settings_form_with_its_own_forms(
 def test_a_check_that_found_one_offers_update_now_on_its_channel():
     found = {"channel": "beta", "result": "would_update", "message": "would update to develop-beta (bbbbbbb)",
              "ok": True, "at": 0}
-    html = _updates(check=found, channel="beta")
-    assert "Would update to develop-beta (bbbbbbb)." in html
+    html = _updates(check={**found, "ref": "develop-beta", "sha": "b" * 40}, channel="beta")
+    assert '<div class="notice new" role="status">' in html
+    assert "<strong>Update available on Beta: develop-beta bbbbbbb</strong>" in html, "no version: its commit"
     assert re.search(r'action="/update/start"[^>]*><input type="hidden" name="channel" value="beta">', html)
     assert 'class="changes"' not in html, "the check couldn't list them: no list"
     html = _updates(check={**found, "result": "current", "message": "no release newer than 2.1.0"})
+    assert '<div class="notice good" role="status">' in html and "this is the newest on Beta" in html
     assert "No release newer than 2.1.0." in html and "/update/start" not in html
+
+
+def test_a_check_says_up_to_date_waiting_or_blocked_apart():
+    check = {"channel": "beta", "ok": True, "at": 0}
+    html = _updates(check={**check, "result": "waiting", "message": "3333333's CI is still running (test)"})
+    assert "Up to date for now" in html and "isn't ready yet" in html and "CI is still running" in html
+    assert '<div class="notice info"' in html and "/update/start" not in html
+    html = _updates(check={**check, "result": "blocked", "ok": False, "message": "fireworks is playing"})
+    assert '<div class="notice warn"' in html and "Can't update right now:</strong> Fireworks is playing." in html
+    assert "Up to date" not in html
+
+
+def test_with_no_check_the_page_checks_the_installed_channel_by_itself():
+    html = _updates(auto_check=True, channel="beta")
+    assert '<div id="update-check" data-auto="beta">' in html and "Checking Beta for a newer version" in html
+    assert "fetch('/update/check'" in html
+    assert 'id="update-check"' not in _updates(), "nothing to check, nothing said"
+    assert check_result({**UPDATES, "auto_check": True})
+    assert check_result(UPDATES) == ""
 
 
 def test_after_an_update_the_card_offers_a_rollback_that_warns_about_config_json():
@@ -234,6 +256,8 @@ def test_after_an_update_the_card_offers_a_rollback_that_warns_about_config_json
     assert '<div class="notice good" role="status">' in html and "Last update" in html
     assert re.search(r'action="/update/rollback"[^>]*data-confirm="[^"]*undoing settings saved since', html)
     assert "Back to 2.0.9 (ccccccc)" in html
+    html = _updates(phase="updated", **{"from": {"version": "2.0.9", "sha": "c" * 40, "branch": "develop-beta"}})
+    assert "Back to 2.0.9 (ccccccc) on develop-beta, as before the last update" in html, "its commit, not a channel"
     assert "/update/rollback" not in _updates(phase="rolled_back", **{"from": {"version": "2.0.9", "sha": "c"}})
 
 
@@ -247,13 +271,20 @@ def test_a_failed_update_and_a_failed_rollback_say_so():
 
 
 def test_while_one_runs_the_card_follows_it_with_the_buttons_off():
-    html = _updates(running=True, phase="switched", status="Installing the new version",
+    html = _updates(running=True, phase="switched", status="Installing the new version", step=2,
                     **{"from": {"version": "2.0.9", "sha": "c" * 40}},
                     outcome={"command": "update", "result": "updated", "message": "old news", "ok": True, "at": 0})
     assert 'id="update-running"' in html and "Installing the new version" in html
+    assert ('<ol class="steps" id="update-steps" aria-label="Steps"><li class="done">Checking it can update</li>'
+            '<li class="done">Saving a rollback point</li><li class="now" aria-current="step">Installing the new '
+            'version</li><li>Restarting and checking it works</li></ol>') in html
     assert "Old news" not in html and "stopped midway" not in html
     assert re.search(r'action="/update/rollback".*?<button type="submit" class="secondary" disabled>', html)
     assert "fetch('/update/status'" in html
+    html = _updates(running=True, phase="rolling_back", status="Rolling back", step=None, auto_check=True,
+                    check={"channel": "beta", "result": "current", "ok": True, "at": 0, "message": "x"})
+    assert 'id="update-steps" aria-label="Steps" hidden>' in html, "a rollback has no steps"
+    assert 'id="update-check"' not in html, "no check while it runs"
 
 
 def test_starting_says_how_it_went():
@@ -269,7 +300,7 @@ def test_an_update_found_lists_whats_in_it_linked_to_github():
              "ok": True, "at": 0, "ref": "v2.2.0", "sha": "2" * 40, "version": "2.2.0", "changes": changes,
              "packages": True}
     html = _updates(check=found)
-    assert "<strong>2.1.0 \u2192 2.2.0</strong>" in html
+    assert "Update available on Releases: 2.2.0" in html and "<strong>2.1.0 \u2192 2.2.0</strong>" in html
     assert ('<li><a href="https://github.com/jc214809/LightningLane-Live-LED/pull/214" target="_blank" '
             'rel="noopener">#214</a><span>Change 14</span></li>') in html
     assert "Change 3<" in html and "Change 2<" not in html and "and 2 more" in html

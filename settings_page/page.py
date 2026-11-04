@@ -9,10 +9,10 @@ from html import escape
 
 import cli
 from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_names, surprise_names, trip_rows
-from settings_page.updates import BUSY, START_FAILED, STARTED
+from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
 from self_update.github import REPO
-from self_update.update import BETA, RELEASES, WOULD_UPDATE
+from self_update.update import BETA, CURRENT, RELEASES, WAITING, WOULD_UPDATE
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
 # What a save says, by Settings.restart_app's outcome.
@@ -233,6 +233,18 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
 .notice.info { color: var(--text-2); background: var(--surface-2); border-color: var(--border); }
 .notice.info svg { color: var(--accent); }
 .card-body > .notice { margin: 16px 0 0; }
+.notice.new { color: var(--text); background: var(--accent-soft); border-color: var(--accent); }
+.notice.new svg { color: var(--accent); }
+.notice .when { color: var(--text-3); font-weight: 400; }
+.steps { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
+.steps li { display: flex; align-items: center; gap: 10px; color: var(--text-3); }
+.steps li::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; border: 2px solid currentColor; }
+.steps li.done { color: var(--good); }
+.steps li.done::before { background: currentColor; }
+.steps li.now { color: var(--text); font-weight: 600; }
+.steps li.now::before { border-color: var(--accent); background: var(--accent); animation: beat 1.2s ease-in-out infinite; }
+@keyframes beat { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .steps li.now::before { animation: none; } }
 
 /* Save bar */
 .savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; border-top: 1px solid var(--border);
@@ -439,12 +451,15 @@ piModel?.addEventListener('change', () => {
 // Updates: the buttons say they're working (a check can take a while), Roll back asks first, and
 // while an update runs the page follows it, reloading once it's done. The settings page restarts
 // during an update, so a failed ask just tries again.
-document.querySelectorAll('form[data-busy]').forEach(f => f.addEventListener('submit', e => {
+// On the document, not each form: the page's own check puts in an Update now form later.
+document.addEventListener('submit', e => {
+  const f = e.target;
+  if (!f.matches('form[data-busy]')) return;
   if (f.dataset.confirm && !confirm(f.dataset.confirm)) return e.preventDefault();
   const button = f.querySelector('button[type=submit]');
   button.disabled = true;
   button.querySelector('span').textContent = f.dataset.busy;
-}));
+});
 const updateRunning = document.getElementById('update-running');
 if (updateRunning) {
   const follow = async () => {
@@ -453,11 +468,31 @@ if (updateRunning) {
       const now = await reply.json();
       if (!now.running) return location.replace('/?t=' + Date.now() + '#updates');
       document.getElementById('update-phase').textContent = now.phase;
+      const steps = document.getElementById('update-steps');
+      if (steps) {
+        steps.hidden = now.step === null;
+        steps.querySelectorAll('li').forEach((li, i) => {
+          li.className = i < now.step ? 'done' : i === now.step ? 'now' : '';
+          if (i === now.step) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+        });
+      }
     } catch {}
     setTimeout(follow, 5000);
   };
   setTimeout(follow, 5000);
 }
+// No check yet: check the installed channel now (the board keeps it ten minutes), without
+// reloading the page over unsaved settings.
+const autoCheck = document.querySelector('#update-check[data-auto]');
+if (autoCheck) (async () => {
+  try {
+    const reply = await fetch('/update/check', {method: 'POST', body: new URLSearchParams({channel: autoCheck.dataset.auto}),
+                                                headers: {Accept: 'application/json'}});
+    autoCheck.outerHTML = (await reply.json()).html;  // a signed-out page gets HTML back, and lands in catch
+  } catch {
+    autoCheck.querySelector('div').textContent = "Couldn't check: press Check to try again.";
+  }
+})();
 const links = [...document.querySelectorAll('.toc a')];
 const spy = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
@@ -498,7 +533,7 @@ def message_page(title, text):
 
 
 def _notice(kind, html, role="status"):
-    glyph = {"good": "check", "bad": "alert", "warn": "info", "info": "info"}[kind]
+    glyph = {"good": "check", "bad": "alert", "warn": "info", "info": "info", "new": "refresh"}[kind]
     return f'<div class="notice {kind}" role="{role}">{icon(glyph)}<div>{html}</div></div>'
 
 
@@ -909,9 +944,10 @@ def updates_card(view, started=None):
         target = f' \u00b7 Updating to {escape(str(to["ref"]))} ({_short(to.get("sha"))})' if to.get("ref") else ""
         top += _notice("info", f'<strong id="update-phase">{escape(view["status"] or "")}</strong>'
                                f'<span id="update-running"></span>{target}'
-                               '<br>The board restarts as it updates, and so does this '
+                               + _steps(view.get("step"))
+                               + '<p>The board restarts as it updates, and so does this '
                                'page: it comes back by itself in a few minutes (sign in again if it asks). Don\'t change '
-                               'settings until it\'s done: a rollback puts config.json back as it was before.'
+                               'settings until it\'s done: a rollback puts config.json back as it was before.</p>'
                                + _changes(view, to))
     elif view["phase"] in UNFINISHED:
         top += _notice("warn", f"<strong>An update stopped midway</strong> (at {escape(view['phase'])}). Roll it back "
@@ -935,27 +971,17 @@ def updates_card(view, started=None):
                   + _options("channel", [(RELEASES, "Releases"), (BETA, "Beta")], channel)
                   + f'<button type="submit" class="secondary"{" disabled" if running else ""}>{icon("refresh")}'
                     '<span>Check</span></button></form>')
-    check = view.get("check")
-    found = ""
-    if check and not running:
-        kind = "good" if check["result"] == WOULD_UPDATE else ("info" if check["ok"] else "warn")
-        found = _notice(kind, f"<strong>{'Beta' if check['channel'] == BETA else 'Releases'}</strong> "
-                              f"({_when(check['at'])}): {_sentence(check['message'])}")
-        if check["result"] == WOULD_UPDATE:
-            found += (_changes(view, check)
-                      + '<div class="below">'
-                      + _post("/update/start", "Update now", "refresh", "Starting\u2026", "primary",
-                              f'<input type="hidden" name="channel" value="{_attr(check["channel"])}">')
-                      + '</div><p class="hint">A few minutes, longer if its Python packages change. If the new '
-                        'version doesn\'t work within 5 minutes, the board rolls back by itself.</p>')
     body = (top
             + _field("update_installed", "Installed", installed)
-            + _field("channel", "Check for a newer version", check_form + found,
+            + _field("channel", "Check for a newer version", check_form + ("" if running else check_result(view)),
                      "Releases: the newest release. Beta: the newest test version whose checks passed. "
                      "Never a downgrade: from Beta, Releases waits for a release newer than what's installed."))
     old = view.get("from")
     if old and view["phase"] not in ("idle", "rolled_back"):
-        back_to = f"{escape(str(old.get('version')))} ({_short(old.get('sha'))})"
+        # The exact commit (and branch) from before the update, whatever channel is picked above.
+        # Plain text: the hint escapes it.
+        sha = str(old.get("sha") or "?")[:7]
+        back_to = f"{old.get('version')} ({sha})" + (f" on {old['branch']}" if old.get("branch") else "")
         body += _field("update_rollback", "Roll back",
                        _post("/update/rollback", "Roll back", "undo", "Rolling back\u2026",
                              confirm="Roll back the last update? This also puts back config.json as it was "
@@ -963,6 +989,54 @@ def updates_card(view, started=None):
                        f"Back to {back_to}, as before the last update. This also puts back config.json as it "
                        "was then, undoing settings saved since.")
     return _section("updates", "Updates", "This board's version, and newer ones from GitHub.", body, "refresh")
+
+
+def _steps(step):
+    """An update's STEPS, step (an index) the one it's on; hidden for a rollback (step None)."""
+    items = ""
+    for i, text in enumerate(STEPS):
+        if step is not None and i < step:
+            items += f'<li class="done">{escape(text)}</li>'
+        elif i == step:
+            items += f'<li class="now" aria-current="step">{escape(text)}</li>'
+        else:
+            items += f"<li>{escape(text)}</li>"
+    return f'<ol class="steps" id="update-steps" aria-label="Steps"{" hidden" if step is None else ""}>{items}</ol>'
+
+
+def check_result(view):
+    """What the last check found (updates.Updates.view()'s "check"), under the Check button: an
+    update with Update now, the newest already, or why it can't; while the page's own check runs,
+    a placeholder its script replaces. "" when there's nothing to say."""
+    check = view.get("check")
+    if not check:
+        if not view.get("auto_check"):
+            return ""
+        name = "Beta" if view["channel"] == BETA else "Releases"
+        return (f'<div id="update-check" data-auto="{_attr(view["channel"])}">'
+                + _notice("info", f"Checking {name} for a newer version\u2026") + "</div>")
+    name = "Beta" if check["channel"] == BETA else "Releases"
+    when = f' <span class="when">\u00b7 checked {_when(check["at"])}</span>'
+    if check["result"] == WOULD_UPDATE:
+        version = check.get("version")
+        what = escape(version) if version and version != view["version"] else \
+            f'{escape(str(check.get("ref")))} {_short(check.get("sha"))}'
+        found = (_notice("new", f"<strong>Update available on {name}: {what}</strong>{when}"
+                                + _changes(view, check))
+                 + '<div class="below">'
+                 + _post("/update/start", "Update now", "refresh", "Starting\u2026", "primary",
+                         f'<input type="hidden" name="channel" value="{_attr(check["channel"])}">')
+                 + '</div><p class="hint">A few minutes, longer if its Python packages change. If the new '
+                   'version doesn\'t work within 5 minutes, the board rolls back by itself.</p>')
+    elif check["result"] == CURRENT:
+        found = _notice("good", f"<strong>Up to date:</strong> this is the newest on {name}.{when}"
+                                f'<br><span class="when">{_sentence(check["message"])}</span>')
+    elif check["result"] == WAITING:
+        found = _notice("info", f"<strong>Up to date for now:</strong> a newer {name} version isn't ready yet."
+                                f'{when}<br><span class="when">{_sentence(check["message"])}</span>')
+    else:
+        found = _notice("warn", f"<strong>Can't update right now:</strong> {_sentence(check['message'])}{when}")
+    return f'<div id="update-check">{found}</div>'
 
 
 def pin_page(shown_s=None, wrong=False, board=None, phone=False, sent=None, signed_out=False):

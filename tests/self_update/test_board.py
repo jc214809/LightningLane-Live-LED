@@ -69,6 +69,14 @@ def test_branch_is_none_when_detached(checkout):
     assert board.branch() == "develop-beta"
 
 
+def test_tags_at_lists_a_commits_tags(checkout):
+    board, run = _board(checkout, {("git", "tag"): "v2.1.0\nv2.1.0-rc\n"})
+    assert board.tags_at("abc") == ["v2.1.0", "v2.1.0-rc"]
+    assert run.args() == [["git", "tag", "--points-at", "abc"]]
+    board, _ = _board(checkout, {("git", "tag"): ""})
+    assert board.tags_at("abc") == []
+
+
 def test_changes_list_tracked_files_only(checkout):
     board, run = _board(checkout, {("git", "status"): " M disney.py\n"})
     assert board.changes() == [" M disney.py"]

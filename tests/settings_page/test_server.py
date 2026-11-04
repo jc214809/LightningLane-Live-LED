@@ -42,6 +42,9 @@ class FakeUpdates:
     def check(self, channel):
         self.asked.append(("check", channel))
 
+    def auto_check(self, channel):
+        self.asked.append(("auto_check", channel))
+
     def start(self, command, channel=None):
         self.asked.append((command, channel))
         return "started"
@@ -416,6 +419,15 @@ def test_check_update_and_roll_back_go_to_the_updates_card(board):
     assert board.settings.updates.asked == [("check", "beta"), ("update", "beta"), ("rollback", None)]
     assert "<strong>Started.</strong>" in board.request("/?update=started")[2]
     assert "<strong>Started.</strong>" not in board.request("/?update=whatever")[2]
+
+
+def test_the_pages_own_check_answers_with_the_cards_result(board):
+    board.request("/update/check", {"channel": "beta"}, {"Accept": "application/json"})
+    assert board.settings.updates.asked == [], "signed out: nothing checked"
+    board.sign_in()
+    status, _, body = board.request("/update/check", {"channel": "beta"}, {"Accept": "application/json"})
+    assert status == 200 and board.settings.updates.asked == [("auto_check", "beta")]
+    assert json.loads(body) == {"html": ""}, "the fake's view has no check to show"
 
 
 def test_while_an_update_runs_its_status_is_followed_and_saving_waits(board):

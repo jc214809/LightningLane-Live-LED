@@ -46,9 +46,10 @@ HEALTH_WINDOW_S = 5 * 60
 HEALTH_POLL_S = 5
 
 # Outcome results.
-UPDATED, CURRENT, BLOCKED, WOULD_UPDATE = "updated", "current", "blocked", "would_update"
+# WAITING: nothing to install yet, but there's something newer (beta's tip, before its CI passes).
+UPDATED, CURRENT, BLOCKED, WOULD_UPDATE, WAITING = "updated", "current", "blocked", "would_update", "waiting"
 ROLLED_BACK, ROLLBACK_FAILED, NOTHING_TO_UNDO = "rolled_back", "rollback_failed", "nothing_to_undo"
-SUCCESSES = (UPDATED, CURRENT, WOULD_UPDATE, ROLLED_BACK)
+SUCCESSES = (UPDATED, CURRENT, WOULD_UPDATE, WAITING, ROLLED_BACK)
 
 
 @dataclass
@@ -114,18 +115,19 @@ class Updater:
         return problems
 
     def plan(self, channel):
-        """(Target, None), or (None, why there's nothing to install). Raises github.GitHubError."""
+        """(Target, None), or (None, the Outcome saying why there's nothing to install: CURRENT or
+        WAITING). Raises github.GitHubError."""
         if channel == RELEASES:
             tag = newest_release(self.gh.releases(), self.installed_version)
             if not tag:
-                return None, f"no release newer than {self.installed_version}"
+                return None, Outcome(CURRENT, f"no release newer than {self.installed_version}")
             return Target(RELEASES, tag), None
         sha = self.gh.branch_tip(BETA_BRANCH)
         if sha == self.board.head():
-            return None, f"already on {BETA_BRANCH}'s tip ({sha[:7]})"
+            return None, Outcome(CURRENT, f"already on {BETA_BRANCH}'s tip ({sha[:7]})")
         problem = self.gh.ci_problem(sha)
         if problem:
-            return None, problem
+            return None, Outcome(WAITING, problem)
         return Target(BETA, BETA_BRANCH, sha), None
 
     def _resolve(self, target):
@@ -163,13 +165,13 @@ class Updater:
         problems = self.preflight()
         target = None
         try:
-            target, why = self.plan(channel)
+            target, nothing = self.plan(channel)
         except github.GitHubError as e:
             problems.append(str(e))
         if problems:
             return Outcome(BLOCKED, "; ".join(problems))
         if target is None:
-            return Outcome(CURRENT, why)
+            return nothing
         try:
             stop = self._resolve(target)
         except CommandFailed as e:
