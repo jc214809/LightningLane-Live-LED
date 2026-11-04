@@ -113,6 +113,7 @@ class FakeBoard:
 class FakeGitHub:
     def __init__(self):
         self.tags, self.tip, self.ci, self.error = ["v2.2.0", "v2.1.0", "v2.0.0"], BETA_TIP, None, None
+        self.runs = []
 
     def _maybe_fail(self):
         if self.error:
@@ -126,8 +127,8 @@ class FakeGitHub:
         self._maybe_fail()
         return self.tip
 
-    def ci_problem(self, sha):
-        return self.ci
+    def ci_status(self, sha):
+        return self.ci, self.runs
 
 
 @pytest.fixture
@@ -193,8 +194,10 @@ def test_beta_installs_the_tip_once_ci_passed(env):
 
 def test_beta_waits_for_ci(env):
     env.gh.ci = "3333333's CI is still running (test (3.11))"
+    env.gh.runs = [("test (3.11)", "running"), ("test (3.13)", "passed")]
     outcome = env.updater.update(BETA)
     assert outcome.result == "waiting" and outcome.ok and "still running" in outcome.message
+    assert outcome.runs == env.gh.runs, "for the card to list"
     assert env.board.calls == [], "nothing fetched or changed"
 
 

@@ -65,6 +65,7 @@ class Outcome:
     message: str
     ok: bool = None  # whether it did what was asked; by default, from the result
     target: Target = None  # what a check found to install (WOULD_UPDATE)
+    runs: list = None  # what's holding it back (WAITING): its CI runs, as github.ci_status gives them
 
     def __post_init__(self):
         if self.ok is None:
@@ -125,9 +126,9 @@ class Updater:
         sha = self.gh.branch_tip(BETA_BRANCH)
         if sha == self.board.head():
             return None, Outcome(CURRENT, f"already on {BETA_BRANCH}'s tip ({sha[:7]})")
-        problem = self.gh.ci_problem(sha)
+        problem, runs = self.gh.ci_status(sha)
         if problem:
-            return None, Outcome(WAITING, problem)
+            return None, Outcome(WAITING, problem, runs=runs)
         return Target(BETA, BETA_BRANCH, sha), None
 
     def _resolve(self, target):

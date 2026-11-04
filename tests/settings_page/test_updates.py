@@ -141,6 +141,14 @@ def test_a_check_is_a_dry_run_kept_for_ten_minutes(tmp_path):
     assert updates.view()["check"] is None
 
 
+def test_a_check_waiting_on_ci_keeps_its_runs(tmp_path):
+    updates, _, _, _ = make(tmp_path, outcome=Outcome("waiting", "3333333's CI is still running (test (3.11))",
+                                                      runs=[("test (3.11)", "running"), ("test (3.13)", "passed")]))
+    updates.check("beta")
+    check = updates.view()["check"]
+    assert check["result"] == "waiting" and check["runs"] == [["test (3.11)", "running"], ["test (3.13)", "passed"]]
+
+
 def test_a_check_with_a_bad_channel_does_nothing(tmp_path):
     updates, updater, _, _ = make(tmp_path)
     updates.check("nightly")
