@@ -1061,4 +1061,4 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
   survive the settings page's restart, so a browser signs in again after an update.
 
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
-`lll-rollback` (done) → the Updates card (done) → TinyPi before merging.
+`lll-rollback` (done) → the Updates card (done, #201) → a board check once it's merged.
