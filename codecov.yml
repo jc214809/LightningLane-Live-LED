@@ -1,10 +1,6 @@
 # Fixed bars, not Codecov's default of "never lower than the branch merged into", which failed a PR
 # for 98.42% against 98.45%. The checks matter beyond the PR: the updater's Beta channel won't
 # install a develop-beta commit with any failed check run (self_update/github.py).
-codecov:
-  notify:
-    after_n_builds: 2  # CI's two coverage halves: no verdict on half the tests
-
 coverage:
   status:
     project:
