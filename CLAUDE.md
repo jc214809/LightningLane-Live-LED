@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```sh
-# Run all tests / one file / one test
-pytest
+# Run all tests (in parallel, as CI does; plain pytest runs them one at a time) / one file / one test
+pytest -n auto
 pytest tests/api/test_disney_api.py
 pytest tests/api/test_disney_api.py::test_function_name
 
@@ -134,6 +134,7 @@ Display rules:
 ### Testing
 
 - `tests/stubs/conftest.py` intercepts `config.json` reads with a dummy config and stubs the `driver` module, so tests run without hardware. Stubs for `aiohttp`, `requests` and `pyowm` live in `tests/stubs/` and mirror the real libraries' names and exceptions; check real-library behaviour separately when upgrading one.
+- CI (`coverage.yml`) runs `pytest -n auto`: 3.13 without coverage, 3.11 with it, uploaded to Codecov (`codecov.yml`: fixed 90% project and patch targets; its checks also gate the updater's Beta channel).
 - App code logs through `utils/debug` (logger `disney-lll`), which pytest's `caplog` doesn't see: check a warning with `monkeypatch.setattr(module.debug, "warning", warnings.append)`. `tools/` scripts use plain `logging`, so `caplog` works there.
 - Animation tests mirror the package (`tests/display/animation/`, one file per module or character); shared fakes (`FakeCanvas`, `FakeMatrix`, …) in `support.py`; its `conftest.py` stubs `graphics` by patching `animation.drawing`. Landmark tests do the same in `tests/display/landmarks/`.
 
