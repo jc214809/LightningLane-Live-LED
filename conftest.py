@@ -61,3 +61,16 @@ def _no_heartbeat(tmp_path, monkeypatch):
     import utils.heartbeat as heartbeat
     monkeypatch.setattr(heartbeat, "HEARTBEAT_FILE", str(tmp_path / "lll-health"))
     heartbeat._last_problem = None
+
+
+def pytest_collection_modifyitems(config, items):
+    """TEST_SHARD="K/N" (CI) runs every Nth test from the Kth, so N jobs share the suite evenly."""
+    shard = os.environ.get("TEST_SHARD")
+    if not shard:
+        return
+    k, n = (int(x) for x in shard.split("/"))
+    if not 1 <= k <= n:
+        raise pytest.UsageError(f"TEST_SHARD must be K/N with 1 <= K <= N, not {shard!r}")
+    keep = [item for i, item in enumerate(items) if i % n == k - 1]
+    config.hook.pytest_deselected(items=[item for i, item in enumerate(items) if i % n != k - 1])
+    items[:] = keep

@@ -13,10 +13,19 @@ jobs:
   test:
     runs-on: ubuntu-latest
     # 3.11 is what the boards run (Raspberry Pi OS Bookworm); 3.13 is the next OS's (Trixie).
+    # Coverage is measured on 3.11 only, and slows each test, so that run is split in two
+    # (TEST_SHARD, in the root conftest.py); Codecov merges the halves (codecov.yml's after_n_builds).
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.13"]
+        include:
+          - python-version: "3.11"
+            shard: "1/2"
+          - python-version: "3.11"
+            shard: "2/2"
+          - python-version: "3.13"
+    env:
+      TEST_SHARD: ${{ matrix.shard }}
 
     steps:
       - name: Checkout repository
@@ -34,10 +43,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      # In parallel, one worker per CPU (pytest-xdist). Coverage only on 3.11, the one uploaded:
-      # measuring it slows the run.
+      # In parallel, one worker per CPU (pytest-xdist).
       - name: Run tests with coverage
-        if: matrix.python-version == '3.11'
+        if: matrix.shard
         run: |
           pytest -n auto \
             --cov=. \
@@ -45,11 +53,11 @@ jobs:
             --cov-report=term-missing
 
       - name: Run tests
-        if: matrix.python-version != '3.11'
+        if: ${{ !matrix.shard }}
         run: pytest -n auto
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.11'
+        if: matrix.shard
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}   # 🔑 add this line
