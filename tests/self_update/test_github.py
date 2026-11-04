@@ -58,18 +58,23 @@ def test_ci_passes_when_every_check_ended_well(monkeypatch):
         {"name": "test (3.11)", "status": "completed", "conclusion": "success"},
         {"name": "test (3.13)", "status": "completed", "conclusion": "success"},
         {"name": "optional", "status": "completed", "conclusion": "skipped"}))
-    assert github.ci_problem(SHA) is None
+    assert github.ci_status(SHA) == (None, [("test (3.11)", "passed"), ("test (3.13)", "passed"), ("optional", "passed")])
 
 
-@pytest.mark.parametrize("runs, why", [
-    ((), "has no CI results"),
-    (({"name": "test (3.11)", "status": "in_progress", "conclusion": None},), "still running (test (3.11))"),
+@pytest.mark.parametrize("runs, why, states", [
+    ((), "has no CI results", []),
+    (({"name": "test (3.11)", "status": "in_progress", "conclusion": None},
+      {"name": "test (3.13)", "status": "completed", "conclusion": "success"}), "still running (test (3.11))",
+     [("test (3.11)", "running"), ("test (3.13)", "passed")]),
     (({"name": "test (3.11)", "status": "completed", "conclusion": "success"},
-      {"name": "test (3.13)", "status": "completed", "conclusion": "failure"}), "didn't pass (test (3.13): failure)"),
+      {"name": "test (3.13)", "status": "completed", "conclusion": "failure"}), "didn't pass (test (3.13): failure)",
+     [("test (3.11)", "passed"), ("test (3.13)", "failed")]),
+    (({"status": "queued"},), "still running (?)", [("?", "running")]),
 ])
-def test_ci_that_hasnt_passed_says_why(monkeypatch, runs, why):
+def test_ci_that_hasnt_passed_says_why_and_how_each_run_stands(monkeypatch, runs, why, states):
     _replies(monkeypatch, _runs(*runs))
-    assert why in github.ci_problem(SHA)
+    problem, found = github.ci_status(SHA)
+    assert why in problem and found == states
 
 
 @pytest.mark.parametrize("reply, why", [
@@ -93,4 +98,4 @@ def test_a_list_of_releases_that_isnt_a_list_is_an_error(monkeypatch):
 def test_checks_that_arent_a_list_are_an_error(monkeypatch):
     _replies(monkeypatch, {f"commits/{SHA}/check-runs?per_page=100": {"message": "Not Found"}})
     with pytest.raises(GitHubError, match="checks"):
-        github.ci_problem(SHA)
+        github.ci_status(SHA)

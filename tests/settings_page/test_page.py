@@ -237,9 +237,26 @@ def test_a_check_says_up_to_date_waiting_or_blocked_apart():
     html = _updates(check={**check, "result": "waiting", "message": "3333333's CI is still running (test)"})
     assert "Up to date for now" in html and "isn't ready yet" in html and "CI is still running" in html
     assert '<div class="notice info"' in html and "/update/start" not in html
+    assert "3333333&#x27;s CI is still running (test)." in html, "a sha isn't capitalised"
     html = _updates(check={**check, "result": "blocked", "ok": False, "message": "fireworks is playing"})
     assert '<div class="notice warn"' in html and "Can't update right now:</strong> Fireworks is playing." in html
     assert "Up to date" not in html
+
+
+def test_a_beta_waiting_on_its_tests_lists_each_run():
+    check = {"channel": "beta", "result": "waiting", "ok": True, "at": 0, "message": "3333333's CI is still running"}
+    html = _updates(check={**check, "runs": [["test (3.13)", "passed"], ["test (3.11)", "running"]]})
+    assert "<strong>A newer Beta is being tested.</strong>" in html and "Up to date for now" not in html
+    assert ('<ol class="steps" aria-label="Tests"><li class="now">Tests on Python 3.11: running</li>'
+            '<li class="done">Tests on Python 3.13: passed</li></ol>') in html, "in name order, step styles"
+    assert "It can be installed once both pass." in html and "/update/start" not in html
+    html = _updates(check={**check, "runs": [["test (3.11)", "passed"], ["lint", "failed"]]})
+    assert "<strong>A newer Beta didn't pass its tests.</strong>" in html
+    assert '<li class="failed">lint: failed</li>' in html and "the next Beta that passes can be" in html
+    html = _updates(check={**check, "runs": []})
+    assert "<strong>A newer Beta hasn't been tested yet.</strong>" in html and 'aria-label="Tests"' not in html
+    html = _updates(check={**check, "runs": [["a", "running"], ["b", "running"], ["c", "passed"]]})
+    assert "once they all pass" in html
 
 
 def test_with_no_check_the_page_checks_the_installed_channel_by_itself():

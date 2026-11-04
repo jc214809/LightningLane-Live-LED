@@ -4,6 +4,7 @@ lines of script), since a phone on the setup hotspot has no internet to fetch an
 works without JavaScript; the script adds trip rows and the "unsaved changes" state.
 """
 import json
+import re
 import time
 from html import escape
 
@@ -11,7 +12,7 @@ import cli
 from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_names, surprise_names, trip_rows
 from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
-from self_update.github import REPO
+from self_update.github import FAILED, PASSED, REPO, RUNNING
 from self_update.update import BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, WOULD_UPDATE
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
@@ -244,6 +245,8 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
 .steps li.done::before { background: currentColor; }
 .steps li.now { color: var(--text); font-weight: 600; }
 .steps li.now::before { border-color: var(--accent); background: var(--accent); animation: beat 1.2s ease-in-out infinite; }
+.steps li.failed { color: var(--bad); font-weight: 600; }
+.steps li.failed::before { background: currentColor; }
 @keyframes beat { 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .steps li.now::before { animation: none; } }
 
@@ -884,8 +887,11 @@ def _when(at):
 
 
 def _sentence(text):
+    """text as a sentence: a capital (unless it starts with a commit's sha) and a full stop."""
     text = str(text or "").strip()
-    return escape(text[:1].upper() + text[1:] + ("" if text.endswith(".") else "."))
+    if not re.match(r"[0-9a-f]{7,40}\b", text):
+        text = text[:1].upper() + text[1:]
+    return escape(text + ("" if text.endswith(".") else "."))
 
 
 def _short(sha):
@@ -1040,6 +1046,31 @@ def _steps(step):
     return f'<ol class="steps" id="update-steps" aria-label="Steps"{" hidden" if step is None else ""}>{items}</ol>'
 
 
+def _run_name(name):
+    """A CI run's name in words: "test (3.11)" is "Tests on Python 3.11"."""
+    found = re.fullmatch(r"test \((\d+\.\d+)\)", name)
+    return f"Tests on Python {found.group(1)}" if found else name
+
+
+def _waiting(runs, when):
+    """A newer Beta held back by its CI (runs: [name, RUNNING/PASSED/FAILED] each), as a notice
+    with one row per run, in the update steps' style."""
+    states = [state for _, state in runs]
+    if FAILED in states:
+        headline, after = "A newer Beta didn't pass its tests", "It won't be installed; the next Beta that passes can be."
+    elif runs:
+        headline = "A newer Beta is being tested"
+        after = f"It can be installed once {'both pass' if len(runs) == 2 else 'they all pass' if len(runs) > 2 else 'it passes'}."
+    else:
+        headline, after = "A newer Beta hasn't been tested yet", "It can be installed once its tests pass."
+    rows = ""
+    for name, state in sorted(runs):
+        css = {RUNNING: ' class="now"', PASSED: ' class="done"', FAILED: ' class="failed"'}.get(state, "")
+        rows += f"<li{css}>{escape(_run_name(name))}: {escape(state)}</li>"
+    steps = f'<ol class="steps" aria-label="Tests">{rows}</ol>' if rows else "<br>"
+    return _notice("info", f"<strong>{headline}.</strong>{when}{steps}" + f'<span class="when">{after}</span>')
+
+
 def check_result(view):
     """What the last check found (updates.Updates.view()'s "check"), under the Check button: an
     update with Update now, the newest already, or why it can't; while the page's own check runs,
@@ -1064,6 +1095,8 @@ def check_result(view):
     elif check["result"] == CURRENT:
         found = _notice("good", f"<strong>Up to date:</strong> this is the newest on {name}.{when}"
                                 f'<br><span class="when">{_sentence(check["message"])}</span>')
+    elif check["result"] == WAITING and isinstance(check.get("runs"), list):
+        found = _waiting(check["runs"], when)
     elif check["result"] == WAITING:
         found = _notice("info", f"<strong>Up to date for now:</strong> a newer {name} version isn't ready yet."
                                 f'{when}<br><span class="when">{_sentence(check["message"])}</span>')

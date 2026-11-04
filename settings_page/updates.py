@@ -17,7 +17,7 @@ import time
 
 from self_update import state as states
 from self_update.board import Board, CommandFailed
-from self_update.update import BETA, BLOCKED, CHANNELS, RELEASES, WOULD_UPDATE, Updater, parse_version
+from self_update.update import BETA, BLOCKED, CHANNELS, RELEASES, WAITING, WOULD_UPDATE, Updater, parse_version
 from utils import debug
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,7 +43,8 @@ STARTS = (STARTED, BUSY, START_FAILED)
 class Updates:
     def __init__(self, app_dir=APP_DIR, updater=None, run=subprocess.run, python=sys.executable, clock=time.time):
         self.app_dir, self._updater, self.run, self.python, self.clock = app_dir, updater, run, python, clock
-        # {"channel", "result", "message", "ok", "at"}, and when it found one, details()'s keys
+        # {"channel", "result", "message", "ok", "at"}, and when it found one, details()'s keys; when
+        # it's waiting on CI, "runs": [[name, github.RUNNING/PASSED/FAILED], ...]
         self.last_check = None
         self.starting = None  # the check whose update was started, for what the card says while it runs
         self.started = None  # what was started last, "update" or "rollback"
@@ -143,6 +144,8 @@ class Updates:
                     outcome = self.updater.update(channel, dry_run=True)
                     result, message, ok = outcome.result, outcome.message, outcome.ok
                     found = self.details(outcome.target) if result == WOULD_UPDATE and outcome.target else {}
+                    if result == WAITING and outcome.runs is not None:
+                        found = {"runs": [list(run) for run in outcome.runs]}
                 except (CommandFailed, OSError) as e:
                     result, message, ok, found = BLOCKED, str(e), False, {}
         debug.info(f"Settings page: checked for updates on {channel}: {result}: {message}")

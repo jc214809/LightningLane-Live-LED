@@ -15,6 +15,8 @@ REPO = "jc214809/LightningLane-Live-LED"
 TIMEOUT_S = 15
 # A check run that ended in one of these doesn't hold an update back.
 PASSING = ("success", "neutral", "skipped")
+# A check run's state, as ci_status gives it.
+RUNNING, PASSED, FAILED = "running", "passed", "failed"
 
 
 class GitHubError(Exception):
@@ -52,19 +54,23 @@ def branch_tip(branch):
     return sha
 
 
-def ci_problem(sha):
-    """Why sha's CI doesn't let it be installed (no checks, still running, a failure), or None if it passed."""
+def ci_status(sha):
+    """(why sha's CI doesn't let it be installed (no checks, still running, a failure), or None if it
+    passed; its runs as (name, RUNNING/PASSED/FAILED), as GitHub lists them)."""
     found = _get(f"commits/{sha}/check-runs?per_page=100")
     runs = found.get("check_runs") if isinstance(found, dict) else None
     if not isinstance(runs, list):
         raise GitHubError(f"GitHub didn't give {sha[:7]}'s checks")
     runs = [r for r in runs if isinstance(r, dict)]
+    states = [(str(r.get("name") or "?"), RUNNING if r.get("status") != "completed"
+               else PASSED if r.get("conclusion") in PASSING else FAILED) for r in runs]
     if not runs:
-        return f"{sha[:7]} has no CI results"
-    running = [r.get("name", "?") for r in runs if r.get("status") != "completed"]
+        return f"{sha[:7]} has no CI results", states
+    running = [name for name, state in states if state == RUNNING]
     if running:
-        return f"{sha[:7]}'s CI is still running ({', '.join(running)})"
+        return f"{sha[:7]}'s CI is still running ({', '.join(running)})", states
     failed = [f"{r.get('name', '?')}: {r.get('conclusion')}" for r in runs if r.get("conclusion") not in PASSING]
     if failed:
-        return f"{sha[:7]}'s CI didn't pass ({', '.join(failed)})"
-    return None
+        return f"{sha[:7]}'s CI didn't pass ({', '.join(failed)})", states
+    return None, states
+
