@@ -17,7 +17,7 @@ import time
 
 from self_update import state as states
 from self_update.board import Board, CommandFailed
-from self_update.update import BETA, BLOCKED, CHANNELS, RELEASES, WAITING, WOULD_UPDATE, Updater, parse_version
+from self_update.update import BLOCKED, CHANNELS, WAITING, WOULD_UPDATE, Updater, channel_of
 from utils import debug
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,7 +34,6 @@ ROLLING_BACK_TEXT = "Rolling back"
 # An update's steps, as the card lists them while one runs, and the step each phase is on.
 STEPS = (CHECKING_TEXT, "Saving a rollback point", "Installing the new version", "Restarting and checking it works")
 PHASE_STEP = {states.READY: 1, states.SWITCHED: 2, states.INSTALLED: 3, states.CHECKING: 3}
-RELEASE_BRANCH = "main"
 # start()'s outcomes, which the page says after the redirect.
 STARTED, BUSY, START_FAILED = "started", "busy", "failed"
 STARTS = (STARTED, BUSY, START_FAILED)
@@ -78,21 +77,8 @@ class Updates:
         return PHASE_TEXT.get(phase, CHECKING_TEXT), PHASE_STEP.get(phase, 0)
 
     def installed_channel(self, sha, branch, record):
-        """The channel what's installed came from: RELEASES on a release tag or the release branch,
-        the channel of the update that installed it, else BETA (develop-beta, or a commit off it)."""
-        to = record.get("to") if isinstance(record.get("to"), dict) else {}
-        if not sha:
-            return to.get("channel") if to.get("channel") in CHANNELS else RELEASES
-        try:
-            tagged = any(parse_version(tag) for tag in self.updater.board.tags_at(sha))
-        except CommandFailed as e:
-            debug.warning(f"Settings page: can't read the checkout's tags: {e}")
-            tagged = False
-        if tagged or branch == RELEASE_BRANCH:
-            return RELEASES
-        if to.get("sha") == sha and to.get("channel") in CHANNELS:
-            return to["channel"]
-        return BETA
+        """The channel what's installed came from (update.channel_of)."""
+        return channel_of(self.updater.board, sha, branch, record)
 
     def view(self):
         """What the card shows (page.updates_card)."""

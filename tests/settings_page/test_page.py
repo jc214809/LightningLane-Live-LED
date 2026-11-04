@@ -278,6 +278,8 @@ def test_after_an_update_the_card_offers_a_rollback_that_warns_about_config_json
     assert "Back to 2.0.9 (ccccccc)" in html
     html = _updates(phase="updated", **{"from": {"version": "2.0.9", "sha": "c" * 40, "branch": "develop-beta"}})
     assert "Back to Beta ccccccc on develop-beta, as before the last update" in html, "its commit, not a channel"
+    html = _updates(phase="updated", **{"from": {"version": "2.0.9", "sha": "c" * 40, "channel": "beta"}})
+    assert "Back to Beta ccccccc, as before the last update" in html, "a detached Beta (an earlier update's)"
     html = _updates(phase="updated", **{"from": {"version": "2.0.9", "sha": "c" * 40, "branch": "main"}})
     assert "Back to 2.0.9 (ccccccc) on main, as before the last update" in html
     assert "/update/rollback" not in _updates(phase="rolled_back", **{"from": {"version": "2.0.9", "sha": "c"}})

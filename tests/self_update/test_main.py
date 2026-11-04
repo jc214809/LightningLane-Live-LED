@@ -103,6 +103,25 @@ def test_status(tmp_path, capsys):
         assert text in out
 
 
+def test_status_without_root_says_it_cant_read_the_last_update(tmp_path, capsys, monkeypatch):
+    updater = FakeUpdater(tmp_path)
+    updater.state.save({"phase": "rolled_back", "good": ["b" * 40]})
+    monkeypatch.setattr(updater.state, "unreadable", lambda: True)
+    assert cli.main(["status"], updater=updater, euid=USER) == 1
+    out = capsys.readouterr().out
+    assert "Installed: 2.1.0" in out and "Heartbeat: none" in out
+    assert "Last update: unknown" in out and "sudo venv/bin/python3 -m self_update status" in out
+    assert "idle" not in out and "rolled_back" not in out and "Good commits" not in out
+
+
+def test_status_names_a_beta_it_came_from_by_its_commit(tmp_path, capsys):
+    updater = FakeUpdater(tmp_path)
+    updater.state.save({"phase": "updated", "good": [], "to": {"ref": "develop-beta", "sha": "c" * 40},
+                        "from": {"version": "2.0.0", "sha": "a" * 40, "channel": "beta"}})
+    cli.main(["status"], updater=updater, euid=USER)
+    assert "to develop-beta (ccccccc), from Beta aaaaaaa" in capsys.readouterr().out
+
+
 def test_a_bad_channel_or_command_is_a_usage_error(tmp_path):
     for argv in (["update", "--channel", "nightly"], ["upgrade"], []):
         with pytest.raises(SystemExit) as exit_:

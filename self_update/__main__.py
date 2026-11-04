@@ -1,6 +1,6 @@
 """The updater's command line, run from the app's folder with its venv's Python:
 
-    venv/bin/python3 -m self_update status                       # what's installed, the last update
+    sudo venv/bin/python3 -m self_update status                  # what's installed, the last update
     venv/bin/python3 -m self_update check [--channel beta]       # what an update would do; changes nothing
     sudo venv/bin/python3 -m self_update update [--channel beta] # update, rolling back if it fails
     sudo venv/bin/python3 -m self_update rollback                # undo the last update (sudo lll-rollback)
@@ -16,28 +16,35 @@ import os
 import sys
 
 from self_update.board import Board
-from self_update.update import CHANNELS, NOTHING_TO_UNDO, RELEASES, Updater
+from self_update.update import CHANNELS, NOTHING_TO_UNDO, RELEASES, Updater, name_of
 from utils import debug, heartbeat
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def status(updater):
-    record = updater.state.load()
+    """What status prints, and whether it could read it all."""
     board = updater.board
     lines = [f"Installed: {updater.installed_version} at {board.head()[:7]}"
-             f" ({'on ' + board.branch() if board.branch() else 'detached'})",
-             f"Last update: {record['phase']}"]
+             f" ({'on ' + board.branch() if board.branch() else 'detached'})"]
+    readable = not updater.state.unreadable()
+    if readable:
+        record = updater.state.load()
+        lines.append(f"Last update: {record['phase']}")
+    else:
+        record = {}
+        lines.append(f"Last update: unknown: {updater.state.folder} is root's, so run it with sudo:"
+                     " sudo venv/bin/python3 -m self_update status")
     if record.get("to"):
         lines.append(f"  to {record['to'].get('ref')} ({str(record['to'].get('sha'))[:7]}),"
-                     f" from {record['from'].get('version')} ({str(record['from'].get('sha'))[:7]})")
+                     f" from {name_of(record['from'])}")
     if record.get("reason"):
         lines.append(f"  rolled back because: {record['reason']}")
     if record.get("good"):
         lines.append(f"Good commits: {', '.join(sha[:7] for sha in record['good'])}")
     beat = heartbeat.read(updater.heartbeat_path)
     lines.append(f"Heartbeat: {updater.clock() - beat['at']:.0f}s ago" if beat else "Heartbeat: none")
-    return "\n".join(lines)
+    return "\n".join(lines), readable
 
 
 def main(argv=None, updater=None, euid=os.geteuid):
@@ -61,8 +68,9 @@ def main(argv=None, updater=None, euid=os.geteuid):
 
     updater = updater or Updater(Board(APP_DIR))
     if args.command == "status":
-        print(status(updater))
-        return 0
+        text, readable = status(updater)
+        print(text)
+        return 0 if readable else 1
     if args.command in ("update", "rollback", "recover") and euid() != 0:
         print(f"{args.command} needs root: sudo venv/bin/python3 -m self_update {args.command}", file=sys.stderr)
         return 1

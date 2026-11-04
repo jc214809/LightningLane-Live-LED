@@ -1072,9 +1072,10 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
   the card says "Restarting and checking it works", `sudo systemctl kill -s KILL
   LightningLane-Live-LED.service`. systemd's restart counts as a crash, so it rolls back at once
   ("the app crashed"); `sudo systemctl stop` instead fails the health window after 5 min ("the app
-  isn't running"). Then `venv/bin/python3 -m self_update status` says `rolled_back`, `git log -1`
-  is the old commit, and the card's Last rollback says why. A power cut during "Installing the new
-  version" checks `lll-update-recover` at the next boot.
+  isn't running"). Then `sudo venv/bin/python3 -m self_update status` says `rolled_back` (without
+  sudo it can't read state.json and says so), `git log -1` is the old commit, and the card's Last
+  rollback says why ("Rolled back to Beta 0dddb41", not version.py's release). A power cut during
+  "Installing the new version" checks `lll-update-recover` at the next boot.
 
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
 `lll-rollback` (done) → the Updates card (done, #201) → a board check once it's merged.
