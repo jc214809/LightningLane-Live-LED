@@ -151,7 +151,7 @@ class Updates:
 
     def details(self, target):
         """What an update to target brings: {"ref", "sha", "version" (its version.py's, or None),
-        "changes" ([PR number or None, title], newest first), "packages" (whether requirements.txt
+        "changes" ([PR number or None, title, release notes], newest first: Board.what_changed), "packages" (whether requirements.txt
         changes: pip runs, which takes ages on a Pi Zero)}. Only ref and sha if git can't say."""
         found = {"ref": target.ref, "sha": target.sha}
         board = self.updater.board

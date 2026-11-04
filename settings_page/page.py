@@ -12,7 +12,7 @@ from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_n
 from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
 from self_update.github import REPO
-from self_update.update import BETA, CURRENT, RELEASES, WAITING, WOULD_UPDATE
+from self_update.update import BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, WOULD_UPDATE
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
 # What a save says, by Settings.restart_app's outcome.
@@ -216,6 +216,7 @@ button, .btn { font: inherit; font-weight: 600; display: inline-flex; align-item
 .changes ul { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
 .changes li { display: flex; gap: 8px; }
 .changes li a, .changes li .mono { flex: none; min-width: 3.2em; color: var(--text-3); }
+.changes .note { display: block; margin-top: 1px; }
 .notice .changes { margin: 8px 0 0; }
 .ghost { background: transparent; color: var(--accent); padding: 0 10px; }
 .ghost:hover { background: var(--accent-soft); }
@@ -903,24 +904,54 @@ def _post(action, label, glyph, busy, kind="secondary", fields="", confirm=None,
 CHANGES_SHOWN = 12
 
 
+def _pr_link(number):
+    return f'<a href="https://github.com/{REPO}/pull/{int(number)}" target="_blank" rel="noopener">#{int(number)}</a>'
+
+
+def _installed_name(view):
+    """What's installed, as the card names it: a Beta build by its commit (its version.py still says
+    the release it grew from, which reads like that release), else its version."""
+    if view.get("installed_channel") == BETA:
+        return f'Beta <span class="mono">{_short(view["sha"])}</span>'
+    return escape(str(view["version"]))
+
+
+def _found_name(found):
+    """What a check found (or an update is installing), as the card names it: develop-beta's tip by
+    its commit, a release by its version, else its ref and commit."""
+    if found.get("ref") == BETA_BRANCH:
+        return f'Beta <span class="mono">{_short(found.get("sha"))}</span>'
+    if found.get("version"):
+        return escape(str(found["version"]))
+    return f'{escape(str(found.get("ref")))} {_short(found.get("sha"))}'
+
+
 def _changes(view, found):
-    """What an update brings (updates.Updates.details): the version, its pull requests (linked to
-    GitHub) and whether pip runs. "" if the check couldn't say."""
+    """What an update brings (updates.Updates.details): from what to what, its pull requests (linked
+    to GitHub) with their release notes under their titles, and whether pip runs. "" if the check
+    couldn't say. Pull requests whose notes say None go in one "Behind the scenes" line."""
     changes = found.get("changes")
     if changes is None:
         return ""
-    version = found.get("version")
-    head = (f'<strong>{escape(str(view["version"]))} \u2192 {escape(version)}</strong>'
-            if version and version != view["version"] else f'<strong>{escape(str(version or view["version"]))}'
-            '</strong>, with changes')
+    head = f"<strong>{_installed_name(view)} \u2192 {_found_name(found)}</strong>"
+    shown, hidden = [], []
+    for number, title, *rest in changes:
+        notes = rest[0] if rest else None
+        if notes == [] and number:
+            hidden.append(number)
+        else:
+            shown.append((number, title, notes))
     items = ""
-    for number, title in changes[:CHANGES_SHOWN]:
-        tag = (f'<a href="https://github.com/{REPO}/pull/{int(number)}" target="_blank" rel="noopener">#{int(number)}</a>'
-               if number else '<span class="mono">\u2022</span>')
-        items += f"<li>{tag}<span>{escape(str(title))}</span></li>"
-    more = len(changes) - CHANGES_SHOWN
+    for number, title, notes in shown[:CHANGES_SHOWN]:
+        tag = _pr_link(number) if number else '<span class="mono">\u2022</span>'
+        notes = "".join(f'<span class="hint note">{escape(str(note))}</span>' for note in notes or ())
+        items += f"<li>{tag}<span>{escape(str(title))}{notes}</span></li>"
+    more = len(shown) - CHANGES_SHOWN
     if more > 0:
         items += f'<li><span class="mono"></span><span class="hint">and {more} more</span></li>'
+    if hidden:
+        items += (f'<li><span class="mono"></span><span class="hint">Behind the scenes, nothing you\'d notice: '
+                  f'{", ".join(_pr_link(number) for number in hidden)}</span></li>')
     packages = ('<p class="hint">Its Python packages change too, so it takes longer: up to hours on a Pi Zero.</p>'
                 if found.get("packages") else "")
     return (f'<div class="changes"><p>{head}</p>'
@@ -941,7 +972,7 @@ def updates_card(view, started=None):
         top += _notice("bad", "<strong>Couldn't start it.</strong> The board's log says why.", "alert")
     if running:
         to = view.get("to") or {}
-        target = f' \u00b7 Updating to {escape(str(to["ref"]))} ({_short(to.get("sha"))})' if to.get("ref") else ""
+        target = f' \u00b7 Updating to {_found_name(to)}' if to.get("ref") else ""
         top += _notice("info", f'<strong id="update-phase">{escape(view["status"] or "")}</strong>'
                                f'<span id="update-running"></span>{target}'
                                + _steps(view.get("step"))
@@ -964,8 +995,12 @@ def updates_card(view, started=None):
                        "status" if outcome.get("ok") else "alert")
 
     where = f"on {escape(view['branch'])}" if view["branch"] else "as installed by an update"
-    installed = (f'<p><strong>{escape(str(view["version"]))}</strong> <span class="mono">{_short(view["sha"])}</span>'
-                 f'</p><p class="hint">{where}</p>')
+    if view.get("installed_channel") == BETA:
+        installed = (f'<p><strong>{_installed_name(view)}</strong></p><p class="hint">A Beta (test) version '
+                     f'{where}, newer than release {escape(str(view["version"]))}</p>')
+    else:
+        installed = (f'<p><strong>{escape(str(view["version"]))}</strong> <span class="mono">{_short(view["sha"])}'
+                     f'</span></p><p class="hint">{where}</p>')
     channel = view["channel"]
     check_form = (f'<form method="post" action="/update/check" data-busy="Checking\u2026" class="add-row">'
                   + _options("channel", [(RELEASES, "Releases"), (BETA, "Beta")], channel)
@@ -981,7 +1016,8 @@ def updates_card(view, started=None):
         # The exact commit (and branch) from before the update, whatever channel is picked above.
         # Plain text: the hint escapes it.
         sha = str(old.get("sha") or "?")[:7]
-        back_to = f"{old.get('version')} ({sha})" + (f" on {old['branch']}" if old.get("branch") else "")
+        back_to = (f"Beta {sha} on {BETA_BRANCH}" if old.get("branch") == BETA_BRANCH else
+                   f"{old.get('version')} ({sha})" + (f" on {old['branch']}" if old.get("branch") else ""))
         body += _field("update_rollback", "Roll back",
                        _post("/update/rollback", "Roll back", "undo", "Rolling back\u2026",
                              confirm="Roll back the last update? This also puts back config.json as it was "
@@ -1018,10 +1054,7 @@ def check_result(view):
     name = "Beta" if check["channel"] == BETA else "Releases"
     when = f' <span class="when">\u00b7 checked {_when(check["at"])}</span>'
     if check["result"] == WOULD_UPDATE:
-        version = check.get("version")
-        what = escape(version) if version and version != view["version"] else \
-            f'{escape(str(check.get("ref")))} {_short(check.get("sha"))}'
-        found = (_notice("new", f"<strong>Update available on {name}: {what}</strong>{when}"
+        found = (_notice("new", f"<strong>Update available on {name}: {_found_name(check)}</strong>{when}"
                                 + _changes(view, check))
                  + '<div class="below">'
                  + _post("/update/start", "Update now", "refresh", "Starting\u2026", "primary",
