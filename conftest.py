@@ -52,3 +52,12 @@ def _no_settings_pin(tmp_path, monkeypatch):
     settings_pin._cache.update(at=None, pin=None, expires=0.0)
     yield
     settings_pin._cache.update(at=None, pin=None, expires=0.0)
+
+
+@pytest.fixture(autouse=True)
+def _no_heartbeat(tmp_path, monkeypatch):
+    # The app writes a heartbeat after each screen: keep the tests' out of a board's real /run file,
+    # which the updater reads to judge an update's health.
+    import utils.heartbeat as heartbeat
+    monkeypatch.setattr(heartbeat, "HEARTBEAT_FILE", str(tmp_path / "lll-health"))
+    heartbeat._last_problem = None

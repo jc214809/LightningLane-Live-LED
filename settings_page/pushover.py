@@ -1,6 +1,7 @@
 """Sends the settings page's PIN to a phone through Pushover (pushover.net), for signing in to a
-board you can't see. Optional: only with config.json's "pushover" keys (utils.config.pushover_keys).
-The PIN goes only in the message, never in a log or an error.
+board you can't see, and the updater's (self_update) news of a failed update. Optional: only with
+config.json's "pushover" keys (utils.config.pushover_keys). The PIN goes only in the message, never
+in a log or an error.
 """
 import json
 import ssl
@@ -22,13 +23,20 @@ def send_pin(keys, pin, board, seconds_left):
     """Send the PIN. keys: (user_key, app_token). The message deletes itself from the phone when
     the PIN runs out (Pushover's ttl). Raises OSError (network), ValueError (a bad reply) or
     PushoverError."""
-    user, token = keys
     minutes = max(1, round(seconds_left / 60))
-    data = urllib.parse.urlencode({
-        "token": token, "user": user, "title": f"{board} settings",
-        "message": f"PIN for {board}'s settings page: {pin}\nIt works for {minutes} minute{'s' if minutes > 1 else ''}.",
-        "ttl": max(1, int(seconds_left)),
-    }).encode()
+    send(keys, f"{board} settings",
+         f"PIN for {board}'s settings page: {pin}\nIt works for {minutes} minute{'s' if minutes > 1 else ''}.",
+         ttl=max(1, int(seconds_left)))
+
+
+def send(keys, title, message, ttl=None):
+    """Send a message. keys: (user_key, app_token); ttl: seconds until it deletes itself from the
+    phone (Pushover's ttl), or None to keep it. Raises as send_pin does."""
+    user, token = keys
+    fields = {"token": token, "user": user, "title": title, "message": message}
+    if ttl is not None:
+        fields["ttl"] = ttl
+    data = urllib.parse.urlencode(fields).encode()
     request = urllib.request.Request(MESSAGES_URL, data=data,
                                      headers={"User-Agent": "LightningLane-Live-LED settings page"})
     try:

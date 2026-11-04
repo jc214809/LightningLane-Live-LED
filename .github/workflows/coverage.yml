@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - develop
+      # The updater's Beta channel installs develop-beta's tip only once its CI has passed.
+      - develop-beta
   pull_request:
 
 jobs:

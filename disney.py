@@ -30,6 +30,7 @@ from utils.wifi_setup import hotspot_name
 
 from utils import debug
 from utils import brightness
+from utils import heartbeat
 from utils.config import (ShowSettings, SoundSettings, brightness_schedule, debug_enabled, forced_show_name, load_config,
                           show_settings, sound_settings, websocket_protocol, websocket_settings)
 from utils.sound import clip_name, playing, show_clips, watch as watch_sound
@@ -215,6 +216,7 @@ def main():
             show_wifi_setup_while_needed(matrix)
             play_fireworks_show_if_due(matrix, parks_data)
             render_logo(matrix)
+            heartbeat.beat()  # the updater's health check: alive, even with every park closed
             last_trip_shown = play_trip_countdown(matrix, config, last_trip_shown)
             if parks_data:
                 for park in parks_data:
@@ -350,6 +352,8 @@ def play_show(matrix, show, theme, start, now):
     version = show_setting(show).version
     full = version != "default"
     score = load_score(clip_name(show), version=version) if full else None
+    remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
+    heartbeat.beat(show=show, show_s=score.end if score else remaining)  # no updates mid-show
     # A default-length show has no music of its own (a synced one's clip is the whole show): the generic clip, if any.
     with playing(show_clips(show) if full else ["fireworks"], sound, now):
         if score:
@@ -357,10 +361,10 @@ def play_show(matrix, show, theme, start, now):
             debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
             render_music_show(matrix, score)
         else:
-            remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
             debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
             render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
     forget_screen(matrix)
+    heartbeat.beat()
 
 def known_shows():
     """{show name: fireworks theme} for every show the board can play: the nightly one and each party's."""
@@ -429,6 +433,7 @@ def loop_through_attractions(matrix, park, parks=()):
             if surprise != "wipe":
                 debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
+            heartbeat.beat()
 
 def _ride_visitor(ride_name, wait=None):
     """A visitor who belongs to this ride, if one rolls in; None otherwise (and no roll is spent)."""
