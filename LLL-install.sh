@@ -9,6 +9,7 @@ SKIP_MATRIX=false
 NO_SUDO=false
 SKIP_VENV=false
 SKIP_WIFI_SETUP=false
+SKIP_REQUIREMENTS=false
 DRIVER_SHA=master
 FORCE=false
 
@@ -16,6 +17,7 @@ usage() {
     cat <<USAGE
     Usage: ./LLL-install.sh [-a | --skip-all] [-c | --skip-config] [-m | --skip-matrix]
                         [-p | --skip-python] [-v | --no-venv] [-e | --emulator-only] [-w | --skip-wifi-setup]
+                        [-r | --skip-requirements]
                         [-d <branch_or_commit> | --driver <branch_or_commit>]
                         [-f | --force] [-h | --help]
 
@@ -29,6 +31,7 @@ usage() {
         -e, --emulator-only     Do not install dependencies under sudo. Skips building matrix dependencies (equivalent to -m)
         -w, --skip-wifi-setup   Skip the Wi-Fi setup hotspot (comitup: with no known Wi-Fi in range, the board opens
                                 a <hostname>-setup hotspot, with no password, whose page puts it on a network).
+        -r, --skip-requirements Skip pip installing requirements.txt (the updater's, when it hasn't changed).
         -d, --driver            Specify a branch name or commit SHA for the rpi-rgb-led-matrix library. (Defaults to "$DRIVER_SHA")
 
         -f, --force             Try to skip most errors and force install. May be able to recover from previous installer errors.
@@ -67,6 +70,10 @@ while [ $# -gt 0 ]; do
         ;;
     -w | --skip-wifi-setup)
         SKIP_WIFI_SETUP=true
+        shift
+        ;;
+    -r | --skip-requirements)
+        SKIP_REQUIREMENTS=true
         shift
         ;;
     -v | --no-venv)
@@ -153,7 +160,9 @@ if [ "$SKIP_VENV" = false ]; then
 fi
 PYTHON=$(which python3)
 
-if [ "$NO_SUDO" = false ]; then
+if [ "$SKIP_REQUIREMENTS" = true ]; then
+    echo "Skipping requirements.txt."
+elif [ "$NO_SUDO" = false ]; then
     sudo "$PYTHON" -m pip install --upgrade --prefer-binary -r requirements.txt
 else
     "$PYTHON" -m pip install --upgrade --prefer-binary -r requirements.txt

@@ -1036,5 +1036,13 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
 - Backstops: a boot oneshot rolls back an update a power cut stopped midway; `sudo lll-rollback`
   over SSH; a Roll back button on the page.
 
-Order, one PR each: releases (done) → updater and heartbeat (CLI, mocked git/systemctl) → boot
-recovery and `lll-rollback` in `board-setup.sh` → the Updates card → TinyPi before merging.
+- Updater and heartbeat: built (2026-11-04, CLI only, untested on a Pi): `python3 -m self_update
+  status|check|update|rollback`, in `self_update/`. `MIN_RELEASE` is 2.1.0 (v2.0.0 predates it). The
+  heartbeat beats after the intro too, not only ride screens, since every park is closed at night.
+  Only the "now" throttle flags block an update (the since-boot ones would until a reboot). The beta
+  gate counts every check run, so a Codecov upload failure holds a commit back. After an update the
+  checkout is detached: by hand, `git checkout develop-beta && git pull` before the usual commands.
+
+Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery (a oneshot running
+`self_update rollback` when `state.json`'s phase is `UNFINISHED`) and `lll-rollback` in
+`board-setup.sh` → the Updates card → TinyPi before merging.

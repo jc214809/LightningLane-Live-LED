@@ -44,6 +44,13 @@ def test_the_pin_goes_in_the_message_and_it_deletes_itself_when_the_pin_runs_out
     assert "4821" not in request.full_url and "t-token" not in request.full_url
 
 
+def test_a_plain_message_stays_on_the_phone(urlopen):
+    pushover.send(KEYS, "DonaldPi: Update rolled back", "Back on 2.1.0 (abc1234).")
+    fields = urlopen.fields()
+    assert fields["title"] == "DonaldPi: Update rolled back" and fields["message"] == "Back on 2.1.0 (abc1234)."
+    assert "ttl" not in fields
+
+
 def test_a_refusal_says_pushovers_reason(urlopen):
     body = json.dumps({"status": 0, "errors": ["application token is invalid"]}).encode()
     urlopen.reply = urllib.error.HTTPError(pushover.MESSAGES_URL, 400, "Bad Request", {}, io.BytesIO(body))

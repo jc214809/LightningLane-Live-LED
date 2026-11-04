@@ -132,6 +132,16 @@ def test_loop_through_attractions(monkeypatch, screens):
     assert drawn[0] is not attraction, "the updater threads mutate the live dict; animate a snapshot"
     assert screens == [{"hold": 8, "transition": "wipe", "animating": True}]
 
+def test_each_ride_screen_beats_the_heartbeat_once_shown(monkeypatch, screens):
+    beats = []
+    monkeypatch.setattr(disney.heartbeat, "beat", lambda **kwargs: beats.append((len(screens), kwargs)))
+    monkeypatch.setattr(disney.random, "random", lambda: 1.0)
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: True)
+    rides = [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
+             {"name": "Haunted Mansion", "waitTime": 20, "status": "OPERATING"}]
+    disney.loop_through_attractions(FakeMatrix(), {"name": "Magic Kingdom", "attractions": rides})
+    assert beats == [(1, {}), (2, {})], "after each screen, so the updater knows the new app draws"
+
 def test_loop_through_attractions_passes_this_hours_forecast(monkeypatch, screens):
     seen = []
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: seen.append(expected))
@@ -527,6 +537,14 @@ def test_fireworks_play_the_shows_sound_until_they_end(monkeypatch):
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
     assert events == [("sound", ["fireworks"], disney.SoundSettings(True), now),
                       "start", "fireworks", "stop"], "a default-length show plays only the generic clip"
+
+
+def test_a_playing_show_is_in_the_heartbeat_until_it_ends(monkeypatch, fireworks_played):
+    beats = []
+    monkeypatch.setattr(disney.heartbeat, "beat", lambda **kwargs: beats.append((len(fireworks_played), kwargs)))
+    disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=8))
+    assert beats == [(0, {"show": "Happily Ever After", "show_s": disney.FIREWORKS_SHOW_S - 8}), (1, {})], \
+        "no update starts mid-show"
 
 
 def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypatch):
