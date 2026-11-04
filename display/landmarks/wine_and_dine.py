@@ -132,13 +132,14 @@ CLINK_S = 0.8  # the sparkle where the rims meet, from the end of the rise
 SETTLE_S = 0.2  # then the glass sinks the row it rose over hers
 
 
-def _text_pixels(font, text, center_x, top, rgb):
-    """{(x, y): rgb} for text in a BDF font, centred on center_x, with the landmarks' drop shadow."""
+def _text_pixels(font, text, center_x, top, rgb, shadow=True):
+    """{(x, y): rgb} for text in a BDF font, centred on center_x, with the landmarks' drop shadow unless
+    `shadow` is False (dark text on a light sign)."""
     path, ascent = font
     glyphs = capture._glyphs(path)
     width = sum(glyphs[ord(ch)][0] for ch in text)
     out = {}
-    for dx, colour in ((1, TITLE_SHADOW_RGB), (0, rgb)):
+    for dx, colour in ((1, TITLE_SHADOW_RGB), (0, rgb))[0 if shadow else 1:]:
         x = round(center_x - width / 2) + dx
         baseline = top + ascent + dx
         for ch in text:

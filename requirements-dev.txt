@@ -3,4 +3,6 @@
 pytest>=7.2.0
 pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
+# Runs the tests in parallel: pytest -n auto (CI does)
+pytest-xdist>=3.5
 coverage>=6.5.0

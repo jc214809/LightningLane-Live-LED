@@ -2,11 +2,13 @@
 # Sets up a Raspberry Pi LED board for one app: LightningLane-Live-LED, Peloton-LED or
 # MLB-LED-Scoreboard. Asks everything up front, shows a summary, then does it all; safe to re-run
 # (to update, or to switch apps). Each app's own installer does the app; this script does the board
-# around it: hostname, a second Wi-Fi network, the power button, matrix tuning and the service.
+# around it: hostname, a second Wi-Fi network, the Wi-Fi setup hotspot, the power button, matrix
+# tuning and the service.
 #
 #   sudo bash board-setup.sh                      # asks
 #   sudo bash board-setup.sh --answers board.txt  # KEY=value lines skip those questions
 #   bash board-setup.sh --dry-run ...             # prints what it would do, changes nothing
+#   sudo bash board-setup.sh --wifi-setup-only    # just the Wi-Fi setup hotspot, settings page and updater (LLL-install.sh's)
 set -Eeuo pipefail
 
 ROOT="${BOARD_SETUP_ROOT:-}"   # tests: a folder standing in for / (system files are read from it)
@@ -18,7 +20,15 @@ MLB_REPO=https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard.git
 LLL_UNIT=LightningLane-Live-LED.service
 PELOTON_UNIT=peloton-led.service
 MLB_UNIT=mlb-led-scoreboard.service
+SETTINGS_UNIT=lll-settings.service  # LightningLane-Live-LED's settings page (settings_page/server.py)
+RECOVER_UNIT=lll-update-recover.service  # rolls back an update a power cut stopped (self_update)
+ROLLBACK_COMMAND=/usr/local/bin/lll-rollback
 UNIT_DIR="$ROOT/etc/systemd/system"
+# comitup: with no known Wi-Fi in range, it opens a hotspot whose page puts the board on a network.
+COMITUP_SOURCE_DEB=https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb
+COMITUP_CALLBACK=/usr/local/bin/comitup-callback
+COMITUP_STATE=/run/comitup-state   # utils/wifi_setup.py reads it
+HOTSPOT_SUFFIX=-setup              # the hotspot is "<hostname>-setup"
 
 ANSWER_KEYS="BOARD_NAME APP PANEL_OPTIONS LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO EXTRA_ARGS LLL_BRANCH
 PELOTON_AUTO_TOKEN WIFI2 WIFI2_IFACE WIFI2_NAME WIFI2_SSID WIFI2_HIDDEN POWER_BUTTON SPEAKER"
@@ -26,10 +36,12 @@ ANSWERED=" "
 DRY_RUN=false
 ASSUME_YES=false
 NEEDS_REBOOT=false
+WROTE=false  # set by write_file when it changes (or, in a dry run, would change) a file
+RENAMED=false
 
 usage() {
     cat <<'USAGE'
-Usage: sudo bash board-setup.sh [--answers FILE] [--branch NAME] [--yes] [--dry-run] [-h]
+Usage: sudo bash board-setup.sh [--answers FILE] [--branch NAME] [--yes] [--dry-run] [--wifi-setup-only] [-h]
 
   --answers FILE  KEY=value lines (# comments) answering questions ahead, e.g. APP=lll.
                   Keys: BOARD_NAME APP PANEL_OPTIONS LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO
@@ -40,6 +52,9 @@ Usage: sudo bash board-setup.sh [--answers FILE] [--branch NAME] [--yes] [--dry-
   --branch NAME   LightningLane-Live-LED's branch (default develop-beta), like LLL_BRANCH=NAME.
   --yes           Don't ask: unanswered questions take their defaults, and no confirmation.
   --dry-run       Print the commands and files it would write; change nothing.
+  --wifi-setup-only
+                  Only install or update the Wi-Fi setup hotspot (comitup), with no questions,
+                  and, run from LightningLane-Live-LED's folder, its settings page and updater.
 USAGE
 }
 
@@ -67,6 +82,7 @@ write_file() {  # write_file PATH MODE < content; SHOWN replaces the content in 
     fi
     if [[ "$DRY_RUN" == true ]]; then
         printf '+ write %s (mode %s):\n%s\n' "$path" "$mode" "${SHOWN:-$content}" | sed 's/^/    /'
+        WROTE=true
         return
     fi
     mkdir -p "$(dirname "$path")"
@@ -76,6 +92,7 @@ write_file() {  # write_file PATH MODE < content; SHOWN replaces the content in 
     install -m "$mode" "$tmp" "$path"
     rm -f "$tmp"
     echo "  wrote $path"
+    WROTE=true
 }
 
 # ─── Answers ──────────────────────────────────────────────────────────────
@@ -117,11 +134,12 @@ ask() {  # ask VAR QUESTION DEFAULT [CHOICE...]: answers file, else prompt, else
 }
 
 collect_answers() {
-    ask BOARD_NAME "Hostname (boards.json picks LightningLane-Live-LED's settings by it)" "$(hostname -s 2>/dev/null || hostname)"
+    ask BOARD_NAME "Hostname (the board's name on the network, and its settings page's)" "$(hostname -s 2>/dev/null || hostname)"
     [[ "$BOARD_NAME" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]] || die "not a usable hostname: $BOARD_NAME"
+    hotspot_name_fits "$BOARD_NAME" || die "$BOARD_NAME is too long: its Wi-Fi setup hotspot, $BOARD_NAME$HOTSPOT_SUFFIX, would be over Wi-Fi's 32 letters"
     ask APP "App to run (lll = LightningLane-Live-LED, peloton = Peloton-LED, mlb = MLB-LED-Scoreboard)" lll lll peloton mlb
-    # Each app can keep these in its own config (LLL: boards.json or config.json's matrix), so by
-    # default they aren't asked and no flags go in the service.
+    # Each app can keep these in its own config (LLL: config.json's matrix, from its settings page),
+    # so by default they aren't asked and no flags go in the service.
     ask PANEL_OPTIONS "Set the panel options (size, GPIO mapping, slowdown, extra flags) in the service? (yes/no; no leaves them to the app's own config)" no yes no
     if [[ "$PANEL_OPTIONS" == yes ]]; then
         ask LED_ROWS "Panel rows" 32 32 64
@@ -175,6 +193,7 @@ Board setup
   App           $APP${LLL_BRANCH:+ (branch $LLL_BRANCH)}
 $(panel_summary)
   Second Wi-Fi  $WIFI2${WIFI2_SSID:+ ($WIFI2_SSID on $WIFI2_IFACE)}
+  Wi-Fi setup   an open $BOARD_NAME$HOTSPOT_SUFFIX hotspot when no known Wi-Fi is in range
   Power button  $POWER_BUTTON
 EOF
     [[ "$APP" == lll ]] && echo "  Speaker       $SPEAKER"
@@ -197,6 +216,7 @@ set_hostname() {
     current="$(hostname -s 2>/dev/null || hostname)"
     [[ "$current" == "$BOARD_NAME" ]] && { echo "  hostname already $BOARD_NAME"; return; }
     say "Renaming the board $current → $BOARD_NAME"
+    RENAMED=true  # the Wi-Fi setup hotspot is named after it
     run hostnamectl set-hostname "$BOARD_NAME"
     if grep -q '^127\.0\.1\.1' "$ROOT/etc/hosts" 2>/dev/null; then
         run sed -i "s/^127\.0\.1\.1.*/127.0.1.1\t$BOARD_NAME/" "$ROOT/etc/hosts"
@@ -243,6 +263,79 @@ method=auto"
     SHOWN="${body/\%PSK\%/********}" write_file "$file" 600 <<<"${body/\%PSK\%/$WIFI2_PSK}"
     run systemctl enable --now NetworkManager
     run nmcli connection reload
+}
+
+hotspot_name_fits() { (( ${#1} + ${#HOTSPOT_SUFFIX} <= 32 )); }
+
+comitup_conf() {
+    cat <<EOF
+# Written by board-setup.sh (re-running it rewrites this); man comitup-conf has the other keys.
+# With no known Wi-Fi in range, comitup opens this hotspot; joining it brings up a page that puts
+# the board on a network. It's open (no ap_password): while it's up, anyone nearby can join it
+# and see the Wi-Fi password typed into that page.
+ap_name: <hostname>$HOTSPOT_SUFFIX
+external_callback: $COMITUP_CALLBACK
+EOF
+}
+
+comitup_callback() {
+    cat <<EOF
+#!/bin/sh
+# Written by board-setup.sh. comitup runs this as its owner (root) on each change of state:
+# HOTSPOT, CONNECTING or CONNECTED. LightningLane-Live-LED reads the state and the hotspot's name
+# from $COMITUP_STATE (utils/wifi_setup.py) for its Wi-Fi setup screen.
+printf '%s %s\n' "\$1" "\$(hostname)$HOTSPOT_SUFFIX" > $COMITUP_STATE.new && mv $COMITUP_STATE.new $COMITUP_STATE
+EOF
+}
+
+name_wifi_modes() {
+    # comitup only tries saved networks whose mode says infrastructure (comitup/nm.py). A keyfile
+    # that leaves the mode to NetworkManager's default (as hand-made ones can) has none, and with
+    # only that network saved, comitup would put the hotspot up in its place, cutting the board off.
+    local file id
+    for file in "$ROOT/etc/NetworkManager/system-connections/"*.nmconnection; do
+        [[ -f "$file" ]] || continue
+        grep -Eq '^type=(wifi|802-11-wireless)$' "$file" || continue
+        sed -n '/^\[wifi\]/,/^\[/p' "$file" | grep -q '^mode=' && continue
+        id="$(sed -n 's/^id=//p' "$file" | head -n 1)"
+        [[ -n "$id" ]] || continue
+        echo "  $id has no Wi-Fi mode: setting it to infrastructure so comitup tries it"
+        run nmcli connection modify "$id" 802-11-wireless.mode infrastructure
+    done
+}
+
+setup_wifi_hotspot() {
+    say "Wi-Fi setup hotspot (comitup): an open $BOARD_NAME$HOTSPOT_SUFFIX when no known Wi-Fi is in range"
+    # comitup runs on NetworkManager, Raspberry Pi OS's own since Bookworm. An older board on
+    # dhcpcd is left alone: moving it over from here could take it off the network.
+    if [[ "$DRY_RUN" == false ]] && ! systemctl is-active --quiet NetworkManager; then
+        echo "  NetworkManager isn't running (an older Raspberry Pi OS?): skipping the Wi-Fi setup hotspot" >&2
+        return 0
+    fi
+    hotspot_name_fits "$BOARD_NAME" || { echo "  $BOARD_NAME is too long for a hotspot name: skipping" >&2; return 0; }
+    name_wifi_modes
+    # The settings and callback go first, so comitup starts with them (and --force-confold has
+    # dpkg keep this comitup.conf over the package's).
+    local changed=false
+    WROTE=false
+    write_file "$ROOT/etc/comitup.conf" 644 <<<"$(comitup_conf)"
+    write_file "$ROOT$COMITUP_CALLBACK" 755 <<<"$(comitup_callback)"
+    [[ "$WROTE" == true || "$RENAMED" == true ]] && changed=true
+    if [[ ! -x "$ROOT/usr/sbin/comitup" ]]; then
+        # From its own repository: Bookworm's comitup needs a newer python3-networkmanager than Debian's.
+        run curl -fsSL -o /tmp/davesteele-comitup-apt-source.deb "$COMITUP_SOURCE_DEB"
+        run dpkg -i /tmp/davesteele-comitup-apt-source.deb
+        run rm -f /tmp/davesteele-comitup-apt-source.deb
+        run apt-get update
+        # It starts at once and stays on the network the board is on: saved networks in range are
+        # always tried before the hotspot.
+        run apt-get install -y -o Dpkg::Options::=--force-confold comitup
+        echo "  installed; apt upgrade keeps it current"
+    elif [[ "$changed" == true ]]; then
+        run systemctl restart comitup  # for the new settings or name; it stays on the network it's on
+    else
+        echo "  already set up"
+    fi
 }
 
 tune_matrix() {
@@ -338,31 +431,14 @@ usb_speaker() {  # the first USB sound card's ALSA name, by name so it survives 
 }
 
 lll_config() {
-    # config.json from the example if missing, plus a "matrix" section when boards.json has no
-    # entry for this hostname, and the speaker. Only the keys it sets change.
-    local dir=$1 boards=$1/boards.json in_boards matrix="" device=""
-    [[ -f "$boards" ]] || boards="$SCRIPT_DIR/boards.json"
-    in_boards="$(python3 -c 'import json,sys; print(sys.argv[2] in json.load(open(sys.argv[1])))' "$boards" "$BOARD_NAME" 2>/dev/null || echo False)"
-    if [[ "$in_boards" == True ]]; then
-        echo "  boards.json has $BOARD_NAME; its settings come from there"
-        # config.json's matrix section overrides boards.json: say so, but leave the user's config alone
-        python3 - "$dir/config.json" <<'CONFIG' 2>/dev/null || true
-import json, sys
-try:
-    matrix = json.load(open(sys.argv[1], encoding="utf-8")).get("matrix") or {}
-except (OSError, ValueError):
-    sys.exit()
-overrides = {k: v for k, v in matrix.items() if v is not None}
-if overrides:
-    print("  note: config.json's matrix section overrides boards.json with "
-          + ", ".join(f"{k}={v}" for k, v in overrides.items()) + " (left as is)")
-CONFIG
-    elif [[ "$PANEL_OPTIONS" == yes ]]; then
+    # config.json from the example if missing, plus the panel answers in its "matrix" section (the
+    # Pi's model gives the rest) and the speaker. Only the keys it sets change.
+    local dir=$1 matrix="" device=""
+    if [[ "$PANEL_OPTIONS" == yes ]]; then
         matrix="{\"led_rows\": $LED_ROWS, \"led_cols\": $LED_COLS, \"led_gpio_mapping\": \"$LED_GPIO_MAPPING\", \"led_slowdown_gpio\": $LED_SLOWDOWN_GPIO}"
-        echo "  boards.json has no $BOARD_NAME: putting the panel settings in config.json's matrix section"
-        echo "  (or add a boards.json entry for it and commit it, like the other boards)"
+        echo "  panel settings: in config.json's matrix section"
     else
-        echo "  panel options: left to boards.json / config.json's matrix section"
+        echo "  panel options: the Pi model's; set the size and rotation at http://$BOARD_NAME.local:8080"
     fi
     if [[ "$SPEAKER" == yes ]]; then
         device="$(usb_speaker)"
@@ -407,21 +483,67 @@ install_lll() {
     checkout "$LLL_REPO" "$dir" "$LLL_BRANCH"
     # A board that has it already skips apt (-p) and the slow matrix-driver build (-m).
     [[ -x "$dir/venv/bin/python3" && -d "$dir/submodules/matrix" ]] && flags=(-p -m)
-    in_dir "$dir" bash LLL-install.sh ${flags[@]+"${flags[@]}"}
+    # -w: the Wi-Fi setup hotspot is this script's own step, for every app
+    in_dir "$dir" bash LLL-install.sh ${flags[@]+"${flags[@]}"} -w
     give_back "$dir"
     lll_config "$dir"
-    # No panel flags: boards.json (or config.json's matrix) has them.
+    # No panel flags: the Pi's model and config.json's matrix give them.
     local unit
     unit="$(app_unit "LightningLane-Live-LED" "$dir" "$dir/venv/bin/python3 $dir/disney.py \$ARGS" "\"ARGS=$EXTRA_ARGS\"")"
     retire_old_units "$LLL_UNIT" "$unit"
     write_file "$UNIT_DIR/$LLL_UNIT" 644 <<<"$unit"
+    setup_settings_page "$dir"
+    setup_updater "$dir"
+}
+
+setup_settings_page() {  # setup_settings_page DIR: LightningLane-Live-LED's settings page, its own service
+    # Its own service, so a config.json that stops the app can still be fixed from it. Root, as the
+    # app: it writes config.json and restarts the app.
+    local dir=$1 python=$1/venv/bin/python3
+    say "Settings page: config.json from a browser at http://$BOARD_NAME.local:8080 (or 10.41.0.1:8080 on the setup hotspot)"
+    [[ -x "$python" ]] || python=/usr/bin/python3
+    write_file "$UNIT_DIR/$SETTINGS_UNIT" 644 <<<"$(app_unit "LightningLane-Live-LED settings page" "$dir" "$python -m settings_page.server")"
+    run systemctl daemon-reload
+    run systemctl enable "$SETTINGS_UNIT"
+    run systemctl restart "$SETTINGS_UNIT"  # for an update's new code
+}
+
+setup_updater() {  # setup_updater DIR: the updater's backstops (self_update, ROADMAP #17), with a version that has it
+    local dir=$1 python=$1/venv/bin/python3
+    [[ -d "$dir/self_update" ]] || return 0
+    say "Updater: an update a power cut stops is rolled back at boot; by hand: sudo lll-rollback"
+    [[ -x "$python" ]] || python=/usr/bin/python3
+    # A oneshot, not ordered before the app: rolling back restarts the app and waits for it. No time
+    # limit: a rollback that reinstalls pip packages takes ages on a Pi Zero.
+    write_file "$UNIT_DIR/$RECOVER_UNIT" 644 <<UNIT
+[Unit]
+Description=LightningLane-Live-LED: roll back an update that stopped midway
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=$dir
+ExecStart=$python -m self_update recover
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    write_file "$ROOT$ROLLBACK_COMMAND" 755 <<COMMAND
+#!/bin/sh
+# Undo LightningLane-Live-LED's last update, config.json included: sudo lll-rollback (board-setup.sh's)
+cd "$dir" && exec "$python" -m self_update rollback "\$@"
+COMMAND
+    run systemctl daemon-reload
+    run systemctl enable "$RECOVER_UNIT"  # runs at the next boot; nothing to do now
 }
 
 retire_old_units() {  # retire_old_units UNIT CONTENT: move older copies of UNIT out of systemd's way
     # Boards set up by hand have their own service file, often with the panel flags in it, in /lib
     # or /etc (and sometimes overrides in UNIT.d/). Any of them would keep a board on its old flags
-    # instead of boards.json, so each goes to a dated backup folder, never deleted, with the flags
-    # it ran with printed so they can be checked against boards.json. Ours, unchanged, stays.
+    # instead of its config.json, so each goes to a dated backup folder, never deleted, with the
+    # flags it ran with printed so they can be checked on the settings page. Ours, unchanged, stays.
     local unit=$1 content=$2 backup old disabled=false
     backup="$ROOT/var/backups/board-setup/$(date +%Y%m%d-%H%M%S)"
     for old in "$ROOT/lib/systemd/system/$unit" "$UNIT_DIR/$unit" "$UNIT_DIR/$unit.d"; do
@@ -486,13 +608,19 @@ start_service() {
             run systemctl disable --now "$other"
         fi
     done
+    # LightningLane-Live-LED's settings page and update recovery go with it.
+    if [[ "$unit" != "$LLL_UNIT" ]]; then
+        for other in "$SETTINGS_UNIT" "$RECOVER_UNIT"; do
+            if [[ -f "$UNIT_DIR/$other" ]]; then run systemctl disable --now "$other"; fi
+        done
+    fi
     run systemctl enable "$unit"
     run systemctl restart "$unit"
 }
 
 main() {
     PANEL_OPTIONS=no LED_ROWS=32 LED_COLS=64 LED_GPIO_MAPPING=adafruit-hat-pwm LED_SLOWDOWN_GPIO=2 EXTRA_ARGS=""
-    LLL_BRANCH="" SPEAKER=no PELOTON_AUTO_TOKEN=no WIFI2_SSID="" WIFI2_IFACE="" WIFI2_PSK=""
+    LLL_BRANCH="" SPEAKER=no PELOTON_AUTO_TOKEN=no WIFI2_SSID="" WIFI2_IFACE="" WIFI2_PSK="" WIFI_SETUP_ONLY=false
     while (($#)); do
         case "$1" in
             --answers) [[ $# -ge 2 ]] || die "--answers needs a file"; read_answers "$2"; shift 2 ;;
@@ -501,11 +629,26 @@ main() {
                 LLL_BRANCH="$2"; ANSWERED="${ANSWERED}LLL_BRANCH "; shift 2 ;;
             --yes|-y) ASSUME_YES=true; shift ;;
             --dry-run) DRY_RUN=true; shift ;;
+            --wifi-setup-only) WIFI_SETUP_ONLY=true; shift ;;
             -h|--help) usage; exit 0 ;;
             *) usage >&2; exit 2 ;;
         esac
     done
 
+    if [[ "$WIFI_SETUP_ONLY" == true ]]; then
+        # LLL-install.sh's step: no questions, and fine as root (board-setup.sh runs that as root).
+        if [[ "$DRY_RUN" == false ]]; then
+            [[ "$(uname -s)" == Linux ]] || die "run this on the Pi"
+            [[ $EUID -eq 0 ]] || die "run it with sudo: sudo bash $0 --wifi-setup-only"
+        fi
+        BOARD_NAME="$(hostname -s 2>/dev/null || hostname)"
+        export DEBIAN_FRONTEND=noninteractive
+        setup_wifi_hotspot
+        # LLL-install.sh runs this from the app's folder; the settings page is part of setup mode.
+        [[ -d "$SCRIPT_DIR/settings_page" ]] && setup_settings_page "$SCRIPT_DIR"
+        setup_updater "$SCRIPT_DIR"
+        return
+    fi
     if [[ "$DRY_RUN" == true ]]; then
         BOARD_USER="${SUDO_USER:-$(id -un)}"
     else
@@ -526,6 +669,7 @@ main() {
     run apt-get install -y git python3 python3-venv
     set_hostname
     setup_wifi
+    setup_wifi_hotspot
     tune_matrix
     setup_power_button
     case "$APP" in

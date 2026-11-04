@@ -5,7 +5,7 @@ import pytest
 from utils.special_events import (
     DATED_LANDMARKS, DEFAULT_STAR_RGB, HOLIDAY_STAR, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, dated_landmark,
     fireworks_show, is_special, seasonal_event,
-    special_event_now, star_rgb,
+    special_event_hours, special_event_now, star_rgb,
 )
 
 ET = "America/New_York"
@@ -179,3 +179,22 @@ def test_every_dated_landmark_entry_is_a_real_date():
     for entry in DATED_LANDMARKS:
         datetime.strptime(entry["date"], "%Y-%m-%d")
         assert entry["park"] == entry["park"].lower(), "matched against a lower-cased park name"
+
+
+def test_special_event_hours_reads_tonights_start_and_end():
+    now = et("2026-12-05 18:00")
+    assert special_event_hours(mk(party("2026-12-05", closes_date="2026-12-06")), now) == ("7PM", "12AM")
+    assert special_event_hours(mk(party("2026-12-05", opens="18:00", closes="23:00")), now) == ("6PM", "11PM")
+    assert special_event_hours(mk(party("2026-12-05", opens="18:57", closes="23:59")), now) == ("7PM", "12AM"), \
+        "a minute to midnight is midnight"
+
+
+@pytest.mark.parametrize("park", [
+    mk(),  # no party tonight
+    mk(party("2026-12-04")),  # last night's, over
+    mk(dict(party("2026-12-05"), closingTime="soon")),  # a bad time
+    mk({k: v for k, v in party("2026-12-05").items() if k != "openingTime"}),  # a missing one
+    None,
+])
+def test_special_event_hours_is_none_without_a_usable_party(park):
+    assert special_event_hours(park, et("2026-12-05 18:00")) is None

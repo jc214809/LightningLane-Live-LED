@@ -17,6 +17,39 @@ def test_run_frames_stops_redrawing_once_static_and_sleeps_out_the_rest(clock):
     assert clock.now == pytest.approx(8)
 
 
+def test_a_static_screen_is_redrawn_when_the_settings_pin_comes_and_goes(clock, monkeypatch):
+    import display.animation.player as player
+    monkeypatch.setattr(player, "shown_pin", lambda: "1234" if 3 <= clock.now < 6 else None)
+    matrix = FakeMatrix()
+    calls = []
+    animation.run_frames(matrix, lambda canvas, t: calls.append(t) or False, duration_s=8)
+    assert calls == [0.0, 0.0, 0.0], "drawn, then again as the PIN shows and again as it goes"
+    assert len(matrix.frames) == 3
+    assert clock.now == pytest.approx(8), "still holds for its time"
+
+
+def test_canvases_follow_the_brightness_schedule_as_they_are_handed_out(monkeypatch):
+    import display.animation.player as player
+
+    class Canvas:
+        brightness = 100
+
+    class Matrix:
+        def CreateFrameCanvas(self):
+            return Canvas()
+
+        def SwapOnVSync(self, canvas):
+            return Canvas()
+    level = [None]
+    monkeypatch.setattr(player.brightness, "current", lambda: level[0])
+    matrix = Matrix()
+    assert player.frame_canvas(matrix).brightness == 100, "no schedule: the board's own"
+    level[0] = 15
+    assert player.frame_canvas(matrix).brightness == 15
+    assert player.present(matrix, Canvas()).brightness == 15, "the next canvas to draw on too"
+    player._canvases.pop(id(matrix))
+
+
 def test_run_frames_reports_frames_drawn_and_time_spent_animating(clock):
     calls = []
     drawn, spent = animation.run_frames(FakeMatrix(), lambda canvas, t: calls.append(t) or len(calls) < 30, duration_s=8)

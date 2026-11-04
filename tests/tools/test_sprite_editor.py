@@ -36,6 +36,14 @@ def test_fixed_size_sprites_carry_their_scale(sprites):
     assert sprites["genie/ART"]["scale"] is None, "Genie himself doubles on 64-row boards"
 
 
+def test_collects_the_landmark_art_a_module_lists_for_the_editor(sprites):
+    from display.landmarks import santa_train
+    assert sprites["santa_train/ENGINE_64"]["rows"] == santa_train.ENGINE_64
+    assert sprites["santa_train/SANTA_WAVE_64[1]"]["rows"] == santa_train.SANTA_WAVE_64[1]
+    assert sprites["santa_train/ENGINE_32"]["scale"] == 1, "drawn as is, not doubled"
+    assert sprites["santa_train/ENGINE_64"]["colors"]["R"] == list(santa_train.COLORS["R"])
+
+
 class _Generated:
     """A character with one named pose, one built at import time, and a placeholder key in its base art."""
     _BASE = ["K##K", "KKKK"]

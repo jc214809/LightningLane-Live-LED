@@ -72,8 +72,8 @@ a hole or a short clear-PLA light pipe over it gives an instant "power is on" li
 
 ## Our boards
 
-Each board's settings come from [boards.json](../../boards.json), keyed by its hostname, overridden by
-`config.json`'s `matrix` section, then by command-line flags.
+Each board starts from its Pi model's defaults (`cli.py`'s `MODEL_DEFAULTS`), overridden by its own
+`config.json`'s `matrix` section (the settings page's Panel card), then by command-line flags.
 
 | Board | Pi | Panel | Settings beyond `adafruit-hat-pwm` | Sound |
 |---|---|---|---|---|

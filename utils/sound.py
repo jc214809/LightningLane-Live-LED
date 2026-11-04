@@ -10,16 +10,21 @@ The player runs under a shell that holds a pipe from the app and kills the playe
 when the block ends, or when the app dies any way at all (a crash, the debugger's Stop, kill -9),
 since the OS closes the pipe then too. Otherwise a 19-minute soundtrack outlives the app.
 """
+import math
 import os
 import re
 import shutil
+import struct
 import subprocess
 import sys
+import tempfile
 import time
+import wave
 from contextlib import contextmanager
 from datetime import datetime
 
 from utils import debug
+from utils.config import load_config, sound_settings
 
 # Relative to the working directory, so run the app from the repo root.
 SOUNDS_DIR = "sounds"
@@ -58,6 +63,100 @@ def player_command(path, device=None, platform=sys.platform):
     if platform == "darwin":
         return ["afplay", path]
     return ["aplay", "-q"] + (["-D", device] if device else []) + [path]
+
+
+# The mixer control a USB speaker's volume goes by, in the order to try; else the card's first one.
+VOLUME_CONTROLS = ("PCM", "Speaker", "Master", "Headphone")
+_CONTROL = re.compile(r"Simple mixer control '([^']+)'")
+
+
+def saved_volume(fallback, load=load_config):
+    """config.json's sound.volume as it is now: the settings page changes it without restarting
+    the app. fallback (the start-up one) if the file can't be read."""
+    try:
+        return sound_settings(load()).volume
+    except (OSError, ValueError, AttributeError) as e:
+        debug.warning(f"Can't read the volume from config.json ({e}); using {fallback}.")
+        return fallback
+
+
+def set_volume(settings, platform=sys.platform, run=subprocess.run):
+    """Set the speaker to settings.volume percent with amixer: before each clip, so a speaker
+    plugged back in (at its own default, often full) is turned down again. True if it was set;
+    a missing amixer or a card with no control is logged and never stops the clip."""
+    if platform == "darwin" or shutil.which("amixer") is None:
+        return False
+    card = _card(settings.device)
+    command = ["amixer"] + (["-c", card] if card else [])
+    try:
+        found = run(command + ["scontrols"], capture_output=True, text=True, timeout=5)
+        controls = _CONTROL.findall(found.stdout or "")
+        control = next((c for c in VOLUME_CONTROLS if c in controls), controls[0] if controls else None)
+        if control is None:
+            debug.warning(f"Can't set the volume: amixer lists no controls for {settings.device or 'the default card'}.")
+            return False
+        done = run(command + ["-q", "sset", control, f"{settings.volume}%"], capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        debug.warning(f"Can't set the volume with amixer: {e}")
+        return False
+    if done.returncode:
+        debug.warning(f"Can't set the volume: amixer {control} said {done.stderr.strip() or done.returncode}")
+        return False
+    return True
+
+
+# The settings page's Play test sound: this long, from the start of the fireworks music, else a chime.
+TEST_SECONDS = 4
+TEST_CLIP = "fireworks"
+
+
+def chime_wav(path, rate=22050):
+    """Write a short two-note chime to path (16-bit mono WAV), for a test with no music in sounds/."""
+    frames = bytearray()
+    for freq, length in ((660, 0.35), (880, 0.6)):
+        count = int(rate * length)
+        for i in range(count):
+            fade = min(1.0, i / (rate * 0.01), (count - i) / (rate * 0.15))  # no clicks at either end
+            frames += struct.pack("<h", int(12000 * fade * math.sin(2 * math.pi * freq * i / rate)))
+    with wave.open(path, "wb") as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(rate)
+        f.writeframes(bytes(frames))
+
+
+def test_command(path, device=None, platform=sys.platform):
+    """The player for TEST_SECONDS of path: afplay on a Mac, aplay on a Pi (on device if given)."""
+    if platform == "darwin":
+        return ["afplay", "-t", str(TEST_SECONDS), path]
+    return ["aplay", "-q", "-d", str(TEST_SECONDS)] + (["-D", device] if device else []) + [path]
+
+
+def play_test(settings, platform=sys.platform, run=subprocess.run, sounds_dir=None):
+    """Set settings.volume and play a few seconds at it, for the settings page; waits until it's
+    done. (True, what played) or (False, why not). Sound needn't be on: it's for setting it up."""
+    if shutil.which(test_command("", platform=platform)[0]) is None:
+        return False, f"{test_command('', platform=platform)[0]} isn't installed."
+    volume_set = set_volume(settings, platform, run)
+    clip = find_clip([TEST_CLIP], sounds_dir)
+    with tempfile.TemporaryDirectory() as folder:
+        if clip is None:
+            clip = os.path.join(folder, "chime.wav")
+            chime_wav(clip)
+        command = test_command(clip, settings.device, platform)
+        try:
+            done = run(command, capture_output=True, text=True, timeout=TEST_SECONDS + 10)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            debug.warning(f"Test sound: {command[0]} failed: {e}")
+            return False, f"{command[0]} failed: {e}"
+    if done.returncode:  # like "Device or resource busy" while a show is playing
+        problem = (done.stderr or "").strip().splitlines()[-1:] or [f"exited {done.returncode}"]
+        debug.warning(f"Test sound: {command[0]} said {problem[0]}")
+        return False, f"{command[0]} said {problem[0]}"
+    what = "the start of the fireworks music" if os.path.basename(clip) != "chime.wav" else "a chime"
+    if not volume_set:
+        return True, f"Played {what} at the speaker's own level: the volume couldn't be set."
+    return True, f"Played {what} at {settings.volume}%."
 
 
 # Runs the player in the background and waits for the app's pipe to close (read hits EOF), then
@@ -100,6 +199,7 @@ def playing(names, settings, now=None):
             debug.info(f"No sound for {names[0]}: add one of {', '.join(n + '.wav' for n in names)} to {SOUNDS_DIR}/.")
         else:
             command = player_command(path, settings.device)
+            set_volume(settings._replace(volume=saved_volume(settings.volume)))
             try:
                 process = _start(command)
                 if process is not None:
@@ -135,11 +235,17 @@ def card_present(device, cards_file=CARDS_FILE):
             cards = [m.groups() for m in map(_CARD_LINE.match, f) if m]
     except OSError:
         return False
-    card = device.partition(":")[2].split(",")[0] if device else ""
-    card = card[len("CARD="):] if card.startswith("CARD=") else card
+    card = _card(device)
     if not card:
         return bool(cards)
     return any(card in (index, name) for index, name in cards)
+
+
+def _card(device):
+    """The card an ALSA device names, by index or name ("plughw:1,0" -> "1",
+    "hw:CARD=Device,DEV=0" -> "Device"), or "" for the default."""
+    card = device.partition(":")[2].split(",")[0] if device else ""
+    return card[len("CARD="):] if card.startswith("CARD=") else card
 
 
 def problem(settings, shows, sounds_dir=None, platform=sys.platform, cards_file=CARDS_FILE):

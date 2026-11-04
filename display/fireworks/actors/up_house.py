@@ -8,80 +8,130 @@ from display.motion import smooth
 
 class UpHouseFloats(Actor):
     """
-    Touch the Sky / Up: Carl's house (ART, 1x on 64x32 and doubled on 64x64) rises from behind the
-    castle's right side, lifted by a dense bunch of balloons (1-px dots in the Balloons effect's
-    colours) tied by a few strings to its chimney. Anything below the castle's roofline is hidden,
-    so the balloons come up over the castle first and the house follows. It hangs there with a gentle
-    sway and a slight lift, then drifts up and off the right edge, gone by DRIFT_END_S (the scene is
-    22 s).
+    Touch the Sky / Up: Carl's house floats in from the board's left edge, lifted by its balloons
+    tied by strings to its chimney: on 64x64 the whole chart (BALLOONS_ART over ART, 24x46, 1x), on
+    64x32 only the house (24x24, 1x), under a dense bunch of 1-px dots in the Balloons effect's
+    colours. It crosses with a gentle bob, climbing faster as it goes, and leaves off the top-right
+    corner, gone by CROSS_S (the scene is 22 s). Anything below the castle's roofline is hidden, so it
+    passes behind the castle's towers.
     """
     NAME = "The Up house"
-    RISE_S = 6.0  # from hidden behind the castle up to where it hangs
-    DRIFT_FROM_S = 15.0  # then up and off to the right...
-    DRIFT_END_S = 21.5  # ...gone by here
-    SWAY_S = 3.2  # one sway
-    SCALE = 1  # the house on 64x32 (the editor's preview)
-    BIG_SCALE = 2  # on 64x64
-    # The balloons' colours: V1's Balloons effect (show_effects.py), so the bunch matches them.
+    CROSS_S = 21.5  # from off the left edge to off the top-right corner
+    BOB_S = 3.2  # one bob
+    SCALE = 1  # 1x on both boards: the chart is 46 rows tall
+    # The 64x32 bunch's colours: V1's Balloons effect (show_effects.py), so it matches them.
     BALLOON_COLOURS = ((240, 50, 50), (250, 200, 40), (60, 120, 255), (60, 200, 80), (240, 110, 200),
                        (255, 140, 40))
     STRING_RGB = (190, 190, 190)
 
-    # Carl's house: a brick chimney through a steep dark-red roof, pale teal clapboard walls framed
-    # in white trim, a yellow-lit window, a brown door, and the porch deck along the bottom.
-    # '.' empty, C chimney, R roof, T white trim, B wall, Y lit window, D door, P porch.
+    # From docs/references/Up house with balloons chart.png, cell for cell (its sky left out).
+    # The balloons and their strings (64x64 only), to sit straight on top of ART.
+    BALLOONS_ART = [
+        ".........iibbyy.........",
+        ".......BOORgBGyRR.......",
+        "......bbOORgBBibby......",
+        "......PPGGByyiibby......",
+        ".....iiyGGyyGggBBBP.....",
+        ".....iiggbOOGbbBBBP.....",
+        ".....POBBbBBRRbbiiG.....",
+        ".....yyBByyORRyyiiG.....",
+        ".....yyggRROiiyGGOO.....",
+        "......RRgRPPiiRRGO......",
+        "......RROOPPyyPPRR......",
+        ".......ggbbRROOyR.......",
+        ".......ggbggROOyy.......",
+        "........yyGGPPBB........",
+        "........yyGGPPBB........",
+        "........s.s..s.s........",
+        "........s.s..s.s........",
+        "........s..s.ss.........",
+        ".........s.ss.s.........",
+        "..........s.ss..........",
+        "...........ss...........",
+        "............s...........",
+    ]
+    # Carl's house: the chimney, a dark roof with sky-blue gables, the pink half (a lilac window,
+    # brown door, pink porch) and the green half (a blue window) under cream trim.
     ART = [
-        "........C..",
-        "....RRR.C..",
-        "..RRRRRRR..",
-        "RRRRRRRRRRR",
-        ".TTTTTTTTT.",
-        ".TBYYBBBDT.",
-        ".TBYYBBBDT.",
-        ".TBBBBBBDT.",
-        "PPPPPPPPPPP",
+        "...........SSS....B.....",
+        "...........RRR....B.....",
+        "...........RRR...BBB....",
+        ".......B...RRR...BYB....",
+        "...SSSBYBSSRRRSSBBYBBSSS",
+        "...SSBYYYBSSSSSSBYYYBSSS",
+        "..SSBYCCCYBSSSSBBYYYBBSS",
+        "..SSSYWWWYSSSSSBYWWWYBSS",
+        ".SSSSYCCCYSSSSBBYWWWYBBS",
+        ".SSSSYYYYYSSSSBYYWWWYYB.",
+        "SSSSSSSSSSSSSBBYYWWWYYBB",
+        ".WIIIIIWIIIIIIYYYyyyYYY.",
+        ".WIIIIIWIIIIIIYYYYYYYYY.",
+        ".WIPPPIWIIIIIIyyyyyyyyy.",
+        ".WIWWWIWINNNNIgGGGGGGGg.",
+        ".WIPPPIWINNNNIgGGbbbGGg.",
+        ".WIPPPIWINNNNIgGGbbbGGg.",
+        ".WIIIIIWINNNNIgGGWWWGGg.",
+        ".WWWWWWWINNNNIgGGbbbGGg.",
+        ".WIWIWIWINNNNIgGGbbbGGg.",
+        ".WiWiWiWiiiiiggGGGGGGGg.",
+        ".iiiiiiWWWWWWggGGGGGGGg.",
+        ".iDDDDiWCCCCCgDGDDDDDGD.",
+        ".iiiiiiWWWWWWWgGGGGGGGg.",
     ]
     COLORS = {
-        "C": (170, 70, 50),
-        "R": (140, 30, 40),
-        "T": (235, 235, 235),
-        "B": (110, 195, 205),
-        "Y": (255, 215, 80),
-        "D": (110, 60, 30),
-        "P": (150, 95, 50),
+        "S": (54, 54, 54),  # roof, chimney cap
+        "R": (200, 20, 20),  # chimney bricks, red balloons
+        "B": (54, 163, 248),  # gables, blue balloons
+        "Y": (252, 237, 143),  # cream trim
+        "y": (251, 232, 32),  # yellow
+        "C": (185, 185, 184),  # light grey
+        "W": (253, 253, 252),  # white
+        "I": (249, 187, 216),  # pink wall
+        "i": (250, 122, 186),  # deep pink
+        "P": (214, 119, 221),  # lilac
+        "N": (105, 82, 46),  # the door
+        "G": (120, 247, 101),  # green wall
+        "g": (11, 113, 21),  # dark green
+        "b": (64, 93, 238),  # blue
+        "D": (153, 43, 100),  # the planters
+        "O": (247, 132, 44),  # orange balloons
+        "s": (134, 133, 136),  # strings
     }
-    CHIMNEY_COL = 8
+    CHIMNEY_COL = 12
 
     def __init__(self, show):
         super().__init__(show)
-        s = self.scale = self.BIG_SCALE if self.big else self.SCALE
-        self.w, self.h = len(self.ART[0]) * s, len(self.ART) * s
-        # The bunch: an ellipse of dots over the house, strings from its underside to the chimney.
-        rx, ry = 6.5 * s, 3.0 * s
-        gap = 2 * s  # rows of string between the bunch and the chimney's top
-        self.above = gap + int(2 * ry)  # rows of balloons and string over the house's top
-        cx, cy = self.w / 2 - 0.5, -gap - ry - 0.5
-        art_rng = random.Random(5)  # the same bunch every show
+        self.w, self.h = len(self.ART[0]), len(self.ART)
         cells = {}
-        for dy in range(-self.above, -gap):
-            for dx in range(int(cx - rx) - 1, int(cx + rx) + 2):
-                if ((dx - cx) / rx) ** 2 + ((dy - cy) / ry) ** 2 <= 1 and art_rng.random() < 0.9:
-                    cells[(dx, dy)] = art_rng.choice(self.BALLOON_COLOURS)
-        chim_x = self.CHIMNEY_COL * s + (s - 1) / 2
-        for k in (-3, 0, 3):
-            ex, ey = cx + k * s, -gap - 0.5  # where the string leaves the bunch
-            n = 2 * int(max(abs(chim_x - ex), gap)) + 1
-            for i in range(n + 1):
-                f = i / n
-                x, y = round(ex + (chim_x - ex) * f), round(ey + f * gap)
-                if y < 0:
-                    cells.setdefault((x, y), self.STRING_RGB)
+        if self.big:
+            self.above = len(self.BALLOONS_ART)  # rows of balloons and string over the house's top
+            for row, line in enumerate(self.BALLOONS_ART):
+                for col, kind in enumerate(line):
+                    if kind != ".":
+                        cells[(col, row - self.above)] = self.COLORS[kind]
+        else:
+            # The bunch: an ellipse of dots over the house, strings from its underside to the chimney.
+            rx, ry = 8.0, 3.0
+            gap = 2  # rows of string between the bunch and the chimney's top
+            self.above = gap + int(2 * ry)
+            cx, cy = self.w / 2 - 0.5, -gap - ry - 0.5
+            art_rng = random.Random(5)  # the same bunch every show
+            for dy in range(-self.above, -gap):
+                for dx in range(int(cx - rx) - 1, int(cx + rx) + 2):
+                    if ((dx - cx) / rx) ** 2 + ((dy - cy) / ry) ** 2 <= 1 and art_rng.random() < 0.9:
+                        cells[(dx, dy)] = art_rng.choice(self.BALLOON_COLOURS)
+            for k in (-3, 0, 3):
+                ex, ey = cx + k, -gap - 0.5  # where the string leaves the bunch
+                n = 2 * int(max(abs(self.CHIMNEY_COL - ex), gap)) + 1
+                for i in range(n + 1):
+                    f = i / n
+                    x, y = round(ex + (self.CHIMNEY_COL - ex) * f), round(ey + f * gap)
+                    if y < 0:
+                        cells.setdefault((x, y), self.STRING_RGB)
         for row, line in enumerate(self.ART):
             for col, kind in enumerate(line):
                 if kind != ".":
-                    for oy in range(s):
-                        for ox in range(s):
-                            cells[(col * s + ox, row * s + oy)] = self.COLORS[kind]
+                    cells[(col, row)] = self.COLORS[kind]
         self.cells = [(dx, dy, rgb) for (dx, dy), rgb in cells.items()]
         self.min_dx = min(dx for dx, _, _ in self.cells)
         # The castle's roofline per column: anything at or below it is behind the castle.
@@ -98,27 +148,16 @@ class UpHouseFloats(Actor):
                 self.clip[x] = self.clip[left_end]
             elif x > right_end:
                 self.clip[x] = self.clip[right_end]
-        self.sway = 1 if not self.big else 2
-        self.base_x = show.castle_x + show.castle_w - self.w + 2 + s
-        cols = range(max(0, self.base_x), min(show.width, self.base_x + self.w + self.sway))
-        clear = min(self.clip[x] for x in cols)
-        self.hover = max(self.above, clear - self.h - 1)  # its top where it hangs, house clear of the roof
-        self.lift = max(0, min(2 * s, self.hover - self.above))  # how much higher it floats while hanging
-        lowest = max(self.clip[x] for x in range(int(cx - rx) - 1 + self.base_x,
-                                                  int(cx + rx) + 2 + self.base_x + self.sway)
-                     if 0 <= x < show.width)
-        self.start = lowest + self.above  # its top when everything is still hidden
+        self.hover = self.above  # its top as it comes in: the balloons just under the board's top
+        self.max_dx = max(dx for dx, _, _ in self.cells)
 
     def top_left(self, e):
         """The house's top-left e seconds into the scene."""
-        rise = smooth(e / self.RISE_S)
-        top = self.start + (self.hover - self.start) * rise
-        top -= self.lift * smooth((e - self.RISE_S) / (self.DRIFT_FROM_S - self.RISE_S))
-        left = self.base_x + self.sway * (0.5 - 0.5 * math.cos(2 * math.pi * e / self.SWAY_S))
-        k = max(0.0, min(1.0, (e - self.DRIFT_FROM_S) / (self.DRIFT_END_S - self.DRIFT_FROM_S)))
-        left += (self.show.width - self.min_dx + 1 - self.base_x) * k * k
-        top -= self.show.height * 0.3 * k
-        return left, top
+        k = smooth(e / self.CROSS_S)
+        x0, x1 = -self.max_dx - 1, self.show.width - self.min_dx  # just off the left, just off the right
+        y0, y1 = self.hover, -self.h  # its top where it comes in, then its bottom off the top
+        bob = math.sin(2 * math.pi * e / self.BOB_S)
+        return x0 + (x1 - x0) * k, y0 + (y1 - y0) * k * k + bob
 
     def draw(self, put, out, active):
         if not active:

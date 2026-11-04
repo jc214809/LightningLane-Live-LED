@@ -7,6 +7,7 @@ import certifi
 import requests
 
 from api.weather import fetch_weather_data
+from parks.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, is_water_park
 from utils.special_events import seasonal_event
 from utils import debug
 
@@ -14,7 +15,6 @@ troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c5
 troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
 
-DISNEY_WORLD_DESTINATION_ID = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
 _UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
 
 # Every synchronous request to the ThemeParks Wiki API uses this timeout so a
@@ -88,7 +88,6 @@ def fetch_park_schedule(park_id):
         debug.error(f"Failed to fetch schedule for park ID {park_id}: {e}")
         return []
 
-WATER_PARK_KEYWORDS = ("Water Park", "Shores")
 
 def fetch_parks_from_destination(destination_id):
     """
@@ -113,7 +112,7 @@ def fetch_parks_from_destination(destination_id):
             if not isinstance(park, dict):
                 continue
             park_name = park.get("name", "")
-            if any(kw in park_name for kw in WATER_PARK_KEYWORDS):
+            if is_water_park(park_name):
                 continue
             schedule = park.get("schedule") or []
             schedule_filtered = [
@@ -245,10 +244,6 @@ def fetch_parks_and_attractions(disney_park_list):
         }
         parks.append(park_obj)
     return parks
-
-
-def clean_park_name(raw_name):
-    return raw_name.replace("Theme", " ").replace("Park", " ").replace("Disney's", "").strip()
 
 
 def get_attraction_name(item):

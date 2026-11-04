@@ -14,7 +14,7 @@ from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from display.fireworks.music_show import render_music_show
 from display.fireworks.score import SHOWS_DIR, load_score
-from cli import arguments, board_preset, describe, led_matrix_options
+from cli import arguments, describe, led_matrix_options, model_defaults
 from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
@@ -24,11 +24,15 @@ from display.attractions.attraction_info import draw_attraction_frame
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
 from display.countdown.countdown import render_countdown_to_disney
+from display.wifi_setup import render_settings_address, render_wifi_setup
 from utils.trips import active_trip, parse_trips
+from utils.wifi_setup import hotspot_name
 
 from utils import debug
-from utils.config import (ShowSettings, SoundSettings, debug_enabled, forced_show_name, load_config, show_settings, sound_settings,
-                          websocket_protocol, websocket_settings)
+from utils import brightness
+from utils import heartbeat
+from utils.config import (ShowSettings, SoundSettings, brightness_schedule, debug_enabled, forced_show_name, load_config,
+                          show_settings, sound_settings, websocket_protocol, websocket_settings)
 from utils.sound import clip_name, playing, show_clips, watch as watch_sound
 
 # Configure logging
@@ -113,6 +117,10 @@ sound = SoundSettings()
 # default. See show_setting().
 show_settings_by_clip = {}
 FIREWORKS_SHOW_S = 5 * 60
+# How often the Wi-Fi setup screen checks whether the board has joined a network.
+WIFI_SETUP_CHECK_S = 5
+# Each Wi-Fi setup page stays up this many checks after its first WIFI_SETUP_CHECK_S.
+WIFI_SETUP_PAGE_CHECKS = 2
 _shows_played = set()
 
 def start_live_updaters(config, disney_park_list, update_interval, parks_data):
@@ -149,13 +157,18 @@ def main():
     # Settings first, as in mlb-led-scoreboard: a bad flag or matrix setting exits before anything
     # starts, and --emulated must switch the driver before the matrix is built.
     config = load_config()
-    board_name, board = board_preset()
-    command_line_args = arguments(matrix=config.get("matrix"), board=board, board_name=board_name)
-    debug.info(describe(command_line_args, matrix=config.get("matrix"), board=board, board_name=board_name))
+    model, defaults, why = model_defaults(config.get("pi_model"))
+    command_line_args = arguments(matrix=config.get("matrix"), defaults=defaults, model=model)
+    debug.info(describe(command_line_args, matrix=config.get("matrix"), defaults=defaults, model=model, why=why))
     if command_line_args.emulated:
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
     set_forced_surprise(config.get("force_surprise"))
+    schedule = brightness_schedule(config)
+    brightness.use(schedule)
+    if schedule:
+        debug.info(f"Brightness schedule: {schedule.day} from {schedule.day_start:%H:%M}, "
+                   f"{schedule.night} from {schedule.night_start:%H:%M}.")
     set_forced_show(forced_show_name(config))
     global sound, show_settings_by_clip
     sound = sound_settings(config)
@@ -183,6 +196,8 @@ def main():
 
     matrix = driver.RGBMatrix(options=led_matrix_options(command_line_args))
     initialize_fonts(matrix.height)
+    # With no Wi-Fi the parks can't be fetched, so this comes first.
+    show_wifi_setup_while_needed(matrix)
 
     park_names = config.get('parks', [])
     disney_park_list = resolve_parks_from_config(park_names)
@@ -198,8 +213,10 @@ def main():
     try:
         play_forced_show(matrix)
         while True:
+            show_wifi_setup_while_needed(matrix)
             play_fireworks_show_if_due(matrix, parks_data)
             render_logo(matrix)
+            heartbeat.beat()  # the updater's health check: alive, even with every park closed
             last_trip_shown = play_trip_countdown(matrix, config, last_trip_shown)
             if parks_data:
                 for park in parks_data:
@@ -219,6 +236,30 @@ def main():
         debug.error(traceback.format_exc())
     finally:
         matrix.Clear()
+
+def show_wifi_setup_while_needed(matrix):
+    """While comitup's setup hotspot is up (no known Wi-Fi in range), show how to join it, until
+    the board is on a network. Returns whether it showed."""
+    name = hotspot_name()
+    if not name:
+        return False
+    debug.info(f"No known Wi-Fi: showing the setup screen for the {name} hotspot.")
+    while name:
+        # Two pages in turn: the hotspot to join, then the settings page's address. A new name
+        # starts again from the first.
+        shown, page = name, 0
+        while name == shown:
+            draw = _static(render_wifi_setup, name) if page == 0 else _static(render_settings_address)
+            show_screen(matrix, draw, WIFI_SETUP_CHECK_S)
+            for _ in range(WIFI_SETUP_PAGE_CHECKS):
+                time.sleep(WIFI_SETUP_CHECK_S)
+                name = hotspot_name()
+                if name != shown:
+                    break
+            page = 1 - page
+    debug.info("Wi-Fi setup hotspot down; carrying on.")
+    return True
+
 
 def log_configured_trips(config):
     trips = parse_trips(config)
@@ -311,6 +352,8 @@ def play_show(matrix, show, theme, start, now):
     version = show_setting(show).version
     full = version != "default"
     score = load_score(clip_name(show), version=version) if full else None
+    remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
+    heartbeat.beat(show=show, show_s=score.end if score else remaining)  # no updates mid-show
     # A default-length show has no music of its own (a synced one's clip is the whole show): the generic clip, if any.
     with playing(show_clips(show) if full else ["fireworks"], sound, now):
         if score:
@@ -318,10 +361,10 @@ def play_show(matrix, show, theme, start, now):
             debug.info(f"{show} started at {start.isoformat()}: the synced show for {score.end:.0f}s.")
             render_music_show(matrix, score)
         else:
-            remaining = FIREWORKS_SHOW_S - (now - start).total_seconds()
             debug.info(f"{show} started at {start.isoformat()}: fireworks for {remaining:.0f}s.")
             render_castle_fireworks(matrix, duration=remaining, title=False, theme=theme)
     forget_screen(matrix)
+    heartbeat.beat()
 
 def known_shows():
     """{show name: fireworks theme} for every show the board can play: the nightly one and each party's."""
@@ -390,6 +433,7 @@ def loop_through_attractions(matrix, park, parks=()):
             if surprise != "wipe":
                 debug.info(f"{surprise.capitalize()} is visiting {ride['name']}.")
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
+            heartbeat.beat()
 
 def _ride_visitor(ride_name, wait=None):
     """A visitor who belongs to this ride, if one rolls in; None otherwise (and no roll is spent)."""

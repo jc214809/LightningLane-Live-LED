@@ -179,6 +179,8 @@ Other references, unused:
 
 **7. Santa Goofy / Mickey in a Santa hat (Christmas party, Jollywood Nights).** The hat's red
 and white would echo the green/red/white holiday star on the park-hours screen.
+Partly done: the Christmas party's landmark (`SantaTrainLandmark`) has Santa-hat Mickey, Donald and
+Goofy riding Santa's train, bobbing, blinking and (on 64x64) waving. Still open: the 64x32 waves, a cameo on the ride screens, and anything for Jollywood Nights.
 
 **8. Remy.** Scurries along the bottom edge with a chef-hat hop. Caveat: a small grey rat is
 Figment's original "purple blob" problem all over again. It only works close-up and large,
@@ -983,3 +985,97 @@ dates change every year, so the entries need updating before each race.
 Later for the Caballeros: the Gran Fiesta Tour poster (`docs/references/Gran Fiesta Tour EPCOT poster.png`)
 has them riding the striped magic serape over the Mexico pavilion, which would suit a ride-screen
 surprise on Gran Fiesta Tour all year. The 10K's sprites could be reused.
+
+## 15. ~~A settings page in setup mode~~ Built (2026-10-31, untested on a Pi)
+
+`settings_page/`: every `config.json` setting in a browser, from its own service
+(`lll-settings.service`, port 8080), so a broken config can still be fixed. Open to anyone on the
+setup hotspot (`10.41.0.1:8080`, the Wi-Fi setup screen's second page); on the home network it asks
+for a PIN the board shows on request. Not comitup's `web_service`: comitup stops that one while the
+hotspot is up (its own page has port 80). To check on a board: that port 8080 is reachable from a
+phone on the hotspot, the PIN overlay, and the restart after a save.
+
+Since then: a park picker (#191); Pi model defaults with each board's own panel settings in its
+config.json, in place of boards.json, and a volume set live with a test sound (#192); a Sign out
+button in the top bar.
+
+## 16. ~~Send the settings page's PIN by Pushover~~ Built (2026-11-01, checked on a board)
+
+An optional way to sign in to the settings page from a board you can't see (like DonaldPi): with a
+`pushover` section in `config.json` (user key and app token, entered on the page and masked like the
+other keys), the sign-in page gets "Send the PIN to my phone" next to "Show a PIN". It still shows
+on the LED too. Limit it to one send a minute (anyone on the Wi-Fi can open the sign-in page) and
+never log the PIN. Without the keys, the page stays as it is.
+
+Built as `settings_page/pushover.py` and `PinGate.send_pin`, with a "PIN by Pushover" card (its
+switch turns sending off without clearing the keys). The message's `ttl` deletes it from the phone
+when the PIN runs out. A real send from a board reached the phone (2026-11-02).
+
+## 17. Updates from the settings page, with rollback
+
+An Updates card with two channels: **Releases** (GitHub releases of `vX.Y.Z` tags, newest first)
+and a **Beta** switch that follows `develop-beta`'s tip, but only to a commit whose CI passed.
+Switching from Beta to Releases stays put until a release newer than what's installed exists (no
+downgrade). Manual only to start; nightly beta updates can come once rollback has proven itself.
+Test board: TinyPi, including a deliberately broken commit to watch the auto-rollback.
+
+- Releases: built (`.github/workflows/release.yml`): a pushed `v*` tag becomes a release only if it
+  matches `version.py`. v1.1.0 and older predate the settings page, so the page lists only releases
+  from a minimum version up: the first one that has the updater, so a downgrade can't remove the
+  way back.
+- The update runs as its own process (`systemd-run --unit=lll-update`), not in the settings
+  service it replaces. Pre-flight: network, ~300 MB free, no under-voltage/throttle flags, no show
+  playing, no update running, a clean checkout.
+- Rollback point in `/var/lib/lll-update/state.json`: the commit, `pip freeze`, a copy of
+  `config.json`, and the phase. Then `git checkout --detach <sha>` and the new version's
+  `LLL-install.sh -p -m -w` (pip only if `requirements.txt` changed: a Pi Zero takes ages).
+- Health: `Restart=always` hides a crash loop, so the app writes a heartbeat (`/run/lll-health`)
+  after its first ride screen. Pass within ~5 min: heartbeat, `NRestarts` 0, port 8080 answers.
+  Fail: check out the old commit, reinstall the freeze, restore `config.json` (the page warns this
+  undoes settings saved since), restart, Pushover what failed. Keep the last 3 good commits.
+- Backstops: a boot oneshot rolls back an update a power cut stopped midway; `sudo lll-rollback`
+  over SSH; a Roll back button on the page.
+
+- Updater and heartbeat: built (2026-11-04, CLI only, untested on a Pi): `python3 -m self_update
+  status|check|update|rollback`, in `self_update/`. `MIN_RELEASE` is 2.1.0 (v2.0.0 predates it). The
+  heartbeat beats after the intro too, not only ride screens, since every park is closed at night.
+  Only the "now" throttle flags block an update (the since-boot ones would until a reboot). The beta
+  gate counts every check run, so a Codecov upload failure holds a commit back. After an update the
+  checkout is detached: by hand, `git checkout develop-beta && git pull` before the usual commands.
+
+- Boot recovery and `lll-rollback`: built (2026-11-04, untested on a Pi). `board-setup.sh` installs
+  `lll-update-recover.service` (a oneshot: `self_update recover` rolls back an update stopped midway,
+  even one stopped while checking health; a failed rollback is left for a person, not retried each
+  boot) and `/usr/local/bin/lll-rollback`, with the settings page, for versions that have the updater.
+
+- The Updates card: built (2026-11-04, untested on a Pi), first on the settings page and outside its
+  form. It shows what's installed and the last update, rollback or boot recovery's outcome
+  (`outcome.json` beside `state.json`, written by `self_update`'s command line, since a refused
+  update leaves no phase). Check is a dry run in the settings process (Releases or Beta; kept 10
+  min), listing what's in the update: the version change, the PRs merged since what's installed
+  (`Board.what_changed`, from git's merge commits, leaving out the develop-beta → main release
+  merges; commit subjects when there are none) and whether pip runs. Update now (after a check found one) and Roll back (confirmed: it puts back config.json) run
+  `systemd-run --unit=lll-update --collect`, so systemd refuses a second. While one runs, the page
+  polls `/update/status`, reloads when it's done, and Save is refused (a rollback would undo it).
+  The channel isn't saved: it's the last check's, else the installed one's (Releases on a `vX.Y.Z`
+  tag or `main`, else the last update's if it installed this commit, else Beta). The PIN session doesn't
+  survive the settings page's restart, so a browser signs in again after an update.
+- Card polish (2026-11-04): with no check kept, the page's script checks the installed channel
+  as it loads (`POST /update/check` asking for JSON, which reuses a check under 10 min old, so
+  reloads don't spend GitHub's 60 calls an hour) and swaps in the result without a reload. Results
+  read apart: Update available (accent), Up to date (green), Up to date for now (`waiting`: Beta's
+  tip hasn't passed CI yet), Can't update right now (blocked). A running update lists its four
+  steps (`updates.STEPS`, from state.json's phase), followed by the status poll.
+- Waiting Beta as steps (2026-11-04, #205): a Beta held back by CI lists each run (running, passed,
+  failed) in the steps' style, from `github.ci_status`.
+- Checking the auto-rollback on a board, without a broken commit: update to a newer Beta and, while
+  the card says "Restarting and checking it works", `sudo systemctl kill -s KILL
+  LightningLane-Live-LED.service`. systemd's restart counts as a crash, so it rolls back at once
+  ("the app crashed"); `sudo systemctl stop` instead fails the health window after 5 min ("the app
+  isn't running"). Then `sudo venv/bin/python3 -m self_update status` says `rolled_back` (without
+  sudo it can't read state.json and says so), `git log -1` is the old commit, and the card's Last
+  rollback says why ("Rolled back to Beta 0dddb41", not version.py's release). A power cut during
+  "Installing the new version" checks `lll-update-recover` at the next boot.
+
+Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
+`lll-rollback` (done) → the Updates card (done, #201) → a board check once it's merged.

@@ -90,26 +90,97 @@ def test_lll_runs_from_its_checkout_with_no_panel_flags_and_stops_the_other_apps
     assert f"WorkingDirectory={checkout}" in service
     assert f"ExecStart={checkout}/venv/bin/python3 {checkout}/disney.py $ARGS" in service
     assert 'Environment="ARGS=--led-brightness=85"' in service
-    assert "--led-rows" not in service  # boards.json has the board's settings
+    assert "--led-rows" not in service  # config.json has the board's settings
     assert "ExecStartPre" not in service  # the old script's, under [Unit], where systemd ignores it
-    assert "boards.json has Disneypi" in out
+    assert 'matrix={"led_rows": 64, "led_cols": 64' in out
     assert f"git clone --branch develop-beta https://github.com/jc214809/LightningLane-Live-LED.git {checkout}" in out
-    assert f"(cd {checkout} && bash LLL-install.sh)" in out  # a fresh board gets the full install
+    assert f"(cd {checkout} && bash LLL-install.sh -w)" in out  # the full install, less the Wi-Fi setup (done here)
     for other in ("peloton-led.service", "mlb-led-scoreboard.service"):
         assert f"systemctl disable --now {other}" in out
     assert out.index("systemctl enable LightningLane-Live-LED.service") < out.index(
         "systemctl restart LightningLane-Live-LED.service")
 
 
+def test_lll_gets_its_settings_page_as_its_own_service_from_the_checkout(board):
+    checkout = board.checkout("LightningLane-Live-LED", {"venv/bin/python3": ""})
+    (checkout / "venv/bin/python3").chmod(0o755)
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    service = unit(out, "lll-settings.service")
+    assert f"WorkingDirectory={checkout}" in service
+    assert f"ExecStart={checkout}/venv/bin/python3 -m settings_page.server" in service
+    assert "Restart=always" in service
+    assert "http://Disneypi.local:8080" in out
+    steps = ["systemctl enable lll-settings.service", "systemctl restart lll-settings.service",
+             "systemctl restart LightningLane-Live-LED.service"]
+    at = [out.index(step) for step in steps]
+    assert at == sorted(at)
+    assert "disable --now lll-settings.service" not in out
+
+
+def written(out, path):
+    """A file other than a unit that a dry run would write, from its printed copy."""
+    head = f"{path} (mode 755):\n"
+    assert head in out, out
+    lines = []
+    for line in out.split(head, 1)[1].splitlines():
+        if not line.startswith("    "):
+            break
+        lines.append(line[4:])
+    return "\n".join(lines)
+
+
+def test_lll_gets_the_updaters_boot_recovery_and_lll_rollback(board):
+    checkout = board.checkout("LightningLane-Live-LED", {"venv/bin/python3": "", "self_update/__init__.py": ""})
+    (checkout / "venv/bin/python3").chmod(0o755)
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    recover = unit(out, "lll-update-recover.service")
+    assert "Type=oneshot" in recover and "TimeoutStartSec=infinity" in recover and "Restart=" not in recover
+    assert f"WorkingDirectory={checkout}" in recover
+    assert f"ExecStart={checkout}/venv/bin/python3 -m self_update recover" in recover
+    assert "Before=" not in recover, "rolling back restarts the app: ordered before it, that would deadlock"
+    assert "+ systemctl enable lll-update-recover.service" in out
+    assert "restart lll-update-recover" not in out and "start lll-update-recover" not in out
+    command = written(out, f"{board.root}/usr/local/bin/lll-rollback")
+    assert command.startswith("#!/bin/sh\n")
+    assert f'cd "{checkout}" && exec "{checkout}/venv/bin/python3" -m self_update rollback "$@"' in command
+
+
+def test_a_version_without_the_updater_gets_no_recovery(board):
+    board.checkout("LightningLane-Live-LED")
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    assert "lll-update-recover" not in out and "lll-rollback" not in out
+
+
+def test_lll_rollback_runs_the_rollback_with_its_arguments(board, tmp_path):
+    board.checkout("LightningLane-Live-LED", {"self_update/__init__.py": ""})
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    script = tmp_path / "lll-rollback"
+    script.write_text(written(out, f"{board.root}/usr/local/bin/lll-rollback")
+                      .replace("/usr/bin/python3", "echo"))  # no venv in the fake checkout: the system python
+    result = subprocess.run(["sh", str(script), "--extra"], capture_output=True, text=True)
+    assert result.stdout == "-m self_update rollback --extra\n", result.stderr
+
+
+@pytest.mark.parametrize("app", ["peloton", "mlb"])
+def test_another_app_stops_lights_settings_page_if_it_has_one(board, app):
+    board.checkout("Peloton-LED", {"packaging/systemd/peloton-led.service": f"[Service]\nExecStart={PELOTON_EXEC}\n"})
+    assert "lll-settings.service" not in board.ok(BOARD_NAME="ZeroPi", APP=app)
+    (board.root / "etc/systemd/system").mkdir(parents=True, exist_ok=True)
+    (board.root / "etc/systemd/system/lll-settings.service").write_text("[Service]\n")
+    (board.root / "etc/systemd/system/lll-update-recover.service").write_text("[Service]\n")
+    out = board.ok(BOARD_NAME="ZeroPi", APP=app)
+    assert "+ systemctl disable --now lll-settings.service" in out
+    assert "+ systemctl disable --now lll-update-recover.service" in out
+
+
 def test_lll_on_a_board_it_has_set_up_updates_and_skips_apt_and_the_driver_build(board):
     checkout = board.checkout("LightningLane-Live-LED", {
-        "venv/bin/python3": "", "submodules/matrix/Makefile": "", "config.json": "{}",
-        "boards.json": json.dumps({"MickeyPi": {"led_rows": 64}})})
+        "venv/bin/python3": "", "submodules/matrix/Makefile": "", "config.json": "{}"})
     (checkout / "venv/bin/python3").chmod(0o755)
     out = board.ok(BOARD_NAME="MickeyPi", APP="lll", LLL_BRANCH="develop-sound")
     assert f"git -C {checkout} checkout develop-sound" in out
     assert f"git -C {checkout} pull --ff-only" in out
-    assert f"(cd {checkout} && bash LLL-install.sh -p -m)" in out
+    assert f"(cd {checkout} && bash LLL-install.sh -p -m -w)" in out
     assert "config.json-example" not in out  # keeps the board's config.json
     assert "set in" not in out
 
@@ -130,8 +201,7 @@ def test_a_branch_that_isnt_a_plain_name_is_refused(board, branch):
     assert "apt-get" not in result.stdout
 
 
-def test_lll_on_a_board_missing_from_boards_json_gets_the_panel_in_config_json(board):
-    board.checkout("LightningLane-Live-LED", {"boards.json": json.dumps({"Disneypi": {}})})
+def test_lll_panel_answers_go_in_config_json(board):
     out = board.ok(BOARD_NAME="NewPi", APP="lll", PANEL_OPTIONS="yes", LED_ROWS=64, LED_SLOWDOWN_GPIO=4)
     assert "config.json-example" in out and "chmod 600" in out
     assert ('matrix={"led_rows": 64, "led_cols": 64, "led_gpio_mapping": "adafruit-hat-pwm", '
@@ -178,11 +248,11 @@ def test_mlb_runs_upstream_with_the_panel_flags_and_answers_its_one_question(boa
 
 
 def test_panel_options_are_left_to_each_apps_config_unless_asked_for(board):
-    board.checkout("LightningLane-Live-LED", {"boards.json": json.dumps({"Disneypi": {}})})
     board.checkout("Peloton-LED", {
         "packaging/systemd/peloton-led.service": f"[Service]\nExecStart={PELOTON_EXEC}\n"})
     out = board.ok(BOARD_NAME="NewPi", APP="lll", LED_ROWS=64, EXTRA_ARGS="--led-brightness=85")
     assert "left to the app's own config" in out
+    assert "panel options: the Pi model's; set the size and rotation at http://NewPi.local:8080" in out
     assert "matrix=" not in out and "--led-rows" not in out and "ARGS=--led-brightness" not in out
     out = board.ok(BOARD_NAME="ZeroPi", APP="peloton")
     assert "board.conf" not in out
@@ -252,6 +322,130 @@ def test_a_blank_password_keeps_the_saved_network(board):
     assert "keeping the saved network" in out and "nmcli" not in out
 
 
+def comitup_installed(board):
+    comitup = board.root / "usr/sbin/comitup"
+    comitup.parent.mkdir(parents=True)
+    comitup.write_text("")
+    comitup.chmod(0o755)
+
+
+def written(out, path):
+    """The file a dry run would write at path (under the fake root), from its printed copy."""
+    head = f"+ write {path} ("
+    assert head in out, out
+    lines = []
+    for line in out.split(head, 1)[1].splitlines()[1:]:
+        if not line.startswith("    ") or line.startswith("    + write "):
+            break
+        lines.append(line[4:])
+    return "\n".join(lines)
+
+
+@pytest.mark.parametrize("app", ["lll", "peloton", "mlb"])
+def test_every_board_gets_the_wifi_setup_hotspot_set_up_before_comitup_starts(board, app):
+    out = board.ok(BOARD_NAME="ZeroPi", APP=app)
+    assert "Wi-Fi setup   an open ZeroPi-setup hotspot" in out
+    conf = written(out, f"{board.root}/etc/comitup.conf")
+    assert "ap_name: <hostname>-setup" in conf.splitlines()
+    assert "external_callback: /usr/local/bin/comitup-callback" in conf.splitlines()
+    assert "ap_password" not in conf.replace("(no ap_password)", "")  # open, as asked
+    callback = written(out, f"{board.root}/usr/local/bin/comitup-callback")
+    assert callback.startswith("#!/bin/sh\n")
+    assert ("printf '%s %s\\n' \"$1\" \"$(hostname)-setup\" > /run/comitup-state.new && "
+            "mv /run/comitup-state.new /run/comitup-state") in callback
+    assert "/usr/local/bin/comitup-callback (mode 755)" in out
+    source = "https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb"
+    steps = [f"+ curl -fsSL -o /tmp/davesteele-comitup-apt-source.deb {source}",
+             "+ dpkg -i /tmp/davesteele-comitup-apt-source.deb",
+             "+ apt-get install -y -o Dpkg::Options::=--force-confold comitup"]
+    at = [out.index(step) for step in steps]
+    assert at == sorted(at)
+    assert out.index("/etc/comitup.conf (mode 644)") < at[0], "settings first, so comitup starts with them"
+    assert "systemctl restart comitup" not in out
+
+
+def test_the_wifi_setup_callback_writes_the_state_the_app_reads(board, tmp_path):
+    from utils.wifi_setup import hotspot_name
+    out = board.ok(BOARD_NAME="ZeroPi", APP="lll")
+    state = tmp_path / "comitup-state"
+    script = tmp_path / "callback"
+    script.write_text(written(out, f"{board.root}/usr/local/bin/comitup-callback").replace("/run/comitup-state", str(state)))
+    script.chmod(0o755)
+    board.command("hostname", "echo ZeroPi")
+    env = dict(os.environ, PATH=f"{board.bin}{os.pathsep}{os.environ['PATH']}")
+    subprocess.run([str(script), "HOTSPOT"], check=True, env=env)
+    assert hotspot_name(str(state)) == "ZeroPi-setup"
+    subprocess.run([str(script), "CONNECTED"], check=True, env=env)
+    assert hotspot_name(str(state)) is None
+
+
+def test_wifi_setup_already_in_place_is_left_alone(board):
+    out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
+    for path in ("etc/comitup.conf", "usr/local/bin/comitup-callback"):
+        target = board.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(written(out, f"{board.root}/{path}") + "\n")
+    comitup_installed(board)
+    out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
+    assert "already set up" in out
+    assert "comitup.conf (mode" not in out and "dpkg" not in out and "systemctl restart comitup" not in out
+
+
+def test_changed_wifi_setup_settings_or_a_new_hostname_restart_comitup(board):
+    comitup_installed(board)
+    out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
+    assert "+ systemctl restart comitup\n" in out and "dpkg" not in out
+    for path in ("etc/comitup.conf", "usr/local/bin/comitup-callback"):
+        (board.root / path).parent.mkdir(parents=True, exist_ok=True)
+        (board.root / path).write_text(written(out, f"{board.root}/{path}") + "\n")
+    out = board.ok(BOARD_NAME="ZeroPi", APP="lll")  # renamed: the hotspot is named after the board
+    assert "+ systemctl restart comitup\n" in out
+
+
+def test_a_saved_wifi_with_no_mode_gets_one_so_comitup_doesnt_hotspot_over_it(board):
+    folder = board.root / "etc/NetworkManager/system-connections"
+    folder.mkdir(parents=True)
+    (folder / "preconfigured.nmconnection").write_text(
+        "[connection]\nid=preconfigured\ntype=wifi\n\n[wifi]\nssid=Home\n\n[ipv4]\nmethod=auto\n")
+    (folder / "phone.nmconnection").write_text(
+        "[connection]\nid=phone\ntype=wifi\n\n[wifi]\nmode=infrastructure\nssid=iPhone\n")
+    (folder / "wired.nmconnection").write_text("[connection]\nid=wired\ntype=ethernet\n")
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll")
+    assert "+ nmcli connection modify preconfigured 802-11-wireless.mode infrastructure\n" in out
+    assert "modify phone" not in out and "modify wired" not in out
+    assert out.index("modify preconfigured") < out.index("apt-get install -y -o Dpkg::Options::=--force-confold comitup")
+
+
+def test_a_hostname_too_long_for_a_hotspot_name_is_refused(board):
+    result = board.run(BOARD_NAME="a" * 27, APP="lll")
+    assert result.returncode != 0
+    assert "would be over Wi-Fi's 32 letters" in result.stderr
+    assert board.ok(BOARD_NAME="a" * 26, APP="lll")
+
+
+def test_wifi_setup_only_asks_nothing_and_does_only_that(board):
+    board.command("hostname", "echo MickeyPi")
+    result = board.run_file("", "", "--wifi-setup-only")
+    assert result.returncode == 0, result.stderr
+    out = result.stdout
+    assert "Wi-Fi setup hotspot (comitup): an open MickeyPi-setup" in out
+    assert "dpkg -i" in out
+    assert "Board setup" not in out and "git clone" not in out and "LightningLane-Live-LED.service" not in out
+    # LLL-install.sh runs it from the app's folder: the settings page comes with setup mode
+    service = unit(out, "lll-settings.service")
+    assert f"WorkingDirectory={ROOT}" in service and " -m settings_page.server" in service
+    assert "systemctl restart lll-settings.service" in out
+    # and the updater's backstops, since this version has it
+    assert f" -m self_update recover" in unit(out, "lll-update-recover.service")
+    assert "lll-rollback (mode 755)" in out
+
+
+def test_wifi_setup_only_needs_the_pi_and_sudo(board):
+    result = board.run_file("", "", "--wifi-setup-only", dry_run=False)
+    assert result.returncode != 0
+    assert "run this on the Pi" in result.stderr or "sudo" in result.stderr
+
+
 @pytest.mark.parametrize("answers, message", [
     ("COLOR=red\n", "unknown key COLOR"),
     ("APP=nba\n", "APP=nba isn't one of: lll peloton mlb"),
@@ -279,7 +473,7 @@ def test_without_dry_run_it_needs_the_pi_and_sudo(board):
     assert result.stdout == ""
 
 
-def test_old_service_files_are_retired_to_a_backup_so_the_board_follows_boards_json(board):
+def test_old_service_files_are_retired_to_a_backup_so_the_board_follows_its_config(board):
     """A hand-made board's own units (PlutoPi has both, with its flags in them) are moved, never deleted."""
     flags = 'Environment="ARGS=--led-rows=32 --led-pixel-mapper=Rotate:180 --led-brightness=85"'
     for folder in ("lib/systemd/system", "etc/systemd/system/LightningLane-Live-LED.service.d"):
@@ -309,15 +503,15 @@ def test_our_own_service_file_unchanged_on_a_rerun_is_left_alone(board):
     (board.root / "etc/systemd/system").mkdir(parents=True)
     (board.root / "etc/systemd/system/LightningLane-Live-LED.service").write_text(ours + "\n")
     out = board.ok(BOARD_NAME="Disneypi", APP="lll")
-    assert "Retiring" not in out and "mv " not in out
+    assert "Retiring" not in out and "+ mv " not in out
     assert "systemctl disable LightningLane-Live-LED.service" not in out
     assert "unchanged: " in out
 
 
-def test_config_json_matrix_settings_that_override_boards_json_are_pointed_out_not_removed(board):
+def test_a_boards_own_config_json_matrix_is_left_alone(board):
     board.checkout("LightningLane-Live-LED", {
-        "boards.json": json.dumps({"PlutoPi": {"led_rows": 32}}),
         "config.json": json.dumps({"matrix": {"led_brightness": 85, "led_rows": None}})})
     out = board.ok(BOARD_NAME="PlutoPi", APP="lll")
-    assert "config.json's matrix section overrides boards.json with led_brightness=85 (left as is)" in out
     assert "set in" not in out
+
+

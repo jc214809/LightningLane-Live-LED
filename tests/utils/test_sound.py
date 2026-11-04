@@ -97,6 +97,7 @@ def popen(monkeypatch):
         return started[-1]
     monkeypatch.setattr(sound.subprocess, "Popen", fake)
     monkeypatch.setattr(sound.shutil, "which", lambda name: f"/usr/bin/{name}")  # CI has no aplay
+    monkeypatch.setattr(sound, "set_volume", lambda settings: started.append(("volume", settings.volume)))
     return started
 
 
@@ -106,23 +107,25 @@ EVENING = datetime(2026, 10, 10, 21, 0)
 
 def test_plays_while_the_block_runs_and_stops_after(clips, popen):
     with sound.playing(["happily-ever-after", "fireworks"], ON, EVENING) as process:
-        assert process is popen[0] and not process.stdin.closed
-    assert popen[0].command[:2] == ["sh", "-c"], "under the guard that dies with the app"
-    assert popen[0].command[-1] == str(clips / "fireworks.wav")
-    assert popen[0].stdin.closed, "closing the pipe stops the player"
+        assert popen[0] == ("volume", 80), "the volume is set before the clip starts"
+        assert process is popen[1] and not process.stdin.closed
+    assert process.command[:2] == ["sh", "-c"], "under the guard that dies with the app"
+    assert process.command[-1] == str(clips / "fireworks.wav")
+    assert process.stdin.closed, "closing the pipe stops the player"
 
 
 def test_stops_even_when_the_screen_fails(clips, popen):
     with pytest.raises(RuntimeError):
         with sound.playing(["fireworks"], ON, EVENING):
             raise RuntimeError("draw failed")
-    assert popen[0].stdin.closed
+    assert popen[1].stdin.closed
 
 
 def test_a_guard_that_hangs_is_killed(clips, monkeypatch):
     process = FakeProcess(["sh"], hangs=True)
     monkeypatch.setattr(sound.subprocess, "Popen", lambda command, **kwargs: process)
     monkeypatch.setattr(sound.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(sound, "set_volume", lambda settings: True)  # amixer would go through the fake Popen
     with sound.playing(["fireworks"], ON, EVENING):
         pass
     assert process.stdin.closed and process.killed
@@ -132,7 +135,7 @@ def test_a_missing_player_is_logged_not_started(clips, popen, monkeypatch):
     monkeypatch.setattr(sound.shutil, "which", lambda name: None)
     with sound.playing(["fireworks"], ON, EVENING) as process:
         assert process is None
-    assert popen == []
+    assert not any(isinstance(p, FakeProcess) for p in popen), "no player started"
 
 
 @pytest.mark.parametrize("settings, now, names", [
@@ -320,3 +323,144 @@ def test_current_problem_rechecks_once_a_minute_and_logs_changes(monkeypatch):
     clock[0] += 60
     sound.current_problem(lambda: clock[0])
     assert len(logged) == 2, "logged on a change, not every check"
+
+
+# ---- Volume, set with amixer before each clip ----
+
+class FakeRun:
+    """subprocess.run for amixer: scontrols lists `controls`; sset exits with `code`."""
+    def __init__(self, controls=("Headphone", "PCM"), code=0, raises=None):
+        self.controls, self.code, self.raises, self.calls = controls, code, raises, []
+
+    def __call__(self, command, **kwargs):
+        self.calls.append(command)
+        if self.raises:
+            raise self.raises
+        if command[-1] == "scontrols":
+            out = "".join(f"Simple mixer control '{c}',0\n" for c in self.controls)
+            return subprocess.CompletedProcess(command, 0, out, "")
+        return subprocess.CompletedProcess(command, self.code, "", "amixer: Invalid card" if self.code else "")
+
+
+@pytest.fixture
+def amixer(monkeypatch):
+    monkeypatch.setattr(sound.shutil, "which", lambda name: f"/usr/bin/{name}")
+    warnings = []
+    monkeypatch.setattr(sound.debug, "warning", warnings.append)
+    return warnings
+
+
+@pytest.mark.parametrize("device, card", [
+    (None, []), ("plughw:1,0", ["-c", "1"]), ("plughw:CARD=Device,DEV=0", ["-c", "Device"]),
+])
+def test_set_volume_sets_the_speakers_pcm_on_its_card(amixer, device, card):
+    run = FakeRun()
+    assert sound.set_volume(SoundSettings(True, device, None, 65), "linux", run)
+    assert run.calls == [["amixer"] + card + ["scontrols"], ["amixer"] + card + ["-q", "sset", "PCM", "65%"]]
+    assert amixer == []
+
+
+def test_set_volume_falls_back_to_the_cards_first_control(amixer):
+    run = FakeRun(controls=("Mic", "Auto Gain Control"))
+    assert sound.set_volume(ON, "linux", run)
+    assert run.calls[-1][-2:] == ["Mic", "80%"]
+
+
+@pytest.mark.parametrize("run, warning", [
+    (FakeRun(controls=()), "lists no controls"),
+    (FakeRun(code=1), "amixer PCM said amixer: Invalid card"),
+    (FakeRun(raises=subprocess.TimeoutExpired("amixer", 5)), "Can't set the volume with amixer"),
+    (FakeRun(raises=OSError("no such file")), "no such file"),
+])
+def test_set_volume_logs_a_failure_and_carries_on(amixer, run, warning):
+    assert sound.set_volume(ON, "linux", run) is False
+    assert warning in amixer[0]
+
+
+def test_set_volume_skips_a_mac_and_a_board_without_amixer(monkeypatch):
+    run = FakeRun()
+    assert sound.set_volume(ON, "darwin", run) is False
+    monkeypatch.setattr(sound.shutil, "which", lambda name: None)
+    assert sound.set_volume(ON, "linux", run) is False
+    assert run.calls == []
+
+
+def test_saved_volume_is_read_fresh_so_the_settings_page_needs_no_restart(monkeypatch):
+    assert sound.saved_volume(80, lambda: {"sound": {"volume": 40}}) == 40
+    assert sound.saved_volume(80, lambda: {}) == 80
+
+
+def test_saved_volume_falls_back_when_config_json_cant_be_read(monkeypatch):
+    warnings = []
+    monkeypatch.setattr(sound.debug, "warning", warnings.append)
+
+    def broken():
+        raise ValueError("Expecting value")
+    assert sound.saved_volume(65, broken) == 65
+    assert "Expecting value" in warnings[0]
+
+
+def test_playing_sets_the_volume_saved_now_not_the_start_up_one(clips, popen, monkeypatch):
+    monkeypatch.setattr(sound, "saved_volume", lambda fallback: 30)
+    with sound.playing(["fireworks"], ON, EVENING):
+        pass
+    assert popen[0] == ("volume", 30)
+
+
+# ---- The settings page's test sound ----
+
+def test_the_chime_is_a_short_wav(tmp_path):
+    import wave
+    path = str(tmp_path / "chime.wav")
+    sound.chime_wav(path)
+    with wave.open(path) as f:
+        assert (f.getnchannels(), f.getsampwidth()) == (1, 2)
+        assert 0.5 < f.getnframes() / f.getframerate() < 2
+
+
+def test_the_test_plays_a_few_seconds():
+    assert sound.test_command("a.wav", "plughw:1,0", "linux") == ["aplay", "-q", "-d", "4", "-D", "plughw:1,0", "a.wav"]
+    assert sound.test_command("a.wav", None, "darwin") == ["afplay", "-t", "4", "a.wav"]
+
+
+class FakePlayer(FakeRun):
+    """FakeRun for amixer, and aplay exiting with `play_code` and `play_error`."""
+    def __init__(self, play_code=0, play_error="", **kwargs):
+        super().__init__(**kwargs)
+        self.play_code, self.play_error, self.played = play_code, play_error, []
+
+    def __call__(self, command, **kwargs):
+        if command[0] != "aplay":
+            return super().__call__(command, **kwargs)
+        self.played.append((command, os.path.exists(command[-1])))
+        return subprocess.CompletedProcess(command, self.play_code, "", self.play_error)
+
+
+def test_a_test_plays_the_start_of_the_fireworks_music_at_the_volume(amixer, clips):
+    run = FakePlayer()
+    settings = SoundSettings(True, "plughw:1,0", None, 45)
+    assert sound.play_test(settings, "linux", run, str(clips)) == \
+        (True, "Played the start of the fireworks music at 45%.")
+    assert run.calls[1][-2:] == ["PCM", "45%"], "the volume first"
+    assert run.played == [(["aplay", "-q", "-d", "4", "-D", "plughw:1,0", str(clips / "fireworks.wav")], True)]
+
+
+def test_with_no_music_a_test_plays_a_chime(amixer, tmp_path):
+    run = FakePlayer()
+    assert sound.play_test(ON, "linux", run, str(tmp_path)) == (True, "Played a chime at 80%.")
+    assert run.played[0][0][-1].endswith("chime.wav") and run.played[0][1], "the chime existed while it played"
+
+
+def test_a_test_says_why_it_didnt_play(amixer, clips):
+    run = FakePlayer(play_code=1, play_error="aplay: main:831: audio open error: Device or resource busy\n")
+    assert sound.play_test(ON, "linux", run, str(clips)) == \
+        (False, "aplay said aplay: main:831: audio open error: Device or resource busy")
+    assert "Device or resource busy" in amixer[-1]
+
+
+def test_a_test_with_no_player_or_no_volume_says_so(amixer, clips, monkeypatch):
+    run = FakePlayer(controls=())
+    assert sound.play_test(ON, "linux", run, str(clips)) == \
+        (True, "Played the start of the fireworks music at the speaker's own level: the volume couldn't be set.")
+    monkeypatch.setattr(sound.shutil, "which", lambda name: None)
+    assert sound.play_test(ON, "linux", FakePlayer(), str(clips)) == (False, "aplay isn't installed.")

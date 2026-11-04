@@ -5,6 +5,8 @@ without a restart. Feature-specific sections (trip_countdown, force_surprise) ar
 the code that validates them (utils/trips.py, disney.py).
 """
 import json
+import os
+import shutil
 from datetime import time
 from typing import NamedTuple, Optional, Tuple
 
@@ -18,6 +20,29 @@ def load_config(file_path=CONFIG_FILE):
     """Load the configuration from a JSON file."""
     with open(file_path, 'r') as file:
         return json.load(file)
+
+
+def save_config(config, path=CONFIG_FILE):
+    """Write config.json whole or not at all, keeping the last one as config.json.bak, with the
+    old file's owner and mode (the user's, 600, as board-setup.sh made it), even when run as root."""
+    temp = path + ".new"
+    try:
+        old = os.stat(path)
+    except FileNotFoundError:
+        old = None
+    fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, old.st_mode & 0o777 if old else 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
+        f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    if old:
+        try:
+            os.chown(temp, old.st_uid, old.st_gid)
+        except PermissionError:  # not root (a dev machine): it's ours already
+            pass
+        shutil.copy2(path, path + ".bak")
+    os.replace(temp, path)
 
 
 def debug_enabled(config):
@@ -62,6 +87,16 @@ def websocket_settings(config):
         debug.warning('config.json "websocket.enabled" is true but "websocket.api_key" is not set; using REST polling only.')
         return False, api_key
     return True, api_key
+
+
+def pushover_keys(config):
+    """(user_key, app_token) from config.json's "pushover" section, for sending the settings
+    page's PIN to a phone, or None: no section, turned off, or a key missing or a placeholder."""
+    section = config.get("pushover")
+    if not isinstance(section, dict) or section.get("enabled", True) is not True:
+        return None
+    user, token = section.get("user_key"), section.get("app_token")
+    return (user.strip(), token.strip()) if has_api_key(user) and has_api_key(token) else None
 
 
 WS_PROTOCOLS = ("legacy", "preview")
@@ -137,16 +172,21 @@ def forced_show_name(config):
     return None
 
 
+# A USB speaker draws on the Pi's 5V rail; near full volume it under-volted Disneypi (a Pi 4), 80% didn't.
+DEFAULT_VOLUME = 80
+
+
 class SoundSettings(NamedTuple):
     enabled: bool = False
     device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card
     quiet_hours: Optional[Tuple[time, time]] = None  # (start, end) in the board's local time
+    volume: int = DEFAULT_VOLUME  # percent, set with amixer before each clip
 
 
 def sound_settings(config):
-    """config.json's "sound" section: {"enabled": true, "device": null,
+    """config.json's "sound" section: {"enabled": true, "device": null, "volume": 80,
     "quiet_hours": {"start": "22:00", "end": "08:00"}}. Without the section the board stays silent.
-    A bad quiet_hours turns sound off rather than risk playing in the night."""
+    A bad quiet_hours turns sound off rather than risk playing in the night; a bad volume is 80."""
     section = config.get("sound")
     if section is None:
         return SoundSettings()
@@ -164,6 +204,13 @@ def sound_settings(config):
                       'using the default.')
         device = None
 
+    volume = section.get("volume")
+    if volume is None:
+        volume = DEFAULT_VOLUME
+    elif isinstance(volume, bool) or not isinstance(volume, int) or not 0 <= volume <= 100:
+        debug.warning(f'config.json "sound.volume" should be 0 to 100, not {volume!r}; using {DEFAULT_VOLUME}.')
+        volume = DEFAULT_VOLUME
+
     quiet = section.get("quiet_hours")
     quiet_hours = None
     if quiet is not None:
@@ -173,4 +220,44 @@ def sound_settings(config):
             debug.warning(f'config.json "sound.quiet_hours" should be {{"start": "22:00", "end": "08:00"}}, '
                           f'not {quiet!r}; sound is off.')
             return SoundSettings()
-    return SoundSettings(enabled, device, quiet_hours)
+    return SoundSettings(enabled, device, quiet_hours, volume)
+
+
+class BrightnessSchedule(NamedTuple):
+    day: int  # 1 to 100, as --led-brightness
+    night: int
+    day_start: time  # the board's local time
+    night_start: time
+
+
+BRIGHTNESS_SCHEDULE_KEYS = {"day", "night", "day_start", "night_start"}
+
+
+def parse_brightness_schedule(section):
+    """(BrightnessSchedule or None, what's wrong or None) for config.json's "brightness_schedule", shaped
+    as Peloton-LED's: null for one brightness all day, else
+    {"day": 80, "night": 15, "day_start": "07:00", "night_start": "22:00"}."""
+    if section is None:
+        return None, None
+    if not isinstance(section, dict) or set(section) != BRIGHTNESS_SCHEDULE_KEYS:
+        return None, "needs day, night, day_start and night_start"
+    for key in ("day", "night"):
+        value = section[key]
+        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 100:
+            return None, f'"{key}" should be 1 to 100, not {value!r}'
+    starts = []
+    for key in ("day_start", "night_start"):
+        try:
+            starts.append(time.fromisoformat(section[key]))
+        except (TypeError, ValueError):
+            return None, f'"{key}" should be a time like "07:00", not {section[key]!r}'
+    return BrightnessSchedule(section["day"], section["night"], *starts), None
+
+
+def brightness_schedule(config):
+    """config.json's "brightness_schedule" (see parse_brightness_schedule), or None. A bad one is warned
+    about and leaves the board at one brightness all day."""
+    schedule, problem = parse_brightness_schedule(config.get("brightness_schedule"))
+    if problem:
+        debug.warning(f'config.json "brightness_schedule" {problem}; keeping one brightness all day.')
+    return schedule

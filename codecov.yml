@@ -1,11 +1,14 @@
-flag_management:
-  individual_flags:
-    - name: smart-tests
-      carryforward: true
-      carryforward_mode: "labels"
-      statuses:
-        - type: "project"
-        - type: "patch"
+# Fixed bars, not Codecov's default of "never lower than the branch merged into", which failed a PR
+# for 98.42% against 98.45%. The checks matter beyond the PR: the updater's Beta channel won't
+# install a develop-beta commit with any failed check run (self_update/github.py).
+coverage:
+  status:
+    project:
+      default:
+        target: 90%  # the whole project's coverage
+    patch:
+      default:
+        target: 90%  # the lines the PR adds or changes
 
 cli:
   plugins:

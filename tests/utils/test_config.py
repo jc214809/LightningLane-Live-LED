@@ -4,7 +4,7 @@ import pytest
 
 from datetime import time
 
-from utils.config import (ShowSettings, forced_show_name, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, sound_settings,
+from utils.config import (ShowSettings, forced_show_name, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, pushover_keys, sound_settings,
                           weather_api_key, websocket_protocol, websocket_settings)
 
 
@@ -48,6 +48,20 @@ def test_weather_api_key(config, expected):
 def test_has_api_key_is_false_without_a_real_key(api_key):
     # The server closes keyless connections (3000 "Authentication timeout"), so these poll REST instead.
     assert not has_api_key(api_key)
+
+
+@pytest.mark.parametrize("section, expected", [
+    ({"user_key": " u-1 ", "app_token": "t-2"}, ("u-1", "t-2")),
+    ({"user_key": "u-1", "app_token": "t-2", "enabled": True}, ("u-1", "t-2")),
+    ({"user_key": "u-1", "app_token": "t-2", "enabled": False}, None),
+    ({"user_key": "u-1", "app_token": "t-2", "enabled": "yes"}, None),
+    ({"user_key": "u-1"}, None),
+    ({"user_key": "<PUSHOVER_USER_KEY>", "app_token": "t-2"}, None),
+    ("u-1", None),
+    (None, None),
+])
+def test_pushover_keys_need_both_real_keys_and_not_turned_off(section, expected):
+    assert pushover_keys({} if section is None else {"pushover": section}) == expected
 
 
 def test_has_api_key_is_true_for_a_real_key():
@@ -151,3 +165,42 @@ def test_forced_show_name(config, expected, monkeypatch):
     assert forced_show_name(config) == expected
     assert bool(warnings) == (config.get("force_show") == HEA and expected == HEA or
                               len([s for s in config.get("shows", []) if s.get("force")]) > 1)
+
+
+# ---- brightness_schedule ----
+
+def test_brightness_schedule_is_read_as_peloton_leds():
+    from datetime import time
+    from utils.config import BrightnessSchedule, brightness_schedule
+    config = {"brightness_schedule": {"day": 80, "night": 15, "day_start": "07:00", "night_start": "22:00"}}
+    assert brightness_schedule(config) == BrightnessSchedule(80, 15, time(7), time(22))
+    assert brightness_schedule({}) is None and brightness_schedule({"brightness_schedule": None}) is None
+
+
+@pytest.mark.parametrize("section, problem", [
+    ({"day": 80}, "needs day, night, day_start and night_start"),
+    ("bright", "needs day, night, day_start and night_start"),
+    ({"day": 0, "night": 15, "day_start": "07:00", "night_start": "22:00"}, '"day" should be 1 to 100'),
+    ({"day": 80, "night": True, "day_start": "07:00", "night_start": "22:00"}, '"night" should be 1 to 100'),
+    ({"day": 80, "night": 15, "day_start": "7am", "night_start": "22:00"}, '"day_start" should be a time'),
+])
+def test_a_bad_brightness_schedule_is_warned_about_and_ignored(monkeypatch, section, problem):
+    import utils.config as config_module
+    warnings = []
+    monkeypatch.setattr(config_module.debug, "warning", warnings.append)
+    assert config_module.brightness_schedule({"brightness_schedule": section}) is None
+    assert len(warnings) == 1 and problem in warnings[0]
+
+
+@pytest.mark.parametrize("volume, expected", [(None, 80), (0, 0), (65, 65), (100, 100)])
+def test_sound_volume_defaults_to_80(volume, expected):
+    assert sound_settings({"sound": {"volume": volume}}).volume == expected
+
+
+@pytest.mark.parametrize("volume", [101, -1, "80", 80.5, True])
+def test_a_bad_sound_volume_is_80_with_a_warning(monkeypatch, volume):
+    from utils import config as config_module
+    warnings = []
+    monkeypatch.setattr(config_module.debug, "warning", warnings.append)
+    assert sound_settings({"sound": {"volume": volume}}).volume == 80
+    assert "sound.volume" in warnings[0]

@@ -55,10 +55,12 @@ sudo bash board-setup.sh
 
 It asks everything first (hostname, app, whether to set the panel options here (size, GPIO mapping and slowdown, extra flags; the default is no, since each app keeps them in its own config), a second Wi-Fi network such as a phone hotspot, the [power button](docs/hardware/POWER.md)), shows a summary, then clones the app into your home folder and runs the app's own installer, sets up the matrix tuning (`snd_bcm2835` off, `isolcpus=3`), writes the app's systemd service, and stops the other two apps' services, since only one app can drive the panel. Re-run it to update a board or switch apps; on a board it has already set up, it skips the slow matrix-driver build.
 
-- **Older service files:** a board set up by hand often has its own `LightningLane-Live-LED.service` (in `/lib` or `/etc`, with the panel flags in it), which would keep it on those flags instead of `boards.json`. The script moves them to `/var/backups/board-setup/<date>/` (never deletes them) and prints the flags each one ran with, so you can check them against the board's `boards.json` entry. It also points out any `config.json` `matrix` settings, which override `boards.json`, but leaves them alone.
-- **This app:** the service carries no panel flags. If you said yes to the panel options and `boards.json` has no entry for the hostname, they go in `config.json`'s `matrix` section instead (or add an entry for the board and commit it). A new `config.json` is copied from the example: fill in your keys afterwards.
+- **Older service files:** a board set up by hand often has its own `LightningLane-Live-LED.service` (in `/lib` or `/etc`, with the panel flags in it), which would keep it on those flags instead of its `config.json`. The script moves them to `/var/backups/board-setup/<date>/` (never deletes them) and prints the flags each one ran with, so you can check them on the settings page.
+- **This app:** the service carries no panel flags. If you said yes to the panel options, they go in `config.json`'s `matrix` section; otherwise the Pi's model gives them, and you set the size and rotation on the settings page. A new `config.json` is copied from the example: fill in your keys afterwards.
 - **Peloton-LED:** its own installer puts it in `/opt/peloton-led` and asks for the riders; if you chose to set the panel options here, this script adds them in a drop-in, `/etc/systemd/system/peloton-led.service.d/board.conf`.
 - `--branch develop-sound` installs this app from another branch (the default is `develop-beta`; the branch question asks it too).
+- **Wi-Fi setup hotspot (every board, every app):** it installs [comitup](https://davesteele.github.io/comitup/). When no Wi-Fi the board knows is in range, the board opens a hotspot named after it, `<hostname>-setup` (e.g. `Disneypi-setup`), with no password. Join it from a phone, pick your network on the page that opens (or browse to http://10.41.0.1/), and the board joins it. While the hotspot is up, this app's screen says `Wi-Fi setup`, `Join` and the hotspot's name. The hotspot is open, so anyone nearby can join it and see the Wi-Fi password typed into that page, but only while the board is in setup. Networks the board already has are kept and always tried first. It needs NetworkManager (Raspberry Pi OS Bookworm or later): an older board is skipped. `LLL-install.sh` sets it up too (`-w` skips it); `sudo bash board-setup.sh --wifi-setup-only` does just this.
+- **Settings page (LightningLane-Live-LED):** every `config.json` setting (API keys, parks, trips, sound, brightness, shows, and the panel under Advanced) from a browser, so a board can be set up with no SSH. On the setup hotspot, browse to http://10.41.0.1:8080 (the Wi-Fi setup screen shows it next): no password, since you're with the board. On the home network, browse to `http://<hostname>.local:8080` and press **Show a PIN on the board**: the board shows a 4-digit PIN for two minutes, and typing it in signs that browser in for an hour (five wrong tries use a PIN up; **Sign out** in the top bar ends it sooner). For a board you can't see, put your Pushover user key and an app token in the page's **PIN by Pushover** card: the sign-in page then also has **Send the PIN to my phone** (once a minute at most; the PIN still shows on the board, and the message deletes itself when the PIN runs out). Saved API keys show only their last four letters; leave a key blank to keep it. Saving checks everything first, keeps the old file as `config.json.bak`, and restarts the app. It runs as its own service, `lll-settings.service`, so it works even when a bad `config.json` stops the app; `journalctl -u lll-settings.service` has its log. `--wifi-setup-only` from the app's folder (so `LLL-install.sh`) installs it too.
 - `--answers board.txt` answers questions ahead with `KEY=value` lines (`APP=lll`, `LED_ROWS=64`, ...; `--help` lists the keys). `--dry-run` prints everything it would do and changes nothing. The Wi-Fi password is never stored in the answers file or put on a command line.
 
 Reboot afterwards if it says so (boot settings changed).
@@ -102,13 +104,14 @@ It will also install the following python libraries that are required for certai
 Additional flags are available for customizing your install:
 
 ```
--a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m -v).
+-a, --skip-all          Skip all dependencies and config installation (equivalent to -c -p -m -v -w).
 -c, --skip-config       Skip updating JSON configuration files. (Currently no effect: the installer never changes config.json.)
 -m, --skip-matrix       Skip building matrix driver dependency. Video display will default to emulator mode.
 -p, --skip-python       Skip Python 3 installation. Requires manual Python 3 setup if not already installed.
 
 -v, --no-venv           Do not create a virtual environment for the dependencies.
 -e, --emulator-only     Do not install dependencies under sudo. Skips building matrix dependencies (equivalent to -m)
+-w, --skip-wifi-setup   Skip the Wi-Fi setup hotspot (see board-setup.sh above). Linux only; -e skips it too.
 -d, --driver            Specify a branch name or commit SHA for the rpi-rgb-led-matrix library. (Default: master)
 
 -f, --force             Try to skip most errors and force install. May be able to recover from previous installer errors.
@@ -197,20 +200,24 @@ You can configure your LED matrix with the same flags used in the [rpi-rgb-led-m
 --drop-privileges         Force the matrix driver to drop root privileges after setup. (Default: false)
 ```
 
-Each board's settings live in `boards.json`, keyed by the Pi's hostname, and a board picks its own at startup. To change one, edit its entry, commit, and update that board; there's nothing to change on the Pi itself, and its service needs no flags:
+Each board starts from its Pi model's defaults (in `cli.py`'s `MODEL_DEFAULTS`: the bonnet's `adafruit-hat-pwm` mapping, slowdown 4 and `led_pwm_lsb_nanoseconds=200` on a Pi 4, slowdown 2 on a Pi 3 or Zero 2 W), found from the Pi itself or picked with `config.json`'s `"pi_model"` (`"pi4"`, `"pi3"`, `"pizero2w"` or `"auto"`). Anything a board needs beyond that, like its size and rotation, goes in its own `config.json`'s `"matrix"` section, which the settings page's Panel card edits, and its service needs no flags:
 
 ```json
-"PlutoPi": {
+"pi_model": "auto",
+"matrix": {
   "led_rows": 32,
   "led_cols": 64,
-  "led_gpio_mapping": "adafruit-hat-pwm",
-  "led_slowdown_gpio": 2,
-  "led_pixel_mapper": "Rotate:180",
-  "led_brightness": 85
+  "led_pixel_mapper": "Rotate:180"
 }
 ```
 
-Settings are named like the flags with underscores. A board's `config.json` can override its preset in a `"matrix"` section of the same shape (`config.json-example` lists every setting as `null`, which overrides nothing), and a flag on the command line overrides both. Switches like `led_show_refresh` take `true` or `false`. An unknown name or a bad value stops the app with a message, like a bad flag. The startup log shows the result: `Board settings (boards.json preset PlutoPi): led_cols=64 (board PlutoPi), ...`.
+Settings are named like the flags with underscores (`config.json-example` lists every setting as `null`, which leaves it to the defaults), and a flag on the command line overrides both. Switches like `led_show_refresh` take `true` or `false`. An unknown name or a bad value stops the app with a message, like a bad flag. The startup log shows the result: `Board settings (Pi Zero 2 W, detected): led_gpio_mapping=adafruit-hat-pwm (Pi Zero 2 W default), led_pixel_mapper=Rotate:180 (config), ...`. There's no Pi 5 default: rpi-rgb-led-matrix can't drive its GPIO.
+
+To dim the board at night, add a `brightness_schedule` to `config.json`, shaped as Peloton-LED's (`null`, the default, keeps one brightness all day). It takes over from `led_brightness` while the app runs, by the board's clock, with brightness from 1 to 100; a day that runs past midnight works too. A broken schedule is warned about and ignored. The settings page sets it under Display.
+
+```json
+"brightness_schedule": {"day": 80, "night": 15, "day_start": "07:00", "night_start": "22:00"}
+```
 
 ### Waveshare P5 64×32 panel
 

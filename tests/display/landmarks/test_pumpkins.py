@@ -154,9 +154,9 @@ def _party_park():
 
 @pytest.mark.parametrize("motion", ["wink", "bounce"])
 def test_party_hours_fade_into_the_mist_on_cue_and_fit_clear_of_the_pumpkin(motion):
-    height, expected = 64, ["7PM", "11PM"]
+    height, expected = 64, ["7PM", "12AM"]
     pumpkin = _pinned(motion)(64, height, random.Random(17), park=_party_park())
-    assert pumpkin.hours == ("7PM", "11PM")
+    assert pumpkin.hours == ("7PM", "12AM")
     # Down in the mist, fading in slowly from the moment the wink or hop starts.
     begin, fade_s = pumpkin._motion_start(), pumpkin.MIST_HOURS_FADE_S
     assert fade_s >= 1.0, "a slow fade"
@@ -219,7 +219,7 @@ def test_short_board_hours_fade_in_where_the_pumpkin_was_then_it_winks():
     pumpkin = _pinned("bounce")(64, 32, random.Random(23), park=_party_park())
     assert pumpkin.motion == "wink", "the jump is its move on 64x32; it winks after landing"
     end = _short_scene_s(pumpkin) - 0.05
-    hours = ["TONIGHT", "7PM TO", "11PM"]
+    hours = ["TONIGHT", "7PM TO", "12AM"]
     assert not {line[0] for line in pumpkin.title(pumpkin.TONIGHT_AT - 0.05)} & set(hours)
     lines = [line for line in pumpkin.title(end) if line[0] in hours]
     assert [line[0] for line in lines] == hours

@@ -1,0 +1,29 @@
+name: Release notes
+
+# Every pull request says what it changes on the board under "## Release notes" (or "None"): the
+# repo merges with the description as the commit message, and each board's Updates card reads the
+# notes from those merge commits (self_update/release_notes.py). Edited descriptions recheck.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check the description has release notes
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_HEAD: ${{ github.event.pull_request.head.ref }}
+        run: python -m self_update.release_notes

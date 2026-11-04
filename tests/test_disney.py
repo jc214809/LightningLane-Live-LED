@@ -132,6 +132,16 @@ def test_loop_through_attractions(monkeypatch, screens):
     assert drawn[0] is not attraction, "the updater threads mutate the live dict; animate a snapshot"
     assert screens == [{"hold": 8, "transition": "wipe", "animating": True}]
 
+def test_each_ride_screen_beats_the_heartbeat_once_shown(monkeypatch, screens):
+    beats = []
+    monkeypatch.setattr(disney.heartbeat, "beat", lambda **kwargs: beats.append((len(screens), kwargs)))
+    monkeypatch.setattr(disney.random, "random", lambda: 1.0)
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: True)
+    rides = [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
+             {"name": "Haunted Mansion", "waitTime": 20, "status": "OPERATING"}]
+    disney.loop_through_attractions(FakeMatrix(), {"name": "Magic Kingdom", "attractions": rides})
+    assert beats == [(1, {}), (2, {})], "after each screen, so the updater knows the new app draws"
+
 def test_loop_through_attractions_passes_this_hours_forecast(monkeypatch, screens):
     seen = []
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: seen.append(expected))
@@ -529,6 +539,14 @@ def test_fireworks_play_the_shows_sound_until_they_end(monkeypatch):
                       "start", "fireworks", "stop"], "a default-length show plays only the generic clip"
 
 
+def test_a_playing_show_is_in_the_heartbeat_until_it_ends(monkeypatch, fireworks_played):
+    beats = []
+    monkeypatch.setattr(disney.heartbeat, "beat", lambda **kwargs: beats.append((len(fireworks_played), kwargs)))
+    disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=8))
+    assert beats == [(0, {"show": "Happily Ever After", "show_s": disney.FIREWORKS_SHOW_S - 8}), (1, {})], \
+        "no update starts mid-show"
+
+
 def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypatch):
     events = []
 
@@ -755,18 +773,22 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
         raise _Built  # stop main() before its endless loop
 
     monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
-    monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}})
-    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
+    monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}, "pi_model": "pi4"})
+    picked = []
+    monkeypatch.setattr(disney, "model_defaults", lambda choice: picked.append(choice) or (
+        "pi4", {"led_rows": 32, "led_cols": 64, "led_slowdown_gpio": 4}, "picked in config.json"))
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
     monkeypatch.setattr(disney.driver, "set_mode", lambda mode: calls.append(("set_mode", mode)), raising=False)
     monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)
     monkeypatch.setattr(disney.driver, "hardware_load_failed", False, raising=False)
     monkeypatch.setattr(disney.driver, "RGBMatrix", build_matrix)
-    monkeypatch.setattr(disney, "led_matrix_options", lambda args: f"rows={args.led_rows} cols={args.led_cols}")
+    monkeypatch.setattr(disney, "led_matrix_options",
+                        lambda args: f"rows={args.led_rows} cols={args.led_cols} slowdown={args.led_slowdown_gpio}")
     with pytest.raises(_Built):
         disney.main()
-    # cols from the board's preset, rows from config over the preset
-    assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64")]
+    # slowdown and cols from the Pi model's defaults, rows from config over them
+    assert calls == [("set_mode", "SOFTWARE_EMULATION"), ("matrix", "rows=64 cols=64 slowdown=4")]
+    assert picked == ["pi4"]
 
 
 @pytest.mark.parametrize("shows, expected", [
@@ -787,7 +809,7 @@ def test_main_watches_the_full_scored_shows_for_the_sound_badges(monkeypatch, sh
 
     monkeypatch.setattr(disney.sys, "argv", ["disney.py"])
     monkeypatch.setattr(disney, "load_config", lambda: {"sound": {"device": "plughw:1,0"}, "shows": shows})
-    monkeypatch.setattr(disney, "board_preset", lambda: ("TestPi", {"led_rows": 32, "led_cols": 64}))
+    monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
     monkeypatch.setattr(disney, "watch_sound", watch)
     with pytest.raises(_Watched):
         disney.main()
@@ -798,6 +820,63 @@ def test_main_watches_the_full_scored_shows_for_the_sound_badges(monkeypatch, sh
 
 def disney_driver_modes():
     return type("DriverMode", (), {"SOFTWARE_EMULATION": "SOFTWARE_EMULATION", "HARDWARE": "HARDWARE"})
+
+
+# ---- Wi-Fi setup ----
+
+def test_no_setup_hotspot_carries_straight_on(monkeypatch, screens):
+    monkeypatch.setattr(disney, "hotspot_name", lambda: None)
+    assert disney.show_wifi_setup_while_needed(FakeMatrix()) is False
+    assert screens == []
+
+
+def test_the_setup_screen_takes_turns_with_the_settings_address_until_the_board_joins_a_network(monkeypatch, screens):
+    # the first check, then WIFI_SETUP_PAGE_CHECKS (2) per page
+    states = iter(["Disneypi-setup"] * 5 + [None])
+    monkeypatch.setattr(disney, "hotspot_name", lambda: next(states))
+    drawn = []
+    monkeypatch.setattr(disney, "render_wifi_setup", lambda canvas, name: drawn.append(name))
+    monkeypatch.setattr(disney, "render_settings_address", lambda canvas: drawn.append("settings"))
+    assert disney.show_wifi_setup_while_needed(FakeMatrix()) is True
+    assert drawn == ["Disneypi-setup", "settings", "Disneypi-setup"], "each page drawn once, not on every check"
+    assert screens == [{"hold": disney.WIFI_SETUP_CHECK_S, "transition": "wipe", "animating": False}] * 3
+
+
+def test_a_renamed_hotspot_redraws_the_screen_from_its_first_page(monkeypatch, screens):
+    states = iter(["OldPi-setup", "OldPi-setup", "OldPi-setup", "NewPi-setup", None])
+    monkeypatch.setattr(disney, "hotspot_name", lambda: next(states))
+    drawn = []
+    monkeypatch.setattr(disney, "render_wifi_setup", lambda canvas, name: drawn.append(name))
+    monkeypatch.setattr(disney, "render_settings_address", lambda canvas: drawn.append("settings"))
+    disney.show_wifi_setup_while_needed(FakeMatrix())
+    assert drawn == ["OldPi-setup", "settings", "NewPi-setup"]
+
+
+def test_main_shows_the_setup_screen_before_it_needs_the_network(monkeypatch):
+    class _Fetched(Exception):
+        pass
+
+    calls = []
+    monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
+    monkeypatch.setattr(disney, "load_config", lambda: {})
+    monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
+    monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
+    monkeypatch.setattr(disney.driver, "set_mode", lambda mode: None, raising=False)
+    monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)
+    monkeypatch.setattr(disney.driver, "hardware_load_failed", False, raising=False)
+    monkeypatch.setattr(disney.driver, "RGBMatrix", lambda options: FakeMatrix())
+    monkeypatch.setattr(disney, "led_matrix_options", lambda args: None)
+    monkeypatch.setattr(disney, "initialize_fonts", lambda height: None)
+    monkeypatch.setattr(disney, "show_wifi_setup_while_needed", lambda matrix: calls.append("wifi setup"))
+
+    def fetch(names):
+        calls.append("fetch parks")
+        raise _Fetched
+
+    monkeypatch.setattr(disney, "resolve_parks_from_config", fetch)
+    with pytest.raises(_Fetched):
+        disney.main()
+    assert calls == ["wifi setup", "fetch parks"]
 
 
 # ---- force_show ----

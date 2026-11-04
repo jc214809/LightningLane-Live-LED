@@ -15,11 +15,18 @@
   "sound": {
     "enabled": false,
     "device": null,
+    "volume": 80,
     "quiet_hours": {"start": "22:00", "end": "08:00"}
   },
   "weather": {
     "apikey": "<API_KEY_HERE>"
   },
+  "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+  },
+  "pi_model": "auto",
   "matrix": {
     "led_rows": null,
     "led_cols": null,
@@ -43,6 +50,7 @@
     "emulated": null,
     "drop_privileges": null
   },
+  "brightness_schedule": null,
   "shows": [
     {"name": "Happily Ever After", "enabled": true, "version": "default"}
   ],
