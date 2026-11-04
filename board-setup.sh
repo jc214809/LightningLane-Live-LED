@@ -8,7 +8,7 @@
 #   sudo bash board-setup.sh                      # asks
 #   sudo bash board-setup.sh --answers board.txt  # KEY=value lines skip those questions
 #   bash board-setup.sh --dry-run ...             # prints what it would do, changes nothing
-#   sudo bash board-setup.sh --wifi-setup-only    # just the Wi-Fi setup hotspot and settings page (LLL-install.sh's)
+#   sudo bash board-setup.sh --wifi-setup-only    # just the Wi-Fi setup hotspot, settings page and updater (LLL-install.sh's)
 set -Eeuo pipefail
 
 ROOT="${BOARD_SETUP_ROOT:-}"   # tests: a folder standing in for / (system files are read from it)
@@ -21,6 +21,8 @@ LLL_UNIT=LightningLane-Live-LED.service
 PELOTON_UNIT=peloton-led.service
 MLB_UNIT=mlb-led-scoreboard.service
 SETTINGS_UNIT=lll-settings.service  # LightningLane-Live-LED's settings page (settings_page/server.py)
+RECOVER_UNIT=lll-update-recover.service  # rolls back an update a power cut stopped (self_update)
+ROLLBACK_COMMAND=/usr/local/bin/lll-rollback
 UNIT_DIR="$ROOT/etc/systemd/system"
 # comitup: with no known Wi-Fi in range, it opens a hotspot whose page puts the board on a network.
 COMITUP_SOURCE_DEB=https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb
@@ -52,7 +54,7 @@ Usage: sudo bash board-setup.sh [--answers FILE] [--branch NAME] [--yes] [--dry-
   --dry-run       Print the commands and files it would write; change nothing.
   --wifi-setup-only
                   Only install or update the Wi-Fi setup hotspot (comitup), with no questions,
-                  and, run from LightningLane-Live-LED's folder, its settings page.
+                  and, run from LightningLane-Live-LED's folder, its settings page and updater.
 USAGE
 }
 
@@ -491,6 +493,7 @@ install_lll() {
     retire_old_units "$LLL_UNIT" "$unit"
     write_file "$UNIT_DIR/$LLL_UNIT" 644 <<<"$unit"
     setup_settings_page "$dir"
+    setup_updater "$dir"
 }
 
 setup_settings_page() {  # setup_settings_page DIR: LightningLane-Live-LED's settings page, its own service
@@ -503,6 +506,37 @@ setup_settings_page() {  # setup_settings_page DIR: LightningLane-Live-LED's set
     run systemctl daemon-reload
     run systemctl enable "$SETTINGS_UNIT"
     run systemctl restart "$SETTINGS_UNIT"  # for an update's new code
+}
+
+setup_updater() {  # setup_updater DIR: the updater's backstops (self_update, ROADMAP #17), with a version that has it
+    local dir=$1 python=$1/venv/bin/python3
+    [[ -d "$dir/self_update" ]] || return 0
+    say "Updater: an update a power cut stops is rolled back at boot; by hand: sudo lll-rollback"
+    [[ -x "$python" ]] || python=/usr/bin/python3
+    # A oneshot, not ordered before the app: rolling back restarts the app and waits for it. No time
+    # limit: a rollback that reinstalls pip packages takes ages on a Pi Zero.
+    write_file "$UNIT_DIR/$RECOVER_UNIT" 644 <<UNIT
+[Unit]
+Description=LightningLane-Live-LED: roll back an update that stopped midway
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=$dir
+ExecStart=$python -m self_update recover
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    write_file "$ROOT$ROLLBACK_COMMAND" 755 <<COMMAND
+#!/bin/sh
+# Undo LightningLane-Live-LED's last update, config.json included: sudo lll-rollback (board-setup.sh's)
+cd "$dir" && exec "$python" -m self_update rollback "\$@"
+COMMAND
+    run systemctl daemon-reload
+    run systemctl enable "$RECOVER_UNIT"  # runs at the next boot; nothing to do now
 }
 
 retire_old_units() {  # retire_old_units UNIT CONTENT: move older copies of UNIT out of systemd's way
@@ -574,9 +608,11 @@ start_service() {
             run systemctl disable --now "$other"
         fi
     done
-    # LightningLane-Live-LED's settings page goes with it.
-    if [[ "$unit" != "$LLL_UNIT" && -f "$UNIT_DIR/$SETTINGS_UNIT" ]]; then
-        run systemctl disable --now "$SETTINGS_UNIT"
+    # LightningLane-Live-LED's settings page and update recovery go with it.
+    if [[ "$unit" != "$LLL_UNIT" ]]; then
+        for other in "$SETTINGS_UNIT" "$RECOVER_UNIT"; do
+            if [[ -f "$UNIT_DIR/$other" ]]; then run systemctl disable --now "$other"; fi
+        done
     fi
     run systemctl enable "$unit"
     run systemctl restart "$unit"
@@ -610,6 +646,7 @@ main() {
         setup_wifi_hotspot
         # LLL-install.sh runs this from the app's folder; the settings page is part of setup mode.
         [[ -d "$SCRIPT_DIR/settings_page" ]] && setup_settings_page "$SCRIPT_DIR"
+        setup_updater "$SCRIPT_DIR"
         return
     fi
     if [[ "$DRY_RUN" == true ]]; then

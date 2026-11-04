@@ -3,7 +3,8 @@
     venv/bin/python3 -m self_update status                       # what's installed, the last update
     venv/bin/python3 -m self_update check [--channel beta]       # what an update would do; changes nothing
     sudo venv/bin/python3 -m self_update update [--channel beta] # update, rolling back if it fails
-    sudo venv/bin/python3 -m self_update rollback                # undo the last update
+    sudo venv/bin/python3 -m self_update rollback                # undo the last update (sudo lll-rollback)
+    sudo venv/bin/python3 -m self_update recover                 # at boot: undo an update a power cut stopped
 
 The channel is "releases" (the default) or "beta" (develop-beta's tip, once its CI passed). A
 rollback also puts back config.json as it was before the update, undoing settings saved since.
@@ -15,7 +16,7 @@ import os
 import sys
 
 from self_update.board import Board
-from self_update.update import CHANNELS, RELEASES, Updater
+from self_update.update import CHANNELS, NOTHING_TO_UNDO, RELEASES, Updater
 from utils import debug, heartbeat
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,6 +49,8 @@ def main(argv=None, updater=None, euid=os.geteuid):
         command = commands.add_parser(name, help=text)
         command.add_argument("--channel", choices=CHANNELS, default=RELEASES)
     commands.add_parser("rollback", help="undo the last update, config.json included (as root)")
+    commands.add_parser("recover", help="roll back an update that stopped midway, else nothing (as root; "
+                                        "board-setup.sh's lll-update-recover.service runs it at boot)")
     args = parser.parse_args(argv)
 
     debug.logger.setLevel(logging.INFO)
@@ -60,15 +63,18 @@ def main(argv=None, updater=None, euid=os.geteuid):
     if args.command == "status":
         print(status(updater))
         return 0
-    if args.command in ("update", "rollback") and euid() != 0:
+    if args.command in ("update", "rollback", "recover") and euid() != 0:
         print(f"{args.command} needs root: sudo venv/bin/python3 -m self_update {args.command}", file=sys.stderr)
         return 1
     if args.command == "rollback":
         outcome = updater.rollback()
+    elif args.command == "recover":
+        outcome = updater.recover()
     else:
         outcome = updater.update(args.channel, dry_run=args.command == "check")
     print(f"{outcome.result}: {outcome.message}")
-    return 0 if outcome.ok else 1
+    usual_boot = args.command == "recover" and outcome.result == NOTHING_TO_UNDO
+    return 0 if outcome.ok or usual_boot else 1
 
 
 if __name__ == "__main__":

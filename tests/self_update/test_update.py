@@ -394,3 +394,28 @@ def test_a_pushover_failure_is_logged_not_raised(env, monkeypatch):
     env.config.write_text(json.dumps({"pushover": {"user_key": "u-real", "app_token": "t-real"}}))
     Updater(env.board, state=env.state, gh=env.gh, config_path=str(env.config))._pushover("T", "m")
     assert warnings and "token is invalid" in warnings[0]
+
+
+@pytest.mark.parametrize("phase", states.UNFINISHED)
+def test_recovery_at_boot_rolls_back_an_update_a_power_cut_stopped(env, phase):
+    env.board.head_sha, env.board.branch_name = NEW, None  # where the power cut left it
+    env.state.set_phase(env.state.load(), phase, **{"from": {"sha": OLD, "branch": "develop-beta", "version": "2.0.0",
+                                                             "requirements_changed": False, "config_saved": False}},
+                        to={"sha": NEW, "ref": "v2.2.0", "channel": "releases"})
+    outcome = env.updater.recover()
+    assert outcome.result == "rolled_back" and f"stopped midway (at {phase})" in outcome.message
+    assert env.board.head_sha == OLD and env.board.branch_name == "develop-beta"
+    assert env.notes and env.notes[0][0] == "Update rolled back"
+
+
+@pytest.mark.parametrize("phase", ["idle", "updated", "rolled_back", "rollback_failed"])
+def test_recovery_leaves_a_finished_update_alone(env, phase):
+    env.state.set_phase(env.state.load(), phase, **{"from": {"sha": OLD}})
+    outcome = env.updater.recover()
+    assert outcome.result == "nothing_to_undo" and phase in outcome.message
+    assert env.board.calls == [] and env.notes == []
+
+
+def test_recovery_waits_for_a_running_update(env):
+    with env.state.lock():
+        assert env.updater.recover().result == "blocked"

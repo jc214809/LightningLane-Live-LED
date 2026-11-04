@@ -20,6 +20,10 @@ class FakeUpdater:
         self.asked.append(("rollback",))
         return self.outcome
 
+    def recover(self):
+        self.asked.append(("recover",))
+        return self.outcome
+
 
 @pytest.fixture(autouse=True)
 def journal_only(monkeypatch):
@@ -35,6 +39,7 @@ ROOT, USER = (lambda: 0), (lambda: 1000)
     (["update", "--channel", "beta"], ("update", "beta", False)),
     (["check", "--channel", "beta"], ("update", "beta", True)),
     (["rollback"], ("rollback",)),
+    (["recover"], ("recover",)),
 ])
 def test_commands(tmp_path, capsys, argv, asked):
     updater = FakeUpdater(tmp_path)
@@ -48,10 +53,17 @@ def test_a_failure_exits_1(tmp_path, capsys):
     assert cli.main(["update"], updater=updater, euid=ROOT) == 1
 
 
+def test_nothing_to_recover_is_the_usual_boot(tmp_path, capsys):
+    updater = FakeUpdater(tmp_path, Outcome("nothing_to_undo", "no unfinished update (last: updated)"))
+    assert cli.main(["recover"], updater=updater, euid=ROOT) == 0
+    assert cli.main(["rollback"], updater=updater, euid=ROOT) == 1, "by hand, there was nothing to undo"
+
+
 def test_update_and_rollback_need_root_but_check_doesnt(tmp_path, capsys):
     updater = FakeUpdater(tmp_path)
     assert cli.main(["update"], updater=updater, euid=USER) == 1
     assert cli.main(["rollback"], updater=updater, euid=USER) == 1
+    assert cli.main(["recover"], updater=updater, euid=USER) == 1
     assert "needs root" in capsys.readouterr().err and updater.asked == []
     assert cli.main(["check"], updater=updater, euid=USER) == 0
 
