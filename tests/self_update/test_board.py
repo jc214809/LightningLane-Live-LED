@@ -46,12 +46,13 @@ def test_git_runs_in_the_checkout_as_its_user_when_not_root(checkout):
 
 def test_git_as_root_runs_as_the_checkouts_owner(checkout, monkeypatch):
     monkeypatch.setattr(board_module.os, "stat", lambda path: SimpleNamespace(st_uid=1000, st_gid=1000))
-    monkeypatch.setattr(board_module.pwd, "getpwuid", lambda uid: SimpleNamespace(pw_dir="/home/pi"))
+    home = str(checkout.parent / "owner-home")
+    monkeypatch.setattr(board_module.pwd, "getpwuid", lambda uid: SimpleNamespace(pw_dir=home))
     board, run = _board(checkout, euid=0)
     board.fetch()
     args, kwargs = run.calls[0]
     assert args == ["git", "fetch", "--force", "--tags", "origin"]
-    assert kwargs["user"] == 1000 and kwargs["group"] == 1000 and kwargs["env"]["HOME"] == "/home/pi"
+    assert kwargs["user"] == 1000 and kwargs["group"] == 1000 and kwargs["env"]["HOME"] == home
 
 
 def test_a_root_owned_checkout_runs_git_as_root(checkout, monkeypatch):
