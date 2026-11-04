@@ -13,6 +13,7 @@ from settings_page.updates import Updates
 class FakeBoard:
     def __init__(self):
         self.running, self.asked = False, []
+        self.on_branch, self.tags = "develop-beta", []
         self.log = [(201, "Show what an update brings"), (200, "Roll back at boot")]
 
     def what_changed(self, old, new):
@@ -36,7 +37,12 @@ class FakeBoard:
         return "a" * 40
 
     def branch(self):
-        return "develop-beta"
+        return self.on_branch
+
+    def tags_at(self, sha):
+        if isinstance(self.tags, Exception):
+            raise self.tags
+        return self.tags
 
 
 class FakeUpdater:
@@ -70,20 +76,57 @@ def make(tmp_path, run=None, **kwargs):
     return updates, updater, clock, calls
 
 
-def test_a_board_that_never_updated_shows_what_is_installed_on_releases(tmp_path):
+def test_a_board_that_never_updated_shows_what_is_installed_and_asks_for_a_check(tmp_path):
     updates, *_ = make(tmp_path)
     view = updates.view()
     assert (view["version"], view["sha"], view["branch"], view["running"]) == ("2.1.0", "a" * 40, "develop-beta", False)
     assert view["phase"] == "idle" and view["outcome"] is None and view["check"] is None
-    assert view["channel"] == "releases" and view["from"] is None
+    assert view["channel"] == view["installed_channel"] == "beta" and view["from"] is None
+    assert view["auto_check"] is True
 
 
-def test_the_channel_follows_the_last_check_else_the_last_update(tmp_path):
+def test_the_channel_is_the_installed_ones_until_a_check_picks_another(tmp_path):
     updates, updater, _, _ = make(tmp_path)
-    updater.state.save({"phase": "updated", "to": {"channel": "beta"}, "from": {"sha": "b" * 40}, "good": []})
+    assert updates.view()["channel"] == "beta", "on develop-beta"
+    updater.board.on_branch = "main"
+    assert updates.view()["channel"] == "releases"
+    updater.board.on_branch = None  # detached, as an update leaves it
+    assert updates.view()["channel"] == "beta", "a commit that isn't a release"
+    updater.state.save({"phase": "updated", "to": {"channel": "releases", "sha": "a" * 40}, "good": []})
+    assert updates.view()["channel"] == "releases", "what the last update installed"
+    updater.state.save({"phase": "updated", "to": {"channel": "releases", "sha": "b" * 40}, "good": []})
+    assert updates.view()["channel"] == "beta", "the last update installed something else: rolled back"
+    updater.board.tags = ["v2.1.0-rc1", "v2.1.0"]
+    assert updates.view()["channel"] == "releases", "on a release tag"
+    updater.board.tags = ["nightly"]
     assert updates.view()["channel"] == "beta"
     updates.check("releases")
-    assert updates.view()["channel"] == "releases"
+    view = updates.view()
+    assert view["channel"] == "releases" and view["installed_channel"] == "beta" and view["auto_check"] is False
+
+
+def test_unreadable_tags_or_commit_still_give_a_channel(tmp_path, monkeypatch):
+    warnings = []
+    monkeypatch.setattr(upd.debug, "warning", warnings.append)
+    updates, updater, _, _ = make(tmp_path)
+    updater.board.tags = CommandFailed("git tag exited 128")
+    assert updates.view()["channel"] == "beta" and "tags" in warnings[0]
+    assert updates.installed_channel(None, None, {}) == "releases"
+    assert updates.installed_channel(None, None, {"to": {"channel": "beta"}}) == "beta"
+
+
+def test_the_pages_own_check_reuses_a_fresh_one(tmp_path):
+    updates, updater, clock, _ = make(tmp_path)
+    updates.auto_check("beta")
+    updates.auto_check("beta")
+    assert updater.asked == [("beta", True)], "one check: the second page load reuses it"
+    updates.auto_check("releases")
+    assert updater.asked[-1] == ("releases", True), "another channel checks"
+    clock.now += upd.CHECK_FRESH_S + 1
+    updates.auto_check("releases")
+    assert len(updater.asked) == 3, "too old: checks again"
+    updates.check("releases")
+    assert len(updater.asked) == 4, "the Check button always checks"
 
 
 def test_a_check_is_a_dry_run_kept_for_ten_minutes(tmp_path):
@@ -155,12 +198,27 @@ def test_a_start_that_fails_is_logged(tmp_path, monkeypatch, run):
 
 def test_status_says_what_a_running_update_is_doing(tmp_path):
     updates, updater, _, _ = make(tmp_path)
-    assert updates.status() == {"running": False, "phase": None}
+    assert updates.status() == {"running": False, "phase": None, "step": None}
     updater.board.running = True
-    assert updates.status() == {"running": True, "phase": "Checking it can update"}, "before its rollback point"
-    updater.state.save({"phase": "checking", "good": []})
-    assert updates.status()["phase"] == "Checking the new version works"
+    assert updates.status() == {"running": True, "phase": "Checking it can update", "step": 0}, \
+        "before its rollback point"
+    for phase, step in (("ready", 1), ("switched", 2), ("installed", 3), ("checking", 3)):
+        updater.state.save({"phase": phase, "good": []})
+        assert updates.status()["step"] == step and updates.view()["step"] == step
+    assert updates.status()["phase"] == "Checking the new version works" == updates.view()["status"]
     assert updater.board.asked[-1] == "lll-update.service"
+    updater.state.save({"phase": "rolling_back", "good": []})
+    assert updates.status() == {"running": True, "phase": "Rolling back", "step": None}
+
+
+def test_a_rollback_started_here_has_no_steps_before_its_phase_is_saved(tmp_path):
+    updates, updater, _, _ = make(tmp_path)
+    updater.state.save({"phase": "updated", "good": []})
+    updates.start("rollback")
+    updater.board.running = True
+    assert updates.status() == {"running": True, "phase": "Rolling back", "step": None}
+    updates.start("update", "beta")
+    assert updates.status()["step"] is None, "busy: the rollback still runs"
 
 
 def test_without_systemctl_nothing_is_running(tmp_path):

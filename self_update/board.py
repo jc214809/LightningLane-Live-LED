@@ -78,6 +78,10 @@ class Board:
         done = self.git("rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}", check=False)
         return done.stdout.strip() if done.returncode == 0 else None
 
+    def tags_at(self, sha):
+        """The tags on commit sha."""
+        return self.git("tag", "--points-at", sha).stdout.split()
+
     def file_at(self, sha, path):
         """path's text at commit sha, or None if it isn't there."""
         done = self.git("show", f"{sha}:{path}", check=False)

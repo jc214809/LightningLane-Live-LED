@@ -330,8 +330,13 @@ class Handler(BaseHTTPRequestHandler):
         self._redirect(f"/?saved={outcome}")
 
     def _update(self, path, channel):
-        """POST /update/check, /update/start (channel) and /update/rollback, the Updates card's buttons."""
+        """POST /update/check, /update/start (channel) and /update/rollback, the Updates card's buttons.
+        /update/check asking for JSON is the page's own check as it loads: a fresh one is reused, and
+        the answer is {"html": what it found, for the card}."""
         updates = self.settings.updates
+        if path == "/update/check" and "application/json" in (self.headers.get("Accept") or ""):
+            updates.auto_check(channel)
+            return self._send_json(200, {"html": page.check_result(updates.view())})
         if path == "/update/check":
             updates.check(channel)
             return self._redirect("/#updates")

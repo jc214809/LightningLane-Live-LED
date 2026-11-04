@@ -1,7 +1,9 @@
 """The Updates card's side of the settings page (ROADMAP #17): what's installed and how the last
 update went (self_update's state.json and outcome.json), a check for a newer version (a dry run,
 in this process: it changes nothing but a git fetch) with what's in it (the pull requests merged
-since what's installed), and starting an update or a rollback.
+since what's installed), and starting an update or a rollback. The page checks the channel of
+what's installed by itself when it loads (auto_check), at most once per CHECK_FRESH_S: GitHub allows
+60 calls an hour, and a check is two or three.
 
 An update restarts this service, so it runs as its own transient unit (systemd-run
 --unit=lll-update), which also means only one runs at a time: systemd refuses a second.
@@ -15,7 +17,7 @@ import time
 
 from self_update import state as states
 from self_update.board import Board, CommandFailed
-from self_update.update import BLOCKED, CHANNELS, RELEASES, WOULD_UPDATE, Updater
+from self_update.update import BETA, BLOCKED, CHANNELS, RELEASES, WOULD_UPDATE, Updater, parse_version
 from utils import debug
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -28,6 +30,11 @@ PHASE_TEXT = {states.READY: "Saving a rollback point", states.SWITCHED: "Install
               states.INSTALLED: "Restarting the board", states.CHECKING: "Checking the new version works",
               states.ROLLING_BACK: "Rolling back"}
 CHECKING_TEXT = "Checking it can update"
+ROLLING_BACK_TEXT = "Rolling back"
+# An update's steps, as the card lists them while one runs, and the step each phase is on.
+STEPS = (CHECKING_TEXT, "Saving a rollback point", "Installing the new version", "Restarting and checking it works")
+PHASE_STEP = {states.READY: 1, states.SWITCHED: 2, states.INSTALLED: 3, states.CHECKING: 3}
+RELEASE_BRANCH = "main"
 # start()'s outcomes, which the page says after the redirect.
 STARTED, BUSY, START_FAILED = "started", "busy", "failed"
 STARTS = (STARTED, BUSY, START_FAILED)
@@ -39,6 +46,7 @@ class Updates:
         # {"channel", "result", "message", "ok", "at"}, and when it found one, details()'s keys
         self.last_check = None
         self.starting = None  # the check whose update was started, for what the card says while it runs
+        self.started = None  # what was started last, "update" or "rollback"
         self._check_lock = threading.Lock()
 
     @property
@@ -55,10 +63,35 @@ class Updates:
             return False
 
     def status(self):
-        """For the page's script while one runs: {"running", "phase"} (what it's doing, in words)."""
+        """For the page's script while one runs: {"running", "phase" (what it's doing, in words),
+        "step" (its index in STEPS, or None for a rollback, which has no steps)}."""
         running = self.running()
         phase = self.updater.state.load()["phase"]
-        return {"running": running, "phase": PHASE_TEXT.get(phase, CHECKING_TEXT) if running else None}
+        text, step = self._progress(phase) if running else (None, None)
+        return {"running": running, "phase": text, "step": step}
+
+    def _progress(self, phase):
+        """(what a running update or rollback is doing, its step) from state.json's phase."""
+        if phase == states.ROLLING_BACK or (phase not in states.UNFINISHED and self.started == "rollback"):
+            return ROLLING_BACK_TEXT, None
+        return PHASE_TEXT.get(phase, CHECKING_TEXT), PHASE_STEP.get(phase, 0)
+
+    def installed_channel(self, sha, branch, record):
+        """The channel what's installed came from: RELEASES on a release tag or the release branch,
+        the channel of the update that installed it, else BETA (develop-beta, or a commit off it)."""
+        to = record.get("to") if isinstance(record.get("to"), dict) else {}
+        if not sha:
+            return to.get("channel") if to.get("channel") in CHANNELS else RELEASES
+        try:
+            tagged = any(parse_version(tag) for tag in self.updater.board.tags_at(sha))
+        except CommandFailed as e:
+            debug.warning(f"Settings page: can't read the checkout's tags: {e}")
+            tagged = False
+        if tagged or branch == RELEASE_BRANCH:
+            return RELEASES
+        if to.get("sha") == sha and to.get("channel") in CHANNELS:
+            return to["channel"]
+        return BETA
 
     def view(self):
         """What the card shows (page.updates_card)."""
@@ -79,21 +112,33 @@ class Updates:
             else self.starting
         if running and to and self.starting and self.starting.get("sha") == to.get("sha"):
             to = {**self.starting, **to}
+        installed = self.installed_channel(sha, branch, record)
+        status, step = self._progress(record["phase"]) if running else (None, None)
         return {"version": updater.installed_version, "sha": sha, "branch": branch, "running": running,
-                "to": to if running else None,
-                "phase": record["phase"], "status": PHASE_TEXT.get(record["phase"], CHECKING_TEXT) if running else None,
+                "to": to if running else None, "phase": record["phase"], "status": status, "step": step,
                 "from": record.get("from") if isinstance(record.get("from"), dict) else None,
-                "outcome": updater.state.load_outcome(), "check": check,
-                "channel": (check or {}).get("channel") or (record.get("to") or {}).get("channel") or RELEASES}
+                "outcome": updater.state.load_outcome(), "check": check, "installed_channel": installed,
+                "channel": (check or {}).get("channel") or installed,
+                # No check yet: the page's script asks for one (auto_check) once it's loaded.
+                "auto_check": not check and not running}
 
-    def check(self, channel):
-        """The Check button: what an update on channel would do, kept in last_check. Changes nothing."""
+    def auto_check(self, channel):
+        """The page's own check when it loads: check(channel), unless one from the last CHECK_FRESH_S
+        is kept (also one that finished while this waited for it)."""
+        self.check(channel, reuse=True)
+
+    def check(self, channel, reuse=False):
+        """The Check button: what an update on channel would do, kept in last_check. Changes nothing.
+        reuse: keep a fresh check of channel instead."""
         if channel not in CHANNELS:
             return
         if self.running():
             result, message, ok, found = BLOCKED, "an update or rollback is running", False, {}
         else:
             with self._check_lock:  # two at once would fetch at once
+                last = self.last_check
+                if reuse and last and last["channel"] == channel and self.clock() - last["at"] <= CHECK_FRESH_S:
+                    return
                 try:
                     outcome = self.updater.update(channel, dry_run=True)
                     result, message, ok = outcome.result, outcome.message, outcome.ok
@@ -142,6 +187,7 @@ class Updates:
                 return BUSY
             debug.error(f"Settings page: can't start the {command}: {problem}")
             return START_FAILED
+        self.started = command
         self.starting = self.last_check if command == "update" and self.last_check \
             and self.last_check.get("channel") == channel and self.last_check.get("sha") else None
         debug.info(f"Settings page: started the {command}" + (f" on {channel}" if channel else "")

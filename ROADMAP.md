@@ -1057,8 +1057,15 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
   merges; commit subjects when there are none) and whether pip runs. Update now (after a check found one) and Roll back (confirmed: it puts back config.json) run
   `systemd-run --unit=lll-update --collect`, so systemd refuses a second. While one runs, the page
   polls `/update/status`, reloads when it's done, and Save is refused (a rollback would undo it).
-  The channel isn't saved: it's the last check's, else the last update's. The PIN session doesn't
+  The channel isn't saved: it's the last check's, else the installed one's (Releases on a `vX.Y.Z`
+  tag or `main`, else the last update's if it installed this commit, else Beta). The PIN session doesn't
   survive the settings page's restart, so a browser signs in again after an update.
+- Card polish (2026-11-04): with no check kept, the page's script checks the installed channel
+  as it loads (`POST /update/check` asking for JSON, which reuses a check under 10 min old, so
+  reloads don't spend GitHub's 60 calls an hour) and swaps in the result without a reload. Results
+  read apart: Update available (accent), Up to date (green), Up to date for now (`waiting`: Beta's
+  tip hasn't passed CI yet), Can't update right now (blocked). A running update lists its four
+  steps (`updates.STEPS`, from state.json's phase), followed by the status poll.
 
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
 `lll-rollback` (done) → the Updates card (done, #201) → a board check once it's merged.

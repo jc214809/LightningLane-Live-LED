@@ -194,7 +194,7 @@ def test_beta_installs_the_tip_once_ci_passed(env):
 def test_beta_waits_for_ci(env):
     env.gh.ci = "3333333's CI is still running (test (3.11))"
     outcome = env.updater.update(BETA)
-    assert outcome.result == "current" and "still running" in outcome.message
+    assert outcome.result == "waiting" and outcome.ok and "still running" in outcome.message
     assert env.board.calls == [], "nothing fetched or changed"
 
 
