@@ -1066,6 +1066,15 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
   read apart: Update available (accent), Up to date (green), Up to date for now (`waiting`: Beta's
   tip hasn't passed CI yet), Can't update right now (blocked). A running update lists its four
   steps (`updates.STEPS`, from state.json's phase), followed by the status poll.
+- Waiting Beta as steps (2026-11-04, #205): a Beta held back by CI lists each run (running, passed,
+  failed) in the steps' style, from `github.ci_status`.
+- Checking the auto-rollback on a board, without a broken commit: update to a newer Beta and, while
+  the card says "Restarting and checking it works", `sudo systemctl kill -s KILL
+  LightningLane-Live-LED.service`. systemd's restart counts as a crash, so it rolls back at once
+  ("the app crashed"); `sudo systemctl stop` instead fails the health window after 5 min ("the app
+  isn't running"). Then `venv/bin/python3 -m self_update status` says `rolled_back`, `git log -1`
+  is the old commit, and the card's Last rollback says why. A power cut during "Installing the new
+  version" checks `lll-update-recover` at the next boot.
 
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
 `lll-rollback` (done) → the Updates card (done, #201) → a board check once it's merged.
