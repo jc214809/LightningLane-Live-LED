@@ -9,4 +9,7 @@ __pycache__/
 .coverage
 logs/
 .DS_Store
-README.md
+.claude/settings.local.json
+sounds/*
+!sounds/README.md
+park_names.json

@@ -1,7 +1,4 @@
-# tests/api/test_disney_api_full.py
-import asyncio
-import copy
-import threading
+# tests/api/test_disney_api.py
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -9,19 +6,18 @@ import requests
 
 from api import disney_api
 from api.disney_api import (
-    get_park_location,
     fetch_park_schedule,
     fetch_list_of_disney_world_parks,
     fetch_parks_and_attractions,
     get_attraction_name,
     clean_park_name,
-    is_special_event,
     determine_llmp_price,
     get_down_time,
-    fetch_live_data_for_attraction,
-    fetch_live_data,
-    park_has_operating_attraction,
-    update_parks_operating_status,
+    fetch_park_live_data,
+    parse_queue_wait,
+    build_live_updates,
+    parse_forecast,
+    parse_showtimes,
     handle_park_schedule_update,
     refresh_park_attractions,
     resolve_destination_id,
@@ -84,6 +80,19 @@ def test_resolve_destination_id_request_error(monkeypatch):
     monkeypatch.setattr(requests, "get",
                         lambda url, **kw: (_ for _ in ()).throw(requests.RequestException("err")))
     assert resolve_destination_id("Cedar Point") is None
+
+def test_resolve_destination_id_passes_timeout(monkeypatch):
+    """Regression test: every request to the ThemeParks Wiki API must pass a
+    timeout, so a slow/unreachable API fails fast instead of hanging the
+    caller -- resolve_parks_from_config runs synchronously on bullpen's
+    render/update thread when used as a plugin."""
+    calls = []
+    monkeypatch.setattr(
+        requests, "get",
+        lambda url, **kw: calls.append(kw) or DummyResponse({"destinations": []}, 200),
+    )
+    resolve_destination_id("Cedar Point")
+    assert calls and calls[0].get("timeout") == disney_api.REQUEST_TIMEOUT_SECONDS
 
 ###########
 # Tests for resolve_parks_from_config
@@ -183,17 +192,22 @@ def test_resolve_parks_from_config_preserves_config_order(monkeypatch):
 # Tests for HTTP Functions
 ###########
 
-def test_get_park_location_success(monkeypatch):
+def test_get_park_entity_info_success(monkeypatch):
+    from api.disney_api import get_park_entity_info
     dummy_location = {"latitude": 28.3759, "longitude": -81.5494}
-    monkeypatch.setattr(requests, "get", lambda url, **kwargs: DummyResponse({"location": dummy_location}, 200))
-    result = get_park_location("dummy-park-id")
-    assert result == dummy_location
+    monkeypatch.setattr(requests, "get", lambda url, **kwargs: DummyResponse(
+        {"location": dummy_location, "timezone": "America/New_York"}, 200))
+    location, tz = get_park_entity_info("dummy-park-id")
+    assert location == dummy_location
+    assert tz == "America/New_York"
 
-def test_get_park_location_exception(monkeypatch):
+def test_get_park_entity_info_exception(monkeypatch):
+    from api.disney_api import get_park_entity_info
     monkeypatch.setattr(requests, "get",
                         lambda url, **kwargs: (_ for _ in ()).throw(requests.RequestException("error")))
-    result = get_park_location("dummy-park-id")
-    assert result == []
+    location, tz = get_park_entity_info("dummy-park-id")
+    assert location == []
+    assert tz is None
 
 def test_fetch_park_schedule_success(monkeypatch):
     today = datetime.now()
@@ -280,6 +294,25 @@ def test_fetch_parks_and_attractions_success(monkeypatch):
     attraction = park["attractions"][0]
     assert get_attraction_name({"name": "Space Mountain\u2122"}) == "Space Mountain"
 
+def test_fetch_parks_and_attractions_carries_timezone_through(monkeypatch):
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    fake_parks_list = [{
+        "id": "dummy-id",
+        "name": "Magic Kingdom",
+        "schedule": [{"date": today_str, "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00"}],
+        "weather": [],
+        "location": {"latitude": 28.3759, "longitude": -81.5494},
+        "timezone": "America/New_York",
+    }]
+    def fake_get(url, **kwargs):
+        if "children" in url:
+            return DummyResponse({"children": []}, 200)
+        return DummyResponse({}, 200)
+    monkeypatch.setattr(requests, "get", fake_get)
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {})
+    result = fetch_parks_and_attractions(fake_parks_list)
+    assert result[0]["timezone"] == "America/New_York"
+
 def test_fetch_parks_and_attractions_includes_shows(monkeypatch):
     today_str = datetime.now().strftime('%Y-%m-%d')
     fake_parks_list = [{
@@ -362,18 +395,6 @@ def test_clean_park_name():
     assert clean_park_name("Disney's Hollywood Studios") == "Hollywood Studios"
     assert clean_park_name("EPCOT") == "EPCOT"
 
-def test_is_special_event():
-    schedule = [{
-        "type": "TICKETED_EVENT",
-        "description": "Special ticketed event extended evening"
-    }]
-    assert is_special_event(schedule) is True
-    schedule = [{
-        "type": "TICKETED_EVENT",
-        "description": "Regular event"
-    }]
-    assert is_special_event(schedule) is False
-
 def test_determine_llmp_price():
     operating_event = {
         "purchases": [
@@ -413,222 +434,195 @@ def test_get_down_time_empty_string():
     assert result is None
 
 ###########
-# Asynchronous Live Data Tests
+# Live Data Tests (per-park endpoint)
 ###########
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_success(monkeypatch):
-    # Dummy live entry with status "OPERATING" that should update waitTime.
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
+
+def test_parse_queue_wait_standby():
+    assert parse_queue_wait({"STANDBY": {"waitTime": 45}}) == 45
+
+def test_parse_queue_wait_standby_takes_priority_over_boarding_group():
+    queue = {
+        "STANDBY": {"waitTime": 30},
+        "BOARDING_GROUP": {"currentGroupStart": 1, "currentGroupEnd": 50},
+    }
+    assert parse_queue_wait(queue) == 30
+
+def test_parse_queue_wait_boarding_group_range():
+    queue = {"BOARDING_GROUP": {"currentGroupStart": 1, "currentGroupEnd": 50}}
+    assert parse_queue_wait(queue) == "Groups 1-50"
+
+def test_parse_queue_wait_boarding_group_open_ended():
+    queue = {"BOARDING_GROUP": {"currentGroupStart": 10, "currentGroupEnd": None}}
+    assert parse_queue_wait(queue) == "Group 10+"
+
+def test_parse_queue_wait_boarding_group_closed():
+    queue = {"BOARDING_GROUP": {"currentGroupStart": None, "currentGroupEnd": None}}
+    assert parse_queue_wait(queue) is None
+
+def test_parse_queue_wait_empty_or_null_blocks():
+    assert parse_queue_wait({}) is None
+    assert parse_queue_wait({"STANDBY": None, "BOARDING_GROUP": None}) is None
+
+
+def test_build_live_updates_operating_attraction():
+    entries = [{
+        "id": "attr-1",
+        "entityType": "ATTRACTION",
         "status": "OPERATING",
+        "lastUpdated": "2023-10-01T12:00:00Z",
         "queue": {"STANDBY": {"waitTime": 45}},
-        "entityType": "ATTRACTION"
-    }
-
-    # Define a fake response that implements async context manager.
-    class FakeResponse:
-        def __init__(self, json_data, status=200):
-            self._json = json_data
-            self.status = status
-
-        async def json(self):
-            return self._json
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc, tb):
-            pass
-
-    # Define a FakeSession with a normal get() method returning FakeResponse.
-    class FakeSession:
-        def get(self, url, **kwargs):
-            return FakeResponse({"liveData": [dummy_live_entry]}, 200)
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc, tb):
-            pass
-
-    # Create a dummy attraction with blank waitTime values.
-    dummy_attraction = {
-        "id": "attr-1",
-        "name": "Space Mountain",
-        "waitTime": '',
-        "status": '',
-        "lastUpdatedTs": ''
-    }
-
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-
-    # Assert that waitTime was updated to 45 (as an int),
-    # and that status and lastUpdatedTs are updated properly.
-    assert result["waitTime"] == 45, f"Expected waitTime 45, got {result['waitTime']}"
-    assert result["status"] == "OPERATING"
-    assert result["lastUpdatedTs"] == "2023-10-01T12:00:00Z"
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_standby_takes_priority_over_boarding_group():
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
-        "status": "OPERATING",
-        "queue": {
-            "STANDBY": {"waitTime": 30},
-            "BOARDING_GROUP": {
-                "currentGroupStart": 1,
-                "currentGroupEnd": 50,
-                "allocationStatus": "OPEN",
-                "estimatedWait": None,
-                "nextAllocationTime": None
-            }
-        },
-        "entityType": "ATTRACTION"
-    }
-
-    class FakeResponse:
-        status = 200
-        async def json(self): return {"liveData": [dummy_live_entry]}
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    class FakeSession:
-        def get(self, url, **kwargs): return FakeResponse()
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    dummy_attraction = {"id": "attr-3", "name": "Test Ride", "waitTime": "", "status": "", "lastUpdatedTs": ""}
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-    assert result["waitTime"] == 30
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_boarding_group_range():
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
-        "status": "OPERATING",
-        "queue": {
-            "BOARDING_GROUP": {
-                "currentGroupStart": 1,
-                "currentGroupEnd": 50,
-                "allocationStatus": "OPEN",
-                "estimatedWait": None,
-                "nextAllocationTime": None
-            }
-        },
-        "entityType": "ATTRACTION"
-    }
-
-    class FakeResponse:
-        status = 200
-        async def json(self): return {"liveData": [dummy_live_entry]}
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    class FakeSession:
-        def get(self, url, **kwargs): return FakeResponse()
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    dummy_attraction = {"id": "attr-2", "name": "Tron", "waitTime": "", "status": "", "lastUpdatedTs": ""}
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-    assert result["waitTime"] == "Groups 1-50"
-    assert result["status"] == "OPERATING"
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_for_attraction_boarding_group_closed():
-    dummy_live_entry = {
-        "lastUpdated": "2023-10-01T12:00:00Z",
-        "status": "OPERATING",
-        "queue": {
-            "BOARDING_GROUP": {
-                "currentGroupStart": None,
-                "currentGroupEnd": None,
-                "allocationStatus": "CLOSED",
-                "estimatedWait": None,
-                "nextAllocationTime": None
-            }
-        },
-        "entityType": "ATTRACTION"
-    }
-
-    class FakeResponse:
-        status = 200
-        async def json(self): return {"liveData": [dummy_live_entry]}
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    class FakeSession:
-        def get(self, url, **kwargs): return FakeResponse()
-        async def __aenter__(self): return self
-        async def __aexit__(self, *a): pass
-
-    dummy_attraction = {"id": "attr-2", "name": "Tron", "waitTime": "", "status": "", "lastUpdatedTs": ""}
-    from api.disney_api import fetch_live_data_for_attraction
-    result = await fetch_live_data_for_attraction(FakeSession(), dummy_attraction)
-    assert result["waitTime"] is None
-
-@pytest.mark.asyncio
-async def test_fetch_live_data_exception(monkeypatch):
-    class FakeSession:
-        async def get(self, url, **kwargs):
-            raise Exception("Live data error")
-        async def __aenter__(self):
-            return self
-        async def __aexit__(self, exc_type, exc, tb):
-            pass
-    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: FakeSession())
-    dummy_attractions = [{
-        "id": "attr-1",
-        "name": "Space Mountain",
-        "waitTime": '',
-        "status": '',
-        "lastUpdatedTs": ''
     }]
-    result = await fetch_live_data(dummy_attractions)
-    assert result[0]["waitTime"] == ''
-    assert result[0]["status"] == ''
-    assert result[0]["lastUpdatedTs"] == ''
+    updates = build_live_updates(entries)
+    assert updates == [{
+        "id": "attr-1",
+        "status": "OPERATING",
+        "lastUpdatedTs": "2023-10-01T12:00:00Z",
+        "updateSource": "rest",
+        "waitTime": 45,
+    }]
+
+def test_build_live_updates_filters_non_attraction_entities():
+    entries = [
+        {"id": "r-1", "entityType": "RESTAURANT", "status": "OPERATING", "lastUpdated": "ts"},
+        {"id": "p-1", "entityType": "PARK", "status": "OPERATING", "lastUpdated": "ts"},
+        {"id": "s-1", "entityType": "SHOW", "status": "OPERATING", "lastUpdated": "ts", "queue": {}},
+    ]
+    updates = build_live_updates(entries)
+    assert [u["id"] for u in updates] == ["s-1"]
+
+def test_build_live_updates_down_attraction_omits_wait_time():
+    # waitTime for DOWN attractions is derived later in merge_live_data from
+    # the persisted down_since, not from the raw per-poll lastUpdated here.
+    entries = [{
+        "id": "attr-1", "entityType": "ATTRACTION", "status": "DOWN",
+        "lastUpdated": "2023-10-01T12:00:00Z",
+    }]
+    updates = build_live_updates(entries)
+    assert "waitTime" not in updates[0]
+    assert updates[0]["status"] == "DOWN"
+
+def test_build_live_updates_down_show_omits_wait_time():
+    entries = [{
+        "id": "show-1", "entityType": "SHOW", "status": "DOWN",
+        "lastUpdated": "2023-10-01T12:00:00Z",
+    }]
+    updates = build_live_updates(entries)
+    assert "waitTime" not in updates[0]
+    assert updates[0]["status"] == "DOWN"
+
+def test_build_live_updates_closed_omits_wait_time():
+    """CLOSED/REFURBISHMENT keep the last known wait time via omission."""
+    for status in ("CLOSED", "REFURBISHMENT"):
+        entries = [{
+            "id": "attr-1", "entityType": "ATTRACTION", "status": status,
+            "lastUpdated": "ts",
+        }]
+        updates = build_live_updates(entries)
+        assert "waitTime" not in updates[0]
+        assert updates[0]["status"] == status
+
+def test_build_live_updates_missing_queue_fields():
+    entries = [{
+        "id": "attr-1", "entityType": "ATTRACTION", "status": "OPERATING",
+        "lastUpdated": "ts",
+    }]
+    updates = build_live_updates(entries)
+    assert updates[0]["waitTime"] is None
+
+
+class _FakeLiveResponse:
+    def __init__(self, json_data=None, status=200, raise_on_json=False):
+        self._json = json_data
+        self.status = status
+        self._raise_on_json = raise_on_json
+
+    async def json(self):
+        if self._raise_on_json:
+            raise ValueError("bad json")
+        return self._json
+
+    async def __aenter__(self): return self
+    async def __aexit__(self, *a): pass
+
+
+class _FakeLiveSession:
+    def __init__(self, response=None, raise_on_get=False):
+        self._response = response
+        self._raise_on_get = raise_on_get
+        self.requested_urls = []
+
+    def get(self, url, **kwargs):
+        self.requested_urls.append(url)
+        if self._raise_on_get:
+            raise Exception("network error")
+        return self._response
+
+    async def __aenter__(self): return self
+    async def __aexit__(self, *a): pass
+
+
+DUMMY_PARK = {"id": "park-1", "name": "Magic Kingdom"}
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_success(monkeypatch):
+    live = [{
+        "id": "attr-1", "entityType": "ATTRACTION", "status": "OPERATING",
+        "lastUpdated": "2023-10-01T12:00:00Z",
+        "queue": {"STANDBY": {"waitTime": 45}},
+    }]
+    session = _FakeLiveSession(_FakeLiveResponse({"liveData": live}))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    updates = await fetch_park_live_data(DUMMY_PARK)
+    assert updates[0]["waitTime"] == 45
+    assert session.requested_urls == ["https://api.themeparks.wiki/v1/entity/park-1/live"]
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_rate_limited_returns_none(monkeypatch):
+    session = _FakeLiveSession(_FakeLiveResponse(status=429))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) is None
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_network_error_returns_none(monkeypatch):
+    session = _FakeLiveSession(raise_on_get=True)
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) is None
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_bad_json_returns_none(monkeypatch):
+    session = _FakeLiveSession(_FakeLiveResponse(raise_on_json=True))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) is None
+
+@pytest.mark.asyncio
+async def test_fetch_park_live_data_missing_livedata_key(monkeypatch):
+    session = _FakeLiveSession(_FakeLiveResponse({"id": "park-1"}))
+    monkeypatch.setattr("api.disney_api.aiohttp.ClientSession", lambda **kw: session)
+    assert await fetch_park_live_data(DUMMY_PARK) == []
 
 ###########
-# Tests for Park Operating Status & Schedule Update
-###########
-def test_park_has_operating_attraction(monkeypatch):
-    park = {
-        "name": "Test Park",
-        "attractions": [
-            {"name": "Ride A", "waitTime": "15", "status": "OPERATING"},
-            {"name": "Ride B", "waitTime": "", "status": "CLOSED"}
-        ]
-    }
-    assert park_has_operating_attraction(park) is True
-    park["attractions"][0]["status"] = "CLOSED"
-    assert park_has_operating_attraction(park) is False
 
 def test_handle_park_schedule_update(monkeypatch):
     park = {"name": "Test Park", "id": "dummy-id", "schedule": []}
     # Patch fetch_park_schedule to return a dummy schedule with an OPERATING event.
     dummy_schedule = [{
-        "type": "OPERATING", 
-        "openingTime": "09:00", 
+        "type": "OPERATING",
+        "date": "2026-08-12",
+        "openingTime": "09:00",
         "closingTime": "22:00",
         "purchases": [{"name": "Lightning Lane Multi Pass", "price": {"formatted": "$25"}}]
     }]
     monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: dummy_schedule)
-    # Patch is_special_event to return True.
-    monkeypatch.setattr("api.disney_api.is_special_event", lambda sch: True)
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
     # Capture debug info if desired.
     from api.disney_api import handle_park_schedule_update
     handle_park_schedule_update(park)
-    # Verify that schedule is updated, and llmpPrice and specialTicketedEvent are set.
+    # Verify that schedule is updated and llmpPrice is set.
     assert park["schedule"] == dummy_schedule
     assert park["llmpPrice"] == "$25"
-    assert park["specialTicketedEvent"] is True
     assert park["openingTime"] == "09:00"
     assert park["closingTime"] == "22:00"
+    assert park["schedule_date"] == "2026-08-12"
 
 def test_handle_park_schedule_update_calls_refresh(monkeypatch):
     park = {"name": "Test Park", "id": "dummy-id", "schedule": [], "attractions": []}
@@ -638,50 +632,6 @@ def test_handle_park_schedule_update_calls_refresh(monkeypatch):
     handle_park_schedule_update(park)
     assert refreshed == [park]
 
-def test_update_parks_operating_status_no_refresh_when_already_operating(monkeypatch):
-    park = {
-        "name": "Test Park", "id": "dummy-id", "schedule": [], "operating": True,
-        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
-    }
-    monkeypatch.setattr("api.disney_api.fetch_park_schedule",
-                        lambda park_id: (_ for _ in ()).throw(AssertionError("schedule fetched")))
-    refreshed = []
-    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
-    updated = update_parks_operating_status([park])
-    assert updated[0]["operating"] is True
-    assert refreshed == []
-    assert not updated[0].get("schedule_refresh_needed")
-
-def test_update_parks_operating_status_defers_schedule_fetch(monkeypatch):
-    """fetch_schedules=False (WS thread): transition flags the park but does no HTTP."""
-    park = {
-        "name": "Test Park", "id": "dummy-id", "schedule": [],
-        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
-    }
-    monkeypatch.setattr("api.disney_api.fetch_park_schedule",
-                        lambda park_id: (_ for _ in ()).throw(AssertionError("schedule fetched")))
-    monkeypatch.setattr("api.disney_api.refresh_park_attractions",
-                        lambda p: (_ for _ in ()).throw(AssertionError("attractions refreshed")))
-    updated = update_parks_operating_status([park], fetch_schedules=False)
-    assert updated[0]["operating"] is True
-    assert updated[0]["schedule_refresh_needed"] is True
-
-def test_update_parks_operating_status_consumes_deferred_flag(monkeypatch):
-    """fetch_schedules=True (REST thread): a pending flag triggers the fetch and is cleared."""
-    park = {
-        "name": "Test Park", "id": "dummy-id", "schedule": [],
-        "operating": True, "schedule_refresh_needed": True,
-        "attractions": [{"name": "Ride A", "waitTime": "10", "status": "OPERATING"}],
-    }
-    monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [{
-        "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00"
-    }])
-    refreshed = []
-    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
-    updated = update_parks_operating_status([park])
-    assert updated[0]["schedule_refresh_needed"] is False
-    assert updated[0]["openingTime"] == "09:00"
-    assert refreshed == [park]
 
 ###########
 # Tests for refresh_park_attractions
@@ -742,24 +692,90 @@ def test_refresh_park_attractions_request_error(monkeypatch):
     refresh_park_attractions(park)
     assert len(park["attractions"]) == 1  # unchanged on error
 
-def test_update_parks_operating_status(monkeypatch):
-    park = {
-        "name": "Test Park",
-        "attractions": [{
-            "name": "Ride A",
-            "waitTime": "10",
-            "status": "OPERATING"
-        }],
-        "id": "dummy-id",
-        "schedule": []
-    }
-    parks = [park]
-    monkeypatch.setattr("api.disney_api.fetch_park_schedule", lambda park_id: [{
-        "type": "OPERATING",
-        "openingTime": "09:00",
-        "closingTime": "22:00"
-    }])
-    monkeypatch.setattr("api.disney_api.fetch_weather_data", lambda lat, lon: {"temp": "dummy"})
-    monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: None)
-    updated = update_parks_operating_status(copy.deepcopy(parks))
-    assert updated[0]["operating"] is True
+
+# ---- Wait-time forecasts ----
+
+FORECAST = [
+    {"time": "2026-09-25T10:00:00-04:00", "waitTime": 20, "percentage": 17},
+    {"time": "2026-09-25T11:00:00-04:00", "waitTime": 40, "percentage": 34},
+]
+
+
+def test_parse_forecast_keeps_time_and_wait_only():
+    assert parse_forecast(FORECAST) == [
+        {"time": "2026-09-25T10:00:00-04:00", "waitTime": 20},
+        {"time": "2026-09-25T11:00:00-04:00", "waitTime": 40},
+    ]
+
+
+@pytest.mark.parametrize("raw", [None, [], "nope", [None], [{"time": "2026-09-25T10:00:00-04:00"}],
+                                 [{"waitTime": 10}], [{"time": 5, "waitTime": 10}],
+                                 [{"time": "2026-09-25T10:00:00-04:00", "waitTime": "10"}],
+                                 [{"time": "2026-09-25T10:00:00-04:00", "waitTime": True}]])
+def test_parse_forecast_drops_malformed_points(raw):
+    assert parse_forecast(raw) == []
+
+
+def test_build_live_updates_includes_forecast_only_when_present():
+    entries = [
+        {"id": "a", "entityType": "ATTRACTION", "status": "OPERATING", "lastUpdated": "t",
+         "queue": {"STANDBY": {"waitTime": 30}}, "forecast": FORECAST},
+        {"id": "b", "entityType": "ATTRACTION", "status": "OPERATING", "lastUpdated": "t",
+         "queue": {"STANDBY": {"waitTime": 10}}},
+    ]
+    with_fc, without_fc = build_live_updates(entries)
+    assert with_fc["forecast"] == parse_forecast(FORECAST)
+    assert "forecast" not in without_fc
+
+
+# --- showtimes ---
+
+HEA_RAW = [{"type": "Performance Time", "startTime": "2026-09-26T21:30:00-04:00", "endTime": "2026-09-26T21:30:00-04:00"}]
+HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+
+
+def test_parse_showtimes_keeps_valid_starts_and_drops_malformed():
+    raw = HEA_RAW + [{"startTime": "not a time"}, {"endTime": "2026-09-26T22:00:00-04:00"},
+                     {"startTime": "2026-09-26T23:00:00"}, "junk", {"startTime": None}]
+    assert parse_showtimes(raw) == [HEA_START], "naive times are dropped: no way to compare to now"
+    assert parse_showtimes(None) == [] and parse_showtimes([]) == []
+
+
+def test_build_live_updates_carries_showtimes_including_an_empty_list():
+    entries = [
+        {"id": "hea", "entityType": "SHOW", "status": "OPERATING", "lastUpdated": "x", "showtimes": HEA_RAW},
+        {"id": "done", "entityType": "SHOW", "status": "OPERATING", "lastUpdated": "x", "showtimes": []},
+        {"id": "ride", "entityType": "ATTRACTION", "status": "OPERATING", "lastUpdated": "x"},
+    ]
+    hea, done, ride = build_live_updates(entries)
+    assert hea["showtimes"] == [HEA_START]
+    assert done["showtimes"] == [], "an empty list clears yesterday's showtimes"
+    assert "showtimes" not in ride
+
+
+def test_startup_fetches_log_summaries_not_whole_payloads(monkeypatch):
+    # The API returns tens of KB per park; the debug log gets a count, not the payload.
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    children = [{"id": f"attr-{i}", "name": f"Ride {i} " + "x" * 40, "entityType": "ATTRACTION"} for i in range(200)]
+    schedule = [{"date": today_str, "type": "OPERATING", "openingTime": "09:00", "closingTime": "22:00",
+                 "description": "y" * 200} for _ in range(30)]
+
+    def fake_get(url, **kwargs):
+        if "children" in url:
+            return DummyResponse({"children": children}, 200)
+        if "schedule" in url:
+            return DummyResponse({"schedule": schedule}, 200)
+        return DummyResponse({"location": {"latitude": 28.3759, "longitude": -81.5494}}, 200)
+
+    monkeypatch.setattr(requests, "get", fake_get)
+    monkeypatch.setattr(disney_api, "fetch_weather_data", lambda lat, lon: {"temp": "dummy"})
+    logged = []
+    for level in ("log", "info"):
+        monkeypatch.setattr(disney_api.debug, level, lambda msg, *a, **k: logged.append(str(msg)))
+    parks = [{"id": "dummy-id", "name": "Magic Kingdom", "schedule": schedule, "weather": [],
+              "location": {"latitude": 28.3759, "longitude": -81.5494}}]
+    fetch_park_schedule("dummy-id")
+    result = fetch_parks_and_attractions(parks)
+    assert len(result[0]["attractions"]) == 200
+    assert logged and max(len(m) for m in logged) < 300, "summaries, not the whole response"
+    assert len(logged) < 20, "not a line per attraction"

@@ -1,4 +1,3 @@
-import asyncio
 import re
 import ssl
 from datetime import datetime, timedelta, timezone
@@ -8,15 +7,21 @@ import certifi
 import requests
 
 from api.weather import fetch_weather_data
+from parks.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, is_water_park
+from utils.special_events import seasonal_event
 from utils import debug
-from utils.utils import get_eastern
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
 
-DISNEY_WORLD_DESTINATION_ID = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
 _UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+
+# Every synchronous request to the ThemeParks Wiki API uses this timeout so a
+# slow/unreachable API fails fast instead of hanging the caller indefinitely —
+# resolve_parks_from_config runs on bullpen's render/update thread when used
+# as a plugin, so a hang here freezes the whole scoreboard.
+REQUEST_TIMEOUT_SECONDS = 10
 
 
 def resolve_destination_id(name_or_id):
@@ -25,7 +30,7 @@ def resolve_destination_id(name_or_id):
     if _UUID_RE.match(name_or_id):
         return name_or_id
     try:
-        response = requests.get("https://api.themeparks.wiki/v1/destinations")
+        response = requests.get("https://api.themeparks.wiki/v1/destinations", timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         destinations = response.json().get("destinations", [])
         name_lower = name_or_id.lower()
@@ -40,17 +45,19 @@ def resolve_destination_id(name_or_id):
         return None
 
 
-def get_park_location(park_id):
+def get_park_entity_info(park_id):
+    """Location and IANA timezone (e.g. 'America/New_York') for the park, from the
+    same /entity/{id} lookup. Timezone drives the daily 3am-local schedule refresh."""
     api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}"
-    debug.info("Fetching Disney World schedule data...")
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
+        response.raise_for_status()
         park_data = response.json()
-        return park_data.get("location")
+        return park_data.get("location"), park_data.get("timezone")
     except requests.RequestException as e:
-        debug.error(f"Failed get park data with location data: {e}")
-        return []
+        debug.error(f"Failed to fetch entity info for park {park_id}: {e}")
+        return [], None
 
 def fetch_park_schedule(park_id):
     """
@@ -65,7 +72,7 @@ def fetch_park_schedule(park_id):
     debug.info(f"Fetching schedule for park with ID: {park_id}")
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()  # Ensure we raise an error for bad responses
         schedule_data = response.json().get("schedule", [])
 
@@ -74,13 +81,13 @@ def fetch_park_schedule(park_id):
             event for event in schedule_data if event.get("date") in (today_str, yesterday_str)
         ]
 
-        debug.log(f"Schedule Data for park ID {park_id}: {schedule_data}")
+        debug.log(f"Schedule for park ID {park_id}: {len(schedule_data)} events, "
+                  f"{len(schedule_filtered)} today or yesterday")
         return schedule_filtered
     except requests.RequestException as e:
         debug.error(f"Failed to fetch schedule for park ID {park_id}: {e}")
         return []
 
-WATER_PARK_KEYWORDS = ("Water Park", "Shores")
 
 def fetch_parks_from_destination(destination_id):
     """
@@ -91,7 +98,7 @@ def fetch_parks_from_destination(destination_id):
     debug.info("Fetching parks for destination %s", destination_id)
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         parks_data = response.json().get("parks", [])
 
@@ -105,20 +112,23 @@ def fetch_parks_from_destination(destination_id):
             if not isinstance(park, dict):
                 continue
             park_name = park.get("name", "")
-            if any(kw in park_name for kw in WATER_PARK_KEYWORDS):
+            if is_water_park(park_name):
                 continue
             schedule = park.get("schedule") or []
             schedule_filtered = [
                 event for event in schedule if event.get("date") in (today_str, yesterday_str)
             ]
-            debug.log(f"Schedule Filter: {schedule_filtered}")
+            debug.log(f"{park.get('name')} schedule, today and yesterday: "
+                      + (", ".join(f"{e.get('date')} {e.get('type')}" for e in schedule_filtered) or "none"))
+            location, park_timezone = get_park_entity_info(park.get("id"))
             filtered_parks.append({
                 "name": clean_park_name(park_name) if is_disney else park_name,
                 "id": park.get("id", "Unknown"),
                 "destination_id": destination_id,
                 "schedule": schedule_filtered,
                 "weather": [],
-                "location": get_park_location(park.get("id"))
+                "location": location,
+                "timezone": park_timezone
             })
 
         debug.info(f"Found {len(filtered_parks)} parks for destination {destination_id}.")
@@ -145,7 +155,7 @@ def resolve_parks_from_config(park_names):
         return fetch_list_of_disney_world_parks()
 
     try:
-        response = requests.get("https://api.themeparks.wiki/v1/destinations")
+        response = requests.get("https://api.themeparks.wiki/v1/destinations", timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         destinations = response.json().get("destinations", [])
     except requests.RequestException as e:
@@ -195,10 +205,10 @@ def fetch_parks_and_attractions(disney_park_list):
         debug.info(f"Fetching attractions for park: {park_name} (ID: {park_id})")
         api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
         try:
-            response = requests.get(api_url)
+            response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
             park_data = response.json()
-            debug.log(f"{park_name} Park Data: {park_data}")
+            debug.log(f"{park_name}: {len(park_data.get('children', []))} entities from the API")
         except requests.RequestException as e:
             debug.error(f"Failed to fetch attractions for park {park_name}: {e}")
             continue
@@ -213,9 +223,9 @@ def fetch_parks_and_attractions(disney_park_list):
                     "parkId": park_id,
                     "waitTime": '',      # Placeholder for wait time
                     "status": '',        # Placeholder for status
-                    "lastUpdatedTs": ''  # Placeholder for timestamp
+                    "lastUpdatedTs": '',  # Placeholder for timestamp
+                    "updateSource": ''    # "rest" or "websocket": which path wrote it last
                 }
-                debug.log(f"Attraction found: {attraction}")
                 attractions.append(attraction)
         debug.info(f"{len(attractions)} were found in {park_name}")
         park_obj = {
@@ -223,33 +233,22 @@ def fetch_parks_and_attractions(disney_park_list):
             "name": park_name,
             "destination_id": park_info.get("destination_id"),
             "attractions": attractions,
-            "specialTicketedEvent": is_special_event(schedule),
+            "schedule": schedule,
+            "seasonalEvent": seasonal_event(park_data.get("children", [])),
             "closingTime": operating_event.get("closingTime", ""),
             "openingTime": operating_event.get("openingTime", ""),
             "llmpPrice": determine_llmp_price(operating_event),
             "weather": fetch_weather_data(location.get("latitude"), location.get("longitude")),
-            "location": location
+            "location": location,
+            "timezone": park_info.get("timezone")
         }
         parks.append(park_obj)
     return parks
 
 
-def clean_park_name(raw_name):
-    return raw_name.replace("Theme", " ").replace("Park", " ").replace("Disney's", "").strip()
-
-
 def get_attraction_name(item):
     return item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", "").replace(" at Mickey's Not-So-Scary Halloween Party", "")
 
-
-def is_special_event(schedule):
-    return any(
-        event.get("type") == "TICKETED_EVENT" and (
-            "special ticketed event" in event.get("description", "").lower() or
-            "extended evening" in event.get("description", "").lower()
-        )
-        for event in schedule
-    )
 
 def determine_llmp_price(operating_event):
     lightning_lane_multi_pass_price = ""
@@ -273,125 +272,118 @@ def get_down_time(last_updated_date):
         debug.error(f"Invalid date format: {last_updated_date}")
         return None
 
-async def fetch_live_data_for_attraction(session, attraction):
-    """
-    Fetch live data for a single attraction.
-    If the status is not "CLOSED" or "REFURBISHMENT", update the waitTime.
-    """
-    current_data = attraction.copy()
 
-    api_url = f"https://api.themeparks.wiki/v1/entity/{attraction['id']}/live"
-    debug.log(f"Fetching live data for attraction: {attraction['name']} (ID: {attraction['id']})")
+def parse_timestamp(when):
+    """An ISO timestamp with a timezone ("Z" or an offset) as an aware datetime; None for
+    anything else, a naive time included (it can't be compared with the aware ones)."""
     try:
-        async with session.get(api_url) as response:
-            if response.status == 200:
-                data = await response.json()
-                live_data_info = data.get('liveData', [])
-                if live_data_info:
-                    live_data_entry = live_data_info[0]  # Use the first liveData entry
-                    attraction["lastUpdatedTs"] = live_data_entry.get("lastUpdated", None)
-                    attraction["status"] = live_data_entry.get("status", None)
-                    if live_data_entry.get("status") == "DOWN" and live_data_entry.get("entityType") == "ATTRACTION":
-                        attraction["waitTime"] = f"Down {get_down_time(live_data_entry.get('lastUpdated'))}"
-                    if live_data_entry.get("status") not in ["CLOSED", "REFURBISHMENT","DOWN"]:
-                        queue = live_data_entry.get("queue", {})
-                        standby_wait = queue.get("STANDBY", {}).get("waitTime", None)
-                        if standby_wait is not None:
-                            attraction["waitTime"] = standby_wait
-                        else:
-                            bg = queue.get("BOARDING_GROUP", {})
-                            start = bg.get("currentGroupStart")
-                            end = bg.get("currentGroupEnd")
-                            if start is not None and end is not None:
-                                attraction["waitTime"] = f"Groups {start}-{end}"
-                            elif start is not None:
-                                attraction["waitTime"] = f"Group {start}+"
-                            else:
-                                attraction["waitTime"] = None
-            else:
-                debug.error(f"Failed to fetch live data for {attraction['name']}, Status Code: {response.status}")
-    except Exception as e:
-        debug.error(f"Error occurred while fetching live data for {attraction['name']}: {e}")
+        parsed = datetime.fromisoformat(when.replace("Z", "+00:00"))
+    except (ValueError, AttributeError, TypeError):
+        return None
+    return parsed if parsed.tzinfo else None
 
-    if current_data != attraction:
-        debug.log(f"There is new data for {attraction['name']} | Wait time: {current_data['waitTime']}(Existing) vs {attraction['waitTime']}(New) | Status: {current_data['status']}(Existing) vs {attraction['status']}(New) | Last updated: {get_eastern(current_data['lastUpdatedTs'])}(Existing) vs {get_eastern(attraction['lastUpdatedTs'])}(New)")
-    else:
-        debug.log(f"No new data for {attraction['name']}")
-    return attraction
 
-async def fetch_live_data(attractions):
+def parse_queue_wait(queue):
     """
-    Fetch live data for all attractions concurrently.
+    Extract a display wait value from a liveData queue block: STANDBY minutes,
+    a boarding group range, or None when neither is available.
     """
+    standby_wait = (queue.get("STANDBY") or {}).get("waitTime")
+    if standby_wait is not None:
+        return standby_wait
+    bg = queue.get("BOARDING_GROUP") or {}
+    start = bg.get("currentGroupStart")
+    end = bg.get("currentGroupEnd")
+    if start is not None and end is not None:
+        return f"Groups {start}-{end}"
+    if start is not None:
+        return f"Group {start}+"
+    return None
+
+
+def parse_forecast(raw_forecast):
+    """Keep the hourly (time, waitTime) points from a liveData forecast, dropping malformed ones."""
+    points = []
+    for point in raw_forecast or []:
+        if not isinstance(point, dict):
+            continue
+        when, wait = point.get("time"), point.get("waitTime")
+        if isinstance(when, str) and isinstance(wait, int) and not isinstance(wait, bool):
+            points.append({"time": when, "waitTime": wait})
+    return points
+
+
+def parse_showtimes(raw_showtimes):
+    """Start times (aware datetimes) of a show's performances, dropping malformed entries."""
+    starts = []
+    for show in raw_showtimes or []:
+        when = show.get("startTime") if isinstance(show, dict) else None
+        try:
+            start = datetime.fromisoformat(when.replace("Z", "+00:00"))
+        except (ValueError, AttributeError, TypeError):
+            continue
+        if start.tzinfo is not None:
+            starts.append(start)
+    return starts
+
+
+def build_live_updates(live_entries):
+    """
+    Convert raw liveData entries into the minimal update dicts merge_live_data
+    consumes. CLOSED/REFURBISHMENT entries, and all DOWN entries, omit waitTime:
+    merge_live_data derives the DOWN wait string from the persisted down_since
+    timestamp rather than the raw per-poll lastUpdated value.
+    """
+    updates = []
+    for entry in live_entries:
+        if entry.get("entityType") not in ("ATTRACTION", "SHOW"):
+            continue
+        status = entry.get("status")
+        update = {
+            "id": entry.get("id"),
+            "status": status,
+            "lastUpdatedTs": entry.get("lastUpdated"),
+            "updateSource": "rest",
+        }
+        if status == "DOWN":
+            pass  # waitTime is derived from down_since once merged; see merge_live_data
+        elif status not in ("CLOSED", "REFURBISHMENT"):
+            update["waitTime"] = parse_queue_wait(entry.get("queue") or {})
+        if entry.get("forecast"):
+            update["forecast"] = parse_forecast(entry["forecast"])
+        if "showtimes" in entry:
+            update["showtimes"] = parse_showtimes(entry["showtimes"])
+        updates.append(update)
+    return updates
+
+
+async def fetch_park_live_data(park):
+    """
+    Fetch live data for all of a park's attractions with a single request to the
+    park-level live endpoint. Returns a list of update dicts for merge_live_data,
+    or None if the fetch failed (caller keeps existing data and retries later).
+    """
+    api_url = f"https://api.themeparks.wiki/v1/entity/{park['id']}/live"
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     connector = aiohttp.TCPConnector(ssl=ssl_ctx)
-    async with aiohttp.ClientSession(connector=connector) as session:
-        tasks = [fetch_live_data_for_attraction(session, attraction) for attraction in attractions]
-        results = await asyncio.gather(*tasks)
-    debug.log(f"Total live data fetched: {len(results)}")
-    return results
+    try:
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.get(api_url) as response:
+                if response.status != 200:
+                    debug.error(f"Failed to fetch live data for {park.get('name')}, Status Code: {response.status}")
+                    return None
+                data = await response.json()
+    except Exception as e:
+        debug.error(f"Error occurred while fetching live data for {park.get('name')}: {e}")
+        return None
 
-def park_has_operating_attraction(park):
-    """
-    Returns True only if the park is within its scheduled hours AND has at least
-    one OPERATING attraction with a non-empty wait time.
-    A park whose entire live feed has gone stale (all DOWN, no OPERATING) returns False.
-    A park past its closing time returns False regardless of API status.
-    """
-    closing_time_str = park.get("closingTime")
-    if closing_time_str:
-        try:
-            closing_dt = datetime.fromisoformat(closing_time_str)
-            now = datetime.now(closing_dt.tzinfo)
-            if now > closing_dt:
-                debug.info(f"{park['name']} is past closing time ({closing_time_str}), marking non-operating.")
-                return False
-        except (ValueError, TypeError):
-            pass
-
-    debug.log(f"Searching for open attractions in {park['name']}")
-    for attraction in park.get("attractions", []):
-        wait_time = attraction.get("waitTime")
-        status = attraction.get("status")
-        debug.log(
-            f"Attraction: {attraction['name']} (Park: {park['name']}) | "
-            f"Wait Time: {wait_time} | Status: {status}"
-        )
-        if status and status.upper() == "OPERATING" and wait_time not in (None, ''):
-            debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")
-            return True
-    debug.info(f"{park['name']}: no OPERATING attractions found, marking non-operating.")
-    return False
-
-
-def update_parks_operating_status(parks, fetch_schedules=True):
-    """
-    Updates each park object in the list with a new key 'operating' that is
-    True if the park has at least one operating attraction with a valid
-    wait time, otherwise False.
-
-    When a park transitions from closed to open it needs a schedule fetch
-    (blocking HTTP). With fetch_schedules=False that work is only flagged via
-    'schedule_refresh_needed' — safe to call from the WS event loop — and a
-    later call with fetch_schedules=True (the REST thread) performs it.
-    """
-
-    for park in parks:
-        is_park_open = park_has_operating_attraction(park)  # Check if any attractions are operating
-        if not park.get("operating") and is_park_open:
-            park["schedule_refresh_needed"] = True
-        # Update the operating status
-        park["operating"] = is_park_open
-
-        if fetch_schedules and park.get("schedule_refresh_needed"):
-            handle_park_schedule_update(park)
-            park["schedule_refresh_needed"] = False
-
-    return parks
+    updates = build_live_updates(data.get("liveData", []))
+    debug.log(f"Live data fetched for {park.get('name')}: {len(updates)} entries")
+    return updates
 
 
 def handle_park_schedule_update(park):
-    debug.info(f"{park.get('name')} is now operating. Fetching schedule...")
+    debug.info(f"Fetching schedule for {park.get('name')}...")
     schedule = fetch_park_schedule(park.get("id"))
     park["schedule"] = schedule
     debug.info(f"Updated schedule for {park.get('name')}")
@@ -399,9 +391,9 @@ def handle_park_schedule_update(park):
     # Update park schedule details
     operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
     park["llmpPrice"] = determine_llmp_price(operating_event)
-    park["specialTicketedEvent"] = is_special_event(schedule)
     park["closingTime"] = operating_event.get("closingTime", "")
     park["openingTime"] = operating_event.get("openingTime", "")
+    park["schedule_date"] = operating_event.get("date", "")
 
     refresh_park_attractions(park)
 
@@ -416,13 +408,14 @@ def refresh_park_attractions(park):
     api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
 
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         children = response.json().get("children", [])
     except requests.RequestException as e:
         debug.error(f"Failed to refresh attractions for {park_name}: {e}")
         return
 
+    park["seasonalEvent"] = seasonal_event(children)
     fresh = {
         item["id"]: item
         for item in children
@@ -446,6 +439,7 @@ def refresh_park_attractions(park):
                 "waitTime": "",
                 "status": "",
                 "lastUpdatedTs": "",
+                "updateSource": "",
                 "down_since": ""
             })
             debug.info(f"New attraction added to {park_name}: {get_attraction_name(item)}")

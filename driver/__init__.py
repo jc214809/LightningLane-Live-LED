@@ -1,24 +1,47 @@
+"""
+Picks rgbmatrix (a Pi) or RGBMatrixEmulator, and stands in for whichever it is: `from driver import
+RGBMatrix, graphics` works the same on both. Hardware unless running under tests or rgbmatrix won't
+import; disney.py switches to the emulator with set_mode for --emulated (cli.py). Importing this
+never reads the command line, as in mlb-led-scoreboard.
+"""
+import importlib
 import sys
 
 from driver.mode import DriverMode
 from utils import debug
-from utils.utils import args
+
+
+class _Graphics:
+    """driver.graphics, looked up on the current driver at each use. Display modules import it
+    before disney.py has read --emulated, so a binding made then would keep rgbmatrix's graphics,
+    which crash on an emulator canvas. Setting or deleting an attribute (display/capture.py swaps
+    in its own DrawText while capturing) changes the current driver's graphics, as it always did."""
+
+    def __init__(self, wrapper):
+        object.__setattr__(self, "_wrapper", wrapper)
+
+    def __getattr__(self, name):
+        return getattr(self._wrapper.graphics_module, name)
+
+    def __setattr__(self, name, value):
+        setattr(self._wrapper.graphics_module, name, value)
+
+    def __delattr__(self, name):
+        delattr(self._wrapper.graphics_module, name)
 
 
 class DriverWrapper:
+    DriverMode = DriverMode  # driver.mode can't be imported once this object replaces the package
+
     def __init__(self):
         self.hardware_load_failed = False
         self.mode = None
+        self.graphics = _Graphics(self)
 
-        if 'unittest' in sys.modules or args().emulated:
+        if 'unittest' in sys.modules:
             self.set_mode(DriverMode.SOFTWARE_EMULATION)
         else:
             self.set_mode(DriverMode.HARDWARE)
-
-        if self.hardware_load_failed:
-            debug.info("Failed to load hardware driver. Using software emulation.")
-
-        debug.info(f"Driver mode: {self.mode}")
     @property
     def __name__(self):
         return 'driver'
@@ -38,15 +61,20 @@ class DriverWrapper:
 
                 self.driver = rgbmatrix
             except ImportError:
-                import RGBMatrixEmulator
-
                 self.mode = DriverMode.SOFTWARE_EMULATION
-                self.driver = RGBMatrixEmulator
                 self.hardware_load_failed = True
-        else:
+                debug.info("Failed to load hardware driver. Using software emulation.")
+
+        if self.is_emulated():
+            # Outside the except: the emulator's own load errors aren't chained to rgbmatrix's.
             import RGBMatrixEmulator
 
             self.driver = RGBMatrixEmulator
+
+        # Imported by name: `import rgbmatrix` doesn't load its graphics submodule (the emulator's
+        # package does), so rgbmatrix.graphics isn't an attribute until something imports it.
+        self.graphics_module = importlib.import_module(f"{self.driver.__name__}.graphics")
+        debug.info(f"Driver mode: {self.mode}")
 
     def __getattr__(self, name):
         return getattr(self.driver, name)

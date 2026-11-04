@@ -1,0 +1,54 @@
+import os
+import tempfile
+
+# Redirect utils.debug's log file into a throwaway temp directory before any
+# test module can import utils.debug (that import wires up a RotatingFileHandler
+# pointed at the real logs/app.log). Without this, running pytest alongside a
+# live app instance interleaves test fixture data into the real log and can
+# even trip live logic that reacts to log-derived state (e.g. the WebSocket
+# watchdog's message counter).
+os.environ.setdefault('LLL_LOG_DIR', tempfile.mkdtemp(prefix='lll-test-logs-'))
+
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _no_sound_watch():
+    # The sound badge's watch is process-wide too; main() sets it.
+    import utils.sound as sound
+    sound._watched = sound._found = sound._checked_at = None
+    yield
+    sound._watched = sound._found = sound._checked_at = None
+
+
+@pytest.fixture(autouse=True)
+def _network_ok():
+    # The network flag is process-wide; a test that fails a fetch would otherwise
+    # leave the badge drawn over every later test's frames.
+    import updater.shared as shared
+    shared._network_issues = False
+    shared.note_live_feed_down()
+    yield
+    shared._network_issues = False
+    shared.note_live_feed_down()
+
+
+@pytest.fixture(autouse=True)
+def _no_brightness_schedule():
+    # main() sets the schedule process-wide; the next test's canvases would follow it.
+    import utils.brightness as brightness
+    brightness.use(None)
+    yield
+    brightness.use(None)
+
+
+@pytest.fixture(autouse=True)
+def _no_settings_pin(tmp_path, monkeypatch):
+    # The PIN overlay reads a /run file every second and caches it process-wide: point it at a file
+    # that isn't there, so a board running the tests never draws its own PIN into them.
+    import utils.settings_pin as settings_pin
+    monkeypatch.setattr(settings_pin, "PIN_FILE", str(tmp_path / "no-pin"))
+    settings_pin._cache.update(at=None, pin=None, expires=0.0)
+    yield
+    settings_pin._cache.update(at=None, pin=None, expires=0.0)

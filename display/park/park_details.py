@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from io import BytesIO
 
@@ -7,9 +8,14 @@ from PIL import Image
 from display.display import get_text_width, wrap_text, color_dict, loaded_fonts
 from driver import graphics
 from utils import debug
+from utils.special_events import DEFAULT_STAR_RGB, star_rgb
+
+ICON_TIMEOUT_S = 5
+ICON_RETRY_S = 300
 
 # Icon cache for storing loaded weather icons
 icon_cache = {}
+icon_failures = {}
 def render_park_information_screen(matrix, park_obj):
     """
     Renders the park name at the top and the hours/price at the bottom.
@@ -37,8 +43,19 @@ def render_park_information_screen(matrix, park_obj):
         render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(loaded_fonts["info"], llmp_price), matrix, llmp_price)
         render_park_hours(baseline_y, 1, matrix, park_obj)
 
-def render_special_ticketed_events(vertical_start, matrix, hours_text):
-    graphics.DrawText(matrix, loaded_fonts["info"], 1 + get_text_width(loaded_fonts["info"], hours_text), vertical_start, color_dict["gold"], "*")
+# The dots of the "info" font's "*" (4x6-legacy on both boards), as (x, y) from the left edge and
+# the baseline, in the order a multicoloured star lists its colours.
+STAR_DOTS = [(0, -5), (2, -5), (1, -4), (0, -3), (2, -3)]
+
+
+def render_special_ticketed_events(vertical_start, matrix, hours_text, rgb=DEFAULT_STAR_RGB):
+    x = 1 + get_text_width(loaded_fonts["info"], hours_text)
+    if isinstance(rgb[0], tuple):
+        # A multicoloured star can't go through DrawText: set its dots one by one.
+        for (dx, dy), dot in zip(STAR_DOTS, rgb):
+            matrix.SetPixel(x + dx, vertical_start + dy, *dot)
+        return
+    graphics.DrawText(matrix, loaded_fonts["info"], x, vertical_start, graphics.Color(*rgb), "*")
 
 def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
@@ -52,8 +69,9 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
     closing_time = park_obj.get("closingTime", "")
     if opening_time and closing_time:
         hours_text = f"{format_iso_time(opening_time)}-{format_iso_time(closing_time)}"
-        if park_obj.get("specialTicketedEvent", False):
-            render_special_ticketed_events(vertical_start, matrix, hours_text)
+        star = star_rgb(park_obj)
+        if star:
+            render_special_ticketed_events(vertical_start, matrix, hours_text, star)
     else:
         hours_text = "??-??"
     graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], hours_text)
@@ -61,32 +79,36 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
 def render_weather_icon(icon_code):
     # Construct the URL for the weather icon
     # Check if the icon is already cached
-    debug.log(f"Fetching cache: {icon_cache}")
+    # Called every animation frame: no logging on this path (a cache hit is the normal case).
     if icon_code in icon_cache:
-        debug.info(f"Fetching icon from cache for code: {icon_code}")
         return icon_cache[icon_code]
+    # The park screen is redrawn every animation frame; don't re-download a failing icon each time.
+    failed_at = icon_failures.get(icon_code)
+    if failed_at is not None and time.monotonic() - failed_at < ICON_RETRY_S:
+        return None
 
     icon_url = f"https://openweathermap.org/img/wn/{icon_code}.png"
 
     try:
         # Fetch the icon image from the URL
-        response = requests.get(icon_url)
+        response = requests.get(icon_url, timeout=ICON_TIMEOUT_S)
         response.raise_for_status()  # Raise an exception for HTTP errors
         img = Image.open(BytesIO(response.content))
         img = img.resize((15, 15))  # Resize the image to a smaller display size for the matrix
         icon_cache[icon_code] = img
+        icon_failures.pop(icon_code, None)
+        debug.log(f"Downloaded weather icon {icon_code}")  # once per new icon, not per frame
 
         return img
     except requests.RequestException as e:
         debug.error(f"Failed to fetch icon from URL: {icon_url} - {e}")  # Log any issues
-        return None
     except Exception as e:
         debug.error(f"Failed to load icon: {e}")  # Log other errors
-        return None
+    icon_failures[icon_code] = time.monotonic()
+    return None
 
 def display_weather_icon_and_description(matrix, weather_info, font_height,show_icon=True):
     """Display the weather icon and its description in the top right corner."""
-    debug.info(f"Weather Info: {weather_info}")
 
     temp = weather_info.get("temperature", "?")
 
@@ -106,8 +128,7 @@ def display_weather_icon_and_description(matrix, weather_info, font_height,show_
                 vertical_point = int(matrix.height - (loaded_fonts["info"].height * 2.5))
                 matrix.SetImage(img.convert("RGB"), horizontal_point, vertical_point - img.height)
                 graphics.DrawText(matrix, loaded_fonts["info"], horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text)
-        else:
-            debug.warning("Icon could not be rendered, only displaying text.")
+        # No icon: the fetch already logged why, once per retry window; this runs every frame.
 
 def format_iso_time(iso_str):
     """

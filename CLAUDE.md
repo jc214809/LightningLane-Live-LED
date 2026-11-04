@@ -5,68 +5,141 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```sh
-# Run all tests
+# Run all tests / one file / one test
 pytest
-
-# Run a single test file
 pytest tests/api/test_disney_api.py
-
-# Run a single test by name
 pytest tests/api/test_disney_api.py::test_function_name
 
-# Run the app in emulator mode (no hardware required)
+# Run the app in emulator mode (no hardware); --led-rows=64 for the 64x64 board
 ./disney.py --emulated --led-cols=64 --led-rows=32
-
-# Run with specific board size
-./disney.py --emulated --led-cols=64 --led-rows=64
 
 # Check version
 python3 version.py
 
-# Update requirements (after adding/changing dependencies)
-pipreqs . --force
+# Release: merge develop-beta into main, then tag main with version.py's version; the Release
+# workflow makes the GitHub release only if they match (tools/check_release_tag.py)
+git tag v2.0.0 origin/main && git push origin v2.0.0
+
+# Set up a whole board (LLL, Peloton-LED or MLB): see what it would do without changing anything
+bash board-setup.sh --dry-run --answers board.txt   # KEY=value lines; --help lists them
+
+# Install for development (the app plus the test tools), on Python 3.11 like the boards
+uv venv --python 3.11 .venv && uv pip install --python .venv -r requirements-dev.txt
+
+# Rebuild the sprite editor after changing any character art (a test fails until you do)
+python3 tools/build_sprite_editor.py
+
+# Rebake Merida's Touch the Sky poses after changing merida_poses.py or the archer's art (a test fails until you do)
+python3 tools/build_merida_poses.py
+
+# Redraw docs/hardware's wiring diagrams after editing tools/draw_wiring.py (a test fails until you do)
+python3 tools/draw_wiring.py
+
+# Measure a new reference image for docs/references/README.md (a test fails until it has a row)
+python3 tools/analyze_reference.py docs/references/<image> [--box x0,y0,x1,y1] [--lines] [--cell PX] [--art]
+
+# Record the synced show as the boards draw it, then compare it with the real show in tools/show_sync_checker.html
+python3 tools/render_show.py [--recording] [--version v2]
+
+# Loop part of the synced show live in the emulator, with its music (audio seconds; run from a folder whose emulator_config.json sets the port)
+python3 tools/loop_show.py 0 98 [--rows 64] [--sound] [--version v1]
+
+# Lip-sync a singing show character (demucs in its own venv: install lines atop the tool)
+python3 tools/lip_sync.py genie 525 565 --model htdemucs --close 549.82 --mute 542.6-545.0 --mute 553.7-559.7   # --close: an m inside a held note; --mute FROM-TO: someone else sings (the backup singers, per the lyric sheet)
+python3 tools/lip_sync.py merida 268 276.3 --model htdemucs
+python3 tools/lip_sync.py mufasa 849 889 --close 869.97 --close 871.70 --close 877.88 --close 882.3 --close 882.75 --from-mix 881.95-883.4   # --from-mix: his echoing last "Remember"
 ```
+
+- **Python:** 3.11 is the target everywhere (`.python-version`, pyproject's `requires-python`, CI) because it's Raspberry Pi OS Bookworm's. CI also runs 3.13, the next OS's (Trixie). When the boards move, raise all three together.
+- **Requirements:** edit `requirements.txt` (what the boards need) and pyproject.toml's `dependencies` by hand and keep them in sync; test tools go in `requirements-dev.txt`. Don't run pipreqs: it rewrites requirements.txt from imports and drops the caps and comments.
 
 ## Architecture
 
-The application is a continuous display loop that fetches Disney World attraction wait times and renders them on an RGB LED matrix. Two threads run concurrently:
+A continuous display loop that fetches Disney World wait times and renders them on an RGB LED matrix (64x32 and 64x64 boards). Two or three threads:
 
-- **Main thread** (`disney.py`): Drives the display loop — renders Mickey logo → optional trip countdown → park title screen → attraction wait times, cycling indefinitely.
-- **Background thread** (`updater/data_updater.py:live_data_updater`): Fetches updated live wait times every 5 minutes and updates the shared `parks_data` list in-place.
+- **Main thread** (`disney.py`): castle fireworks intro (`display/fireworks/fireworks.py`) → optional trip countdown → per operating park: landmark → park title → ride screens, forever. `play_fireworks_show_if_due` cuts in before any screen with the castle fireworks for `FIREWORKS_SHOW_S` after tonight's show starts (`utils/special_events.py:fireworks_show()`, live showtimes via `parks/live.py:show_start_due`), once per performance.
+- **REST thread** (`updater/data_updater.py:live_data_updater`): every 5 min, updates the shared `parks_data` in place, refreshes weather, rechecks operating status and does deferred schedule fetches. Always runs, as the backstop for WS-sourced status. With the preview protocol it skips the startup fetch if the WS snapshot comes within `LIVE_FEED_STARTUP_WAIT_SECS` (15), then polls live data only when `rest_poll_due`: the feed is unhealthy (`updater/shared.py:live_feed_healthy`) or 30 min have passed.
+- **WebSocket thread** (`updater/websocket_updater.py`, running `ws_legacy.py` or `ws_preview.py` per `websocket.protocol`; shared parts in `ws_common.py`): only with `websocket.enabled` (default true) and a real `api_key` (`utils/config.py:websocket_settings`; placeholders don't count; an old top-level `themeparks_api_key` is still read, since the installer doesn't migrate configs). Keyless, the server closes with 3000 "Authentication timeout". Host: `wss://api.themeparks.wiki/v1/live` only. Each destination is subscribed once per `WS_ENTITY_TYPES` (`ATTRACTION`, `SHOW`): `entityTypeFilter` takes one type, and unfiltered, restaurants were two thirds of the traffic. A key gets 15 subscriptions.
 
 ### Data flow
 
-1. `api/disney_api.py:fetch_list_of_disney_world_parks()` — fetches the 4 WDW theme parks (excluding water parks) from the ThemeParks Wiki API.
-2. `api/disney_api.py:fetch_parks_and_attractions()` — fetches each park's attraction list; initial wait times are empty placeholders.
-3. Background thread calls `fetch_live_data()` (async, via `aiohttp`) to concurrently fetch live wait times for all attractions, then `merge_live_data()` merges them into the shared list.
-4. `api/weather.py` provides weather data per park, fetched via OpenWeatherMap (requires API key in `config.json`).
+1. `api/disney_api.py` fetches and parses; decisions over the data live in `parks/`. `fetch_list_of_disney_world_parks()` (4 theme parks, no water parks) → `fetch_parks_and_attractions()` → one `fetch_park_live_data()` per park (`/entity/{parkId}/live`; never one call per attraction) → `build_live_updates()`/`parse_queue_wait()` → `updater/data_updater.py:merge_live_data()`.
+2. **Operating** (`parks/operating.py`): `update_parks_operating_status()` sets `operating` and `operatingReason` from `operating_and_why()`, logging only on open/close. With a usable schedule, it alone decides: open from the day's first opening (Early Entry included) to `actual_park_closing_time()` (the latest close of the day's entries, so a party's; stored as `actualParkClosingTime`), whatever the rides say, since shows report OPERATING forever. The day in progress is the latest `date` that has opened, so a 1am party end is still the previous day's. `closingTime` is the regular hours, for display. With no usable schedule (or one `_SCHEDULE_TRUST_HOURS` past its close with no next opening), a park is open while a ride is `OPERATING` with a wait and a `lastUpdatedTs` within `_ATTRACTION_FRESHNESS_MINUTES` (20). The main loop skips closed parks.
+3. **Schedules:** `schedule_refresh_needed` is set on a closed→open transition and by a daily refresh from 3am park-local time (`park["timezone"]`), retried every 30 min until the day's schedule appears, giving up at 9am. The WS thread always passes `fetch_schedules=False` (never block the event loop); the REST thread does the fetch, through `api/disney_api.py:handle_park_schedule_update`.
+4. **Special events** (`utils/special_events.py`): the API only says "Special Ticketed Event", so each `SPECIAL_EVENTS` entry is matched by a string in the park's entity names. Order is match priority (generic `after_hours` stays last). An entry can set the park screen's star colour, a landmark, and its own fireworks show and theme. Whether a party is on is decided at draw time by `special_event_now()`. Add a party by adding one entry.
+5. **Weather** (`api/weather.py`, OpenWeatherMap via pyowm): `fetch_weather_data` never raises. It caches, retries, pauses all parks on an outage, rechecks a rejected key (immediately if `config.json`'s key changes), and serves the last good reading until it's an hour old. pyowm puts the key in the URL, so log its errors through `_redact`.
+
+### Shared state: rules
+
+- Mutations of `parks_data` (WS and REST threads) hold `updater/shared.py:parks_data_lock`, but only for in-memory writes, never across HTTP calls.
+- `merge_live_data` mutates attraction dicts in place and returns the same list. Don't rebuild the list: that drops concurrent WS updates.
+- The display thread reads without locking, by design. `loop_through_attractions` snapshots each ride dict before animating it.
+
+### Preview protocol (`websocket.protocol: "preview"`)
+
+In `updater/ws_preview.py`. `_PreviewFeed.handle()` takes one frame and returns the replies as `(delay_s, frame)`; `_preview_ws_loop` does the I/O. Spec and live-probe results: themeparks.wiki/api/websockets.
+- Subscribes on the `welcome` frame (which carries the key's `limits`): one per destination per `WS_ENTITY_TYPES`, or one unfiltered per destination if `maxSubscriptions` is too low. `snapshot` and `update` data are REST `/live` elements, merged through `build_live_updates` + `merge_live_data` like a REST poll, so `lastUpdatedTs` is the ride's real change time.
+- **Resume:** the cursor of every applied `snapshot`, `update`, `resumed` and `ping` frame is kept in memory; a reconnect subscribes with `since: cursor` and the server replays what was missed (or sends a fresh snapshot past its window). A restart starts from a snapshot. A retryable refusal is re-sent after `_SUBSCRIBE_RETRY_SECS`; "Resume incomplete" re-subscribes that channel with a snapshot.
+- `merge_live_data` skips an update older than the ride's `lastUpdatedTs` (replays, late REST polls); it applies anything it can't compare.
+- Dead connection: `ws_receive=90` (the server pings idle connections every ~30s; we reply `pong`). The watchdog counts only `update` frames. Close codes in `_REFUSED_CLOSE_CODES` (4029 connection cap, 3000 bad key) wait `_REFUSED_RETRY_SECS` (10 min); other reconnects use `_next_delay` with jitter.
+- The account has 2 connections for 3 boards, and an emulator run takes one too.
+
+### WebSocket resilience
+
+Layered defenses in `updater/ws_legacy.py` (which asks for the `legacy` subprotocol to keep its `{"event": ...}` frames), with the watchdog and backoff in `ws_common.py`; each fixed a real incident:
+- `ws_connect(..., heartbeat=30, timeout=ClientWSTimeout(ws_receive=120, ws_close=10))` forces a reconnect on a dead socket within ~2 min. The float `receive_timeout=` is deprecated in aiohttp 3.14; give `ws_close` explicitly, or the 10s close default is dropped.
+- `_watchdog` force-reconnects if no messages arrive for 5 min while any park is operating (alive at the protocol level but not streaming).
+- Backoff (`_next_delay`) resets to 5s only after a connection stays up 60s; otherwise it doubles to 60s, so a connect-then-die loop can't hammer the server.
+- Each ride's `updateSource` is `"rest"` or `"websocket"`: whichever path wrote it last (`build_live_updates` / `_apply_live_update`'s `livedata` branch); the "Displaying ride" log shows it.
+- WS messages carry no `lastUpdated` (REST's do), so `lastUpdatedTs` is the receive time and `down_since` the receive time of the first DOWN message. The REST poll writes the real `lastUpdated` back every 5 min.
 
 ### Display layer
 
-All rendering lives under `display/`. Fonts are loaded once at startup by `display/display.py:initialize_fonts()` into the module-level `loaded_fonts` dict, keyed by board height (32 or 64). Each sub-module (`park/park_details.py`, `attractions/attraction_info.py`, `countdown/countdown.py`, `startup.py`) imports from that shared dict. Font sizes and paths differ between 64-row and 32-row boards.
+- **Fonts:** loaded once by `display/display.py:initialize_fonts()` into `loaded_fonts`, keyed by board height (32 or 64); sizes and paths differ per board.
+- **Shared helpers:** `display/motion.py` (`ease_out`, `smooth`, `progress`, `ramp`) and `display/pixels.py` (`put`/`set_pixel` with bounds check, `paint`, `blend`, `art_pixels`, `rotate_art`, `noise`). Use these before writing another copy.
+- **Screens:** every screen after the intro plays through `display/animation/player.py:show_screen(matrix, draw, hold_s, transition)`. It sweeps the old screen away, reveals the new one with the transition, then calls `draw(canvas, t)` each frame until it returns False.
+- **Transitions** (`display/animation/`): `mechanics.py` has the kinds (`Wipe`, `FlyByReveal`, `PeekReveal`, `CapturesScreens`), `player.py` the playback, `characters/` one file per character (its class docstring says what it does), registered in `TRANSITIONS`. Who appears where is in `disney.py`: `PARK_REVEALS`, `SURPRISES` (ride screens, under 13% in all, held by a test) and `RIDE_VISITORS` (own rides only). A reveal longer than its screen sets `hold_after_s`; `run_frames`' `play_s` plays it in full even on a slow board (scenes step by frame, so they run in slow motion). `animation.X` re-exports everything. `config.json`'s `force_surprise` plays one on every ride screen, for checking on a board.
+- **Characters:** read `display/CHARACTERS.md` before adding or reworking one; planned work is in `ROADMAP.md`. Add one with a file under `characters/` and a line in `TRANSITIONS`. `tools/sprite_editor.html` edits every sprite and palette (and landmark art a module lists in `EDITOR_SPRITES`) and turns pattern charts and bead photos into pixels (detection is pure JS in its `core` script, tested under Node); a sprite drawn at a fixed size on both boards declares `SCALE` or `<NAME>_SCALE` so the editor previews it right.
+- **References** (`docs/references/`): every image needs a README row (one per character on a sheet), held by `tests/tools/test_analyze_reference.py`. `tools/analyze_reference.py` drafts it with the editor's Pattern-mode core under Node; the SessionStart hook in `.claude/settings.json` (checked in; personal permissions go in the ignored `settings.local.json`) lists images with no row.
+- **Landmarks** (`display/landmarks/`, one file each, `Landmark` base in `scene.py`): play before each park title for their `SCREEN_S`, matched loosely on the park name by `landmark_for()`; a party can swap in its own (`active_party()`), and a date can too (`utils/special_events.py` `DATED_LANDMARKS`, by the park's local date: race days the park data never names; it wins over a party; an entry listing several picks one at random each showing). `PLAYS_UNDER_WIPE` landmarks keep animating while the wipe uncovers them.
+- **Ride screen** (`display/attractions/attraction_info.py`): long names scroll; the wait drops into spare rows (`wait_drop`); DOWN rides pulse red with a full bar. It draws 2px word spaces (`SPACE_PX`): wrap, measure and draw text through `wrap_text`/`get_text_width`/`draw_text` with `space_px` so all three agree.
+- **Network badge:** `present()` stamps a red "!" (`display/network.py`) while `updater/shared.py:network_issues()` is set, driven by `note_network_result()`. Tests reset the flag in the root `conftest.py`.
+- **Wi-Fi setup screen:** `board-setup.sh`'s `setup_wifi_hotspot` installs comitup on every board (`LLL-install.sh` calls it as `--wifi-setup-only`; `-w` skips it): with no known Wi-Fi in range, it opens an open `<hostname>-setup` hotspot with a page that puts the board on a network. Its callback writes `<STATE> <hotspot>` to `/run/comitup-state`. While that says `HOTSPOT`, `disney.py:show_wifi_setup_while_needed` holds the text screen (`display/wifi_setup.py`), before the park fetch at start-up and at the top of each cycle. comitup only tries saved networks with `mode=infrastructure` (the script adds a missing mode); a hotspot that comes up by mistake also cuts off SSH.
+- **Settings page** (`settings_page/`, ROADMAP #15): `python -m settings_page.server` (board-setup.sh's `lll-settings.service`, port 8080, root, its own process so a bad config can be fixed). `form.py` is the config ⇄ form logic (only shown keys change; matrix checked by `cli.matrix_problem`; the Panel card holds the Pi model (`pi_model`), the Panel size (matrix rows/cols) and `page.PANEL_SETTINGS`, each blank one naming the model's default from `form.panel_choices`, the rest under Advanced), `park_names.py` the park picker's list (ThemeParks.wiki `/v1/destinations`, refetched in the background once a day into `park_names.json` beside config.json, so the hotspot has it offline; named by `parks/names.py`, the app's own rules; a name not on it is refused on save, and with no list yet names go unchecked), `page.py` the HTML, `pins.py` the PIN gate (sessions, and Sign out ending one), `pushover.py` the optional "Send the PIN to my phone" (ROADMAP #16: with `config.json`'s `pushover` keys, `utils/config.py:pushover_keys`; one send per `SEND_EVERY_S` whoever presses it, failed sends included; the PIN is never logged), `server.py` stdlib HTTP. No PIN for a browser in `HOTSPOT_NETWORK` while comitup is in HOTSPOT; otherwise the PIN goes to `/run/lll-settings-pin`, which `present()` draws (`display/settings_pin.py`), and `run_frames` rechecks it every `PIN_CHECK_S` during a static hold. Save: validate, `.bak`, atomic write with the old owner/mode, `systemctl try-restart`. Its tests name the file `board-config.json`: the stub conftest fakes every `config.json` read.
+- **Sound badges:** `present()` also stamps one bottom-left (`display/sound_badges.py`) while sound is enabled and `utils/sound.py:current_problem()` finds one, a 9x9 red square like the network one: a white note and X when a show has no clip in `sounds/`, a white speaker and X when there's no player or no ALSA card for `sound.device` (`/proc/asound/cards`; that one wins). Always on, quiet hours too, so it's fixed before the show. `main()` calls `watch()` with every `known_shows()`; the check reruns at most once a minute and logs only changes.
+
+Display rules:
+- A transition that takes the old screen (`wants_prev`) must paint every pixel of it, black included: `show_screen` has already drawn the new screen underneath, and it bleeds through otherwise. Add each new one to `test_new_screen_never_shows_through_the_old_screens_dark_pixels`.
+- Screens draw onto an offscreen canvas and are redrawn every frame, so they must be cheap and side-effect free: no per-draw INFO logs or uncached HTTP.
+- All drawing shares one canvas per matrix via `frame_canvas()`/`present()`, because rgbmatrix never frees canvases from `CreateFrameCanvas`.
+- Call `forget_screen()` after anything that bypasses `show_screen`, so the next sweep doesn't redraw a stale screen.
+- `over_screen` transitions play over a finished screen and let it keep animating underneath.
+- Fireworks: the castle is `_CASTLE_ART`, doubled on 64-row boards; `_BIG_CASTLE_ROW_PATCH` adjusts only the doubled one.
+- Synced shows: a show with a score in `display/fireworks/shows/<clip_name>.json` plays whole, in time with its music, through `display/fireworks/music_show.py` (its own copy of the fireworks simulation, so the everyday ones don't change; `score.py` reads the file). Scene looks are one class each in `show_effects.py`, turned on by name in a scene's `effects`; add one there and in `EFFECTS`. A single firework at a set moment (a rooftop fan, one shell, one comet) is a scene's `hits` (`score.Hit`), not an effect. A look change mid-scene is its `castle_changes` (show seconds); a V2 stage change mid-scene is the overlay's `stage_changes` (seconds into the scene). What the real show does (timeline, colours, where ours is off) is in `docs/shows/<clip_name>/README.md`; start there for improvements. To study the real show further, `docs/shows/happily-ever-after/WATCH.md` has a `/watch` section per scene: "watch scene 4.3" means `bash docs/shows/happily-ever-after/watch-scenes.sh 4.3` (it builds the question, runs the skill on that scene's video window, and saves the answer under it, newest first). It follows the clock, not frames, so a slow board stays with the music. `render_music_show` logs each scene's fps, where the slowest frame's time went (build/push), late frames, pixel count, show-thread vs process CPU and the board's load/temperature/clock/throttle flags (`utils/system_stats.py`): `journalctl -u LightningLane-Live-LED.service | grep log_scene` after a run says why a scene dipped. To check a change against the real show, re-run `tools/render_show.py` and open `tools/show_sync_checker.html` (recording and render side by side, scene marks to paste back).
+- Show versions: V2 (a `config.json` `shows` entry's `version`) is an overlay, `shows/<clip_name>.v2.json`, adding a `stage` (`castle`/`ghost`/`off`: the castle dims or goes) and `actors` to V1 scenes by title (`effects` replaces a scene's, when an actor redraws one); a bad or missing overlay plays V1. Characters are one class each in `show_actors.py` (registered in `ACTORS`), placed by the clock; one who sings reads its mouth track (`score.Lips`, from `<clip_name>.v2.lips.json`, made by `tools/lip_sync.py` from demucs-split vocals; a bad file only stills the mouths). Plan and progress: `docs/shows/happily-ever-after/V2-PLAN.md`. Render with `--version v2` and open the checker with `?show=<clip_name>.v2`; serve it over http with Range support (`npx http-server`), or the videos won't seek.
 
 ### Driver abstraction
 
-`driver/` wraps both `rgbmatrix` (real hardware, Raspberry Pi only) and `RGBMatrixEmulator` (software). The `driver/__init__.py` auto-selects based on whether hardware is available. `driver/mode.py` defines the `DriverMode` enum. Use `driver.is_emulated()` to branch on hardware vs. emulator.
+`driver/` wraps `rgbmatrix` (Pi only) and `RGBMatrixEmulator`: hardware by default (the emulator under tests, or if rgbmatrix won't import). Branch on `driver.is_emulated()`. Importing it never reads the command line: `disney.main()` parses `cli.py:arguments()` once: the Pi model's defaults (`MODEL_DEFAULTS`; `model_defaults()` takes the model from `config.json`'s `pi_model`, else `/proc/device-tree/model`; an unknown Pi still gets the bonnet's mapping; no Pi 5: rpi-rgb-led-matrix can't drive it), overridden by `config.json`'s `matrix` (each board's own size, rotation and overrides, from the settings page; `utils/migrate_boards.py`, run by `LLL-install.sh`, moved the old boards.json entries there once), overridden by the command line (flag names with underscores; bad flags, settings and `--led-rows` other than 32/64 exit); `describe()` logs the result and each setting's source, calls `driver.set_mode(...)` for `--emulated`, then builds the matrix. `driver.graphics` resolves on the current driver at each use; take `RGBMatrix` etc. as `driver.X` after the switch. `import rgbmatrix` doesn't load its `graphics` submodule (the emulator's does), so `set_mode` imports it by name; tests can't catch this, check driver changes on a board before merging.
 
 ### Configuration
 
-`config.json` (gitignored; copy from `config.json-example`) controls:
-- `trip_countdown.enabled` — show/hide countdown
-- `trip_countdown.trip_dates` — list of ISO date strings (`YYYY-MM-DD`); supports multiple trips
-- `trip_countdown.trip_date` — legacy single-date fallback
-- `weather.apikey` — OpenWeatherMap API key
-- `debug` — enables verbose logging
+`config.json` (gitignored; copy `config.json-example`), read through `utils/config.py`: `trip_countdown` (`trip_dates` as ISO dates or `{"start", "end", "name"}`; `utils/trips.py:active_trip()` picks one), `weather.apikey`, `websocket` (`enabled`, `api_key`, `protocol`: `"legacy"`/`"preview"`), `pi_model` (`"auto"` or a key of `cli.MODEL_DEFAULTS`), `matrix` (this board's own panel settings over its Pi model's, see Driver), `sound` (`enabled`, `device`, `volume`, `quiet_hours`; played by `utils/sound.py:playing()` from the gitignored `sounds/`, during the fireworks show; `volume`, default 80 since a USB speaker near full under-volts a Pi, is set with amixer before each clip, reread from config.json each time, so the settings page sets it live and skips the restart when it's the only change; its Volume slider's Set volume and Play test sound buttons post to `/volume`, which saves only the volume or plays `play_test`'s few seconds of `sounds/fireworks.wav`, else a chime, saving nothing), `shows` (a list of `{name, enabled, version, force}`; a show not listed is enabled and `"default"`: the five-minute castle fireworks, with only `sounds/fireworks.wav` for sound; `"v1"`/`"v2"` plays a scored show's whole synced version, with its own clip; `"force": true` plays it once at start-up whatever the schedule, for checking a show and its sound on a board; read by `utils/config.py:show_settings`/`forced_show_name`, applied in `disney.py:show_setting`; the old top-level `show_version` is gone and `force_show` is only a warned-about fallback), `pushover` (`enabled`, `user_key`, `app_token`: only the settings page's sign-in reads it), `force_surprise`, `debug`, `brightness_schedule` (Peloton-LED's shape, `{day, night, day_start, night_start}` or null; `utils/brightness.py`, set by `main()`; `player.py` sets each canvas's `brightness` as it hands it out, since rgbmatrix applies brightness per canvas as pixels are drawn).
 
 ### Testing
 
-Tests use `pytest`. The `tests/stubs/conftest.py` patches `builtins.open` to intercept `config.json` reads (returns a dummy config) and stubs out the `driver` module entirely so tests run without hardware or the `rgbmatrix` binary. Stub modules for `aiohttp`, `requests`, `pyowm`, and `pytz` live in `tests/stubs/`.
-
-The `operating` field on a park dict is set by `update_parks_operating_status()` — a park is considered operating only if at least one attraction has a non-null wait time and `OPERATING` status. The main loop skips parks where `operating` is falsy. Its `fetch_schedules` flag controls whether a closed→open transition fetches the park schedule immediately (blocking HTTP) or only sets `schedule_refresh_needed`; the WebSocket thread always passes `fetch_schedules=False` (never block the asyncio event loop) and the REST thread services the flag on its next 5-minute cycle.
+- `tests/stubs/conftest.py` intercepts `config.json` reads with a dummy config and stubs the `driver` module, so tests run without hardware. Stubs for `aiohttp`, `requests` and `pyowm` live in `tests/stubs/` and mirror the real libraries' names and exceptions; check real-library behaviour separately when upgrading one.
+- App code logs through `utils/debug` (logger `disney-lll`), which pytest's `caplog` doesn't see: check a warning with `monkeypatch.setattr(module.debug, "warning", warnings.append)`. `tools/` scripts use plain `logging`, so `caplog` works there.
+- Animation tests mirror the package (`tests/display/animation/`, one file per module or character); shared fakes (`FakeCanvas`, `FakeMatrix`, …) in `support.py`; its `conftest.py` stubs `graphics` by patching `animation.drawing`. Landmark tests do the same in `tests/display/landmarks/`.
 
 ### Gotchas
 
-- The app must run from the repo root — font paths (`assets/fonts/...`) and `config.json`/`emulator_config.json` are resolved relative to the cwd.
+- Run the app from the repo root: fonts, `config.json` and `emulator_config.json` are resolved relative to the cwd.
 - The emulator's browser adapter binds port 8888 (`emulator_config.json`); a second instance fails with `[Errno 48] Address already in use`.
-- The ThemeParks.wiki WS server closes duplicate/rate-limited connections with close code 4029; `ws.close_code` is logged when the receive loop ends.
+- On a Pi, rgbmatrix's `graphics.DrawText`/`DrawLine` only accept rgbmatrix's own canvas, which can't be read back. Anything that needs a screen's pixels must go through `display/capture.py:capture_screen()`. The emulator accepts any canvas, so tests and previews won't catch a direct capture; this crashed a board once.
+- The ThemeParks.wiki WS server closes duplicate/rate-limited connections with close code 4029.
+- Every character transition logs its achieved fps; `journalctl -u LightningLane-Live-LED.service -f` shows a board's real speed.
+- `LLL-install.sh` installs with `pip install --upgrade --prefer-binary`. `--upgrade` keeps the boards current (plain `pip install -r` never moves a package that meets its floor). `--prefer-binary` matters on the 32-bit boards (`armhf`: PlutoPi, ZeroPi), whose piwheels builds lag PyPI; without it pip compiles a newer numpy on a Pi Zero, which takes hours or runs out of memory. The caps in `requirements.txt` keep upgrades compatible.
+- Pillow is capped `<12`: the boards' rgbmatrix `SetImage` reads `ImagingCore.unsafe_ptrs`, which Pillow 12 removed, so the first image drawn (the weather icon) crashes the service into a restart loop. The emulator and tests don't touch that path, so check on a real board before raising the cap.
 - macOS has no GNU `timeout`; use `perl -e 'alarm N; exec "python3", @ARGV' disney.py ...` for time-boxed runs.
+- `board-setup.sh` is tested in `--dry-run` by `tests/tools/test_board_setup.py`, under macOS's bash 3.2 as well as CI's: no associative arrays, `mapfile` or `${x,,}`; it reads system files through `$ROOT` (`BOARD_SETUP_ROOT`) and changes things only through `run`/`in_dir`/`write_file`, so a dry run touches nothing. Peloton-LED and MLB are other repos: it calls their installers and never copies their files, so re-read their installers when they change.

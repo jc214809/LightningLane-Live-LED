@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Show sync checker</title>
+<!--
+  The real show's recording beside our board's render of the synced fireworks show, on one clock.
+  Make the files first: python3 tools/render_show.py --recording (writes build/show_sync/, gitignored),
+  then open this page straight from disk. ?show=<clip name> picks another show (default happily-ever-after),
+  ?t=<seconds> opens at that moment, ?board=64x64 picks the board.
+  The board side is the real show code (display/fireworks/music_show.py) recorded ahead of time; this page
+  only plays it. Marks turn into scene start times to paste back.
+-->
+<style>
+:root {
+  --bg: #0d1126; --panel: #161c3b; --line: #2b3565; --ink: #f2f0fa; --muted: #9aa3c7;
+  --gold: #f2c14e; --rose: #e86a92; --good: #7bd389; --bad: #ff8a80; --stage: #000;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef0f8; --panel: #fff; --line: #d3d8ea; --ink: #141a38; --muted: #5a6388;
+    --gold: #9a6c00; --rose: #b8325f; --good: #2e7d32; --bad: #c62828; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef0f8; --panel: #fff; --line: #d3d8ea; --ink: #141a38; --muted: #5a6388;
+  --gold: #9a6c00; --rose: #b8325f; --good: #2e7d32; --bad: #c62828; color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1280px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 1.4rem; margin: 0 0 2px; }
+.sub { color: var(--muted); margin: 0 0 14px; }
+.stages { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stage { background: var(--stage); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; position: relative; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
+.stage video, .stage canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+.stage .label { position: absolute; left: 8px; top: 6px; font-size: .78rem; color: #cfd5f2; background: rgba(0,0,0,.55); padding: 1px 7px; border-radius: 6px; }
+.stage .empty { color: #cfd5f2; padding: 18px; text-align: center; font-size: .92rem; }
+.stage .empty code { color: var(--gold); }
+#ledSource { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.now { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 18px; align-items: center; margin: 14px 0 6px; }
+.clock { font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); line-height: 1; }
+.scene { font-size: 1.15rem; font-weight: 650; }
+.does { color: var(--muted); font-size: .9rem; }
+.next { color: var(--muted); font-size: .88rem; text-align: right; }
+.timeline { position: relative; height: 34px; border-radius: 8px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); cursor: pointer; margin: 8px 0 4px; }
+.timeline:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.seg { position: absolute; top: 0; bottom: 0; opacity: .55; }
+.tick { position: absolute; top: 0; width: 1px; height: 11px; background: rgba(255,255,255,.75); }
+.mark { position: absolute; bottom: 0; width: 3px; height: 15px; margin-left: -1px; background: var(--rose); }
+.head { position: absolute; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; background: #fff; box-shadow: 0 0 6px #fff; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+button, select { font: inherit; font-weight: 600; min-height: 40px; padding: 7px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+button:hover, select:hover { border-color: var(--gold); }
+button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.primary { background: var(--gold); color: #1a1405; border-color: var(--gold); min-width: 92px; }
+.markbtn { background: var(--rose); border-color: var(--rose); color: #fff; }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 4px; }
+.hint, .status { color: var(--muted); font-size: .86rem; }
+kbd { font: inherit; font-size: .82em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; }
+.cols { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; margin-top: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.panel h2 { font-size: 1rem; margin: 0 0 8px; }
+.scenes { max-height: 360px; overflow: auto; margin: 0; padding: 0; list-style: none; }
+.scenes li button { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 52px 1fr; gap: 8px; width: 100%; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
+.scenes li button:hover { background: rgba(127,127,127,.12); }
+.scenes li button:focus-visible { outline: 2px solid var(--gold); }
+.scenes li.on button { background: rgba(242,193,78,.16); }
+.scenes .t { font-variant-numeric: tabular-nums; color: var(--muted); }
+.scenes .sec { color: var(--muted); font-size: .8rem; }
+.scenes .cast { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 6px 4px 66px; }
+.scenes .cast button { all: unset; cursor: pointer; font-size: .78rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); }
+.scenes .cast button:hover { background: rgba(242,193,78,.16); }
+.scenes .cast button:focus-visible { outline: 2px solid var(--gold); }
+ol.marks { margin: 0; padding-left: 1.3em; max-height: 200px; overflow: auto; }
+.late { color: var(--bad); } .early { color: var(--good); }
+textarea { width: 100%; min-height: 150px; font: 13px/1.4 ui-monospace, Menlo, monospace; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.setup { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.setup code { color: var(--gold); }
+[hidden] { display: none !important; }
+@media (max-width: 860px) {
+  .stages, .cols { grid-template-columns: 1fr; }
+  .now { grid-template-columns: auto 1fr; }
+  .next { grid-column: 1 / -1; text-align: left; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Show sync checker</h1>
+  <p class="sub">The real show on the left, our board on the right, on one clock. When a scene changes in the real show, press <kbd>M</kbd>: marks become start times to send back.</p>
+
+  <div id="setup" class="setup" hidden>
+    <h2>Nothing to play yet</h2>
+    <p>Render the show first, from the repo root:</p>
+    <p><code>python3 tools/render_show.py --recording</code></p>
+    <p class="hint">It writes <code>build/show_sync/</code> (about a minute, plus the recording's download), then reload this page.</p>
+  </div>
+
+  <div id="app" hidden>
+    <div class="stages">
+      <div class="stage" id="recStage">
+        <span class="label">Real show (recording)</span>
+        <video id="rec" muted playsinline preload="auto"></video>
+        <div class="empty" id="recEmpty" hidden>No recording yet: <code>python3 tools/render_show.py --recording</code></div>
+      </div>
+      <div class="stage">
+        <span class="label" id="ledLabel">Our board</span>
+        <canvas id="led" aria-label="Our board's render of the show"></canvas>
+        <video id="ledSource" playsinline preload="auto"></video>
+      </div>
+    </div>
+
+    <div class="now">
+      <div class="clock" id="clock" aria-live="off">0:00.0</div>
+      <div>
+        <div class="scene" id="scene"></div>
+        <div class="does" id="does"></div>
+      </div>
+      <div class="next" id="next"></div>
+    </div>
+
+    <div class="timeline" id="timeline" tabindex="0" role="slider" aria-label="Show position" aria-valuemin="0"></div>
+
+    <div class="row">
+      <button class="primary" id="play">Play</button>
+      <button id="back5" title="Back 5 s (Shift+Left)">−5s</button>
+      <button id="back1" title="Back 1 s (Left)">−1s</button>
+      <button id="fwd1" title="Forward 1 s (Right)">+1s</button>
+      <button id="fwd5" title="Forward 5 s (Shift+Right)">+5s</button>
+      <span class="sep"></span>
+      <label class="hint" for="speed">Speed</label>
+      <select id="speed"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+      <span class="sep"></span>
+      <span class="hint">Board</span>
+      <span id="boards"></span>
+      <span class="sep"></span>
+      <button id="hear" aria-pressed="false" title="Hear the recording's sound instead of our music">Hear recording</button>
+      <span class="sep"></span>
+      <button class="markbtn" id="markbtn">Scene changed now <kbd>M</kbd></button>
+    </div>
+    <div class="row">
+      <span class="hint">Recording offset</span>
+      <button id="nudgeDown" title="Recording earlier by 0.05 s">−0.05</button>
+      <span class="hint" id="nudge">±0.00 s</span>
+      <button id="nudgeUp" title="Recording later by 0.05 s">+0.05</button>
+      <span class="hint">Measured by align_audio.py; nudge only if the two look off.</span>
+      <span class="status" id="status"></span>
+    </div>
+    <p class="hint"><kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> 1 s (<kbd>Shift</kbd> 5 s) · <kbd>M</kbd> mark · <kbd>[</kbd>/<kbd>]</kbd> slower/faster · click a scene to jump just before it, or one of our characters under it to jump to them</p>
+
+    <div class="cols">
+      <section class="panel">
+        <h2>Scenes</h2>
+        <ul class="scenes" id="scenes"></ul>
+      </section>
+      <section class="panel">
+        <h2>Marks</h2>
+        <p class="hint" id="noMarks">None yet. Each mark goes to the nearest scene start, so you see how far off the score is.</p>
+        <ol class="marks" id="marks"></ol>
+        <div class="row"><button id="undo">Remove last</button><button id="clear">Clear all</button></div>
+        <h2>To send back</h2>
+        <textarea id="out" readonly aria-label="Corrections to send back"></textarea>
+        <div class="row"><button class="primary" id="copy">Copy</button><span class="status" id="copied"></span></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+"use strict";
+const SHOW_NAME = new URLSearchParams(location.search).get("show") || "happily-ever-after";
+const DIR = "../build/show_sync/";
+const LED_SCREEN_PX = 10;   // each LED drawn in a 10 x 10 cell on the page
+const DOT = .42;            // dot radius, of a cell
+const OFF_RGB = "rgb(14,16,30)";  // an unlit LED
+const $ = id => document.getElementById(id);
+const fmt = (t, tenths) => {
+  const s = Math.max(0, t), m = Math.floor(s / 60), r = s - m * 60;
+  return m + ":" + (tenths ? r.toFixed(1).padStart(4, "0") : String(Math.floor(r)).padStart(2, "0"));
+};
+
+const script = document.createElement("script");
+script.src = DIR + SHOW_NAME + ".js";
+script.onload = () => start(window.SHOW_SYNC);
+script.onerror = () => { $("setup").hidden = false; };
+document.head.appendChild(script);
+
+function start(S) {
+  if (!S || !Object.keys(S.boards || {}).length) { $("setup").hidden = false; return; }
+  $("app").hidden = false;
+  const label = S.name + (S.version && S.version !== "v1" ? " " + S.version : "");
+  $("title").textContent = "Show sync checker: " + label;
+  document.title = "Sync: " + label;
+  const store = (k, v) => { try { v === undefined ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+  const KEY = "show-sync:" + S.name + ":";
+
+  const src = $("ledSource"), rec = $("rec"), canvas = $("led"), ctx = canvas.getContext("2d");
+  const R = S.recording;
+  let nudge = load(KEY + "nudge", 0), speed = 1, board = null, hearRec = false;
+  let marks = load(KEY + "marks", []);
+
+  // ---- the board: the rendered video, drawn as round LEDs ----
+  let base = null, mask = null, cols = 64, rows = 32;
+  function layers() {
+    const w = cols * LED_SCREEN_PX, h = rows * LED_SCREEN_PX, r = DOT * LED_SCREEN_PX;
+    canvas.width = w; canvas.height = h;
+    base = document.createElement("canvas"); base.width = w; base.height = h;
+    mask = document.createElement("canvas"); mask.width = w; mask.height = h;
+    const b = base.getContext("2d"), m = mask.getContext("2d");
+    b.fillStyle = "#000"; b.fillRect(0, 0, w, h); b.fillStyle = OFF_RGB;
+    m.fillStyle = "#000"; m.fillRect(0, 0, w, h); m.globalCompositeOperation = "destination-out";
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const cx = (x + .5) * LED_SCREEN_PX, cy = (y + .5) * LED_SCREEN_PX;
+      b.beginPath(); b.arc(cx, cy, r, 0, 7); b.fill();
+      m.beginPath(); m.arc(cx, cy, r, 0, 7); m.fill();
+    }
+  }
+  function drawBoard() {
+    ctx.globalCompositeOperation = "source-over";
+    ctx.drawImage(base, 0, 0);
+    if (src.readyState >= 2) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalCompositeOperation = "lighter";   // lit LEDs over the dim unlit ones
+      ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = "source-over";
+    }
+    ctx.drawImage(mask, 0, 0);
+  }
+  function setBoard(name) {
+    const t = src.currentTime || 0, wasPlaying = !src.paused;
+    board = name;
+    [cols, rows] = name.split("x").map(Number);
+    layers();
+    src.src = DIR + S.boards[name];
+    src.addEventListener("loadedmetadata", () => {
+      src.currentTime = t; src.playbackRate = speed; src.muted = hearRec;
+      if (wasPlaying) src.play();
+    }, { once: true });
+    document.querySelectorAll("#boards button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.board === name)));
+    $("ledLabel").textContent = "Our board, " + name + " (real render)";
+    store(KEY + "board", name);
+  }
+  const boardNames = Object.keys(S.boards).sort();
+  boardNames.forEach(name => {
+    const b = document.createElement("button"); b.textContent = name; b.dataset.board = name;
+    b.onclick = () => setBoard(name); $("boards").appendChild(b); $("boards").append(" ");
+  });
+
+  // ---- the recording follows the board's clock ----
+  const recTime = t => t * R.scale + R.offset + nudge;
+  if (R && R.file) {
+    rec.src = DIR + R.file;
+    rec.addEventListener("error", () => { rec.hidden = true; $("recEmpty").hidden = false; });
+  } else {
+    rec.hidden = true; $("recEmpty").hidden = false;
+  }
+  function follow() {
+    if (!R || rec.hidden || rec.readyState < 1) return;
+    const want = recTime(src.currentTime);
+    rec.playbackRate = speed * R.scale;
+    if (want >= rec.duration) { if (!rec.paused) rec.pause(); return; }
+    if (Math.abs(rec.currentTime - want) > .12) rec.currentTime = want;
+    if (src.paused !== rec.paused) src.paused ? rec.pause() : rec.play().catch(() => {});
+  }
+
+  // ---- transport ----
+  const now = () => src.currentTime || 0;
+  function seek(t) { src.currentTime = Math.min(Math.max(0, t), S.end); if (R && !rec.hidden && rec.readyState >= 1) rec.currentTime = recTime(src.currentTime); }
+  function togglePlay() {
+    if (src.paused) src.play().catch(() => $("status").textContent = "The browser blocked playback: press Play again.");
+    else src.pause();
+  }
+  src.addEventListener("play", () => $("play").textContent = "Pause");
+  src.addEventListener("pause", () => $("play").textContent = "Play");
+  $("play").onclick = togglePlay;
+  [["back5", -5], ["back1", -1], ["fwd1", 1], ["fwd5", 5]].forEach(([id, d]) => $(id).onclick = () => seek(now() + d));
+  function setSpeed(v) { speed = v; src.playbackRate = v; $("speed").value = String(v); }
+  $("speed").onchange = e => setSpeed(+e.target.value);
+  $("hear").onclick = () => {
+    hearRec = !hearRec; src.muted = hearRec; rec.muted = !hearRec;
+    $("hear").setAttribute("aria-pressed", String(hearRec));
+  };
+  function showNudge() { $("nudge").textContent = (nudge >= 0 ? "+" : "−") + Math.abs(nudge).toFixed(2) + " s"; store(KEY + "nudge", nudge); }
+  $("nudgeUp").onclick = () => { nudge = Math.round((nudge + .05) * 100) / 100; showNudge(); seek(now()); };
+  $("nudgeDown").onclick = () => { nudge = Math.round((nudge - .05) * 100) / 100; showNudge(); seek(now()); };
+  showNudge();
+
+  // ---- scenes, timeline ----
+  const scenes = S.scenes, sections = S.sections;
+  const sceneAt = t => scenes.find(s => t < s.end) || scenes[scenes.length - 1];
+  const tl = $("timeline");
+  tl.setAttribute("aria-valuemax", String(S.end));
+  sections.forEach(sec => {
+    const d = document.createElement("div"); d.className = "seg"; d.title = sec.id;
+    d.style.left = (sec.start / S.end * 100) + "%"; d.style.width = ((sec.end - sec.start) / S.end * 100) + "%";
+    d.style.background = `linear-gradient(90deg, ${sec.palette[0]}, ${sec.palette[1] || sec.palette[0]})`;
+    tl.appendChild(d);
+  });
+  scenes.forEach(s => { const k = document.createElement("div"); k.className = "tick"; k.style.left = (s.start / S.end * 100) + "%"; k.title = fmt(s.start) + " " + s.title; tl.appendChild(k); });
+  const head = document.createElement("div"); head.className = "head"; tl.appendChild(head);
+  tl.addEventListener("click", e => { const r = tl.getBoundingClientRect(); seek((e.clientX - r.left) / r.width * S.end); });
+
+  const list = $("scenes");
+  scenes.forEach((s, i) => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.innerHTML = `<span class="t">${fmt(s.start)}</span><span>${s.title}<br><span class="sec">${s.section}${s.characters.length ? " · " + s.characters.join(", ") : ""}</span></span>`;
+    b.onclick = () => seek(s.start - 2);
+    li.appendChild(b);
+    if ((s.cast || []).length) {
+      // Our characters in this scene: each jumps to a second before it first shows.
+      const row = document.createElement("div"); row.className = "cast";
+      s.cast.forEach(c => {
+        const cb = document.createElement("button");
+        cb.textContent = c.name + " " + fmt(c.start);
+        cb.title = "Jump to " + c.name;
+        cb.onclick = () => seek(c.start - 1);
+        row.appendChild(cb);
+      });
+      li.appendChild(row);
+    }
+    list.appendChild(li);
+  });
+
+  // ---- marks ----
+  function nearest(t) { let best = scenes[0]; scenes.forEach(s => { if (Math.abs(s.start - t) < Math.abs(best.start - t)) best = s; }); return best; }
+  function addMark() { const t = Math.round(now() * 10) / 10, s = nearest(t); marks.push({ t, title: s.title, start: s.start }); store(KEY + "marks", marks); renderMarks(); }
+  function renderMarks() {
+    const ol = $("marks"); ol.innerHTML = "";
+    tl.querySelectorAll(".mark").forEach(m => m.remove());
+    $("noMarks").hidden = marks.length > 0;
+    const lines = [], fixes = {};
+    marks.forEach(m => {
+      const d = Math.round((m.t - m.start) * 10) / 10, sign = d > 0 ? "+" : "";
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>${m.title}</strong>: score ${fmt(m.start, true)}, marked ${fmt(m.t, true)} <span class="${d > 0 ? "late" : "early"}">(${sign}${d} s)</span>`;
+      ol.appendChild(li);
+      const mk = document.createElement("div"); mk.className = "mark"; mk.style.left = (m.t / S.end * 100) + "%"; tl.appendChild(mk);
+      lines.push(`- ${m.title}: score ${m.start} s, real show ${m.t} s (${sign}${d} s)`);
+      fixes[m.title] = m.t;
+    });
+    $("out").value = marks.length
+      ? `Sync marks for ${S.name} (audio seconds; marked by watching the recording):\n${lines.join("\n")}\n\nNew scene starts: ${JSON.stringify(fixes)}` : "";
+  }
+  $("markbtn").onclick = addMark;
+  $("undo").onclick = () => { marks.pop(); store(KEY + "marks", marks); renderMarks(); };
+  $("clear").onclick = () => { if (!marks.length || confirm("Clear all marks?")) { marks = []; store(KEY + "marks", marks); renderMarks(); } };
+  $("copy").onclick = async () => {
+    try { await navigator.clipboard.writeText($("out").value); $("copied").textContent = "Copied."; }
+    catch (e) { $("out").select(); $("copied").textContent = "Selected: press Cmd+C or Ctrl+C."; }
+  };
+  renderMarks();
+
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT" || e.metaKey || e.ctrlKey) return;
+    const step = e.shiftKey ? 5 : 1;
+    if (e.code === "Space") { e.preventDefault(); togglePlay(); }
+    else if (e.key === "m" || e.key === "M") addMark();
+    else if (e.key === "ArrowLeft") { e.preventDefault(); seek(now() - step); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); seek(now() + step); }
+    else if (e.key === "[") setSpeed(Math.max(.5, [.5, .75, 1, 1.5, 2][Math.max(0, [.5, .75, 1, 1.5, 2].indexOf(speed) - 1)]));
+    else if (e.key === "]") setSpeed([.5, .75, 1, 1.5, 2][Math.min(4, [.5, .75, 1, 1.5, 2].indexOf(speed) + 1)]);
+  });
+
+  // ---- every frame ----
+  let shown = null;
+  function frame() {
+    const t = now(), s = sceneAt(t);
+    drawBoard(); follow();
+    $("clock").textContent = fmt(t, true);
+    head.style.left = (Math.min(t, S.end) / S.end * 100) + "%";
+    tl.setAttribute("aria-valuenow", String(Math.round(t)));
+    const nx = scenes.find(x => x.start > t);
+    $("next").innerHTML = nx ? `next in ${Math.ceil(nx.start - t)} s<br><strong>${nx.title}</strong>` : "last scene";
+    if (s !== shown) {
+      shown = s;
+      $("scene").textContent = s.title;
+      const bits = [s.section, "castle: " + (s.castle || "everyday"), s.rate ? "fireworks " + s.rate + "×" : "no fireworks"];
+      if (s.effects.length) bits.push(s.effects.join(", "));
+      if (s.stage && s.stage !== "castle") bits.push("castle " + s.stage);
+      if (s.actors && s.actors.length) bits.push("ours: " + s.actors.join(", "));
+      if (s.characters.length) bits.push("real show: " + s.characters.join(", "));
+      $("does").textContent = bits.join(" · ");
+      list.querySelectorAll("li").forEach((li, i) => li.classList.toggle("on", scenes[i] === s));
+    }
+    requestAnimationFrame(frame);
+  }
+  const saved = load(KEY + "board", boardNames[0]);
+  setBoard(new URLSearchParams(location.search).get("board") in S.boards ? new URLSearchParams(location.search).get("board")
+           : saved in S.boards ? saved : boardNames[0]);
+  const startAt = parseFloat(new URLSearchParams(location.search).get("t"));
+  if (startAt > 0) src.addEventListener("loadedmetadata", () => seek(startAt), { once: true });
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>

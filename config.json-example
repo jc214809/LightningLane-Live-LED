@@ -1,16 +1,59 @@
 {
   "parks": ["Magic Kingdom", "EPCOT", "Hollywood Studios", "Animal Kingdom"],
-  "themeparks_api_key": "89e4add6-30cd-4960-83a7-eb7882a1649a",
+  "websocket": {
+    "enabled": true,
+    "api_key": "<THEMEPARKS_API_KEY_HERE>",
+    "protocol": "legacy"
+  },
   "trip_countdown": {
     "enabled": true,
     "trip_dates": [
-      "2025-06-25",
-      "2025-12-01"
+      {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"},
+      "2027-06-01"
     ]
+  },
+  "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {"start": "22:00", "end": "08:00"}
   },
   "weather": {
     "apikey": "<API_KEY_HERE>"
   },
-  "websocket_only": false,
+  "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+  },
+  "pi_model": "auto",
+  "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+  },
+  "brightness_schedule": null,
+  "shows": [
+    {"name": "Happily Ever After", "enabled": true, "version": "default"}
+  ],
+  "force_surprise": "",
   "debug": false
 }

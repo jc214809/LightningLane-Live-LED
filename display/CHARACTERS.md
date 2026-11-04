@@ -1,0 +1,786 @@
+# Drawing characters for the LED board
+
+Notes from building the characters in `display/animation/` (one file per character under
+`characters/`). Most of these were learned the hard way — by rendering something, looking at it, and finding it
+unrecognizable. Read this before adding a character. What each one does on screen is in its
+class's docstring.
+
+## The one rule that matters most: render it and look at it
+
+Every character in this file took 3-6 rounds of *draw it, render it to a PNG, actually
+look at the image, fix what's wrong*. Not one of them was right on the first try, and
+the failures were never subtle — they were "this is a purple blob" or "his eyes look
+like holes punched through his head". You cannot tell from reading the ASCII art
+whether it will read as the character. You have to look.
+
+The harness is small. Capture pixels with a stand-in canvas, draw each one as a
+circle with PIL at ~10px per LED, tile a few timesteps into one sheet, and open it:
+
+```python
+class C:
+    def __init__(s, w, h): s.width, s.height, s.px = w, h, {}
+    def SetPixel(s, x, y, r, g, b): s.px[(int(x), int(y))] = (r, g, b)
+    def Clear(s): s.px = {}
+```
+
+Always put a non-black stand-in "screen" behind the character too, or you won't notice
+that your reveal is punching holes in the background (see *Blending*, below).
+
+## Size
+
+**Bigger than feels right.** Figment was first drawn at 8x6 and read as a purple blob
+with two orange stubs. Redrawn at 25x20 — about ten times the pixels — he reads as a
+dragon with horns, a wing and a muzzle. Nothing else changed. If a character isn't
+recognizable, the first question is whether it's simply too small.
+
+Rough sizes that work, in sprite cells before scaling:
+- 20-25 wide x 20-25 tall for a full character (Stitch, Figment, Ralph, Genie).
+- Faces and heads can go bigger; a head-only close-up reads better than a tiny
+  full body.
+
+**But watch the 2x scale.** Sprites double on 64-row boards (`scale = 2 if height >= 64`).
+A 25-cell-wide sprite is 50 of 64 columns there, which leaves almost nothing for
+anything else. Slinky Dog's spring nearly vanished at 2x for exactly this reason.
+Check both board sizes every time; they fail differently.
+
+**If a character's motion needs the board's width, keep him 1x rather than bending
+his path.** Slinky is two sprites with a spring between them. Doubled on 64x64 the
+halves ate 54 of 64 columns and the spring — his best feature — had nowhere to go.
+Earlier versions tried to buy room with the path instead: walking the bottom edge and
+turning up the right side, then running corner to corner on the diagonal. Both lost
+the one pose that sells him. The Slinky that landed stays 1x on both boards
+(`SCALE = 1`) and stretches straight across a single ground line, rear on the left
+edge and nose on the right. Genie's lamp is 1x for the same reason; declare a fixed
+size with a `SCALE` or `<NAME>_SCALE` attribute so the sprite editor previews it right.
+
+The diagonal also forced both sprites to rotate, and a tilted dog reads as two
+separate animals joined by a spring rather than one dog stretching. **Keep characters
+upright on a ground line.**
+
+## Reading at low resolution
+
+**Silhouette first.** If the outline doesn't say who it is, no amount of interior
+detail will save it. Ears, horns, a hat, a snout — the shape that sticks out is what
+identifies the character.
+
+**Outline everything.** A dark character on a dark board disappears. Every sprite here
+uses a `K` outline color around the body. Sorcerer Mickey's ears were invisible as
+true black; lifting them to charcoal `(74, 72, 88)` fixed it.
+
+**Faces want three-quarter view, not profile.** Slinky's head was drawn in profile
+first and the face collapsed into a dark mass with one dot on it — in profile a dog is
+mostly skull and ear, and the features that identify him are edge-on. Turned toward
+the viewer, the parts separate: cap on top, ear down one side, and a broad muzzle out
+front carrying both eyes and the mouth. Nearly every character here reads better
+facing you.
+
+**Eyes are the hardest part, and the most important.** Five separate failures:
+- White rectangles with tiny pupils → looks startled and cartoonishly wrong.
+- Near-black pupils on a mid-tone face → the eye vanishes into the fur.
+- Dark eyes on a dark background → the eye sockets read as holes punched through
+  the head.
+- Eyes up on the skull rather than beside the muzzle → they read as sitting on top
+  of the face instead of in it.
+- Eyes flush against the body outline → they merge into the border and the face
+  reads as blank. Inset them so they sit surrounded by the face color.
+
+**A feature must differ from what it sits ON and from what it sits NEXT TO.** Slinky's
+nose was drawn at `(28,24,24)` beside an outline at `(35,22,14)`: correctly placed,
+strongly contrasting with the muzzle, and completely invisible, because it touched a
+border it matched. The eyes were then lost the same way. Check both distances.
+
+What works: make the eye a distinct mid-dark tone that differs from *both* the face
+and the background, ring it with the outline color so it's clearly a separate shape,
+and add a small bright glint. Keep a gap between the two eyes so they never merge
+into a bar.
+
+**Colors need to differ from their neighbours, not just be "correct".** Accuracy to
+the character matters less than separation on the board. Nudge a color until the shape
+beside it is legible.
+
+## Movement
+
+**One motion, motivated by the character.** Each character has one signature motion
+and everything else follows from it. Dumbo's ear flap drives his bob — he lifts on the
+upstroke. Baymax's inflation drives his squash, his overshoot and his settle. Slinky's
+head-lead drives both the stretch and the reveal front.
+
+**Pick the mechanic from the character, not the other way round.** Four exist:
+- *Fly-by* (`FlyByReveal`) — crosses the board, reveals in its wake, trails particles.
+- *Peek* (`PeekReveal`) — rises from the bottom edge over a visible screen. No blackout.
+- *Wreck* (`RalphReveal`, `wants_prev`) — destroys the outgoing screen's pixels.
+- *Assemble* (`MickeyReveal`, `wants_new`) — builds the incoming screen's pixels.
+
+Genie needed none of them — his lamp emerge has no flight path — so he's standalone.
+Don't force a character into a mechanic that fights it.
+
+**Procedural beats sprite art when something must scale smoothly.** Baymax inflates,
+and scaling fixed ASCII art moves in whole-pixel jumps that read as popping rather
+than filling with air. He's drawn as filled ellipses keyed off one inflation factor
+instead. Everything that holds a fixed size is easier as ASCII art.
+
+**Sell the physics with small extras.** Baymax is pinned to the bottom edge so he grows
+*upward*, and he's wide-and-flat when deflated, round when full. Those two details do
+more than the scaling itself.
+
+**Feet that move.** A character crossing the board with still feet glides, and it shows
+(Chip 'n' Dale did, at first). `drawing.walking_pixels` cuts the feet out of side-on art by
+row and column and steps them through `WALK_CYCLE` (apart, back foot up, passing, front foot
+up), a pixel at a time; bob the body a row while a foot is up for a run. It reads even at
+1px, and it works on all fours (Tigger's back and far front paws step together).
+
+**Side-on art stays side-on.** Turning Chip 'n' Dale's heads to face us, with front heads
+drawn to match their side ones, read as two other chipmunks, even after a redraw. A
+character drawn in profile should act in profile.
+
+**A new pose keeps the arm's real length.** For Chip 'n' Dale's rope swing, the first try
+lifted the back arm the full height of the sprite to a hand above the head, and left Dale's
+old back sleeve in place, so he had two arms; it read as wrong at a glance. What worked: the
+arm only as long as it was hanging down (about six rows from the shoulder), the hand beside
+the head at brim level, and everything of the old arm removed (sleeve and hand), the rest of
+the art untouched. Mock the pose on a board frame with its prop (the rope) before building.
+
+## Blending
+
+Particles and smoke must be drawn *additively* over what's already on the canvas.
+Genie's smoke used plain `SetPixel` at first and the puffs read as black holes eating
+the background. Soft, semi-transparent things need to let the screen show through.
+
+## Timing
+
+Give the eye time. Roughly:
+- 1.2-2.3s for a fly-by crossing.
+- 2-4s for anything with phases (rise, hold, act, leave).
+- Preview with the real hold: ride screens hold 8s on the board, and a character's time
+  comes out of that. A 4s preview hold made a 2.8s character look like it left the wait
+  time no time at all.
+- A board below 30 fps plays a scene in slow motion (`t` is the frame number over `FPS`). Luxo's
+  searchlight, the costliest frame, ran so long on a board that the 8s cut came while it was still
+  dark. A long or heavy scene sets `hold_after_s`, which also guarantees it plays in full.
+- Hold at the extremes. A pause at the top of Stitch's peek, or at Baymax's full
+  inflation, reads far better than constant motion.
+- Ease, don't move linearly. `ease_out` on entrances; a decaying overshoot for
+  anything springy.
+
+## Bounds
+
+A bigger sprite plus a bob will push a character off the board. Clamp the amplitude to
+the room the sprite actually leaves:
+
+```python
+room = max(0, self.height - self.sprite_h)
+amp = min(room / 2, self.height * 0.15)
+```
+
+Figment shipped without this and the tests caught it immediately. Always test that
+nothing draws off-board, at both sizes.
+
+## What to test
+
+The parametrized fly-by tests cover a lot for free — add the class to `FLYBYS`. Beyond
+that, worth asserting: it finishes within `duration`; it never draws outside the board
+on either size; the signature motion actually happens (measure it — the drawn span
+grows, the poses differ, the gap widens); art rows are uniform width and every
+non-`.` character has a color.
+
+Test the *motion*, not the pixels. Asserting on exact pixel positions makes the art
+impossible to iterate on.
+
+**Assert relationships in the art, not coordinates.** "The eyes sit surrounded by
+muzzle", "the mouth is below the eyes", "the tail rises above the body" survive a
+redraw; `art[6][3] == "P"` does not, and it will be the first thing you delete.
+
+**Pin the colors too.** Slinky's nose passed every layout assertion while being
+invisible, twice, because the tests only knew where things were, not whether you could
+see them. A cheap channel-distance check catches exactly the failure that renders look
+fine to a test and wrong to a person:
+
+```python
+def distance(a, b):
+    return sum(abs(x - y) for x, y in zip(colors[a], colors[b]))
+
+assert distance("P", "T") > 200   # eye against the muzzle it sits on
+```
+
+None of this replaces looking at it. It stops a feature you already fixed from
+silently going missing the next time you redraw the head — which happened here twice.
+
+## Scorecard
+
+What worked and what didn't, so we don't repeat it:
+
+- **Baymax** — the best of them. Procedural drawing, one clean inflation factor
+  driving everything, and a face of two dots and a line that's unmistakable at any
+  size. Simple shapes, well animated, beat detailed art.
+- **Genie** — strong. Big, and his emerge-from-the-lamp gives him a story beat the
+  others don't have. Redrawn cell for cell from `docs/references/genie.jpg`: he sits
+  on his lamp with his tail in its lid, and the smoke and his grow-in start from the
+  lid. The pattern is 39 rows, so it fits by dropping whole rows (`TRIM_32`,
+  `TRIM_64`), never redrawing them. The pattern's near-black hair vanished on the
+  board and was brightened to a blue charcoal. The lamp stays 1x on both boards;
+  doubled on 64x64 it swamped Genie.
+  Give props their own color keys: the lamp once shared Genie's `K` and turned his
+  outline bronze.
+- **Sorcerer Mickey** — the materialize effect is the best mechanic here, but his
+  face reads as a flat mask.
+- **Dumbo** — ears and flap are great; he's missing his back half entirely.
+- **Slinky Dog** — redrawn from scratch around one pose: rear planted on the left
+  edge, front half walking out until his nose touches the right edge, spring pulled
+  across the whole board between them; then the rear snaps across and both bound off.
+  The coils are tilted rings, shaded behind and bright in front, so they bunch into a
+  tube when squashed and separate when stretched; his tail is a banded spring. The
+  earlier versions took more rounds than any other character; the rewrite landed in
+  three renders because it started from the pose, not the path.
+
+- **Green Army Men** — landed on the second pass. The first read as green gingerbread
+  men: one dim green for helmet, body and rifle, rigging drawn as two dots that read as
+  eyes, three canopies merging into one band, and a chute that "collapsed" into a blob in
+  mid-air. The redraw: bright toy-plastic green with a light/mid/dark shade, a dark
+  helmet brim, the molded base, a rifle that pokes out past him at both ends, real
+  rigging that swings like a pendulum, smaller canopies, a chute that slumps to the
+  ground downwind, and a hop-off on their bases instead of a slide.
+- **Millennium Falcon** — strong. Traced from the user's photo for the outline, then
+  only the bold features painted back (see below). The arrival first had nothing on
+  screen for its opening beat; making it the jump in reverse (a streak snapping into the
+  ship) fixed it, and brightening her toward white as she stretches stopped the jump
+  reading as a long grey brick.
+- **Lightsaber clash** — no art at all: two solid lines drawn in code, each a line through
+  a point at an angle, filled `blade_w` thick across whichever axis it runs less of (the
+  64x32 board's diagonal is shallower than 45°). In the first render the two blades, upright
+  at the centre, landed on the same columns and blue hid red; they stand side by side now.
+- **Luke vs Vader** — two references that already held their sabers pointing at each other made
+  the pairing easy. A saber that has to swing comes out of the art and is drawn from the hilt;
+  fill the robe back in where the blade crossed it. Where they meet is solved from the two
+  blades each frame, so a spark always lands on the actual crossing.
+  Moving the arms (asked for as "more lifelike") changed the reach: with the fists out front the
+  hilts nearly touched, so they stand further apart and the cut and guard were re-solved until
+  every blow crosses. An arm drawn in code over a body of the same colour needs its outline, or
+  it disappears into the robe. A second arm from a shoulder at the same height just doubles the
+  first into a thick stripe. Luke's back arm reads best free, held out behind him like a fencer's
+  and swinging against the saber arm; two hands on the hilt wasn't wanted.
+  Outline a drawn limb only where it's out past the body: over the body the outline cut black
+  lines into Luke's tunic. And when a reference's arm is taken out, take out what it left behind
+  (his old sleeve, the outline of his hands), or the clothes look off.
+- **Obi-Wan and Yoda (more duels)** — a matchup is data: art, anchor, shoulders, arm length, waist,
+  sleeve and fist colours, blade colour. Put the anchor 3.5 px behind and below the front shoulder,
+  as on Luke, and the existing cut and guard angles cross for every pair without retuning. A white
+  background inside a pattern (Obi-Wan's arm against his head) reads as white pixels; clear it.
+  Before mirroring a reference, check where the head and eyes face, not just the weapon: Yoda's
+  saber pointed left but his head was turned right, so mirroring him made him look away from Vader.
+  With the arms drawn in code, the weapon's side in the art no longer matters. A small far ear in a
+  three-quarter view is two pixels on the board; lengthen it or it reads as missing.
+  For a pair, one artist for both beats two sources: Kylo from the bead sheet was a big helmet on a
+  tiny body next to Rey; the same artist's Kylo matched her.
+
+- **Ralph** — redrawn from the user's pattern, cell for cell, with a double-fist slam. His
+  raised arms were drawn as thick outlined lines from the shoulder (generated, not typed),
+  and the first ones were far too long: fists nine rows over his head read as poles; four
+  rows read as a wind-up. A pattern's size includes its outline, and black outline is
+  invisible on the board, so he fits 64x32 with his outline rows hanging off it. Debris
+  thrown with 64x32's gravity was still a third in the air when he finished on 64x64;
+  scaling gravity with the board's height and a short tail let it clear.
+- **Stitch** — two scenes from the user's profile pixel art were built and scrapped (a
+  pop-up chomp, and eating the old ride letter by letter), but they taught two things.
+  The art's eye was solid black like its outline, and on the board it read as a hole through
+  his head; filling it indigo inside the black ring, glint kept, made it an eye. And his first
+  closed mouth just removed the jaw's tip, which read as part of his face vanishing; it read
+  as shut once the jaw swung up against the teeth as a solid wedge. What's left is surfing,
+  from two bead patterns, copied cell for cell: standing on 64x64
+  ([stitch.jpg](../docs/references/stitch.jpg)) and sitting on 64x32
+  ([sitting_stitch.jpg](../docs/references/sitting_stitch.jpg)), where the standing one is
+  too tall. On the back of the wave he looked like he was sledding down a ramp; a surfer
+  rides the face, ahead of the crest, with the wave chasing him.
+
+The pattern: the characters that landed are the ones with a simple, strong silhouette
+and one well-executed motion. The ones that fell short tried for detail and lost the
+shape. Slinky is the clearest case of the other lesson — decide the one pose that
+sells the character, then size him to hold it.
+
+- **Jack, Sally and Zero** — landed on the fifth try at the art, and the motion took one. Zero
+  from a clean pattern was right first time. Jack and Sally went through a parade of all three
+  (too wide to share the board), a moon-backed pair, the user's bead photos and a downscaled
+  screenshot before a single combined pattern of the two of them fit. Shortened to 32 rows,
+  split by colour, they walk in from opposite sides and kiss.
+- **The Seven Dwarfs Mine Train** (`mine_train`) — the dwarfs copied cell for cell from one sheet;
+  the motion changed twice. A side view for a walk-in (a hand-drawn Doc profile) was dropped for
+  a mine train, so they face us the whole ride. The car and the gem car took a few renders;
+  Snow White was redrawn at car size from a photo of stitching over six rounds of small fixes.
+- **Bluey and Bingo** (`grannies`, `keepy_uppy`) — the Grannies from one grid pattern of the
+  pair, Keepy Uppy from a grid pattern of Bingo and a bead photo of Bluey; each board got its own
+  art. Both landed in a couple of rounds; the motion, not the art, needed the second look.
+- **Rex** (`rex`) — the user's art for each board went on cell for cell; only the roar needed
+  drawing. His first open jaw read as a stripe across his face; it read as a roar once it
+  swung wider at the front than the hinge and the teeth went with the lower jaw.
+- **The Aliens** (`aliens`) — one alien redrawn small from a sheet, repeated into a crowd. The first
+  mock packed the rows so tight they read as a green pattern; a crowd reads when each figure has
+  its own outline: on 64x32 a back row of heads over a front row, on 64x64 rows clear of each other.
+
+- **Pooh and his balloon** (`pooh`) — a clean grid pattern, cell for cell on both boards, right in
+  one round. Splitting the art at the string, and drawing the string as a line, lets the balloon
+  sway with Pooh swinging a beat behind it for no extra art. A floater wants ease in *and* out
+  (`smooth`): a cubic ease shoots off the edge at three times its average speed.
+- **Forky** (`forky`) — a clean grid pattern, cell for cell (1x on 64x32, 2x on 64x64), right in
+  one round. His eye holes were empty in the pattern; on a white head they're filled as googly
+  eyes, a grey ring round a black pupil that rolls as he waddles (a white eye would vanish into
+  him, a dark one reads as a hole). A white sprite over the ride's white text needs a black ring
+  round it. 64x32 has no room over a full-height figure, so TRASH! goes beside him there. The old
+  screen going down the hole nearest first reads at once; test it by how much is left near the
+  hole and far from it, not single pixels, which the pixels falling in pass over.
+- **Kevin and Dug** (`kevin`) — Kevin cell for cell from a grid pattern, Dug redrawn small from
+  his, balloons in code; the mock was right first time. A pattern's light-grey drop shadow isn't
+  part of the character: drop it, but keep a pale part of the art (her plume). Kevin is 38 rows,
+  mostly neck, so 64x32 cuts the neck (first and last neck rows kept, so it still tapers) and
+  nothing else. A front-facing sitting Dug can't trot, so he bobs a row as he follows; the
+  balloons sell the scene, not his legs. The first version stopped them mid-board for the lift and
+  had Kevin stretch her neck after him; the user wanted no stop: Dug chasing her, lifted a little
+  more with every step (height from the share of the way across, squared, so he leaves the
+  ground gently), off the right edge up high while she stays on the ground.
+  A bunch of small 3x3 balloons (bottom corners off, a shine pixel) reads as Up's cluster.
+- **The Up house** (HEA V2 `up_house` actor) — a grid pattern, cell for cell at 1x (24x46 with
+  its balloons). It replaced an 11x9 house drawn in code. Drop a chart's background colour where it
+  shows between strings. 46 rows is too tall for 64x32, so that board gets the charted house under
+  code balloons. A 24-row house can never clear the castle's roof. Drawing it in front of the
+  dimmed castle shows all of it, but the user kept it behind. It first rose from behind the
+  castle and hung there; the user preferred it crossing: in from the left edge, climbing out the
+  top-right corner. For a vague motion request, a path sheet of each reading settled it in one go.
+
+## The Aliens: what worked
+
+- **A crowd is small figures that don't overlap much.** Rows overlapping by half a figure merged
+  into wallpaper. Keep each one's outline whole, and only let a back row peek over a front one.
+- **Random picks need limits.** The claw first chose an alien on 64x32's back row, so high that
+  the claw was barely on the board when it grabbed. Pick only from the ones it can reach in sight.
+- **A grab from below waits for its moment.** Woody first leapt for Buzz's boot the instant the
+  lift began, but on 64x32 Buzz fills the board's height, so the boot was off the bottom and Woody
+  jumped down and vanished. He now stands until the boot rises within his reach, then jumps up for
+  it, which is also how the movie plays it.
+- **Text in a scene: bake it from the BDF.** `capture._glyphs` reads the board's fonts in Python,
+  so YOU'VE BEEN CHOSEN! is pixels worked out once, drawn the same on a Pi and in the emulator,
+  with a black edge so it reads over the crowd.
+- **The Pattern tool reads grid charts, not every bead photo.** On `TS_beads.jpg` it locked onto
+  the bead holes (half the bead pitch) and a false 13 degree turn; the sheet's alien read cleanly.
+
+## Rex: what worked
+
+- **Open a mouth by swinging the jaw, not by drawing a second head.** `_open_jaw` shears the
+  lower jaw down (and, where there's room above, the snout up) about a hinge column, more at
+  the front of the face, and fills the gap with his mouth, nearly off: the user asked why it
+  was red inside, and a dark gap between the teeth reads as a roar without a colour of its own. It's worked out from the art,
+  so a redraw in the sprite editor keeps the roar.
+- **A mouth wants a wedge and teeth on its edge.** Opened evenly, the mouth was a band across his
+  face that could have been a tongue or a scarf. Wider at the front, with teeth on both edges (the art's tooth row
+  on the lower jaw, and a matching tooth above each one on the upper jaw), it's a roar.
+- **Tip the head back by rotating it about the neck.** The user asked for his head back on the
+  roar: `_roar_pose` turns the head (jaw and mouth included) about his neck, snout up and crown
+  back, sampling each board cell from the art so no holes open. The head's back near the neck
+  stays drawn underneath, or the turn leaves a gap there. Where the board's top is in the way
+  (64x32), the head sinks into his neck the rows it needs instead of losing his crest.
+- **Shaking the board means repainting the ride.** The new screen is already drawn underneath,
+  so a knocked frame paints the captured ride (`wants_new`) at the offset, black included, or
+  the steady copy shows through at the edges.
+
+## Bluey and Bingo: what worked
+
+- **"Slow" means slow for the character, not slower than the last one.** A pixel a frame is
+  half Chip 'n' Dale's pace and still read as far too fast for a granny. A character with a prop
+  should move with it: Bingo stands while her walker lifts and plants a step ahead, then shuffles
+  up to it, so the pair goes in steps (about 10 px/s). When that makes the crossing longer than
+  the ride screen, use `hold_after_s` rather than rushing it.
+- **A prop that moves away from a hand needs the arm to follow.** The walker leads Bingo by up
+  to a step, so her sleeve column repeats to fill the gap (`SLEEVE`) and her hand moves with the
+  handle; otherwise the hand floats free of the arm.
+- **Check the width before recommending a height.** Arms-out poses are wide: two characters at
+  44 rows were 69 columns together. Work out the pair's width on the board first.
+- **Each board can have its own art.** A pattern too tall for 64x32 can still go cell for cell on
+  64x64 (the Grannies' 40 rows), with a hand redraw only for the small board.
+- **Size props in the user's terms, and expect a round or two.** The balloon went from 4 wide to
+  three times that to 70% of it. Mock it in the scene beside the characters, not alone.
+- **Mirror the art, then find the hand on the mirrored art.** Bluey first batted with her far
+  hand because the hand's column was mirrored the wrong way. Give positions in the art as it's
+  drawn on the board at that moment.
+- **Grid sites block scripts.** Kandi Patterns and Kandi Pad refuse automated downloads; a free
+  32x32 sprite pack on itch.io came through but was too small and stiff once the size was decided.
+  Ask the user for a pattern image when the search comes up empty.
+
+## The Mine Train: what worked
+
+- **Measure a sheet's real grid from its lines, not its printed labels.** `dwarfs.jpg` is
+  labelled 140x60, but its grid is 80x81, so every dwarf was about 20x40, not the 30x28 the
+  references table said. That decided which boards he fits.
+- **A photo of finished stitching transcribes well.** Fit the stitch pitch with a frequency fit
+  over a flat area (the skirt), sample each stitch's centre, then redraw by hand at the size
+  you need. A plain shrink lost Snow White's smile and swamped her eyes.
+- **Centre a rider on the middle of his body, not his outline.** A raised arm or a hand on the
+  hip pulls the outline sideways; each dwarf is centred on his belt buckle (`BUCKLE`).
+- **Black outlines vanish on the board.** The gem heap read as tiny specks until it was drawn as
+  packed colour with dark facets, and the couplings only showed once they were grey metal.
+- **A one-pixel nose right above a V smile closes it into a diamond** that reads as a kiss.
+  Keep a row of skin between them.
+- **Ask how big a feature should be in the user's terms.** "One pixel wider than the dwarf" and
+  "shoulders up" settled sizes that guesses kept missing.
+- **A long reveal can ask for a longer screen.** The full train is about 9s; `hold_after_s`
+  keeps the ride screen up after it, without changing anyone else's timing.
+- **Draw only what's on the board.** Nine cars is too many pixels a frame for a Pi Zero; only
+  the two or three on the board are drawn, from pixel lists worked out once (`_cells`).
+
+## Jack, Sally and Zero: what worked
+
+- **Ask for a grid pattern.** A pattern with one cell per bead copies in minutes. A photo of
+  beads needed the bead pitch found from the holes, rotation fitted, colours clustered and then
+  checked by eye; a downscaled screenshot needed its grid recovered per figure. Both took far
+  longer, and the user noticed. Say so before starting, or ask for a pattern.
+- **Mock one still before building motion.** "Stand next to each other" was built as a parade
+  that wasn't wanted. One render of the pose would have caught it.
+- **Several figures side by side need a combined piece.** Three figures about 34 wide can't
+  share 64 columns, and doubled pairs crowd 64x64. The answer was a pattern drawn as a pair: the
+  overlap is part of the art.
+- **Shortening art to fit: cut by column, not by row.** Removing rows straight across took off
+  Jack's coat tails and would have cut three hands in half. Remove the rows the user marks where
+  the art repeats (clothes, legs), and under anything sticking out (hands, coat tails, a hair
+  flare) remove empty rows below it instead. Every column loses the same number, so everything
+  above moves down together and nothing tears.
+- **Split a combined piece by colour.** Each coloured cell goes to its owner; black outline
+  cells go to the nearest owner by flood fill. Colours both share need a rule: Sally's white
+  shoes are hers, every other white is Jack's.
+- **Fill dark gaps beside a figure.** Black is off on the board, so gaps between Sally's hair and
+  her body read as holes. Running her hair down around her body fixed it.
+- **64x32 has no room above a full-height piece.** The heart that floats up from the kiss stops
+  at the top edge there instead of leaving the board.
+
+## Landmarks and scenes: what worked
+
+Notes from the Tower of Terror redraw and the Halloween party work (the two jack-o'-lanterns
+in `display/landmarks/`, the Halloween castle fireworks). Both landed faster and better than the
+early characters above, and mostly for process reasons. Read this before redoing a landmark.
+
+### The process
+
+1. **Start from the user's reference image.** The tower was drawn from a photo; the friendly
+   pumpkin from a colouring page. A reference settles the questions a description can't
+   (what the eyes look like, where the stem sits, which details are the identity), and it
+   gives both of you something to compare renders against. Ask for one first. Patterns
+   collected so far are in [docs/references/](../docs/references/README.md), each labelled with
+   whether it fits each board cell for cell.
+2. **Ask every open question in one batch, before drawing.** Guessing cost the early Slinky
+   many redraws. Offer choices with a recommended default. The answers that most changed the
+   result were ones nobody would have guessed: "a wink *and* a bounce", "put the name on
+   the screen", "Mickey pumpkins, drop the plain ones". If the answer is "show me both",
+   build both as a pinned variant (`MOTION`) and let production pick at random.
+3. **Mock up text layouts with the real BDF fonts first.** Rendering the party name in the
+   board's 4x6/5x8 fonts over the scene settled the layout in one round, before any code.
+4. **Render to a PNG sheet, several moments, both board sizes, and look.** Every round found
+   a real problem that reading the code never would. Crop and zoom in on the detail you're
+   changing (the wink was only fixable at 20px per LED).
+5. **Then put it on live emulator previews** so the user sees it move: one port per board
+   size or variant (9000, 9001, 9002), each run from its own folder whose
+   `emulator_config.json` sets the port, driven through `landmark_screen` so fonts and
+   titles are real. Restart them after every change; they've imported the old code.
+6. **Pin what broke in a test**, as relationships and colour distances, not pixels (below).
+
+### What the renders caught, and the fix that generalised
+
+- **A lit feature blended into what it sits on.** The pumpkin's glowing face read as the same
+  orange as its shell. Fix: keep the surroundings darker than the feature at its dimmest,
+  and add a **dark rim** around it, like the cut edge of a carving. The same rim fixed the
+  filled Mickey-pumpkin firework's face.
+- **Flicker dimmed a feature to its neighbour's colour.** Flicker by moving a hot spot or
+  varying a small range around a high floor, never by fading the whole feature.
+- **Colour against the background, not just neighbours.** Purple bursts vanished on the
+  purple sky; brighter purples fixed it. Check every colour against the sky it flies over.
+- **Foreground hid the subject.** The castle spire covered the pumpkin burst's face; the
+  tower's cloud had to sit where the bolt could leave it. Place the subject clear of
+  whatever draws in front of it, and test that it's clear.
+- **A held effect changed an unrelated one.** Holding shape sparks bright also held their
+  white-hot flash for a second. When you stretch one phase, check the others.
+- **A closing eye left its outline behind.** Anything that disappears must take its outline
+  and rim with it (the wink restores the shell under the eye and its cut rim).
+
+### Design lessons
+
+- **64x32 wants its own composition, not a shrunken 64x64.** The tower tilts the camera up
+  from the trees to the dome; the pumpkin moves beside the text instead of under it.
+  Decide both layouts up front, and put them behind a hook like `_layout()`.
+- **Budget the screen time.** The sweep and wipe take 1.2s of every landmark's `SCREEN_S`,
+  so a 3s landmark has 1.8s of scene. The tower's strike, doors and drop needed 3.5s; say
+  so with `SCREEN_S` instead of rushing the story.
+- **One story beat, then hold.** Tower: strike, doors, drop. Pumpkin: dark, candle catches,
+  one wink or hop. Both read because each beat has room.
+- **Keep layers separate** so a motion moves only the subject: the pumpkin hops but the mist
+  and sky stay put (`_draw_pumpkin` vs `_draw_mist`).
+- **Procedural shapes scale; keep proportions relative to the board** (radius from height),
+  then tune the one or two numbers that look wrong on each size.
+- **Check the live API before designing a trigger.** The party's name was only in entity
+  names, not the schedule; show names mix curly and straight apostrophes; Happily Ever After
+  is closed on party nights. Each of those shaped the design, and each came from one curl.
+
+### Tests that paid off
+
+- Colour distance between a feature and what surrounds it (glow vs shell, tongue vs glow).
+- The subject clears the foreground and the text (face above the castle, title boxes off
+  the pumpkin), on both board sizes.
+- The story happens inside the screen: the tower's strike, doors and drop all fall within
+  `SCREEN_S`, once, in order.
+- Variants and random picks: both motions get picked; only the intended burst shapes appear.
+
+### The Wine & Dine 5K (`WineAndDine5KLandmark`)
+
+Marie for the runDisney 5K, picked from four concepts (medal, Eiffel Tower, toast, finish line) and
+then four layouts of the toast. What helped:
+
+- **Find a pattern, don't draw from promo art.** My Marie traced from the medal graphic read as a
+  generic cat. Google Images (in Chrome: "marie aristocats perler bead pattern", "... pixel art
+  sprite") found Pixilart and BraceletBook charts that web search never shows. `analyze_reference.py`
+  read them cell for cell; an outline-on-white chart needs its outside flood-filled away.
+- **Pastels go white on LEDs.** The art's pastel pink bow and ears were indistinguishable from her
+  fur; deepened pinks fixed it. A black outline vanishes on a black night sky (use a grey rim there);
+  on the purple Paris sky a black one reads, and it's what the user picked.
+- **Check props against what they sit on.** Pale glasses disappeared on her white fur at 2x; they
+  only work off her body (or with a dark rim).
+- **64x64 wanted the space filled.** The 1x peeking Marie left 64x64 mostly empty, so it got a
+  different, taller Marie (48 rows) and a bigger title instead of the same art.
+- **Bigger title fonts:** `landmark_screen` only draws the 4x6 title font, so this scene bakes its
+  title (9x18B "5K", 5x8 "Wine & Dine") into pixels in `build()` from the BDF files via
+  `capture._glyphs`.
+- **A day the API can't name:** races run before the park opens and never appear in the park data,
+  so `utils/special_events.py` `DATED_LANDMARKS` swaps a landmark in by the park's local date.
+
+### The Wine & Dine 10K (`ThreeCaballeros10KLandmark`)
+
+José, Panchito (centre stage) and Donald under a gold 10K; each hops in turn, then all three as
+confetti falls. It took many rounds; what finally worked, and what didn't:
+
+- **Traced renders, kept as traced.** The sprites the user picked came from the Disney wiki's
+  transparent renders (DuckTales 2017 Panchito and José, a classic Donald), downsampled by alpha
+  silhouette and colour vote with the black line art kept (a cell that's 30%+ line stays black),
+  then snapped to saturated LED colours. Line art kept was the step that made Donald read as Donald.
+- **Small edits on top, not redraws.** Donald's cap became a sombrero (centred on his head: the user
+  checks symmetry) and his raised arm was slanted out clear of the brim. Edits to traced art are
+  quick to judge; my own redraws of whole characters weren't.
+- **What didn't land:** hand-drawn characters from scratch (read as penguins or generic birds),
+  a shaded game sprite beside traced cartoon art (styles clashed), runners on sliding sprites (two
+  run frames still looked like floating), and auto-shaded heads (shading turned faces to mud).
+  A pixel chart (José on graph paper) and the flat Gran Fiesta Tour poster style looked promising.
+- **Mock up many options at once, side by side.** The user picked from sheets of four (layouts,
+  styles, ideas) far faster than from one version at a time.
+
+### The Wine & Dine half marathon (`PenguinWaitersHalfLandmark`, `GrumpyTwoCourseLandmark`)
+
+Two screens, picked at random each showing (a `DATED_LANDMARKS` entry can list several): three Mary
+Poppins penguin waiters flap and hop in turn, or Grumpy (the Two Course Challenge's medal, finishing
+the same day), arms folded, taps a foot and gives one grudging hop. Each names its own race in gold under
+"Wine & Dine": "Half Marathon", and "Challenge" with its distance, 19.3 (the user's calls; Grumpy
+isn't running just the half). What was new:
+
+- **Not everything traces.** There is no clean penguin render on the Disney wikis. The race poster
+  was too small (black penguins on navy; the beaks snapped to Big Ben's gold), and the 1964 film frame
+  has them overlapping and cut off at the waist. Hand-drawn penguins in the poster's pose worked: a
+  penguin is simple shapes, unlike the Caballeros. The user asked for them taller and slimmer than the
+  first round's (about 40 x 15 on 64x64, 20 x 10 on 64x32), filling the board under the title.
+- **A painted render loses the face; an outlined one keeps it.** Grumpy from a painted render traced
+  to a blur. A render with bold black outlines (the Disney wiki's arms-folded one) kept them once a
+  cell needed only 18% line to stay black (thin outlines miss the 30% the Caballeros used); brows
+  and eyes still got a small hand edit. The user picked it over a cross-stitch chart of him leaning on
+  a pickaxe, which filled 64x64 but kept little of his face.
+- **Reading a scanned cross-stitch chart:** `analyze_reference.py` turned the (untilted) scan 16.7
+  degrees until given `--no-turn`, and its pale pink beard read as background. Reading it by hand
+  worked: fit the grid from the line pattern, call a near-white cell beard only when its middle is
+  tinted, and black where backstitch crosses a cell (darker than its own fill, not just dark: dark
+  brown fill isn't a line).
+- **Props and backdrops that didn't make it:** a wine glass on a tray and the poster's Big Ben and
+  London skyline (which also swallowed the penguins' black backs).
+- **"HALF MARATHON" in 5x8 is exactly 64 px of ink:** it fits 64x64 edge to edge, with its shadow
+  clipped (`penguin_waiters.title_pixels`). On 64x32 it splits into corner pairs, or stacks down the
+  side beside a character too tall for the corners.
+
+### The Very Merry Christmas Party (`SantaTrainLandmark`)
+
+Santa drives a steam engine across a snowy night pulling Mickey, a gift car, Donald, a tree car, Goofy and
+Pluto, in place of the castle on party nights. 258 px long on 64x64, so it drives the whole screen instead of
+posing. What was new:
+
+- **Copy real charts; don't draw characters.** Two hand-drawn Donalds were rejected outright ("does not
+  look like Donald at all"), and so were Tsum Tsum heads and 10px mini heads. Every rider that stuck came
+  from a real chart, cleaned up: backstitch outlines put back as pixels, a Santa hat in place of a sailor
+  cap, Donald's bill recoloured, Pluto mirrored to face the way the train drives.
+- **Riders need bodies.** Heads on a car's rim looked like they floated; seated riders in Christmas
+  sweaters with their gloves on the rim fixed it. Only four of the eight tried fit at a readable size.
+- **Halve by majority, not by stride.** Every other pixel (`row[::2]`) jumbled Santa's face and the
+  cowcatcher; each 2x2 block's most common colour kept both. Wheels still turned to mush either way, so
+  the half train stamps a clean 4x3 wheel at each halved wheel position. The 64x32 riders are the DIY Candy
+  mini heads rather than halved ones.
+- **Long sprites: index by column.** The frame walks only the train columns on the board, not all ~9000
+  pixels, so a slow board isn't paying for the cars off screen.
+- **End on something to read.** A billboard car as wide as the board goes on last; the train brakes evenly
+  to a stop with it filling the screen and holds 4s, so the screen is about 13.4s. Its lettering is dark on a
+  light sign, so `_text_pixels(..., shadow=False)`; tonight's hours come from `special_event_hours` (shared
+  with the pumpkin), and without them it says the name alone. The wheels roll by distance travelled, not
+  time, so they stop when the train does.
+- **Smoke is puffed, not painted.** A smoke cloud drawn into the engine just rode along with it. Puffs leave
+  the stack every `PUFF_S`, each staying where it was puffed (so they trail as the train pulls ahead),
+  growing and fading as they rise off the top.
+- **White near the wheels reads as noise.** Static rim shine and chassis-corner highlights looked like
+  stray pixels on a moving train; the wheel rows carry no white (held by a test), only the 64x32 rim spot.
+  The dark under the cars is opaque sky, or snowflakes fall through between the wheels.
+- **Gaps in a rider are background.** White or outline colour where the chart had nothing (the top of
+  Pluto's head) reads as part of him; the user wants the board off there, the night showing through.
+- **The riders move, and new limbs come from the user.** Bob (riders sink 1px into the car, rippling down the
+  train), blinks, Pluto's tail wag and panting all work by patching the existing art (`rider_patch`). Every
+  invented waving arm was rejected, four rounds over; what worked was asking exact questions (which hand,
+  how high, does the arm show, how it moves) and then letting the user draw Santa's frames in the sprite
+  editor (landmarks list art for it in `EDITOR_SPRITES`). Santa's arm was his red sleeve inside the window,
+  not the white block beside the cab: ask what a shape is before animating it. 64x32 has no waves yet.
+- **Keep mock code out of /tmp's reach.** A cleanup deleted the first train mock's art mid-design; the
+  parts had to be recovered from a pickled render.
+
+### Before redoing Spaceship Earth
+
+The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders
+as mottled noise, not the triangles that make the sphere recognisable, and nothing but a
+glint happens. Questions to settle first, with a reference photo:
+
+- Day or night? At night the sphere is lit in changing colours ("Beacons of Magic"), which
+  could be the motion and would stand out far more than grey.
+- What identifies it at this size: a bold triangle pattern (fewer, larger facets), the
+  tripod legs, the EPCOT entrance sign or fountain, or the silhouette alone?
+- One story beat for the screen: the lights coming on, a colour wave around the sphere,
+  fireworks behind it, a monorail passing in front?
+- 64x32 composition: shrink, crop, or tilt up like the tower?
+
+## Army Men and the Falcon: what worked
+
+The process above held; these are the lessons that were new.
+
+### Drawing
+
+- **Trace a reference photo, then keep only the bold features.** Turn the photo to the
+  sprite's heading, crop to the subject, and downscale it to board size: that gives an
+  accurate silhouette and where each feature sits. The photo's detail comes out as grey
+  noise (the Spaceship Earth problem), so throw it away and paint back a handful of bold
+  shapes on flat colour. For the Falcon: the gap between the mandibles, the turret ring,
+  docking arms, a few red patches, the cockpit tube and the engine band.
+- **Generate geometric shapes, don't hand-type them.** The canopy star failed four times
+  in hand-drawn ASCII (it kept reading as a face) and was right first time rasterized from
+  a real five-point polygon at 8x and scaled down. Same for domes and discs.
+- **Any pair of lone dots reads as eyes.** The Army Men's rigging, drawn as two white
+  points under each canopy, looked like faces floating in the sky. Draw rigging as lines.
+- **A thin prop has to break the silhouette.** A rifle held across a body is invisible at
+  this size until it pokes out past him at both ends; then it reads instantly.
+- **Move a character the way its source moves.** Toy army men can't walk, their feet are
+  molded to a base, so they hop, as in the films. It read far better than sliding.
+- **Something that turns into light should turn into light.** A stretched hull stays a
+  grey brick; blend it toward the streak colour as it stretches.
+- **Deflating isn't shrinking.** A chute scaled down in place became a blob hanging in
+  mid-air. Things lose their shape and fall: it blows downwind, sinks, flattens, fades.
+  When you squash art, check which rows the scaling picks (the star smeared into a white
+  bar) and swap features out of it.
+
+### Timing and size
+
+- **Time by distance, not seconds.** 64x64 is twice the drop of 64x32, so the same
+  `FALL_S` made the Army Men plummet there. Give the tall board its own time
+  (`FALL_S_TALL`) and test the speed, not the duration.
+- **Check clearance at 2x.** The Falcon doubled on 64x64 fills the board well, but her
+  cruise ran her mandibles off the right edge until her stop point was clamped so her
+  nose stays on the board.
+
+### Screens and pixels
+
+- **A transition that takes the old screen must paint every pixel of it, black
+  included.** `show_screen` draws the new screen first and the transition paints over
+  it, so drawing only the old screen's lit pixels lets the new ride show through its
+  dark areas. The Army Men and Ralph both shipped with that bug.
+- **Test with fake screens that have dark pixels.** The Army Men's tests used an old
+  screen lit edge to edge, which is exactly why they missed the bleed-through.
+  `test_new_screen_never_shows_through_the_old_screens_dark_pixels` goes through the real
+  `show_screen` with a half-lit screen; add each new screen-taking transition to it.
+- **Blend soft effects against pixels you captured, not the canvas.** Dust, glow and
+  fades need what's underneath. A real Pi canvas can't be read back (`canvas.px` doesn't
+  exist there, so it blends against black), but a transition holding `prev_px`/`new_px`
+  knows exactly what's on the board. The Falcon keeps the frame it drew in `_base` so
+  its glow blends over the stretched old screen, not the original.
+- **Draw whole frames cheaply.** Stretching the old screen per pixel into streaks would
+  be hundreds of thousands of `SetPixel` calls a frame; mapping each output pixel back to
+  a source pixel (`(x - shift) / stretch`) is one call per LED and reads the same.
+
+## Happily Ever After V2's characters: what worked
+
+The show's characters (`display/fireworks/actors/`) differ from transitions: they're placed by the
+show's clock, not by frames, and share the board with fireworks and the castle.
+
+- **Settle each one's size and motion with the user first.** Every character took one batch of
+  questions (boards, size, pose, motion, stage) and then built without rework; the ones guessed at
+  (Dumbo's ear flap, Mufasa's place) were redone.
+- **Check the real render, not just the actor alone.** Merida's brown arrow was drawn correctly and
+  invisible in the video among the scene's gold sparks; it took a bright shaft, a white trail and a
+  lower `rate` for the scene. Crop frames from `build/show_sync/*.mp4` with ffmpeg and look.
+- **Lift near-black to the LEDs' floor.** Chart blacks (Moana's, Charming's and Eric's hair,
+  Merida's bow) show as off; lift them to a dark colour of the same hue. Outlines can stay black.
+- **Lip sync from the voice, checked against the words.** demucs splits the voice; Whisper and the
+  lyric sheet say who sings what (Friend Like Me's backup singers are muted from Genie's track). A
+  mouth needs its own art row: Merida's face moved up a row to make one.
+- **Time big moments to words.** Mufasa fades from "Remember who you are", Olaf's face melts after his
+  last word, Merida's arrow hits on "sky": take the times from the mouth track or Whisper's word
+  timestamps, not from the scene's edges.
+- **Fit the scene, not the other way round.** A move longer than its scene (Olaf's melt) starts earlier
+  rather than spilling into the next; a fade must end inside its slot (Ariel's first didn't).
+- **A transition's art can play a show part, posed.** Touch the Sky's Merida is the archer's art taken
+  apart into layers (skirt, body, bow arm, bow), patched for poses the art doesn't draw (her hand on her
+  hip, a wider face for a 5 px mouth) and turned with `pixels.rotate_cells` (RotSprite: outlines stay
+  1px at any angle). Turning is milliseconds a sprite in Python, far too slow for a Pi Zero, so
+  `tools/build_merida_poses.py` bakes every frame and the actor only stamps one. Lessons from her mocks:
+  a lean back reads as a curve, not a hinge (waist a third, chest the rest, head nearer level, hips
+  forward); a release needs the string to snap and the hand to fly back, or the arrow "just pops off";
+  draw a nocked arrow last and edge it dark, or her arm and hair hide it; when a prop moves, draw what
+  was behind it (her skirt under the bow's foot); an outline pass must never paint over another layer's
+  cells; a gap between an arm and a body reads as a hole in the dress. On 64x32 she stands waist up (her
+  waist on the bottom row): everything she does happens above it, so the same frames play, just lower. Her tests check every baked frame
+  for a whole skirt and a mouth.
+- **Tests per actor:** placement and bounds on both boards, the key moments by the clock, "follows the
+  clock, not the frames" (30 fps and 7 fps land on the same frame), nothing drawn when inactive.
+- **Show the user several references side by side, on the board.** Mike and Sulley went through
+  five mocks (a sheet pair, two web finds, the user's charts, a cross-stitch photo), each over the
+  castle at board size; picking from those beat describing them. Watch relative size: a pair can be
+  right alone and wrong together (Mike as tall as Sulley).
+- **Shrink a chart by dropping repeated rows and columns, not by resampling.** Mike went from 33x30
+  to 27x25 by deleting rows and columns from his body's middle, the eye's inside and the legs: the
+  outline, shading, glint and teeth all survived, where resampling would have blurred them.
+- **A photo of a stitched or beaded piece needs a hand transcription.** `analyze_reference.py` read a
+  silver tin behind a cross-stitch as colours; a numbered grid drawn over the enlarged photo made it
+  quick to copy by hand.
+- **Readable beats in proportion.** Woody first reused the claw scene's 14x18 art and was lost in a
+  corner of the 64x64 castle. A bigger chart (a 19x26 chibi, copied cell for cell, not scaled) standing
+  in front of the castle's edge reads at a glance; the user wanted him visible, not to scale. Black
+  outlines stay black: over the lit castle they read as an outline, not a gap.
+- **An actor's own randomness gets its own generator.** Every actor is built with the show, V1's
+  too, so shuffling with `show.rng` in `__init__` moved every V1 firework (the Toy Story blocks did,
+  caught by a V1 frame hash). Seed a private `random.Random` for layouts, and hash V1's frames before
+  and after any actor change.
+- **Fill the castle by projecting, not by fitting.** Blocks that had to sit wholly inside the castle
+  left it nearly empty (crenellations and towers break every slot); a grid over its outline, each
+  block at least half on it and drawn only on its pixels while standing, fills it and keeps the
+  silhouette and doorway. Loosened, they're drawn whole.
+- **One big character at a time beats two small ones.** Woody and Buzz shared the scene at 14x18
+  and 15x13, both hard to read; at full size (Woody 21x26, Buzz flying 40x26) they'd crowd the board together, so Woody has the
+  first half (the blocks fill) and Buzz the second (the knock-down). On 64x32 Buzz is taller than the
+  castle, which is fine when he's alone: he hits every block.
+
+## The Archer (`archer`): what worked
+
+- **Lift a moving part out of the user's art and draw it in code.** Her art was already at full draw, so
+  the arrow and the string came out (the arrow was a translucent row over her outline) and are drawn
+  from the cells they were in: at full draw they match the art exactly, and they move from there. Where
+  the string ran through her hair and face, the neighbouring cell fills in.
+- **The string's snap is a V that straightens and rings.** Each row's column is scaled between the
+  bow's tips and the nock (`tension`: 1 drawn, 0 straight, then a decaying cosine), so one number
+  gives the snap, the overshoot and the settle; the arrow's tail speeds up over 0.15s, not a constant.
+- **Uncover behind the arrow's tail, scaled to the board,** so the reveal starts at column 0 and ends
+  with the arrow's exit: starting at the tail's column made the screen jump in behind her.
+- **A figure 54 of 64 rows tall is 64x64 only.** disney.py's `TALL_ONLY` gives a short board the plain
+  wipe. The slice is still taken from the 13% budget, so the Army Men were trimmed to 0.5%.
+- **"Anime" shading is many tones in thin streaks.** The user's art read as anime next to ours: five
+  hair shades with flecks, and light streaks down the skirt. Ours are a base, a shadow and one small
+  highlight; merging the hair's darkest red and the skirt's streaks into their neighbours did it, in
+  the character's own colours (the show's Merida's teal and flame).
+- **No room for a face? Add rows, don't shrink the features.** Her face was four rows of skin. Copying
+  the face's own row three times pushed her hair and bow up and made room for brows, two eyes with a
+  glint, a nose between pink cheeks, and a mouth a skin row below the nose.

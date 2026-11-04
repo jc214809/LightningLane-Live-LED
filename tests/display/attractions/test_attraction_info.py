@@ -159,3 +159,291 @@ def test_wait_time_formatting_boarding_group_single():
     """Single boarding group strings are used as-is."""
     from display.attractions.attraction_info import _format_wait_time
     assert _format_wait_time("Group 1+") == "Group 1+"
+
+# ---- Animated attraction screen ----
+
+import pytest
+
+import display.attractions.attraction_info as attraction_mod
+import display.display as display_mod
+
+
+class RecordingCanvas:
+    def __init__(self, width=64, height=32):
+        self.width, self.height = width, height
+
+
+@pytest.fixture
+def frame_recorder(monkeypatch):
+    loaded_fonts["ride"] = DummyFont(width=4, height=6)
+    loaded_fonts["waittime"] = DummyFont(width=4, height=6)
+    record = {"text": [], "lines": []}
+    fake = type("G", (), {
+        "Color": staticmethod(lambda r, g, b: (r, g, b)),
+        "DrawText": staticmethod(lambda c, font, x, y, color, text: record["text"].append((text, color))),
+        "DrawLine": staticmethod(lambda c, x0, y0, x1, y1, color: record["lines"].append((x0, y0, x1, y1, color))),
+    })
+    # Ride text is drawn through display.display.draw_text, so fake graphics in both modules.
+    monkeypatch.setattr(attraction_mod, "graphics", fake)
+    monkeypatch.setattr(display_mod, "graphics", fake)
+    return record
+
+
+def test_wait_counts_up_from_zero_and_lands_exactly():
+    assert attraction_mod.counted_wait(45, 0) == 0
+    samples = [attraction_mod.counted_wait(45, t / 30) for t in range(40)]
+    assert samples == sorted(samples)
+    assert attraction_mod.counted_wait(45, attraction_mod.COUNT_UP_S) == 45
+    assert attraction_mod.counted_wait(45, 99) == 45
+
+
+@pytest.mark.parametrize("wait", ["Down 12:41", "Down", "Groups 40-55", "Group 12+", ""])
+def test_non_numeric_waits_are_shown_as_is(wait):
+    assert attraction_mod.counted_wait(wait, 0) == wait
+
+
+def test_pulse_stays_visible():
+    levels = [attraction_mod.pulse_level(t / 30) for t in range(200)]
+    assert min(levels) >= 0.5 - 1e-9 and max(levels) <= 1.0 + 1e-9
+
+
+@pytest.mark.parametrize("minutes, band", [(5, 0), (20, 0), (21, 1), (45, 1), (46, 2), (240, 2)])
+def test_wait_bar_color_bands(minutes, band):
+    assert attraction_mod.wait_bar_color(minutes) == attraction_mod.BAR_BANDS[band][1]
+
+
+def test_wait_bar_length_tracks_minutes_and_caps_at_full_width(frame_recorder):
+    attraction_mod.draw_wait_bar(RecordingCanvas(64, 32), 45)
+    (x0, y0, x1, y1, _), = frame_recorder["lines"]
+    assert (x0, x1, y0, y1) == (0, 31, 31, 31)
+    frame_recorder["lines"].clear()
+    attraction_mod.draw_wait_bar(RecordingCanvas(64, 64), 500)
+    assert [(l[0], l[2]) for l in frame_recorder["lines"]] == [(0, 63), (0, 63)], "2 rows tall on 64-row boards"
+    frame_recorder["lines"].clear()
+    attraction_mod.draw_wait_bar(RecordingCanvas(), 0)
+    assert frame_recorder["lines"] == []
+
+
+def test_numeric_ride_counts_up_then_goes_static(frame_recorder):
+    ride = {"name": "Space Mountain", "waitTime": 45}
+    assert attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, 0.1) is True
+    assert attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, 5.0) is False
+    assert [text for text, _ in frame_recorder["text"][-2:]] == ["45", "Mins"]
+    assert ride["waitTime"] == 45, "the caller's ride dict is not modified"
+
+
+def test_down_ride_pulses_red_and_keeps_animating(frame_recorder):
+    ride = {"name": "Big Thunder", "waitTime": "Down 12:41"}
+    colors = []
+    for t in (0.0, attraction_mod.PULSE_PERIOD_S / 2):
+        frame_recorder["text"].clear()
+        frame_recorder["lines"].clear()
+        assert attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, t, expected=45) is True
+        text_color = next(c for text, c in frame_recorder["text"] if "Down" in text)
+        bar, tick = frame_recorder["lines"]
+        assert bar[:4] == (0, 31, 63, 31), "full width along the bottom"
+        assert tick[:4] == (31, 30, 31, 31), "the forecast tick stays"
+        assert bar[4] == tick[4] == text_color, "bar and tick blink in sync with the Down text"
+        colors.append(text_color)
+    bright, dim = colors
+    assert bright == attraction_mod.DOWN_RGB
+    assert dim[0] < bright[0] and dim[1:] == (0, 0)
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_down_ride_name_stays_centered_and_its_wait_drops(frame_recorder, monkeypatch, height):
+    # The down text used to sit just the gap under the name; it gets the same drop as a normal wait.
+    ride = {"name": "Space Mountain", "waitTime": "Down 15"}
+    canvas = RecordingCanvas(64, height)
+    reserve, _ = attraction_mod.bar_layout(canvas, ride)
+    centered = _baselines(monkeypatch, lambda: attraction_mod.render_attraction_info(canvas, ride))
+    framed = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(canvas, ride, 0))
+    assert framed[0] == centered[0], "the name stays where it was before the red line was added"
+    assert framed[-1] > centered[-1], "the down text drops into the spare rows"
+    assert framed[-1] + 1 <= height - reserve, "still clear of the bar"
+
+
+def test_a_long_down_name_moves_up_rather_than_run_into_the_bar(frame_recorder, monkeypatch):
+    # 4 lines + gap centered on 32 rows ends at row 30, into the 3 rows kept for the bar.
+    ride = {"name": "Test Track Presented by Chevrolet", "waitTime": "Down"}
+    canvas = RecordingCanvas(64, 32)
+    reserve, gap = attraction_mod.bar_layout(canvas, ride)
+    assert reserve and not attraction_mod.centered_clears_bar(canvas, ride, reserve, gap)
+    above = _baselines(monkeypatch, lambda: attraction_mod.render_attraction_info(canvas, ride, reserve_bottom=reserve, gap=gap))
+    framed = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(canvas, ride, 0))
+    assert framed == above
+
+
+def test_down_bar_is_two_rows_on_64_row_boards(frame_recorder):
+    attraction_mod.draw_attraction_frame(RecordingCanvas(64, 64), {"name": "Big Thunder", "waitTime": "Down"}, 0)
+    assert [l[:4] for l in frame_recorder["lines"]] == [(0, 63, 63, 63), (0, 62, 63, 62)], "no tick without a forecast"
+
+
+def test_boarding_group_ride_is_static(frame_recorder):
+    ride = {"name": "TRON", "waitTime": "Groups 40-55"}
+    assert attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, 0) is False
+    assert frame_recorder["lines"] == []
+
+
+def test_forecast_tick_marks_the_expected_wait_and_stands_taller(frame_recorder):
+    attraction_mod.draw_wait_bar(RecordingCanvas(64, 32), 30, expected=45)
+    bar, tick = frame_recorder["lines"]
+    assert bar[:4] == (0, 31, 20, 31)
+    assert tick[:4] == (31, 30, 31, 31), "at 45/90 of the width, 1px taller than the bar"
+    assert tick[4] == attraction_mod.FORECAST_TICK_RGB
+
+
+@pytest.mark.parametrize("expected, x", [(0, 0), (500, 63)])
+def test_forecast_tick_stays_on_the_board(frame_recorder, expected, x):
+    attraction_mod.draw_wait_bar(RecordingCanvas(64, 64), 30, expected=expected)
+    tick = frame_recorder["lines"][-1]
+    assert tick[0] == tick[2] == x
+    assert (tick[1], tick[3]) == (61, 63)
+
+
+def test_no_tick_without_a_forecast(frame_recorder):
+    attraction_mod.draw_wait_bar(RecordingCanvas(64, 32), 30)
+    assert len(frame_recorder["lines"]) == 1
+
+
+def test_a_name_that_only_just_overflows_keeps_the_bar_by_tightening(frame_recorder):
+    # 4 name lines + the wait is 3px over on a 32-row board with normal spacing, but
+    # fits once the blank row and the name/wait gap are dropped.
+    long_ride = {"name": "Meet Beloved Disney Pals at Mickey and Friends", "waitTime": 35}
+    canvas = RecordingCanvas(64, 32)
+    reserve, gap = attraction_mod.bar_layout(canvas, long_ride)
+    assert reserve == attraction_mod.bar_reserve_rows(32, tight=True)
+    assert gap == 0, "the gap above the wait is given up to make room"
+    assert attraction_mod.text_fits_above_bar(canvas, long_ride)
+    attraction_mod.draw_attraction_frame(canvas, long_ride, 5.0, expected=40)
+    assert len(frame_recorder["lines"]) == 2, "bar and tick are drawn"
+
+
+def test_roomy_names_keep_normal_spacing(frame_recorder):
+    canvas = RecordingCanvas(64, 32)
+    reserve, gap = attraction_mod.bar_layout(canvas, {"name": "Space Mountain", "waitTime": 35})
+    assert reserve == attraction_mod.bar_reserve_rows(32), "no tightening when there's room"
+    assert gap == attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT
+
+
+def _baselines(monkeypatch, draw):
+    ys = []
+    monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: ys.append(y)))
+    draw()
+    return sorted(set(ys))  # draw_text draws word by word
+
+
+def test_spare_rows_drop_the_wait_but_leave_the_name(frame_recorder, monkeypatch):
+    ride = {"name": "Space Mountain", "waitTime": 35}
+    reserve = attraction_mod.bar_reserve_rows(32)
+    # 2 lines of 6px + gap 2 above a 3-row reserve leave 15 spare rows: 7 above the
+    # name as before, and the wait drops half of the 8 below it.
+    name_y, wait_y = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0))
+    assert name_y == 5 + 7, "the name sits where plain centering puts it"
+    assert wait_y == name_y + 6 + attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT + 4
+    assert wait_y + 1 <= 32 - reserve, "still clear of the bar"
+
+
+def test_a_full_board_does_not_drop_the_wait(frame_recorder, monkeypatch):
+    # Tight layout: no spare rows, so name and wait sit exactly as they did.
+    ride = {"name": "Meet Beloved Disney Pals at Mickey and Friends", "waitTime": 35}
+    ys = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0))
+    assert [b - a for a, b in zip(ys, ys[1:])] == [6] * 4
+
+
+def test_names_too_long_even_when_tightened_drop_the_bar(frame_recorder):
+    # 6 name lines can't fit however the spacing is squeezed; the text wins.
+    huge = {"name": " ".join(["Halloween"] * 9), "waitTime": 35}
+    canvas = RecordingCanvas(64, 32)
+    assert attraction_mod.bar_layout(canvas, huge) == (0, attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT)
+    assert not attraction_mod.text_fits_above_bar(canvas, huge)
+    attraction_mod.draw_attraction_frame(canvas, huge, 0.1, expected=40)
+    assert frame_recorder["lines"] == [], "no bar or tick"
+
+
+def test_short_names_keep_the_bar_and_move_up_to_clear_it(frame_recorder, monkeypatch):
+    ride = {"name": "Space Mountain", "waitTime": 35}
+    baselines = {}
+    for reserve in (0, attraction_mod.bar_reserve_rows(32)):
+        ys = []
+        monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: ys.append(y)))
+        attraction_mod.render_attraction_info(RecordingCanvas(64, 32), ride, reserve_bottom=reserve)
+        baselines[reserve] = min(ys)  # the name line; the wait may drop into spare rows
+    assert baselines[attraction_mod.bar_reserve_rows(32)] < baselines[0]
+    attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0, expected=40)
+    assert len(frame_recorder["lines"]) == 2, "bar and tick"
+
+
+def test_ride_names_are_drawn_with_plain_characters(frame_recorder):
+    attraction_mod.render_attraction_info(RecordingCanvas(64, 64), {"name": "Star Tours – Buzz Lightyear’s", "waitTime": 5})
+    drawn = " ".join(text for text, _ in frame_recorder["text"])
+    assert "–" not in drawn and "’" not in drawn
+    assert "Lightyear's" in drawn
+
+
+def test_scroll_pauses_scrolls_to_the_end_and_back():
+    over = 16
+    travel = over / attraction_mod.SCROLL_PX_PER_S
+    p = attraction_mod.SCROLL_PAUSE_S
+    assert attraction_mod.scroll_offset(0, over) == 0
+    assert attraction_mod.scroll_offset(p - 0.01, over) == 0
+    assert attraction_mod.scroll_offset(p + travel / 2, over) == over // 2
+    assert attraction_mod.scroll_offset(p + travel + 0.1, over) == over
+    assert attraction_mod.scroll_offset(2 * (p + travel) + 0.1, over) == 0, "repeats"
+    assert all(0 <= attraction_mod.scroll_offset(t / 30, over) <= over for t in range(300))
+
+
+def test_names_too_tall_for_the_board_scroll_and_short_ones_do_not(frame_recorder, monkeypatch):
+    long_ride = {"name": " ".join(["Halloween Party Parade"] * 6), "waitTime": 20}
+    short_ride = {"name": "Space Mountain", "waitTime": 20}
+    assert attraction_mod.overflow_rows(RecordingCanvas(64, 32), long_ride) > 0
+    assert attraction_mod.overflow_rows(RecordingCanvas(64, 32), short_ride) == 0
+    tops = []
+    monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: tops.append(y)))
+    p = attraction_mod.SCROLL_PAUSE_S
+    for t in (0, p + 1.0):
+        tops.clear()
+        assert attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), long_ride, t) is True, "keeps animating"
+        first = tops[0]
+        if t == 0:
+            start = first
+    assert first < start, "text has moved up"
+    assert attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), short_ride, 5.0) is False
+
+
+def test_meet_and_greet_venue_is_dropped_when_the_gap_would_push_it_off_the_board(frame_recorder):
+    # 8px lines on a 64-row board: "Meet" + five one-per-line words + "at Venue" is 7 lines,
+    # and 7 name lines + the wait + the gap is 66px, so the venue has to go.
+    loaded_fonts["ride"] = DummyFont(width=4, height=8)
+    loaded_fonts["waittime"] = DummyFont(width=4, height=8)
+    words = " ".join(["Abcdefghijklmn"] * 5)
+    ride = {"name": f"Meet {words} at Venue", "waitTime": 10}
+    lines, name_lines, *_ = attraction_mod._layout(RecordingCanvas(64, 64), ride)
+    assert not any("Venue" in line for line in name_lines)
+    assert attraction_mod.overflow_rows(RecordingCanvas(64, 64), ride) == 0, "fits without scrolling"
+
+
+def test_ride_name_is_white_and_wait_is_cyan(frame_recorder, monkeypatch):
+    monkeypatch.setitem(attraction_mod.color_dict, "white", "WHITE")
+    monkeypatch.setitem(attraction_mod.color_dict, "wait", "CYAN")
+    monkeypatch.setitem(attraction_mod.color_dict, "down", "RED")
+    attraction_mod.render_attraction_info(RecordingCanvas(64, 32), {"name": "Space Mountain", "waitTime": 45})
+    colors = dict(frame_recorder["text"])
+    assert colors["Space"] == colors["Mountain"] == "WHITE"
+    assert colors["45"] == colors["Mins"] == "CYAN"
+    frame_recorder["text"].clear()
+    attraction_mod.render_attraction_info(RecordingCanvas(64, 32), {"name": "Big Thunder", "waitTime": "Down 100"})
+    colors = dict(frame_recorder["text"])
+    assert colors["Big"] == "WHITE" and colors["Down"] == colors["100"] == "RED"
+
+
+def test_drawing_ride_frames_logs_nothing(frame_recorder, monkeypatch):
+    # Drawn 30 times a second while a screen is up; disney.py logs each screen once instead.
+    from utils import debug
+    logged = []
+    for level in ("log", "info", "warning", "error"):
+        monkeypatch.setattr(debug, level, lambda *a, _l=level, **k: logged.append(_l))
+    ride = {"name": "Space Mountain", "waitTime": 45, "status": "OPERATING"}
+    for i in range(10):
+        attraction_mod.draw_attraction_frame(RecordingCanvas(), ride, i / 30, expected=40)
+    assert logged == []

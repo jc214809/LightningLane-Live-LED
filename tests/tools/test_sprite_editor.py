@@ -1,0 +1,498 @@
+import importlib.util
+import json
+import os
+import re
+import shutil
+import subprocess
+
+import pytest
+
+import display.animation as animation
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_spec = importlib.util.spec_from_file_location("build_sprite_editor", os.path.join(ROOT, "tools", "build_sprite_editor.py"))
+builder = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(builder)
+
+NODE = shutil.which("node")
+needs_node = pytest.mark.skipif(NODE is None, reason="the editor's JS core runs under Node")
+
+
+@pytest.fixture(scope="module")
+def sprites():
+    return builder.collect_sprites(animation)
+
+
+def test_collects_both_slinky_halves_with_their_palette(sprites):
+    for attr in ("FRONT_ART", "REAR_ART"):
+        s = sprites[f"slinky/{attr}"]
+        assert s["rows"] == getattr(animation.SlinkyReveal, attr)
+        assert s["palette_attr"] == "COLORS"
+        assert s["colors"]["K"] == list(animation.SlinkyReveal.COLORS["K"])
+
+
+def test_fixed_size_sprites_carry_their_scale(sprites):
+    assert sprites["genie/LAMP_ART"]["scale"] == animation.GenieReveal.LAMP_SCALE == 1
+    assert sprites["genie/ART"]["scale"] is None, "Genie himself doubles on 64-row boards"
+
+
+def test_collects_the_landmark_art_a_module_lists_for_the_editor(sprites):
+    from display.landmarks import santa_train
+    assert sprites["santa_train/ENGINE_64"]["rows"] == santa_train.ENGINE_64
+    assert sprites["santa_train/SANTA_WAVE_64[1]"]["rows"] == santa_train.SANTA_WAVE_64[1]
+    assert sprites["santa_train/ENGINE_32"]["scale"] == 1, "drawn as is, not doubled"
+    assert sprites["santa_train/ENGINE_64"]["colors"]["R"] == list(santa_train.COLORS["R"])
+
+
+class _Generated:
+    """A character with one named pose, one built at import time, and a placeholder key in its base art."""
+    _BASE = ["K##K", "KKKK"]
+    POSE_ART = ["KWPK", "KKKK"]
+    art = [POSE_ART, ["KPWK", "KKKK"]]
+    colors = {"K": (0, 0, 0), "W": (255, 255, 255), "P": (60, 60, 90)}
+
+
+def _generated_sprites():
+    return builder.collect_sprites(type("Animation", (), {"TRANSITIONS": {"gen": _Generated}}))
+
+
+def test_aliases_appear_once_and_animation_frames_are_split(sprites):
+    assert "dumbo/EARS_UP" in sprites and "dumbo/art" not in sprites, "art = EARS_UP is one sprite"
+    generated = _generated_sprites()
+    assert "gen/POSE_ART" in generated and "gen/art[0]" not in generated, "a named pose in art appears once, by name"
+    assert "gen/art[1]" in generated, "an unnamed frame is editable too"
+    assert {s["character"] for s in sprites.values()} >= {"tink", "buzz", "genie", "mickey", "ralph", "dumbo"}
+
+
+def test_every_key_has_a_color_and_placeholders_are_flagged(sprites):
+    for sid, s in sprites.items():
+        used = {ch for row in s["rows"] for ch in row} - {"."}
+        assert used <= set(s["colors"]), sid
+    base = _generated_sprites()["gen/_BASE"]
+    assert base["unmapped"] == ["#"], "a slot filled at draw time is flagged"
+    assert base["colors"]["#"] == builder.UNMAPPED_RGB
+
+
+def test_checked_in_editor_matches_the_current_art(sprites):
+    with open(builder.EDITOR, encoding="utf-8") as f:
+        embedded = builder.embedded_sprites(f.read())
+    assert embedded == json.loads(json.dumps(sprites)), \
+        "character art changed: run python3 tools/build_sprite_editor.py"
+
+
+def test_build_rewrites_only_the_sprite_block(tmp_path):
+    page = tmp_path / "editor.html"
+    page.write_text(f"<p>before</p><script>const S = {builder.BEGIN}{{}}{builder.END};</script><p>after</p>")
+    count = builder.build(str(page), animation)
+    html = page.read_text()
+    assert count == len(builder.embedded_sprites(html)) > 10
+    assert html.startswith("<p>before</p><script>const S = ") and html.endswith(";</script><p>after</p>")
+    builder.build(str(page), animation)
+    assert page.read_text() == html, "rebuilding unchanged art is a no-op"
+
+
+def _run_core(body):
+    with open(builder.EDITOR, encoding="utf-8") as f:
+        core = re.search(r'<script id="core">(.*?)</script>', f.read(), re.S).group(1)
+    # The script goes in on stdin: with every sprite embedded it's past Linux's limit for one argument.
+    out = subprocess.run([NODE], input=core + "\n" + body, capture_output=True, text=True, timeout=30)
+    assert out.returncode == 0, out.stderr
+    return json.loads(out.stdout)
+
+
+@needs_node
+def test_export_then_import_round_trips_every_sprite(sprites):
+    result = _run_core(f"""
+        const sprites = {json.dumps(sprites)}, bad = [];
+        for (const [id, s] of Object.entries(sprites)) {{
+          const p = parseSprite(exportArt(s.rows, s.attr) + "\\n" + exportColors(s.colors, s.palette_attr));
+          if (JSON.stringify(p.rows) !== JSON.stringify(s.rows) || JSON.stringify(p.colors) !== JSON.stringify(s.colors)
+              || p.name !== s.attr || p.paletteName !== s.palette_attr) bad.push(id);
+        }}
+        console.log(JSON.stringify(bad));""")
+    assert result == []
+
+
+@needs_node
+def test_import_reads_json_bare_rows_and_art_without_colors():
+    result = _run_core("""
+        console.log(JSON.stringify([
+          parseSprite('{"rows": ["AB", ".A"], "colors": {"A": [1, 2, 3]}}'),
+          parseSprite("..K..\\n.KYK.\\nKYYYK"),
+          parseSprite('HEAD = [\\n    "K.K",\\n    ".K.",\\n]'),
+        ]));""")
+    as_json, bare, art_only = result
+    assert as_json["rows"] == ["AB", ".A"] and as_json["colors"] == {"A": [1, 2, 3]}
+    assert bare["rows"] == ["..K..", ".KYK.", "KYYYK"]
+    assert art_only == {"rows": ["K.K", ".K."], "colors": None, "name": "HEAD", "paletteName": None}
+
+
+@needs_node
+def test_contrast_check_catches_a_feature_lost_in_its_outline():
+    """Slinky's first nose: dark on the muzzle, but touching an outline it matched."""
+    result = _run_core("""
+        const colors = {K: [35, 22, 14], N: [28, 24, 24], T: [232, 196, 138]};
+        console.log(JSON.stringify([
+          contrastIssues(["TKT", "TNT", "TTT"], colors),
+          contrastIssues(["TTT", "TNT", "TTT"], colors),
+        ]));""")
+    lost, fine = result
+    assert {"kind": "touch", "a": "K", "b": "N", "distance": 19} in lost
+    assert not [i for i in fine if i["kind"] == "touch"], "the same nose ringed by muzzle is fine"
+    assert any(i["kind"] == "dark" and i["a"] == "K" for i in lost), "and K sinks into the black board"
+
+
+@needs_node
+def test_fill_color_conversion_and_nearest_key():
+    result = _run_core("""
+        const cells = ["..K", ".KK", "..."].map(r => [...r]);
+        const n = floodFill(cells, 0, 0, "Y");
+        console.log(JSON.stringify({
+          n, cells: cells.map(r => r.join("")),
+          same: floodFill(cells, 0, 0, "Y"),
+          rgb: [[250, 200, 60], [46, 28, 16], [0, 0, 0], [255, 255, 255]].map(c => hsvToRgb(...rgbToHsv(c))),
+          hex: [rgbToHex([250, 200, 60]), hexToRgb("#fac83c"), hexToRgb("nope")],
+          nearest: nearestKey([240, 190, 70], {K: [46, 28, 16], Y: [250, 200, 60]}),
+        }));""")
+    assert result["n"] == 6 and result["cells"] == ["YYK", "YKK", "YYY"]
+    assert result["same"] == 0, "filling a region with its own key does nothing"
+    assert result["rgb"] == [[250, 200, 60], [46, 28, 16], [0, 0, 0], [255, 255, 255]]
+    assert result["hex"] == ["#fac83c", [250, 200, 60], None]
+    assert result["nearest"] == "Y"
+
+
+# A heart in red with a blue centre: what the synthetic images below draw, one letter per cell.
+_PATTERN = [
+    ".RR.RR.",
+    "RRRRRRR",
+    "RRRBRRR",
+    ".RRRRR.",
+    "..RRR..",
+    "...R...",
+]
+_PATTERN_JS = """
+const PATTERN = %s, INK = {R: [220, 30, 40], B: [30, 60, 220]};
+// Seeded noise, so a failure reproduces.
+let seed = 7;
+const noise = amp => { seed = (seed * 1103515245 + 12345) %% 2147483648; return Math.round((seed / 2147483648 - .5) * 2 * amp); };
+function image(W, H, paint) {
+  const data = new Uint8ClampedArray(W * H * 4);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) data.set([...paint(x, y), 255], (y * W + x) * 4);
+  return data;
+}
+// A printed chart: white paper, a 1px grey line between cells, and a margin round the grid.
+function chart(P, off, cols, rows) {
+  const W = Math.ceil(off + cols * P + 9), H = Math.ceil(off + rows * P + 9);
+  const data = image(W, H, (x, y) => {
+    const cx = (x - off) / P, cy = (y - off) / P;
+    if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) return [255, 255, 255];
+    if (Math.abs(cx - Math.round(cx)) * P < .6 || Math.abs(cy - Math.round(cy)) * P < .6) return [90, 90, 90];
+    const k = (PATTERN[Math.floor(cy) - 1] || "")[Math.floor(cx) - 1];
+    return INK[k] || [255, 255, 255];
+  });
+  return { data, W, H };
+}
+// A bead photo: round beads with holes, on a grey pegboard, with sensor noise.
+function beads(P, off, cols, rows) {
+  const W = Math.ceil(off + cols * P), H = Math.ceil(off + rows * P);
+  const data = image(W, H, (x, y) => {
+    const cx = (x - off) / P, cy = (y - off) / P, r = Math.hypot(cx - Math.floor(cx) - .5, cy - Math.floor(cy) - .5);
+    const k = (PATTERN[Math.floor(cy) - 1] || "")[Math.floor(cx) - 1], base = INK[k] || [120, 120, 125];
+    const c = r < .14 || r > .47 ? [40, 40, 45] : base;
+    return c.map(v => v + noise(14));
+  });
+  return { data, W, H };
+}
+function read({ data, W, H }, options) {
+  const prof = edgeProfiles(data, W, H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+  const { offsetX, offsetY } = alignGrid(data, W, H, fx.period, fy.period, fx.offset, fy.offset);
+  const gx = gridCells(W, fx.period, offsetX), gy = gridCells(H, fy.period, offsetY);
+  const result = buildPattern(sampleCells(data, W, H, gx, gy), options);
+  return { fx, fy, gx, gy, rows: result.rows, keys: Object.keys(result.colors), colors: result.colors };
+}
+""" % json.dumps(_PATTERN)
+
+
+@needs_node
+def test_pattern_mode_reads_a_chart_with_fractional_cells_and_a_margin():
+    result = _run_core(_PATTERN_JS + "console.log(JSON.stringify(read(chart(11.5, 6, 9, 8))));")
+    for axis, cells in (("fx", 9), ("fy", 8)):
+        assert abs(result[axis]["period"] - 11.5) * cells < 1, "under a pixel of drift across the grid"
+        assert abs(result[axis]["offset"] - 6.5) < .5, "boundaries on the middle of the 1px lines"
+    assert result["rows"] == _PATTERN, "the paper is dropped and the art trimmed to the heart"
+    assert result["keys"] == ["R", "B"], "most-used first, named for their color"
+
+
+@needs_node
+def test_pattern_mode_reads_a_noisy_bead_photo():
+    result = _run_core(_PATTERN_JS + "console.log(JSON.stringify(read(beads(14, 3, 9, 8))));")
+    assert abs(result["fx"]["period"] - 14) * 9 < 1
+    assert result["rows"] == _PATTERN, "holes, gaps and noise don't change a bead's color"
+    r, g, b = result["colors"]["R"]
+    assert abs(r - 220) + abs(g - 30) + abs(b - 40) < 30
+
+
+@needs_node
+def test_build_pattern_drops_the_background_merges_shades_and_keeps_it_on_request():
+    result = _run_core("""
+        const W = [250, 250, 250], R1 = [200, 20, 20], R2 = [215, 30, 25], K = [10, 10, 10];
+        const cells = [[W, W, W, W], [W, R1, R2, W], [W, K, null, W], [W, W, W, W]];
+        console.log(JSON.stringify([
+          buildPattern(cells, {background: 60, merge: 40}),
+          buildPattern(cells, {background: 0, merge: 40}),
+          buildPattern(cells, {background: 60, merge: 10}),
+          buildPattern([[W, W], [W, W]]),
+        ]));""")
+    dropped, kept, unmerged, blank = result
+    assert dropped["rows"] == ["RR", "K."], "two close reds share a key; a transparent cell is empty"
+    assert kept["rows"][0] == "WWWW" and set(kept["colors"]) == {"W", "R", "K"}, "background 0 keeps the paper"
+    assert len(unmerged["colors"]) == 3 and set(unmerged["rows"][0]) == {"R", "r"}, "a tight merge gives each red its own key"
+    assert blank["rows"] == [], "an all-background image has nothing to apply"
+
+
+@needs_node
+def test_build_pattern_keeps_enclosed_background_and_follows_lighting():
+    result = _run_core("""
+        const W = [250, 250, 250], K = [10, 10, 10], _ = null;
+        // Mickey-style eyes: white walled in by the outline. And a board that brightens left to right.
+        const eyes = [[W, W, W, W, W], [W, K, K, K, W], [W, K, W, K, W], [W, K, K, K, W], [W, W, W, W, W]];
+        const lit = v => [v, v, v + 5], R = [220, 30, 40];
+        const board = [[lit(100), lit(115), lit(130), lit(145), lit(160)], [lit(100), R, R, R, lit(160)], [lit(100), lit(115), lit(130), lit(145), lit(160)]];
+        // Transparent round the edge: the outline touching it is art, not background.
+        const sprite = [[_, K, _], [K, R, K], [_, K, _]];
+        console.log(JSON.stringify([
+          buildPattern(eyes).rows, buildPattern(eyes, {enclosed: false}).rows,
+          buildPattern(board).rows, buildPattern(board, {enclosed: false}).rows,
+          buildPattern(sprite).rows,
+        ]));""")
+    eyes, eyes_all, board, board_global, sprite = result
+    assert eyes == ["KKK", "KWK", "KKK"], "the walled-in white stays lit"
+    assert eyes_all == ["KKK", "K.K", "KKK"], "unless enclosed background is dropped too"
+    assert board == ["RRR"], "the flood follows the board as it brightens"
+    assert len(board_global[0]) > 3, "one global match leaves the bright side of the board lit"
+    assert sprite == [".K.", "KRK", ".K."]
+
+
+@needs_node
+def test_pattern_mode_stays_on_a_big_grid_to_its_far_edge():
+    result = _run_core(_PATTERN_JS + "console.log(JSON.stringify(read(chart(18.3, 20, 64, 64))));")
+    assert abs(result["fx"]["period"] - 18.3) * 64 < 1 and abs(result["fy"]["period"] - 18.3) * 64 < 1
+    assert result["rows"] == _PATTERN
+
+
+# A tilted photo: read() after straightening it the way Detect grid does.
+_TILTED_JS = _PATTERN_JS + """
+function tilted(img, deg) { const r = rotateImage(img.data, img.W, img.H, deg); return { data: r.data, W: r.W, H: r.H }; }
+function straightened(img) {
+  const turn = gridTurn(img.data, img.W, img.H), r = rotateImage(img.data, img.W, img.H, turn);
+  return { turn, ...read({ data: r.data, W: r.W, H: r.H }) };
+}
+"""
+
+
+@needs_node
+@pytest.mark.parametrize("deg", [-12, -6.5, 4, 9])
+def test_a_tilted_bead_photo_is_straightened_and_read(deg):
+    result = _run_core(_TILTED_JS + f"console.log(JSON.stringify(straightened(tilted(beads(14, 3, 9, 8), {deg}))));")
+    assert abs(result["turn"] + deg) <= .5, "turned back by the tilt, to half a degree"
+    assert abs(result["fx"]["period"] - 14) < .5 and abs(result["fy"]["period"] - 14) < .5
+    assert result["rows"] == _PATTERN
+
+
+@needs_node
+def test_a_straight_chart_or_photo_is_not_turned():
+    result = _run_core(_TILTED_JS + """
+        console.log(JSON.stringify([chart(11.5, 6, 9, 8), beads(14, 3, 9, 8), chart(18.3, 20, 64, 64)]
+          .map(i => gridTurn(i.data, i.W, i.H))));""")
+    assert result == [0, 0, 0], "no resampling, so crisp charts stay crisp"
+
+
+@needs_node
+def test_turning_maps_points_there_and_back():
+    result = _run_core("""
+        const r = rotateImage(new Uint8ClampedArray(40 * 30 * 4), 40, 30, 9.5);
+        const there = r.map(5, 7), back = r.unmap(...there), mid = r.map(20, 15);
+        console.log(JSON.stringify({ back, mid, size: [r.W, r.H] }));""")
+    assert result["back"] == pytest.approx([5, 7])
+    assert result["mid"] == pytest.approx([result["size"][0] / 2, result["size"][1] / 2]), "it turns about the middle"
+
+
+@needs_node
+def test_calibration_levels_a_row_or_column_clicked_either_way_round():
+    result = _run_core("""
+        const t = 8 * Math.PI / 180, P = 20, along = (n, ux, uy) => [100 + n * P * ux, 100 + n * P * uy];
+        const row = along(6, Math.cos(t), Math.sin(t)), col = along(5, -Math.sin(t), Math.cos(t));
+        console.log(JSON.stringify([
+          calibrateLine([100, 100], row, 0, 19), calibrateLine(row, [100, 100], 0, 19),
+          calibrateLine([100, 100], col, 0, 22), calibrateLine([100, 100], row, 4, 19),
+        ]));""")
+    for line in result[:3]:
+        assert line["turn"] == pytest.approx(-8), "turned back by the row's (or column's) tilt"
+        assert line["period"] == pytest.approx(20)
+    assert result[0]["apart"] == 6 and result[2]["apart"] == 5, "counted from the cell size found so far"
+    assert result[3]["apart"] == 4 and result[3]["period"] == pytest.approx(30), "Cells apart wins when it's filled in"
+
+
+SIMBA = os.path.join(ROOT, "docs", "references", "simba_bricks.png")
+
+
+@needs_node
+def test_the_simba_brick_photo_is_straightened_and_read(tmp_path):
+    """A real photo: studded bricks shot about 9 degrees off, on wavy paper, with a watermark."""
+    from PIL import Image
+    im = Image.open(SIMBA).convert("RGBA")
+    raw = tmp_path / "simba.rgba"
+    raw.write_bytes(im.tobytes())
+    result = _run_core(f"""
+        const data = new Uint8ClampedArray(require("fs").readFileSync({json.dumps(str(raw))}));
+        const turn = gridTurn(data, {im.width}, {im.height}), r = rotateImage(data, {im.width}, {im.height}, turn);
+        const prof = edgeProfiles(r.data, r.W, r.H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+        const {{ offsetX, offsetY }} = alignGrid(r.data, r.W, r.H, fx.period, fy.period, fx.offset, fy.offset);
+        const out = buildPattern(sampleCells(r.data, r.W, r.H, gridCells(r.W, fx.period, offsetX), gridCells(r.H, fy.period, offsetY)));
+        console.log(JSON.stringify({{ turn, fx, fy, rows: out.rows, colors: out.colors }}));""")
+    assert 8 <= result["turn"] <= 10.5, "turned clockwise by its tilt"
+    # One stud per cell, about 23 pixels apart in the photo.
+    assert 22 < result["fx"]["period"] < 24.5 and 21.5 < result["fy"]["period"] < 24.5
+    lit = [(r, c) for r, row in enumerate(result["rows"]) for c, k in enumerate(row) if k != "."]
+    assert len(lit) > 400, "Simba, not the paper: the background is dropped and he's mostly there"
+    names = {k[0].upper() for k in result["colors"]}
+    assert {"Y", "O", "R"} <= names | {"N"} and ("R" in names or "N" in names), "his yellow, orange and dark red outline"
+
+
+TS_BEADS = os.path.join(ROOT, "docs", "references", "TS_beads.jpg")
+
+
+@needs_node
+@pytest.mark.parametrize("name, box, turn, size", [
+    ("Woody", (125, 15, 385, 330), (-1, 1), (9, 13)),
+    ("Alien", (90, 355, 355, 680), (-1, 1), (11, 14)),
+    ("Buzz", (405, 380, 665, 675), (2, 4), (10, 12)),
+])
+def test_ts_bead_photo_is_read_bead_for_bead_not_by_its_holes(tmp_path, name, box, turn, size):
+    """Six Toy Story characters in fused beads, about 22 pixels apart, each with a dark hole. Round beads
+    also line up along the grid's diagonals (a third of a bead apart about 18 degrees off), which once
+    turned each character that far and read its holes and rims as tiny cells."""
+    from PIL import Image
+    im = Image.open(TS_BEADS).convert("RGBA")
+    raw = tmp_path / "beads.rgba"
+    raw.write_bytes(im.tobytes())
+    result = _run_core(f"""
+        const full = new Uint8ClampedArray(require("fs").readFileSync({json.dumps(str(raw))}));
+        const c = cropImage(full, {im.width}, {im.height}, {json.dumps(list(box))});
+        const turn = gridTurn(c.data, c.W, c.H), r = rotateImage(c.data, c.W, c.H, turn);
+        const prof = edgeProfiles(r.data, r.W, r.H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+        const {{ offsetX, offsetY }} = alignGrid(r.data, r.W, r.H, fx.period, fy.period, fx.offset, fy.offset);
+        const out = buildPattern(sampleCells(r.data, r.W, r.H, gridCells(r.W, fx.period, offsetX), gridCells(r.H, fy.period, offsetY)));
+        console.log(JSON.stringify({{ turn, fx, fy, rows: out.rows }}));""")
+    assert turn[0] <= result["turn"] <= turn[1], "straight, or turned by the tilt the photo really has"
+    assert 21.5 < result["fx"]["period"] < 23.5 and 21.5 < result["fy"]["period"] < 23.5, "one bead per cell"
+    rows = result["rows"]
+    assert abs(len(rows[0]) - size[0]) <= 2 and abs(len(rows) - size[1]) <= 1
+
+
+# A chart drawn over a picture: sky, a white cloud band and a wooden floor behind the art, grid lines only
+# round the art's cells. The heart's B cell is the sky's exact blue, and the bottom row of the heart is navy
+# with lines that barely show, like a suit.
+_OVER_PICTURE_JS = _PATTERN_JS + """
+const SKY = [30, 60, 220];
+function overPicture(P, cols, rows) {
+  const W = Math.ceil(cols * P), H = Math.ceil(rows * P);
+  const data = image(W, H, (x, y) => {
+    const cx = x / P, cy = y / P, row = Math.floor(cy) - 1, k = (PATTERN[row] || "")[Math.floor(cx) - 1];
+    const back = cy > rows - 1.5 ? [180, 120, 60] : cy > rows - 3 ? [245, 245, 245] : SKY;
+    if (!INK[k]) return back;
+    const ink = row === PATTERN.length - 1 ? [20, 25, 70] : INK[k];
+    const onLine = Math.abs(cx - Math.round(cx)) * P < .6 || Math.abs(cy - Math.round(cy)) * P < .6;
+    return onLine ? (row === PATTERN.length - 1 ? [32, 36, 80] : [90, 90, 90]) : ink;
+  });
+  return { data, W, H };
+}
+function readLined(img) {
+  const { data, W, H } = img, prof = edgeProfiles(data, W, H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+  const { offsetX, offsetY } = alignGrid(data, W, H, fx.period, fy.period, fx.offset, fy.offset);
+  const gx = gridCells(W, fx.period, offsetX), gy = gridCells(H, fy.period, offsetY), cells = sampleCells(data, W, H, gx, gy);
+  return { lined: buildPattern(cells, { lined: gridLineCells(data, W, H, gx, gy) }).rows, byColor: buildPattern(cells).rows };
+}
+"""
+
+
+@needs_node
+def test_grid_lines_only_keeps_art_that_matches_the_sky_and_drops_a_busy_backdrop():
+    result = _run_core(_OVER_PICTURE_JS + "console.log(JSON.stringify(readLined(overPicture(12, 9, 11))));")
+    shape = lambda rows: ["".join("." if k == "." else "#" for k in row) for row in rows]
+    assert shape(result["lined"]) == shape(_PATTERN), "sky, cloud and floor go; the sky-blue cell and the dark bottom stay"
+    assert result["lined"][2][3] == "B" and result["lined"][-1][3] not in "R.", "the sky-blue middle, and the navy tip as its own key"
+    assert result["byColor"] != _PATTERN, "by color alone the sky-blue cell would go with the sky"
+
+
+@needs_node
+def test_crop_image_keeps_the_box_inside_the_image():
+    result = _run_core("""
+        const data = new Uint8ClampedArray(6 * 4 * 4).map((_, i) => i);
+        const c = cropImage(data, 6, 4, [4.5, -3, 9, 2.2]);
+        console.log(JSON.stringify({ W: c.W, H: c.H, x0: c.x0, y0: c.y0, first: [...c.data.slice(0, 4)] }));""")
+    assert (result["W"], result["H"], result["x0"], result["y0"]) == (2, 3, 4, 0)
+    assert result["first"] == [16, 17, 18, 19], "starts at pixel (4, 0)"
+
+
+SHEET = os.path.join(ROOT, "docs", "references", "toy_story_4_sheet.png")
+
+
+@needs_node
+@pytest.mark.parametrize("name, box, size, cell", [
+    ("Bunny", (15, 25, 190, 285), (15, 23), 10.9),
+    ("Woody", (435, 275, 665, 590), (19, 27), 11.6),
+])
+def test_one_character_is_read_from_a_box_on_a_sheet(tmp_path, name, box, size, cell):
+    """The Toy Story 4 sheet: eleven characters, each scaled its own way, over sky, clouds, wall and floor."""
+    from PIL import Image
+    im = Image.open(SHEET).convert("RGBA")
+    raw = tmp_path / "sheet.rgba"
+    raw.write_bytes(im.tobytes())
+    result = _run_core(f"""
+        const full = new Uint8ClampedArray(require("fs").readFileSync({json.dumps(str(raw))}));
+        const {{ data, W, H }} = cropImage(full, {im.width}, {im.height}, {json.dumps(list(box))});
+        const prof = edgeProfiles(data, W, H), fx = findGrid(prof.x), fy = findGrid(prof.y);
+        const {{ offsetX, offsetY }} = alignGrid(data, W, H, fx.period, fy.period, fx.offset, fy.offset);
+        const gx = gridCells(W, fx.period, offsetX), gy = gridCells(H, fy.period, offsetY);
+        const out = buildPattern(sampleCells(data, W, H, gx, gy), {{ lined: gridLineCells(data, W, H, gx, gy) }});
+        console.log(JSON.stringify({{ turn: gridTurn(data, W, H), fx, rows: out.rows }}));""")
+    assert result["turn"] == 0, "a drawn chart isn't turned"
+    assert abs(result["fx"]["period"] - cell) < .3, "its own cell size, not the sheet's average"
+    rows = result["rows"]
+    assert abs(len(rows[0]) - size[0]) <= 1 and abs(len(rows) - size[1]) <= 1
+    lit = sum(k != "." for row in rows for k in row)
+    assert lit > .55 * size[0] * size[1], "the character, with the backdrop dropped round it"
+    corners = [rows[0][0], rows[0][-1], rows[-1][0], rows[-1][-1]]
+    assert corners.count(".") >= 2, "the sky round him is gone"
+
+
+@needs_node
+def test_find_grid_gives_up_on_an_image_too_small_for_four_cells():
+    assert _run_core("console.log(JSON.stringify(findGrid([1, 5, 1, 5, 1, 5, 1, 5, 1, 5])));") is None
+
+
+@needs_node
+def test_keep_ratio_fills_in_the_other_side_and_stops_at_64():
+    result = _run_core("""
+        console.log(JSON.stringify([
+          ratioSize(16, 13, 32, "width"), ratioSize(16, 13, 26, "height"),
+          ratioSize(16, 13, 8, "width"), ratioSize(13, 16, 64, "width"), ratioSize(1, 3, 1, "width"),
+        ]));""")
+    assert result[0] == [32, 26] and result[1] == [32, 26], "either side drives the other"
+    assert result[2] == [8, 7], "a fraction rounds to the nearest pixel"
+    assert result[3] == [52, 64], "the taller side stops at 64 and the typed one shrinks to match"
+    assert result[4] == [1, 3]
+
+
+@needs_node
+def test_fit_to_board_shrinks_both_sides_and_keeps_the_shape():
+    result = _run_core("""
+        console.log(JSON.stringify([
+          fitSize(64, 64, 64, 32), fitSize(52, 64, 64, 32), fitSize(80, 20, 64, 32), fitSize(20, 10, 64, 32), fitSize(64, 64, 32, 32),
+        ]));""")
+    assert result[0] == [32, 32], "a square on the 64x32 board shrinks both ways, not just in height"
+    assert result[1] == [26, 32]
+    assert result[2] == [64, 16], "a wide one is limited by the width instead"
+    assert result[3] == [20, 10], "art that already fits isn't enlarged"
+    assert result[4] == [32, 32]
