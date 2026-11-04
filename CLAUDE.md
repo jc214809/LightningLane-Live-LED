@@ -16,6 +16,10 @@ pytest tests/api/test_disney_api.py::test_function_name
 # Check version
 python3 version.py
 
+# Release: merge develop-beta into main, then tag main with version.py's version; the Release
+# workflow makes the GitHub release only if they match (tools/check_release_tag.py)
+git tag v2.0.0 origin/main && git push origin v2.0.0
+
 # Set up a whole board (LLL, Peloton-LED or MLB): see what it would do without changing anything
 bash board-setup.sh --dry-run --answers board.txt   # KEY=value lines; --help lists them
 

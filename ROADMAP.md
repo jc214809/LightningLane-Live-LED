@@ -1010,3 +1010,31 @@ never log the PIN. Without the keys, the page stays as it is.
 Built as `settings_page/pushover.py` and `PinGate.send_pin`, with a "PIN by Pushover" card (its
 switch turns sending off without clearing the keys). The message's `ttl` deletes it from the phone
 when the PIN runs out. A real send from a board reached the phone (2026-11-02).
+
+## 17. Updates from the settings page, with rollback
+
+An Updates card with two channels: **Releases** (GitHub releases of `vX.Y.Z` tags, newest first)
+and a **Beta** switch that follows `develop-beta`'s tip, but only to a commit whose CI passed.
+Switching from Beta to Releases stays put until a release newer than what's installed exists (no
+downgrade). Manual only to start; nightly beta updates can come once rollback has proven itself.
+Test board: TinyPi, including a deliberately broken commit to watch the auto-rollback.
+
+- Releases: built (`.github/workflows/release.yml`): a pushed `v*` tag becomes a release only if it
+  matches `version.py`. v1.1.0 and older predate the settings page, so the page lists only releases
+  from a minimum version up: the first one that has the updater, so a downgrade can't remove the
+  way back.
+- The update runs as its own process (`systemd-run --unit=lll-update`), not in the settings
+  service it replaces. Pre-flight: network, ~300 MB free, no under-voltage/throttle flags, no show
+  playing, no update running, a clean checkout.
+- Rollback point in `/var/lib/lll-update/state.json`: the commit, `pip freeze`, a copy of
+  `config.json`, and the phase. Then `git checkout --detach <sha>` and the new version's
+  `LLL-install.sh -p -m -w` (pip only if `requirements.txt` changed: a Pi Zero takes ages).
+- Health: `Restart=always` hides a crash loop, so the app writes a heartbeat (`/run/lll-health`)
+  after its first ride screen. Pass within ~5 min: heartbeat, `NRestarts` 0, port 8080 answers.
+  Fail: check out the old commit, reinstall the freeze, restore `config.json` (the page warns this
+  undoes settings saved since), restart, Pushover what failed. Keep the last 3 good commits.
+- Backstops: a boot oneshot rolls back an update a power cut stopped midway; `sudo lll-rollback`
+  over SSH; a Roll back button on the page.
+
+Order, one PR each: releases (done) → updater and heartbeat (CLI, mocked git/systemctl) → boot
+recovery and `lll-rollback` in `board-setup.sh` → the Updates card → TinyPi before merging.
