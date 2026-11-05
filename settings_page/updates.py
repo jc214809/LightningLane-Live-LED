@@ -9,7 +9,6 @@ An update restarts this service, so it runs as its own transient unit (systemd-r
 --unit=lll-update), which also means only one runs at a time: systemd refuses a second.
 """
 import os
-import re
 import subprocess
 import sys
 import threading
@@ -139,15 +138,14 @@ class Updates:
                            **found}
 
     def details(self, target):
-        """What an update to target brings: {"ref", "sha", "version" (its version.py's, or None),
+        """What an update to target brings: {"ref", "sha", "version" (from its tags, as version.py gives it, or None),
         "changes" ([PR number or None, title, release notes], newest first: Board.what_changed), "packages" (whether requirements.txt
         changes: pip runs, which takes ages on a Pi Zero)}. Only ref and sha if git can't say."""
         found = {"ref": target.ref, "sha": target.sha}
         board = self.updater.board
         try:
             head = board.head()
-            version = re.search(r'SCRIPT_VERSION\s*=\s*"([^"]+)"', board.file_at(target.sha, "version.py") or "")
-            found.update(version=version.group(1) if version else None,
+            found.update(version=board.describe(target.sha),
                          changes=[list(change) for change in board.what_changed(head, target.sha)],
                          packages=board.changed(head, target.sha, "requirements.txt"))
         except CommandFailed as e:

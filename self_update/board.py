@@ -87,6 +87,11 @@ class Board:
         """The tags on commit sha."""
         return self.git("tag", "--points-at", sha).stdout.split()
 
+    def describe(self, sha):
+        """sha's version from its tags, as version.py gives it ("2.2.0", "2.1.5-beta"), or None."""
+        done = self.git("describe", "--tags", "--match", "v[0-9]*", sha, check=False)
+        return done.stdout.strip().removeprefix("v") or None if done.returncode == 0 else None
+
     def file_at(self, sha, path):
         """path's text at commit sha, or None if it isn't there."""
         done = self.git("show", f"{sha}:{path}", check=False)

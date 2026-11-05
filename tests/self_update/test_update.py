@@ -7,7 +7,8 @@ from self_update import state as states
 from self_update import update as update_module
 from self_update.board import CommandFailed
 from self_update.github import GitHubError
-from self_update.update import BETA, RELEASES, Updater, channel_of, name_of, newest_release, parse_version
+from self_update.update import (BETA, RELEASES, Updater, beta_number, channel_of, installed_number, name_of,
+                                newest_release, parse_version, release_of)
 from utils import heartbeat
 
 OLD, NEW, BETA_TIP = "1" * 40, "2" * 40, "3" * 40
@@ -154,6 +155,18 @@ def env(tmp_path):
 def test_versions():
     assert parse_version("v2.1.0") == (2, 1, 0) == parse_version("2.1.0")
     assert parse_version("v2.1") is None and parse_version("latest") is None
+    assert parse_version("v2.1.5-beta") is None, "a Beta tag is never a release"
+
+
+def test_installed_versions_as_git_describe_gives_them():
+    assert installed_number("2.1.0") == installed_number("2.1.0-3-g1a2b3c4") == (2, 1, 0)
+    assert installed_number("2.1.5-beta") == installed_number("v2.1.5-beta-3-g1a2b3c4") == (2, 1, 5)
+    assert installed_number("latest") is None and installed_number("2.1.5-rc") is None
+    assert beta_number("2.1.5-beta") == "2.1.5"
+    assert beta_number("2.1.5-beta-3-g1a2b3c4") is None, "a commit past a Beta isn't that Beta"
+    assert beta_number("2.1.0") is None and beta_number(None) is None
+    assert release_of("2.1.5-beta") == release_of("2.1.5-beta-2-gabcdef0") == "2.1.0"
+    assert release_of("2.1.0-2-gabcdef0") == "2.1.0" and release_of("unknown") == "unknown"
 
 
 @pytest.mark.parametrize("tags, installed, expected", [
@@ -163,6 +176,9 @@ def test_versions():
     (["v2.1.0"], "2.5.0", None),  # beta ahead of every release: no downgrade
     (["v2.0.0", "v1.1.0"], "1.0.0", None),  # older than the updater: never offered
     (["v2.1.0", "junk"], "not a version", "v2.1.0"),
+    (["v2.2.0", "v2.1.0"], "2.1.5-beta", "v2.2.0"),  # a Beta counts as its number
+    (["v2.1.0"], "2.1.5-beta-3-g1a2b3c4", None),  # older than it: no downgrade
+    (["v2.2.0", "v2.1.5-beta"], "2.1.0", "v2.2.0"),
 ])
 def test_newest_release(tags, installed, expected):
     assert newest_release(tags, installed) == expected
@@ -334,6 +350,11 @@ def test_a_commits_channel(env, monkeypatch):
 def test_a_rollback_point_from_before_channels_is_named_by_its_version():
     assert name_of({"sha": OLD, "version": "2.0.0"}) == "2.0.0 (1111111)"
     assert name_of({"sha": OLD, "version": "2.0.0", "channel": "beta"}) == "Beta 1111111"
+
+
+def test_a_beta_rollback_point_is_named_by_its_number_when_it_was_exactly_one():
+    assert name_of({"sha": OLD, "version": "2.1.5-beta", "channel": "beta"}) == "Beta 2.1.5"
+    assert name_of({"sha": OLD, "version": "2.1.5-beta-2-g1111111", "channel": "beta"}) == "Beta 1111111"
 
 
 def test_a_crash_loop_rolls_back_without_waiting_out_the_window(env):

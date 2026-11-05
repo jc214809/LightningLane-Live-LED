@@ -1,5 +1,5 @@
-"""What GitHub says is available: the releases (vX.Y.Z tags that tools/check_release_tag.py let
-through) and develop-beta's tip with its CI result. Unauthenticated (60 calls an hour per board),
+"""What GitHub says is available: the releases (vX.Y.Z tags, made by .github/workflows/auto-tag.yml
+when develop-beta merges into main) and develop-beta's tip with its CI result. Unauthenticated (60 calls an hour per board),
 which is plenty for updates started by hand: one check is two or three calls.
 """
 import json

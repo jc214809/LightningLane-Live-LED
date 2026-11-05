@@ -21,8 +21,8 @@ class FakeBoard:
             raise self.log
         return self.log
 
-    def file_at(self, sha, path):
-        return 'SCRIPT_NAME = "x"\nSCRIPT_VERSION = "2.2.0"\n' if path == "version.py" else None
+    def describe(self, sha):
+        return "2.2.0"
 
     def changed(self, old, new, path):
         return path == "requirements.txt"
