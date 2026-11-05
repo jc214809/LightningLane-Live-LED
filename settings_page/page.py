@@ -13,7 +13,8 @@ from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_n
 from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
 from self_update.github import FAILED, PASSED, REPO, RUNNING
-from self_update.update import BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, WOULD_UPDATE, name_of
+from self_update.update import (BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, WOULD_UPDATE, beta_number, name_of,
+                                release_of)
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
 # What a save says, by Settings.restart_app's outcome.
@@ -914,19 +915,24 @@ def _pr_link(number):
     return f'<a href="https://github.com/{REPO}/pull/{int(number)}" target="_blank" rel="noopener">#{int(number)}</a>'
 
 
+def _beta_name(version, sha):
+    """A Beta by its number when it's exactly one (v2.1.5-beta: "Beta 2.1.5"), else by its commit."""
+    number = beta_number(version)
+    return f"Beta {escape(number)}" if number else f'Beta <span class="mono">{_short(sha)}</span>'
+
+
 def _installed_name(view):
-    """What's installed, as the card names it: a Beta build by its commit (its version.py still says
-    the release it grew from, which reads like that release), else its version."""
+    """What's installed, as the card names it: a Beta by its number or commit, else its version."""
     if view.get("installed_channel") == BETA:
-        return f'Beta <span class="mono">{_short(view["sha"])}</span>'
+        return _beta_name(view["version"], view["sha"])
     return escape(str(view["version"]))
 
 
 def _found_name(found):
     """What a check found (or an update is installing), as the card names it: develop-beta's tip by
-    its commit, a release by its version, else its ref and commit."""
+    its number or commit, a release by its version, else its ref and commit."""
     if found.get("ref") == BETA_BRANCH:
-        return f'Beta <span class="mono">{_short(found.get("sha"))}</span>'
+        return _beta_name(found.get("version"), found.get("sha"))
     if found.get("version"):
         return escape(str(found["version"]))
     return f'{escape(str(found.get("ref")))} {_short(found.get("sha"))}'
@@ -1003,7 +1009,7 @@ def updates_card(view, started=None):
     where = f"on {escape(view['branch'])}" if view["branch"] else "as installed by an update"
     if view.get("installed_channel") == BETA:
         installed = (f'<p><strong>{_installed_name(view)}</strong></p><p class="hint">A Beta (test) version '
-                     f'{where}, newer than release {escape(str(view["version"]))}</p>')
+                     f'{where}, newer than release {escape(release_of(view["version"]))}</p>')
     else:
         installed = (f'<p><strong>{escape(str(view["version"]))}</strong> <span class="mono">{_short(view["sha"])}'
                      f'</span></p><p class="hint">{where}</p>')

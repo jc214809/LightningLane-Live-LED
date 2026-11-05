@@ -1,0 +1,54 @@
+name: Auto tag
+
+# Versions are tags, never commits (tools/auto_tag.py): each pull request merged into develop-beta
+# tags its merge vX.Y.N-beta, and develop-beta merged into main tags main's merge vX.(Y+1).0 and
+# makes its GitHub release here, in the same job (a tag pushed with GITHUB_TOKEN starts no
+# workflow). The settings page's updater lists releases; version.py reads the tags.
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - develop-beta
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    if: >-
+      github.event.pull_request.merged == true && (github.event.pull_request.base.ref == 'develop-beta'
+      || github.event.pull_request.head.ref == 'develop-beta')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0  # every tag and merge, for the next number and the release notes
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Tag the merge
+        id: tag
+        env:
+          KIND: ${{ github.event.pull_request.base.ref == 'main' && 'release' || 'beta' }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          tag=$(python3 tools/auto_tag.py "$KIND" "$SHA" --notes "$RUNNER_TEMP/notes.md")
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create the release
+        if: github.event.pull_request.base.ref == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG already has a release"
+          else
+            gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          fi

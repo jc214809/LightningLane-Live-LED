@@ -136,7 +136,7 @@ That should be it! Your latest version should now be working with whatever new f
 
 #### Version Information
 
-You can check the version information for your installation of LightningLane-Live-LED by running `python3 version.py`.
+You can check the version information for your installation of LightningLane-Live-LED by running `python3 version.py`. It reads the version from git's tags (`git fetch --tags` if it looks old): `2.1.0` is a release, `2.1.5-beta` a Beta, and `-3-g1a2b3c4` on the end means three commits past it.
 
 The latest version of the software is available [here](https://github.com/jc214809/LightningLane-Live-LED/releases).
 

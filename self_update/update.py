@@ -79,9 +79,37 @@ def parse_version(text):
     return tuple(int(n) for n in found.groups()) if found else None
 
 
+# What version.py gives (git describe without the "v"): "2.1.0", "2.1.5-beta", or either with
+# "-3-g1a2b3c4" for three commits past it.
+DESCRIBED = re.compile(r"v?(\d+)\.(\d+)\.(\d+)(-beta)?(?:-\d+-g[0-9a-f]+)?")
+
+
+def installed_number(text):
+    """(major, minor, patch) of an installed version as version.py gives it, a Beta counting as its
+    number (2.1.5-beta is newer than v2.1.0, older than v2.2.0), or None."""
+    found = DESCRIBED.fullmatch(str(text).strip())
+    return tuple(int(n) for n in found.groups()[:3]) if found else None
+
+
+def beta_number(text):
+    """"2.1.5" for exactly the Beta v2.1.5-beta (not a commit past it), else None."""
+    found = DESCRIBED.fullmatch(str(text).strip())
+    return ".".join(found.groups()[:3]) if found and found.group(4) and found.group(0).endswith("-beta") else None
+
+
+def release_of(text):
+    """The release a version grew from: X.Y.0 for a Beta (Betas count up from their release), else
+    its X.Y.Z; text itself if it isn't a version."""
+    found = DESCRIBED.fullmatch(str(text).strip())
+    if not found:
+        return str(text)
+    major, minor, patch, beta = found.groups()
+    return f"{major}.{minor}.0" if beta else f"{major}.{minor}.{patch}"
+
+
 def newest_release(tags, installed):
     """The newest release tag at least MIN_RELEASE and newer than the installed version, or None."""
-    current = parse_version(installed) or (0, 0, 0)
+    current = installed_number(installed) or (0, 0, 0)
     found = [(v, tag) for tag in tags if (v := parse_version(tag)) and v >= MIN_RELEASE and v > current]
     return max(found)[1] if found else None
 
@@ -105,18 +133,20 @@ def channel_of(board, sha, branch, record):
 
 
 def name_of(old):
-    """A rollback point (state.json's "from") as people read it: a Beta by its commit (its version.py
-    still says the release it grew from, which reads like that release), else its version and commit."""
+    """A rollback point (state.json's "from") as people read it: a Beta by its number when it was
+    exactly one, else by its commit; a release by its version and commit."""
     sha = str(old.get("sha") or "?")[:7]
-    return f"Beta {sha}" if old.get("channel") == BETA else f"{old.get('version')} ({sha})"
+    if old.get("channel") == BETA:
+        return f"Beta {beta_number(old.get('version')) or sha}"
+    return f"{old.get('version')} ({sha})"
 
 
 class Updater:
     def __init__(self, board, state=None, gh=github, installed_version=None, config_path=None,
                  heartbeat_path=None, notify=None, clock=time.time, sleep=time.sleep):
-        from version import SCRIPT_VERSION
+        from version import version
         self.board, self.state, self.gh = board, state or states.State(), gh
-        self.installed_version = installed_version or SCRIPT_VERSION
+        self.installed_version = installed_version or version(board.app_dir)
         self.config_path = config_path or os.path.join(board.app_dir, "config.json")
         self.heartbeat_path, self.clock, self.sleep = heartbeat_path, clock, sleep
         self.notify = notify or self._pushover

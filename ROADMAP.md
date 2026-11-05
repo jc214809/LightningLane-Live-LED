@@ -1019,8 +1019,11 @@ Switching from Beta to Releases stays put until a release newer than what's inst
 downgrade). Manual only to start; nightly beta updates can come once rollback has proven itself.
 Test board: TinyPi, including a deliberately broken commit to watch the auto-rollback.
 
-- Releases: built (`.github/workflows/release.yml`): a pushed `v*` tag becomes a release only if it
-  matches `version.py`. v1.1.0 and older predate the settings page, so the page lists only releases
+- Releases: built, by tags only (`.github/workflows/auto-tag.yml`, `tools/auto_tag.py`; 2026-11-04):
+  each PR merged into develop-beta tags its merge `vX.Y.N-beta`, and develop-beta merged into main
+  tags `vX.(Y+1).0` and makes the release, with the PRs' release notes. No workflow commits (a
+  GITHUB_TOKEN push gets no CI run, and Beta installs only a tip whose CI passed); `version.py`
+  reads `git describe`. The first release is v2.1.0. v1.1.0 and older predate the settings page, so the page lists only releases
   from a minimum version up: the first one that has the updater, so a downgrade can't remove the
   way back.
 - The update runs as its own process (`systemd-run --unit=lll-update`), not in the settings
@@ -1074,7 +1077,7 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
   ("the app crashed"); `sudo systemctl stop` instead fails the health window after 5 min ("the app
   isn't running"). Then `sudo venv/bin/python3 -m self_update status` says `rolled_back` (without
   sudo it can't read state.json and says so), `git log -1` is the old commit, and the card's Last
-  rollback says why ("Rolled back to Beta 0dddb41", not version.py's release). A power cut during
+  rollback says why ("Rolled back to Beta 2.1.5", or "Beta 0dddb41" for an untagged commit). A power cut during
   "Installing the new version" checks `lll-update-recover` at the next boot.
 
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and

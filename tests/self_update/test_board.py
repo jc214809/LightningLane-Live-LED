@@ -77,6 +77,14 @@ def test_tags_at_lists_a_commits_tags(checkout):
     assert board.tags_at("abc") == []
 
 
+def test_describe_gives_a_commits_version_from_its_tags(checkout):
+    board, run = _board(checkout, {("git", "describe"): "v2.1.5-beta\n"})
+    assert board.describe("abc") == "2.1.5-beta"
+    assert run.args() == [["git", "describe", "--tags", "--match", "v[0-9]*", "abc"]]
+    board, _ = _board(checkout, {("git", "describe"): (128, "")})
+    assert board.describe("abc") is None, "no tag behind it"
+
+
 def test_changes_list_tracked_files_only(checkout):
     board, run = _board(checkout, {("git", "status"): " M disney.py\n"})
     assert board.changes() == [" M disney.py"]

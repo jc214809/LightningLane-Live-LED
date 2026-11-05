@@ -357,6 +357,17 @@ def test_a_beta_build_shows_as_beta_not_as_the_release_it_grew_from():
     assert '<strong>Beta <span class="mono">aaaaaaa</span> \u2192 2.1.0</strong>' in html
 
 
+def test_a_tagged_beta_shows_by_its_number():
+    html = _updates(installed_channel="beta", version="2.1.5-beta")
+    assert "<strong>Beta 2.1.5</strong>" in html and "newer than release 2.1.0" in html
+    html = _updates(installed_channel="beta", version="2.1.5-beta-2-gaaaaaaa")
+    assert '<strong>Beta <span class="mono">aaaaaaa</span></strong>' in html, "past a Beta: by its commit"
+    found = {"channel": "beta", "result": "would_update", "message": "m", "ok": True, "at": 0,
+             "ref": "develop-beta", "sha": "b" * 40, "version": "2.1.6-beta", "changes": []}
+    html = _updates(installed_channel="beta", version="2.1.5-beta", check=found, channel="beta")
+    assert "<strong>Beta 2.1.5 \u2192 Beta 2.1.6</strong>" in html
+
+
 def test_each_pull_request_shows_its_notes_under_its_title_and_the_behind_the_scenes_ones_together():
     found = {"channel": "beta", "result": "would_update", "message": "m", "ok": True, "at": 0,
              "ref": "develop-beta", "sha": "b" * 40, "changes": [
