@@ -29,6 +29,7 @@ class Board:
         (self.root / "etc/hosts").write_text("127.0.0.1\tlocalhost\n127.0.1.1\traspberrypi\n")
         self.command("hostname", "echo raspberrypi")
         self.command("getent", "exit 2")  # no passwd entry: the home folder is $HOME
+        self.command("tailscale", "exit 1")  # never this machine's own: only asked once installed, and logged out
 
     def boot(self, name, text):
         (self.root / "boot/firmware" / name).write_text(text)
@@ -444,6 +445,91 @@ def test_wifi_setup_only_needs_the_pi_and_sudo(board):
     result = board.run_file("", "", "--wifi-setup-only", dry_run=False)
     assert result.returncode != 0
     assert "run this on the Pi" in result.stderr or "sudo" in result.stderr
+
+
+def tailscale_installed(board, running=False):
+    tailscale = board.root / "usr/bin/tailscale"
+    tailscale.parent.mkdir(parents=True, exist_ok=True)
+    tailscale.write_text("")
+    tailscale.chmod(0o755)
+    state = "Running" if running else "NeedsLogin"
+    board.command("tailscale", f"""[ "$1 $2" = "status --json" ] && echo '{{\n  "BackendState": "{state}",'""")
+
+
+FAKE_TAILSCALE_KEY = "tskey-" + "auth-example-notreal"  # plain words: secret scanners flag random-looking keys
+
+
+TAILSCALE_STEPS = ["+ curl -fsSL -o /tmp/tailscale-install.sh https://tailscale.com/install.sh",
+                   "+ sh /tmp/tailscale-install.sh", "+ rm -f /tmp/tailscale-install.sh"]
+
+
+@pytest.mark.parametrize("app, unit_name", [("lll", "LightningLane-Live-LED.service"),
+                                            ("peloton", "peloton-led.service"), ("mlb", "mlb-led-scoreboard.service")])
+def test_every_board_installs_tailscale_and_joins_from_a_link_last(board, app, unit_name):
+    out = board.ok(BOARD_NAME="TinyPi", APP=app)
+    assert "Tailscale     joins from a link it prints at the end, Tailscale SSH on" in out
+    at = [out.index(step) for step in [*TAILSCALE_STEPS, "+ tailscale up --ssh --timeout=10m\n"]]
+    assert at == sorted(at)
+    assert out.index(f"systemctl restart {unit_name}") < at[0], "the app runs while the login link waits"
+    assert "open the link it prints to add TinyPi" in out
+    assert "auth-key" not in out
+
+
+def test_a_tailscale_auth_key_joins_from_a_file_and_is_never_shown(board):
+    key = FAKE_TAILSCALE_KEY
+    out = board.ok(BOARD_NAME="TinyPi", APP="lll", TAILSCALE_AUTHKEY=key)
+    assert key not in out
+    assert "Tailscale     joins with the auth key" in out
+    key_file = f"{board.root}/run/board-setup-tailscale.key"
+    assert f"+ write {key_file} (mode 600):\n    ********\n" in out
+    steps = [key_file, "+ tailscale up --ssh --timeout=10m --auth-key=file:/run/board-setup-tailscale.key\n",
+             f"+ rm -f {key_file}\n"]
+    at = [out.index(step) for step in steps]
+    assert at == sorted(at)
+    assert "open the link" not in out
+
+
+def test_a_bad_tailscale_auth_key_is_refused_without_showing_it(board):
+    result = board.run(BOARD_NAME="TinyPi", APP="lll", TAILSCALE_AUTHKEY="hunter2-not-a-key")
+    assert result.returncode != 0
+    assert "isn't a Tailscale auth key" in result.stderr
+    assert "hunter2" not in result.stderr + result.stdout and "apt-get" not in result.stdout
+
+
+def test_a_board_already_on_the_tailnet_just_gets_tailscale_ssh(board):
+    tailscale_installed(board, running=True)
+    out = board.ok(BOARD_NAME="Disneypi", APP="lll", TAILSCALE_AUTHKEY=FAKE_TAILSCALE_KEY)
+    assert "Tailscale     already on the tailnet (Tailscale SSH on)" in out
+    assert "+ tailscale set --ssh\n" in out
+    assert "tailscale-install.sh" not in out and "tailscale up" not in out and "tailscale.key" not in out
+
+
+def test_tailscale_installed_but_logged_out_joins_without_reinstalling(board):
+    tailscale_installed(board)
+    out = board.ok(BOARD_NAME="TinyPi", APP="lll")
+    assert "tailscale-install.sh" not in out
+    assert "+ tailscale up --ssh --timeout=10m\n" in out
+
+
+def test_tailscale_no_leaves_it_out(board):
+    out = board.ok(BOARD_NAME="TinyPi", APP="lll", TAILSCALE="no")
+    assert "Tailscale     no" in out
+    assert "+ tailscale" not in out and "tailscale-install.sh" not in out
+
+
+def test_wifi_setup_only_installs_tailscale_but_cant_join(board):
+    out = board.ok("", "--wifi-setup-only")
+    at = [out.index(step) for step in TAILSCALE_STEPS]
+    assert at == sorted(at)
+    assert "tailscale up" not in out.replace("sudo tailscale up --ssh (it prints", "")
+    assert "not on the tailnet yet: sudo tailscale up --ssh" in out
+
+
+def test_wifi_setup_only_leaves_a_board_on_the_tailnet_alone(board):
+    tailscale_installed(board, running=True)
+    out = board.ok("", "--wifi-setup-only")
+    assert "already on the tailnet" in out
+    assert "tailscale-install.sh" not in out and "+ tailscale" not in out
 
 
 @pytest.mark.parametrize("answers, message", [
