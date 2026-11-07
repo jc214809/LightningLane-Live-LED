@@ -3,12 +3,12 @@
 # MLB-LED-Scoreboard. Asks everything up front, shows a summary, then does it all; safe to re-run
 # (to update, or to switch apps). Each app's own installer does the app; this script does the board
 # around it: hostname, a second Wi-Fi network, the Wi-Fi setup hotspot, the power button, matrix
-# tuning and the service.
+# tuning, the service and Tailscale.
 #
 #   sudo bash board-setup.sh                      # asks
 #   sudo bash board-setup.sh --answers board.txt  # KEY=value lines skip those questions
 #   bash board-setup.sh --dry-run ...             # prints what it would do, changes nothing
-#   sudo bash board-setup.sh --wifi-setup-only    # just the Wi-Fi setup hotspot, settings page and updater (LLL-install.sh's)
+#   sudo bash board-setup.sh --wifi-setup-only    # just the Wi-Fi setup hotspot, settings page, updater and Tailscale (LLL-install.sh's)
 set -Eeuo pipefail
 
 ROOT="${BOARD_SETUP_ROOT:-}"   # tests: a folder standing in for / (system files are read from it)
@@ -29,9 +29,12 @@ COMITUP_SOURCE_DEB=https://davesteele.github.io/comitup/deb/davesteele-comitup-a
 COMITUP_CALLBACK=/usr/local/bin/comitup-callback
 COMITUP_STATE=/run/comitup-state   # utils/wifi_setup.py reads it
 HOTSPOT_SUFFIX=-setup              # the hotspot is "<hostname>-setup"
+# Tailscale: every board on the tailnet, to reach it (SSH included) from anywhere.
+TAILSCALE_INSTALL=https://tailscale.com/install.sh
+TAILSCALE_KEY_FILE=/run/board-setup-tailscale.key  # the auth key, only while tailscale up reads it
 
 ANSWER_KEYS="BOARD_NAME APP PANEL_OPTIONS LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO EXTRA_ARGS LLL_BRANCH
-PELOTON_AUTO_TOKEN WIFI2 WIFI2_IFACE WIFI2_NAME WIFI2_SSID WIFI2_HIDDEN POWER_BUTTON SPEAKER"
+PELOTON_AUTO_TOKEN WIFI2 WIFI2_IFACE WIFI2_NAME WIFI2_SSID WIFI2_HIDDEN POWER_BUTTON SPEAKER TAILSCALE TAILSCALE_AUTHKEY"
 ANSWERED=" "
 DRY_RUN=false
 ASSUME_YES=false
@@ -46,15 +49,19 @@ Usage: sudo bash board-setup.sh [--answers FILE] [--branch NAME] [--yes] [--dry-
   --answers FILE  KEY=value lines (# comments) answering questions ahead, e.g. APP=lll.
                   Keys: BOARD_NAME APP PANEL_OPTIONS LED_ROWS LED_COLS LED_GPIO_MAPPING LED_SLOWDOWN_GPIO
                   EXTRA_ARGS LLL_BRANCH PELOTON_AUTO_TOKEN WIFI2 WIFI2_IFACE WIFI2_NAME
-                  WIFI2_SSID WIFI2_HIDDEN POWER_BUTTON SPEAKER. The Wi-Fi password is never in it: it's
-                  asked (or, with stdin not a terminal, read from its first line), and a blank
-                  one keeps the saved network.
+                  WIFI2_SSID WIFI2_HIDDEN POWER_BUTTON SPEAKER TAILSCALE TAILSCALE_AUTHKEY. The Wi-Fi
+                  password is never in it: it's asked (or, with stdin not a terminal, read from its
+                  first line), and a blank one keeps the saved network. TAILSCALE_AUTHKEY (a key
+                  from Tailscale's admin console) joins the tailnet with no login; without it,
+                  tailscale up prints a link to log in. It's a secret: never commit the file.
   --branch NAME   LightningLane-Live-LED's branch (default develop-beta), like LLL_BRANCH=NAME.
   --yes           Don't ask: unanswered questions take their defaults, and no confirmation.
   --dry-run       Print the commands and files it would write; change nothing.
   --wifi-setup-only
                   Only install or update the Wi-Fi setup hotspot (comitup), with no questions,
                   and, run from LightningLane-Live-LED's folder, its settings page and updater.
+                  It installs Tailscale too, but can't log in unattended: an unjoined board says
+                  to run sudo tailscale up --ssh.
 USAGE
 }
 
@@ -173,6 +180,19 @@ collect_answers() {
         fi
     fi
     ask POWER_BUTTON "Power button on GPIO 3 with its light on GPIO 25 (docs/hardware/POWER.md)? (yes/no)" no yes no
+    ask TAILSCALE "Join your Tailscale network, to reach the board (SSH too) from anywhere? (yes/no)" yes yes no
+    # Never asked (a prompt would show it): only from the answers file. Checked without echoing it.
+    if [[ -n "$TAILSCALE_AUTHKEY" && ! "$TAILSCALE_AUTHKEY" =~ ^tskey-[A-Za-z0-9_-]+$ ]]; then
+        die "TAILSCALE_AUTHKEY isn't a Tailscale auth key (tskey-...)"
+    fi
+}
+
+tailscale_summary() {
+    if [[ "$TAILSCALE" != yes ]]; then echo no
+    elif tailscale_joined; then echo "already on the tailnet (Tailscale SSH on)"
+    elif [[ -n "$TAILSCALE_AUTHKEY" ]]; then echo "joins with the auth key, Tailscale SSH on"
+    else echo "joins from a link it prints at the end, Tailscale SSH on"
+    fi
 }
 
 panel_summary() {
@@ -195,6 +215,7 @@ $(panel_summary)
   Second Wi-Fi  $WIFI2${WIFI2_SSID:+ ($WIFI2_SSID on $WIFI2_IFACE)}
   Wi-Fi setup   an open $BOARD_NAME$HOTSPOT_SUFFIX hotspot when no known Wi-Fi is in range
   Power button  $POWER_BUTTON
+  Tailscale     $(tailscale_summary)
 EOF
     [[ "$APP" == lll ]] && echo "  Speaker       $SPEAKER"
     [[ "$APP" == peloton ]] && echo "  Auto token    $PELOTON_AUTO_TOKEN"
@@ -336,6 +357,50 @@ setup_wifi_hotspot() {
     else
         echo "  already set up"
     fi
+}
+
+tailscale_joined() {  # installed, logged in and up
+    [[ -x "$ROOT/usr/bin/tailscale" ]] || return 1
+    tailscale status --json 2>/dev/null | grep -q '"BackendState": *"Running"'
+}
+
+setup_tailscale() {  # setup_tailscale join|install: install it, and with join, put the board on the tailnet
+    local mode=$1
+    say "Tailscale: reach $BOARD_NAME from anywhere on your tailnet, over SSH too"
+    if [[ ! -x "$ROOT/usr/bin/tailscale" ]]; then
+        # Tailscale's own script picks the apt repository for this OS and CPU (armhf on a Pi Zero
+        # too), so apt upgrade keeps it current, and starts tailscaled. The board's app doesn't
+        # need it: a failure warns and carries on.
+        if ! { run curl -fsSL -o /tmp/tailscale-install.sh "$TAILSCALE_INSTALL" && run sh /tmp/tailscale-install.sh; }; then
+            run rm -f /tmp/tailscale-install.sh
+            echo "  warning: Tailscale didn't install; re-run this, or see https://tailscale.com/download/linux" >&2
+            return 0
+        fi
+        run rm -f /tmp/tailscale-install.sh
+    fi
+    if tailscale_joined; then
+        echo "  already on the tailnet"
+        # set, not up: up wants every flag it was first given again, set changes just this one.
+        [[ "$mode" == join ]] && run tailscale set --ssh
+        return 0
+    fi
+    if [[ "$mode" != join ]]; then
+        echo "  not on the tailnet yet: sudo tailscale up --ssh (it prints a link to log in)"
+        return 0
+    fi
+    # --ssh: Tailscale SSH, so any of your devices gets in with no keys (the tailnet's ACL decides who).
+    local up=(tailscale up --ssh --timeout=10m)
+    if [[ -n "$TAILSCALE_AUTHKEY" ]]; then
+        # Read from a file, so the key is never on a command line (where ps sees it); gone after.
+        SHOWN='********' write_file "$ROOT$TAILSCALE_KEY_FILE" 600 <<<"$TAILSCALE_AUTHKEY"
+        up+=("--auth-key=file:$TAILSCALE_KEY_FILE")
+    else
+        echo "  open the link it prints to add $BOARD_NAME to your tailnet (it waits 10 minutes)"
+    fi
+    if ! run "${up[@]}"; then
+        echo "  warning: $BOARD_NAME isn't on the tailnet; later: sudo tailscale up --ssh" >&2
+    fi
+    if [[ -n "$TAILSCALE_AUTHKEY" ]]; then run rm -f "$ROOT$TAILSCALE_KEY_FILE"; fi
 }
 
 tune_matrix() {
@@ -621,6 +686,7 @@ start_service() {
 main() {
     PANEL_OPTIONS=no LED_ROWS=32 LED_COLS=64 LED_GPIO_MAPPING=adafruit-hat-pwm LED_SLOWDOWN_GPIO=2 EXTRA_ARGS=""
     LLL_BRANCH="" SPEAKER=no PELOTON_AUTO_TOKEN=no WIFI2_SSID="" WIFI2_IFACE="" WIFI2_PSK="" WIFI_SETUP_ONLY=false
+    TAILSCALE=yes TAILSCALE_AUTHKEY=""
     while (($#)); do
         case "$1" in
             --answers) [[ $# -ge 2 ]] || die "--answers needs a file"; read_answers "$2"; shift 2 ;;
@@ -647,6 +713,7 @@ main() {
         # LLL-install.sh runs this from the app's folder; the settings page is part of setup mode.
         [[ -d "$SCRIPT_DIR/settings_page" ]] && setup_settings_page "$SCRIPT_DIR"
         setup_updater "$SCRIPT_DIR"
+        setup_tailscale install  # last: logging in needs someone there, so it only installs
         return
     fi
     if [[ "$DRY_RUN" == true ]]; then
@@ -677,6 +744,8 @@ main() {
         peloton) install_peloton; start_service "$PELOTON_UNIT" ;;
         mlb) install_mlb; start_service "$MLB_UNIT" ;;
     esac
+    # Last, with the app running: without an auth key, it waits for you to open its login link.
+    if [[ "$TAILSCALE" == yes ]]; then setup_tailscale join; fi
 
     local unit
     case "$APP" in lll) unit=$LLL_UNIT ;; peloton) unit=$PELOTON_UNIT ;; mlb) unit=$MLB_UNIT ;; esac
