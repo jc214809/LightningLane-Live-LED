@@ -17,6 +17,7 @@ from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # lik
 from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # likewise
 from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # likewise
 from display.landmarks.santa_train import SantaTrainLandmark  # looked up by class name for its party (landmark_for)
+from display.landmarks.jollywood_tower import JollywoodTowerLandmark  # likewise
 
 
 LANDMARKS = {

@@ -6,7 +6,8 @@ tower_of_terror.py, tree_of_life.py, pumpkins.py (the Halloween-party jack-o'-la
 wine_and_dine.py (the Wine & Dine 5K's Marie, for its race day),
 three_caballeros.py (the Wine & Dine 10K's Three Caballeros, for theirs),
 penguin_waiters.py (the half marathon's penguin waiters), grumpy.py (the Two Course Challenge's Grumpy,
-the same day), santa_train.py (the Very Merry Christmas Party's Santa train), and
+the same day), santa_train.py (the Very Merry Christmas Party's Santa train), jollywood_tower.py (Jollywood Nights'
+decked-out Tower of Terror), and
 screen.py (landmark_for and landmark_screen). Everything is re-exported here, so
 `from display import landmarks` and `landmarks.X` work as they did when this was one file.
 """
@@ -58,6 +59,10 @@ from display.landmarks.grumpy import (  # noqa: F401
 
 from display.landmarks.santa_train import (  # noqa: F401
     SantaTrainLandmark,
+)
+
+from display.landmarks.jollywood_tower import (  # noqa: F401
+    JollywoodTowerLandmark,
 )
 
 from display.landmarks.screen import (  # noqa: F401
