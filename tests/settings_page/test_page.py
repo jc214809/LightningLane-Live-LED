@@ -1,7 +1,8 @@
 import json
 import re
+import time
 
-from settings_page.page import SENT, check_result, pin_page, settings_page
+from settings_page.page import SENT, _when, check_result, pin_page, settings_page
 
 CONFIG = {"trip_countdown": {"enabled": True, "trip_dates": [
     {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"}, "2027-06-01"]}}
@@ -382,3 +383,12 @@ def test_each_pull_request_shows_its_notes_under_its_title_and_the_behind_the_sc
     assert "Faster CI" not in html
     html = _updates(check={**found, "changes": [[None, "Fix a typo", None]]}, channel="beta")
     assert "<span>Fix a typo</span>" in html and "Behind the scenes" not in html
+
+
+def test_update_times_use_a_12_hour_clock():
+    def at(hour, minute):
+        return time.mktime((2026, 11, 4, hour, minute, 0, 0, 0, -1))
+    assert _when(at(19, 5)) == "04 Nov 7:05 PM"
+    assert _when(at(0, 30)) == "04 Nov 12:30 AM" and _when(at(12, 0)) == "04 Nov 12:00 PM"
+    assert _when(at(9, 41)) == "04 Nov 9:41 AM"
+    assert _when(None) == "?" and _when("soon") == "?"
