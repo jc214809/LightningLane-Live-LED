@@ -881,10 +881,13 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
 
 
 def _when(at):
+    """A time on the board's clock, 12-hour: "04 Nov 7:05 PM"."""
     try:
-        return time.strftime("%d %b %H:%M", time.localtime(float(at)))
+        moment = time.localtime(float(at))
     except (TypeError, ValueError, OverflowError, OSError):
         return "?"
+    return (time.strftime("%d %b ", moment) + f"{moment.tm_hour % 12 or 12}:{moment.tm_min:02d} "
+            + ("PM" if moment.tm_hour >= 12 else "AM"))
 
 
 def _sentence(text):
