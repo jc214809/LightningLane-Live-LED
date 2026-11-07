@@ -34,9 +34,12 @@ SPECIAL_EVENTS = {
         "star_rgb": HOLIDAY_STAR,
         "landmark": "SantaTrainLandmark",  # display/landmarks/santa_train.py
     },
-    # The rest have no landmark or fireworks of their own yet; they just colour the star.
-    # Their match strings are the events' published names: none is in the live data today.
-    "jollywood": {"match": "jollywood nights", "star_rgb": HOLIDAY_STAR},
+    "jollywood": {
+        "match": "jollywood nights",  # likewise its published name
+        "star_rgb": HOLIDAY_STAR,
+        "landmark": "JollywoodTowerLandmark",  # display/landmarks/jollywood_tower.py
+    },
+    # The rest have no landmark or fireworks of their own; they just colour the star.
     # Last: Magic Kingdom lists "... at Disney After Hours" all through party season, so every
     # more specific party above has to win over it.
     "after_hours": {"match": "disney after hours", "star_rgb": _RED},

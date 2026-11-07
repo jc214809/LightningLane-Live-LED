@@ -632,6 +632,23 @@ posing. What was new:
 - **Keep mock code out of /tmp's reach.** A cleanup deleted the first train mock's art mid-design; the
   parts had to be recovered from a pickled render.
 
+### Jollywood Nights (`JollywoodTowerLandmark`)
+
+The Tower of Terror decked out, in place of the plain tower on party nights: chasing bulbs, red and green
+windows, a cupola bow, two wreaths, a pink neon "JOLLYWOOD" sign, tonight's hours in green neon in the
+top-corner clouds, red and green lightning, two searchlights, snow, and a gift for the elevator car that
+bursts into confetti. Picked from five animated mocks (a marquee and a clapperboard + tree were the others).
+
+- **Dress up a landmark by subclassing it.** It inherits the tower's story, beats, tilt and screen times,
+  and decorates in `animate()` after the tower's own. The one change to the tower was a hook
+  (`draw_car`, `CAR_FLOOR`) so the gift replaces the car instead of being painted over it.
+- **Put the hours where both boards can see them.** On the building, in the side sky and in the grass were
+  all rejected; the top-corner storm clouds work, and 64x32 shows them after its tilt.
+- **64x32 lands the gift under the sign** (`CAR_FLOOR` 28) so its burst is in view; the signs wait for the
+  tilt. Keep the burst flash off the lettering (a test holds it).
+- **Precompute anything per-pixel.** The mock's searchlights tested all 4096 pixels per beam per frame; the
+  landmark keeps each beam's sky sorted by angle and looks up only the slice it points at.
+
 ### Before redoing Spaceship Earth
 
 The current `SpaceshipEarthLandmark` reads as a grey ball on legs: its facet pattern renders

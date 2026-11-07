@@ -54,7 +54,7 @@ def test_every_dated_landmark_exists():
 
 
 def test_an_event_without_a_landmark_keeps_the_parks_own():
-    assert landmarks.landmark_for("Hollywood Studios", "jollywood") is landmarks.TowerOfTerrorLandmark
+    assert landmarks.landmark_for("Hollywood Studios", "after_hours") is landmarks.TowerOfTerrorLandmark
     assert landmarks.landmark_for("EPCOT", "extended_evening") is landmarks.SpaceshipEarthLandmark
 
 

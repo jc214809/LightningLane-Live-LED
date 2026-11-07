@@ -26,6 +26,7 @@ class TowerOfTerrorLandmark(Landmark):
     # Scene times of (strike, doors open, car drops, car lands), without and with the tilt.
     BEATS = {False: (0.6, 1.2, 1.9, 2.5), True: (1.6, 2.2, 2.9, 3.5)}
     FLASH_S, DOORS_OPEN_S = 0.15, 0.25
+    CAR_FLOOR = 52  # the car's top row when it lands, at the arches
     BOLT_RGB, BOLT_EDGE_RGB, CAR_RGB = (235, 235, 255), (170, 170, 230), (255, 235, 180)
     COLORS = {
         "wall": (200, 124, 96), "shade": (150, 88, 70), "lit_wall": (225, 150, 115),
@@ -158,6 +159,12 @@ class TowerOfTerrorLandmark(Landmark):
         top = round((self.height - self.view_h) * (1 - min(1.0, t / self.PAN_S)) ** 3)
         return {(x, y - top): rgb for (x, y), rgb in out.items() if top <= y < top + self.view_h}
 
+    def draw_car(self, out, left, top):
+        """The falling car, 5x4 with its top-left corner at (left, top)."""
+        for y in range(top, top + 4):
+            for x in range(left, left + 5):
+                self.put(out, x, y, self.CAR_RGB)
+
     def animate(self, out, t):
         c = self.COLORS
         for x, y, phase in self.windows:
@@ -175,16 +182,14 @@ class TowerOfTerrorLandmark(Landmark):
         elif self.DROP_AT <= t < self.LAND_AT:
             # The car falls, accelerating, down the shaft to the arches, trailing its light.
             p = (t - self.DROP_AT) / (self.LAND_AT - self.DROP_AT)
-            car_y = y0 + 1 + int((52 - y0 - 1) * p * p)
+            car_y = y0 + 1 + int((self.CAR_FLOOR - y0 - 1) * p * p)
             left = (self.STRIP_L + self.STRIP_R + 1) // 2 - 2
             for tail in range(1, 6):
                 f = 1 - tail / 6
                 if car_y - tail * 2 >= y0:
                     for x in range(left, left + 5):
                         self.put(out, x, car_y - tail * 2, tuple(int(v * f) for v in c["win_lit"]))
-            for y in range(car_y, car_y + 4):
-                for x in range(left, left + 5):
-                    self.put(out, x, y, self.CAR_RGB)
+            self.draw_car(out, left, car_y)
         if 0 <= t - self.STRIKE_AT < self.FLASH_S:
             for p, (r, g, b) in list(out.items()):
                 if r < 70 and g < 70:
