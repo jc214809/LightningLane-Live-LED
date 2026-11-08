@@ -172,11 +172,11 @@ def test_checkout_keeps_any_other_edit_to_disney_py(checkout, diff):
 
 def test_the_installer_runs_as_root_with_sudos_idea_of_who_owns_the_checkout(checkout, monkeypatch):
     monkeypatch.setattr(board_module.os, "stat", lambda path: SimpleNamespace(st_uid=1000, st_gid=1001))
-    monkeypatch.setattr(board_module.pwd, "getpwuid", lambda uid: SimpleNamespace(pw_name="admin", pw_dir="/h"))
+    monkeypatch.setattr(board_module.pwd, "getpwuid", lambda uid: SimpleNamespace(pw_name="pi", pw_dir="/h"))
     board, run = _board(checkout, euid=0)
     board.install(skip_requirements=False)
     env = run.calls[0][1]["env"]
-    assert (env["SUDO_UID"], env["SUDO_GID"], env["SUDO_USER"]) == ("1000", "1001", "admin")
+    assert (env["SUDO_UID"], env["SUDO_GID"], env["SUDO_USER"]) == ("1000", "1001", "pi")
     assert "user" not in run.calls[0][1], "still root: it installs services"
     board, run = _board(checkout, euid=1000)
     board.install(skip_requirements=False)
