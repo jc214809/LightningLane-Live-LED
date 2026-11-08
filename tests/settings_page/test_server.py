@@ -15,6 +15,8 @@ import pytest
 import settings_page.server as server
 from settings_page.park_names import ParkNames
 from settings_page.pins import PinGate
+import settings_page.ride_names as ride_names
+from settings_page.ride_names import RideNames
 from settings_page.server import Settings, make_server
 
 CONFIG = {"parks": ["EPCOT"], "websocket": {"enabled": False, "api_key": "tp-secret-1234", "protocol": "legacy"},
@@ -71,11 +73,15 @@ class Board:
         names = tmp_path / "park_names.json"
         names.write_text(json.dumps({"fetched": time.time(), "parks": [["EPCOT", "Walt Disney World® Resort"],
                                                                       ["Cedar Point", "Cedar Point"]]}))
+        rides = tmp_path / "ride_names.json"
+        rides.write_text(json.dumps({"format": ride_names.FORMAT, "fetched": time.time(), "parks": ["EPCOT"],
+                                     "rides": {"EPCOT": ["Test Track", "Soarin' Around the World"]}}))
         self.model = tmp_path / "model"
         self.model.write_bytes(b"Raspberry Pi 4 Model B Rev 1.5\0")
         self.settings = Settings(str(self.config), self.gate, state_file=str(self.state), cards_file=str(self.cards),
                                  park_names=ParkNames(str(names), fetch=self.no_fetch),
-                                 model_file=str(self.model), updates=FakeUpdates())
+                                 model_file=str(self.model), updates=FakeUpdates(),
+                                 ride_names=RideNames(str(rides), fetch=self.no_fetch))
         monkeypatch.setattr(self.settings, "restart_app", lambda: self.restarts.append(1) or "restarted")
         self.httpd = make_server(self.settings, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
@@ -153,6 +159,186 @@ def test_signed_in_the_form_shows_masked_keys_and_saves(board):
     assert oct(os.stat(board.config).st_mode & 0o777) == "0o600", "keeps the file's mode"
     assert json.loads((board.config.parent / "board-config.json.bak").read_text()) == CONFIG
     assert "restarting with the new settings" in board.request("/?saved=restarted")[2]
+
+
+def test_the_surprises_page_needs_the_pin_then_saves_to_its_own_file_and_restarts(board):
+    surprises = board.config.parent / "surprises.json"
+    status, headers, _ = board.request("/surprises")
+    assert status == 303 and headers["Location"] == "/", "not signed in: back to the PIN page"
+    status, _, _ = board.request("/surprises", {"surprises_enabled": "on"})
+    assert status == 303 and not surprises.exists() and board.restarts == []
+    board.sign_in()
+    status, _, html = board.request("/surprises")
+    assert status == 200 and 'action="/surprises"' in html and 'id="chance_genie"' in html
+    assert '"EPCOT": ["Test Track", "Soarin\' Around the World"]' in html, "the ride list, from ride_names.json"
+    os.chmod(board.config, 0o640)  # not the default 600, so the new file following config.json shows
+    form = {"surprises_enabled": "on", "surprise_genie": "on", "surprise_falcon": "on", "chance_genie": "1.5",
+            "ride_chance_falcon": "25", "rides_set_genie": "1", "rides_genie": ["Test Track"]}
+    status, headers, _ = board.request("/surprises", form)
+    assert status == 303 and headers["Location"] == "/surprises?saved=restarted"
+    saved = json.loads(surprises.read_text())
+    assert saved["enabled"] is True and saved["characters"]["genie"] == {"chance": 1.5, "rides": ["Test Track"]}
+    assert saved["characters"]["falcon"] == {"ride_chance": 25} and saved["characters"]["tron"] == {"on": False}
+    assert board.saved() == CONFIG, "config.json isn't touched"
+    assert oct(os.stat(surprises).st_mode & 0o777) == "0o640", "the new file is made like config.json (the user's, not root's)"
+    assert board.restarts == [1]
+    assert 'value="1.5"' in board.request("/surprises")[2], "the page shows what was saved"
+    assert "restarting with the new settings" in board.request("/surprises?saved=restarted")[2]
+    assert "restarting" not in board.request("/surprises?saved=bogus")[2]
+
+
+def test_export_gives_all_the_settings_on_the_page_as_it_is_now_without_saving_anything(board):
+    surprises = board.config.parent / "surprises.json"
+    status, _, _ = board.request("/surprises/export", {"surprises_enabled": "on"})
+    assert status == 303 and not surprises.exists(), "needs the PIN"
+    board.sign_in()
+    form = {"surprises_enabled": "on", "surprise_genie": "on", "chance_genie": "1.5", "rides_set_genie": "1",
+            "rides_genie": ["Test Track"]}
+    status, headers, body = board.request("/surprises/export", form)
+    reply = json.loads(body)
+    assert status == 200 and headers["Content-Type"] == "application/json" and reply["ok"] is True
+    exported = json.loads(reply["json"])
+    assert exported["enabled"] is True
+    assert exported["characters"]["genie"] == {"on": True, "chance": 1.5, "ride_chance": 10, "rides": ["Test Track"]}
+    assert exported["characters"]["tron"]["on"] is False, "everything unticked is off"
+    assert exported["characters"]["baymax"] == {"on": False, "chance": 0.7, "ride_chance": 10, "rides": []}, \
+        "and the defaults are spelled out, so the copy is complete on its own"
+    assert not surprises.exists() and board.restarts == [], "nothing saved, nothing restarted"
+
+
+def test_exporting_a_page_nobody_changed_still_gives_every_character_with_its_numbers_and_rides(board):
+    board.sign_in()
+    html = board.request("/surprises")[2]
+    status, _, body = board.request("/surprises/export", browser_form(html))
+    exported = json.loads(json.loads(body)["json"])
+    assert status == 200 and exported["enabled"] is True
+    characters = exported["characters"]
+    assert len(characters) > 25 and all(c["on"] is True for c in characters.values())
+    assert characters["genie"] == {"on": True, "chance": 0.5, "ride_chance": 10, "rides": []}
+    assert characters["jack_sally"]["ride_chance"] == 50 and characters["falcon"]["chance"] == 0
+    assert "tink" not in characters and "buzz" not in characters
+    assert not (board.config.parent / "surprises.json").exists()
+    # and pasting it back gives the page it came from: nothing is different from the defaults
+    status, _, page = board.request("/surprises/import", {"surprises_json": json.dumps(exported)})
+    assert status == 200 and 'id="chance_genie" name="chance_genie" value=""' in page, "defaults aren't frozen in"
+
+
+def test_export_with_a_problem_says_what_and_gives_nothing(board):
+    board.sign_in()
+    status, _, body = board.request("/surprises/export", {"surprises_enabled": "on", "chance_genie": "500"})
+    reply = json.loads(body)
+    assert status == 400 and reply["ok"] is False and "should be a percent from 0 to 100" in reply["problems"][0]
+
+
+def test_import_fills_the_page_without_saving_and_says_it_is_not_saved_yet(board):
+    surprises = board.config.parent / "surprises.json"
+    status, _, _ = board.request("/surprises/import", {"surprises_json": "{}"})
+    assert status == 303 and not surprises.exists(), "needs the PIN"
+    board.sign_in()
+    paste = json.dumps({"enabled": True, "characters": {"genie": {"chance": 1.5, "rides": ["Test Track"]},
+                                                        "tron": {"on": False}, "new_one": {"chance": 5}}})
+    status, _, html = board.request("/surprises/import", {"surprises_json": paste})
+    assert status == 200 and "not saved yet" in html and "Left out because this board's version doesn't have them: new_one" in html
+    assert 'id="chance_genie" name="chance_genie" value="1.5"' in html and 'value="Test Track"' in html
+    assert re.search(r'id="surprise_tron" name="surprise_tron"(?! checked)', html), "unticked, as imported"
+    assert not surprises.exists() and board.restarts == [], "Save and restart does that"
+    assert not os.path.exists(surprises), "still nothing on disk"
+
+
+def browser_form(html, form_id="settings"):
+    """The fields a browser would post for the page's form: text, number and hidden inputs, and the checkboxes that are
+    ticked (a checkbox with no value posts "on")."""
+    from html.parser import HTMLParser
+
+    class Fields(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.inside, self.fields = False, {}
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == "form":
+                self.inside = attrs.get("id") == form_id
+            elif self.inside and tag == "input" and attrs.get("name"):
+                if attrs.get("type") == "checkbox":
+                    if "checked" in attrs:
+                        self.fields.setdefault(attrs["name"], []).append(attrs.get("value") or "on")
+                else:
+                    self.fields.setdefault(attrs["name"], []).append(attrs.get("value") or "")
+
+        def handle_endtag(self, tag):
+            if tag == "form":
+                self.inside = False
+    parser = Fields()
+    parser.feed(html)
+    return parser.fields
+
+
+def test_an_imported_page_saves_exactly_what_it_shows_rides_included_without_opening_a_picker(board):
+    """The bug this holds: imported rides sat on the page as hidden inputs, but only a picker that had been opened said
+    they were to be saved, so Save and restart kept the chances and dropped the rides."""
+    board.sign_in()
+    surprises = board.config.parent / "surprises.json"
+    imported = {"enabled": True, "characters": {"genie": {"chance": 1.5, "rides": ["Test Track"]},
+                                                "falcon": {"ride_chance": 25, "rides": []}, "tron": {"on": False}}}
+    status, _, html = board.request("/surprises/import", {"surprises_json": json.dumps(imported)})
+    assert status == 200
+    form = browser_form(html)
+    assert form["rides_genie"] == ["Test Track"] and form["rides_set_genie"] == ["saved"]
+    assert form["rides_set_falcon"] == ["saved"] and "rides_falcon" not in form, "none at all is posted as none"
+    status, headers, _ = board.request("/surprises", form)
+    assert status == 303 and headers["Location"] == "/surprises?saved=restarted"
+    assert json.loads(surprises.read_text()) == imported
+
+
+def test_a_page_that_is_just_opened_and_saved_changes_nothing_not_even_by_writing_the_default_rides_down(board):
+    board.sign_in()
+    surprises = board.config.parent / "surprises.json"
+    html = board.request("/surprises")[2]
+    form = browser_form(html)
+    assert form["rides_set_falcon"] == ["1"], "the default rides are ticked and posted"
+    assert board.request("/surprises", form)[0] == 303
+    assert json.loads(surprises.read_text()) == {"enabled": True, "characters": {}}, "equal to the defaults: not saved"
+
+
+def test_an_import_with_problems_changes_nothing_and_says_why(board):
+    board.sign_in()
+    status, _, html = board.request("/surprises/import", {"surprises_json": '{"characters": {"genie": {"chance": 500}}}'})
+    assert status == 400 and "Nothing imported." in html and "should be a percent from 0 to 100" in html
+    status, _, html = board.request("/surprises/import", {"surprises_json": ""})
+    assert status == 400 and "Nothing imported." in html and "Not saved." not in html
+    assert not (board.config.parent / "surprises.json").exists()
+
+
+def test_asking_for_json_checks_a_paste_without_drawing_a_page(board):
+    board.sign_in()
+    status, headers, body = board.request("/surprises/import", {"surprises_json": '{"enabled": true}'},
+                                          {"Accept": "application/json"})
+    assert status == 200 and headers["Content-Type"] == "application/json" and json.loads(body) == {"ok": True}
+    status, _, body = board.request("/surprises/import", {"surprises_json": "just some words"},
+                                    {"Accept": "application/json"})
+    reply = json.loads(body)
+    assert status == 400 and reply["ok"] is False and "isn't valid JSON" in reply["problems"][0]
+    status, _, body = board.request("/surprises/import", {"surprises_json": '{"characters": {"genie": {"chance": 500}}}'},
+                                    {"Accept": "application/json"})
+    assert status == 400 and "should be a percent from 0 to 100" in json.loads(body)["problems"][0]
+    assert not (board.config.parent / "surprises.json").exists() and board.restarts == []
+
+
+def test_surprise_problems_are_shown_and_nothing_is_saved(board):
+    board.sign_in()
+    status, _, html = board.request("/surprises", {"surprises_enabled": "on", "chance_genie": "500"})
+    assert status == 400 and "should be a percent from 0 to 100" in html
+    assert board.saved() == CONFIG and board.restarts == []
+    assert not (board.config.parent / "surprises.json").exists()
+
+
+def test_a_surprise_save_waits_for_a_running_update(board):
+    board.sign_in()
+    board.settings.updates.is_running = True
+    status, _, html = board.request("/surprises", {"surprises_enabled": "on"})
+    assert status == 409 and "An update is running" in html
+    assert not (board.config.parent / "surprises.json").exists()
 
 
 def test_problems_are_shown_and_nothing_is_saved(board):

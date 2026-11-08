@@ -244,6 +244,278 @@ def test_a_surprise_from_the_list_is_saved_and_anything_else_refused():
     assert problems == ["Surprise on every ride screen: 'wipe' isn't a character."]
 
 
+def test_the_surprise_list_is_one_entry_per_character_that_a_roll_can_pick():
+    from display.animation import TRANSITIONS
+    from settings_page.form import surprise_characters
+    from utils.config import SURPRISE_LOOKS, SURPRISES_UNUSED
+    from utils.surprises import PARK_REVEALS
+    names = surprise_characters()
+    assert "genie" in names and "walle_side" in names and "saber_duel" in names
+    for hidden in ("wipe", "walle", "chip_dale_swing", "saber_duel_yoda", "mine_train_all", "aliens_toys",
+                   *SURPRISES_UNUSED, *PARK_REVEALS):
+        assert hidden not in names
+    assert set(names) | {look for group in SURPRISE_LOOKS.values() for look in group} | set(SURPRISES_UNUSED) \
+        | set(PARK_REVEALS) == set(TRANSITIONS) - {"wipe"}, \
+        "a new character is listed (or declared unused, or a park title's) rather than silently missing"
+
+
+def surprise_form(**changes):
+    """The Surprise characters page's form with every character ticked and the switch on, plus changes."""
+    from settings_page.form import surprise_characters
+    form = {"surprises_enabled": ["on"], **{f"surprise_{n}": ["on"] for n in surprise_characters()}}
+    form.update({k: [v] if isinstance(v, str) else v for k, v in changes.items()})
+    return form
+
+
+def test_the_main_form_knows_nothing_of_the_surprises():
+    new, _ = apply_form(CONFIG, form_for(CONFIG))
+    assert "surprises" not in new and "characters" not in new
+
+
+def test_unticked_characters_are_saved_as_off_and_the_switch_as_enabled():
+    from settings_page.form import apply_surprises
+    form = surprise_form()
+    del form["surprise_tron"], form["surprise_genie"]
+    new, problems = apply_surprises({}, form)
+    assert problems == [] and new == {"enabled": True, "characters": {"genie": {"on": False}, "tron": {"on": False}}}
+    new, _ = apply_surprises({}, {k: v for k, v in surprise_form().items() if k != "surprises_enabled"})
+    assert new == {"enabled": False, "characters": {}}, "the switch is a checkbox: absent means off; all at defaults"
+
+
+def test_typed_chances_are_saved_as_percents_and_blank_ones_go_back_to_the_default():
+    from settings_page.form import apply_surprises
+    data = {"enabled": True, "characters": {"genie": {"chance": 3}, "tron": {"chance": 2, "on": False}}}
+    new, problems = apply_surprises(data, surprise_form(chance_genie="1.5", chance_tron="", ride_chance_falcon="25"))
+    assert problems == []
+    assert new["characters"] == {"genie": {"chance": 1.5}, "falcon": {"ride_chance": 25}}, \
+        "tron is ticked again with its default chance, so it has no entry"
+
+
+@pytest.mark.parametrize("typed", ["abc", "-1", "101", "1e2", "nan"])
+def test_a_chance_that_is_not_a_percent_from_0_to_100_is_refused(typed):
+    from settings_page.form import apply_surprises
+    _, problems = apply_surprises({}, surprise_form(chance_genie=typed))
+    assert problems == [f"Genie: the chance should be a percent from 0 to 100, not {typed!r}."]
+
+
+def test_the_ride_screen_chances_together_cannot_pass_100_percent():
+    from settings_page.form import apply_surprises
+    _, problems = apply_surprises({}, surprise_form(chance_genie="60", chance_tron="50"))
+    assert len(problems) == 1 and "can't pass 100%" in problems[0] and "121.6%" in problems[0]
+    _, problems = apply_surprises({}, surprise_form(chance_genie="60", chance_tron="30"))
+    assert len(problems) == 1, "the other characters' defaults count too"
+    _, problems = apply_surprises({}, surprise_form(chance_genie="0", chance_tron="0", chance_baymax="0"))
+    assert problems == []
+
+
+RIDES = {"Magic Kingdom": ["Space Mountain", "Haunted Mansion"],
+         "Hollywood Studios": ["Millennium Falcon: Smugglers Run", "Star Wars: Rise of the Resistance", "Tower of Terror"]}
+
+
+def test_any_character_can_take_a_chance_on_any_ride_screen_and_rides_of_their_own():
+    from settings_page.form import apply_surprises
+    new, problems = apply_surprises({}, surprise_form(chance_falcon="2", ride_chance_genie="30",
+                                                      rides_set_genie="1", rides_genie=["Space Mountain", "Test Track"]), RIDES)
+    assert problems == []
+    assert new["characters"] == {"falcon": {"chance": 2}, "genie": {"ride_chance": 30, "rides": ["Space Mountain", "Test Track"]}}
+    assert [type(v) for v in (new["characters"]["falcon"]["chance"], new["characters"]["genie"]["ride_chance"])] == [int, int], \
+        "25 is written 25, not 25.0, so an export reads cleanly"
+
+
+def test_a_character_s_default_rides_are_the_rides_whose_names_have_their_pieces_in_them():
+    from settings_page.form import default_rides
+    assert default_rides("falcon", RIDES) == ["Millennium Falcon: Smugglers Run", "Star Wars: Rise of the Resistance"]
+    assert default_rides("genie", RIDES) == [] and default_rides("falcon", {}) == [] and default_rides("falcon", None) == []
+
+
+def test_ticking_just_the_default_rides_saves_nothing_so_they_keep_following_the_defaults():
+    from settings_page.form import apply_surprises
+    defaults = ["Star Wars: Rise of the Resistance", "Millennium Falcon: Smugglers Run"]
+    new, _ = apply_surprises({}, surprise_form(rides_set_falcon="1", rides_falcon=defaults), RIDES)
+    assert new["characters"] == {}
+    new, _ = apply_surprises({}, surprise_form(rides_set_falcon="1", rides_falcon=defaults + ["Space Mountain"]), RIDES)
+    assert new["characters"]["falcon"]["rides"] == ["Millennium Falcon: Smugglers Run", "Space Mountain",
+                                                    "Star Wars: Rise of the Resistance"]
+
+
+def test_unticking_every_ride_saves_an_empty_list_which_means_no_rides_at_all():
+    from settings_page.form import apply_surprises
+    new, _ = apply_surprises({}, surprise_form(rides_set_falcon="1"), RIDES)
+    assert new["characters"] == {"falcon": {"rides": []}}
+    new, _ = apply_surprises({}, surprise_form(rides_set_genie="1"), RIDES)
+    assert new["characters"] == {}, "Genie has none by default: nothing to save"
+
+
+def test_a_ride_picker_that_was_never_opened_leaves_the_saved_rides_alone():
+    from settings_page.form import apply_surprises
+    data = {"characters": {"falcon": {"rides": ["Space Mountain"]}, "genie": {"rides": []}}}
+    new, _ = apply_surprises(data, surprise_form(), RIDES)
+    assert new["characters"] == data["characters"], "no rides_set_ field: not touched, even with the list unloaded"
+    new, _ = apply_surprises(data, surprise_form(rides_set_falcon="1", rides_falcon=["Haunted Mansion"]), RIDES)
+    assert new["characters"]["falcon"] == {"rides": ["Haunted Mansion"]} and new["characters"]["genie"] == {"rides": []}
+
+
+def test_none_saved_as_none_stays_none_even_when_the_ride_list_has_none_of_the_default_rides():
+    from settings_page.form import apply_surprises
+    epcot_only = {"EPCOT": ["Test Track"]}
+    new, _ = apply_surprises({}, surprise_form(rides_set_falcon="saved"), epcot_only)
+    assert new["characters"] == {"falcon": {"rides": []}}, "saved as none: not mistaken for the defaults"
+    new, _ = apply_surprises({}, surprise_form(rides_set_falcon="1"), epcot_only)
+    assert new["characters"] == {}, "no marker of that: nothing ticked, nothing unticked, so the defaults"
+    new, _ = apply_surprises({}, surprise_form(rides_set_genie="saved"), epcot_only)
+    assert new["characters"] == {}, "Genie has no default rides, so none is nothing to save"
+    both = {"Hollywood Studios": ["Millennium Falcon: Smugglers Run"]}
+    new, _ = apply_surprises({}, surprise_form(rides_set_falcon="saved", rides_falcon=["Millennium Falcon: Smugglers Run"]), both)
+    assert new["characters"] == {}, "saved rides that are just the defaults are the defaults"
+
+
+def test_chosen_rides_are_saved_sorted_without_blanks_or_repeats():
+    from settings_page.form import apply_surprises
+    new, _ = apply_surprises({}, surprise_form(rides_set_tron="1",
+                                               rides_tron=["Test Track", " ", "Space Mountain", "Test Track"]), RIDES)
+    assert new["characters"]["tron"] == {"rides": ["Space Mountain", "Test Track"]}
+
+
+def test_tink_and_buzz_are_not_on_the_page_and_a_hand_saved_entry_for_them_survives_a_save():
+    from settings_page.form import apply_surprises, surprise_rows
+    assert not {"tink", "buzz"} & {row.name for row in surprise_rows()}
+    data = {"characters": {"tink": {"on": False}}}
+    new, problems = apply_surprises(data, surprise_form(chance_tink="5", rides_set_tink="1", rides_tink=["Space Mountain"]), RIDES)
+    assert problems == [] and new["characters"] == {"tink": {"on": False}}, "the form can't change them"
+
+
+def test_too_many_rides_or_a_huge_name_are_refused():
+    from settings_page.form import MAX_RIDE_NAME, MAX_RIDES_PER_CHARACTER, apply_surprises
+    many = [f"Ride {i}" for i in range(MAX_RIDES_PER_CHARACTER + 1)]
+    _, problems = apply_surprises({}, surprise_form(rides_set_tron="1", rides_tron=many), RIDES)
+    assert problems == ["Tron: that's too many rides, or a ride name that's too long."]
+    _, problems = apply_surprises({}, surprise_form(rides_set_tron="1", rides_tron=["x" * (MAX_RIDE_NAME + 1)]), RIDES)
+    assert len(problems) == 1
+
+
+def test_characters_and_settings_a_newer_version_saved_survive_a_save():
+    from settings_page.form import apply_surprises
+    data = {"enabled": True, "future": 1, "characters": {"from_the_future": {"chance": 4},
+                                                         "genie": {"on": False, "note": "keep"}}}
+    new, _ = apply_surprises(data, surprise_form())
+    assert new == {"enabled": True, "future": 1, "characters": {"from_the_future": {"chance": 4},
+                                                                 "genie": {"note": "keep"}}}
+
+
+def test_the_rows_carry_each_characters_default_chances_and_rides():
+    from settings_page.form import surprise_rows
+    rows = {r.name: r for r in surprise_rows()}
+    assert (rows["genie"].anywhere, rows["genie"].own, rows["genie"].rides) == ("0.5", "10", []), \
+        "a character with no rides of its own gets the 10% a new ride choice would use"
+    assert rows["walle_side"].anywhere == "1.2"
+    assert rows["falcon"].anywhere == "0" and rows["falcon"].own == "10"
+    assert rows["falcon"].rides == ["Smugglers Run", "Rise Of The Resistance"]
+    assert (rows["mike"].anywhere, rows["mike"].own) == ("0.8", "10"), "Mike has both"
+    assert "tink" not in rows and "buzz" not in rows, "park titles aren't ride-screen surprises"
+
+
+def test_import_takes_what_export_wrote_and_keeps_only_what_the_page_would_save():
+    from settings_page.form import import_surprises
+    text = json.dumps({"enabled": False, "future_key": 1, "characters": {
+        "genie": {"on": False, "chance": 1.5, "ride_chance": 20, "rides": ["Test Track", "Space Mountain", " "], "junk": 1},
+        "falcon": {"on": True}}})
+    data, problems, skipped = import_surprises(text)
+    assert problems == [] and skipped == []
+    assert data == {"enabled": False, "characters": {
+        "genie": {"on": False, "chance": 1.5, "ride_chance": 20, "rides": ["Space Mountain", "Test Track"]}}}, \
+        "no future_key or junk, and a character at its defaults ('on' only) has no entry"
+
+
+def test_import_skips_characters_this_version_does_not_have_and_says_so():
+    from settings_page.form import import_surprises
+    data, problems, skipped = import_surprises(json.dumps({"characters": {"genie": {"chance": 2}, "new_one": {"chance": 5},
+                                                                          "tink": {"on": False}}}))
+    assert problems == [] and sorted(skipped) == ["new_one", "tink"], "Tink and Buzz aren't on the page"
+    assert data["characters"] == {"genie": {"chance": 2}}
+
+
+@pytest.mark.parametrize("text, problem", [
+    ("{not json", "isn't settings the Export button copied: it isn't valid JSON"),
+    ("[1, 2]", "it should be an object"), ('"hello"', "it should be an object"),
+    ('{"enabled": "yes"}', '"enabled" should be true or false'),
+    ('{"characters": []}', '"characters" should be an object'),
+    ('{"characters": {"genie": "on"}}', "Genie: its settings should be an object"),
+    ('{"characters": {"genie": {"on": "no"}}}', 'Genie: "on" should be true or false'),
+    ('{"characters": {"genie": {"chance": 101}}}', 'Genie: "chance" should be a percent from 0 to 100, not 101'),
+    ('{"characters": {"genie": {"chance": true}}}', "Genie: \"chance\" should be a percent"),
+    ('{"characters": {"genie": {"ride_chance": "5"}}}', 'Genie: "ride_chance" should be a percent'),
+    ('{"characters": {"genie": {"rides": "Test Track"}}}', 'Genie: "rides" should be a list of ride names'),
+    ('{"characters": {"genie": {"rides": [1]}}}', 'Genie: "rides" should be a list of ride names'),
+    ('{"characters": {"genie": {"chance": 60}, "tron": {"chance": 50}}}', "can't pass 100%"),
+])
+def test_import_refuses_what_the_page_would_not_save(text, problem):
+    from settings_page.form import import_surprises
+    data, problems, _ = import_surprises(text)
+    assert any(problem in p for p in problems)
+
+
+def test_a_snapshot_has_every_character_with_its_on_chances_and_rides_defaults_included():
+    from settings_page.form import character_label, snapshot_surprises, surprise_rows
+    snap = snapshot_surprises({"enabled": True, "characters": {"tron": {"on": False}, "genie": {"chance": 1.5}}}, RIDES)
+    assert snap["enabled"] is True and set(snap["characters"]) == {row.name for row in surprise_rows()}
+    assert snap["characters"]["tron"] == {"on": False, "chance": 0.8, "ride_chance": 10, "rides": []}
+    assert snap["characters"]["genie"]["chance"] == 1.5 and snap["characters"]["genie"]["on"] is True
+    assert snap["characters"]["falcon"]["rides"] == ["Millennium Falcon: Smugglers Run", "Star Wars: Rise of the Resistance"], \
+        "the rides it visits by default, by name"
+    assert snap["characters"]["jack_sally"]["ride_chance"] == 50
+    assert list(snap["characters"]) == sorted(snap["characters"], key=lambda n: character_label(n).lower()), "readable order"
+
+
+def test_a_snapshot_names_the_default_rides_by_their_pieces_when_the_ride_list_has_none_of_them():
+    from settings_page.form import snapshot_surprises
+    for rides in ({}, {"EPCOT": ["Test Track"]}):
+        snap = snapshot_surprises({}, rides)
+        assert snap["characters"]["falcon"]["rides"] == ["smugglers run", "rise of the resistance"]
+        assert snap["characters"]["mike"]["rides"] == ["laugh floor"]
+        assert snap["characters"]["genie"]["rides"] == [], "no default rides: an empty list is just that"
+
+
+def test_a_snapshots_rides_import_back_to_the_defaults_wherever_the_ride_list_is_missing_them():
+    from settings_page.form import import_surprises, snapshot_surprises
+    for rides in (None, {}, {"EPCOT": ["Test Track"]}, RIDES):
+        data, problems, _ = import_surprises(json.dumps(snapshot_surprises({}, rides)), rides)
+        assert problems == [] and data == {"enabled": True, "characters": {}}, rides
+
+
+def test_saved_rides_win_in_a_snapshot_even_none():
+    from settings_page.form import snapshot_surprises
+    snap = snapshot_surprises({"characters": {"falcon": {"rides": []}, "genie": {"rides": ["Test Track"]}}}, RIDES)
+    assert snap["characters"]["falcon"]["rides"] == [] and snap["characters"]["genie"]["rides"] == ["Test Track"]
+
+
+def test_importing_a_whole_snapshot_keeps_only_what_differs_from_the_defaults():
+    from settings_page.form import import_surprises, snapshot_surprises
+    snap = snapshot_surprises({"characters": {"tron": {"on": False}, "genie": {"chance": 1.5, "rides": ["Test Track"]}}}, RIDES)
+    data, problems, skipped = import_surprises(json.dumps(snap), RIDES)
+    assert problems == [] and skipped == []
+    assert data == {"enabled": True, "characters": {"tron": {"on": False},
+                                                    "genie": {"chance": 1.5, "rides": ["Test Track"]}}}
+
+
+def test_importing_none_for_a_character_whose_default_rides_are_missing_from_the_list_keeps_the_none():
+    from settings_page.form import import_surprises
+    text = json.dumps({"characters": {"falcon": {"rides": []}, "genie": {"rides": []}}})
+    data, _, _ = import_surprises(text, {"EPCOT": ["Test Track"]})
+    assert data["characters"] == {"falcon": {"rides": []}}, "Falcon has defaults to switch off; Genie has none"
+
+
+def test_what_one_board_exports_another_imports_as_the_same_settings():
+    from settings_page.form import apply_surprises, import_surprises
+    form = surprise_form(chance_genie="1.5", ride_chance_falcon="25", rides_set_genie="1",
+                         rides_genie=["Space Mountain", "Test Track"], rides_set_falcon="1", rides_falcon=[])
+    del form["surprise_tron"]
+    exported, problems = apply_surprises({}, form, RIDES)
+    assert problems == []
+    from settings_page.form import snapshot_surprises
+    imported, problems, skipped = import_surprises(json.dumps(snapshot_surprises(exported, RIDES), indent=2), RIDES)
+    assert problems == [] and skipped == [] and imported == exported
+
+
 def test_the_brightness_schedule_is_saved_as_peloton_leds_or_null():
     fields = dict(brightness_schedule="on", bright_day="80", bright_night="15", day_start="07:00", night_start="22:00")
     new, problems = apply_form(CONFIG, form_for(CONFIG, **fields))
