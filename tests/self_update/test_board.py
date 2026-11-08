@@ -149,7 +149,38 @@ def test_checkout_detaches_unless_going_back_to_a_branch(checkout):
     board, run = _board(checkout)
     board.checkout("abc")
     board.checkout("develop-beta", detach=False)
-    assert run.args() == [["git", "checkout", "--detach", "abc"], ["git", "checkout", "develop-beta"]]
+    assert [a for a in run.args() if a[1] == "checkout"] == [["git", "checkout", "--detach", "abc"],
+                                                              ["git", "checkout", "develop-beta"]]
+
+
+SHEBANG = "+#!/usr/bin/sudo /usr/bin/python3"
+
+
+def test_checkout_drops_the_installers_shebang_when_that_is_all_that_changed(checkout):
+    board, run = _board(checkout, {("git", "diff"): f"@@ -0,0 +1 @@\n{SHEBANG}\n"})
+    board.checkout("abc")
+    assert ["git", "checkout", "--", "disney.py"] in run.args()
+    assert run.args()[-1] == ["git", "checkout", "--detach", "abc"], "then switches"
+
+
+@pytest.mark.parametrize("diff", ["", f"{SHEBANG}\n+print('mine')\n", "-import os\n"])
+def test_checkout_keeps_any_other_edit_to_disney_py(checkout, diff):
+    board, run = _board(checkout, {("git", "diff"): diff})
+    board.checkout("abc")
+    assert ["git", "checkout", "--", "disney.py"] not in run.args()
+
+
+def test_the_installer_runs_as_root_with_sudos_idea_of_who_owns_the_checkout(checkout, monkeypatch):
+    monkeypatch.setattr(board_module.os, "stat", lambda path: SimpleNamespace(st_uid=1000, st_gid=1001))
+    monkeypatch.setattr(board_module.pwd, "getpwuid", lambda uid: SimpleNamespace(pw_name="admin", pw_dir="/h"))
+    board, run = _board(checkout, euid=0)
+    board.install(skip_requirements=False)
+    env = run.calls[0][1]["env"]
+    assert (env["SUDO_UID"], env["SUDO_GID"], env["SUDO_USER"]) == ("1000", "1001", "admin")
+    assert "user" not in run.calls[0][1], "still root: it installs services"
+    board, run = _board(checkout, euid=1000)
+    board.install(skip_requirements=False)
+    assert "env" not in run.calls[0][1]
 
 
 def test_a_failed_command_says_which_and_how(checkout):
