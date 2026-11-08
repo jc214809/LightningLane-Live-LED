@@ -8,13 +8,18 @@ import pytest
 from utils.migrate_boards import OLD_BOARDS, main, migrate
 
 
-def test_a_board_gets_its_size_and_rotation_where_its_config_has_none():
-    config = {"parks": ["EPCOT"], "matrix": {"led_rows": None, "led_brightness": 80}}
+def test_a_board_gets_its_size_and_rotation_when_its_config_has_no_matrix_section():
+    config = {"parks": ["EPCOT"]}
     new, moved = migrate(config, "PlutoPi.local")
-    assert new == {"parks": ["EPCOT"], "matrix": {"led_rows": 32, "led_brightness": 80, "led_cols": 64,
-                                                  "led_pixel_mapper": "Rotate:180"}}
+    assert new == {"parks": ["EPCOT"], "matrix": {"led_rows": 32, "led_cols": 64, "led_pixel_mapper": "Rotate:180"}}
     assert moved == ["led_rows", "led_cols", "led_pixel_mapper"]
-    assert config["matrix"]["led_rows"] is None, "the config passed in is left as it was"
+    assert "matrix" not in config, "the config passed in is left as it was"
+
+
+def test_a_setting_nulled_on_the_settings_page_stays_null_on_every_update():
+    """TinyPi: the page saved the rotation as null (the default); each update put Rotate:90 back."""
+    config = {"matrix": {"led_rows": 64, "led_cols": 64, "led_pixel_mapper": None}}
+    assert migrate(config, "TinyPi") == (config, [])
 
 
 def test_settings_already_in_config_win_so_a_rerun_changes_nothing():
@@ -36,12 +41,12 @@ def test_only_whats_not_the_pi_models_moves():
 
 def test_main_saves_with_a_backup_and_says_what_moved(tmp_path, capsys):
     path = tmp_path / "board-config.json"
-    path.write_text(json.dumps({"matrix": {"led_rows": None}}))
+    path.write_text(json.dumps({"parks": []}))
     os.chmod(path, 0o600)
     assert main([str(path)], "ZeroPi") == 0
     assert json.loads(path.read_text())["matrix"] == {"led_rows": 32, "led_cols": 64}
     assert oct(os.stat(path).st_mode & 0o777) == "0o600"
-    assert json.loads((tmp_path / "board-config.json.bak").read_text()) == {"matrix": {"led_rows": None}}
+    assert json.loads((tmp_path / "board-config.json.bak").read_text()) == {"parks": []}
     assert f"Panel settings moved into {path}: led_rows=32, led_cols=64." in capsys.readouterr().out
     assert main([str(path)], "ZeroPi") == 0
     assert "nothing to move" in capsys.readouterr().out

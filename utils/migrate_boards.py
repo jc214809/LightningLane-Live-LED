@@ -1,8 +1,10 @@
 """
 One-time move of a board's panel settings from the old boards.json (keyed by hostname, in the
 repo) into its own config.json "matrix" section, where the settings page edits them. LLL-install.sh
-runs it on every update: python3 -m utils.migrate_boards [config.json]. It only fills settings
-config.json leaves unset, so a rerun, or a board already set on the page, changes nothing.
+runs it on every update: python3 -m utils.migrate_boards [config.json]. It only fills a config with no
+"matrix" section at all: a section means the board was migrated or set on the settings page, where a blank
+setting is saved as null (the default), so a null can't be read as "unset" or every update would put
+the old rotation back.
 
 Only what isn't the Pi model's (cli.MODEL_DEFAULTS covers the GPIO mapping and timing): the panel's
 size, its rotation, and the Mac's emulator switch. Delete this once every board has updated.
@@ -26,10 +28,11 @@ OLD_BOARDS = {
 def migrate(config, hostname):
     """(config with this board's old settings in "matrix" where it has none, [keys moved])."""
     old = OLD_BOARDS.get(hostname.split(".")[0].lower(), {})
-    matrix = config.get("matrix") if isinstance(config.get("matrix"), dict) else {}
-    moved = [key for key, value in old.items() if matrix.get(key) is None]
+    if "matrix" in config:
+        return config, []
+    moved = list(old)
     if moved:
-        config = dict(config, matrix={**matrix, **{key: old[key] for key in moved}})
+        config = dict(config, matrix=dict(old))
     return config, moved
 
 
