@@ -226,6 +226,23 @@ def test_the_real_installer_has_the_flag():
         assert board_module.SKIP_REQUIREMENTS in f.read()
 
 
+def test_the_installer_trusts_its_checkout_for_git_add_so_an_old_updater_can_run_it():
+    """A board on an updater without SUDO_UID (before 2.0.7) runs the new version's installer as root
+    from systemd: a plain git add there died with "dubious ownership", and the rollback after it too."""
+    with open("LLL-install.sh") as f:
+        adds = [line.strip() for line in f if " add disney.py" in line and not line.strip().startswith("#")]
+    assert adds == ['git -c safe.directory="$PWD" add disney.py']
+
+
+def test_git_takes_the_installers_safe_directory_override(tmp_path):
+    """The option as the installer writes it is one git accepts (a typo would fail every update)."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "disney.py").write_text("print()\n")
+    subprocess.run(["git", "-c", f"safe.directory={tmp_path}", "add", "disney.py"], cwd=tmp_path, check=True)
+    staged = subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=tmp_path, capture_output=True, text=True)
+    assert staged.stdout.split() == ["disney.py"]
+
+
 def test_systemd_states(checkout):
     unit = "LightningLane-Live-LED.service"
     board, run = _board(checkout, {("systemctl", "show", "--property", "NRestarts"): "2\n",
