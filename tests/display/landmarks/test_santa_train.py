@@ -31,7 +31,7 @@ def _party_park(opens="19:00", closes="23:59"):
 def _text(scene):
     """The billboard's lettering, read back from its sign: the red and green pixels inside its frame."""
     frame = st.FRAME_PX[scene.height >= 64]
-    letters = (st.COLORS["R"], st.COLORS["G"])
+    letters = st.SIGN_INK
     return {(x, y): rgb for x, col in enumerate(scene.columns[:scene.width]) for y, rgb in col
             if y < scene.sign_h and rgb in letters
             and frame <= x < scene.width - frame and frame <= y < scene.sign_h - frame}
@@ -264,7 +264,7 @@ def test_the_billboard_says_the_party_and_tonights_hours(w, h, lines):
 def test_the_lettering_fits_inside_the_frame_and_alternates_red_and_green(w, h):
     font = st.SMALL_FONT if h >= 64 else st.TINY_FONT
     names = st.NAME[h >= 64] + ["12PM-12AM"]  # the widest hours
-    lines = [(font, text, st.COLORS["R" if i % 2 == 0 else "G"]) for i, text in enumerate(names)]
+    lines = [(font, text, st.SIGN_INK[i % 2]) for i, text in enumerate(names)]
     sign_h = _scene(w, h).sign_h
     frame = st.FRAME_PX[h >= 64]
     sign = st.sign_pixels(w, sign_h, lines, frame)

@@ -49,7 +49,8 @@ RIM_32 = [(1, 0), (2, 0), (3, 1), (2, 2), (1, 2), (0, 1)]  # a 64x32 wheel's rim
 # The billboard: its flatcar is Mickey's red car from this row down, stretched to the board's width.
 DECK_ROW = {True: 48, False: 25}
 FRAME_PX = {True: 2, False: 1}
-SIGN_RGB = (215, 215, 220)  # white, a little down from full: it's most of the board
+SIGN_RGB = (170, 170, 176)  # white well down from full: it's most of the board, and 215 glared
+SIGN_INK = ((215, 25, 30), (25, 125, 45))  # the lettering, red then green, dimmed with it
 CHASE_HZ = 6  # bulb steps per second round the frame
 BOB_PX = {True: 15, False: 9}  # px travelled per bob: about 3 a second at cruising speed
 BOB_DOWN = 0.35  # the share of each bob a rider spends sunk 1px into the car
@@ -88,7 +89,7 @@ class SantaTrainLandmark(Landmark):
         self.sign_h = self.train_y + DECK_ROW[big]  # the sign fills the board above the flatcar's deck
         font = SMALL_FONT if big else TINY_FONT
         names = NAME[big] + (["-".join(self.hours)] if self.hours else [])
-        lines = [(font, text, COLORS["R" if i % 2 == 0 else "G"]) for i, text in enumerate(names)]
+        lines = [(font, text, SIGN_INK[i % 2]) for i, text in enumerate(names)]
         sign = sign_pixels(w, self.sign_h, lines, FRAME_PX[big])
         self.bulbs = ring(w, self.sign_h)[::2]
         # Column by column, so a frame only walks the columns on the board.
