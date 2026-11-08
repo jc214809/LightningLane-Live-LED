@@ -31,9 +31,9 @@ def _chance_cell(name, kind, default, saved):
 
 def _rides_cell(name, shown):
     """The Rides cell: the names of the rides the character visits and, at the right edge, a plus button that opens
-    the panel under the row. shown: the ride names to say."""
-    text = ", ".join(shown) or "No rides"
-    return (f'<td><div class="rides-cell"><span class="ride-names{"" if shown else " none"}">{escape(text)}</span>'
+    the panel under the row. shown: the ride names to say, one per line."""
+    text = "".join(f'<span class="ride">{escape(ride)}</span>' for ride in shown) or "No rides"
+    return (f'<td><div class="rides-cell"><span class="ride-names{"" if shown else " none"}">{text}</span>'
             f'<button type="button" class="secondary add-rides" aria-expanded="false" '
             f'aria-label="Add rides for {_attr(character_label(name))}" title="Add rides">{icon("plus")}</button></div></td>')
 

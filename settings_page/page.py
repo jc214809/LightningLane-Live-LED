@@ -236,9 +236,10 @@ table.odds { width: 100%; border-collapse: collapse; font-size: 14px; }
   cursor: pointer; border-radius: 4px; }
 .odds th button:hover { color: var(--text); }
 .odds th button:focus-visible { outline: 2px solid var(--accent); }
-.odds th button::after { content: " \2195"; opacity: .45; }
-.odds th[aria-sort=ascending] button::after { content: " \25B2"; opacity: 1; }
-.odds th[aria-sort=descending] button::after { content: " \25BC"; opacity: 1; }
+/* Only the sorted column says which way. CSS escapes need a doubled backslash in this Python string: a
+   single one is Python's octal escape, and "\\2195" once reached the browser as a control character and "95". */
+.odds th[aria-sort=ascending] button::after { content: " \\25B2"; }
+.odds th[aria-sort=descending] button::after { content: " \\25BC"; }
 .odds td:nth-child(2) { font-weight: 550; min-width: 150px; }
 .odds td input[type=number] { width: 92px; }
 .odds .none { color: var(--text-3); }
@@ -249,6 +250,7 @@ table.odds { width: 100%; border-collapse: collapse; font-size: 14px; }
 .rides-cell { display: flex; align-items: flex-start; gap: 12px; }
 .ride-names { flex: 1; min-width: 160px; color: var(--text-2); line-height: 1.4; padding-top: 4px; }
 .ride-names.none { color: var(--text-3); }
+.ride-names .ride { display: block; }  /* one ride per line */
 .odds .add-rides { flex: none; margin-left: auto; width: 30px; height: 30px; padding: 0; display: inline-grid;
   place-items: center; }
 .odds .add-rides svg { width: 16px; height: 16px; }
@@ -309,6 +311,7 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
 .notice.new { color: var(--text); background: var(--accent-soft); border-color: var(--accent); }
 .notice.new svg { color: var(--accent); }
 .notice .when { color: var(--text-3); font-weight: 400; }
+#update-check { margin-top: 14px; }  /* room between the channel picker and Check, and what the check found */
 .steps { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
 .steps li { display: flex; align-items: center; gap: 10px; color: var(--text-3); }
 .steps li::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; border: 2px solid currentColor; }

@@ -122,10 +122,7 @@ const showTotals = () => {
 table.addEventListener('input', showTotals);
 table.addEventListener('change', showTotals);
 const rideList = JSON.parse(document.getElementById('ride-list').textContent);
-const namesText = row => {
-  const names = Array.from(row.nextElementSibling.querySelectorAll('input[type=checkbox]:checked')).map(input => input.value);
-  return names.length ? names.join(', ') : 'No rides';
-};
+const rideNames = row => Array.from(row.nextElementSibling.querySelectorAll('input[type=checkbox]:checked')).map(input => input.value);
 const listed = Object.entries(rideList).filter(([, rides]) => rides.length);
 document.querySelectorAll('button.add-rides').forEach(button => {
   const row = button.closest('tr');
@@ -209,10 +206,17 @@ document.querySelectorAll('button.add-rides').forEach(button => {
       none.textContent = 'No rides match "' + search.value.trim() + '".';
       none.hidden = shown > 0;
     });
-    box.addEventListener('change', () => {
+    box.addEventListener('change', () => {  // one ride per line, as the page draws them
       const names = row.querySelector('.ride-names');
-      names.textContent = namesText(row);
-      names.classList.toggle('none', names.textContent === 'No rides');
+      const ticked = rideNames(row);
+      names.replaceChildren(...ticked.map(ride => {
+        const line = document.createElement('span');
+        line.className = 'ride';
+        line.textContent = ride;
+        return line;
+      }));
+      if (!ticked.length) names.textContent = 'No rides';
+      names.classList.toggle('none', !ticked.length);
     });
   });
 });

@@ -600,3 +600,20 @@ def test_the_volume_buttons_read_the_forms_volume_and_speaker():
     assert chosen_device({"sound_device": ["plughw:CARD=Device,DEV=0"]}) == "plughw:CARD=Device,DEV=0"
     assert chosen_device({"sound_device": ["custom"], "sound_device_custom": [" hw:2,0 "]}) == "hw:2,0"
     assert chosen_device({"sound_device": [""]}) is None and chosen_device({}) is None
+
+
+def test_trips_are_listed_soonest_first_whatever_order_config_json_has_them_in():
+    config = {"trip_countdown": {"trip_dates": [
+        {"start": "2027-12-20", "name": "Christmas"}, "soon", "2027-06-01",
+        {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"}]}}
+    assert trip_rows(config) == [("2027-03-14", "2027-03-19", "Spring Break"), ("2027-06-01", "", ""),
+                                 ("2027-12-20", "", "Christmas"), ("soon", "", "")], "a start that isn't a date goes last"
+
+
+def test_trips_are_saved_soonest_first_so_config_json_reads_in_order():
+    form = form_for(CONFIG, trip_start_0="2027-12-20", trip_name_0="Christmas", trip_end_0="",
+                    trip_start_2="2027-01-05", trip_name_2="New Year")
+    new, problems = apply_form(CONFIG, form)
+    assert problems == []
+    assert [t["start"] if isinstance(t, dict) else t for t in new["trip_countdown"]["trip_dates"]] == [
+        "2027-01-05", "2027-06-01", "2027-12-20"]

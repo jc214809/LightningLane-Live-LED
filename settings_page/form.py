@@ -324,14 +324,23 @@ def show_names(config):
 
 
 def trip_rows(config):
-    """config.json's trips as (start, end, name) strings for the form's date fields."""
+    """config.json's trips as (start, end, name) strings for the form's date fields, soonest start first (one whose
+    start isn't a date goes last, as it was)."""
     entries = (config.get("trip_countdown") or {}).get("trip_dates")
     rows = []
     for entry in entries if isinstance(entries, list) else []:
         entry = entry if isinstance(entry, dict) else {"start": entry}
         rows.append(tuple(_date_text(entry.get(k)) if k != "name" else str(entry.get(k) or "")
                           for k in ("start", "end", "name")))
-    return rows
+    return sorted(rows, key=lambda row: _by_start(row[0]))
+
+
+def _by_start(text):
+    """A sort key: a trip's start date, or after every date when it isn't one."""
+    try:
+        return 0, parse_date(text)
+    except (TypeError, ValueError):
+        return 1, None
 
 
 def _date_text(value):
@@ -435,7 +444,8 @@ def apply_form(config, form, park_names=()):
             continue
         trips.append({"start": start, **({"end": end} if end else {}), **({"name": name} if name else {})}
                      if end or name else start)
-    countdown["trip_dates"] = trips
+    # Soonest first, so config.json reads in order as the page does (every start here is a date).
+    countdown["trip_dates"] = sorted(trips, key=lambda t: parse_date(t["start"] if isinstance(t, dict) else t))
     countdown.pop("trip_date", None)  # the old single date; trip_dates replaces it
 
     # Sound
