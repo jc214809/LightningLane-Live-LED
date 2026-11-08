@@ -9,7 +9,7 @@ import time
 from html import escape
 
 import cli
-from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, show_names, surprise_names, trip_rows
+from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, character_label, show_names, surprise_names, trip_rows
 from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
 from self_update.github import FAILED, PASSED, REPO, RUNNING
@@ -193,6 +193,44 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 .trip-x:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); }
 
 /* Shows */
+.share { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 16px; }
+.share-status { color: var(--text-2); font-size: 13px; }
+.share-status.bad { color: var(--bad); }
+.table-wrap { overflow-x: auto; margin: 6px 0 14px; }
+table.odds { width: 100%; border-collapse: collapse; font-size: 14px; }
+.odds th, .odds td { text-align: left; padding: 9px 10px; border-top: 1px solid var(--border); vertical-align: top; }
+.odds thead th { border-top: 0; font-size: 12px; font-weight: 600; color: var(--text-3); white-space: nowrap; }
+.odds th button { background: none; border: 0; padding: 2px 4px; margin: -2px -4px; font: inherit; color: inherit;
+  cursor: pointer; border-radius: 4px; }
+.odds th button:hover { color: var(--text); }
+.odds th button:focus-visible { outline: 2px solid var(--accent); }
+.odds th button::after { content: " \2195"; opacity: .45; }
+.odds th[aria-sort=ascending] button::after { content: " \25B2"; opacity: 1; }
+.odds th[aria-sort=descending] button::after { content: " \25BC"; opacity: 1; }
+.odds td:nth-child(2) { font-weight: 550; min-width: 150px; }
+.odds td input[type=number] { width: 92px; }
+.odds .none { color: var(--text-3); }
+.odds th:last-child, .odds td:last-child { width: 100%; }
+.odds tfoot th, .odds tfoot td { border-top: 2px solid var(--border-strong); font-weight: 600; }
+.odds .total-sub { font-weight: 400; font-size: 12px; color: var(--text-3); }
+.odds .over { color: var(--bad); }
+.rides-cell { display: flex; align-items: flex-start; gap: 12px; }
+.ride-names { flex: 1; min-width: 160px; color: var(--text-2); line-height: 1.4; padding-top: 4px; }
+.ride-names.none { color: var(--text-3); }
+.odds .add-rides { flex: none; margin-left: auto; width: 30px; height: 30px; padding: 0; display: inline-grid;
+  place-items: center; }
+.odds .add-rides svg { width: 16px; height: 16px; }
+.odds tr.ride-row td { border-top: 0; padding: 0 10px 14px; }
+.ride-pick { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); }
+.ride-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.ride-bar.ride-foot { margin: 12px 0 0; justify-content: flex-end; }
+.ride-pick input[type=search] { width: 100%; max-width: 320px; }
+.odds .add-rides[aria-expanded=true] svg { transform: rotate(45deg); }
+.ride-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px 20px; align-items: start; }
+.ride-pick h4 { margin: 0 0 6px; font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; }
+.ride-pick label { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-weight: 400; }
+.ride-pick label[hidden], .ride-park[hidden], .ride-pick p[hidden] { display: none; }
+.ride-pick p { margin: 0; color: var(--text-3); }
 .shows { display: grid; padding-top: 6px; }
 .show { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: center;
   padding: 14px 0; border-top: 1px solid var(--border); }
@@ -309,22 +347,11 @@ ICONS = {
     "undo": '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
 }
 
-# Proper names for the surprise dropdown, where title case gets them wrong; the rest are title-cased.
-CHARACTER_NAMES = {
-    "tink": "Tinker Bell", "buzz": "Buzz Lightyear", "ralph": "Wreck-It Ralph", "slinky": "Slinky Dog",
-    "slinky_wrap": "Slinky Dog (wrap)", "walle": "WALL-E", "walle_side": "WALL-E (side)", "army_men": "Green Army Men",
-    "falcon": "Millennium Falcon", "mike": "Mike Wazowski", "mcqueen": "Lightning McQueen",
-    "chip_dale": "Chip 'n' Dale", "chip_dale_swing": "Chip 'n' Dale (swing)", "pooh": "Winnie the Pooh",
-    "donald": "Donald Duck", "jack_sally": "Jack & Sally", "grannies": "Bluey: Grannies",
-    "keepy_uppy": "Bluey: Keepy Uppy", "saber_duel": "Saber Duel (random)", "saber_duel_obiwan": "Saber Duel Obi-Wan",
-    "archer": "Merida (archer)",
-}
-
 SECTIONS = (  # id, nav title, icon
     ("updates", "Updates", "refresh"), ("live", "Live updates", "live"), ("weather", "Weather", "cloud"), ("phone", "PIN by Pushover", "phone"),
     ("parks", "Parks", "pin"), ("trips", "Trip countdown", "calendar"),
     ("sound", "Sound", "sound"), ("panel", "Panel", "board"), ("display", "Display", "sun"),
-    ("shows", "Fireworks shows", "sparkle"),
+    ("shows", "Fireworks shows", "sparkle"), ("surprises", "Surprise characters", "sparkle"),
     ("testing", "Testing", "flask"), ("advanced", "Advanced", "sliders"),
 )
 
@@ -819,6 +846,11 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
                           "plays a show once each time the app starts; turn it off when you're done.")
     ), "sparkle")
 
+    surprises = _section("surprises", "Surprise characters",
+                         "Who now and then drops in between ride screens and park titles, and how often.", (
+        f'<a class="btn secondary" href="/surprises">{icon("sparkle")}<span>Choose characters and chances</span></a>'
+    ), "sparkle")
+
     settings = {key: (help_text, options, switch) for key, help_text, options, switch, _ in cli.matrix_settings()}
     panel_fields = "".join(_matrix_field(key, label, *settings[key], matrix.get(key), blanks.get(key, "Default"))
                            for key, label in PANEL_SETTINGS.items())
@@ -855,13 +887,14 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
         _switch("debug", "Debug logging", config.get("debug", False), "More detail in the board's log.")
         + _field("force_surprise", "Surprise on every ride screen",
                  _options("force_surprise", [("", "None")] + sorted(
-                     ((n, CHARACTER_NAMES.get(n, n.replace("_", " ").title())) for n in surprise_names()), key=lambda o: o[1]),
+                     ((n, character_label(n)) for n in surprise_names()), key=lambda o: o[1]),
                      config.get("force_surprise") or ""),
                  "Plays that character on every ride screen, for checking it on the board. "
                  "Set it back to None when you're done.")
     ), "flask")
 
-    toc = "".join(f'<a href="#{sid}">{icon(glyph)}{escape(title)}</a>' for sid, title, glyph in SECTIONS)
+    toc = "".join(f'<a href="{"/surprises" if sid == "surprises" else "#" + sid}">{icon(glyph)}{escape(title)}</a>'
+                  for sid, title, glyph in SECTIONS)
     mode = ("warn", "Setup mode") if hotspot else ("good", "Signed in")
     body = (
         _topbar(board, mode, sign_out=not hotspot)  # on the hotspot there's no PIN session to end
@@ -872,7 +905,7 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
         # First, and outside the settings form: its buttons post forms of their own.
         + (f'<div class="stack before">{updates_card(updates, started)}</div>' if updates else "")
         + f'<form method="post" action="/save" id="settings"><div class="stack">'
-          f'{live}{weather_html}{phone}{park_html}{trips}{sound_html}{panel_html}{display}{shows}{testing}{advanced}</div>'
+          f'{live}{weather_html}{phone}{park_html}{trips}{sound_html}{panel_html}{display}{shows}{surprises}{testing}{advanced}</div>'
         + '<div class="savebar"><div class="savebar-in"><div class="status" id="save-status"><span class="dot"></span>'
           '<span>Saved keys stay as they are unless you replace them</span></div>'
           f'<button type="submit" class="primary" id="save">{icon("save")}<span>Save and restart</span></button>'

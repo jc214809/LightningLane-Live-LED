@@ -23,13 +23,14 @@ from ipaddress import ip_address, ip_network
 from urllib.parse import parse_qs, urlsplit
 
 import cli
-from settings_page import page, pushover
-from settings_page.form import apply_form, chosen_device, panel_choices, volume_from_form
+from settings_page import page, pushover, surprises_page
+from settings_page.form import WDW_PARKS, apply_form, apply_surprises, chosen_device, import_surprises, snapshot_surprises, panel_choices, volume_from_form
 from settings_page.park_names import ParkNames
+from settings_page.ride_names import RideNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
 from settings_page.updates import STARTS, Updates
 from utils import debug
-from utils.config import CONFIG_FILE, pushover_keys, save_config, sound_settings
+from utils.config import CONFIG_FILE, SURPRISES_FILE, load_surprises, pushover_keys, save_config, sound_settings
 from utils.sound import play_test, set_volume
 from utils.wifi_setup import hotspot_name
 
@@ -42,6 +43,7 @@ MAX_BODY = 64 * 1024
 COOKIE = "lll_settings"
 RESTART_TIMEOUT_S = 30
 PARK_NAMES_FILE = "park_names.json"
+RIDE_NAMES_FILE = "ride_names.json"
 
 
 class Settings:
@@ -51,12 +53,15 @@ class Settings:
 
     def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
                  state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE,
-                 send_pushover=pushover.send_pin, updates=None):
+                 send_pushover=pushover.send_pin, updates=None, ride_names=None):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
+        self.surprises_path = os.path.join(os.path.dirname(os.path.abspath(config_path)), SURPRISES_FILE)
         self.model_file, self.send_pushover = model_file, send_pushover
         self.gate = gate or PinGate()
         self.park_names = park_names or ParkNames(
             os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE))
+        self.ride_names = ride_names or RideNames(
+            os.path.join(os.path.dirname(os.path.abspath(config_path)), RIDE_NAMES_FILE))
         self.state_file = state_file
         self.updates = updates or Updates()
         self.save_lock = threading.Lock()
@@ -80,6 +85,18 @@ class Settings:
     def save(self, config):
         """config.json, written whole with a .bak and its owner and mode kept (utils.config.save_config)."""
         save_config(config, self.config_path)
+
+    def rides(self):
+        """{park: [rides]} at the board's parks for the Surprise characters page's pickers; {} until the first
+        fetch has worked."""
+        config, _ = self.load()
+        parks = config.get("parks")
+        return self.ride_names.names(parks if isinstance(parks, list) and parks else list(WDW_PARKS))
+
+    def save_surprises(self, data):
+        """surprises.json, beside config.json, written whole with a .bak (utils.config.save_config), and, the first time,
+        with config.json's owner and mode, so it's the user's to read and edit over SSH even though this runs as root."""
+        save_config(data, self.surprises_path, like=self.config_path)
 
     def restart_app(self):
         """"restarted", "saved" (nothing to restart: no unit set, or no systemd) or "failed" (logged).
@@ -243,6 +260,11 @@ class Handler(BaseHTTPRequestHandler):
                                   board_name(), problem, self.settings.park_names.names(),
                                   self.settings.panel_choices(config), self.settings.updates.view(), started)
 
+    def _surprises_page(self, problems=(), saved=None, data=None, imported=None):
+        data = data if data is not None else load_surprises(self.settings.surprises_path)
+        return surprises_page.surprises_page(data, problems, saved, board_name(), self._in_setup(),
+                                             self.settings.rides(), imported)
+
     # --- routes
 
     def do_GET(self):
@@ -251,6 +273,11 @@ class Handler(BaseHTTPRequestHandler):
             if not self._allowed():
                 return self._send_json(403, {"running": False, "phase": None})
             return self._send_json(200, self.settings.updates.status())
+        if url.path == "/surprises":
+            if not self._allowed():
+                return self._redirect("/")
+            saved = parse_qs(url.query).get("saved", [None])[0]
+            return self._send(200, self._surprises_page(saved=saved if saved in page.SAVED else None))
         if url.path != "/":
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
         # "?wrong", "?shown", "?sent=...", "?signedout", "?saved=...", "?update=..."
@@ -300,7 +327,7 @@ class Handler(BaseHTTPRequestHandler):
             self.settings.gate.sign_out(self._token())
             return self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; "
                                                                  f"SameSite=Strict")])
-        if path not in ("/save", "/volume", "/update/check", "/update/start", "/update/rollback"):
+        if path not in ("/save", "/surprises", "/surprises/export", "/surprises/import", "/volume", "/update/check", "/update/start", "/update/rollback"):
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
         if not self._allowed():
             return self._redirect("/")
@@ -308,6 +335,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._volume(form)
         if path.startswith("/update/"):
             return self._update(path, (form.get("channel") or [""])[0])
+        if path == "/surprises":
+            return self._save_surprises(form)
+        if path == "/surprises/export":
+            return self._export_surprises(form)
+        if path == "/surprises/import":
+            return self._import_surprises(form)
         if self.settings.updates.running():  # a rollback would put back config.json as it was, losing the save
             loaded, _ = self.settings.load()
             return self._send(409, self._page(["An update is running: save once it's done (see Updates)."],
@@ -328,6 +361,52 @@ class Handler(BaseHTTPRequestHandler):
         # show that's playing carries on at the new volume.
         outcome = self.settings.set_volume(new) if volume_only(config, new) else self.settings.restart_app()
         self._redirect(f"/?saved={outcome}")
+
+    def _export_surprises(self, form):
+        """POST /surprises/export, the Export button: all the settings on the page as it is now, unsaved edits too
+        and every default spelled out (form.snapshot_surprises), as {"ok": true, "json": the text to copy} or {"ok": false, "problems": [...]}. Saves nothing."""
+        rides = self.settings.rides()
+        new, problems = apply_surprises(load_surprises(self.settings.surprises_path), form, rides)
+        if problems:
+            return self._send_json(400, {"ok": False, "problems": problems})
+        self._send_json(200, {"ok": True, "json": json.dumps(snapshot_surprises(new, rides), indent=2)})
+
+    def _import_surprises(self, form):
+        """POST /surprises/import, the Import button: the pasted settings (import_surprises) fill the page, not yet
+        saved, so they can be looked over and saved with Save and restart. Asking for JSON (the page's script, to check
+        a paste before it leaves the page) gets {"ok": true} or {"ok": false, "problems": [...]} and nothing drawn.
+        Otherwise anything wrong shows the page as it was, with why."""
+        pasted = (form.get("surprises_json") or [""])[0]
+        data, problems, skipped = import_surprises(pasted, self.settings.rides())
+        wants_json = "application/json" in (self.headers.get("Accept") or "")
+        if problems:
+            debug.info(f"Settings page: surprises import refused: {'; '.join(problems)}")
+            if wants_json:
+                return self._send_json(400, {"ok": False, "problems": problems})
+            return self._send(400, self._surprises_page(problems, imported=False))
+        if wants_json:
+            return self._send_json(200, {"ok": True})
+        self._send(200, self._surprises_page(data=data, imported=skipped))
+
+    def _save_surprises(self, form):
+        """POST /surprises: the Surprise characters page's form, saved to surprises.json, with a restart."""
+        if self.settings.updates.running():
+            return self._send(409, self._surprises_page(
+                ["An update is running: save once it's done (see Updates)."],
+                data=apply_surprises(load_surprises(self.settings.surprises_path), form,
+                                     self.settings.rides())[0]))
+        with self.settings.save_lock:
+            new, problems = apply_surprises(load_surprises(self.settings.surprises_path), form, self.settings.rides())
+            if problems:
+                debug.info(f"Settings page: surprises not saved: {'; '.join(problems)}")
+                return self._send(400, self._surprises_page(problems, data=new))
+            try:
+                self.settings.save_surprises(new)
+            except OSError as e:
+                debug.error(f"Settings page: can't save {self.settings.surprises_path}: {e}")
+                return self._send(500, self._surprises_page([f"Couldn't save: {e}"], data=new))
+        debug.info(f"Settings page: saved {self.settings.surprises_path} (from {self.client_address[0]}).")
+        self._redirect(f"/surprises?saved={self.settings.restart_app()}")
 
     def _update(self, path, channel):
         """POST /update/check, /update/start (channel) and /update/rollback, the Updates card's buttons.
@@ -379,6 +458,7 @@ def main(argv=None):
         debug.logger.removeHandler(debug.file_handler)
     settings = Settings(args.config, restart_unit=args.restart_unit)
     settings.park_names.refresh_if_due()  # at boot, so the list is ready before anyone opens the page
+    settings.rides()
     server = make_server(settings, port=args.port)
     debug.info(f"Settings page on port {args.port}, for {os.path.abspath(args.config)}.")
     server.serve_forever()

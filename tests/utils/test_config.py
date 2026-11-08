@@ -204,3 +204,125 @@ def test_a_bad_sound_volume_is_80_with_a_warning(monkeypatch, volume):
     monkeypatch.setattr(config_module.debug, "warning", warnings.append)
     assert sound_settings({"sound": {"volume": volume}}).volume == 80
     assert "sound.volume" in warnings[0]
+
+
+# ---- surprises ----
+
+def test_surprises_are_all_on_unless_the_file_says_otherwise():
+    from utils.config import SurpriseSettings, surprise_settings
+    assert surprise_settings({}) == SurpriseSettings()
+    assert SurpriseSettings().allows("tron") and SurpriseSettings().allows("wipe")
+
+
+def test_a_character_turned_off_takes_all_its_looks_with_it():
+    from utils.config import surprise_settings
+    settings = surprise_settings({"characters": {n: {"on": False} for n in ("tron", "saber_duel", "walle_side")}})
+    assert not settings.allows("tron")
+    assert not settings.allows("saber_duel_yoda") and not settings.allows("walle")
+    assert settings.allows("genie") and settings.allows("wipe")
+
+
+def test_the_master_switch_off_allows_only_the_wipe():
+    from utils.config import surprise_settings
+    settings = surprise_settings({"enabled": False})
+    assert settings.allows("wipe") and not settings.allows("genie") and not settings.allows("tink")
+
+
+def test_chances_are_read_as_percents_into_fractions():
+    from utils.config import surprise_settings
+    settings = surprise_settings({"characters": {"genie": {"chance": 1.5}, "tron": {"chance": 0},
+                                                 "falcon": {"ride_chance": 25}}})
+    assert settings.chance("genie", 0.005) == pytest.approx(0.015) and settings.chance("tron", 0.008) == 0
+    assert settings.chance("baymax", 0.007) == 0.007, "not set: the default"
+    assert settings.ride_chance("falcon", 0.10) == 0.25 and settings.ride_chance("rex", 0.10) == 0.10
+
+
+@pytest.mark.parametrize("data, field", [
+    ({"enabled": "no"}, "enabled"), ({"characters": ["tron"]}, "characters"), ({"characters": {"tron": "off"}}, "tron"),
+    ({"characters": {"tron": {"on": "no"}}}, "on"), ({"characters": {"genie": {"chance": 120}}}, "chance"),
+    ({"characters": {"genie": {"chance": -1}}}, "chance"), ({"characters": {"genie": {"chance": "5"}}}, "chance"),
+    ({"characters": {"genie": {"chance": True}}}, "chance"), ({"characters": {"falcon": {"ride_chance": None}}}, "ride_chance"),
+])
+def test_bad_surprise_settings_warn_and_fall_back_to_the_defaults(data, field, monkeypatch):
+    from utils.config import SurpriseSettings, surprise_settings
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    assert surprise_settings(data) == SurpriseSettings()
+    assert len(warnings) == 1 and field in warnings[0]
+
+
+def test_surprises_json_is_read_whole_and_a_bad_or_missing_file_means_defaults(tmp_path, monkeypatch):
+    from utils.config import load_surprises
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    path = tmp_path / "surprises.json"
+    assert load_surprises(str(path)) == {} and warnings == [], "missing is fine: nothing was ever changed"
+    path.write_text(json.dumps({"enabled": False}))
+    assert load_surprises(str(path)) == {"enabled": False}
+    for bad in ("{not json", "[1]", "3"):
+        path.write_text(bad)
+        assert load_surprises(str(path)) == {}
+    assert len(warnings) == 3
+
+
+def test_chosen_rides_are_read_lowercased_and_trimmed_and_an_empty_list_means_no_rides():
+    from utils.config import surprise_settings
+    settings = surprise_settings({"characters": {"genie": {"rides": ["Space Mountain", " Test Track "]},
+                                                 "tron": {"rides": []}, "falcon": {"rides": ["", " "]}}})
+    assert settings.rides == {"genie": ("space mountain", "test track"), "tron": (), "falcon": ()}
+
+
+def test_a_character_with_settings_but_no_rides_key_keeps_its_default_rides():
+    from utils.config import surprise_settings
+    assert surprise_settings({"characters": {"falcon": {"chance": 5, "on": False}}}).rides == {}
+
+
+@pytest.mark.parametrize("rides", ["Space Mountain", [1], ["Space Mountain", None]])
+def test_bad_rides_warn_and_keep_the_usual_ones(rides, monkeypatch):
+    from utils.config import surprise_settings
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    assert surprise_settings({"characters": {"genie": {"rides": rides}}}).rides == {}
+    assert len(warnings) == 1 and "rides" in warnings[0]
+
+
+# ---- save_config: who owns a file it creates ----
+
+def test_a_new_file_takes_the_mode_and_owner_of_the_file_it_is_beside(tmp_path, monkeypatch):
+    import os
+    from utils.config import save_config
+    config = tmp_path / "config.json"
+    config.write_text("{}")
+    os.chmod(config, 0o640)
+    owned = []
+    monkeypatch.setattr("utils.config.os.chown", lambda path, uid, gid: owned.append((os.path.basename(path), uid, gid)))
+    target = tmp_path / "surprises.json"
+    save_config({"enabled": True}, str(target), like=str(config))
+    assert oct(os.stat(target).st_mode & 0o777) == "0o640", "config.json's, not the default 600"
+    assert owned == [("surprises.json.new", os.stat(config).st_uid, os.stat(config).st_gid)]
+    assert not (tmp_path / "surprises.json.bak").exists(), "nothing to back up the first time"
+
+
+def test_a_file_that_exists_keeps_its_own_owner_and_mode_whatever_it_is_beside(tmp_path, monkeypatch):
+    import os
+    from utils.config import save_config
+    config, target = tmp_path / "config.json", tmp_path / "surprises.json"
+    config.write_text("{}")
+    target.write_text('{"old": 1}')
+    os.chmod(config, 0o640)
+    os.chmod(target, 0o600)
+    monkeypatch.setattr("utils.config.os.chown", lambda *args: None)
+    save_config({"new": 1}, str(target), like=str(config))
+    assert oct(os.stat(target).st_mode & 0o777) == "0o600"
+    assert json.loads((tmp_path / "surprises.json.bak").read_text()) == {"old": 1}
+
+
+def test_with_nothing_to_copy_a_new_file_is_600_and_nothing_is_chowned(tmp_path, monkeypatch):
+    import os
+    from utils.config import save_config
+    owned = []
+    monkeypatch.setattr("utils.config.os.chown", lambda *args: owned.append(args))
+    save_config({"a": 1}, str(tmp_path / "one.json"))
+    save_config({"a": 1}, str(tmp_path / "two.json"), like=str(tmp_path / "missing.json"))
+    assert oct(os.stat(tmp_path / "one.json").st_mode & 0o777) == oct(os.stat(tmp_path / "two.json").st_mode & 0o777) == "0o600"
+    assert owned == []

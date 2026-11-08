@@ -1,3 +1,4 @@
+import pytest
 import json
 import re
 import time
@@ -31,9 +32,244 @@ def test_the_surprise_is_a_dropdown_of_characters_with_the_saved_one_chosen():
     assert '<option value="baymax">Baymax</option>' in select, "title case for the rest"
 
 
+def test_the_main_page_links_to_the_surprises_page_instead_of_listing_them():
+    html = settings_page({}, [])
+    assert html.count('href="/surprises"') == 2, "the heading link in the nav, and the card's button"
+    assert 'id="surprises"' in html and 'name="surprise_genie"' not in html
+    assert 'action="/surprises"' not in html
+
+
+def test_the_surprises_page_ticks_every_character_but_those_saved_as_off():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({"enabled": True, "characters": {"tron": {"on": False}}})
+    assert re.search(r'id="surprises_enabled" name="surprises_enabled" checked', html)
+    assert re.search(r'id="surprise_genie" name="surprise_genie" checked', html)
+    assert re.search(r'id="surprise_tron" name="surprise_tron"(?! checked)', html)
+    assert 'id="surprise_walle"' not in html and '<td>WALL-E (side)</td>' in html
+    assert 'action="/surprises"' in html and 'href="/"' in html, "its own form, and a way back"
+
+
+def test_the_surprises_page_is_all_on_with_nothing_saved_and_shows_the_defaults_greyed():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({})
+    assert re.search(r'id="surprises_enabled" name="surprises_enabled" checked', html)
+    assert not re.search(r'name="surprise_\w+"(?! checked)', html)
+    genie = re.search(r'<input type="number" id="chance_genie"[^>]*>', html).group(0)
+    assert 'value=""' in genie and 'placeholder="0.5"' in genie
+    assert 'placeholder="10"' in re.search(r'<input type="number" id="ride_chance_falcon"[^>]*>', html).group(0)
+    assert 'placeholder="0"' in re.search(r'<input type="number" id="chance_falcon"[^>]*>', html).group(0), \
+        "every character can be added to any ride, at 0% until someone does"
+    assert 'id="chance_tink"' not in html and 'data-name="tink"' not in html and 'data-name="buzz"' not in html, \
+        "Tink and Buzz aren't ride-screen surprises: not on the page"
+    assert "12.9%" in html, "the defaults come to"
+
+
+def test_the_surprises_page_fills_the_saved_chances_and_totals_them():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({"characters": {"genie": {"chance": 1.5}, "falcon": {"ride_chance": 25, "chance": 1}}})
+    assert 'id="chance_genie" name="chance_genie" value="1.5"' in html
+    assert 'id="ride_chance_falcon" name="ride_chance_falcon" value="25"' in html
+    assert 'id="total-all">14.9%</strong>' in html, "12.9 + 1 + 1 (Genie's 0.5 became 1.5)"
+
+
+def test_every_column_heading_is_a_sort_button_and_the_rows_start_in_alphabetical_order():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({})
+    heads = re.findall(r'<th scope="col" aria-sort="none" data-sort="(\w+)" data-first="(\w+)"><button type="button">([^<]+)', html)
+    assert heads == [("on", "descending", "On"), ("name", "ascending", "Character"),
+                     ("num", "descending", "% of all ride screens"), ("num", "descending", "% on their own rides"),
+                     ("rides", "descending", "Rides")]
+    labels = re.findall(r'<tr data-name="\w+" data-label="([^"]+)"', html)
+    assert labels == sorted(labels, key=str.lower) and len(labels) > 25
+    assert "aria-sort" in html and "table.querySelectorAll('thead th')" in html, "the script that sorts them"
+
+
+RIDES = {"Magic Kingdom": ["Space Mountain"], "Hollywood Studios": ["Millennium Falcon: Smugglers Run",
+                                                                      "Star Wars: Rise of the Resistance", "Test Track"]}
+
+
+def row(html, name):
+    return re.search(rf'<tr data-name="{name}".*?</tr><tr class="ride-row"[^>]*>.*?</tr>', html, re.S).group(0)
+
+
+def test_each_character_has_a_plus_button_after_their_rides_and_a_hidden_panel_under_the_row():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({}, rides=RIDES)
+    genie = row(html, "genie")
+    button = re.search(r'<button type="button" class="secondary add-rides"[^>]*>.*?</button>', genie, re.S).group(0)
+    assert 'aria-expanded="false" aria-label="Add rides for Genie" title="Add rides"' in button
+    assert "<svg" in button and "Add</span>" not in button, "a plus sign and no text"
+    assert genie.index('class="ride-names') < genie.index("add-rides"), "the names are to its left"
+    assert '<tr class="ride-row" hidden><td colspan="5"><div class="ride-pick">' in genie
+
+
+def test_the_names_of_the_rides_a_character_visits_are_said_and_their_default_rides_are_ticked():
+    from settings_page.surprises_page import surprises_page
+    falcon = row(surprises_page({}, rides=RIDES), "falcon")
+    assert ('<span class="ride-names">Millennium Falcon: Smugglers Run, Star Wars: Rise of the Resistance</span>'
+            in falcon)
+    assert falcon.count('<input type="hidden" name="rides_falcon"') == 2
+    assert 'value="Millennium Falcon: Smugglers Run"' in falcon and 'value="Test Track"' not in falcon
+    assert '<span class="ride-names none">No rides</span>' in row(surprises_page({}, rides=RIDES), "genie")
+
+
+def test_saved_rides_replace_the_default_ones_and_an_empty_list_says_no_rides():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({"characters": {"falcon": {"rides": ["Test Track"]}, "tron": {"rides": ["Space Mountain", "Test Track"]},
+                                          "rex": {"rides": []}}}, rides=RIDES)
+    assert '<span class="ride-names">Test Track</span>' in row(html, "falcon") and 'value="Test Track"' in row(html, "falcon")
+    assert '<span class="ride-names">Space Mountain, Test Track</span>' in row(html, "tron")
+    assert '<span class="ride-names none">No rides</span>' in row(html, "rex") and 'name="rides_rex"' not in row(html, "rex")
+
+
+def test_before_the_ride_list_loads_the_default_rides_are_named_by_their_pieces_but_not_posted():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({})
+    assert '<span class="ride-names">Smugglers Run, Rise Of The Resistance</span>' in row(html, "falcon")
+    assert 'name="rides_falcon"' not in html, "nothing ticked is posted, so nothing is saved over them"
+    assert '<span class="ride-names none">No rides</span>' in row(html, "genie")
+    saved = surprises_page({"characters": {"falcon": {"rides": []}}})
+    assert '<span class="ride-names none">No rides</span>' in row(saved, "falcon"), "saved as none: not the defaults"
+
+
+def test_the_ride_panel_can_be_closed_and_shows_every_ride_without_a_scrolling_cap():
+    from settings_page.page import STYLE
+    from settings_page.surprises_page import SCRIPT, surprises_page
+    html = surprises_page({}, rides=RIDES)
+    assert "close.className = 'secondary close-rides'" in SCRIPT, "a Close button"
+    assert "bar.append(search, closeButton())" in SCRIPT and "foot.appendChild(closeButton())" in SCRIPT, \
+        "at the top and the bottom of a long list"
+    assert "event.key === 'Escape'" in SCRIPT and "button.title = open ? 'Close' : 'Add rides'" in SCRIPT
+    assert SCRIPT in html
+    assert ".add-rides[aria-expanded=true] svg { transform: rotate(45deg); }" in STYLE, "the plus turns into a cross"
+    assert ".ride-park { max-height" not in STYLE, "a park's rides aren't hidden behind a scrollbar"
+
+
+def test_enter_in_the_ride_search_box_does_not_submit_the_form_which_would_save_and_restart_the_app():
+    from settings_page.surprises_page import SCRIPT
+    assert "search.addEventListener('keydown', event => { if (event.key === 'Enter') event.preventDefault(); })" in SCRIPT
+
+
+def test_hidden_rides_really_disappear_because_the_label_style_would_otherwise_override_hidden():
+    from settings_page.page import STYLE
+    from settings_page.surprises_page import SCRIPT
+    assert ".ride-pick label { display: flex;" in STYLE, "which is why hidden needs its own rule"
+    assert ".ride-pick label[hidden], .ride-park[hidden], .ride-pick p[hidden] { display: none; }" in STYLE
+    assert "column.hidden = !matches" in SCRIPT and "No rides match" in SCRIPT, "empty parks and no matches are handled"
+
+
+def test_the_pages_script_is_valid_javascript(tmp_path):
+    """Every other check here is that some text is in the script: a quote in the wrong place would pass them all and
+    leave the page dead (sorting, the pickers, the totals, Export)."""
+    import shutil
+    import subprocess
+    if not shutil.which("node"):
+        pytest.skip("node isn't installed")
+    from settings_page.surprises_page import SCRIPT
+    path = tmp_path / "surprises.js"
+    path.write_text(SCRIPT, encoding="utf-8")
+    done = subprocess.run(["node", "--check", str(path)], capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+
+
+def test_export_and_import_are_two_plain_buttons_above_the_form_with_no_text_boxes():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({}, rides=RIDES)
+    assert '<button type="button" class="secondary" id="export-btn"' in html and ">Export</button>" in html
+    assert '<button type="button" class="secondary" id="import-btn"' in html and ">Import</button>" in html
+    share = re.search(r'<div class="share">.*?</span></div>', html, re.S).group(0)
+    assert "<textarea" not in share and "<form" not in share and "<input" not in share, "one click, nothing to fill in"
+    assert html.index('class="share"') < html.index('<form method="post" action="/surprises" id="settings">')
+    assert 'id="share-status" role="status" aria-live="polite"' in share, "says what happened"
+    assert "<textarea" not in html and "export-text" not in html and "import-box" not in html, "no boxes anywhere"
+
+
+def test_export_copies_in_one_click_from_a_snapshot_kept_fresh_so_the_click_is_still_fresh():
+    from settings_page.surprises_page import SCRIPT
+    assert "fetch('/surprises/export', {method: 'POST', body: new URLSearchParams(new FormData(form))})" in SCRIPT
+    assert "refresh();" in SCRIPT and "form.addEventListener('input', stale)" in SCRIPT and "setTimeout(refresh, 300)" in SCRIPT, \
+        "fetched ahead on load and after each edit"
+    assert "const reply = ready || await refresh();" in SCRIPT, "a click right after an edit waits for the new one"
+    assert "if (mine === version) ready = reply" in SCRIPT, "an answer to an older page is dropped"
+    assert "document.execCommand('copy')" in SCRIPT and "area.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0'" in SCRIPT, \
+        "a hidden textarea, which works on plain http"
+    assert "navigator.clipboard.writeText(text)" in SCRIPT and "Not copied: " in SCRIPT
+
+
+def test_import_reads_the_clipboard_where_it_may_and_otherwise_waits_for_one_paste():
+    from settings_page.surprises_page import SCRIPT
+    assert "navigator.clipboard.readText && window.isSecureContext" in SCRIPT, "one click where the browser allows"
+    assert "document.addEventListener('paste', onPaste, {once: true})" in SCRIPT and "event.clipboardData.getData('text')" in SCRIPT
+    assert "Press Ctrl+V (Cmd+V on a Mac) now to paste the settings." in SCRIPT
+    assert "headers: {Accept: 'application/json'}" in SCRIPT and "'Nothing imported: '" in SCRIPT.replace('"', "'"), \
+        "a bad paste is checked first and says why, leaving the page as it is"
+    assert "send.action = '/surprises/import'" in SCRIPT and "send.submit()" in SCRIPT, "then the board draws the page"
+
+
+def test_an_imported_page_says_it_is_not_saved_and_a_refused_one_says_why():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({"characters": {"genie": {"chance": 2}}}, imported=["new_one", "tink"])
+    assert "<strong>not saved yet</strong>" in html and "new_one, tink" in html and "Saved." not in html
+    assert "<strong>Imported.</strong>" in surprises_page({}, imported=[]) and "Left out" not in surprises_page({}, imported=[])
+    html = surprises_page({}, ["It isn't JSON."], imported=False)
+    assert "Nothing imported." in html and "It isn&#x27;t JSON." in html and "Not saved." not in html
+
+
+def test_the_rides_on_the_page_are_posted_with_a_marker_whenever_they_are_the_ones_to_save():
+    from settings_page.surprises_page import surprises_page
+    marker = lambda html, name: re.findall(rf'<input type="hidden" name="rides_set_{name}" value="(\w*)">', html)
+    html = surprises_page({"characters": {"genie": {"rides": ["Test Track"]}, "falcon": {"rides": []}}}, rides=RIDES)
+    assert marker(html, "genie") == ["saved"] and marker(html, "falcon") == ["saved"], "saved rides, even none"
+    assert marker(html, "rex") == ["1"], "the default rides, ticked and known"
+    html = surprises_page({"characters": {"genie": {"rides": ["Test Track"]}}})
+    assert marker(html, "genie") == ["saved"] and marker(html, "rex") == [], "no list: the defaults can't be named"
+
+
+def test_opening_a_picker_keeps_saying_the_rides_were_saved():
+    from settings_page.surprises_page import SCRIPT
+    assert "set.value = markerValue" in SCRIPT
+    assert SCRIPT.index("const markerValue") < SCRIPT.index("box.textContent = ''"), "read before the box is cleared"
+    assert 'input[type=hidden][name="\' + field + \'"]' in SCRIPT or "input[type=hidden][name=" in SCRIPT, \
+        "the marker isn't mistaken for a ride"
+
+
+def test_the_ride_list_goes_to_the_script_as_json_and_cannot_end_the_script_early():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({}, rides={"Magic Kingdom": ["Space Mountain", "</script><b>"]})
+    data = re.search(r'<script type="application/json" id="ride-list">(.*?)</script>', html, re.S).group(1)
+    assert json.loads(data) == {"Magic Kingdom": ["Space Mountain", "</script><b>"]}
+    assert json.loads(re.search(r'id="ride-list">(.*?)</script>', surprises_page({}), re.S).group(1)) == {}, "not loaded yet"
+
+
+def test_the_total_is_a_footer_row_with_all_the_chances_and_the_ticked_ones():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({})
+    foot = re.search(r"<tfoot>.*?</tfoot>", html, re.S).group(0)
+    assert '<th scope="row">Total</th>' in foot and 'id="total-all">12.9%</strong>' in foot
+    assert '12.9% from the ticked characters' in foot and "over" not in foot
+    assert html.index("</tbody>") < html.index("<tfoot>"), "at the bottom, outside the rows that sort"
+    html = surprises_page({"characters": {"genie": {"on": False}, "baymax": {"on": False, "chance": 2}}})
+    foot = re.search(r"<tfoot>.*?</tfoot>", html, re.S).group(0)
+    assert 'id="total-all">14.2%</strong>' in foot, "12.9 and Baymax's 0.7 became 2: off characters still hold their slice"
+    assert "11.7% from the ticked characters" in foot, "14.2 less Genie's 0.5 and Baymax's 2"
+
+
+def test_a_total_past_100_is_marked_and_the_script_keeps_the_footer_live():
+    from settings_page.surprises_page import surprises_page
+    html = surprises_page({"characters": {"genie": {"chance": 100}}})
+    assert '<strong id="total-all" class="over">' in html
+    assert "const showTotals" in html and "table.addEventListener('input', showTotals)" in html
+
+
+def test_the_surprises_page_shows_problems_and_saved():
+    from settings_page.surprises_page import surprises_page
+    assert "Not saved." in surprises_page({}, ["Genie: nope."]) and "Genie: nope." in surprises_page({}, ["Genie: nope."])
+    assert "restarting with the new settings" in surprises_page({}, saved="restarted")
+
+
 def test_every_proper_name_is_for_a_real_character():
     from settings_page.form import surprise_names
-    from settings_page.page import CHARACTER_NAMES
+    from settings_page.form import CHARACTER_NAMES
     assert set(CHARACTER_NAMES) <= set(surprise_names())
 
 
