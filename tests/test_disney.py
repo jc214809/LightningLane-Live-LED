@@ -490,6 +490,149 @@ def test_surprise_slices_match_their_chances_and_stay_rare():
     assert disney._surprise(0.999) == "wipe"
 
 
+# ---- surprises on the settings page ----
+
+@pytest.fixture
+def surprises_set(monkeypatch):
+    def use(config):
+        monkeypatch.setattr(disney, "surprises", disney.surprise_settings(config))
+    return use
+
+
+def test_a_character_turned_off_gets_the_plain_wipe_on_their_roll(monkeypatch, screens, surprises_set):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: _roll_for("genie"))
+    surprises_set({"characters": {"genie": {"on": False}}})
+    disney.loop_through_attractions(FakeMatrix(64, 64), park)
+    assert screens[-1]["transition"] == "wipe"
+    surprises_set({"characters": {"baymax": {"on": False}}})
+    disney.loop_through_attractions(FakeMatrix(64, 64), park)
+    assert screens[-1]["transition"] == "genie", "others are untouched"
+
+
+def test_a_ride_visitor_turned_off_stays_away_from_their_ride(monkeypatch, screens, surprises_set):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Seven Dwarfs Mine Train", "waitTime": 3, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: 0.99)
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "mine_train_snow"
+    surprises_set({"characters": {"mine_train": {"on": False}}})
+    disney.loop_through_attractions(FakeMatrix(), park)
+    assert screens[-1]["transition"] == "wipe", "the short-wait full train is one of the mine train's looks"
+
+
+def test_the_master_switch_off_makes_every_screen_change_a_wipe(monkeypatch, screens, surprises_set):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+    monkeypatch.setattr(disney.random, "random", lambda: _roll_for("genie"))
+    surprises_set({"enabled": False})
+    disney.loop_through_attractions(FakeMatrix(64, 64), park)
+    assert screens[-1]["transition"] == "wipe"
+    assert disney._park_reveal() == "wipe"
+
+
+def test_force_surprise_overrides_what_is_turned_off(monkeypatch, screens, surprises_set):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    park = {"name": "MK", "attractions": [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"}]}
+    surprises_set({"enabled": False})
+    disney.set_forced_surprise("genie")
+    try:
+        disney.loop_through_attractions(FakeMatrix(64, 64), park)
+    finally:
+        disney.set_forced_surprise(None)
+    assert screens[-1]["transition"] == "genie"
+
+
+def test_a_chance_set_on_the_page_moves_that_characters_slice_of_the_roll(surprises_set):
+    surprises_set({"characters": {"genie": {"chance": 50}}})
+    assert disney._surprise(0.49) == "genie" and disney._surprise(0.51) != "genie"
+    surprises_set({"characters": {"genie": {"chance": 0}}})
+    assert disney._surprise(0.0) == "baymax", "a chance of 0 takes the slice away, so the next one starts at 0"
+    surprises_set({})
+    assert disney._surprise(0.004) == "genie", "unset: the table's own chance"
+
+
+def test_a_chance_set_for_a_ride_visitors_own_rides_replaces_the_tables(monkeypatch, surprises_set):
+    monkeypatch.setattr(disney.random, "random", lambda: 0.2)
+    assert disney._ride_visitor("Rise of the Resistance") is None, "10% by default: a 0.2 roll misses"
+    surprises_set({"characters": {"falcon": {"ride_chance": 25}}})
+    assert disney._ride_visitor("Rise of the Resistance") == "falcon"
+    surprises_set({"characters": {n: {"ride_chance": 0} for n in ("falcon", "saber_clash", "saber_duel")}})
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    assert disney._ride_visitor("Rise of the Resistance") is None
+
+
+def test_rides_chosen_on_the_page_replace_a_characters_usual_rides(monkeypatch, surprises_set):
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    assert disney._ride_visitor("Space Mountain") is None
+    assert disney._ride_visitor("Rise of the Resistance") == "falcon"
+    surprises_set({"characters": {"falcon": {"rides": ["Space Mountain"]}}})
+    assert disney._ride_visitor("Space Mountain") == "falcon", "added to a ride"
+    assert disney._ride_visitor("Rise of the Resistance") != "falcon", "and no longer on its usual ones"
+
+
+def test_an_empty_ride_list_takes_a_character_off_all_their_rides(monkeypatch, surprises_set):
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    assert disney._ride_visitor("Rise of the Resistance") == "falcon"
+    surprises_set({"characters": {"falcon": {"rides": []}}})
+    assert disney._ride_visitor("Rise of the Resistance") != "falcon", "the others on that ride still can"
+    assert disney._ride_visitor("Space Mountain") is None
+    surprises_set({"characters": {"falcon": {"chance": 5}}})
+    assert disney._ride_visitor("Rise of the Resistance") == "falcon", "settings without a rides key leave them be"
+
+
+def test_a_character_with_no_rides_of_their_own_is_added_to_the_rides_chosen_at_ten_percent(monkeypatch, surprises_set):
+    surprises_set({"characters": {"genie": {"rides": ["Test Track"]}}})
+    monkeypatch.setattr(disney.random, "random", lambda: 0.09)
+    assert disney._ride_visitor("Test Track") == "genie" and disney._ride_visitor("Space Mountain") is None
+    monkeypatch.setattr(disney.random, "random", lambda: 0.11)
+    assert disney._ride_visitor("Test Track") is None
+    surprises_set({"characters": {"genie": {"rides": ["Test Track"], "ride_chance": 50}}})
+    monkeypatch.setattr(disney.random, "random", lambda: 0.4)
+    assert disney._ride_visitor("Test Track") == "genie"
+
+
+def test_a_character_added_to_rides_still_obeys_the_off_switch(monkeypatch, screens, surprises_set):
+    monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
+    monkeypatch.setattr(disney.random, "random", lambda: 0.0)
+    park = {"name": "EPCOT", "attractions": [{"name": "Test Track", "waitTime": 30, "status": "OPERATING"}]}
+    surprises_set({"characters": {"genie": {"rides": ["Test Track"]}}})
+    disney.loop_through_attractions(FakeMatrix(64, 64), park)
+    assert screens[-1]["transition"] == "genie"
+    surprises_set({"characters": {"genie": {"rides": ["Test Track"], "on": False}}})
+    disney.loop_through_attractions(FakeMatrix(64, 64), park)
+    assert screens[-1]["transition"] == "wipe"
+
+
+def test_chosen_rides_for_the_mine_train_move_its_short_wait_train_too(monkeypatch, surprises_set):
+    monkeypatch.setattr(disney.random, "random", lambda: 0.99)
+    assert disney._ride_visitor("Seven Dwarfs Mine Train", 3) == "mine_train_snow"
+    surprises_set({"characters": {"mine_train": {"rides": ["Space Mountain"]}}})
+    assert disney._ride_visitor("Seven Dwarfs Mine Train", 3) is None
+    assert disney._ride_visitor("Space Mountain", 3) == "mine_train_snow"
+
+
+def test_a_character_given_a_chance_on_any_ride_screen_joins_the_roll_after_the_table(surprises_set):
+    surprises_set({"characters": {"falcon": {"chance": 10}, "wipe": {"chance": 50}, "not_a_character": {"chance": 50}}})
+    table_end = sum(disney.SURPRISES.values())
+    assert disney._surprise(table_end + 0.05) == "falcon" and disney._surprise(table_end + 0.11) == "wipe"
+    assert disney._surprise(0.004) == "genie", "the table's own slices don't move"
+
+
+def test_park_titles_pick_only_the_allowed_reveal(surprises_set):
+    surprises_set({"characters": {"tink": {"on": False}}})
+    assert {disney._park_reveal() for _ in range(30)} == {"buzz"}
+    surprises_set({})
+    assert {disney._park_reveal() for _ in range(60)} == {"tink", "buzz"}
+
+
+def test_every_surprise_the_settings_page_hides_is_never_rolled():
+    from utils.config import SURPRISES_UNUSED
+    rolled = set(disney.SURPRISES) | set(disney.RIDE_VISITORS) | set(disney.PARK_REVEALS)
+    assert not rolled & set(SURPRISES_UNUSED)
+
+
 # ---- Happily Ever After fireworks ----
 
 HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)

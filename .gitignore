@@ -13,3 +13,5 @@ logs/
 sounds/*
 !sounds/README.md
 park_names.json
+surprises.json
+surprises.json.bak

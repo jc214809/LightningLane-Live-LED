@@ -31,8 +31,10 @@ from utils.wifi_setup import hotspot_name
 from utils import debug
 from utils import brightness
 from utils import heartbeat
-from utils.config import (ShowSettings, SoundSettings, brightness_schedule, debug_enabled, forced_show_name, load_config,
-                          show_settings, sound_settings, websocket_protocol, websocket_settings)
+from utils.config import (ShowSettings, SoundSettings, SurpriseSettings, brightness_schedule, debug_enabled,
+                          forced_show_name, load_config, load_surprises, show_settings, sound_settings, surprise_settings,
+                          websocket_protocol, websocket_settings)
+from utils.surprises import DEFAULT_RIDE_CHANCE, PARK_REVEALS, RIDE_VISITORS, SURPRISES, TALL_ONLY
 from utils.sound import clip_name, playing, show_clips, watch as watch_sound
 
 # Configure logging
@@ -42,70 +44,14 @@ if debug_enabled(load_config()):
 else:
     logger.setLevel(logging.INFO)
 
-PARK_REVEALS = ("tink", "buzz")
-# Rare visitors on ride screens, and each one's chance per screen. Genie erupts from his
-# lamp and sweeps the next ride in; Baymax peeks over it so the wait stays readable;
-# Slinky walks off the right edge and his spring wraps round the back of the board;
-# WALL-E, in profile, bales the old ride into a cube and drives off with it (his
-# three-quarter view, "walle", is kept for force_surprise but isn't in the rotation);
-# Mike Wazowski pops up, looks around and scares (and visits the Laugh Floor more often).
-# Two TRON light cycles race across, blue on top and red below, their trails the wipe.
-# Olaf stacks himself up out of snowballs while it snows, waves, and walks off.
-# Goofy flies his biplane through a loop-the-loop, towing a YAHOOEY! banner.
-# The Pixar Ball bounces in with Luxo Jr., in one of three little stories.
-# Lightning McQueen zooms in, skids, Ka-chows and peels out; Mater drives across backwards.
-# (WALL-E and Baymax were trimmed to make room for the Cars pair under 10% in all.)
-# Chip 'n' Dale run in and meet nose to nose, or swing in on ropes, Dale bonking into Chip
-# (the Army Men were trimmed to make room).
-# Tigger bounces across on his tail. Stitch surfs the new ride in on a wave that washes
-# the old one away. Wreck-It Ralph stomps in and smashes the old ride into falling pixels.
-# Pooh floats up on his balloon, uncovering the ride below him (Baymax was trimmed to make
-# room; Pooh also visits his own ride more often).
-# Forky waddles in, spots the old ride (TRASH!) and dives through the bottom of the board,
-# taking it down the hole after him.
-# Kevin struts across with Dug chasing her, his balloons lifting him higher as he goes.
-# An archer rises at full draw, looses an arrow across the board and sinks away, the new ride
-# uncovered behind the arrow (64x64 boards only; the Army Men were trimmed again to make room).
-# Surprises may fill up to 13% of ride screens.
-# Ride screens run 8s each, about 400 an hour while parks are open, so 1% is roughly
-# four visits an hour.
-SURPRISES = {"genie": 0.005, "baymax": 0.007, "slinky_wrap": 0.01, "walle_side": 0.012, "army_men": 0.005,
-             "mike": 0.008, "tron": 0.008, "archer": 0.005,
-             "olaf": 0.005, "goofy": 0.008,
-             "luxo_ball": 0.005, "mcqueen": 0.005, "mater": 0.005,
-             "chip_dale": 0.005, "tigger": 0.005, "stitch_surf": 0.005,
-             "ralph": 0.005, "grannies": 0.005,
-             "keepy_uppy": 0.001, "pooh": 0.005, "forky": 0.005,
-             "kevin": 0.005}
-# Visitors too tall for a 64x32 board: there the roll gives the plain wipe.
-TALL_ONLY = ("archer",)
-# Visitors who only turn up on their own rides, and how often on those rides. Matched by
-# a piece of the ride's name, ignoring case. The Falcon keeps to Galaxy's Edge, and a red and
-# a blue lightsaber clash over its rides and Star Tours, then sweep apart to the next; on the
-# same rides Luke and Vader fight a duel, lock blades and are thrown apart to the edges. Mike is
-# in the rotation too, but drops in on his own Laugh Floor far more often. Jack, Sally and
-# Zero turn up on their own meet, which is only listed on Halloween party nights ("jack
-# skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too). The Mine Train
-# brings a few dwarfs in their cars now and then; at a short wait the whole train comes every
-# time (see _mine_train_for_wait). Rex stomps through Toy Story Land, and the claw chooses one of
-# the Aliens on their own rides; at a wait of 5 or less it's Buzz, every time, with Woody hanging on.
-# Pooh floats through his own ride's screens.
-RIDE_VISITORS = {
-    "falcon": {"rides": ("smugglers run", "rise of the resistance"), "chance": 0.10},
-    "saber_clash": {"rides": ("smugglers run", "rise of the resistance", "star tours"), "chance": 0.10},
-    "saber_duel": {"rides": ("smugglers run", "rise of the resistance", "star tours"), "chance": 0.10},
-    "mike": {"rides": ("laugh floor",), "chance": 0.10},
-    "jack_sally": {"rides": ("meet jack skellington",), "chance": 0.5},
-    "mine_train": {"rides": ("seven dwarfs mine train",), "chance": 0.10},
-    "rex": {"rides": ("slinky dog dash", "toy story mania", "alien swirling saucers"), "chance": 0.10},
-    "aliens": {"rides": ("toy story mania", "alien swirling saucers"), "chance": 0.10},
-    "pooh": {"rides": ("winnie the pooh",), "chance": 0.10},
-}
 # When Magic Kingdom's fireworks start, the board drops everything and plays its own
 # castle fireworks (no title) until this long after the show's start time.
 # config.json "force_surprise": plays that visitor on every ride screen. For checking a
 # character on a real board; leave it unset otherwise.
 forced_surprise = None
+# surprises.json, read once at start-up: which characters may visit. A roll for one that's off
+# plays the plain wipe instead. force_surprise ignores it.
+surprises = SurpriseSettings()
 # config.json "shows" entry with "force": true (or the old "force_show"): a fireworks show's name
 # ("Happily Ever After"), played once at start-up
 # whatever the schedule says, with its sound. For checking a show on a real board; leave it unset
@@ -164,6 +110,10 @@ def main():
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
     set_forced_surprise(config.get("force_surprise"))
+    global surprises
+    surprises = surprise_settings(load_surprises())
+    if not surprises.enabled or surprises.off:
+        debug.info(f"Surprise characters: {'all off' if not surprises.enabled else 'off for ' + ', '.join(sorted(surprises.off))}.")
     schedule = brightness_schedule(config)
     brightness.use(schedule)
     if schedule:
@@ -317,7 +267,7 @@ def initialize_park_information_screen(matrix, park):
         scene = landmark(matrix.width, matrix.height, park=park)
         show_screen(matrix, landmark_screen(scene), scene.SCREEN_S)
     debug.info(f"Rendering {park['name']} Title Screen. | Weather: {park.get('weather')}")
-    show_screen(matrix, _static(render_park_information_screen, park), 8, transition=random.choice(PARK_REVEALS))
+    show_screen(matrix, _static(render_park_information_screen, park), 8, transition=_park_reveal())
 
 def show_setting(show):
     """A show's ShowSettings from config.json's "shows": enabled and "default" (the castle fireworks for
@@ -428,6 +378,8 @@ def loop_through_attractions(matrix, park, parks=()):
                 f"From: {ride.get('updateSource') or 'none yet'}")
             surprise = (forced_surprise or _ride_visitor(ride.get("name", ""), ride.get("waitTime"))
                         or _surprise(random.random()))
+            if not forced_surprise and not surprises.allows(surprise):
+                surprise = "wipe"
             if surprise in TALL_ONLY and matrix.height < 64:
                 surprise = "wipe"
             if surprise != "wipe":
@@ -435,16 +387,35 @@ def loop_through_attractions(matrix, park, parks=()):
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
             heartbeat.beat()
 
+def _park_reveal():
+    """Tink or Buzz for a park title, whichever surprises.json allows; the plain wipe if neither."""
+    allowed = [name for name in PARK_REVEALS if surprises.allows(name)]
+    return random.choice(allowed) if allowed else "wipe"
+
+def _visitor_specs():
+    """{character: {"rides": pieces of ride names, "chance": per screen}} for the characters who visit rides of their
+    own: utils/surprises.py's, with the rides and chances surprises.json sets, and any other character it gives rides."""
+    specs = {name: dict(spec) for name, spec in RIDE_VISITORS.items()}
+    for name, rides in surprises.rides.items():
+        if not rides:
+            specs.pop(name, None)  # none at all
+        elif name in TRANSITIONS:
+            specs[name] = {"chance": DEFAULT_RIDE_CHANCE, **specs.get(name, {}), "rides": rides}
+    for name, spec in specs.items():
+        spec["chance"] = surprises.ride_chance(name, spec["chance"])
+    return specs
+
 def _ride_visitor(ride_name, wait=None):
     """A visitor who belongs to this ride, if one rolls in; None otherwise (and no roll is spent)."""
     name = ride_name.lower()
-    if any(part in name for part in RIDE_VISITORS["mine_train"]["rides"]):
+    specs = _visitor_specs()
+    if "mine_train" in specs and any(part in name for part in specs["mine_train"]["rides"]):
         full_train = _mine_train_for_wait(wait)
         if full_train:
             return full_train
-    if any(part in name for part in RIDE_VISITORS["aliens"]["rides"]) and _short_wait(wait):
+    if "aliens" in specs and any(part in name for part in specs["aliens"]["rides"]) and _short_wait(wait):
         return "aliens_toys"
-    for visitor, spec in RIDE_VISITORS.items():
+    for visitor, spec in specs.items():
         if any(part in name for part in spec["rides"]) and random.random() < spec["chance"]:
             return visitor
     return None
@@ -470,7 +441,11 @@ def _mine_train_for_wait(wait):
 def _surprise(roll):
     # Each visitor owns a slice of the roll as wide as their chance, so order doesn't change the odds.
     edge = 0.0
-    for name, chance in SURPRISES.items():
+    # The table's characters, then any the settings page gave a chance on any ride screen.
+    table = {**SURPRISES, **{name: 0.0 for name in sorted(surprises.chances)
+                             if name not in SURPRISES and name in TRANSITIONS and name != "wipe"}}
+    for name, default in table.items():
+        chance = surprises.chance(name, default)
         edge += chance  # a running total; subtracting from the roll drifts at slice edges
         if roll < edge:
             return name
