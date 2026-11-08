@@ -106,7 +106,7 @@ def test_each_character_has_a_plus_button_after_their_rides_and_a_hidden_panel_u
 def test_the_names_of_the_rides_a_character_visits_are_said_and_their_default_rides_are_ticked():
     from settings_page.surprises_page import surprises_page
     falcon = row(surprises_page({}, rides=RIDES), "falcon")
-    assert ('<span class="ride-names">Millennium Falcon: Smugglers Run, Star Wars: Rise of the Resistance</span>'
+    assert ('<span class="ride-names"><span class="ride">Millennium Falcon: Smugglers Run</span><span class="ride">Star Wars: Rise of the Resistance</span></span>'
             in falcon)
     assert falcon.count('<input type="hidden" name="rides_falcon"') == 2
     assert 'value="Millennium Falcon: Smugglers Run"' in falcon and 'value="Test Track"' not in falcon
@@ -117,15 +117,15 @@ def test_saved_rides_replace_the_default_ones_and_an_empty_list_says_no_rides():
     from settings_page.surprises_page import surprises_page
     html = surprises_page({"characters": {"falcon": {"rides": ["Test Track"]}, "tron": {"rides": ["Space Mountain", "Test Track"]},
                                           "rex": {"rides": []}}}, rides=RIDES)
-    assert '<span class="ride-names">Test Track</span>' in row(html, "falcon") and 'value="Test Track"' in row(html, "falcon")
-    assert '<span class="ride-names">Space Mountain, Test Track</span>' in row(html, "tron")
+    assert '<span class="ride-names"><span class="ride">Test Track</span></span>' in row(html, "falcon") and 'value="Test Track"' in row(html, "falcon")
+    assert '<span class="ride-names"><span class="ride">Space Mountain</span><span class="ride">Test Track</span></span>' in row(html, "tron")
     assert '<span class="ride-names none">No rides</span>' in row(html, "rex") and 'name="rides_rex"' not in row(html, "rex")
 
 
 def test_before_the_ride_list_loads_the_default_rides_are_named_by_their_pieces_but_not_posted():
     from settings_page.surprises_page import surprises_page
     html = surprises_page({})
-    assert '<span class="ride-names">Smugglers Run, Rise Of The Resistance</span>' in row(html, "falcon")
+    assert '<span class="ride-names"><span class="ride">Smugglers Run</span><span class="ride">Rise Of The Resistance</span></span>' in row(html, "falcon")
     assert 'name="rides_falcon"' not in html, "nothing ticked is posted, so nothing is saved over them"
     assert '<span class="ride-names none">No rides</span>' in row(html, "genie")
     saved = surprises_page({"characters": {"falcon": {"rides": []}}})
@@ -628,3 +628,25 @@ def test_update_times_use_a_12_hour_clock():
     assert _when(at(0, 30)) == "04 Nov 12:30 AM" and _when(at(12, 0)) == "04 Nov 12:00 PM"
     assert _when(at(9, 41)) == "04 Nov 9:41 AM"
     assert _when(None) == "?" and _when("soon") == "?"
+
+
+def test_the_odds_table_headings_have_no_stray_characters_and_only_the_sorted_one_has_an_arrow():
+    """A single backslash in the Python string was an octal escape: the browser got a control character and "95"
+    after every heading."""
+    from settings_page.page import STYLE
+    assert not any(ord(c) < 32 and c not in "\n\t" for c in STYLE), "no control characters reach the browser"
+    assert '.odds th[aria-sort=ascending] button::after { content: " \\25B2"; }' in STYLE
+    assert '.odds th[aria-sort=descending] button::after { content: " \\25BC"; }' in STYLE
+    assert ".odds th button::after" not in STYLE, "an unsorted heading shows no arrow"
+
+
+def test_a_characters_rides_are_one_per_line_on_the_page_and_in_the_script():
+    from settings_page.page import STYLE
+    from settings_page.surprises_page import SCRIPT
+    assert ".ride-names .ride { display: block; }" in STYLE
+    assert "line.className = 'ride'" in SCRIPT and "names.textContent = 'No rides'" in SCRIPT
+
+
+def test_what_a_check_found_sits_a_little_below_the_channel_picker_and_check_button():
+    from settings_page.page import STYLE
+    assert "#update-check { margin-top: 14px; }" in STYLE
