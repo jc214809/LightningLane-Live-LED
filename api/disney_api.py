@@ -7,7 +7,7 @@ import certifi
 import requests
 
 from api.weather import fetch_weather_data
-from parks.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, is_water_park
+from parks.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, clean_ride_name, is_water_park
 from utils.special_events import seasonal_event
 from utils import debug
 
@@ -247,7 +247,7 @@ def fetch_parks_and_attractions(disney_park_list):
 
 
 def get_attraction_name(item):
-    return item.get("name", "").replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", "").replace(" at Mickey's Not-So-Scary Halloween Party", "")
+    return clean_ride_name(item.get("name", ""))
 
 
 def determine_llmp_price(operating_event):
