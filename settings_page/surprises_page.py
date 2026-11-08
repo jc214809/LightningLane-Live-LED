@@ -324,8 +324,9 @@ def surprises_page(data, problems=(), saved=None, board=None, hotspot=None, ride
     shares = [(row.name, settings.chance(row.name, float(row.anywhere) / 100) * 100) for row in surprise_rows()]
     total = sum(share for _, share in shares)
     ticked = sum(share for name, share in shares if name not in settings.off)
+    over = ' class="over"' if total > 100 else ""
     foot = ('<tfoot><tr><td></td><th scope="row">Total</th><td>'
-            f'<strong id="total-all"{" class=\"over\"" if total > 100 else ""}>{percent_text(total / 100)}%</strong>'
+            f'<strong id="total-all"{over}>{percent_text(total / 100)}%</strong>'
             f'<div class="total-sub" id="total-ticked">{percent_text(ticked / 100)}% from the ticked characters</div>'
             "</td><td></td><td></td></tr></tfoot>")
     card = _section("characters", "Characters", "Untick a character to stop them visiting.", (
