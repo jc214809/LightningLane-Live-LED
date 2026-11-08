@@ -1082,3 +1082,18 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
 
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
 `lll-rollback` (done) → the Updates card (done, #201) → a board check once it's merged.
+
+## 18. ~~The settings page's logo, and the board's own art on it~~ Built (2026-11-08, untested on a Pi)
+
+The castle logo (`settings_page/static/icon.svg`, with square PNGs for phones) as the tab icon, the top bar's
+mark and the sign-in page's, with the wordmark "LightningLane" over "LED", in a storybook navy-and-gold theme.
+The cards show what the board draws and knows: "On the board now" from the heartbeat, each park's landmark
+(`tools/build_settings_art.py`), the countdown in the board's own words, the castle under the brightness,
+rotation and show settings, and the surprise characters by name.
+
+Still to do:
+- **Group the character variants on the Surprise characters card.** It lists every transition by name, so the
+  count says 45 with "Saber Duel Kylo", "Saber Duel Luke", "Mine Train Snow" and the like each counted. Group them
+  under one name each, as the Surprise characters page does (`SURPRISE_LOOKS`), and count characters, not looks.
+- A board check: open the page on a Pi Zero board and a Pi 4, light and dark, and add the castle to a phone's
+  home screen.

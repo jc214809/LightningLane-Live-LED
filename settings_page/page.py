@@ -3,13 +3,18 @@ them), the PIN page, and the notices after a save. Everything is inline (styles,
 lines of script), since a phone on the setup hotspot has no internet to fetch anything from. It
 works without JavaScript; the script adds trip rows and the "unsaved changes" state.
 """
+import functools
 import json
+import os
 import re
 import time
 from html import escape
 
 import cli
+from settings_page.board_status import NONE, QUIET, SHOW, ago
 from settings_page.form import BRIGHTNESS, WDW_PARKS, masked, panel_size, character_label, show_names, surprise_names, trip_rows
+from utils import debug
+from utils.trips import active_trip, countdown_message, parse_trips
 from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
 from self_update.github import FAILED, PASSED, REPO, RUNNING
@@ -17,30 +22,42 @@ from self_update.update import (BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, W
                                 release_of)
 from utils.config import DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS
 
+# The page's pictures, served by server.py from settings_page/static (no internet on the setup hotspot):
+# the logo and its PNGs for phones, and the board's park landmarks, rendered by tools/build_settings_art.py.
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+ICON, TOUCH_ICON, ICON_512 = "/static/icon.svg", "/static/apple-touch-icon.png", "/static/icon-512.png"
+LANDMARK_INDEX = "landmarks.json"
+CASTLE_KEY = "magic kingdom"  # the castle stands in for the board in the brightness, rotation and show previews
+
 # What a save says, by Settings.restart_app's outcome.
 SAVED = ("restarted", "saved", "failed", "volume", "volume_failed")
 SENT = ("sent", "wait", "used", "failed")  # pins.PinGate.send_pin's outcomes
 
 STYLE = """
+/* The logo's storybook night: navy and indigo, with gold. */
 :root {
-  --bg: #f4f5f7; --surface: #fff; --surface-2: #f8f9fb; --border: #e3e6eb; --border-strong: #cfd4dc;
-  --text: #111827; --text-2: #4b5563; --text-3: #6b7280;
-  --accent: #2f54eb; --accent-hover: #2546c9; --accent-soft: #e8edff; --on-accent: #fff;
+  --navy: #0e1440; --indigo: #2b1d63; --gold: #f2b84b; --gold-lt: #ffe6a6; --led-bg: #04061a;
+  --bg: #f4f2fa; --surface: #fff; --surface-2: #f8f6fd; --border: #e4e0f0; --border-strong: #cfc9e2;
+  --text: #151a3f; --text-2: #454a6e; --text-3: #6b6f8f;
+  --accent: #3a2d8f; --accent-hover: #2b2070; --accent-soft: #ece8fb; --on-accent: #fff;
+  --primary-bg: linear-gradient(135deg, var(--navy), var(--indigo)); --primary-text: var(--gold-lt);
   --good: #067647; --good-bg: #ecfdf3; --good-line: #abefc6;
   --bad: #b42318; --bad-bg: #fef3f2; --bad-line: #fecdca;
   --warn: #93370d; --warn-bg: #fffaeb; --warn-line: #fedf89;
-  --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .06);
+  --shadow: 0 1px 2px rgba(14, 20, 64, .06), 0 1px 3px rgba(14, 20, 64, .08);
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) { :root {
-  --bg: #0b0d12; --surface: #141821; --surface-2: #1a1f2a; --border: #262c38; --border-strong: #3a4252;
-  --text: #eef1f6; --text-2: #b4bccb; --text-3: #8b94a5;
-  --accent: #6b8cff; --accent-hover: #8aa4ff; --accent-soft: #1c2440; --on-accent: #0b0d12;
+  --bg: #0a0d26; --surface: #121638; --surface-2: #181d45; --border: #262b58; --border-strong: #383e72;
+  --text: #eef0fb; --text-2: #bcc0dc; --text-3: #8d92b5;
+  --accent: #f2b84b; --accent-hover: #ffd27a; --accent-soft: #2c2748; --on-accent: #0e1440;
+  --primary-bg: linear-gradient(135deg, #ffd27a, #f2b84b); --primary-text: #0e1440;
   --good: #75e0a7; --good-bg: #0c2a1c; --good-line: #14532d;
   --bad: #fda29b; --bad-bg: #2d1412; --bad-line: #5c1f1a;
   --warn: #fec84b; --warn-bg: #2b2110; --warn-line: #5c4313;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45);
 } }
+.serif, .page-head h1, .brand-name, .auth h1 { font-family: ui-serif, "Iowan Old Style", Georgia, "Noto Serif", serif; }
 * { box-sizing: border-box; }
 html { scroll-padding-top: 84px; }
 body { margin: 0; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
@@ -50,16 +67,24 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 h1, h2, h3, p { margin: 0; }
 a { color: var(--accent); }
 
-/* Top bar */
-.topbar { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border); }
+/* Top bar: always the logo's night sky, a scatter of stars, a gold edge */
+.topbar { position: sticky; top: 0; z-index: 20; color: #eef0fb; border-bottom: 1px solid rgba(242, 184, 75, .45);
+  background: radial-gradient(1.6px 1.6px at 12% 30%, #fff8 50%, transparent 51%),
+              radial-gradient(1.6px 1.6px at 38% 70%, #fff6 50%, transparent 51%),
+              radial-gradient(2px 2px at 61% 25%, #fff9 50%, transparent 51%),
+              radial-gradient(1.6px 1.6px at 79% 62%, #fff6 50%, transparent 51%),
+              radial-gradient(1.6px 1.6px at 92% 22%, #fff7 50%, transparent 51%),
+              linear-gradient(120deg, var(--navy), var(--indigo)); }
 .topbar-in { max-width: 1080px; margin: 0 auto; padding: 0 16px; height: 60px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.mark { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff;
-  background: linear-gradient(135deg, #2f54eb, #7c3aed); box-shadow: var(--shadow); flex: none; }
-.mark svg { width: 18px; height: 18px; fill: #fde047; stroke: #fde047; }
-.brand-name { font-weight: 650; letter-spacing: -.01em; white-space: nowrap; }
-.brand-sub { color: var(--text-3); font-size: 12.5px; }
+.mark { width: 38px; height: 38px; border-radius: 10px; overflow: hidden; flex: none;
+  box-shadow: 0 0 0 1px rgba(242, 184, 75, .5); }
+.mark img { width: 100%; height: 100%; display: block; }
+.brand-name { font-style: italic; font-weight: 600; font-size: 19px; color: var(--gold-lt); line-height: 1.1;
+  white-space: nowrap; }
+.brand-sub { color: #c9cdea; font-size: 10px; font-weight: 650; letter-spacing: .3em; text-transform: uppercase; }
+.brand-sub::before, .brand-sub::after { content: "\\2726"; color: var(--gold); margin: 0 .45em; letter-spacing: 0; }
 .top-meta { display: flex; align-items: center; gap: 8px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px;
   border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); font-size: 13px;
@@ -67,8 +92,13 @@ a { color: var(--accent); }
 .chip svg { width: 14px; height: 14px; }
 .chip.warn { color: var(--warn); background: var(--warn-bg); border-color: var(--warn-line); }
 .chip.good { color: var(--good); background: var(--good-bg); border-color: var(--good-line); }
+.topbar .chip { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .18); color: #e6e8f7; }
+.topbar .chip.warn { color: #fec84b; border-color: #fec84b66; background: #fec84b1a; }
+.topbar .chip.good { color: #75e0a7; border-color: #75e0a766; background: #75e0a71a; }
 .topbar form { margin: 0; }
 .topbar button { height: 28px; padding: 0 10px; font-size: 13px; }
+.topbar .ghost { color: var(--gold-lt); }
+.topbar .ghost:hover { background: rgba(255, 255, 255, .1); }
 @media (max-width: 520px) { .brand-sub, .chip.board { display: none; } }
 
 /* Layout */
@@ -80,11 +110,12 @@ a { color: var(--accent); }
   .toc a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px;
     color: var(--text-2); text-decoration: none; font-weight: 500; font-size: 14px; }
   .toc a:hover { background: var(--surface); color: var(--text); }
-  .toc a.on { background: var(--accent-soft); color: var(--accent); }
+  .toc a.on { background: var(--accent-soft); color: var(--accent); box-shadow: inset 2px 0 0 var(--gold); }
   .toc svg { width: 16px; height: 16px; }
 }
 .page-head { margin-bottom: 20px; }
-.page-head h1 { font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
+.page-head h1 { font-size: 28px; font-weight: 600; font-style: italic; letter-spacing: -.02em; }
+.page-head h1::after { content: " \\2726"; color: var(--gold); font-style: normal; font-size: .7em; vertical-align: .2em; }
 .page-head p { color: var(--text-2); margin-top: 4px; }
 .stack { display: grid; gap: 20px; }
 .stack.before { margin-bottom: 20px; }
@@ -92,8 +123,9 @@ a { color: var(--accent); }
 /* Cards */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
 .card-head { display: flex; gap: 14px; align-items: flex-start; padding: 18px 20px; border-bottom: 1px solid var(--border); }
-.card-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
-  background: var(--accent-soft); color: var(--accent); flex: none; }
+.card-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
+  background: linear-gradient(135deg, var(--navy), var(--indigo)); color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgba(242, 184, 75, .35); }
 .card-head h2 { font-size: 16px; font-weight: 650; letter-spacing: -.01em; }
 .card-head p { color: var(--text-3); font-size: 13.5px; margin-top: 2px; }
 .card-body { padding: 4px 20px 18px; }
@@ -154,7 +186,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
   padding: 0 4px 0 6px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent-soft);
   color: var(--text); font-weight: 550; max-width: 100%; }
 .park-chip::before { content: counter(park); width: 22px; height: 22px; border-radius: 50%; display: grid;
-  place-items: center; flex: none; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 650; }
+  place-items: center; flex: none; background: var(--primary-bg); color: var(--primary-text); font-size: 12px; font-weight: 650; }
 .park-chip.unknown { border-color: var(--bad-line); background: var(--bad-bg); color: var(--bad); }
 .park-chip.unknown::before { background: var(--bad); }
 .park-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -246,8 +278,8 @@ table.odds { width: 100%; border-collapse: collapse; font-size: 14px; }
 button, .btn { font: inherit; font-weight: 600; display: inline-flex; align-items: center; justify-content: center;
   gap: 8px; height: 40px; padding: 0 16px; border-radius: 9px; cursor: pointer; border: 1px solid transparent;
   transition: background .15s, border-color .15s; }
-.primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow); }
-.primary:hover { background: var(--accent-hover); }
+.primary { background: var(--primary-bg); color: var(--primary-text); box-shadow: var(--shadow); }
+.primary:hover { background: var(--primary-bg); filter: brightness(1.12); }
 .primary:disabled { opacity: .7; cursor: progress; }
 .secondary { background: var(--surface); color: var(--text); border-color: var(--border-strong); box-shadow: var(--shadow); }
 .secondary:hover { background: var(--surface-2); }
@@ -290,7 +322,7 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
 @media (prefers-reduced-motion: reduce) { .steps li.now::before { animation: none; } }
 
 /* Save bar */
-.savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; border-top: 1px solid var(--border);
+.savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; border-top: 1px solid rgba(242, 184, 75, .5);
   background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: saturate(1.4) blur(10px); }
 .savebar-in { max-width: 1080px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center;
   justify-content: space-between; gap: 16px; }
@@ -303,9 +335,58 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
 .center { min-height: calc(100vh - 60px); display: grid; place-items: center; padding: 32px 16px; }
 .auth { width: 100%; max-width: 420px; padding: 28px; }
 .auth-icon { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 18px;
-  background: var(--accent-soft); color: var(--accent); }
+  background: linear-gradient(135deg, var(--navy), var(--indigo)); color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgba(242, 184, 75, .35); }
 .auth-icon svg { width: 24px; height: 24px; }
-.auth h1 { font-size: 21px; font-weight: 700; letter-spacing: -.02em; }
+.auth h1 { font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+/* Sign-in: the logo and wordmark crown the card. */
+.auth-hero { display: grid; justify-items: center; gap: 10px; margin: -4px 0 20px; text-align: center; }
+.auth-hero img { width: 76px; height: 76px; border-radius: 19px; box-shadow: 0 6px 20px rgba(14, 20, 64, .3); }
+.auth-hero .brand-name { color: var(--accent); font-size: 24px; }
+@media (prefers-color-scheme: dark) { .auth-hero .brand-name { color: var(--gold-lt); } }
+.auth-hero .brand-sub { color: var(--text-3); }
+.auth.signin h1, .auth.signin > p { text-align: center; }
+
+/* What the board draws, on the page: the LED panel's black, its pixels kept sharp */
+.led { background: var(--led-bg); border-radius: 10px; padding: 6px; display: inline-block; line-height: 0;
+  box-shadow: inset 0 0 0 1px rgba(242, 184, 75, .25), 0 1px 3px rgba(14, 20, 64, .25); }
+.led img { image-rendering: pixelated; display: block; border-radius: 3px; width: 128px; height: 64px; }
+.preview-label { font-size: 12px; color: var(--text-3); margin-top: 6px; text-align: center; }
+.previews { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; padding: 16px 0 4px; }
+.previews .led img { transition: filter .2s, transform .3s; }
+.previews .hint { max-width: 320px; margin: 0; }
+.previews [hidden] { display: none; }
+.board-now { display: flex; gap: 16px; align-items: center; padding: 16px 20px; flex-wrap: wrap; }
+.board-now h2 { font-size: 16.5px; font-weight: 650; }
+.board-now .card-text { flex: 1; min-width: 220px; }
+.board-now p { color: var(--text-3); font-size: 13.5px; margin-top: 2px; }
+.facts { display: flex; gap: 6px 18px; flex-wrap: wrap; margin-top: 8px; font-size: 13.5px; color: var(--text-2); }
+.facts b { color: var(--text); font-weight: 600; }
+.beat { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--good); }
+.beat::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor;
+  box-shadow: 0 0 0 4px var(--good-bg); animation: beat 2s ease-in-out infinite; }
+.beat.quiet { color: var(--warn); } .beat.quiet::before { box-shadow: 0 0 0 4px var(--warn-bg); animation: none; }
+.beat.none { color: var(--text-3); } .beat.none::before { box-shadow: none; animation: none; }
+@media (prefers-reduced-motion: reduce) { .beat::before { animation: none; } }
+.park-chips { gap: 12px; }
+.park-chip { height: auto; border-radius: 12px; padding: 6px 6px 6px 8px; gap: 10px; }
+.park-chip .led { padding: 3px; border-radius: 7px; }
+.park-chip .led img { width: 64px; height: 32px; }
+.noland { width: 64px; height: 32px; display: grid; place-items: center; font-size: 10px; color: #8d92b5;
+  line-height: 1.2; text-align: center; }
+.park-chip .led [hidden] { display: none; }
+.countdown { display: flex; align-items: center; gap: 16px; margin: 16px 0 4px; flex-wrap: wrap; }
+.countdown .led { padding: 10px 18px; line-height: 1.15; text-align: center; min-width: 140px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.countdown .big { display: block; color: #ffd23c; font-size: 26px; font-weight: 700; text-shadow: 0 0 8px rgba(255, 210, 60, .6); }
+.countdown .line { display: block; color: #9fd8ff; font-size: 12px; letter-spacing: .08em; text-shadow: 0 0 6px rgba(159, 216, 255, .5); }
+.countdown .hint { max-width: 360px; margin: 0; }
+.trip.next { border-color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); }
+.trip .tag { position: absolute; top: -9px; left: 12px; font-size: 11px; font-weight: 650; padding: 0 8px;
+  border-radius: 999px; background: var(--gold); color: #0e1440; }
+.cast { list-style: none; margin: 0; padding: 16px 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+.cast li { font-size: 12.5px; padding: 2px 10px; border-radius: 999px; background: var(--surface-2);
+  border: 1px solid var(--border); color: var(--text-2); }
 .auth > p { color: var(--text-2); margin: 6px 0 22px; }
 .step { display: flex; gap: 12px; padding: 16px 0; border-top: 1px solid var(--border); }
 .step-n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex: none;
@@ -399,6 +480,8 @@ const parkError = document.getElementById('park-error');
 const parkNames = new Map([...document.querySelectorAll('#park-names option')].map(o => [o.value.toLowerCase(), o.value]));
 const changed = () => form.dispatchEvent(new Event('input'));
 const parkProblem = text => { parkError.textContent = text; parkError.hidden = !text; };
+// The landmark the board plays before a park, by the loose name match the board uses.
+const parkScenes = JSON.parse(document.getElementById('park-scenes')?.textContent || '{}');
 function addPark() {
   const typed = parkAdd.value.trim().replace(/\\s+/g, ' ');
   if (!typed) return;
@@ -410,6 +493,13 @@ function addPark() {
   chip.querySelector('input[name=park]').value = name;
   chip.querySelector('input[name=park_remove]').value = name;
   chip.querySelector('.park-name').textContent = name;
+  const scene = Object.entries(parkScenes).find(([key]) => name.toLowerCase().includes(key));
+  if (scene) {
+    const img = chip.querySelector('.park-landmark');
+    img.src = scene[1];
+    img.hidden = false;
+    chip.querySelector('.noland').hidden = true;
+  }
   chip.querySelectorAll('[aria-label]').forEach(el => { el.setAttribute('aria-label', el.getAttribute('aria-label') + ' ' + name); });
   parkList.appendChild(chip);
   parkAdd.value = '';
@@ -525,6 +615,38 @@ if (autoCheck) (async () => {
     autoCheck.querySelector('div').textContent = "Couldn't check: press Check to try again.";
   }
 })();
+// The castle previews: dimmed to the brightness the Display card sets, turned the way Rotation turns it.
+const level = id => { const v = parseInt(document.getElementById(id)?.value, 10); return isNaN(v) ? null : v; };
+const dim = (id, percent) => { const img = document.getElementById(id); if (img) img.style.filter = `brightness(${0.25 + 0.75 * percent / 100})`; };
+function brightnessPreviews() {
+  if (!document.getElementById('pv-all')) return;
+  const scheduleOn = document.getElementById('brightness_schedule').checked;
+  const day = level('bright_day') ?? 80, night = level('bright_night') ?? 15, all = level('matrix_led_brightness');
+  document.getElementById('pv-all-box').hidden = scheduleOn;
+  document.getElementById('pv-day-box').hidden = !scheduleOn;
+  document.getElementById('pv-night-box').hidden = !scheduleOn;
+  dim('pv-all', all ?? 100);
+  dim('pv-day', day);
+  dim('pv-night', night);
+  document.getElementById('pv-all-l').textContent = all ? `All day, ${all}%` : "All day, the Pi model's default";
+  document.getElementById('pv-day-l').textContent = `Day, ${day}%`;
+  document.getElementById('pv-night-l').textContent = `Night, ${night}%`;
+}
+['bright_day', 'bright_night', 'matrix_led_brightness', 'brightness_schedule'].forEach(id =>
+  document.getElementById(id)?.addEventListener('input', brightnessPreviews));
+brightnessPreviews();
+const rotation = document.getElementById('matrix_led_pixel_mapper');
+const turns = {'Rotate:90': 'rotate(90deg) scale(.5)', 'Rotate:180': 'rotate(180deg)', 'Rotate:270': 'rotate(270deg) scale(.5)',
+               'Mirror:H': 'scaleX(-1)', 'Mirror:V': 'scaleY(-1)'};
+function rotationPreview() {
+  const img = document.getElementById('pv-rot');
+  if (!img || !rotation) return;
+  img.style.transform = turns[rotation.value] || '';
+  const text = rotation.options[rotation.selectedIndex].text.split(' (')[0];
+  document.getElementById('pv-rot-l').textContent = rotation.value ? `Drawn ${text.toLowerCase()}` : 'Drawn as is';
+}
+rotation?.addEventListener('change', rotationPreview);
+rotationPreview();
 const links = [...document.querySelectorAll('.toc a')];
 const spy = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
@@ -537,11 +659,43 @@ def icon(name):
     return f'<svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[name]}</svg>'
 
 
+@functools.lru_cache(maxsize=None)
+def landmarks(path=None):
+    """{park key: "/static/<file>"} from tools/build_settings_art.py's index; {} if it can't be read (logged), so
+    the page still works, just without the pictures."""
+    path = path or os.path.join(STATIC_DIR, LANDMARK_INDEX)
+    try:
+        with open(path, encoding="utf-8") as f:
+            index = json.load(f)
+    except (OSError, ValueError) as e:
+        debug.warning(f"Settings page: no landmark pictures ({path}: {e})")
+        return {}
+    if not isinstance(index, dict):
+        debug.warning(f"Settings page: no landmark pictures ({path} isn't a key-to-file map)")
+        return {}
+    return {str(k): f"/static/{v}" for k, v in index.items() if isinstance(v, str) and "/" not in v}
+
+
+def landmark_src(park):
+    """The landmark picture the board plays before this park, matched loosely on its name as
+    display/landmarks/screen.py landmark_for does, or None (the board shows its title alone)."""
+    name = (park or "").lower()
+    return next((src for key, src in landmarks().items() if key in name), None)
+
+
 def document(title, body, script=""):
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<meta name="robots" content="noindex"><title>{escape(title)}</title><style>{STYLE}</style></head>'
+            f'<meta name="robots" content="noindex"><meta name="theme-color" content="#0e1440">'
+            f'<link rel="icon" href="{ICON}" type="image/svg+xml">'
+            f'<link rel="icon" href="{ICON_512}" type="image/png" sizes="512x512">'
+            f'<link rel="apple-touch-icon" href="{TOUCH_ICON}">'
+            f'<title>{escape(title)}</title><style>{STYLE}</style></head>'
             f'<body>{body}{f"<script>{script}</script>" if script else ""}</body></html>')
+
+
+def wordmark():
+    return '<div class="brand-name">LightningLane</div><div class="brand-sub">LED</div>'
 
 
 def _topbar(board=None, mode=None, sign_out=False):
@@ -552,9 +706,14 @@ def _topbar(board=None, mode=None, sign_out=False):
         chips += f'<span class="chip {kind}">{icon("wifi" if kind == "warn" else "lock")}{escape(text)}</span>'
     if sign_out:
         chips += '<form method="post" action="/signout"><button type="submit" class="ghost">Sign out</button></form>'
-    return (f'<header class="topbar"><div class="topbar-in"><div class="brand"><span class="mark">{icon("bolt")}</span>'
-            f'<div><div class="brand-name">LightningLane Live LED</div><div class="brand-sub">Board settings</div>'
-            f'</div></div><div class="top-meta">{chips}</div></div></header>')
+    return (f'<header class="topbar"><div class="topbar-in"><div class="brand"><span class="mark">'
+            f'<img src="{ICON}" alt="" width="38" height="38"></span><div>{wordmark()}</div></div>'
+            f'<div class="top-meta">{chips}</div></div></header>')
+
+
+def _led(src, alt="", extra=""):
+    """A picture of the board's screen, on the panel's black."""
+    return f'<span class="led"><img src="{src}" alt="{_attr(alt)}"{extra}></span>'
 
 
 def message_page(title, text):
@@ -639,12 +798,14 @@ def _section(sid, title, description, body, glyph):
             f'<p>{escape(description)}</p></div></div><div class="card-body">{body}</div></section>')
 
 
-def _trip(index, start="", end="", name=""):
+def _trip(index, start="", end="", name="", on_board=False):
+    """on_board: the trip the countdown shows now, tagged so."""
     i = index
     name_input = _input(f"trip_name_{i}", name, extra=' placeholder="Spring Break"')
     remove = (f'<label class="trip-x" for="trip_remove_{i}" title="Remove this trip"><input type="checkbox" '
               f'id="trip_remove_{i}" name="trip_remove_{i}" aria-label="Remove this trip">{icon("x")}</label>')
-    return (f'<div class="trip"><div class="wide"><label class="mini" for="trip_name_{i}">Name</label>'
+    tag = '<span class="tag">On the board now</span>' if on_board else ""
+    return (f'<div class="trip{" next" if on_board else ""}">{tag}<div class="wide"><label class="mini" for="trip_name_{i}">Name</label>'
             f'{name_input}</div>'
             f'<div><label class="mini" for="trip_start_{i}">Start</label>{_input(f"trip_start_{i}", start, "date")}</div>'
             f'<div><label class="mini" for="trip_end_{i}">End <span class="hint">(optional)</span></label>'
@@ -656,8 +817,12 @@ def _park_chip(name, unknown=False):
     without the script; the arrow (script only) moves it one place earlier."""
     label = _attr(name)
     title = ' title="Not a ThemeParks.wiki park name"' if unknown else ""
+    # The landmark the board plays before this park; the script fills it in for a park added on the page.
+    src = landmark_src(name) if name else None
+    scene = (f'<span class="led"><img class="park-landmark" src="{src or ""}" alt="" width="64" height="32"'
+             f'{"" if src else " hidden"}><span class="noland"{" hidden" if src else ""}>Title only</span></span>')
     return (f'<li class="park-chip{" unknown" if unknown else ""}"{title}><input type="hidden" name="park" value="{label}">'
-            f'<span class="park-name">{escape(name)}</span>'
+            f'{scene}<span class="park-name">{escape(name)}</span>'
             f'<button type="button" class="chip-btn js-only" hidden aria-label="Move earlier: {label}">{icon("left")}</button>'
             f'<label class="chip-x" title="Remove"><input type="checkbox" name="park_remove" value="{label}" '
             f'aria-label="Remove {label}">{icon("x")}</label></li>')
@@ -688,14 +853,82 @@ def _matrix_field(key, label, help_text, options, switch, value, blank="Default"
     return _field(name, label, control, help_text or "")
 
 
+def _board_now_card(now):
+    """The "On the board now" card, from board_status.BoardNow."""
+    castle = landmarks().get(CASTLE_KEY)
+    picture = _led(castle, "The board's castle") if castle else ""
+    if now.state == NONE:
+        status = ('<span class="beat none">No word yet</span><span>The app hasn\'t written its heartbeat since the '
+                  'board started: it may still be starting, or not be running.</span>')
+    elif now.state == QUIET:
+        status = (f'<span class="beat quiet">Quiet</span><span>Last screen <b>{ago(now.age_s)}</b>: the app may '
+                  f'have stopped. Saving restarts it.</span>')
+    elif now.state == SHOW:
+        status = f'<span class="beat">Showtime</span><span>Playing <b>{escape(now.show)}</b></span>'
+    else:
+        status = f'<span class="beat">Running</span><span>Last screen <b>{ago(now.age_s)}</b></span>'
+    version = f'<span>Version <b>{escape(now.version)}</b></span>' if now.version else ""
+    return (f'<section class="card board-now" aria-labelledby="now-title">{picture}<div class="card-text">'
+            '<h2 id="now-title">On the board now</h2><p>From the app\'s heartbeat, as of when this page loaded.</p>'
+            f'<div class="facts">{status}{version}</div></div></section>')
+
+
+def _countdown_preview(config, enabled, today=None):
+    """(the LED-style preview of what the countdown shows today, the Trip it's counting to or None),
+    in utils.trips' own words."""
+    trip = active_trip(parse_trips(config), today)
+    if not enabled:
+        return '<p class="hint countdown">Off: the board goes straight from park to park.</p>', None
+    if trip is None:
+        return '<p class="hint countdown">No trip coming up: the board skips the countdown until you add one.</p>', None
+    number, lines = countdown_message(trip, today)
+    big = f'<span class="big">{escape(number)}</span>' if number else ""
+    words = "".join(f'<span class="line">{escape(line)}</span>' for line in lines)
+    when = f'{trip.start:%B} {trip.start.day}, {trip.start.year}'
+    return (f'<div class="countdown"><div class="led" role="img" aria-label="{_attr(" ".join(filter(None, (number,) + lines)))}">'
+            f'{big}{words}</div><p class="hint">What the board shows between parks today, counting to '
+            f'<strong>{escape(trip.name or "your trip")}</strong> on {when}.</p></div>'), trip
+
+
+def _same_trip(row, trip):
+    """Whether a trip_rows row (start, end, name as the form shows them) is this Trip."""
+    if trip is None:
+        return False
+    start, end, name = row
+    return (start == trip.start.isoformat() and (end or None) == (trip.end.isoformat() if trip.end else None)
+            and (name.strip() or None) == trip.name)
+
+
+def _brightness_previews():
+    """The castle at each brightness the Display card sets; the script dims them as the numbers change."""
+    castle = landmarks().get(CASTLE_KEY)
+    if not castle:
+        return ""
+    return ('<div class="previews" aria-hidden="true">'
+            + "".join(f'<div id="pv-{k}-box"><span class="led"><img id="pv-{k}" src="{castle}" alt=""></span>'
+                      f'<div class="preview-label" id="pv-{k}-l">{label}</div></div>'
+                      for k, label in (("all", "All day"), ("day", "Day"), ("night", "Night")))
+            + "</div>")
+
+
+def _rotation_preview():
+    castle = landmarks().get(CASTLE_KEY)
+    if not castle:
+        return ""
+    return (f'<div class="previews"><div><span class="led"><img id="pv-rot" src="{castle}" alt=""></span>'
+            '<div class="preview-label" id="pv-rot-l">Drawn as is</div></div><p class="hint">Rotation turns the whole '
+            'picture. Pick the one that puts the castle the right way up on your panel.</p></div>')
+
+
 def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),
-                  panel=None, updates=None, started=None):
+                  panel=None, updates=None, started=None, now=None, today=None):
     """The settings form, filled from config. sound_cards: ALSA device names for the dropdown.
     note: why config.json couldn't be read, if it couldn't. park_names: [(name, destination)]
     for the park picker's suggestions, [] when the list hasn't loaded. panel: form.PanelChoices,
     the Pi model and Panel size dropdowns and what blank fields say; None leaves them off.
     updates: updates.Updates.view(), for the Updates card (None leaves it off); started: how
-    starting an update or rollback went, one of updates.STARTS."""
+    starting an update or rollback went, one of updates.STARTS. now: board_status.BoardNow, for the
+    "On the board now" card (None leaves it off). today: the date the countdown preview counts from."""
     ws = config.get("websocket") if isinstance(config.get("websocket"), dict) else {}
     sound = config.get("sound") if isinstance(config.get("sound"), dict) else {}
     countdown = config.get("trip_countdown") if isinstance(config.get("trip_countdown"), dict) else {}
@@ -737,9 +970,11 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
            f'<button type="button" class="secondary js-only" id="park-add-btn" hidden>{icon("plus")}Add</button></div>'
            f'<datalist id="park-names">{suggestions}</datalist>'
            '<p class="field-error" id="park-error" role="alert" hidden></p>')
-    park_html = _section("parks", "Parks", "Which parks the board cycles through, in this order.", (
+    park_html = _section("parks", "Parks", "Which parks the board cycles through, in this order, with the landmark "
+                                           "it plays before each one.", (
         f'<ol class="park-chips" id="park-chips" aria-label="Parks, in order">{chips}</ol>'
         + f'<template id="park-chip">{_park_chip("")}</template>'
+        + f'<script type="application/json" id="park-scenes">{_json_for_script(landmarks())}</script>'
         + _field("park_add", "Add a park", add,
                  "Any park on ThemeParks.wiki: start typing and pick it from the list. It goes on the end; "
                  "the arrow moves a park earlier." if park_names else
@@ -748,9 +983,12 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     ), "pin")
 
     rows = trip_rows(config)
+    preview, counting_to = _countdown_preview(config, countdown.get("enabled", False), today)
     trips = _section("trips", "Trip countdown", "Days to go until your next trip, between the parks.", (
-        _switch("trips_enabled", "Show the countdown", countdown.get("enabled", False))
-        + '<div class="trips" id="trip-list">' + "".join(_trip(i, *row) for i, row in enumerate(rows))
+        preview
+        + _switch("trips_enabled", "Show the countdown", countdown.get("enabled", False))
+        + '<div class="trips" id="trip-list">'
+        + "".join(_trip(i, *row, on_board=_same_trip(row, counting_to)) for i, row in enumerate(rows))
         + ("" if rows else _trip(0)) + "</div>"  # a blank row to start from only when there are no trips
         + f'<template id="trip-row">{_trip("N")}</template>'
         + f'<p style="margin-top:12px"><button type="button" class="ghost" id="add-trip">{icon("plus")}Add a trip'
@@ -805,7 +1043,8 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
     blanks = (panel.blanks.get(panel.auto_model if chosen_model == cli.AUTO else chosen_model, {})
               if panel else {})
     display = _section("display", "Display", "How bright the LED panel is, all day or by the time of day.", (
-        _field(f"matrix_{BRIGHTNESS}", "Brightness",
+        _brightness_previews()
+        + _field(f"matrix_{BRIGHTNESS}", "Brightness",
                _input(f"matrix_{BRIGHTNESS}", "" if brightness is None else brightness, "number",
                       f'{level} placeholder="{_attr(blanks.get(BRIGHTNESS, "Default"))}" data-key="{BRIGHTNESS}"'),
                "1 to 100. Blank uses the Pi model's (see Panel). A schedule, when on, takes over from it.")
@@ -839,16 +1078,26 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
             + f'</label><label><span class="mini">Test</span>'
             + _switch_input(f"show_force_{i}", entry.get("force"), f' aria-label="Play {label} at start-up"')
             + "</label></div></div>")
+    castle = landmarks().get(CASTLE_KEY)
+    show_scene = (f'<div class="previews">{_led(castle, "The castle on the board")}<p class="hint">Each show plays '
+                  "over the board's castle when that show starts in the park, by ThemeParks.wiki's showtimes.</p></div>"
+                  if castle else "")
     shows = _section("shows", "Fireworks shows", "What plays when each show starts in the park.", (
-        f'<div class="shows">{show_rows}</div>'
+        show_scene
+        + f'<div class="shows">{show_rows}</div>'
         + _notice("info", "<strong>Default</strong> plays the castle fireworks for five minutes. <strong>V1</strong> "
                           "and <strong>V2</strong> play the whole show in time with its music. <strong>Test</strong> "
                           "plays a show once each time the app starts; turn it off when you're done.")
     ), "sparkle")
 
+    cast = sorted(character_label(n) for n in surprise_names())
+    cast_list = (f'<ul class="cast" aria-label="The characters">{"".join(f"<li>{escape(n)}</li>" for n in cast)}</ul>'
+                 if cast else "")
     surprises = _section("surprises", "Surprise characters",
                          "Who now and then drops in between ride screens and park titles, and how often.", (
-        f'<a class="btn secondary" href="/surprises">{icon("sparkle")}<span>Choose characters and chances</span></a>'
+        cast_list
+        + f'<a class="btn secondary" href="/surprises">{icon("sparkle")}<span>Choose '
+          f'{f"from all {len(cast)} characters and their" if cast else "characters and"} chances</span></a>'
     ), "sparkle")
 
     settings = {key: (help_text, options, switch) for key, help_text, options, switch, _ in cli.matrix_settings()}
@@ -865,7 +1114,8 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
                      "Columns x rows, as on the panel's label.")
             + f'<script type="application/json" id="panel-blanks">{_json_for_script(for_script)}</script>')
     panel_html = _section("panel", "Panel", "Which Pi and panel this is, and which way up it's mounted.", (
-        model_and_size
+        _rotation_preview()
+        + model_and_size
         + _notice("info", "Each setting left blank is the Pi model's default, shown greyed out. Set one to "
                           "customise this board, like Rotation for a panel mounted upside down; clear it to go back.")
         + panel_fields
@@ -903,7 +1153,8 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
           'and the app restarts to use them.</p></div>'
         + top
         # First, and outside the settings form: its buttons post forms of their own.
-        + (f'<div class="stack before">{updates_card(updates, started)}</div>' if updates else "")
+        + (f'<div class="stack before">{_board_now_card(now) if now else ""}'
+           f'{updates_card(updates, started) if updates else ""}</div>' if updates or now else "")
         + f'<form method="post" action="/save" id="settings"><div class="stack">'
           f'{live}{weather_html}{phone}{park_html}{trips}{sound_html}{panel_html}{display}{shows}{surprises}{testing}{advanced}</div>'
         + '<div class="savebar"><div class="savebar-in"><div class="status" id="save-status"><span class="dot"></span>'
@@ -1168,7 +1419,8 @@ def pin_page(shown_s=None, wrong=False, board=None, phone=False, sent=None, sign
                                  f"minute{'s' if shown_s > 90 else ''}.")
     body = (
         _topbar(board)
-        + f'<div class="center"><div class="card auth"><div class="auth-icon">{icon("lock")}</div>'
+        + f'<div class="center"><div class="card auth signin"><div class="auth-hero">'
+          f'<img src="{ICON}" alt="" width="76" height="76"><div>{wordmark()}</div></div>'
           '<h1>Sign in to this board</h1><p>To change this board\'s settings, type in the PIN it shows.</p>'
         + status
         + '<div class="step"><span class="step-n">1</span><div class="step-body"><strong>Show a PIN</strong>'

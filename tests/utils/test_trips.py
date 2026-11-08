@@ -106,3 +106,9 @@ def test_no_trip_when_all_are_long_past():
 
 def test_defaults_to_today():
     assert active_trip([Trip(date.today() + timedelta(days=3))]) is not None
+
+
+def test_the_countdowns_words_live_here_and_the_display_uses_the_same_function():
+    from display.countdown import countdown as display_countdown
+    from utils import trips
+    assert display_countdown.countdown_message is trips.countdown_message

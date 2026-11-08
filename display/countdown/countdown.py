@@ -1,9 +1,9 @@
 import math
-from datetime import date
 
 from display.motion import ease_out
 from display.display import draw_text, get_text_width, loaded_fonts, color_dict
 from display.fireworks.fireworks import castle_sprite, _CASTLE_COLORS
+from utils.trips import countdown_message  # noqa: F401 (its words live with the trips; re-exported here)
 
 # The castle stays 1x on 64-row boards too: doubled it leaves no room for the number.
 CASTLE_PIXELS, CASTLE_W, CASTLE_H = castle_sprite(32)
@@ -12,28 +12,6 @@ LINE_GAPS = (2, 1)
 COUNT_UP_S = 1.0
 TWINKLE_PERIOD_S = 1.6
 TWINKLE_MIN = 0.35
-
-
-def countdown_message(trip, today=None):
-    """
-    What the countdown says, as (number, lines): big text with a label under it, or
-    number None and a message on the days that deserve one. A trip's name, when it
-    has one, stands in for "DISNEY" under the day count (render falls back to
-    "DISNEY" if the name doesn't fit).
-    """
-    today = today or date.today()
-    days = (trip.start - today).days
-    if days > 1:
-        return str(days), ("DAYS TO", (trip.name or "DISNEY").upper())
-    if days == 1:
-        return None, ("DISNEY", "TOMORROW")
-    if days == 0:
-        return None, ("IT'S", "DISNEY", "DAY!")
-    if trip.end is None:
-        return None, ("HAVE A", "MAGICAL", "TRIP!")
-    if today <= trip.end:
-        return f"DAY {1 - days}", (f"OF {(trip.end - trip.start).days + 1}",)
-    return None, ("WELCOME", "HOME!")
 
 
 def layout(width, height):

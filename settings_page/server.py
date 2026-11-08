@@ -9,6 +9,8 @@ Standard library
 and certifi (the app's own requirement) only, so it runs on any board the app runs on.
 """
 import argparse
+import functools
+import gzip
 import json
 import logging
 import os
@@ -23,7 +25,7 @@ from ipaddress import ip_address, ip_network
 from urllib.parse import parse_qs, urlsplit
 
 import cli
-from settings_page import page, pushover, surprises_page
+from settings_page import board_status, page, pushover, surprises_page
 from settings_page.form import WDW_PARKS, apply_form, apply_surprises, chosen_device, import_surprises, snapshot_surprises, panel_choices, volume_from_form
 from settings_page.park_names import ParkNames
 from settings_page.ride_names import RideNames
@@ -44,6 +46,19 @@ COOKIE = "lll_settings"
 RESTART_TIMEOUT_S = 30
 PARK_NAMES_FILE = "park_names.json"
 RIDE_NAMES_FILE = "ride_names.json"
+# What /static/ serves, by extension; anything else there is a 404.
+STATIC_TYPES = {".svg": "image/svg+xml", ".png": "image/png"}
+STATIC_MAX_AGE_S = 24 * 3600  # an update can change them, so not forever
+# Sent gzipped to a browser that takes it: the castle logo's SVG is ~100 KB of repeated stonework, ~10 KB gzipped.
+# PNGs are compressed already.
+COMPRESSIBLE = {"image/svg+xml"}
+
+
+@functools.lru_cache(maxsize=8)
+def _gzipped(body):
+    """body gzipped, once per distinct file content (mtime 0, so the same bytes every time)."""
+    return gzip.compress(body, mtime=0)
+ROOT_ICONS = {"/apple-touch-icon.png": "apple-touch-icon.png", "/apple-touch-icon-precomposed.png": "apple-touch-icon.png"}
 
 
 class Settings:
@@ -53,8 +68,9 @@ class Settings:
 
     def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
                  state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE,
-                 send_pushover=pushover.send_pin, updates=None, ride_names=None):
+                 send_pushover=pushover.send_pin, updates=None, ride_names=None, heartbeat_file=None):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
+        self.heartbeat_file = heartbeat_file  # None: utils/heartbeat.py's HEARTBEAT_FILE
         self.surprises_path = os.path.join(os.path.dirname(os.path.abspath(config_path)), SURPRISES_FILE)
         self.model_file, self.send_pushover = model_file, send_pushover
         self.gate = gate or PinGate()
@@ -115,6 +131,10 @@ class Settings:
             return "failed"
         debug.info(f"Settings page: restarted {self.restart_unit}.")
         return "restarted"
+
+    def board_now(self):
+        """What the app's heartbeat says, for the "On the board now" card (board_status.board_now)."""
+        return board_status.board_now(self.heartbeat_file)
 
     def pushover_keys(self):
         """config.json's Pushover keys, or None: the sign-in page offers to send the PIN only with them."""
@@ -258,7 +278,37 @@ class Handler(BaseHTTPRequestHandler):
         config = config if config is not None else loaded
         return page.settings_page(config, self.settings.sound_cards(), self._in_setup(), problems, saved,
                                   board_name(), problem, self.settings.park_names.names(),
-                                  self.settings.panel_choices(config), self.settings.updates.view(), started)
+                                  self.settings.panel_choices(config), self.settings.updates.view(), started,
+                                  self.settings.board_now())
+
+    def _static(self, name):
+        """GET /static/<name>: the page's pictures (page.STATIC_DIR), open to anyone, as the sign-in page and the
+        browser tab show them. Only a plain file name listed in STATIC_TYPES; nothing else on the board."""
+        kind = STATIC_TYPES.get(os.path.splitext(name)[1])
+        path = os.path.join(page.STATIC_DIR, name)
+        if not kind or "/" in name or "\\" in name or name.startswith(".") or not os.path.isfile(path):
+            return self._send(404, page.message_page("Not found", "There's nothing at this address."))
+        try:
+            with open(path, "rb") as f:
+                body = f.read()
+        except OSError as e:
+            debug.warning(f"Settings page: can't read {path}: {e}")
+            return self._send(404, page.message_page("Not found", "There's nothing at this address."))
+        squeeze = kind in COMPRESSIBLE
+        gzipped = squeeze and "gzip" in (self.headers.get("Accept-Encoding") or "").lower()
+        if gzipped:
+            body = _gzipped(body)
+        self.send_response(200)
+        self.send_header("Content-Type", kind)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", f"max-age={STATIC_MAX_AGE_S}")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        if squeeze:
+            self.send_header("Vary", "Accept-Encoding")
+        if gzipped:
+            self.send_header("Content-Encoding", "gzip")
+        self.end_headers()
+        self.wfile.write(body)
 
     def _surprises_page(self, problems=(), saved=None, data=None, imported=None):
         data = data if data is not None else load_surprises(self.settings.surprises_path)
@@ -269,6 +319,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlsplit(self.path)
+        if url.path.startswith("/static/"):
+            return self._static(url.path[len("/static/"):])
+        if url.path in ROOT_ICONS:  # where phones and browsers look when a page doesn't say
+            return self._static(ROOT_ICONS[url.path])
         if url.path == "/update/status":  # the page's script, following a running update
             if not self._allowed():
                 return self._send_json(403, {"running": False, "phase": None})

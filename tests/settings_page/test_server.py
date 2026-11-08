@@ -624,3 +624,75 @@ def test_while_an_update_runs_its_status_is_followed_and_saving_waits(board):
     status, _, html = board.request("/save", SAVE)
     assert status == 409 and "An update is running" in html and board.saved() == CONFIG and board.restarts == []
     assert 'value="May"' in html, "what was typed stays on the page"
+
+
+# --- the page's pictures
+
+def raw(board, path, headers=None):
+    """GET path as bytes, signed out."""
+    req = urllib.request.Request(board.url + path, headers=headers or {})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            return response.status, dict(response.headers), response.read()
+    except urllib.error.HTTPError as e:
+        return e.code, dict(e.headers), e.read()
+
+
+@pytest.mark.parametrize("path, kind", [("/static/icon.svg", "image/svg+xml"),
+                                        ("/static/apple-touch-icon.png", "image/png"),
+                                        ("/static/landmark-epcot.png", "image/png"),
+                                        ("/apple-touch-icon.png", "image/png")])
+def test_the_pictures_are_served_to_anyone_since_the_sign_in_page_shows_them(board, path, kind):
+    status, headers, body = raw(board, path)
+    assert status == 200 and headers["Content-Type"] == kind and body
+    assert headers["Cache-Control"] == f"max-age={server.STATIC_MAX_AGE_S}" and headers["X-Content-Type-Options"] == "nosniff"
+    name = path.rsplit("/", 1)[1]
+    with open(os.path.join(server.page.STATIC_DIR, name), "rb") as f:
+        assert body == f.read()
+
+
+@pytest.mark.parametrize("path", ["/static/landmarks.json", "/static/missing.png", "/static/../server.py",
+                                  "/static/%2e%2e/server.py", "/static/..%2fserver.py", "/static/", "/static/.png"])
+def test_nothing_else_is_served_from_static(board, path):
+    status, headers, body = raw(board, path)
+    assert status == 404 and headers["Content-Type"].startswith("text/html") and b"nothing at this address" in body
+
+
+def test_an_unreadable_picture_is_a_404_and_logged(board, monkeypatch):
+    import builtins
+    warnings, real_open = [], builtins.open
+    monkeypatch.setattr(server.debug, "warning", warnings.append)
+
+    def failing(path, *args, **kwargs):
+        if str(path).endswith("icon.svg"):
+            raise PermissionError("no")
+        return real_open(path, *args, **kwargs)
+    monkeypatch.setattr(builtins, "open", failing)
+    assert raw(board, "/static/icon.svg")[0] == 404 and "icon.svg" in warnings[0]
+
+
+def test_the_page_says_what_the_heartbeat_says(board, tmp_path):
+    beat = tmp_path / "lll-health"
+    beat.write_text(json.dumps({"at": time.time() - 4, "version": "2.1.5-beta"}))
+    board.settings.heartbeat_file = str(beat)
+    board.sign_in()
+    html = board.request("/")[2]
+    assert '<span class="beat">Running</span>' in html and "Version <b>2.1.5-beta</b>" in html
+    beat.unlink()
+    assert '<span class="beat none">No word yet</span>' in board.request("/")[2]
+
+
+def test_the_svg_logo_goes_gzipped_to_a_browser_that_takes_it_and_plain_to_one_that_doesnt(board):
+    import gzip
+    with open(os.path.join(server.page.STATIC_DIR, "icon.svg"), "rb") as f:
+        svg = f.read()
+    status, headers, body = raw(board, "/static/icon.svg", {"Accept-Encoding": "gzip, deflate, br"})
+    assert status == 200 and headers["Content-Encoding"] == "gzip" and headers["Vary"] == "Accept-Encoding"
+    assert gzip.decompress(body) == svg and int(headers["Content-Length"]) == len(body) < len(svg) // 4
+    status, headers, body = raw(board, "/static/icon.svg")
+    assert status == 200 and "Content-Encoding" not in headers and headers["Vary"] == "Accept-Encoding" and body == svg
+
+
+def test_pngs_are_never_gzipped_they_are_compressed_already(board):
+    status, headers, _ = raw(board, "/static/apple-touch-icon.png", {"Accept-Encoding": "gzip"})
+    assert status == 200 and "Content-Encoding" not in headers and "Vary" not in headers
