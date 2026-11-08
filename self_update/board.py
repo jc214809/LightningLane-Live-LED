@@ -129,7 +129,17 @@ class Board:
         return any(PR_MERGE.match(line) or PR_TITLED.match(line) for line in merged)
 
     def checkout(self, ref, detach=True):
+        self._drop_installer_shebang()
         self.git("checkout", *(["--detach"] if detach else []), ref)
+
+    def _drop_installer_shebang(self):
+        """LLL-install.sh puts a shebang on disney.py's first line, which a checkout refuses to overwrite
+        when the installer died before git's filter hid it (a rollback after a failed install). Drops that
+        edit and only that one: anything else changed in disney.py is left for the checkout to refuse."""
+        diff = self.git("diff", "HEAD", "--unified=0", "--", "disney.py", check=False).stdout.splitlines()
+        edits = [line for line in diff if line[:1] in "+-" and not line.startswith(("+++", "---"))]
+        if edits and all(line.startswith("+#!") for line in edits):
+            self.git("checkout", "--", "disney.py")
 
     # pip and the installer (as root, like the app)
 
@@ -149,7 +159,17 @@ class Board:
         args = ["bash", "LLL-install.sh", "-p", "-m", "-w"]
         if skip_requirements and self.installer_skips_requirements():
             args.append(SKIP_REQUIREMENTS)
-        self._command(args, INSTALL_TIMEOUT_S)
+        self._command(args, INSTALL_TIMEOUT_S, **self._as_sudo())
+
+    def _as_sudo(self):
+        """Root's env as `sudo ./LLL-install.sh` by hand gives it: SUDO_UID names the checkout's owner, which
+        git takes as the reason to trust a checkout it would call dubious (the installer runs git add as root;
+        from a systemd unit it died with "dubious ownership")."""
+        owner = os.stat(os.path.join(self.app_dir, ".git"))
+        if self._euid() != 0 or owner.st_uid == 0:
+            return {}
+        return {"env": {**os.environ, "SUDO_UID": str(owner.st_uid), "SUDO_GID": str(owner.st_gid),
+                        "SUDO_USER": pwd.getpwuid(owner.st_uid).pw_name}}
 
     def installer_skips_requirements(self):
         try:
