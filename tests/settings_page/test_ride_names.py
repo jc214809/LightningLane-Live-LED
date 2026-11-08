@@ -176,3 +176,25 @@ def test_a_park_whose_data_cannot_be_read_fails_the_whole_fetch(monkeypatch, api
     monkeypatch.setattr(ride_names, "_get_json", lambda url: {"children": [], "liveData": "none"})
     with pytest.raises(ValueError):
         fetch_rides(["Magic Kingdom"])
+
+
+def test_one_parks_outage_keeps_that_parks_last_list_and_the_others_are_fetched(monkeypatch, api):
+    good = ride_names._get_json
+
+    def get(url):
+        if "/ec/" in url:
+            raise urllib.error.URLError("down")
+        return good(url)
+    monkeypatch.setattr(ride_names, "_get_json", get)
+    rides = fetch_rides(["Magic Kingdom", "EPCOT"], {"EPCOT": ["Test Track"]})
+    assert rides["EPCOT"] == ["Test Track"], "its last list, not nothing"
+    assert "Space Mountain" in rides["Magic Kingdom"]
+    assert "EPCOT" not in fetch_rides(["Magic Kingdom", "EPCOT"]), "no last list: left out, and the others still show"
+
+
+def test_every_park_down_is_a_failed_fetch(monkeypatch, api):
+    def get(url):
+        raise urllib.error.URLError("down")
+    monkeypatch.setattr(ride_names, "_get_json", get)
+    with pytest.raises(ValueError):
+        fetch_rides(["Magic Kingdom"])

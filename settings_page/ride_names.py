@@ -44,20 +44,30 @@ def _has_wait_queue(entry):
 
 def fetch_rides(park_names, keep=None):
     """{park: [ride names]} for these configured parks: each attraction or show (a meet is one) whose live entry has a
-    wait queue, named as the app names it, plus any in keep ({park: [names]}, the last list) that is still there. Raises on a network
-    error, a bad status or bad JSON; a park whose data can't be read fails the whole fetch."""
-    rides = {}
+    wait queue, named as the app names it, plus any in keep ({park: [names]}, the last list) that is still there. A park whose data
+    can't be read keeps its last list (keep) and is left out if it has none; raises only when no park gave any rides."""
+    rides, failed = {}, []
     for park, park_id in park_ids(fetch_destinations(), park_names).items():
-        children = _get_json(CHILDREN_URL.format(park_id)).get("children")
-        live = _get_json(LIVE_URL.format(park_id)).get("liveData")
-        if not isinstance(children, list) or not isinstance(live, list):
-            raise ValueError(f"no children or live data for {park}")
+        try:
+            children = _get_json(CHILDREN_URL.format(park_id)).get("children")
+            live = _get_json(LIVE_URL.format(park_id)).get("liveData")
+            if not isinstance(children, list) or not isinstance(live, list):
+                raise ValueError(f"no children or live data for {park}")
+        except (OSError, ValueError) as e:  # one park's outage doesn't cost the others, or its own last list
+            debug.warning(f"Settings page: couldn't read the rides at {park} ({type(e).__name__}: {e}).")
+            if not (keep or {}).get(park):
+                failed.append(park)
+            else:
+                rides[park] = list(keep[park])
+            continue
         waiting = {entry.get("id") for entry in live if _has_wait_queue(entry)}
         listed = {c.get("id"): clean_ride_name(c["name"]).strip() for c in children
-                       if isinstance(c, dict) and c.get("entityType") in KINDS and isinstance(c.get("name"), str)}
+                  if isinstance(c, dict) and c.get("entityType") in KINDS and isinstance(c.get("name"), str)}
         names = {name for ride_id, name in listed.items() if ride_id in waiting}
         names |= set((keep or {}).get(park, [])) & set(listed.values())
         rides[park] = sorted((n for n in names if n), key=str.lower)
+    if failed and not any(rides.values()):
+        raise ValueError(f"couldn't read the rides at {', '.join(failed)}")
     return rides
 
 
@@ -115,8 +125,10 @@ class RideNames:
                 raise ValueError("the parks listed no rides")
             self._write(parks, rides)
         except Exception as e:  # a bad reply or full disk: log it, keep the old list, retry later
+            with self.lock:
+                have = bool(self.rides)
             debug.warning(f"Settings page: couldn't refresh the ride list ({type(e).__name__}: {e}); "
-                          f"{'keeping the last one' if self.rides else 'the pickers stay empty until it works'}.")
+                          f"{'keeping the last one' if have else 'the pickers stay empty until it works'}.")
             return False
         finally:
             with self.lock:
