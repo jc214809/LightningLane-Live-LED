@@ -29,7 +29,7 @@ def _party_park(opens="19:00", closes="23:59"):
 
 
 def _text(scene):
-    """The billboard's lettering, read back from its sign: the red and green pixels inside its frame."""
+    """The billboard's lettering, read back from its sign: the lettering's pixels inside its frame."""
     frame = st.FRAME_PX[scene.height >= 64]
     letters = st.SIGN_INK
     return {(x, y): rgb for x, col in enumerate(scene.columns[:scene.width]) for y, rgb in col
@@ -261,10 +261,10 @@ def test_the_billboard_says_the_party_and_tonights_hours(w, h, lines):
 
 
 @pytest.mark.parametrize("w, h", BOARDS)
-def test_the_lettering_fits_inside_the_frame_and_alternates_red_and_green(w, h):
+def test_the_lettering_fits_inside_the_frame(w, h):
     font = st.SMALL_FONT if h >= 64 else st.TINY_FONT
     names = st.NAME[h >= 64] + ["12PM-12AM"]  # the widest hours
-    lines = [(font, text, st.SIGN_INK[i % 2]) for i, text in enumerate(names)]
+    lines = [(font, text, st.SIGN_INK[i % len(st.SIGN_INK)]) for i, text in enumerate(names)]
     sign_h = _scene(w, h).sign_h
     frame = st.FRAME_PX[h >= 64]
     sign = st.sign_pixels(w, sign_h, lines, frame)
@@ -275,6 +275,49 @@ def test_the_lettering_fits_inside_the_frame_and_alternates_red_and_green(w, h):
         assert frame <= x < w - frame and frame <= y < sign_h - frame
     blank = st.sign_pixels(w, sign_h, [], frame)
     assert all(sign[p] == blank[p] for p in blank if not (frame <= p[0] < w - frame and frame <= p[1] < sign_h - frame)), "frame untouched"
+
+
+@pytest.mark.parametrize("w, h", BOARDS)
+def test_the_lines_run_white_red_green_from_the_top_on_a_dark_board(w, h):
+    # The old light grey board made red and green lettering hard to read on a panel: bright on dark now.
+    scene = _scene(w, h, park=_party_park("19:00", "23:59"))
+    text = _text(scene)
+    rows = sorted({y for _, y in text})
+    starts = [rows[0]] + [b for a, b in zip(rows, rows[1:]) if b > a + 1]
+    colours = [next(rgb for (x, y), rgb in text.items() if y == top) for top in starts]
+    white, red, green = st.SIGN_INK
+    assert colours == [[white, red, green][i % 3] for i in range(len(starts))]
+    assert colours[:4] == [white, red, green, white]
+    assert red[0] > 200 > max(red[1:]) and min(white) > 200 and green[1] > 200 > max(green[0], green[2])
+    assert max(st.SIGN_RGB) < 60, "a dark board"
+    luma = lambda rgb: 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2]
+    assert all(luma(ink) > 4 * luma(st.SIGN_RGB) for ink in st.SIGN_INK), "every line stands out"
+
+
+@pytest.mark.parametrize("hours", [("7PM", "12AM"), ("6PM", "1AM"), ("7PM", "11PM")])
+def test_64x32_says_tonights_hours_first_then_the_name(hours):
+    inside = 64 - 2 * st.FRAME_PX[False]
+    assert st.sign_lines(False, hours, inside, st.TINY_FONT) == \
+        [f"TONIGHT {'-'.join(hours)}", "MICKEY'S", "VERY MERRY", "CHRISTMAS PARTY"]
+    assert st.sign_lines(True, hours, 60, st.SMALL_FONT)[-1] == "-".join(hours), "64x64 keeps the hours last"
+
+
+def test_64x32s_tonight_line_fits_inside_the_frame_with_a_narrow_space():
+    scene = _scene(64, 32, park=_party_park("19:00", "23:59"))
+    text = _text(scene)
+    top = min(y for _, y in text)
+    first = sorted(x for x, y in text if top <= y < top + st.TINY_FONT[1] + 1)
+    frame = st.FRAME_PX[False]
+    assert frame <= first[0] and first[-1] < 64 - frame, "inside the frame"
+    assert first[-1] - first[0] + 1 == 63 - (4 - st.TONIGHT_SPACE_PX), "a 4 px space would be one too wide"
+    gaps = [b - a - 1 for a, b in zip(first, first[1:]) if b - a > 1]
+    assert max(gaps) == st.TONIGHT_SPACE_PX + 1, "the word gap: the narrow space plus a glyph's blank column"
+
+
+def test_64x32_shows_the_hours_alone_when_tonight_wont_fit():
+    inside = 64 - 2 * st.FRAME_PX[False]
+    assert st.sign_lines(False, ("10PM", "12AM"), inside, st.TINY_FONT)[0] == "10PM-12AM"
+    assert st.sign_lines(False, None, inside, st.TINY_FONT) == st.NAME[False], "the name alone without hours"
 
 
 @pytest.mark.parametrize("w, h", BOARDS)
