@@ -416,17 +416,99 @@ def test_christmas_show_has_a_midnight_sky_red_roofs_and_steady_green_windows(he
     assert all(later[p] == frame[p] for p in windows), "no flicker"
     assert not show.moon and not show.bats and not show.bats_on
     _run(show, 400)
-    allowed = set(theme["palette"]) | {fireworks.ORNAMENT_RGB, fireworks.ORNAMENT_FILL_RGB, fireworks.CAP_RGB,
-                                        fireworks.SHINE_RGB, fireworks.CANE_RED, fireworks.CANE_WHITE}
-    assert {s.color for s in show.sparks} <= allowed, "bursts use only the party's colours"
+    shape_colours = {rgb for fn in fireworks._SHAPE_POINTS.values() for _, _, rgb in fn(show.shape_radius)}
+    assert {s.color for s in show.sparks} <= set(theme["palette"]) | shape_colours, "bursts use only the party's colours"
 
 
-def test_christmas_bursts_are_ornaments_and_candy_canes_among_regular_fireworks():
+CHRISTMAS_SHAPES = ["mickey_ornament", "mickey_ornament_green", "candy_cane", "snowflake", "star", "tree"]
+
+
+def test_christmas_bursts_are_ornaments_canes_snowflakes_trees_and_stars_among_regular_fireworks():
     show = FireworksShow(64, 64, random.Random(12), "christmas")
-    shapes = [show._pick_shape() for _ in range(4000)]
-    assert set(shapes) == {"mickey_ornament", "candy_cane", None}
-    assert 240 < shapes.count("mickey_ornament") < 400, "about 8%"
-    assert 200 < shapes.count("candy_cane") < 360, "about 7%"
+    shapes = [show._pick_shape() for _ in range(10000)]
+    assert set(shapes) == {"mickey_ornament", "candy_cane", "snowflake", "tree", "star", None}
+    for shape, share in (("mickey_ornament", 0.06), ("candy_cane", 0.05), ("snowflake", 0.04),
+                         ("tree", 0.04), ("star", 0.03)):
+        assert abs(shapes.count(shape) / 10000 - share) < 0.012, shape
+    assert 0.19 < 1 - shapes.count(None) / 10000 < 0.25, "about 22% shapes in all"
+
+
+def test_ornaments_take_turns_red_then_green():
+    show = FireworksShow(64, 64, random.Random(5), "christmas")
+    show._pick_shape = lambda: "mickey_ornament"
+    show.rockets = []
+    for _ in range(6):
+        show.launch()
+    assert [r.shape for r in show.rockets] == ["mickey_ornament", "mickey_ornament_green"] * 3
+    assert [r.color for r in show.rockets[:2]] == [fireworks.ORNAMENT_RGB, fireworks.GREEN_ORNAMENT_RGB]
+    green = fireworks._green_ornament_points(9)
+    red = fireworks._mickey_ornament_points(9)
+    assert [(x, y) for x, y, _ in green] == [(x, y) for x, y, _ in red], "the same ornament, recoloured"
+    assert {c for _, _, c in green} == {fireworks.GREEN_ORNAMENT_RGB, fireworks.GREEN_ORNAMENT_FILL_RGB,
+                                        fireworks.CAP_RGB, fireworks.SHINE_RGB}
+
+
+@pytest.mark.parametrize("height", [32, 64])
+@pytest.mark.parametrize("shape", CHRISTMAS_SHAPES)
+@pytest.mark.parametrize("seed", range(4))
+def test_every_christmas_shape_stays_on_the_board_and_clear_of_the_castle(height, shape, seed):
+    show, rocket, sparks = _burst(height, shape, seed)
+    radius = show.shape_radius
+    for px, py, _ in fireworks._shape_points(shape, radius, rocket.tilt):
+        x, y = rocket.x + px * radius, rocket.burst_y + py * radius
+        assert -0.5 <= x <= 63.5 and y >= -0.5, shape
+        assert y <= show.castle_y + 3, "clears the spire"
+    assert len({s.life for s in sparks}) == 1, "expands, holds and fades together"
+
+
+def _leds(points, radius):
+    return {(round(x * radius), round(y * radius)): c for x, y, c in points}
+
+
+@pytest.mark.parametrize("radius", [5, 9])
+@pytest.mark.parametrize("shape", ["star", "tree"])
+def test_star_and_tree_are_solid_with_no_dark_gaps(radius, shape):
+    # Every LED whose centre is inside the star (or a tree tier) is lit: no dark ring inside the outline
+    # (the first draft left one) and no holes in a slanted edge.
+    leds = _leds(fireworks._SHAPE_POINTS[shape](radius), radius)
+    polygons = [fireworks._STAR_CORNERS] if shape == "star" else \
+        [[(0.0, top), (half, bottom), (-half, bottom)] for top, bottom, half in fireworks._TREE_TIERS]
+    holes = [(x, y) for x in range(-radius * 2, radius * 2) for y in range(-radius * 2, radius * 2)
+             if (x, y) not in leds and any(fireworks._inside(x / radius, y / radius, p) for p in polygons)]
+    assert not holes, f"{shape} has dark pixels inside it at {holes}"
+
+
+@pytest.mark.parametrize("radius", [5, 9])
+def test_star_is_gold_with_five_points_up_top(radius):
+    leds = _leds(fireworks._star_points(radius), radius)
+    assert set(leds.values()) == {fireworks.STAR_RGB, fireworks.STAR_FILL_RGB}
+    top = min(y for _, y in leds)
+    assert [x for x, y in leds if y == top] == [0], "one point straight up"
+    assert list(leds.values()).count(fireworks.STAR_FILL_RGB) > 0, "filled"
+
+
+@pytest.mark.parametrize("radius", [5, 9])
+def test_tree_has_green_tiers_lights_a_star_on_top_and_a_trunk(radius):
+    leds = _leds(fireworks._tree_points(radius), radius)
+    colours = list(leds.values())
+    assert colours.count(fireworks.TREE_FILL_RGB) > colours.count(fireworks.TREE_RGB) / 3
+    assert sum(colours.count(c) for c in fireworks.TREE_LIGHTS) >= (4 if radius < 6 else 8)
+    assert len({c for c in colours if c in fireworks.TREE_LIGHTS}) == len(fireworks.TREE_LIGHTS), "every colour"
+    top = min(y for _, y in leds)
+    assert all(c == fireworks.STAR_RGB for (x, y), c in leds.items() if y == top), "a star on top"
+    bottom = max(y for _, y in leds)
+    assert all(c == fireworks.TRUNK_RGB for (x, y), c in leds.items() if y == bottom), "a trunk below"
+
+
+@pytest.mark.parametrize("radius", [5, 9])
+def test_snowflake_has_six_white_arms_with_icy_tips(radius):
+    points = fireworks._snowflake_points(radius)
+    tips = [(x, y) for x, y, c in points if c == fireworks.FLAKE_TIP_RGB and math.hypot(x, y) > 1.0]
+    assert len(tips) == 6
+    angles = sorted(round(math.degrees(math.atan2(-y, x))) % 360 for x, y in tips)
+    assert angles == [30, 90, 150, 210, 270, 330], "one arm straight up, 60 degrees apart"
+    assert {c for _, _, c in points} == {fireworks.FLAKE_RGB, fireworks.FLAKE_TIP_RGB}
+    assert (0, 0) in _leds(points, radius), "a centre"
 
 
 @pytest.mark.parametrize("radius", [5, 9])  # the ornament's size on 64x32 and on 64x64
