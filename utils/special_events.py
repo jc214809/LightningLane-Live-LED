@@ -28,11 +28,13 @@ SPECIAL_EVENTS = {
         "fireworks_show": "Disney's Not-So-Spooky Spectacular",  # plays the castle fireworks when it starts
         "fireworks_theme": "halloween",  # display/fireworks/fireworks.py THEMES
     },
-    # Its match string is the event's published name: it isn't in the live data yet.
+    # The live data names the party's entities ("... at Mickey's Very Merry Christmas Party"), so this matches.
     "christmas": {
         "match": "very merry christmas party",
         "star_rgb": HOLIDAY_STAR,
         "landmark": "SantaTrainLandmark",  # display/landmarks/santa_train.py
+        "fireworks_show": "Minnie's Wonderful Christmastime Fireworks",
+        "fireworks_theme": "christmas",
     },
     "jollywood": {
         "match": "jollywood nights",  # likewise its published name

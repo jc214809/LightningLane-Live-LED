@@ -1031,6 +1031,8 @@ def test_force_show_matches_a_known_show_loosely(monkeypatch):
         assert disney.forced_show == ("Happily Ever After", None)
         disney.set_forced_show("Disney’s Not-So-Spooky Spectacular")  # curly apostrophe, as typed on a phone
         assert disney.forced_show == ("Disney's Not-So-Spooky Spectacular", "halloween"), "the party's theme too"
+        disney.set_forced_show("minnie’s wonderful christmastime fireworks")
+        assert disney.forced_show == ("Minnie's Wonderful Christmastime Fireworks", "christmas")
     finally:
         disney.set_forced_show(None)
 

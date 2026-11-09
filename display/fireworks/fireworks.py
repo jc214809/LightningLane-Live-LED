@@ -81,6 +81,17 @@ THEMES = {
         # Burst shapes and their chance per launch; the everyday show's is {"mickey": MICKEY_CHANCE}.
         "shapes": {"mickey_pumpkin": 0.15},  # as often as the everyday show's Mickey bursts
     },
+    "christmas": {
+        # Reds and greens listed twice over the rest, so they lead; a little icy blue for the snow.
+        "palette": [(230, 30, 30), (255, 80, 80), (40, 200, 60), (100, 255, 120),
+                    (255, 255, 255), (255, 200, 50), (150, 210, 255)],
+        "sky": ((8, 12, 48), (2, 4, 20)),  # midnight blue
+        # White walls, red roofs, green windows and gold finials; steady, no flicker.
+        "castle": {"W": (225, 225, 235), "R": (200, 25, 30), "Y": (110, 220, 90), "G": (255, 200, 50)},
+        "snow": True,
+        "sleigh": True,
+        "shapes": {"mickey_ornament": 0.08, "candy_cane": 0.07},  # together as often as the everyday Mickeys
+    },
 }
 
 GRAVITY = 0.035
@@ -98,6 +109,11 @@ PUMPKIN_RGB, STEM_RGB, FACE_RGB = (255, 120, 10), (90, 210, 70), (255, 235, 110)
 PUMPKIN_FILL_RGB = (225, 95, 5)  # deeper than the outline, so the edge and the face still stand out
 MOON_RGB, BAT_RGB = (240, 235, 200), (8, 4, 12)
 
+ORNAMENT_RGB, ORNAMENT_FILL_RGB = (230, 30, 30), (160, 15, 20)  # a red Mickey bauble, filled a deeper red
+CAP_RGB, SHINE_RGB = (255, 200, 50), (255, 255, 255)  # its gold cap and loop, and the white shine on its head
+CANE_RED, CANE_WHITE = (230, 30, 30), (255, 255, 255)
+SNOW_RGB = (190, 200, 225)
+
 
 def _mickey_outline():
     """Unit-radius points on the outer outline of Mickey's head and ears."""
@@ -113,6 +129,23 @@ def _mickey_outline():
     return points
 
 
+def _mickey_fill(radius, clear_of, gap, rgb):
+    """One spark per LED across Mickey's head and ears, inside the outline and clear of it, leaving a
+    `gap`-LED dark ring round each of the (x, y, rgb) points in `clear_of`."""
+    step = 1 / radius
+    n = int(1.6 / step) + 1
+    points = []
+    for j in range(-n, n + 1):
+        for i in range(-n, n + 1):
+            x, y = i * step, j * step
+            if not any((x - cx) ** 2 + (y - cy) ** 2 <= (r - 1.2 * step) ** 2 for cx, cy, r in _MICKEY_CIRCLES):
+                continue
+            if any((x - fx) ** 2 + (y - fy) ** 2 < (gap * step) ** 2 for fx, fy, _ in clear_of):
+                continue
+            points.append((x, y, rgb))
+    return points
+
+
 def _mickey_pumpkin_points(radius):
     """(x, y, rgb) in head-radius units for a Mickey jack-o'-lantern burst: Mickey's head and ears
     outlined in orange and filled a deeper orange, a green stem and a glowing carved face. Fewer
@@ -124,17 +157,7 @@ def _mickey_pumpkin_points(radius):
     # On a small pumpkin the face's sparks sit an LED or so apart, so a 1.6-LED gap round each
     # would join up and empty the whole head (64x32's pumpkins had just an outline and a face):
     # there, only clear the LEDs the face itself lands on.
-    step = 1 / radius
-    gap = 1.6 if radius >= 6 else 0.6
-    n = int(1.6 / step) + 1
-    for j in range(-n, n + 1):
-        for i in range(-n, n + 1):
-            x, y = i * step, j * step
-            if not any((x - cx) ** 2 + (y - cy) ** 2 <= (r - 1.2 * step) ** 2 for cx, cy, r in _MICKEY_CIRCLES):
-                continue
-            if any((x - fx) ** 2 + (y - fy) ** 2 < (gap * step) ** 2 for fx, fy, _ in face):
-                continue
-            points.append((x, y, PUMPKIN_FILL_RGB))
+    points += _mickey_fill(radius, face, 1.6 if radius >= 6 else 0.6, PUMPKIN_FILL_RGB)
     # A stubby stem, about 3 sparks wide on a 64-row board, leaning a little to the right at the top.
     points += [(x, y, STEM_RGB) for y in (-1.08, -1.19) for x in (-0.11, 0.0, 0.11)]
     points += [(0.05, -1.3, STEM_RGB), (0.16, -1.3, STEM_RGB)]
@@ -154,6 +177,134 @@ def _pumpkin_face(radius):
     return points
 
 
+def _mickey_ornament_points(radius):
+    """(x, y, rgb) in head-radius units for a Mickey Christmas-ornament burst: his head and ears
+    outlined in red and filled a deeper red, a gold cap with a loop on top of the head between the
+    ears, and a white shine at the upper left (with a dark gap round it, so it reads)."""
+    big = radius >= 6
+    step = 1 / radius
+    points = [(x, y, ORNAMENT_RGB) for x, y in _mickey_outline()]
+    shine = [(-0.55, -0.3), (-0.55, -0.41), (-0.44, -0.52), (-0.33, -0.52)] if big \
+        else [(-0.4, -0.2), (-0.4, -0.4), (-0.2, -0.4)]  # on the 5-LED grid
+    shine = [(x, y, SHINE_RGB) for x, y in shine]
+    points += _mickey_fill(radius, shine, 1.6 if big else 0.6, ORNAMENT_FILL_RGB)
+    # The cap sits on the head's top (y = -1): 3 sparks wide and 2 tall on a 64-row board, 2 by 1 on
+    # a small one; the hook is a little ring (a single bar on a small board) above it.
+    w = 3 if big else 2
+    xs = [(i - (w - 1) / 2) * step for i in range(w)]
+    rows = 2 if big else 1
+    points += [(x, -1.0 - step * (1 + j), CAP_RGB) for j in range(rows) for x in xs]
+    top = -1.0 - step * (rows + 1)
+    if big:
+        points += [(xs[0], top, CAP_RGB), (xs[2], top, CAP_RGB),
+                   (xs[0], top - step, CAP_RGB), (xs[1], top - step, CAP_RGB), (xs[2], top - step, CAP_RGB)]
+    else:
+        points += [(x, top, CAP_RGB) for x in xs]
+    return points + shine
+
+
+# The candy cane: a vertical stick from y = -1 to 1 (2 head-radii tall) at x = _CANE_X, with a hook
+# curling over its top to the right, always the same side so no extra rng is drawn.
+_CANE_X, _CANE_HOOK_R = -0.4, 0.5
+
+
+def _candy_cane_points(radius):
+    """(x, y, rgb) in head-radius units for a candy-cane burst: a stick 3 sparks wide on a 64-row board
+    (2 on a small one) with a round hook over the top, striped red and white in diagonal bands."""
+    big = radius >= 6
+    step = 1 / radius
+    w = 3 if big else 2
+    band = 3 if big else 2  # LEDs per stripe
+    offsets = [k - (w - 1) // 2 for k in range(w)]  # whole LEDs, so it is w wide whatever the rounding
+
+    def colour(along, k):  # `along` LEDs from the foot; the column shifts the band for the diagonal
+        return CANE_RED if int((along + k) // band) % 2 == 0 else CANE_WHITE
+
+    points = []
+    for j in range(2 * radius + 1):  # the stick, foot to the top of the hook's start
+        y = 1.0 - j * step
+        points += [(_CANE_X + o * step, y, colour(j, k)) for k, o in enumerate(offsets)]
+    hx, hy, rr = _CANE_X + _CANE_HOOK_R, -1.0, _CANE_HOOK_R
+    for k, o in enumerate(offsets):
+        r = rr - o * step  # the stick's left edge is the hook's outer rim
+        n = int(math.pi * r * radius * 1.3) + 2
+        for i in range(1, n + 1):
+            a = math.pi - (math.pi + 0.45) * i / n  # over the top and a little way down the far side
+            points.append((hx + r * math.cos(a), hy - r * math.sin(a),
+                           colour(2 * radius + r * radius * (math.pi - a), k)))
+    return points
+
+
+# Per shape: its points (given the radius), its rocket and flash colour, and (half-width, top, bottom)
+# in head-radius units where they differ from Mickey's, to keep it on the board and clear of the castle.
+_SHAPE_POINTS = {"mickey_pumpkin": _mickey_pumpkin_points, "mickey_ornament": _mickey_ornament_points,
+                 "candy_cane": _candy_cane_points}
+_SHAPE_RGB = {"mickey_pumpkin": PUMPKIN_RGB, "mickey_ornament": ORNAMENT_RGB, "candy_cane": CANE_RED}
+_SHAPE_EXTENTS = {"candy_cane": (0.8, 1.5, 1.0)}
+# Shapes that burst at an angle, picked at random per burst (degrees clockwise): a candy cane leans
+# either way or lies on its side, never upside down. Where a shape is placed then comes from its
+# tilted points, not _SHAPE_EXTENTS.
+_SHAPE_TILTS = {"candy_cane": (-40, -25, 25, 40, 90)}
+
+
+def _shape_points(shape, radius, tilt=0):
+    """A party shape's (x, y, rgb) points in head-radius units, turned `tilt` degrees clockwise."""
+    points = _SHAPE_POINTS[shape](radius)
+    if not tilt:
+        return points
+    c, s = math.cos(math.radians(tilt)), math.sin(math.radians(tilt))
+    return [(x * c - y * s, x * s + y * c, rgb) for x, y, rgb in points]
+
+
+# Santa's sleigh team, drawn flying right (mirrored for left), the user's pick from mocks (2026-11-08):
+# 64x32 boards get Santa and two reindeer at 1x, 64x64 boards Santa and Rudolph doubled.
+# '.' empty, N Rudolph's nose (it blinks), n another reindeer's (black), B a reindeer, b its far legs,
+# A antlers, L the gold reins, S the sleigh, K its gold runner, R Santa's red, W his white, F his face,
+# G his dark green sack.
+_REINDEER = [  # leaping, with a muzzle that puts the nose out in front of the head
+    "......A.A...",
+    ".......AA...",
+    "........BBn.",
+    "B.......BB..",
+    ".BBBBBBBB...",
+    "..BBBBBB....",
+    ".b.....bB...",
+    "b........B..",
+]
+_RUDOLPH = [row.replace("n", "N") for row in _REINDEER]
+_SANTA_SLEIGH = [  # Santa faces the reindeer: his hat's pom trails behind, his face and beard in front
+    "....WRR.......",
+    ".....RRRR.....",
+    ".GG..WWWWW....",
+    "GGGG.WFFFF....",
+    "SGGSRRRWWWS..K",
+    "SSSSSSSSSSS.K.",
+    ".SSSSSSSSSKK..",
+    "KKKKKKKKKK....",
+]
+_REINS_ROW = 4  # the rows of the art where the reins run between sleigh and team
+
+
+def _sleigh_team(reindeer):
+    """The sleigh, reins, then `reindeer` reindeer with Rudolph in front, as rows of one width."""
+    rows = range(len(_SANTA_SLEIGH))
+    parts = [_SANTA_SLEIGH, [".L" if r == _REINS_ROW else ".." for r in rows]]
+    for k in range(reindeer):
+        if k == reindeer - 1:
+            parts.append(_RUDOLPH)
+        else:
+            parts += [_REINDEER, ["L" if r == _REINS_ROW else "." for r in rows]]
+    return ["".join(part[r] for part in parts) for r in rows]
+
+
+_SLEIGH_ART_SMALL = _sleigh_team(2)
+_SLEIGH_ART_BIG = ["".join(c * 2 for c in row) for row in _sleigh_team(1) for _ in range(2)]
+_SLEIGH_COLORS = {"A": (200, 160, 100), "B": (150, 90, 40), "b": (95, 55, 25), "n": (0, 0, 0),
+                  "L": (230, 200, 60), "S": (205, 20, 25), "K": (255, 200, 50), "R": (235, 40, 40),
+                  "W": (255, 255, 255), "F": (255, 190, 150), "G": (20, 110, 40)}
+_NOSE_BRIGHT, _NOSE_DIM = (255, 40, 40), (120, 20, 20)
+
+
 def castle_sprite(board_height):
     """Return (pixels, width, height); pixels is a list of (dx, dy, kind), scaled 2x on 64-row boards."""
     scale = 2 if board_height >= 64 else 1
@@ -167,14 +318,15 @@ def castle_sprite(board_height):
 
 
 class _Rocket:
-    __slots__ = ("x", "y", "vx", "vy", "burst_y", "color", "mickey", "shape")
+    __slots__ = ("x", "y", "vx", "vy", "burst_y", "color", "mickey", "shape", "tilt")
 
-    def __init__(self, x, y, vx, vy, burst_y, color, mickey=False, shape=None):
+    def __init__(self, x, y, vx, vy, burst_y, color, mickey=False, shape=None, tilt=0):
         self.x, self.y, self.vx, self.vy = x, y, vx, vy
         self.burst_y = burst_y
         self.color = color
         self.mickey = mickey
-        self.shape = shape  # a Halloween burst shape ("mickey_pumpkin"), or None
+        self.shape = shape  # a party burst shape (a key of _SHAPE_POINTS), or None
+        self.tilt = tilt  # degrees clockwise the shape bursts at (a candy cane's; see _SHAPE_TILTS)
 
 
 class _Spark:
@@ -226,7 +378,7 @@ class FireworksShow:
         self.rocket_speed = 1.6 if big else 1.1
         self.launch_gap = (6, 16) if big else (10, 26)
         self.mickey_radius = 7 if big else 4
-        self.shape_radius = 9 if big else 5  # pumpkins are bigger than Mickey bursts, so their faces read
+        self.shape_radius = 9 if big else 5  # party shapes are bigger than Mickey bursts, so their faces read
         self.stars = [
             (self.rng.randrange(width), self.rng.randrange(max(1, self.castle_y + ch // 2)))
             for _ in range(width // 5)
@@ -237,6 +389,13 @@ class FireworksShow:
         if self.bats_on:
             # One bat crosses the moon soon after the show starts; more come at random.
             self._add_bat(from_left=True, y=self.moon_y if self.moon else height * 0.2)
+        self.snow = self._snowfall() if style.get("snow") else []
+        self.sleigh_art = _SLEIGH_ART_BIG if big else _SLEIGH_ART_SMALL
+        self.sleighs = []  # [x, y, vx]: at most one in the sky
+        if style.get("sleigh"):
+            # Santa crosses soon after the show starts; another now and then once he's gone.
+            self._add_sleigh(from_left=True, y=self._sleigh_lowest() / 2)
+        self.sleigh_on = style.get("sleigh", False)
 
     def _moon(self):
         big = self.height >= 64
@@ -251,6 +410,36 @@ class FireworksShow:
                 if (x - cx) ** 2 + (y - cy) ** 2 <= r * r and (x - bite_x) ** 2 + (y - bite_y) ** 2 > bite_r ** 2:
                     moon[(x, y)] = MOON_RGB
         return moon
+
+    def _snowfall(self):
+        """Flakes as [x, y, fall speed, drift phase], spread over the whole sky."""
+        big = self.height >= 64
+        return [[self.rng.uniform(0, self.width), self.rng.uniform(0, self.height),
+                 self.rng.uniform(0.15, 0.3) if big else self.rng.uniform(0.1, 0.2), self.rng.uniform(0, 2 * math.pi)]
+                for _ in range(self.width // (4 if big else 6))]
+
+    def _sleigh_lowest(self):
+        """The lowest top row that keeps the whole sleigh team above the castle's spire."""
+        return max(0, self.castle_y - len(self.sleigh_art) - 1)
+
+    def _add_sleigh(self, from_left, y):
+        speed = (0.45 if self.height >= 64 else 0.3) * self.rng.uniform(0.9, 1.1)
+        width = len(self.sleigh_art[0])
+        self.sleighs.append([-float(width) if from_left else self.width + 1.0, y, speed if from_left else -speed])
+
+    def _sleigh_pixels(self, sleigh):
+        """[(x, y, rgb)] for the sleigh, mirrored when it flies left; Rudolph's nose blinks slowly."""
+        x0, y0, vx = sleigh
+        art = self.sleigh_art
+        width = len(art[0])
+        nose = _NOSE_BRIGHT if (self.frame // 12) % 2 == 0 else _NOSE_DIM
+        pixels = []
+        for r, row in enumerate(art):
+            for c, kind in enumerate(row):
+                if kind != ".":
+                    dx = c if vx > 0 else width - 1 - c
+                    pixels.append((int(round(x0)) + dx, int(round(y0)) + r, nose if kind == "N" else _SLEIGH_COLORS[kind]))
+        return pixels
 
     def _add_bat(self, from_left, y):
         speed = (0.55 if self.height >= 64 else 0.35) * self.rng.uniform(0.8, 1.2)
@@ -278,16 +467,24 @@ class FireworksShow:
             # Keep the whole shape (a head-and-ears silhouette at most) on the board.
             mickey = shape == "mickey"
             radius = self.mickey_radius if mickey else self.shape_radius
-            half_w = _MICKEY_HALF_WIDTH * radius + 1
-            x = rng.uniform(half_w, self.width - half_w)
-            top = max(top, _MICKEY_TOP * radius + 1)
+            tilt = rng.choice(_SHAPE_TILTS[shape]) if shape in _SHAPE_TILTS else 0
+            if shape in _SHAPE_TILTS:
+                points = _shape_points(shape, radius, tilt)
+                left, right = -min(p[0] for p in points), max(p[0] for p in points)
+                up, down = -min(p[1] for p in points), max(p[1] for p in points)
+                x = rng.uniform(left * radius + 1, self.width - right * radius - 1)
+            else:
+                reach, up, down = _SHAPE_EXTENTS.get(shape, (_MICKEY_HALF_WIDTH, _MICKEY_TOP, 1.0))
+                half_w = reach * radius + 1
+                x = rng.uniform(half_w, self.width - half_w)
+            top = max(top, up * radius + 1)
             if not mickey:
-                # A pumpkin's face must clear the castle, or the spire hides it.
-                bottom = min(bottom, self.castle_y - radius)
+                # A party shape (a pumpkin's face, say) must clear the castle, or the spire hides it.
+                bottom = min(bottom, self.castle_y - down * radius)
             burst_y = rng.uniform(top, max(top + 1, bottom))
-            color = PUMPKIN_RGB if not mickey else rng.choice(self.palette)
+            color = _SHAPE_RGB[shape] if not mickey else rng.choice(self.palette)
             self.rockets.append(_Rocket(x, self.height - 1, 0.0, -self.rocket_speed, burst_y, color,
-                                        mickey=mickey, shape=None if mickey else shape))
+                                        mickey=mickey, shape=None if mickey else shape, tilt=tilt))
             return
         # Half the rockets rise from behind the castle, half from the grounds on either side.
         if rng.random() < 0.5:
@@ -308,11 +505,11 @@ class FireworksShow:
         return None
 
     def _explode_shape(self, rocket):
-        """Burst into a Mickey jack-o'-lantern; like the Mickey burst, every spark shares one life
-        so the shape expands, holds and fades together."""
+        """Burst into the rocket's party shape (a Mickey jack-o'-lantern, say); like the Mickey burst,
+        every spark shares one life so the shape expands, holds and fades together."""
         travel = (1 - DRAG ** (MICKEY_LIFE * 0.6)) / (1 - DRAG)
         speed = self.shape_radius / travel
-        for px, py, rgb in _mickey_pumpkin_points(self.shape_radius):
+        for px, py, rgb in _shape_points(rocket.shape, self.shape_radius, rocket.tilt):
             self.sparks.append(_Spark(rocket.x, rocket.y, px * speed, py * speed,
                                       MICKEY_LIFE, rgb, gravity=GRAVITY * 0.2, hold=1.8))
 
@@ -396,6 +593,17 @@ class FireworksShow:
             self.bats = [b for b in self.bats if -4 <= b[0] <= self.width + 3]
             if len(self.bats) < 3 and self.rng.random() < 0.012:
                 self._add_bat(self.rng.random() < 0.5, self.rng.uniform(2, max(3, self.castle_y * 0.6)))
+        for flake in self.snow:
+            flake[1] += flake[2]
+            if flake[1] >= self.height:  # off the bottom: back to the top somewhere new
+                flake[0], flake[1] = self.rng.uniform(0, self.width), 0.0
+        if self.sleigh_on:
+            for sleigh in self.sleighs:
+                sleigh[0] += sleigh[2]
+            width = len(self.sleigh_art[0])
+            self.sleighs = [z for z in self.sleighs if -width - 1 <= z[0] <= self.width + 1]
+            if not self.sleighs and self.rng.random() < 0.003:
+                self._add_sleigh(self.rng.random() < 0.5, self.rng.uniform(0, self._sleigh_lowest()))
 
     def frame_pixels(self):
         """Compose the current frame as {(x, y): (r, g, b)}; unlisted pixels are black."""
@@ -414,6 +622,9 @@ class FireworksShow:
         for sx, sy in self.stars:
             twinkle = 25 + int(25 * self.rng.random())
             put(sx, sy, (twinkle, twinkle, twinkle + 10))
+
+        for fx, fy, _, phase in self.snow:
+            put(fx + math.sin(self.frame * 0.05 + phase), fy, SNOW_RGB)
 
         for s in self.sparks:
             f = min(1.0, s.life / s.max_life * s.hold)
@@ -435,6 +646,12 @@ class FireworksShow:
             for x, y in self._bat_pixels(bat):
                 if 0 <= x < self.width and 0 <= y < self.height:
                     out[(x, y)] = BAT_RGB
+
+        # Santa's sleigh is opaque like the bats: over the sky and sparks, under the castle.
+        for sleigh in self.sleighs:
+            for x, y, rgb in self._sleigh_pixels(sleigh):
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    out[(x, y)] = rgb
 
         # Castle is drawn last so it occludes anything launched from behind it.
         for dx, dy, kind in self.castle_pixels:

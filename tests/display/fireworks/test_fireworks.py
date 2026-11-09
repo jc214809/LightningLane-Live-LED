@@ -51,7 +51,7 @@ def test_castle_sits_on_bottom_and_is_centered(width, height):
 
 
 @pytest.mark.parametrize("width, height", [(64, 32), (64, 64)])
-@pytest.mark.parametrize("theme", [None, "halloween"])
+@pytest.mark.parametrize("theme", [None, "halloween", "christmas"])
 def test_frames_stay_in_bounds_with_valid_colors(width, height, theme):
     show = FireworksShow(width, height, random.Random(3), theme)
     for _ in range(300):
@@ -371,6 +371,250 @@ def test_halloween_bursts_are_mickey_pumpkins_among_regular_fireworks():
     shapes = [show._pick_shape() for _ in range(2000)]
     assert set(shapes) == {"mickey_pumpkin", None}, "no plain pumpkins or plain Mickeys"
     assert 200 < shapes.count("mickey_pumpkin") < 400, "about as often as the everyday show's Mickeys"
+
+
+def _burst(height, shape, seed=11):
+    """A Christmas show's rocket of the given shape, launched and exploded at once: (show, rocket, sparks)."""
+    show = FireworksShow(64, height, random.Random(seed), "christmas")
+    show._pick_shape = lambda: shape
+    show.rockets = []
+    show.launch()
+    rocket = show.rockets[0]
+    show.sparks = []
+    show._explode(rocket)
+    return show, rocket, show.sparks
+
+
+def test_halloween_frames_are_unchanged_by_the_shape_tables():
+    # Hashes of 400 seeded frames, captured before the shape bursts were routed through _SHAPE_POINTS.
+    import hashlib
+    expected = {32: "c0360c55d0579a6c6d07a2015bd80423", 64: "b975ae621016f973207e068fdfa137dd"}
+    for height, digest in expected.items():
+        show = FireworksShow(64, height, random.Random(5), "halloween")
+        h = hashlib.md5()
+        for _ in range(400):
+            show.step()
+            h.update(repr(sorted(show.frame_pixels().items())).encode())
+        assert h.hexdigest() == digest, height
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_christmas_show_has_a_midnight_sky_red_roofs_and_steady_green_windows(height):
+    show = FireworksShow(64, height, random.Random(8), "christmas")
+    theme = fireworks.THEMES["christmas"]
+    frame = show.frame_pixels()
+    r, g, b = frame[(40, 2)] if height == 64 else frame[(40, 1)]
+    assert b > g > r and b < 80, "midnight blue"
+    colors = {kind: [(show.castle_x + dx, show.castle_y + dy) for dx, dy, k in show.castle_pixels if k == kind]
+              for kind in "RYGW"}
+    assert all(frame[p][0] > 140 and frame[p][1] < 60 for p in colors["R"]), "red roofs"
+    assert all(frame[p] == theme["castle"]["Y"] for p in colors["Y"]) and theme["castle"]["Y"][1] > 200, "green windows"
+    assert all(frame[p] == theme["castle"]["G"] for p in colors["G"]), "gold finials"
+    windows = colors["Y"] + colors["G"]
+    _run(show, 5)
+    later = show.frame_pixels()
+    assert all(later[p] == frame[p] for p in windows), "no flicker"
+    assert not show.moon and not show.bats and not show.bats_on
+    _run(show, 400)
+    allowed = set(theme["palette"]) | {fireworks.ORNAMENT_RGB, fireworks.ORNAMENT_FILL_RGB, fireworks.CAP_RGB,
+                                        fireworks.SHINE_RGB, fireworks.CANE_RED, fireworks.CANE_WHITE}
+    assert {s.color for s in show.sparks} <= allowed, "bursts use only the party's colours"
+
+
+def test_christmas_bursts_are_ornaments_and_candy_canes_among_regular_fireworks():
+    show = FireworksShow(64, 64, random.Random(12), "christmas")
+    shapes = [show._pick_shape() for _ in range(4000)]
+    assert set(shapes) == {"mickey_ornament", "candy_cane", None}
+    assert 240 < shapes.count("mickey_ornament") < 400, "about 8%"
+    assert 200 < shapes.count("candy_cane") < 360, "about 7%"
+
+
+@pytest.mark.parametrize("radius", [5, 9])  # the ornament's size on 64x32 and on 64x64
+def test_mickey_ornament_has_a_red_outline_a_filled_head_a_gold_cap_and_a_shine(radius):
+    points = fireworks._mickey_ornament_points(radius)
+    count = lambda rgb: sum(1 for p in points if p[2] == rgb)
+    assert count(fireworks.ORNAMENT_RGB) > count(fireworks.CAP_RGB) > 0
+    assert count(fireworks.ORNAMENT_FILL_RGB) > count(fireworks.CAP_RGB), "filled in"
+    assert 2 <= count(fireworks.SHINE_RGB) <= 4
+    led = lambda x, y: (round(x * radius), round(y * radius))
+    shine = {led(x, y) for x, y, c in points if c == fireworks.SHINE_RGB}
+    assert all(x < 0 and y < 0 for x, y in shine), "upper left"
+    fill = {led(x, y) for x, y, c in points if c == fireworks.ORNAMENT_FILL_RGB}
+    assert not fill & shine, "a dark gap round the shine"
+    cap = [(x, y) for x, y, c in points if c == fireworks.CAP_RGB]
+    assert all(abs(x) < 0.3 and y < -0.95 for x, y in cap), "on top of the head, between the ears"
+    head = [(x, y) for x in range(-radius, radius + 1) for y in range(-radius, radius + 1)
+            if x * x + y * y <= (radius - 1.5) ** 2 and (x, y) not in shine]
+    assert sum(1 for p in head if p in fill) / len(head) > 0.45
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_ornament_burst_stays_on_the_board_and_clear_of_the_castle(height):
+    show, rocket, sparks = _burst(height, "mickey_ornament")
+    assert rocket.shape == "mickey_ornament" and rocket.color == fireworks.ORNAMENT_RGB
+    reach = fireworks._MICKEY_HALF_WIDTH * show.shape_radius
+    assert reach <= rocket.x <= 64 - reach and rocket.burst_y - fireworks._MICKEY_TOP * show.shape_radius >= 0
+    assert rocket.burst_y + show.shape_radius <= show.castle_y + 3
+    assert len({s.life for s in sparks}) == 1
+
+
+@pytest.mark.parametrize("radius", [5, 9])
+def test_candy_cane_is_striped_red_and_white_with_a_hook_over_the_top(radius):
+    points = fireworks._candy_cane_points(radius)
+    red = sum(1 for p in points if p[2] == fireworks.CANE_RED)
+    white = sum(1 for p in points if p[2] == fireworks.CANE_WHITE)
+    assert red + white == len(points) and min(red, white) / max(red, white) > 0.7, "near-equal stripes"
+    stick_x = fireworks._CANE_X
+    stick = [p for p in points if p[1] >= -1.0 and p[0] < stick_x + 0.3]
+    assert max(p[1] for p in stick) - min(p[1] for p in stick) >= 1.8, "two head-radii tall"
+    width = len({round(p[0] * radius) for p in stick})
+    assert width == (3 if radius >= 6 else 2)
+    hook = [p for p in points if p[1] < -1.0 - 0.5 / radius]
+    assert hook and all(p[0] > stick_x - 0.3 for p in hook)
+    assert max(p[0] for p in hook) > stick_x + 0.6, "curls over to the right"
+    assert any(p[1] > -1.0 and p[0] > stick_x + 0.6 for p in points), "and a little way down"
+    assert len({round(p[1] * radius) for p in stick if p[2] == fireworks.CANE_RED}) > 3, "bands, not a solid colour"
+
+
+@pytest.mark.parametrize("height", [32, 64])
+@pytest.mark.parametrize("seed", range(12))
+def test_candy_cane_burst_stays_on_the_board_and_clear_of_the_castle(height, seed):
+    show, rocket, sparks = _burst(height, "candy_cane", seed)
+    assert rocket.shape == "candy_cane" and not rocket.mickey
+    radius = show.shape_radius
+    cx, cy = rocket.x, rocket.burst_y
+    points = fireworks._shape_points("candy_cane", radius, rocket.tilt)
+    xs = [cx + px * radius for px, _, _ in points]
+    ys = [cy + py * radius for _, py, _ in points]
+    assert min(xs) >= 0 and max(xs) <= 63 and min(ys) >= 0
+    assert max(ys) <= show.castle_y + 3, "the foot clears the castle spire"
+
+
+def test_candy_canes_burst_at_a_random_tilt_either_way_or_sideways_never_upside_down():
+    tilts = {_burst(64, "candy_cane", seed)[1].tilt for seed in range(60)}
+    assert tilts == set(fireworks._SHAPE_TILTS["candy_cane"])
+    assert any(t < 0 for t in tilts) and any(0 < t < 90 for t in tilts) and 90 in tilts
+    assert all(abs(t) <= 90 for t in tilts), "never upside down"
+    # The sparks fly out along the tilted shape: a sideways cane is wider than it is tall.
+    show, rocket, sparks = _burst(64, "candy_cane", 0)
+    rocket.tilt = 90
+    show.sparks = []
+    show._explode(rocket)
+    xs, ys = [s.vx for s in show.sparks], [s.vy for s in show.sparks]
+    assert max(xs) - min(xs) > 1.5 * (max(ys) - min(ys))
+
+
+def test_other_shapes_never_tilt():
+    for shape in ("mickey_ornament", "mickey_pumpkin"):
+        assert _burst(64, shape)[1].tilt == 0
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_snow_stays_on_the_board_falls_and_wraps_to_the_top(height):
+    show = FireworksShow(64, height, random.Random(3), "christmas")
+    assert len(show.snow) == (64 // 4 if height == 64 else 64 // 6)
+    ys = [f[1] for f in show.snow]
+    show.step()
+    assert all(f[1] > y for f, y in zip(show.snow, ys) if y + f[2] < height), "it falls"
+    wrapped = False
+    for _ in range(600):
+        before = [f[1] for f in show.snow]
+        show.step()
+        wrapped = wrapped or any(f[1] < y for f, y in zip(show.snow, before))
+        assert all(0 <= f[0] <= 64 and 0 <= f[1] < height for f in show.snow)
+        assert all(0 <= x < 64 and 0 <= y < height for x, y in show.frame_pixels())
+    assert wrapped, "a flake that passes the bottom starts again at the top"
+    assert any(show.frame_pixels().get((round(f[0] + math.sin(show.frame * 0.05 + f[3])), round(f[1])))
+               == fireworks.SNOW_RGB for f in show.snow if show.castle_y > f[1]), "flakes are drawn"
+
+
+def test_other_themes_have_no_snow_or_sleigh():
+    for theme in (None, "halloween"):
+        show = FireworksShow(64, 64, random.Random(1), theme)
+        _run(show, 50)
+        assert not show.snow and not show.sleighs
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_a_sleigh_crosses_the_sky_and_another_comes_later_never_two_at_once(height):
+    show = FireworksShow(64, height, random.Random(10), "christmas")
+    assert len(show.sleighs) == 1, "one starts on its way across soon after the show starts"
+    x0 = show.sleighs[0][0]
+    seen_at = []
+    for i in range(3000):
+        show.step()
+        assert len(show.sleighs) <= 1
+        if show.sleighs:
+            seen_at.append(i)
+            sleigh = show.sleighs[0]
+            assert sleigh[1] + len(show.sleigh_art) < show.castle_y, "clear of the castle"
+    gaps = [i for i, j in zip(seen_at[1:], seen_at) if i - j > 1]
+    assert gaps, "the first leaves the sky and a new one comes along later"
+    assert x0 < 0, "entering from the left"
+
+
+def test_the_sleigh_flies_and_is_drawn_over_the_sky_facing_the_way_it_goes():
+    show = FireworksShow(64, 64, random.Random(10), "christmas")
+    xs = []
+    for _ in range(80):
+        show.step()
+        xs.append(show.sleighs[0][0])
+    assert xs == sorted(xs) and xs[-1] > xs[0] + 20, "flies across"
+    frame = show.frame_pixels()
+    right = show._sleigh_pixels(show.sleighs[0])
+    assert right and all(frame.get((x, y)) == rgb for x, y, rgb in right
+                         if 0 <= x < 64 and 0 <= y < 64)
+    left_sleigh = [show.sleighs[0][0], show.sleighs[0][1], -0.45]
+    left = show._sleigh_pixels(left_sleigh)
+    base = int(round(left_sleigh[0]))
+    width = len(show.sleigh_art[0])
+    rudolph = lambda pixels, x0: {x - x0 for x, y, c in pixels if c in (fireworks._NOSE_BRIGHT, fireworks._NOSE_DIM)}
+    assert rudolph(right, base) and min(rudolph(right, base)) > width * 0.9, "Rudolph leads"
+    assert rudolph(left, base) == {width - 1 - x for x in rudolph(right, base)}, "mirrored"
+    assert {(x - base, y) for x, y, _ in left} == {(width - 1 - x + base, y) for x, y, _ in right}
+
+
+def test_rudolphs_nose_blinks_slowly():
+    show = FireworksShow(64, 64, random.Random(10), "christmas")
+    noses = set()
+    for _ in range(60):
+        show.step()
+        noses |= {c for _, _, c in show._sleigh_pixels(show.sleighs[0] if show.sleighs else [0, 0, 1])
+                  if c in (fireworks._NOSE_BRIGHT, fireworks._NOSE_DIM)}
+    assert noses == {fireworks._NOSE_BRIGHT, fireworks._NOSE_DIM}
+
+
+def test_sleigh_art_rows_are_all_one_width_and_use_known_colours():
+    for art in (fireworks._SLEIGH_ART_SMALL, fireworks._SLEIGH_ART_BIG):
+        assert len({len(row) for row in art}) == 1
+        assert set("".join(art)) <= set(".N") | set(fireworks._SLEIGH_COLORS)
+
+
+def test_sleigh_team_sizes_the_user_picked():
+    # 64x32: Santa and two reindeer at 1x, big enough to read; 64x64: Santa and Rudolph doubled.
+    small, big = fireworks._SLEIGH_ART_SMALL, fireworks._SLEIGH_ART_BIG
+    assert len(small) == 8 and len(small[0]) > 32
+    assert "".join(small).count("N") == 1 and "".join(small).count("n") == 1, "Rudolph red, the other black"
+    assert big == ["".join(c * 2 for c in row) for row in fireworks._sleigh_team(1) for _ in range(2)]
+    assert "n" not in "".join(big) and len(big[0]) <= 64
+    # Every reindeer's nose sits at the end of its muzzle, in front of its head.
+    for row in small:
+        for nose in "Nn":
+            if nose in row:
+                i = row.index(nose)
+                assert row[i - 2:i] == "BB" and row[i + 1:i + 2] in ("", ".")
+    # Santa faces the way the sleigh flies: his face is in front of the hair at the back of his head.
+    face_row = fireworks._SANTA_SLEIGH[3]
+    assert face_row.index("W") < face_row.index("F")
+
+
+@pytest.mark.parametrize("height", [32, 64])
+def test_every_sleigh_clears_the_castle_spire(height):
+    show = FireworksShow(64, height, random.Random(4), "christmas")
+    for _ in range(4000):
+        show.step()
+        for sleigh in show.sleighs:
+            assert 0 <= sleigh[1] and sleigh[1] + len(show.sleigh_art) < show.castle_y
 
 
 def test_everyday_show_is_unchanged_on_black():

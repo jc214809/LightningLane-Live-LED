@@ -40,6 +40,7 @@ def test_is_special_matches_ticketed_parties_and_extended_evenings():
     (["Stitch’s Masquerade Mashup at Mickey’s Not-So-Scary Halloween Party"], "halloween"),
     (["Space Mountain", "Haunted Mansion"], None),
     (["Meet Santa at Mickey's Very Merry Christmas Party"], "christmas"),
+    (["Minnie's Wonderful Christmastime Fireworks at Mickey's Very Merry Christmas Party"], "christmas"),
     (["Holiday Show at Disney Jollywood Nights"], "jollywood"),
     (["Disney Enchantment at Disney After Hours at Magic Kingdom"], "after_hours"),
     # Magic Kingdom's list today: an After Hours show alongside the Halloween party's.
@@ -106,6 +107,12 @@ def test_fireworks_show_comes_from_tonights_schedule():
     assert fireworks_show({"name": "EPCOT"}, now) == NIGHTLY_FIREWORKS
 
 
+def test_the_christmas_party_has_its_own_fireworks_show():
+    now = et("2026-11-20 21:00")
+    show = fireworks_show(mk(party("2026-11-20"), seasonal="christmas"), now)
+    assert show == ("Minnie's Wonderful Christmastime Fireworks", "christmas")
+
+
 def test_every_fireworks_theme_exists():
     from display.fireworks.fireworks import THEMES
     for key, event in SPECIAL_EVENTS.items():
@@ -146,7 +153,7 @@ def test_extended_evening_is_named_by_the_schedule_not_the_party_season():
 def test_a_party_named_after_hours_colours_the_star():
     now = et("2026-09-27 20:00")
     assert star_rgb(mk(party("2026-09-27"), seasonal="after_hours"), now) == SPECIAL_EVENTS["after_hours"]["star_rgb"]
-    assert fireworks_show(mk(party("2026-09-27"), seasonal="christmas"), now) == NIGHTLY_FIREWORKS
+    assert fireworks_show(mk(party("2026-09-27"), seasonal="jollywood"), now) == NIGHTLY_FIREWORKS
 
 
 def test_the_wine_and_dine_races_are_epcots_landmarks_on_their_race_days_only():
