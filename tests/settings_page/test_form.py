@@ -184,6 +184,7 @@ def test_sound_device_from_the_list_or_typed_and_blank_quiet_hours_mean_none():
 def test_shows_the_board_plays_are_all_offered_and_only_one_can_be_forced():
     names = show_names(CONFIG)
     assert names[0] == "Happily Ever After" and "Disney's Not-So-Spooky Spectacular" in names
+    assert "Minnie's Wonderful Christmastime Fireworks" in names
     form = form_for(CONFIG, show_force_1="on", show_version_1="v1")
     new, problems = apply_form(CONFIG, form)
     assert problems == []
