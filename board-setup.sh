@@ -28,6 +28,7 @@ UNIT_DIR="$ROOT/etc/systemd/system"
 COMITUP_SOURCE_DEB=https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb
 COMITUP_CALLBACK=/usr/local/bin/comitup-callback
 COMITUP_STATE=/run/comitup-state   # utils/wifi_setup.py reads it
+COMITUP_WAIT=/etc/systemd/system/comitup.service.d/wait-for-wifi.conf  # comitup waits for wlan0 at boot
 HOTSPOT_SUFFIX=-setup              # the hotspot is "<hostname>-setup"
 # Tailscale: every board on the tailnet, to reach it (SSH included) from anywhere.
 TAILSCALE_INSTALL=https://tailscale.com/install.sh
@@ -309,6 +310,22 @@ printf '%s %s\n' "\$1" "\$(hostname)$HOTSPOT_SUFFIX" > $COMITUP_STATE.new && mv 
 EOF
 }
 
+comitup_wait_conf() {
+    cat <<EOF
+# Written by board-setup.sh. On a cold boot comitup can start before the Wi-Fi chip's wlan0
+# exists, find no network to try and open the setup hotspot over a network that's in range
+# (PelotonPi, 2026-11-11). So it waits for wlan0, then a few seconds for NetworkManager to see
+# it. With no wlan0 at all, systemd gives up waiting after its device timeout (90 s) and starts
+# comitup anyway.
+[Unit]
+Wants=sys-subsystem-net-devices-wlan0.device
+After=sys-subsystem-net-devices-wlan0.device
+
+[Service]
+ExecStartPre=/bin/sleep 10
+EOF
+}
+
 name_wifi_modes() {
     # comitup only tries saved networks whose mode says infrastructure (comitup/nm.py). A keyfile
     # that leaves the mode to NetworkManager's default (as hand-made ones can) has none, and with
@@ -337,7 +354,10 @@ setup_wifi_hotspot() {
     name_wifi_modes
     # The settings and callback go first, so comitup starts with them (and --force-confold has
     # dpkg keep this comitup.conf over the package's).
-    local changed=false
+    local changed=false waits=false
+    WROTE=false
+    write_file "$ROOT$COMITUP_WAIT" 644 <<<"$(comitup_wait_conf)"
+    waits=$WROTE
     WROTE=false
     write_file "$ROOT/etc/comitup.conf" 644 <<<"$(comitup_conf)"
     write_file "$ROOT$COMITUP_CALLBACK" 755 <<<"$(comitup_callback)"
@@ -352,10 +372,14 @@ setup_wifi_hotspot() {
         # always tried before the hotspot.
         run apt-get install -y -o Dpkg::Options::=--force-confold comitup
         echo "  installed; apt upgrade keeps it current"
-    elif [[ "$changed" == true ]]; then
-        run systemctl restart comitup  # for the new settings or name; it stays on the network it's on
     else
-        echo "  already set up"
+        # The wait only matters at boot, so a new one needs a reload, not a restart.
+        [[ "$waits" == true ]] && run systemctl daemon-reload
+        if [[ "$changed" == true ]]; then
+            run systemctl restart comitup  # for the new settings or name; it stays on the network it's on
+        elif [[ "$waits" == false ]]; then
+            echo "  already set up"
+        fi
     fi
 }
 

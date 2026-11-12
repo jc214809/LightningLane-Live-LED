@@ -363,6 +363,29 @@ def test_every_board_gets_the_wifi_setup_hotspot_set_up_before_comitup_starts(bo
     assert at == sorted(at)
     assert out.index("/etc/comitup.conf (mode 644)") < at[0], "settings first, so comitup starts with them"
     assert "systemctl restart comitup" not in out
+    wait = written(out, f"{board.root}/etc/systemd/system/comitup.service.d/wait-for-wifi.conf")
+    for line in ("[Unit]", "Wants=sys-subsystem-net-devices-wlan0.device",
+                 "After=sys-subsystem-net-devices-wlan0.device", "[Service]", "ExecStartPre=/bin/sleep 10"):
+        assert line in wait.splitlines()
+    assert out.index("wait-for-wifi.conf (mode 644)") < at[0], "in place before comitup's first start"
+
+
+WIFI_SETUP_FILES = ("etc/comitup.conf", "usr/local/bin/comitup-callback",
+                    "etc/systemd/system/comitup.service.d/wait-for-wifi.conf")
+
+
+def wifi_section(out):
+    """The Wi-Fi setup step's output, up to the next step."""
+    rest = out.split("Wi-Fi setup hotspot (comitup)", 1)[1]
+    return rest.split("\n→ ", 1)[0]
+
+
+def keep_wifi_setup_files(board, out, paths=WIFI_SETUP_FILES):
+    """Put the files a run wrote in place, as the real run would have."""
+    for path in paths:
+        target = board.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(written(out, f"{board.root}/{path}") + "\n")
 
 
 def test_the_wifi_setup_callback_writes_the_state_the_app_reads(board, tmp_path):
@@ -382,25 +405,31 @@ def test_the_wifi_setup_callback_writes_the_state_the_app_reads(board, tmp_path)
 
 def test_wifi_setup_already_in_place_is_left_alone(board):
     out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
-    for path in ("etc/comitup.conf", "usr/local/bin/comitup-callback"):
-        target = board.root / path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(written(out, f"{board.root}/{path}") + "\n")
+    keep_wifi_setup_files(board, out)
     comitup_installed(board)
     out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
     assert "already set up" in out
     assert "comitup.conf (mode" not in out and "dpkg" not in out and "systemctl restart comitup" not in out
+    assert "wait-for-wifi.conf (mode" not in out and "daemon-reload" not in wifi_section(out)
 
 
 def test_changed_wifi_setup_settings_or_a_new_hostname_restart_comitup(board):
     comitup_installed(board)
     out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
     assert "+ systemctl restart comitup\n" in out and "dpkg" not in out
-    for path in ("etc/comitup.conf", "usr/local/bin/comitup-callback"):
-        (board.root / path).parent.mkdir(parents=True, exist_ok=True)
-        (board.root / path).write_text(written(out, f"{board.root}/{path}") + "\n")
+    keep_wifi_setup_files(board, out)
     out = board.ok(BOARD_NAME="ZeroPi", APP="lll")  # renamed: the hotspot is named after the board
     assert "+ systemctl restart comitup\n" in out
+
+
+def test_a_board_set_up_before_the_wifi_wait_gets_it_without_a_comitup_restart(board):
+    out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
+    keep_wifi_setup_files(board, out, WIFI_SETUP_FILES[:2])  # comitup.conf and the callback only
+    comitup_installed(board)
+    out = board.ok(BOARD_NAME="raspberrypi", APP="lll")
+    assert "wait-for-wifi.conf (mode 644)" in out
+    assert "+ systemctl daemon-reload\n" in wifi_section(out)
+    assert "systemctl restart comitup" not in out and "already set up" not in out and "dpkg" not in out
 
 
 def test_a_saved_wifi_with_no_mode_gets_one_so_comitup_doesnt_hotspot_over_it(board):
