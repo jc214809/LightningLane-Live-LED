@@ -21,7 +21,7 @@ registered in `ACTORS` and named in `happily-ever-after.v2.json`:
 | I See the Light | Rapunzel and Flynn's boat | Drifts in among the lanterns; she lets her own go |
 | Embers | Mufasa | Traced from the user's clouds still, top right, his outline all mane; lip-synced, fading as he says "Remember who you are... Remember" |
 
-Lip sync: `tools/lip_sync.py` (demucs splits the voice, Whisper only to check words; see CLAUDE.md).
+Lip sync: `tools/lip_sync.py` (demucs splits the voice, Whisper only to check words; see docs/dev/SHOWS.md).
 Genie's mouth is muted for the backup singers in Friend Like Me (542.6-545 and the wa-wa-wa's at
 553.7-559.7, per the lyric sheet). Still open: whether to remake Genie's and Olaf's tracks with the cleaner `htdemucs_ft` split, the ghost level (25%), and the
 rest of batches 2 and 4. Each character's size and motion are settled with the user before it's built
@@ -161,7 +161,7 @@ references, and `Flying Dumbo.jpg` gives Dumbo his missing back half. Most usefu
    `utils/config.py`. `load_score(name, version)` applies `shows/<name>.v2.json` when it's v2 and
    exists. If that file is missing or broken, it logs and plays V1, the same rule as V1's file today.
    `disney.py:play_fireworks_show_if_due` passes the setting. Add it to `config.json-example` and
-   CLAUDE.md's Configuration.
+   docs/dev/CONFIG.md.
 2. **V2 as an overlay, not a copy.** `happily-ever-after.v2.json` holds only per-scene additions,
    keyed by scene title: `{"overlays": {"Friend Like Me (Genie)": {"stage": "ghost", "actors":
    ["genie_loops"], "rate": 0.5}}}`. `score.py` merges it onto V1's scenes, so any re-timing of V1

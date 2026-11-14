@@ -11,3 +11,7 @@
 ## Test plan
 <!-- What you ran, and what's left to check on a board. -->
 
+
+## Docs
+<!-- Which docs/dev notes (see CLAUDE.md's Topic notes), README sections or screenshots this updated,
+     or "None needed" and why. A change to an area updates that area's note in the same PR. -->
