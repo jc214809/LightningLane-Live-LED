@@ -85,7 +85,8 @@ class Board:
         monkeypatch.setattr(self.settings, "restart_app", lambda: self.restarts.append(1) or "restarted")
         self.httpd = make_server(self.settings, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
-        threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
+        # The default 0.5 s poll made every shutdown() (each test's teardown) wait half a second.
+        threading.Thread(target=self.httpd.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True).start()
         self.jar = CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar), NoRedirect)
 
