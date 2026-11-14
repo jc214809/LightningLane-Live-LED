@@ -50,7 +50,7 @@ Rules that bite everywhere:
 ## Testing
 
 - `tests/stubs/conftest.py` intercepts `config.json` reads with a dummy config and stubs the `driver` module, so tests run without hardware. Stubs for `aiohttp`, `requests` and `pyowm` live in `tests/stubs/` and mirror the real libraries' names and exceptions; check real-library behaviour separately when upgrading one.
-- CI (`coverage.yml`) runs `pytest -n auto`: 3.13 without coverage, 3.11 with it, uploaded to Codecov (`codecov.yml`: fixed 90% project and patch targets; its checks also gate the updater's Beta channel).
+- CI (`coverage.yml`) runs `pytest -n auto`: 3.11 without coverage, 3.13 with it (`COVERAGE_CORE=sysmon`: 3.11's tracer made the run four times slower), uploaded to Codecov (`codecov.yml`: fixed 90% project and patch targets; its checks also gate the updater's Beta channel).
 - App code logs through `utils/debug` (logger `disney-lll`), which pytest's `caplog` doesn't see: check a warning with `monkeypatch.setattr(module.debug, "warning", warnings.append)`. `tools/` scripts use plain `logging`, so `caplog` works there.
 - `board-setup.sh` must run under macOS's bash 3.2 (its tests do): no associative arrays, `mapfile` or `${x,,}`.
 

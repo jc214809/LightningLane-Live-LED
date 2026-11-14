@@ -34,10 +34,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      # In parallel, one worker per CPU (pytest-xdist). Coverage only on 3.11, the one uploaded:
-      # measuring it slows the run.
+      # In parallel, one worker per CPU (pytest-xdist). Coverage only on 3.13, the one uploaded: there
+      # coverage.py measures through sys.monitoring (3.12+, COVERAGE_CORE=sysmon), which barely slows the
+      # pixel loops. 3.11's line tracer took the run from about 1.5 to 5.5 minutes. Both run every test.
       - name: Run tests with coverage
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.13'
+        env:
+          COVERAGE_CORE: sysmon
         run: |
           pytest -n auto \
             --cov=. \
@@ -45,11 +48,11 @@ jobs:
             --cov-report=term-missing
 
       - name: Run tests
-        if: matrix.python-version != '3.11'
+        if: matrix.python-version != '3.13'
         run: pytest -n auto
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.13'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}   # 🔑 add this line
