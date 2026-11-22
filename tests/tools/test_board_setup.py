@@ -118,7 +118,7 @@ def test_lll_gets_its_settings_page_as_its_own_service_from_the_checkout(board):
     assert "disable --now lll-settings.service" not in out
 
 
-def written(out, path):
+def written_with_mode(out, path):
     """A file other than a unit that a dry run would write, from its printed copy."""
     head = f"{path} (mode 755):\n"
     assert head in out, out
@@ -141,7 +141,7 @@ def test_lll_gets_the_updaters_boot_recovery_and_lll_rollback(board):
     assert "Before=" not in recover, "rolling back restarts the app: ordered before it, that would deadlock"
     assert "+ systemctl enable lll-update-recover.service" in out
     assert "restart lll-update-recover" not in out and "start lll-update-recover" not in out
-    command = written(out, f"{board.root}/usr/local/bin/lll-rollback")
+    command = written_with_mode(out, f"{board.root}/usr/local/bin/lll-rollback")
     assert command.startswith("#!/bin/sh\n")
     assert f'cd "{checkout}" && exec "{checkout}/venv/bin/python3" -m self_update rollback "$@"' in command
 
@@ -156,7 +156,7 @@ def test_lll_rollback_runs_the_rollback_with_its_arguments(board, tmp_path):
     board.checkout("LightningLane-Live-LED", {"self_update/__init__.py": ""})
     out = board.ok(BOARD_NAME="Disneypi", APP="lll")
     script = tmp_path / "lll-rollback"
-    script.write_text(written(out, f"{board.root}/usr/local/bin/lll-rollback")
+    script.write_text(written_with_mode(out, f"{board.root}/usr/local/bin/lll-rollback")
                       .replace("/usr/bin/python3", "echo"))  # no venv in the fake checkout: the system python
     result = subprocess.run(["sh", str(script), "--extra"], capture_output=True, text=True)
     assert result.stdout == "-m self_update rollback --extra\n", result.stderr
@@ -330,7 +330,7 @@ def comitup_installed(board):
     comitup.chmod(0o755)
 
 
-def written(out, path):  # noqa: F811  possible bug: shadows the helper at line 121 for every test, see report
+def written_by_step(out, path):
     """The file a dry run would write at path (under the fake root), from its printed copy."""
     head = f"+ write {path} ("
     assert head in out, out
@@ -346,11 +346,11 @@ def written(out, path):  # noqa: F811  possible bug: shadows the helper at line 
 def test_every_board_gets_the_wifi_setup_hotspot_set_up_before_comitup_starts(board, app):
     out = board.ok(BOARD_NAME="ZeroPi", APP=app)
     assert "Wi-Fi setup   an open ZeroPi-setup hotspot" in out
-    conf = written(out, f"{board.root}/etc/comitup.conf")
+    conf = written_by_step(out, f"{board.root}/etc/comitup.conf")
     assert "ap_name: <hostname>-setup" in conf.splitlines()
     assert "external_callback: /usr/local/bin/comitup-callback" in conf.splitlines()
     assert "ap_password" not in conf.replace("(no ap_password)", "")  # open, as asked
-    callback = written(out, f"{board.root}/usr/local/bin/comitup-callback")
+    callback = written_by_step(out, f"{board.root}/usr/local/bin/comitup-callback")
     assert callback.startswith("#!/bin/sh\n")
     assert ("printf '%s %s\\n' \"$1\" \"$(hostname)-setup\" > /run/comitup-state.new && "
             "mv /run/comitup-state.new /run/comitup-state") in callback
@@ -363,7 +363,7 @@ def test_every_board_gets_the_wifi_setup_hotspot_set_up_before_comitup_starts(bo
     assert at == sorted(at)
     assert out.index("/etc/comitup.conf (mode 644)") < at[0], "settings first, so comitup starts with them"
     assert "systemctl restart comitup" not in out
-    wait = written(out, f"{board.root}/etc/systemd/system/comitup.service.d/wait-for-wifi.conf")
+    wait = written_by_step(out, f"{board.root}/etc/systemd/system/comitup.service.d/wait-for-wifi.conf")
     for line in ("[Unit]", "Wants=sys-subsystem-net-devices-wlan0.device",
                  "After=sys-subsystem-net-devices-wlan0.device", "[Service]", "ExecStartPre=/bin/sleep 10"):
         assert line in wait.splitlines()
@@ -385,7 +385,7 @@ def keep_wifi_setup_files(board, out, paths=WIFI_SETUP_FILES):
     for path in paths:
         target = board.root / path
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(written(out, f"{board.root}/{path}") + "\n")
+        target.write_text(written_by_step(out, f"{board.root}/{path}") + "\n")
 
 
 def test_the_wifi_setup_callback_writes_the_state_the_app_reads(board, tmp_path):
@@ -393,7 +393,7 @@ def test_the_wifi_setup_callback_writes_the_state_the_app_reads(board, tmp_path)
     out = board.ok(BOARD_NAME="ZeroPi", APP="lll")
     state = tmp_path / "comitup-state"
     script = tmp_path / "callback"
-    script.write_text(written(out, f"{board.root}/usr/local/bin/comitup-callback").replace("/run/comitup-state", str(state)))
+    script.write_text(written_by_step(out, f"{board.root}/usr/local/bin/comitup-callback").replace("/run/comitup-state", str(state)))
     script.chmod(0o755)
     board.command("hostname", "echo ZeroPi")
     env = dict(os.environ, PATH=f"{board.bin}{os.pathsep}{os.environ['PATH']}")
