@@ -140,9 +140,10 @@ turns the rules into a CI check.
 ### 6. Modules by feature, small enough to hold in your head
 
 A module groups what changes together. Past ~600 lines it usually holds several features:
-`show_effects.py` (1,020 lines, ~90 classes and functions) is every scene look of every
-show. Split by feature into a package, and keep old imports working by re-exporting from the
-package's `__init__.py`, so callers and tests don't change in the same PR:
+`show_effects.py` was 1,020 lines, every scene look of every show; it's now the
+`display/fireworks/effects/` package, one module per kind of look. Split by feature into a
+package, and keep old imports working by re-exporting (here `show_effects.py` became a
+seven-statement shim), so callers and tests don't change in the same PR:
 
 ```python
 # display/fireworks/effects/__init__.py
