@@ -1,6 +1,9 @@
 # Code health: plan
 
-Status: phase 1 merged (#226), 2c merged (#227), 2a merged (#228) (written 2026-11-22). Next: 2b + 2d.
+Status (2026-11-22): phase 1 (#226) and phase 2 done: 2a #228, 2b #229, 2c #227, 2d #230, 2e #232, 2f #233,
+2g #231, 2h #234, 2i in two parts (A #236; B #237, waiting for its Disneypi run), plus #235 (frame hashes
+cover random stories). No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; the 16 `PLR0913` and
+phase 3 are Joel's call. `ALLOWED_LONG` is empty: no source file is over 600 lines.
 
 Goal: raise code quality and make the structure easier to work in, without changing what
 any board shows or does. Tests check behaviour today (pytest, 90% coverage); nothing checks
@@ -283,9 +286,10 @@ Paste this block into every brief.
   the ones for each function you fix.
 - Before reporting done, all of these pass, and you paste their output:
   ```sh
-  pytest -n auto
   uv venv --python 3.11 /tmp/venv311 && uv pip install --python /tmp/venv311 -r requirements-dev.txt \
     && /tmp/venv311/bin/pytest -n auto              # the boards' Python
+  uv venv --python 3.13 /tmp/venv313 && uv pip install --python /tmp/venv313 -r requirements-dev.txt \
+    && /tmp/venv313/bin/pytest -n auto              # CI's other Python: argparse's messages differ from 3.12
   pytest -n auto --cov=. --cov-report=term-missing  # total stays >= 90%; new code covered
   ruff check .                                      # once phase 1 has merged
   lint-imports                                      # once phase 1 has merged
@@ -300,11 +304,19 @@ Paste this block into every brief.
   # ...your change...
   python3 tools/frame_hashes.py --out /tmp/after.json --compare /tmp/before.json
   ```
-  The compare must report 0 differences. Anything under `settings_page/`: the HTML snapshot
+  The compare must report 0 differences. Run before and after with the same interpreter (hashes
+  depend on library versions). Hashes prove only what the run reaches: measure it on the original
+  code (`coverage run tools/frame_hashes.py`, then `coverage report -m --include=<your files>`), and
+  pin any line of the functions you change that it misses (a random choice, a size-only path) with a
+  test committed first. Anything under `settings_page/`: the HTML snapshot
   and form tests pass unchanged. Elsewhere: the brief names the pinning test; write it
   *first*, commit it on its own, and it must pass unchanged after the refactor.
-- Update in the same branch: the area's topic note, the `CLAUDE.md` file map if a file moves
-  or appears (keep `CLAUDE.md` under 16,000 characters), and this plan's status line.
+- Update in the same branch: the area's topic note and the `CLAUDE.md` file map if a file moves
+  or appears (keep `CLAUDE.md` under 16,000 characters). The lead owns this plan's status line:
+  parallel branches editing it conflict.
+- A dispatch table must not change how bad input is handled: `TABLE.get(value)` raises on an
+  unhashable value that an `if value == "x"` chain ignored; guard with `isinstance` (2i).
+- Install both venvs fully and check (`python -c "import xdist"`) before trusting a run.
 - Your report: the branch, one paragraph on what changed, files changed, the check output,
   the no-change proof output, the `noqa` count before/after per rule, anything you noticed but
   didn't change, and a draft PR description (`.github/pull_request_template.md`, with
