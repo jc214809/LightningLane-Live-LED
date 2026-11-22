@@ -18,6 +18,10 @@ Read before changing `disney.py`'s loop or `display/` outside characters (`docs/
 - **Network badge:** `present()` stamps a red "!" (`display/network.py`) while `updater/shared.py:network_issues()` is set, driven by `note_network_result()`. Tests reset the flag in the root `conftest.py`.
 - **Sound badges:** `present()` also stamps one bottom-left (`display/sound_badges.py`) while sound is enabled and `utils/sound.py:current_problem()` finds one, a 9x9 red square like the network one: a white note and X when a show has no clip in `sounds/`, a white speaker and X when there's no player or no ALSA card for `sound.device` (`/proc/asound/cards`; that one wins). Always on, quiet hours too, so it's fixed before the show. `main()` calls `watch()` with every `known_shows()`; the check reruns at most once a minute and logs only changes.
 
+## Proving a display change changed nothing
+
+`python3 tools/frame_hashes.py --out /tmp/before.json` on the base branch, then `--out /tmp/after.json --compare /tmp/before.json` after your change: it renders every landmark, transition, fireworks theme, synced show (V1 and V2, every frame) and the park-info, ride and countdown screens at 64x32 and 64x64, deterministically, and must report `0 differences` (`--only <substring>` runs a subset; about 80 s in all). A new landmark, transition, theme or show is picked up by itself; a new kind of screen needs a fixture in the tool. Details: `docs/dev/CODE-QUALITY.md`.
+
 ## Display rules
 
 The rules every screen follows (cheap, side-effect-free draws; one canvas via `frame_canvas()`/`present()`) stay in CLAUDE.md.

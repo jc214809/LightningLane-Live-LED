@@ -51,6 +51,7 @@ Rules that bite everywhere:
 
 - `tests/stubs/conftest.py` intercepts `config.json` reads with a dummy config and stubs the `driver` module, so tests run without hardware. Stubs for `aiohttp`, `requests` and `pyowm` live in `tests/stubs/` and mirror the real libraries' names and exceptions; check real-library behaviour separately when upgrading one.
 - CI (`coverage.yml`) runs `pytest -n auto`: 3.11 and 3.13 without coverage, 3.14 with it (`COVERAGE_CORE=sysmon` measures branches only from 3.14; the older tracer made the run four times slower), uploaded to Codecov (`codecov.yml`: fixed 90% project and patch targets; its checks also gate the updater's Beta channel).
+- Before pushing: `ruff check . && lint-imports` (CI's `lint` job; rules, the 600-line cap and `tools/frame_hashes.py`, which proves a display refactor changed nothing, are in `docs/dev/CODE-QUALITY.md`).
 - App code logs through `utils/debug` (logger `disney-lll`), which pytest's `caplog` doesn't see: check a warning with `monkeypatch.setattr(module.debug, "warning", warnings.append)`. `tools/` scripts use plain `logging`, so `caplog` works there.
 - `board-setup.sh` must run under macOS's bash 3.2 (its tests do): no associative arrays, `mapfile` or `${x,,}`.
 
@@ -75,6 +76,7 @@ Read the note before changing its area; update it in the same PR.
 | Releases, auto-tagging, `self_update/`, health, rollback | `docs/dev/UPDATER.md` |
 | `board-setup.sh`, `LLL-install.sh`, comitup Wi-Fi, Tailscale, driver and Pi models, pinned packages | `docs/dev/BOARD-SETUP.md` (wiring: `docs/hardware/`) |
 | Every `config.json` key | `docs/dev/CONFIG.md` |
+| Lint, complexity `noqa` ratchet, 600-line cap, import layers, frame hashes, clean-code rules | `docs/dev/CODE-QUALITY.md` (plan: `docs/plans/CODE-HEALTH-PLAN.md`) |
 
 ## File map
 
@@ -87,7 +89,7 @@ Read the note before changing its area; update it in the same PR.
 - `utils/`: config, special events, trips, sound, surprises, heartbeat, brightness, debug logging
 - `settings_page/`: the board's settings page (its own service, port 8080)
 - `self_update/`: the board updater
-- `tools/`: builders, previews, show tools, reference measuring, release tagging
+- `tools/`: builders, previews, show tools, reference measuring, release tagging, `frame_hashes.py` (display no-change proof)
 - `tests/`: mirrors the packages; `tests/stubs/` fakes hardware and HTTP libraries
 - `docs/`: `dev/` topic notes, `references/`, `shows/`, `hardware/`, `plans/`
 - `board-setup.sh`, `LLL-install.sh`: set up and install a board

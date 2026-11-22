@@ -388,6 +388,8 @@ suite from the repository root directory with:
 pytest
 ```
 
+Lint and import-layer checks (`ruff check . && lint-imports`) run in CI; `pip install pre-commit && pre-commit install` runs ruff on every commit.
+
 ## Licensing
 This project as of v0.1.0 uses the GNU Public License. If you intend to sell these, the code must remain open source.
 
