@@ -193,21 +193,38 @@ class JollywoodTowerLandmark(TowerOfTerrorLandmark):
     def gift_left(self):
         return (self.STRIP_L + self.STRIP_R + 1) // 2 - 2
 
-    def animate(self, out, t):  # noqa: C901, PLR0912
+    def animate(self, out, t):
         super().animate(out, t)
+        self._sweep_beams(out, t)
+        self._glow_windows(out)
+        self._chase_bulbs(out, t)
+        out.update(BOW)
+        if self.DOORS_AT + 0.12 <= t < self.DROP_AT:  # the gift waits behind the opening doors
+            self.draw_car(out, self.gift_left(), self.doors[1] + 1)
+        self._draw_signs(out, t)
+        self._draw_wreaths(out, t)
+        self._burst(out, t)
+        self._snow(out, t)
+
+    def _sweep_beams(self, out, t):
         for cells, swing, phase in self.beams:
             self._beam(out, cells, swing * (0.3 + 0.3 * math.sin(t * 1.2 + phase)))
+
+    def _glow_windows(self, out):
+        """The windows the tower lit glow red and green instead."""
         for p, rgb in self.lit_windows.items():
             if out.get(p) == self.COLORS["win_lit"]:
                 out[p] = rgb
+
+    def _chase_bulbs(self, out, t):
         chase = int(t * CHASE_HZ)
         for i, p in enumerate(self.outline):
             self.put(out, *p, BULBS[(i + chase) % 4])
         for i, p in enumerate(self.wing_outline):
             self.put(out, *p, BULBS[(i - chase) % 4])
-        out.update(BOW)
-        if self.DOORS_AT + 0.12 <= t < self.DROP_AT:  # the gift waits behind the opening doors
-            self.draw_car(out, self.gift_left(), self.doors[1] + 1)
+
+    def _draw_signs(self, out, t):
+        """The JOLLYWOOD neon, then tonight's hours in the clouds."""
         out.update(self.sign_back)
         lit = neon_on(t - self.sign_delay, SIGN_ON_AT)
         for p in self.sign:
@@ -218,12 +235,15 @@ class JollywoodTowerLandmark(TowerOfTerrorLandmark):
             lit = neon_on(t - self.sign_delay, at)
             for p in pixels:
                 self.put(out, *p, HOURS_RGB if lit else HOURS_OFF_RGB)
+
+    def _draw_wreaths(self, out, t):
         for still, dots, bow in self.wreaths:
             out.update(still)
             for x, y, k in dots:
                 self.put(out, x, y, BERRY_RGB if k is None else BULBS[(k + int(t * 4)) % 4])
             out.update(bow)
-        self._burst(out, t)
+
+    def _snow(self, out, t):
         for x, y, speed, phase, bright in self.flakes:
             self.put(out, int((x + 1.2 * math.sin(t * 1.5 + phase)) % self.width), int((y + t * speed) % self.height),
                      SNOW_BRIGHT_RGB if bright else SNOW_RGB)
