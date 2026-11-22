@@ -152,13 +152,69 @@ def download_recording(url, out):
                     "--merge-output-format", "mp4", "-o", out, url], check=True)
 
 
-def main(argv=None):  # noqa: C901, PLR0912, PLR0915
+def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--show", default="happily-ever-after", help="the show's clip name (its score's file name)")
     parser.add_argument("--height", type=int, choices=HEIGHTS, action="append", help="one board (default both)")
     parser.add_argument("--recording", action="store_true", help="also download the real show's recording")
     parser.add_argument("--version", default="v1", help="the show's version: v1, or a later one's overlay file")
-    args = parser.parse_args(argv)
+    return parser.parse_args(argv)
+
+
+def version_score(show, version, raw, tag):
+    """The score of a later version, built here rather than through load_score, which plays V1 on a bad
+    overlay: None, after saying what's wrong, when it can't be used."""
+    try:
+        with open(os.path.join(SHOWS_DIR, f"{tag}.json")) as f:
+            score = parse_score(show, raw, json.load(f))
+        lips_path = os.path.join(SHOWS_DIR, f"{tag}.lips.json")
+        if os.path.exists(lips_path):
+            with open(lips_path) as f:
+                score = score._replace(lips=parse_lips(json.load(f)))
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+        logger.error("can't use %s's %s: %r", show, version, e)
+        return None
+    return score
+
+
+def render_boards(score, tag, heights, audio):
+    """Render each board to OUT_DIR as {"64x32": file name}, or None, after saying why, if one fails."""
+    boards = {}
+    for height in heights:
+        name = f"{tag}-{WIDTH}x{height}.mp4"
+        logger.info("rendering %s (%.0f s of show)...", name, score.end)
+        try:
+            render(score, height, os.path.join(OUT_DIR, name), audio)
+        except (OSError, RuntimeError) as e:
+            logger.error("%s", e)
+            return None
+        boards[f"{WIDTH}x{height}"] = name
+    return boards
+
+
+def add_earlier_boards(boards, tag):
+    """Keep boards rendered on an earlier run listed for the page."""
+    for height in HEIGHTS:
+        name = f"{tag}-{WIDTH}x{height}.mp4"
+        if f"{WIDTH}x{height}" not in boards and os.path.exists(os.path.join(OUT_DIR, name)):
+            boards[f"{WIDTH}x{height}"] = name
+
+
+def fetch_recording(raw, path):
+    """Download the score's recording to path; False, after saying why, when it can't."""
+    if not raw.get("recording"):
+        logger.error("the score has no \"recording\" entry to download")
+        return False
+    try:
+        download_recording(raw["recording"]["url"], path)
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as e:
+        logger.error("couldn't download the recording: %s", e)
+        return False
+    return True
+
+
+def main(argv=None):
+    args = parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     if shutil.which("ffmpeg") is None:
@@ -172,17 +228,9 @@ def main(argv=None):  # noqa: C901, PLR0912, PLR0915
         raw = json.load(f)
     tag = args.show
     if args.version != "v1":
-        # Parsed here rather than through load_score, which plays V1 on a bad overlay: say what's wrong.
         tag = f"{args.show}.{args.version}"
-        try:
-            with open(os.path.join(SHOWS_DIR, f"{tag}.json")) as f:
-                score = parse_score(args.show, raw, json.load(f))
-            lips_path = os.path.join(SHOWS_DIR, f"{tag}.lips.json")
-            if os.path.exists(lips_path):
-                with open(lips_path) as f:
-                    score = score._replace(lips=parse_lips(json.load(f)))
-        except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
-            logger.error("can't use %s's %s: %r", args.show, args.version, e)
+        score = version_score(args.show, args.version, raw, tag)
+        if score is None:
             return 1
     os.makedirs(OUT_DIR, exist_ok=True)
     audio = os.path.join(SOUNDS_DIR, f"{args.show}.wav")
@@ -190,32 +238,14 @@ def main(argv=None):  # noqa: C901, PLR0912, PLR0915
         logger.warning("no %s (gitignored; copy it from a board): the videos will be silent", audio)
         audio = None
 
-    boards = {}
-    for height in args.height or HEIGHTS:
-        name = f"{tag}-{WIDTH}x{height}.mp4"
-        logger.info("rendering %s (%.0f s of show)...", name, score.end)
-        try:
-            render(score, height, os.path.join(OUT_DIR, name), audio)
-        except (OSError, RuntimeError) as e:
-            logger.error("%s", e)
-            return 1
-        boards[f"{WIDTH}x{height}"] = name
-    # Keep boards rendered on an earlier run listed for the page.
-    for height in HEIGHTS:
-        name = f"{tag}-{WIDTH}x{height}.mp4"
-        if f"{WIDTH}x{height}" not in boards and os.path.exists(os.path.join(OUT_DIR, name)):
-            boards[f"{WIDTH}x{height}"] = name
+    boards = render_boards(score, tag, args.height or HEIGHTS, audio)
+    if boards is None:
+        return 1
+    add_earlier_boards(boards, tag)
 
     rec_name = f"{args.show}-recording.mp4"
-    if args.recording:
-        if not raw.get("recording"):
-            logger.error("the score has no \"recording\" entry to download")
-            return 1
-        try:
-            download_recording(raw["recording"]["url"], os.path.join(OUT_DIR, rec_name))
-        except (OSError, RuntimeError, subprocess.CalledProcessError) as e:
-            logger.error("couldn't download the recording: %s", e)
-            return 1
+    if args.recording and not fetch_recording(raw, os.path.join(OUT_DIR, rec_name)):
+        return 1
     have_rec = os.path.exists(os.path.join(OUT_DIR, rec_name))
     write_sync_js(sync_data(score, raw, boards, rec_name if have_rec else None, args.version),
                   os.path.join(OUT_DIR, f"{tag}.js"))
