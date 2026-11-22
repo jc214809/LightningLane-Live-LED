@@ -516,7 +516,7 @@ Each is its own PR, decided one at a time:
   rewrites 323 files at 88 columns, 315 at 100 and 299 at 120 (double quotes: 10,974 lines added
   against single quotes' 38,940 at 88). Chosen: double quotes, format at 120, `E501` at 140 (11 lines
   over after formatting, all rewrapped or a string-level `noqa`). `UP031` stays off (a hand rewrite can
-  change output); `disney.py`'s old-Python check keeps a `noqa: UP036` because a pin test covers it.
+  change output); `disney.py`'s old-Python check kept a `noqa: UP036` because a pin test covered it; the check (dead on 3.11) and its pin test were removed afterwards.
   Five files crossed 600 lines from formatting alone and are allowlisted at their new length.
   Frame hashes: 0 differences.
 - **Type checking** (mypy or pyright) on `parks/` and `api/` first, the pure layers.

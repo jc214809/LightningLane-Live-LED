@@ -1,3 +1,4 @@
+import sys
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
@@ -1026,7 +1027,7 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
         calls.append(("matrix", options))
         raise _Built  # stop main() before its endless loop
 
-    monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
+    monkeypatch.setattr(sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}, "pi_model": "pi4"})
     picked = []
     monkeypatch.setattr(
@@ -1073,7 +1074,7 @@ def test_main_watches_the_full_scored_shows_for_the_sound_badges(monkeypatch, sh
         watched.append((settings, shows))
         raise _Watched  # stop main() before the matrix and its endless loop
 
-    monkeypatch.setattr(disney.sys, "argv", ["disney.py"])
+    monkeypatch.setattr(sys, "argv", ["disney.py"])
     monkeypatch.setattr(disney, "load_config", lambda: {"sound": {"device": "plughw:1,0"}, "shows": shows})
     monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
     monkeypatch.setattr(disney, "watch_sound", watch)
@@ -1124,7 +1125,7 @@ def test_main_shows_the_setup_screen_before_it_needs_the_network(monkeypatch):
         pass
 
     calls = []
-    monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
+    monkeypatch.setattr(sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {})
     monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)

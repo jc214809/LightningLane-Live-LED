@@ -54,7 +54,7 @@ class _Boot:
     """Stands in for everything main() calls. Each method below is installed over the disney function of
     the same name and records what it was given into self.log. opts: config, emulated, hardware_failed,
     surprises, schedule, parks (what resolve returns), parks_data (what start_live_updaters fills in),
-    stop_at (the render_logo call that raises _Stop), version_info, stop_in (the name of a call that raises
+    stop_at (the render_logo call that raises _Stop), stop_in (the name of a call that raises
     _Stop after recording itself)."""
 
     FAKES = (
@@ -209,8 +209,6 @@ class _Boot:
         # main assigns these module globals; setting them here makes monkeypatch put them back.
         for name in ("surprises", "sound", "show_settings_by_clip"):
             monkeypatch.setattr(disney, name, getattr(disney, name))
-        if "version_info" in self.opts:
-            monkeypatch.setattr(disney.sys, "version_info", self.opts["version_info"])
 
 
 @pytest.fixture
@@ -311,13 +309,6 @@ def test_pin_a_brightness_schedule_is_used_then_logged(boot):
         ("brightness.use", SCHEDULE),
         ("info", "Brightness schedule: day from 07:00, night from 19:00."),
     ]
-
-
-def test_pin_an_old_python_exits_before_the_driver_and_matrix(boot):
-    log, matrix, raised, _ = boot(config=CONFIG, version_info=(3, 4))
-    assert isinstance(raised, SystemExit) and raised.code == 1
-    assert log[-2:] == [("watch_sound", disney.SoundSettings(), []), ("error", "Please run with python3")]
-    assert "clear" not in log and not any(e[0] == "RGBMatrix" for e in log if isinstance(e, tuple))
 
 
 def test_pin_no_parks_ends_main_before_any_thread_starts(boot):
