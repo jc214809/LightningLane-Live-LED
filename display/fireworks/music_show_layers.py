@@ -38,13 +38,15 @@ def _plotter(out, width, height):
     return put
 
 
-class _CastleTints:
-    """A lit colour and a dimmed one depend only on the colour going in (and this frame's flash and
-    stage level), so each is worked out once a frame, not once an LED: the castle is most of a
-    frame's LEDs."""
+class _CastleFrame:
+    """This frame's castle: its colours, stage level (`shown`), stained-glass blend, whether it
+    flickers, and how far through a wipe it is (None when not wiping). A lit colour and a dimmed one
+    depend only on the colour going in (and this frame's flash and stage level), so each is worked
+    out once a frame, not once an LED: the castle is most of a frame's LEDs."""
 
-    def __init__(self, flash, shown):
+    def __init__(self, flash, shown, colours, glass, flicker, wipe):
         self.flash, self.shown = flash, shown
+        self.colours, self.glass, self.flicker, self.wipe = colours, glass, flicker, wipe
         self._lit, self._dimmed = {}, {}
 
     def glowing(self, base):
@@ -133,13 +135,14 @@ class FrameLayers:
         wipe = (self.t - self.castle_change_t) / WIPE_S if self.castle_wipe else 1.0
         wiping = 0 <= wipe < 1
         glass = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S) if self.castle_look == "stained_glass" else 0
-        tints = _CastleTints(self.flash, shown)
+        castle = _CastleFrame(self.flash, shown, colours, glass, flicker, wipe if wiping else None)
         if shown > 0.01 and not flicker and not wiping:
-            self._draw_kept_castle(out, colours, shown, glass, tints)
+            self._draw_kept_castle(out, castle)
         else:
-            self._draw_live_castle(put, out, colours, shown, glass, tints, flicker, wipe if wiping else None)
+            self._draw_live_castle(put, out, castle)
 
-    def _draw_kept_castle(self, out, colours, shown, glass, tints):
+    def _draw_kept_castle(self, out, castle):
+        colours, shown, glass, tints = castle.colours, castle.shown, castle.glass, castle
         # Without the fire's flicker every LED of a kind (or of a stained-glass tile) is one colour,
         # and from one frame to the next usually the same one: the finished castle is kept and
         # reused while its colours hold.
@@ -174,9 +177,10 @@ class FrameLayers:
                 layer[(x, y)] = finals[kind]
         return layer
 
-    def _draw_live_castle(self, put, out, colours, shown, glass, tints, flicker, wipe):  # noqa: PLR0913
-        """The castle worked out LED by LED: while it flickers or wipes, no two frames match. `wipe` is
-        how far through a wipe it is, or None."""
+    def _draw_live_castle(self, put, out, castle):
+        """The castle worked out LED by LED: while it flickers or wipes, no two frames match."""
+        colours, shown, glass, tints = castle.colours, castle.shown, castle.glass, castle
+        flicker, wipe = castle.flicker, castle.wipe
         rows = {}  # a wipe's colours for each row of the castle, worked out once a frame
         for dx, dy, kind in ((self.castle_shape or self.castle_pixels) if shown > 0.01 else ()):
             x, y = self.castle_x + dx, self.castle_y + dy
