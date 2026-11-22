@@ -25,7 +25,7 @@ Read before changing `api/`, `parks/`, `updater/`, `utils/special_events.py` or 
 
 ### Preview protocol (`websocket.protocol: "preview"`)
 
-In `updater/ws_preview.py`. `_PreviewFeed.handle()` takes one frame and returns the replies as `(delay_s, frame)`; `_preview_ws_loop` does the I/O. Spec and live-probe results: themeparks.wiki/api/websockets.
+In `updater/ws_preview.py`. `_PreviewFeed.handle()` takes one frame, dispatches it by type through `_FRAME_HANDLERS`, and returns the replies as `(delay_s, frame)`; `_preview_ws_loop` does the I/O (`_read_frames`, `_handle_text`). Spec and live-probe results: themeparks.wiki/api/websockets.
 - Subscribes on the `welcome` frame (which carries the key's `limits`): one per destination per `WS_ENTITY_TYPES`, or one unfiltered per destination if `maxSubscriptions` is too low. `snapshot` and `update` data are REST `/live` elements, merged through `build_live_updates` + `merge_live_data` like a REST poll, so `lastUpdatedTs` is the ride's real change time.
 - **Resume:** the cursor of every applied `snapshot`, `update`, `resumed` and `ping` frame is kept in memory; a reconnect subscribes with `since: cursor` and the server replays what was missed (or sends a fresh snapshot past its window). A restart starts from a snapshot. A retryable refusal is re-sent after `_SUBSCRIBE_RETRY_SECS`; "Resume incomplete" re-subscribes that channel with a snapshot.
 - `merge_live_data` skips an update older than the ride's `lastUpdatedTs` (replays, late REST polls); it applies anything it can't compare.
@@ -38,7 +38,7 @@ Layered defenses in `updater/ws_legacy.py` (which asks for the `legacy` subproto
 - `ws_connect(..., heartbeat=30, timeout=ClientWSTimeout(ws_receive=120, ws_close=10))` forces a reconnect on a dead socket within ~2 min. The float `receive_timeout=` is deprecated in aiohttp 3.14; give `ws_close` explicitly, or the 10s close default is dropped.
 - `_watchdog` force-reconnects if no messages arrive for 5 min while any park is operating (alive at the protocol level but not streaming).
 - Backoff (`_next_delay`) resets to 5s only after a connection stays up 60s; otherwise it doubles to 60s, so a connect-then-die loop can't hammer the server.
-- Each ride's `updateSource` is `"rest"` or `"websocket"`: whichever path wrote it last (`build_live_updates` / `_apply_live_update`'s `livedata` branch); the "Displaying ride" log shows it.
+- Each ride's `updateSource` is `"rest"` or `"websocket"`: whichever path wrote it last (`build_live_updates` / `ws_legacy._apply_livedata`); the "Displaying ride" log shows it.
 - WS messages carry no `lastUpdated` (REST's do), so `lastUpdatedTs` is the receive time and `down_since` the receive time of the first DOWN message. The REST poll writes the real `lastUpdated` back every 5 min.
 
 ## Gotchas
