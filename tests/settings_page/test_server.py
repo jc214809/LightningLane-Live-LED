@@ -697,3 +697,72 @@ def test_the_svg_logo_goes_gzipped_to_a_browser_that_takes_it_and_plain_to_one_t
 def test_pngs_are_never_gzipped_they_are_compressed_already(board):
     status, headers, _ = raw(board, "/static/apple-touch-icon.png", {"Accept-Encoding": "gzip"})
     assert status == 200 and "Content-Encoding" not in headers and "Vary" not in headers
+
+
+# --- POST routing, pinned for the code-health refactor (docs/plans/CODE-HEALTH-PLAN.md, item 2b): every route's
+# answer and the order the gates run in.
+
+ROUTES = ("/pin/show", "/pin/send", "/pin", "/signout", "/save", "/surprises", "/surprises/export",
+          "/surprises/import", "/volume", "/update/check", "/update/start", "/update/rollback")
+PIN_ROUTES = ("/pin/show", "/pin/send", "/pin", "/signout")  # answered before the PIN gate, to anyone
+
+
+def test_signed_out_the_pin_routes_answer_and_every_other_route_goes_home(board):
+    seen = {}
+    for path in ROUTES:
+        status, headers, body = board.request(path, {})
+        seen[path] = (status, headers.get("Location"), headers.get("Set-Cookie"), body)
+    assert seen["/pin/show"][:3] == (303, "/?shown", None)
+    assert seen["/pin/send"][:3] == (303, "/", None), "no Pushover keys"
+    assert seen["/pin"][:3] == (303, "/?wrong", None)
+    assert seen["/signout"][0:2] == (303, "/?signedout") and "Max-Age=0" in seen["/signout"][2]
+    for path in ROUTES:
+        if path not in PIN_ROUTES:
+            assert seen[path] == (303, "/", None, ""), path
+    assert board.saved() == CONFIG and board.restarts == [] and board.settings.updates.asked == []
+
+
+def test_a_wrong_route_is_a_404_before_the_pin_gate_even_signed_out(board):
+    status, headers, body = board.request("/elsewhere", {})
+    assert status == 404 and "Location" not in headers and "nothing at this address." in body
+    assert board.request("/save/", {})[0] == 404 and board.request("/", {})[0] == 404
+    assert board.request("/update/", {})[0] == 404 and board.request("/update/status", {})[0] == 404
+    board.sign_in()
+    assert board.request("/elsewhere", {})[0] == 404
+    assert board.request("/save?x=1", SAVE)[0] == 303, "the query string isn't part of the route"
+
+
+def test_the_gates_run_in_order_origin_then_size_then_route_then_sign_in(board):
+    other = {"Origin": "http://evil.example"}
+    huge = {"force_surprise": "x" * (server.MAX_BODY + 1)}
+    for path in ROUTES + ("/elsewhere",):
+        assert board.request(path, huge, other)[0] == 403, f"{path}: another site before anything"
+        assert board.request(path, huge)[0] == 413, f"{path}: too big before the route is looked at"
+    assert board.request("/elsewhere", {}, other)[0] == 403
+
+
+def test_a_signed_in_board_answers_every_route(board):
+    board.sign_in()
+    assert board.request("/pin/show", {})[1]["Location"] == "/?shown"
+    status, headers, _ = board.request("/pin", {"pin": "wrong"})
+    assert (status, headers["Location"]) == (303, "/?wrong")
+    assert board.request("/save", SAVE)[1]["Location"] == "/?saved=restarted"
+    assert board.request("/surprises", {"surprises_enabled": "on"})[1]["Location"] == "/surprises?saved=restarted"
+    assert board.request("/surprises/export", {"surprises_enabled": "on"})[0] == 200
+    assert board.request("/surprises/import", {"surprises_json": "{}"})[0] == 200
+    assert board.request("/volume", {"volume_action": "nope"})[0] == 400
+    assert board.request("/update/check", {"channel": "beta"})[1]["Location"] == "/#updates"
+    assert board.request("/signout", {})[1]["Location"] == "/?signedout"
+    assert board.request("/save", SAVE)[1]["Location"] == "/", "signed out again"
+
+
+def test_a_save_that_cannot_write_says_so_and_keeps_what_was_typed(board, monkeypatch):
+    board.sign_in()
+
+    def refuse(config):
+        raise OSError("disk full")
+    monkeypatch.setattr(board.settings, "save", refuse)
+    status, _, html = board.request("/save", SAVE)
+    assert status == 500 and "Couldn&#x27;t save: disk full" in html and 'value="May"' in html
+    assert board.restarts == [] and board.saved() == CONFIG
+    assert board.request("/surprises", {"surprises_enabled": "on"})[0] == 303, "the other save is separate"
