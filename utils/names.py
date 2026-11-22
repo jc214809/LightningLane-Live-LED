@@ -11,7 +11,8 @@ def clean_park_name(raw_name):
 
 
 def is_water_park(raw_name):
-    return any(kw in raw_name for kw in WATER_PARK_KEYWORDS)
+    found = any(kw in raw_name for kw in WATER_PARK_KEYWORDS)
+    return found
 
 
 def clean_ride_name(raw_name):
