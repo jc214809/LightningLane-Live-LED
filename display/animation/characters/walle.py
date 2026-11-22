@@ -445,47 +445,64 @@ class WallESideReveal(WallEReveal):
 
     # --- drawing ---
 
-    def _draw_walle(self, canvas, t, x):  # noqa: C901, PLR0912
+    def _draw_walle(self, canvas, t, x):
         x0 = int(round(x)) + self.jolt(t)
-        phase, p = self._phase(t)
-        rolling = phase in ("enter", "leave") and int(x) % 2
-        blinking = phase == "look" and self.BLINK_AT <= p < self.BLINK_AT + self.BLINK_S
-        front, bob, drop = self.facing_us(t), self.head_bob(t), self.arm_drop(t)
-        door = self.door_open(t)
-        for row, line in enumerate(self.art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                dy = 0
-                if row in self.HEAD_ROWS:
-                    dy = bob
-                    if front:
-                        continue  # drawn below, turned toward us
-                    if blinking and kind in "LG":
-                        kind = "H"
-                if self._is_arm(row, col, kind):
-                    continue  # the arm is drawn on top of everything, below
-                if door and row in self.DOOR_ROWS and col in self.DOOR_COLS:
-                    kind = "K"  # the dark inside of his chest
-                if door and (col, row) == self.DOOR_HINGE:
-                    kind = "Y"  # the hinge: yellow, joining the open door to his body
-                if rolling and kind in "TV":
-                    kind = "V" if kind == "T" else "T"
-                self._px(canvas, x0 + col, self.y0 + row + dy, self.COLORS[kind])
+        front, bob = self.facing_us(t), self.head_bob(t)
+        self._draw_body(canvas, t, x, x0, front, bob)
         if front:
-            left = x0 + self.sprite_w - self.HEAD_COL - len(self.HEAD_FRONT[0])
-            for row, line in enumerate(self.HEAD_FRONT):
-                for col, kind in enumerate(line):
-                    if blinking and kind in "LG":
-                        kind = "K" if row == 2 else "E"
-                    self._px(canvas, left + col, self.y0 + row + bob, self.COLORS[kind])
-        if door:
+            self._draw_front_head(canvas, t, x0, bob)
+        if self.door_open(t):
             for col, row in self.door_cells(self.door_angle(t)):
                 self._px(canvas, x0 + col, self.y0 + row, self.COLORS["Y"])
         cube = self.cube_at(t)
         if cube:
-            self._draw_cube(canvas, x0, cube, clip=phase == "eject")
-        self._draw_arm(canvas, x0, drop)
+            self._draw_cube(canvas, x0, cube, clip=self._phase(t)[0] == "eject")
+        self._draw_arm(canvas, x0, self.arm_drop(t))
+
+    def _blinking(self, t):
+        phase, p = self._phase(t)
+        return phase == "look" and self.BLINK_AT <= p < self.BLINK_AT + self.BLINK_S
+
+    def _door_recolors(self, door):
+        """{(col, row): kind} the open door changes: the dark inside of his chest, and the
+        yellow hinge joining the open door to his body."""
+        if not door:
+            return {}
+        recolors = {(col, row): "K" for row in self.DOOR_ROWS for col in self.DOOR_COLS}
+        recolors[self.DOOR_HINGE] = "Y"
+        return recolors
+
+    def _draw_body(self, canvas, t, x, x0, front, bob):
+        """Every cell of the sprite but the arm, and but the head when it is drawn turned to us."""
+        phase = self._phase(t)[0]
+        rolling = phase in ("enter", "leave") and int(x) % 2
+        tread_swap = {"T": "V", "V": "T"} if rolling else {}
+        blink_swap = {"L": "H", "G": "H"} if self._blinking(t) else {}
+        door_swap = self._door_recolors(self.door_open(t))
+        for row, line in enumerate(self.art):
+            is_head = row in self.HEAD_ROWS
+            if is_head and front:
+                continue  # drawn turned toward us instead
+            dy = bob if is_head else 0
+            for col, kind in enumerate(line):
+                if kind == ".":
+                    continue
+                if is_head:
+                    kind = blink_swap.get(kind, kind)
+                if self._is_arm(row, col, kind):
+                    continue  # the arm is drawn on top of everything
+                kind = door_swap.get((col, row), kind)
+                kind = tread_swap.get(kind, kind)
+                self._px(canvas, x0 + col, self.y0 + row + dy, self.COLORS[kind])
+
+    def _draw_front_head(self, canvas, t, x0, bob):
+        left = x0 + self.sprite_w - self.HEAD_COL - len(self.HEAD_FRONT[0])
+        blinking = self._blinking(t)
+        for row, line in enumerate(self.HEAD_FRONT):
+            for col, kind in enumerate(line):
+                if blinking and kind in "LG":
+                    kind = "K" if row == 2 else "E"
+                self._px(canvas, left + col, self.y0 + row + bob, self.COLORS[kind])
 
     def _draw_arm(self, canvas, x0, drop):
         """The cuff and claw, lowered by `drop`, on a grey forearm down from his shoulder."""

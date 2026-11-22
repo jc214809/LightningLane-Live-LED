@@ -6,15 +6,22 @@ from display.animation.motion import FPS
 from display.pixels import paint
 
 
-def _open_jaw(art, jaw, opening):  # noqa: C901
+def _open_jaw(art, jaw, opening):
     """
     (art with its mouth opened `opening`, 0 shut to 1 wide, as a grid of cells; the cells of his
     head). jaw is (first row of the lower jaw, its last row, hinge column, rows it drops): columns
     ahead of the hinge swing open, more toward the front of his face, like a jaw on a hinge, and
     the gap fills with his mouth, teeth along its top and bottom. Everything above the jaw is head.
     """
-    split, bottom, hinge, drop = jaw
     grid = [["."] * len(art[0]) for _ in range(len(art))]
+    head = _swing_jaw(art, grid, jaw, opening)
+    _fill_mouth(art, grid, head, jaw, opening)
+    return grid, head
+
+
+def _swing_jaw(art, grid, jaw, opening):
+    """Copy art into grid with the lower jaw swung open; returns the cells (row, col) of his head."""
+    split, bottom, hinge, drop = jaw
     head, moving = set(), []
     for r, row in enumerate(art):
         for c, k in enumerate(row):
@@ -29,6 +36,12 @@ def _open_jaw(art, jaw, opening):  # noqa: C901
     for r, c, k in moving:  # the swinging jaw goes over anything it swings across (his arm)
         grid[r][c] = k
         head.add((r, c))
+    return head
+
+
+def _fill_mouth(art, grid, head, jaw, opening):
+    """Fill the gap the jaw left with his mouth, a tooth above each of the lower jaw's."""
+    split, _, hinge, drop = jaw
     for c in range(hinge):
         if art[split - 1][c] != "." and art[split][c] != ".":
             gap = round(drop * (hinge - c) / hinge * opening)
@@ -37,7 +50,6 @@ def _open_jaw(art, jaw, opening):  # noqa: C901
                 head.add((r, c))
             if gap and art[split][c] == "W":
                 grid[split - 1][c] = "W"  # a tooth above each of the lower jaw's, on the upper jaw
-    return grid, head
 
 
 NECK_COLS = 6  # how far ahead of and above the neck its cells stay put as his head tips back

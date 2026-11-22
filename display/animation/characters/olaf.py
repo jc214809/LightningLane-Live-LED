@@ -242,20 +242,25 @@ class OlafReveal:
                     kind = "W"
                 px[(x0 + col, y0 + row)] = self.colors[kind]
 
-    def pixels(self, t):  # noqa: C901
+    def pixels(self, t):
         """Every pixel he and the snow cover at time t, {(x, y): rgb}, clipped to the board."""
         if t >= self.duration:
             return {}
-        s = self.s
-        dx, bob, _ = self.walk(t)
         out = {(x, y): self.FLAKE for x, y in self.snow(t) if 0 <= y < self.height}
+        for (x, y), rgb in self._body(t).items():
+            if 0 <= x < self.width and 0 <= y < self.height:
+                out[(x, y)] = rgb
+        return out
 
+    def _body(self, t):
+        """Olaf himself, unclipped, {(x, y): rgb}: feet, snowballs, head and twig arms, then buttons."""
+        dx, bob, _ = self.walk(t)
         body = {}
         for fx, fy in self.feet(t):
             self._blob(body, fx + dx, fy, *self.foot[:2])
         parts = self.parts(t)
         where = {name: (x + dx, y + bob) for name, x, y in parts}
-        for name, x, y in parts:
+        for name, _, _ in parts:
             x, y = where[name]
             rx, ry, _ = getattr(self, name)
             if name == "head":
@@ -264,26 +269,32 @@ class OlafReveal:
             rolling = name == "bottom" and t < self.BOTTOM[1] or name == "middle" and t < self.MIDDLE[1]
             self._blob(body, x, y, rx, ry, roll=(x / rx) if rolling else None)
             if name == "middle" and "head" in where and t >= self.ARMS_S:
-                for side in (-1, 1):
-                    sx, sy = x + side * 2.6 * s, y - 0.3 * s
-                    lift = 3.0 * s + (2.5 * s * self.waving(t) if side == 1 else 0.0)
-                    ex, ey = sx + side * 4.5 * s, sy - lift
-                    self._line(body, sx, sy, ex, ey, self.TWIG)
-                    # a twig finger forking off near the end
-                    self._line(body, ex - side * 1.2 * s, ey + 0.3 * s * (lift / (3.0 * s) if lift else 1),
-                               ex - side * 0.4 * s, ey - 1.4 * s, self.TWIG)
+                self._draw_arms(body, x, y, t)
         if "head" in where and t >= self.FACE_S:
-            hx, _ = where["head"]
-            # Coal buttons: one on the middle snowball, two on the bottom one.
-            for bx, by in ((-0.5, where["middle"][1] + 0.3 * s),
-                           (-0.5, where["bottom"][1] - 1.3 * s), (1.5 * s, where["bottom"][1] + 0.9 * s)):
-                for ddx in range(s):
-                    for ddy in range(s):
-                        body[(int(round(hx + bx)) + ddx, int(round(by)) + ddy)] = self.COAL
-        for (x, y), rgb in body.items():
-            if 0 <= x < self.width and 0 <= y < self.height:
-                out[(x, y)] = rgb
-        return out
+            self._draw_buttons(body, where)
+        return body
+
+    def _draw_arms(self, body, x, y, t):
+        """Twig arms out of the middle snowball at (x, y), the right one waving."""
+        s = self.s
+        for side in (-1, 1):
+            sx, sy = x + side * 2.6 * s, y - 0.3 * s
+            lift = 3.0 * s + (2.5 * s * self.waving(t) if side == 1 else 0.0)
+            ex, ey = sx + side * 4.5 * s, sy - lift
+            self._line(body, sx, sy, ex, ey, self.TWIG)
+            # a twig finger forking off near the end
+            self._line(body, ex - side * 1.2 * s, ey + 0.3 * s * (lift / (3.0 * s) if lift else 1),
+                       ex - side * 0.4 * s, ey - 1.4 * s, self.TWIG)
+
+    def _draw_buttons(self, body, where):
+        """Coal buttons: one on the middle snowball, two on the bottom one."""
+        s = self.s
+        hx, _ = where["head"]
+        for bx, by in ((-0.5, where["middle"][1] + 0.3 * s),
+                       (-0.5, where["bottom"][1] - 1.3 * s), (1.5 * s, where["bottom"][1] + 0.9 * s)):
+            for ddx in range(s):
+                for ddy in range(s):
+                    body[(int(round(hx + bx)) + ddx, int(round(by)) + ddy)] = self.COAL
 
     def overlay(self, canvas, t):
         if t >= self.duration:

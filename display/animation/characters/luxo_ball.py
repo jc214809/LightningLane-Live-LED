@@ -175,23 +175,32 @@ class LuxoBallReveal:
             return None
         return where
 
-    def _luxo(self, t):  # noqa: C901
+    def _luxo(self, t):
         w, s = self.luxo_w, self.story
         off_left, off_right = -w / 2 - 1, self.width + w / 2 + 1
         ground = self.height - self.luxo_h
         if s == "chase":
-            if t < 0.6:
-                return None
-            x, lift, _ = _hops(t, 0.6, 3.6, off_left, off_right, 5, 4)
-            return x, ground - lift, False  # turned round to chase it
+            return self._luxo_chase(t, ground, off_left, off_right)
         if s == "light":
-            if t < 1.0:
-                x, lift, _ = _hops(t, 0.0, 1.0, off_right, self.search_x, 2, 4)
-            elif t < self.LEAVE:
-                x, lift = self.search_x, 0.0
-            else:
-                x, lift, _ = _hops(t, self.LEAVE, self.duration, self.search_x, off_right, 2, 4)
-            return x, ground - lift, True
+            return self._luxo_light(t, ground, off_right)
+        return self._luxo_bat(t, ground, off_right)
+
+    def _luxo_chase(self, t, ground, off_left, off_right):
+        if t < 0.6:
+            return None
+        x, lift, _ = _hops(t, 0.6, 3.6, off_left, off_right, 5, 4)
+        return x, ground - lift, False  # turned round to chase it
+
+    def _luxo_light(self, t, ground, off_right):
+        if t < 1.0:
+            x, lift, _ = _hops(t, 0.0, 1.0, off_right, self.search_x, 2, 4)
+        elif t < self.LEAVE:
+            x, lift = self.search_x, 0.0
+        else:
+            x, lift, _ = _hops(t, self.LEAVE, self.duration, self.search_x, off_right, 2, 4)
+        return x, ground - lift, True
+
+    def _luxo_bat(self, t, ground, off_right):
         if t < 1.0:
             return None
         if t < 2.0:
@@ -277,7 +286,7 @@ class LuxoBallReveal:
                     out.add((x, y))
         return out
 
-    def pixels(self, t):  # noqa: C901
+    def pixels(self, t):
         """{(x, y): rgb} of everything the scene draws at t (the dark board and beam included)."""
         out = {}
         lit = None
@@ -287,25 +296,33 @@ class LuxoBallReveal:
                 for x in range(self.width):
                     if (x, y) not in lit:
                         out[(x, y)] = (0, 0, 0)
-        ball = self.ball(t)
-        if ball:
-            x, y, turns = ball
-            art = _rotate_art(self.BALL_ART, turns)
-            # In the dark, the ball shows only where the beam touches it.
-            self._stamp(out, art, int(round(x - self.ball_size / 2)), int(round(y)), only=lit)
-        lux = self.luxo(t)
-        if lux:
-            x, y, facing_left = lux
-            x0, y0 = int(round(x - self.luxo_w / 2)), int(round(y))
-            colors = self.colors
-            if self.story == "light":
-                colors = {**colors, "Y": self.BULB_ON if t >= self.LIGHT_ON else self.BULB_OFF}
-            for (c, r), kind in self.luxo_pose(self.head_tilt(t) if facing_left else 0.0).items():
-                if not facing_left:
-                    c = self.luxo_w - 1 - c
-                if 0 <= x0 + c < self.width and 0 <= y0 + r < self.height:
-                    out[(x0 + c, y0 + r)] = colors[kind]
+        self._draw_ball(out, t, lit)
+        self._draw_luxo(out, t)
         return out
+
+    def _draw_ball(self, out, t, lit):
+        ball = self.ball(t)
+        if not ball:
+            return
+        x, y, turns = ball
+        art = _rotate_art(self.BALL_ART, turns)
+        # In the dark, the ball shows only where the beam touches it.
+        self._stamp(out, art, int(round(x - self.ball_size / 2)), int(round(y)), only=lit)
+
+    def _draw_luxo(self, out, t):
+        lux = self.luxo(t)
+        if not lux:
+            return
+        x, y, facing_left = lux
+        x0, y0 = int(round(x - self.luxo_w / 2)), int(round(y))
+        colors = self.colors
+        if self.story == "light":
+            colors = {**colors, "Y": self.BULB_ON if t >= self.LIGHT_ON else self.BULB_OFF}
+        for (c, r), kind in self.luxo_pose(self.head_tilt(t) if facing_left else 0.0).items():
+            if not facing_left:
+                c = self.luxo_w - 1 - c
+            if 0 <= x0 + c < self.width and 0 <= y0 + r < self.height:
+                out[(x0 + c, y0 + r)] = colors[kind]
 
     def _stamp(self, out, art, x0, y0, only=None):
         """Add art to the scene's pixels, keeping to the board (and to `only`, if given)."""

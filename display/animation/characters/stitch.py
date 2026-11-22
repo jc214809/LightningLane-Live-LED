@@ -133,47 +133,64 @@ class StitchSurfReveal(CapturesScreens):
             return self.crest * (1 - (u / self.face) ** 0.6)  # steep under the lip, easing out
         return 0
 
-    def overlay(self, canvas, t):  # noqa: C901, PLR0912
+    def overlay(self, canvas, t):
         if t >= self.duration:
             return False
-        w, h = self.width, self.height
         xc = int(self.crest_x(t))
         frame = {}
-        # Ahead of the crest: the old ride, every pixel of it (the new one is already underneath).
-        for x in range(max(0, xc + 1), w):
-            for y in range(h):
+        self._draw_old_ride(frame, xc)
+        self._draw_water(frame, xc)
+        self._draw_lip(frame, xc)
+        self._draw_spray(frame, xc, t)
+        self._draw_stitch(frame, xc, t)
+        paint(canvas, frame, self.width, self.height)
+        return True
+
+    def _draw_old_ride(self, frame, xc):
+        """Ahead of the crest: the old ride, every pixel of it (the new one is already underneath)."""
+        for x in range(max(0, xc + 1), self.width):
+            for y in range(self.height):
                 frame[(x, y)] = self.prev_px.get((x, y), (0, 0, 0))
-        # The water: the back slope, then the face, shaded deeper toward the bottom.
-        for x in range(max(0, xc - int(self.back) - 1), min(w, xc + int(self.face) + 1)):
+
+    def _draw_water(self, frame, xc):
+        """The back slope, then the face, shaded deeper toward the bottom."""
+        h = self.height
+        for x in range(max(0, xc - int(self.back) - 1), min(self.width, xc + int(self.face) + 1)):
             u = x - xc
             top = h - int(round(self.surface(u)))
             for y in range(top, h):
                 frame[(x, y)] = self.FACE if 0 <= u and y < top + 2 else self.WATER if y < top + 3 else self.WATER_DEEP
             if top < h and -self.back * 0.4 < u <= 1:
                 frame[(x, top)] = self.FOAM
-        # The lip curls forward over the face.
+
+    def _draw_lip(self, frame, xc):
+        """The lip curls forward over the face."""
+        w, h = self.width, self.height
         for i, reach in enumerate((4, 3, 2, 1)):
             y = h - self.crest + i
             for x in range(xc + 1, xc + 1 + reach):
                 if 0 <= x < w and 0 <= y < h:
                     frame[(x, y)] = self.FOAM if i == 0 or x == xc + reach else self.FACE
-        # Spray up the edge above the crest, thinning with height.
+
+    def _draw_spray(self, frame, xc, t):
+        """Spray up the edge above the crest, thinning with height."""
+        w, h = self.width, self.height
         spray = random.Random(f"{self.seed}:{int(t * 30)}")
         for y in range(0, h - self.crest):
             chance = 0.55 * (y / max(1, h - self.crest)) + 0.15
             for x in (xc, xc + 1, xc - 1):
                 if 0 <= x < w and spray.random() < chance:
                     frame[(x, y)] = self.FOAM
-        # Stitch on his board, down the face ahead of the curl.
+
+    def _draw_stitch(self, frame, xc, t):
+        """Stitch on his board, down the face ahead of the curl."""
         mid = int(round(xc + self.face * self.RIDE_AT))
         left, right = mid - self.board_w // 2, mid + (self.board_w - 1) // 2
         bob = round(math.sin(t * 9))
-        board_y = h - int(round(self.surface(mid - xc))) - 2 + bob
+        board_y = self.height - int(round(self.surface(mid - xc))) - 2 + bob
         for x in range(left, right + 1):
             end = x in (left, right)
             if not end:
                 frame[(x, board_y)] = self.STRIPE if abs(x - mid) < self.board_w // 2 - 2 else self.BOARD
             frame[(x, board_y + 1)] = self.BOARD if end else self.BOARD_SHADE
         frame.update(dict(art_pixels(self.art, mid - self.art_w // 2, board_y - self.art_h, self.colors)))
-        paint(canvas, frame, w, h)
-        return True

@@ -251,7 +251,7 @@ class GenieReveal:
                           for sy in range(s) for sx in range(s)]
         return self._full
 
-    def _draw_genie(self, canvas, t):  # noqa: C901
+    def _draw_genie(self, canvas, t):
         """
         Draw him at `grow(t)` of full size. Below full size every cell is pulled toward
         the spout by that factor, so he swells out of the smoke rather than fading in.
@@ -263,25 +263,29 @@ class GenieReveal:
         # in opposite directions as he scales, opening a gap down his middle.
         x0, y0 = (math.floor(v + 0.5) for v in self.position(t))
         if g >= 1.0:
-            # Full size, i.e. his whole flight: just offset the precomputed pixels.
-            width, height = self.width, self.height
-            for dx, dy, rgb in self._full_pixels():
-                px, py = x0 + dx, y0 + dy
-                if 0 <= px < width and 0 <= py < height:
-                    canvas.SetPixel(px, py, *rgb)
-            return
+            self._draw_full_size(canvas, x0, y0)
+        else:
+            self._draw_growing(canvas, x0, y0, g)
+
+    def _draw_full_size(self, canvas, x0, y0):
+        """His whole flight: just offset the precomputed pixels."""
+        width, height = self.width, self.height
+        for dx, dy, rgb in self._full_pixels():
+            px, py = x0 + dx, y0 + dy
+            if 0 <= px < width and 0 <= py < height:
+                canvas.SetPixel(px, py, *rgb)
+
+    def _draw_growing(self, canvas, x0, y0, g):
         ax, ay = self.spout()
         for row, line in enumerate(self.art):
             for col, kind in enumerate(line):
                 if kind == ".":
                     continue
-                bx, by = x0 + col * self.scale, y0 + row * self.scale
-                if g < 1.0:
-                    # Scale the cell's centre, not its corner: otherwise near full size every
-                    # column lands on x.5 and round-half-to-even drops every other one.
-                    half = self.scale / 2
-                    bx = ax + (bx + half - ax) * g - half
-                    by = ay + (by + half - ay) * g - half
+                # Scale the cell's centre, not its corner: otherwise near full size every
+                # column lands on x.5 and round-half-to-even drops every other one.
+                half = self.scale / 2
+                bx = ax + (x0 + col * self.scale + half - ax) * g - half
+                by = ay + (y0 + row * self.scale + half - ay) * g - half
                 for sy in range(self.scale):
                     for sx in range(self.scale):
                         px, py = math.floor(bx + 0.5) + sx, math.floor(by + 0.5) + sy

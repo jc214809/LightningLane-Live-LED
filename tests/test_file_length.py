@@ -14,7 +14,6 @@ MAX_LINES = 600
 ALLOWED_LONG = {
     "display/landmarks/santa_train.py": 1231,
     "display/fireworks/fireworks.py": 834,
-    "display/animation/characters/bluey.py": 604,
 }
 
 
