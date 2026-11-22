@@ -7,8 +7,9 @@ Phase 3 done: Pushover to `utils/` (#240), the weather icon on the REST thread (
 cycle broken and a `layers` contract in CI (#242). Joel's decisions: keep the 16 `PLR0913` as documented
 exceptions; leave the legacy `_ws_loop` no-destinations exit (unreachable: every park gets a destination
 id and the thread waits for park data; pinned by a test). Formatting pass done on
-`chore/formatting-pass` (see its entry under phase 3). Later: type checking, and removing
-`settings_page/pushover.py`'s shim a release after #240. No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; no source file is over
+`chore/formatting-pass` (see its entry under phase 3). The `settings_page/pushover.py` shim is removed
+(`chore/remove-pushover-shim`, 2026-11-22: the old updater imported it at module top, so an in-flight
+update is safe). Later: type checking. No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; no source file is over
 600 lines.
 
 Goal: raise code quality and make the structure easier to work in, without changing what
