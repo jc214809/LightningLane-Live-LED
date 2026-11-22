@@ -35,7 +35,7 @@ Source files (every tracked `.py` outside `tests/`) stay at 600 lines or fewer. 
 `[tool.importlinter]` in `pyproject.toml`, run by `lint-imports`:
 
 - `api` and `parks` may not import `updater`, `display`, `settings_page`, `self_update` or `driver`.
-- `display` may not import `api`, `aiohttp`, `requests` or `updater` (except `updater.shared`). Known exception: `display.park.park_details -> requests`, the weather icon fetch (the plan's phase 3 moves it).
+- `display` may not import `api`, `aiohttp`, `requests` or `updater` (except `updater.shared`). No display exception is left: the weather icon is downloaded by the REST thread (`api/weather_icons.py`) and published in `updater.shared.weather_icons`.
 - `driver` may not import `api`, `parks`, `updater`, `display`, `settings_page` or `self_update`.
 - `utils` may not import `api`, `parks`, `updater`, `display`, `self_update` or `settings_page`. Known exception: `utils.settings_pin -> settings_page.pins` (the PIN file's path is owned by the settings service).
 
@@ -112,9 +112,8 @@ if data:                                   if not data:
 A function that computes from its arguments and returns a value is trivial to test. One that
 also fetches, reads a file, logs or draws to the matrix needs stubs. Keep the decision pure
 and put the I/O at the edge. `parks/` already works this way (decisions over park data, no
-HTTP). Counter-example: `display/park/park_details.py` downloads the weather icon with
-`requests` from inside the display code, which the draw loop calls every frame (cached, so it
-works, but the display layer now knows about the network).
+HTTP). Example of the fix: the weather icon used to be downloaded from `display/park/park_details.py`
+(called every frame); the REST thread now downloads it and the screen only reads the ready image.
 
 ### 5. Dependencies point one way: layers
 
@@ -132,7 +131,7 @@ utils/  driver/                   foundations: config, logging, hardware
 ```
 
 Measured 2026-11-22, it mostly holds. The exceptions phase 1 records (and phase 3 decides on):
-`display/park/park_details.py` imports `requests`; `utils/settings_pin.py` imports
+`utils/settings_pin.py` imports
 `settings_page.pins`; `api` imports `parks.names` while `parks` imports `api.disney_api` (a
 package-level cycle); `settings_page` and `self_update` import each other. `import-linter`
 turns the rules into a CI check.

@@ -4,7 +4,8 @@ import traceback
 from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, get_down_time, parse_timestamp
 from parks.operating import update_parks_operating_status
 from api.weather import fetch_weather_data
-from updater.shared import live_feed_healthy, note_network_result, parks_data_lock, wait_for_live_feed
+from api.weather_icons import fetch_icon
+from updater.shared import live_feed_healthy, note_network_result, parks_data_lock, wait_for_live_feed, weather_icons
 from utils import debug
 
 # With the preview WebSocket healthy, REST checks every ride this often instead of every cycle.
@@ -64,6 +65,17 @@ def merge_live_data(existing_attractions, new_live_data):
     return existing_attractions
 
 
+def _ensure_weather_icon(weather):
+    """Download the reading's icon if it isn't published yet (cache hit: no HTTP). Never holds
+    parks_data_lock: it is an HTTP call, and weather_icons needs no lock."""
+    code = weather.get("icon") if weather else None
+    if not isinstance(code, str) or code in weather_icons:
+        return
+    img = fetch_icon(code)
+    if img is not None:
+        weather_icons[code] = img
+
+
 async def _fetch_all_live_data(parks):
     """Fetch every park's live data concurrently on one shared event loop."""
     fetchable = [park for park in parks if park.get("attractions")]
@@ -93,6 +105,7 @@ def update_parks_live_data(parks, fetch_live=True):
     for park in parks:
         if park.get("location") and park.get("operating"):
             park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
+            _ensure_weather_icon(park["weather"])
 
     return parks
 
