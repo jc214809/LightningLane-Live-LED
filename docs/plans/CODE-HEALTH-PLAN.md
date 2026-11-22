@@ -2,8 +2,14 @@
 
 Status (2026-11-22): phase 1 (#226) and phase 2 done: 2a #228, 2b #229, 2c #227, 2d #230, 2e #232, 2f #233,
 2g #231, 2h #234, 2i in two parts (A #236; B #237, waiting for its Disneypi run), plus #235 (frame hashes
-cover random stories). No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; the 16 `PLR0913` and
-phase 3 are Joel's call. `ALLOWED_LONG` is empty: no source file is over 600 lines.
+cover random stories) and #239 (the duplicate `written()` test helper: no test was weaker than it looked).
+Phase 3 done: Pushover to `utils/` (#240), the weather icon on the REST thread (#241), the `api`/`parks`
+cycle broken and a `layers` contract in CI (#242). Joel's decisions: keep the 16 `PLR0913` as documented
+exceptions; leave the legacy `_ws_loop` no-destinations exit (unreachable: every park gets a destination
+id and the thread waits for park data; pinned by a test). Later: the formatting pass (after
+`feature/surprise-characters-page` lands), type checking, and removing `settings_page/pushover.py`'s shim
+a release after #240. No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; no source file is over
+600 lines.
 
 Goal: raise code quality and make the structure easier to work in, without changing what
 any board shows or does. Tests check behaviour today (pytest, 90% coverage); nothing checks
