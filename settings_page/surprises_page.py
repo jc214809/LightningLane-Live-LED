@@ -17,6 +17,7 @@ from settings_page.page import (
     icon,
     notices,
 )
+from settings_page.page_script import FORM_FETCH
 from utils.config import surprise_settings
 from utils.surprises import SURPRISES
 
@@ -32,6 +33,8 @@ COLUMNS = (
 # The page's script lives in surprises.js (so an editor and `node --check` treat it as JavaScript).
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "surprises.js"), encoding="utf-8") as _f:
     SCRIPT = _f.read()
+# Wrapped with the form helper (form_fetch.js), in a block: see page_script.py.
+SCRIPT = "{\n" + FORM_FETCH + SCRIPT + "}\n"
 
 
 def _chance_cell(name, kind, default, saved):

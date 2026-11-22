@@ -268,7 +268,7 @@ def test_import_reads_the_clipboard_where_it_may_and_otherwise_waits_for_one_pas
     assert "headers: {Accept: 'application/json'}" in SCRIPT and "'Nothing imported: '" in SCRIPT.replace('"', "'"), (
         "a bad paste is checked first and says why, leaving the page as it is"
     )
-    assert "send.action = '/surprises/import'" in SCRIPT and "send.submit()" in SCRIPT, "then the board draws the page"
+    assert "sendForm('/surprises/import'" in SCRIPT, "then the board draws the page (by fetch, not a hidden form)"
 
 
 def test_an_imported_page_says_it_is_not_saved_and_a_refused_one_says_why():

@@ -1,6 +1,18 @@
 """The main settings page's script: trip rows, the park picker, the previews, the Updates card's polling. The page works without it."""
 
-SCRIPT = """
+import os
+
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "form_fetch.js"), encoding="utf-8") as _f:
+    FORM_FETCH = _f.read()
+
+# The sign-in page has no other script.
+FORM_SCRIPT = "{\n" + FORM_FETCH + "}\n"
+
+# In a block, so a page the board answers with (document.write) can run the script again: its consts aren't globals.
+SCRIPT = (
+    "{\n"
+    + FORM_FETCH
+    + """
 const form = document.getElementById('settings');
 const status = document.getElementById('save-status');
 form.addEventListener('input', () => {
@@ -206,4 +218,6 @@ const spy = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
 }), {rootMargin: '-80px 0px -65% 0px'});
 document.querySelectorAll('main .card[id]').forEach(s => spy.observe(s));
+}
 """  # noqa: E501  (served as written: a browser script, not Python)
+)
