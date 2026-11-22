@@ -7,7 +7,6 @@ from display.fireworks.actors.ralph import RalphSmashes
 from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
-
 S, E = RalphSmashes.START_S, RalphSmashes.END_S
 
 

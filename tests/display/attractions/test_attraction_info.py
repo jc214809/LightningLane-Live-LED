@@ -20,11 +20,11 @@ graphics_stub.Color = lambda r, g, b: (r, g, b)
 sys.modules['driver'] = types.SimpleNamespace(graphics=graphics_stub)
 
 from display.attractions.attraction_info import (  # noqa: E402  (after the stubs above)
-    get_longest_line_width,
     calculate_x_position,
     calculate_y_position,
-    render_attraction_info,
+    get_longest_line_width,
     loaded_fonts,
+    render_attraction_info,
 )
 
 

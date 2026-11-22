@@ -1,7 +1,6 @@
 """Putting pixel art on the board."""
 
 import display.animation as animation
-
 from tests.display.animation.support import FLYBYS, FakeCanvas
 
 

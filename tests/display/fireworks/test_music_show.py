@@ -3,9 +3,9 @@ import random
 import pytest
 
 import display.fireworks.music_show as music_show
+from display.animation.characters.tink import TinkReveal
 from display.fireworks import show_actors
 from display.fireworks.music_show import CASTLE_LOOKS, SHAPES, MusicShow, render_music_show
-from display.animation.characters.tink import TinkReveal
 from display.fireworks.score import Cue, Hit, Score, load_score
 
 

@@ -2,7 +2,7 @@
 from html import escape
 
 from settings_page.form import WDW_PARKS
-from settings_page.markup import (_attr, _field, _input, _json_for_script, _section, icon, landmark_src, landmarks)
+from settings_page.markup import _attr, _field, _input, _json_for_script, _section, icon, landmark_src, landmarks
 
 
 def _park_chip(name, unknown=False):

@@ -4,8 +4,7 @@ import os
 
 import pytest
 
-from settings_page.form import (apply_form, chosen_device, masked, panel_choices, show_names, trip_rows,
-                                volume_from_form)
+from settings_page.form import apply_form, chosen_device, masked, panel_choices, show_names, trip_rows, volume_from_form
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

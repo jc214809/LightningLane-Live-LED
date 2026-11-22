@@ -1,11 +1,10 @@
-from datetime import date, datetime, timedelta, UTC
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
 import disney  # Import your main module (disney.py)
-from utils.trips import Trip
 import display.animation as disney_animation
-
+from utils.trips import Trip
 
 # ---- Helper/Fake Classes ----
 

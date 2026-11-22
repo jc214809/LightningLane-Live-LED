@@ -6,7 +6,6 @@ import pytest
 
 import display.landmarks as landmarks
 
-
 ALL = [landmarks.CastleLandmark, landmarks.SpaceshipEarthLandmark,
        landmarks.TowerOfTerrorLandmark, landmarks.TreeOfLifeLandmark, landmarks.ScaryJackOLanternLandmark,
        type("WinkingPumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": "wink"}),

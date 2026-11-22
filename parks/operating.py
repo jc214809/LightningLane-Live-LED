@@ -3,7 +3,7 @@ Whether each park is open, and when to refetch its schedule. The schedule decide
 usable (party nights and Early Entry included); otherwise fresh live data does. HTTP stays in
 api.disney_api: this module only calls handle_park_schedule_update when a refresh is due.
 """
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from api.disney_api import handle_park_schedule_update, parse_timestamp

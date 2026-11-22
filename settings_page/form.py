@@ -10,13 +10,31 @@ from datetime import time
 from typing import NamedTuple
 
 import cli
-from settings_page.surprise_form import surprise_names
+
 # Re-exported: callers (server.py, the pages, tests) import all of these from settings_page.form.
-from settings_page.surprise_form import (CHARACTER_NAMES, MAX_RIDE_NAME, MAX_RIDES_PER_CHARACTER, SurpriseRow,  # noqa: F401
-                                         apply_surprises, character_label, default_rides, import_surprises,
-                                         percent_text, snapshot_surprises, surprise_characters, surprise_rows)
-from utils.config import (DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS, has_api_key, parse_brightness_schedule,
-                          pushover_keys)
+from settings_page.surprise_form import (  # noqa: F401
+    CHARACTER_NAMES,
+    MAX_RIDE_NAME,
+    MAX_RIDES_PER_CHARACTER,
+    SurpriseRow,
+    apply_surprises,
+    character_label,
+    default_rides,
+    import_surprises,
+    percent_text,
+    snapshot_surprises,
+    surprise_characters,
+    surprise_names,
+    surprise_rows,
+)
+from utils.config import (
+    DEFAULT_VOLUME,
+    SHOW_VERSIONS,
+    WS_PROTOCOLS,
+    has_api_key,
+    parse_brightness_schedule,
+    pushover_keys,
+)
 from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS
 from utils.trips import parse_date
 

@@ -4,7 +4,6 @@ import math
 import random
 
 import display.animation as animation
-
 from tests.display.animation.support import FLYBYS, FakeCanvas, fill
 
 

@@ -11,10 +11,17 @@ import time
 from display.animation import frame_canvas, present
 from display.animation.characters.tink import TinkReveal
 from display.fireworks import show_actors, show_effects
-from display.fireworks.fireworks import (_CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE,
-                                         castle_sprite)
-from display.fireworks.music_show_layers import (CASTLE_FADE_S, EMBER_RGB, LANTERN_RGB, WIPE_S, WISH_GLOW_RGB,  # noqa: F401
-                                                 WISH_RGB, FrameLayers, _plotter)
+from display.fireworks.fireworks import _CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE, castle_sprite
+from display.fireworks.music_show_layers import (  # noqa: F401
+    CASTLE_FADE_S,
+    EMBER_RGB,
+    LANTERN_RGB,
+    WIPE_S,
+    WISH_GLOW_RGB,
+    WISH_RGB,
+    FrameLayers,
+    _plotter,
+)
 from display.motion import ease_out, smooth
 from utils import debug, system_stats
 

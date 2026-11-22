@@ -1,15 +1,19 @@
 import asyncio
 import copy
+from datetime import UTC
 from unittest.mock import patch
 
 import pytest
 
-from updater.ws_common import WS_ENTITY_TYPES, WS_URL, _WS_CLOSE_TIMEOUT_SECS
-from updater.ws_legacy import (WS_SUBPROTOCOLS, _WS_HEARTBEAT_SECS, _WS_RECEIVE_TIMEOUT_SECS, _apply_live_update,
-                               _ws_loop)
 from tests.updater.ws_support import _FakeSession, _FakeWS, _RefusingSession
-from datetime import UTC
-
+from updater.ws_common import _WS_CLOSE_TIMEOUT_SECS, WS_ENTITY_TYPES, WS_URL
+from updater.ws_legacy import (
+    _WS_HEARTBEAT_SECS,
+    _WS_RECEIVE_TIMEOUT_SECS,
+    WS_SUBPROTOCOLS,
+    _apply_live_update,
+    _ws_loop,
+)
 
 DUMMY_ATTRACTION = {
     "id": "attr-1",

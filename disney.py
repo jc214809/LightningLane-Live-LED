@@ -1,41 +1,50 @@
-import sys
-import os
-import time
 import logging
-import threading
+import os
 import random
+import sys
+import threading
+import time
 import traceback
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 import driver
-
-from display.park.park_details import render_park_information_screen
+from api.disney_api import resolve_parks_from_config
+from cli import arguments, describe, led_matrix_options, model_defaults
+from display.animation import TRANSITIONS, forget_screen, show_screen
+from display.attractions.attraction_info import draw_attraction_frame
+from display.countdown.countdown import render_countdown_to_disney
 from display.display import initialize_fonts
 from display.fireworks.fireworks import render_castle_fireworks
 from display.fireworks.music_show import render_music_show
 from display.fireworks.score import SHOWS_DIR, load_score
-from cli import arguments, describe, led_matrix_options, model_defaults
-from api.disney_api import resolve_parks_from_config
-from parks.live import forecast_wait_now, show_start_due
-from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen
-from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, dated_landmark, fireworks_show
-from display.attractions.attraction_info import draw_attraction_frame
+from display.park.park_details import render_park_information_screen
+from display.wifi_setup import render_settings_address, render_wifi_setup
+from parks.live import forecast_wait_now, show_start_due
 from updater.data_updater import live_data_updater
 from updater.websocket_updater import websocket_live_updater
-from display.countdown.countdown import render_countdown_to_disney
-from display.wifi_setup import render_settings_address, render_wifi_setup
+from utils import brightness, debug, heartbeat
+from utils.config import (
+    ShowSettings,
+    SoundSettings,
+    SurpriseSettings,
+    brightness_schedule,
+    debug_enabled,
+    forced_show_name,
+    load_config,
+    load_surprises,
+    show_settings,
+    sound_settings,
+    surprise_settings,
+    websocket_protocol,
+    websocket_settings,
+)
+from utils.sound import clip_name, playing, show_clips
+from utils.sound import watch as watch_sound
+from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, dated_landmark, fireworks_show
+from utils.surprises import DEFAULT_RIDE_CHANCE, PARK_REVEALS, RIDE_VISITORS, SURPRISES, TALL_ONLY
 from utils.trips import active_trip, parse_trips
 from utils.wifi_setup import hotspot_name
-
-from utils import debug
-from utils import brightness
-from utils import heartbeat
-from utils.config import (ShowSettings, SoundSettings, SurpriseSettings, brightness_schedule, debug_enabled,
-                          forced_show_name, load_config, load_surprises, show_settings, sound_settings, surprise_settings,
-                          websocket_protocol, websocket_settings)
-from utils.surprises import DEFAULT_RIDE_CHANCE, PARK_REVEALS, RIDE_VISITORS, SURPRISES, TALL_ONLY
-from utils.sound import clip_name, playing, show_clips, watch as watch_sound
 
 # Configure logging
 logger = logging.getLogger("disney-lll")

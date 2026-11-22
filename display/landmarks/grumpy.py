@@ -7,13 +7,11 @@ against the penguin waiters each showing (utils/special_events.py DATED_LANDMARK
 
 import math
 
-from display.pixels import art_pixels
-
-from display.landmarks.scene import Landmark
 from display.landmarks.penguin_waiters import title_pixels
+from display.landmarks.scene import Landmark
 from display.landmarks.three_caballeros import SKY_BOTTOM, SKY_TOP, SMALL_FONT, TINY_FONT, WHITE
 from display.landmarks.wine_and_dine import GOLD
-
+from display.pixels import art_pixels
 
 # Traced from the Disney wiki's outlined render (docs/references/Grumpy arms folded render.png), keeping
 # its line art (a cell 18%+ line stays black: its outlines are thin), then his brows and eyes redrawn.

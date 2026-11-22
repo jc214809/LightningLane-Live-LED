@@ -1,8 +1,11 @@
 import sys
 from argparse import Namespace
+
 import pytest
+
 from cli import arguments, describe, led_matrix_options
 from utils import debug
+
 
 # -----------------------------------------------------------------------------
 # Helper: Dummy RGBMatrixOptions
@@ -32,6 +35,7 @@ class DummyRGBMatrixOptions:
 # Ensure driver.RGBMatrixOptions is available, on the driver cli has: another test module may have
 # swapped sys.modules["driver"] since cli was first imported (settings_page imports it too).
 import cli  # noqa: E402  (after the driver stub above)
+
 driver = cli.driver
 if not hasattr(driver, "RGBMatrixOptions"):
     driver.RGBMatrixOptions = DummyRGBMatrixOptions
@@ -317,6 +321,7 @@ def test_the_example_configs_matrix_section_lists_every_setting_and_overrides_no
     # override its Pi model's defaults (config wins over them).
     import json
     import os
+
     from cli import _make_parser
     example = os.path.join(os.path.dirname(__file__), os.pardir, "config.json-example")
     with open(example) as f:

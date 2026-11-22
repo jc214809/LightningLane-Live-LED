@@ -8,7 +8,6 @@ import math
 from display.animation.characters.tink import TinkReveal
 from display.motion import smooth
 
-
 _STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}
 CASTLE_FADE_S = 1.5

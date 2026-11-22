@@ -2,8 +2,15 @@ import random
 
 import pytest
 
-from display.fireworks.actors.toy_story import BLOCK_COLOURS, BUZZ_ART, BUZZ_BOOTS_ROW, BUZZ_COLORS, WOODY_COLORS, BuzzAndWoody
 from display.animation.characters.buzz import BuzzReveal
+from display.fireworks.actors.toy_story import (
+    BLOCK_COLOURS,
+    BUZZ_ART,
+    BUZZ_BOOTS_ROW,
+    BUZZ_COLORS,
+    WOODY_COLORS,
+    BuzzAndWoody,
+)
 from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 

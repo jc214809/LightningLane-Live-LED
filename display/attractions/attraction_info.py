@@ -1,7 +1,7 @@
 import math
 
 from display.animation import ease_out
-from display.display import DOWN_RGB, draw_text, plain_text, wrap_text, get_text_width, color_dict, loaded_fonts
+from display.display import DOWN_RGB, color_dict, draw_text, get_text_width, loaded_fonts, plain_text, wrap_text
 from driver import graphics
 
 COUNT_UP_S = 0.8

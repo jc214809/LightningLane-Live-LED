@@ -6,7 +6,6 @@ from display.animation.motion import FPS
 from display.motion import ease_out, progress, smooth
 from display.pixels import put
 
-
 # Solid blades, no white core: at this size a core reads as a third, thinner line. Each
 # hums between two shades, a frame at a time.
 BLADES = {"red": ((255, 25, 15), (215, 15, 10)), "blue": ((20, 110, 255), (10, 80, 225)),

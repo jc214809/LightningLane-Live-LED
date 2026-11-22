@@ -6,7 +6,6 @@ import random
 import pytest
 
 import display.landmarks as landmarks
-
 from tests.display.landmarks.support import _scene_s
 
 

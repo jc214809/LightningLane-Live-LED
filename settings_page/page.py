@@ -12,20 +12,70 @@ from html import escape
 from settings_page.cards.board_now import _board_now_card
 from settings_page.cards.display import _brightness_previews, display_card  # noqa: F401  (re-exported)
 from settings_page.cards.live import live_card, phone_card, weather_card
-from settings_page.cards.panel import (PANEL_SETTINGS, ROTATIONS, SIZE_SETTINGS, _matrix_field,  # noqa: F401  (re-exported)
-                                       _rotation_preview, advanced_card, panel_blanks, panel_card)
+from settings_page.cards.panel import (  # noqa: F401  (re-exported)
+    PANEL_SETTINGS,
+    ROTATIONS,
+    SIZE_SETTINGS,
+    _matrix_field,
+    _rotation_preview,
+    advanced_card,
+    panel_blanks,
+    panel_card,
+)
 from settings_page.cards.parks import _park_chip, parks_card  # noqa: F401  (re-exported)
 from settings_page.cards.shows import shows_card
 from settings_page.cards.sound import sound_card
 from settings_page.cards.surprises import surprises_card, testing_card
 from settings_page.cards.trips import _countdown_preview, _same_trip, _trip, trips_card  # noqa: F401  (re-exported)
-from settings_page.cards.updates import (CHANGES_SHOWN, _beta_name, _changes, _found_name, _installed_name,  # noqa: F401  (re-exported)
-                                         _post, _pr_link, _run_name, _sentence, _short, _steps, _waiting, _when,
-                                         check_result, updates_card)
-from settings_page.markup import (CASTLE_KEY, ICON, ICON_512, ICONS, LANDMARK_INDEX, SAVED, SENT, STATIC_DIR,  # noqa: F401  (re-exported)
-                                  TOUCH_ICON, _attr, _field, _hint, _input, _json_for_script, _key_field, _led,
-                                  _notice, _options, _section, _switch, _switch_input, _topbar, debug, document,
-                                  icon, landmark_src, landmarks, message_page, notices, wordmark)
+from settings_page.cards.updates import (  # noqa: F401  (re-exported)
+    CHANGES_SHOWN,
+    _beta_name,
+    _changes,
+    _found_name,
+    _installed_name,
+    _post,
+    _pr_link,
+    _run_name,
+    _sentence,
+    _short,
+    _steps,
+    _waiting,
+    _when,
+    check_result,
+    updates_card,
+)
+from settings_page.markup import (  # noqa: F401  (re-exported)
+    CASTLE_KEY,
+    ICON,
+    ICON_512,
+    ICONS,
+    LANDMARK_INDEX,
+    SAVED,
+    SENT,
+    STATIC_DIR,
+    TOUCH_ICON,
+    _attr,
+    _field,
+    _hint,
+    _input,
+    _json_for_script,
+    _key_field,
+    _led,
+    _notice,
+    _options,
+    _section,
+    _switch,
+    _switch_input,
+    _topbar,
+    debug,
+    document,
+    icon,
+    landmark_src,
+    landmarks,
+    message_page,
+    notices,
+    wordmark,
+)
 from settings_page.page_script import SCRIPT
 from settings_page.page_style import STYLE  # noqa: F401  (re-exported)
 

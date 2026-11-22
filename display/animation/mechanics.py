@@ -5,10 +5,9 @@ and the screen capture that reveals needing a screen's pixels share.
 
 import random
 
-from display.capture import capture_screen
-
 from display.animation.drawing import _blackout, _edge, art_pixels, paint
 from display.animation.motion import FLYBY_S, FPS, WIPE_S, ease_out
+from display.capture import capture_screen
 
 
 class CapturesScreens:

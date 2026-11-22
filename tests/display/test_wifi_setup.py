@@ -92,7 +92,8 @@ def test_the_second_page_gives_the_settings_pages_address_all_on_the_board(heigh
 
 
 def test_the_address_is_the_hotspots_and_the_servers_port():
-    from settings_page.server import HOTSPOT_NETWORK, PORT
     from ipaddress import ip_address
+
+    from settings_page.server import HOTSPOT_NETWORK, PORT
     host, port = wifi_setup.SETTINGS_ADDRESS.split(":")
     assert ip_address(host) in HOTSPOT_NETWORK and int(port) == PORT

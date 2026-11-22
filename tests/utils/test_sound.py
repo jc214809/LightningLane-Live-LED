@@ -3,7 +3,7 @@ import subprocess
 import sys
 import textwrap
 import time as _time
-from datetime import datetime, time, timedelta, UTC
+from datetime import UTC, datetime, time, timedelta
 
 import pytest
 

@@ -26,26 +26,62 @@ without them; on 64x32 the hours lead, as "TONIGHT 7PM-12AM"), a ring of bulbs c
 
 import math
 
-from utils.special_events import special_event_hours
-
-from display.pixels import blend
-from display.landmarks.scene import SKY_RGB, Landmark
 from display.landmarks.santa_train_art import (  # noqa: F401  the art and palette lived here: tests and tools read them from this module
-    BULBS, COLORS, DONALD_32, DONALD_64, ENGINE_32, ENGINE_64, GIFT_32, GIFT_64, GOOFY_32, GOOFY_64, MICKEY_32,
-    MICKEY_64, PLUTO_32, PLUTO_64, RIDERS, SANTA_WAVE_64, SANTA_WAVE_AT, TRAIN_32, TRAIN_64, TREE_32, TREE_64,
+    BULBS,
+    COLORS,
+    DONALD_32,
+    DONALD_64,
+    ENGINE_32,
+    ENGINE_64,
+    GIFT_32,
+    GIFT_64,
+    GOOFY_32,
+    GOOFY_64,
+    MICKEY_32,
+    MICKEY_64,
+    PLUTO_32,
+    PLUTO_64,
+    RIDERS,
+    SANTA_WAVE_64,
+    SANTA_WAVE_AT,
+    TRAIN_32,
+    TRAIN_64,
+    TREE_32,
+    TREE_64,
 )
 from display.landmarks.santa_train_riders import (  # noqa: F401  the riders' code lived here too
-    BLINKS, RIM_EDGE, RIM_ROW, blink_times, mickey_wave, pluto_tail, rider_patch, rider_state,
+    BLINKS,
+    RIM_EDGE,
+    RIM_ROW,
+    blink_times,
+    mickey_wave,
+    pluto_tail,
+    rider_patch,
+    rider_state,
 )
 from display.landmarks.santa_train_sign import (  # noqa: F401  and the billboard's
-    FRAME_PX, NAME, SIGN_INK, SIGN_RGB, TONIGHT_SPACE_PX, billboard, line_pixels, ring, sign_lines, sign_pixels,
+    FRAME_PX,
+    NAME,
+    SIGN_INK,
+    SIGN_RGB,
+    TONIGHT_SPACE_PX,
+    billboard,
+    line_pixels,
+    ring,
+    sign_lines,
+    sign_pixels,
     text_width,
 )
 from display.landmarks.santa_train_wheels import (  # noqa: F401  and the wheels'
-    RIM_32, SPIN_STEPS, spin_pixels, wheels,
+    RIM_32,
+    SPIN_STEPS,
+    spin_pixels,
+    wheels,
 )
+from display.landmarks.scene import SKY_RGB, Landmark
 from display.landmarks.three_caballeros import SMALL_FONT, TINY_FONT  # noqa: F401  the sign's fonts, which tests read here
-
+from display.pixels import blend
+from utils.special_events import special_event_hours
 
 RAIL_RGB, SNOW_RGB = (110, 70, 35), (225, 228, 240)
 COVER_AND_WIPE_S = 1.2  # of the screen, before the scene's clock starts

@@ -12,10 +12,10 @@ from urllib.parse import urlencode
 
 import pytest
 
+import settings_page.ride_names as ride_names
 import settings_page.server as server
 from settings_page.park_names import ParkNames
 from settings_page.pins import PinGate
-import settings_page.ride_names as ride_names
 from settings_page.ride_names import RideNames
 from settings_page.server import Settings, make_server
 

@@ -1,11 +1,21 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 import pytest
 
 from utils.special_events import (
-    DATED_LANDMARKS, DEFAULT_STAR_RGB, HOLIDAY_STAR, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, dated_landmark,
-    fireworks_show, is_special, seasonal_event,
-    special_event_hours, special_event_now, star_rgb,
+    DATED_LANDMARKS,
+    DEFAULT_STAR_RGB,
+    HOLIDAY_STAR,
+    NIGHTLY_FIREWORKS,
+    SPECIAL_EVENTS,
+    active_party,
+    dated_landmark,
+    fireworks_show,
+    is_special,
+    seasonal_event,
+    special_event_hours,
+    special_event_now,
+    star_rgb,
 )
 
 ET = "America/New_York"

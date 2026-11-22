@@ -6,7 +6,7 @@ split into named steps with no change in behaviour; each case here passed on the
 import asyncio
 import copy
 import json
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import patch
 

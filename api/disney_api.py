@@ -1,15 +1,15 @@
 import re
 import ssl
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
 import aiohttp
 import certifi
 import requests
 
 from api.weather import fetch_weather_data
+from utils import debug
 from utils.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, clean_ride_name, is_water_park
 from utils.special_events import seasonal_event
-from utils import debug
 
 troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]

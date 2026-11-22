@@ -4,8 +4,18 @@ import os
 from html import escape
 
 from settings_page.form import character_label, default_rides, percent_text, surprise_rows
-from settings_page.page import (_attr, _json_for_script, _notice, _section, _switch, _switch_input, _topbar, document,
-                                icon, notices)
+from settings_page.page import (
+    _attr,
+    _json_for_script,
+    _notice,
+    _section,
+    _switch,
+    _switch_input,
+    _topbar,
+    document,
+    icon,
+    notices,
+)
 from utils.config import surprise_settings
 from utils.surprises import SURPRISES
 

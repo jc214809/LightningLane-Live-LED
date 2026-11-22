@@ -1,5 +1,4 @@
 from display.fireworks.fireworks import _CASTLE_COLORS, castle_sprite
-
 from display.landmarks.scene import LANDMARK_S, Landmark
 
 

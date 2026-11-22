@@ -13,7 +13,7 @@ import aiohttp
 import pytest
 
 from updater import ws_preview
-from updater.ws_preview import _PreviewFeed, _preview_ws_loop, _send_later
+from updater.ws_preview import _preview_ws_loop, _PreviewFeed, _send_later
 
 TEXT, ERROR, BINARY = aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.BINARY
 

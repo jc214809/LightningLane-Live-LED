@@ -1,8 +1,19 @@
 """The Panel card (Pi model, size, rotation, the settings a Pi model sets) and the Advanced card (the rest)."""
 import cli
 from settings_page.form import BRIGHTNESS, panel_size
-from settings_page.markup import (CASTLE_KEY, _attr, _field, _input, _json_for_script, _notice, _options, _section,
-                                  icon, landmarks, sub_dict)
+from settings_page.markup import (
+    CASTLE_KEY,
+    _attr,
+    _field,
+    _input,
+    _json_for_script,
+    _notice,
+    _options,
+    _section,
+    icon,
+    landmarks,
+    sub_dict,
+)
 
 # The Panel card's settings, the ones a Pi model sets (and rotation), with their labels; the rest
 # are under Advanced. Rows and columns are the Panel size dropdown's.

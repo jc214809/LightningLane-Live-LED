@@ -16,9 +16,8 @@ the sign and bursts there, in view.
 
 import math
 
-from utils.special_events import special_event_hours
-
 from display.landmarks.tower_of_terror import TowerOfTerrorLandmark
+from utils.special_events import special_event_hours
 
 RED, GREEN, GOLD, WHITE = (230, 30, 30), (40, 200, 60), (255, 200, 60), (255, 255, 255)
 BULBS = (RED, GREEN, GOLD, WHITE)  # the chase order

@@ -7,7 +7,6 @@ import pytest
 
 import display.landmarks as landmarks
 from display.landmarks import grumpy as gr
-
 from tests.display.landmarks.support import _scene_s
 
 BOARDS = [(64, 32), (64, 64)]

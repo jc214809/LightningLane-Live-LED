@@ -10,7 +10,7 @@ Days the park data can't name at all (a runDisney race is run before the park op
 DATED_LANDMARKS, matched by the park's local date. To add one, add an entry there.
 """
 import random
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from utils import debug

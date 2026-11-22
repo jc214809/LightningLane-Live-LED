@@ -5,10 +5,9 @@ the friendly Mickey one built on it, which replaces Magic Kingdom's castle on pa
 
 import math
 
-from utils.special_events import special_event_hours
-
 from display.landmarks.scene import Landmark
 from display.motion import ramp, smooth
+from utils.special_events import special_event_hours
 
 
 class ScaryJackOLanternLandmark(Landmark):

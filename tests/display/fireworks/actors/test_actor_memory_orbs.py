@@ -6,7 +6,6 @@ from display.fireworks.actors.memory_orbs import EMOTIONS, MemoryOrbs
 from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
-
 S, E = MemoryOrbs.START_S, MemoryOrbs.END_S
 
 

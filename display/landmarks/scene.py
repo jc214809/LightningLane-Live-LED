@@ -5,8 +5,8 @@ returning its pixels at time t; plus the shared sky colours and texture noise.
 
 import math
 import random
-from display.pixels import noise, put
 
+from display.pixels import noise, put
 
 LANDMARK_S = 3.0
 

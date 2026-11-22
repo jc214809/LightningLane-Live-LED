@@ -2,7 +2,7 @@
 What the live data says right now: a ride's forecast wait for this hour, and whether a show
 has just started. Pure reads over the parks_data dicts that api.disney_api builds.
 """
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
 
 def forecast_wait_now(forecast, now=None):

@@ -2,10 +2,22 @@
 santa_train_cars_32.py."""
 
 from display.landmarks.santa_train_cars_32 import (
-    DONALD_32, ENGINE_32, GIFT_32, GOOFY_32, MICKEY_32, PLUTO_32, TREE_32,
+    DONALD_32,
+    ENGINE_32,
+    GIFT_32,
+    GOOFY_32,
+    MICKEY_32,
+    PLUTO_32,
+    TREE_32,
 )
 from display.landmarks.santa_train_cars_64 import (
-    DONALD_64, ENGINE_64, GIFT_64, GOOFY_64, MICKEY_64, PLUTO_64, TREE_64,
+    DONALD_64,
+    ENGINE_64,
+    GIFT_64,
+    GOOFY_64,
+    MICKEY_64,
+    PLUTO_64,
+    TREE_64,
 )
 
 # The art: each piece's rows, all the same height on a board, joined side by side.

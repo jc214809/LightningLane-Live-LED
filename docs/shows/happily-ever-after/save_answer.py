@@ -2,9 +2,10 @@
 
     python3 save_answer.py 4.1 report.md 5:10-5:38
 """
+import datetime
 import re
 import sys
-import datetime
+
 num, path, window = sys.argv[1], sys.argv[2], sys.argv[3]
 report = open(path).read()
 model = re.search(r"\*\*Engine:\*\* (\S+)", report).group(1)

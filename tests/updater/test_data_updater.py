@@ -1,7 +1,7 @@
 import asyncio
 import copy
 import threading
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -9,10 +9,10 @@ from updater import shared
 from updater.data_updater import (
     LIVE_FEED_STARTUP_WAIT_SECS,
     REST_INTERVAL_WITH_LIVE_FEED_SECS,
+    live_data_updater,
     merge_live_data,
     rest_poll_due,
     update_parks_live_data,
-    live_data_updater
 )
 
 # Dummy parks list used for testing.

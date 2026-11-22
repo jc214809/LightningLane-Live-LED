@@ -1,10 +1,11 @@
 from datetime import datetime
 
-from display.display import get_text_width, wrap_text, color_dict, loaded_fonts
+from display.display import color_dict, get_text_width, loaded_fonts, wrap_text
 from driver import graphics
 from updater.shared import weather_icons
 from utils import debug
 from utils.special_events import DEFAULT_STAR_RGB, star_rgb
+
 
 def render_park_information_screen(matrix, park_obj):
     """

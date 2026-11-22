@@ -6,9 +6,22 @@ behaviour; each case here passed on the code before the split.
 """
 import pytest
 
-from self_update import github, state as states, update as update_module
+from self_update import github
+from self_update import state as states
+from self_update import update as update_module
 from self_update.board import CommandFailed
-from self_update.update import BLOCKED, CURRENT, Outcome, ROLLED_BACK, ROLLBACK_FAILED, Target, Updater, UPDATED, WAITING, WOULD_UPDATE
+from self_update.update import (
+    BLOCKED,
+    CURRENT,
+    ROLLBACK_FAILED,
+    ROLLED_BACK,
+    UPDATED,
+    WAITING,
+    WOULD_UPDATE,
+    Outcome,
+    Target,
+    Updater,
+)
 
 
 class _Board:

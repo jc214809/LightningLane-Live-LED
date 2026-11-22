@@ -1,11 +1,22 @@
 import json
+from datetime import time
 
 import pytest
 
-from datetime import time
-
-from utils.config import (ShowSettings, forced_show_name, SoundSettings, show_settings, debug_enabled, has_api_key, load_config, pushover_keys, sound_settings,
-                          weather_api_key, websocket_protocol, websocket_settings)
+from utils.config import (
+    ShowSettings,
+    SoundSettings,
+    debug_enabled,
+    forced_show_name,
+    has_api_key,
+    load_config,
+    pushover_keys,
+    show_settings,
+    sound_settings,
+    weather_api_key,
+    websocket_protocol,
+    websocket_settings,
+)
 
 
 def test_load_config(tmp_path):
@@ -171,6 +182,7 @@ def test_forced_show_name(config, expected, monkeypatch):
 
 def test_brightness_schedule_is_read_as_peloton_leds():
     from datetime import time
+
     from utils.config import BrightnessSchedule, brightness_schedule
     config = {"brightness_schedule": {"day": 80, "night": 15, "day_start": "07:00", "night_start": "22:00"}}
     assert brightness_schedule(config) == BrightnessSchedule(80, 15, time(7), time(22))
@@ -341,6 +353,7 @@ def test_surprise_settings_edge_inputs_pin_their_exact_result(monkeypatch):
 
 def test_a_new_file_takes_the_mode_and_owner_of_the_file_it_is_beside(tmp_path, monkeypatch):
     import os
+
     from utils.config import save_config
     config = tmp_path / "config.json"
     config.write_text("{}")
@@ -356,6 +369,7 @@ def test_a_new_file_takes_the_mode_and_owner_of_the_file_it_is_beside(tmp_path, 
 
 def test_a_file_that_exists_keeps_its_own_owner_and_mode_whatever_it_is_beside(tmp_path, monkeypatch):
     import os
+
     from utils.config import save_config
     config, target = tmp_path / "config.json", tmp_path / "surprises.json"
     config.write_text("{}")
@@ -370,6 +384,7 @@ def test_a_file_that_exists_keeps_its_own_owner_and_mode_whatever_it_is_beside(t
 
 def test_with_nothing_to_copy_a_new_file_is_600_and_nothing_is_chowned(tmp_path, monkeypatch):
     import os
+
     from utils.config import save_config
     owned = []
     monkeypatch.setattr("utils.config.os.chown", lambda *args: owned.append(args))

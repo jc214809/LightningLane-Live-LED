@@ -1,8 +1,8 @@
 """board-setup.sh, run with --dry-run against a fake board: a folder standing in for / (via
 BOARD_SETUP_ROOT), a home folder, and stand-ins for hostname and getent."""
 import json
-import re
 import os
+import re
 import shutil
 import subprocess
 

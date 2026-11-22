@@ -4,12 +4,21 @@ import re
 import time
 from html import escape
 
-from settings_page.markup import _attr, _field, _notice, _options, _section, icon
-from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 from self_update.github import FAILED, PASSED, REPO, RUNNING
 from self_update.state import ROLLBACK_FAILED, UNFINISHED
-from self_update.update import (BETA, BETA_BRANCH, CURRENT, RELEASES, WAITING, WOULD_UPDATE, beta_number, name_of,
-                                release_of)
+from self_update.update import (
+    BETA,
+    BETA_BRANCH,
+    CURRENT,
+    RELEASES,
+    WAITING,
+    WOULD_UPDATE,
+    beta_number,
+    name_of,
+    release_of,
+)
+from settings_page.markup import _attr, _field, _notice, _options, _section, icon
+from settings_page.updates import BUSY, START_FAILED, STARTED, STEPS
 
 
 def _when(at):

@@ -3,9 +3,14 @@ from unittest.mock import patch
 
 import pytest
 
-from updater.ws_common import (_RECONNECT_DELAY_INITIAL, _RECONNECT_DELAY_MAX, _WsStats, _next_delay,
-                               _should_force_reconnect, _watchdog)
-
+from updater.ws_common import (
+    _RECONNECT_DELAY_INITIAL,
+    _RECONNECT_DELAY_MAX,
+    _next_delay,
+    _should_force_reconnect,
+    _watchdog,
+    _WsStats,
+)
 
 # --- watchdog ---
 

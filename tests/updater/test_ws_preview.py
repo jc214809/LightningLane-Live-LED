@@ -5,12 +5,17 @@ from unittest.mock import patch
 import aiohttp
 import pytest
 
-from updater import shared
-from updater.ws_common import WS_URL, _RECONNECT_DELAY_INITIAL
-from updater.ws_preview import (WS_PREVIEW_SUBPROTOCOLS, _PREVIEW_RECEIVE_TIMEOUT_SECS, _REFUSED_RETRY_SECS,
-                                _SUBSCRIBE_RETRY_SECS, _PreviewFeed, _preview_ws_loop)
 from tests.updater.ws_support import _FakeSession, _FakeWS, _RefusingSession
-
+from updater import shared
+from updater.ws_common import _RECONNECT_DELAY_INITIAL, WS_URL
+from updater.ws_preview import (
+    _PREVIEW_RECEIVE_TIMEOUT_SECS,
+    _REFUSED_RETRY_SECS,
+    _SUBSCRIBE_RETRY_SECS,
+    WS_PREVIEW_SUBPROTOCOLS,
+    _preview_ws_loop,
+    _PreviewFeed,
+)
 
 # --- preview protocol ---
 

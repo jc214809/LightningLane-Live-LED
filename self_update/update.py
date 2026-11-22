@@ -22,7 +22,8 @@ import socket
 import time
 from dataclasses import dataclass
 
-from self_update import github, state as states
+from self_update import github
+from self_update import state as states
 from self_update.board import CommandFailed
 from utils import debug, heartbeat, pushover
 from utils.config import pushover_keys

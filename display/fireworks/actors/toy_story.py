@@ -7,7 +7,6 @@ from display.animation.characters.buzz import BuzzReveal
 from display.fireworks.actors.base import Actor, stamp
 from display.motion import smooth
 
-
 # Woody as a chibi, from docs/references/Woody - New.jpg cell for cell (19 x 26), with two empty columns
 # on the right for his raised hand. Drawn for this scene only: the claw scene's 14 x 18 Woody was too
 # small to read beside the castle.

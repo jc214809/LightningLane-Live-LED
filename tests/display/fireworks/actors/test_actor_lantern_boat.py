@@ -3,7 +3,8 @@ import random
 import pytest
 
 from display.fireworks.actors.lantern_boat import LANTERN_RGB, LanternBoat
-from display.fireworks.music_show import LANTERN_RGB as SHOW_LANTERN_RGB, MusicShow
+from display.fireworks.music_show import LANTERN_RGB as SHOW_LANTERN_RGB
+from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
 START, MID, END = 668.0, 697.0, 724.0

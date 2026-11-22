@@ -1,17 +1,20 @@
 # tests/display/park/test_park_details.py
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, UTC
+
 from display.park import park_details
 from display.park.park_details import (
-    render_special_ticketed_events,
-    render_park_hours,
-    render_weather_icon,
     display_weather_icon_and_description,
-    format_iso_time,
     draw_multi_line_park_name_text_block,
-    draw_single_line_park_name_text
+    draw_single_line_park_name_text,
+    format_iso_time,
+    render_park_hours,
+    render_special_ticketed_events,
+    render_weather_icon,
 )
+
 
 # --- Set up dummy dependencies ---
 # Fake font used for testing.
@@ -206,6 +209,7 @@ def _bdf_glyph_dots(path, encoding):
 
 def test_star_dots_match_the_info_fonts_asterisk():
     import os
+
     from display.display import fonts
     repo = os.path.join(os.path.dirname(__file__), "..", "..", "..")
     for height in (32, 64):

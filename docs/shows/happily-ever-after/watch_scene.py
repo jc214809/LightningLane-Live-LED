@@ -4,6 +4,7 @@
 """
 import re
 import sys
+
 num = sys.argv[1]
 s = open("docs/shows/happily-ever-after/WATCH.md").read()
 base = s[s.index("## Base prompt"):s.index("## The show")]

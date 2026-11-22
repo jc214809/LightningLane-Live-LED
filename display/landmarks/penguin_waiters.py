@@ -7,12 +7,10 @@ It replaces Spaceship Earth on race day, picked at random against Grumpy's Two C
 
 import math
 
-from display.pixels import art_pixels
-
 from display.landmarks.scene import Landmark
 from display.landmarks.three_caballeros import SKY_BOTTOM, SKY_TOP, SMALL_FONT, TINY_FONT, WHITE
 from display.landmarks.wine_and_dine import GOLD, _text_pixels
-
+from display.pixels import art_pixels
 
 # Hand-drawn in the half marathon poster's pose (docs/references/Wine and Dine 2026 posters.png): no
 # render of them traces cleanly.

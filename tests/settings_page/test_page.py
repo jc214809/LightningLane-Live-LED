@@ -1,7 +1,8 @@
-import pytest
 import json
 import re
 import time
+
+import pytest
 
 from settings_page.page import SENT, _when, check_result, pin_page, settings_page
 
@@ -269,8 +270,7 @@ def test_the_surprises_page_shows_problems_and_saved():
 
 
 def test_every_proper_name_is_for_a_real_character():
-    from settings_page.form import surprise_names
-    from settings_page.form import CHARACTER_NAMES
+    from settings_page.form import CHARACTER_NAMES, surprise_names
     assert set(CHARACTER_NAMES) <= set(surprise_names())
 
 

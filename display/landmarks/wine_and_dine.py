@@ -7,11 +7,9 @@ It replaces Spaceship Earth on race day (utils/special_events.py DATED_LANDMARKS
 import math
 
 from display import capture
+from display.landmarks.scene import TITLE_SHADOW_RGB, Landmark
 from display.motion import ease_out, progress
 from display.pixels import art_pixels
-
-from display.landmarks.scene import TITLE_SHADOW_RGB, Landmark
-
 
 GOLD, PINK = (255, 200, 60), (255, 90, 170)
 SPARKLE = ((255, 240, 160), (255, 180, 60))  # near the rims, then further out

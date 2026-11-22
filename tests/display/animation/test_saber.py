@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas
 
 OLD, NEW = (90, 0, 90), (0, 140, 0)

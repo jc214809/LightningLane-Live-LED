@@ -5,9 +5,7 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas, fill
-
 
 Pooh = animation.PoohReveal
 OLD, NEW = (0, 40, 90), (70, 0, 70)

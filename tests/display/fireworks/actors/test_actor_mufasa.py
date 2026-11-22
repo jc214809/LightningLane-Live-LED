@@ -129,6 +129,7 @@ def test_on_64x32_his_halved_face_mouths_too():
 def test_mufasa_is_on_the_board_for_every_word_he_says():
     """Through to his echoing last "Remember": he's still clearly there while his mouth moves."""
     import json
+
     from display.fireworks.score import SHOWS_DIR, parse_lips
     with open(f"{SHOWS_DIR}/happily-ever-after.v2.lips.json") as f:
         lips = parse_lips(json.load(f))["mufasa"]

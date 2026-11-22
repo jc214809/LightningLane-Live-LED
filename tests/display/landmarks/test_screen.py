@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.landmarks as landmarks
-
 from tests.display.landmarks.support import TITLE_CHAR_W, _pinned
 
 

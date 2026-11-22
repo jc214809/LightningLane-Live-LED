@@ -7,8 +7,18 @@ from self_update import state as states
 from self_update import update as update_module
 from self_update.board import CommandFailed
 from self_update.github import GitHubError
-from self_update.update import (BETA, RELEASES, Updater, beta_number, channel_of, installed_number, name_of,
-                                newest_release, parse_version, release_of)
+from self_update.update import (
+    BETA,
+    RELEASES,
+    Updater,
+    beta_number,
+    channel_of,
+    installed_number,
+    name_of,
+    newest_release,
+    parse_version,
+    release_of,
+)
 from utils import heartbeat
 
 OLD, NEW, BETA_TIP = "1" * 40, "2" * 40, "3" * 40

@@ -7,11 +7,9 @@ together as confetti bursts from the top and drifts down. It replaces Spaceship 
 
 import math
 
-from display.pixels import art_pixels
-
 from display.landmarks.scene import Landmark
 from display.landmarks.wine_and_dine import GOLD, _text_pixels
-
+from display.pixels import art_pixels
 
 WHITE = (255, 255, 255)
 MID_FONT = ("assets/fonts/patched/7x13B.bdf", 11)  # the 10K: one size down from the 5K's, to clear Panchito
