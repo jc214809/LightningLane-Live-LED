@@ -97,3 +97,18 @@ ignore_imports = [
     # The PIN file's path is owned by the settings service.
     "utils.settings_pin -> settings_page.pins",
 ]
+
+# Type checking: see docs/dev/CODE-QUALITY.md.
+[tool.mypy]
+python_version = "3.11"
+files = ["parks", "api"]
+# Check the bodies of unannotated functions too; don't demand annotations everywhere yet.
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+# Libraries without type information (pyowm) and the hardware/emulator layers stay untyped.
+ignore_missing_imports = true
+follow_imports = "silent"
+# api/ has no __init__.py (a namespace package, imported from the repo root like the other layers).
+namespace_packages = true
+explicit_package_bases = true

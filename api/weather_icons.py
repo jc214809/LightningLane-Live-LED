@@ -17,8 +17,8 @@ ICON_TIMEOUT_S = 5
 ICON_RETRY_S = 300
 ICON_SIZE = (15, 15)
 
-_cache = {}  # icon code -> resized PIL image
-_failures = {}  # icon code -> monotonic time of its last failed download
+_cache: dict[str, Image.Image] = {}  # icon code -> resized PIL image
+_failures: dict[str, float] = {}  # icon code -> monotonic time of its last failed download
 
 
 def _reset():
@@ -43,8 +43,7 @@ def fetch_icon(icon_code):
     try:
         response = requests.get(icon_url, timeout=ICON_TIMEOUT_S)
         response.raise_for_status()
-        img = Image.open(BytesIO(response.content))
-        img = img.resize(ICON_SIZE)  # small enough for the matrix
+        img = Image.open(BytesIO(response.content)).resize(ICON_SIZE)  # small enough for the matrix
         _cache[icon_code] = img
         _failures.pop(icon_code, None)
         debug.log(f"Downloaded weather icon {icon_code}")
