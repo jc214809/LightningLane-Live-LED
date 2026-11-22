@@ -6,8 +6,11 @@ from utils import system_stats
 @pytest.fixture
 def board(tmp_path, monkeypatch):
     """Point the module at fake sysfs files; each test writes the ones its board has."""
-    paths = {"THERMAL_PATH": tmp_path / "temp", "CPU_FREQ_PATH": tmp_path / "freq",
-             "THROTTLED_PATH": tmp_path / "throttled"}
+    paths = {
+        "THERMAL_PATH": tmp_path / "temp",
+        "CPU_FREQ_PATH": tmp_path / "freq",
+        "THROTTLED_PATH": tmp_path / "throttled",
+    }
     for name, path in paths.items():
         monkeypatch.setattr(system_stats, name, str(path))
     monkeypatch.setattr(system_stats.os, "getloadavg", lambda: (1.44, 1.0, 1.0))
@@ -35,6 +38,7 @@ def test_unreadable_values_are_left_out_not_raised(board):
 def test_without_a_load_average_the_rest_still_shows(board, monkeypatch):
     def no_load():
         raise OSError("no loadavg")
+
     monkeypatch.setattr(system_stats.os, "getloadavg", no_load)
     board["THERMAL_PATH"].write_text("40000")
     assert system_stats.describe() == "40°C"

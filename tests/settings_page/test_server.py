@@ -1,5 +1,6 @@
 """The settings server over real HTTP, on a free port, with config.json and comitup's state in a
 temp folder. The file is "board-config.json": tests/stubs/conftest.py fakes every "config.json"."""
+
 import json
 import os
 import re
@@ -12,14 +13,20 @@ from urllib.parse import urlencode
 
 import pytest
 
+import settings_page.ride_names as ride_names
 import settings_page.server as server
 from settings_page.park_names import ParkNames
 from settings_page.pins import PinGate
+from settings_page.ride_names import RideNames
 from settings_page.server import Settings, make_server
 
-CONFIG = {"parks": ["EPCOT"], "websocket": {"enabled": False, "api_key": "tp-secret-1234", "protocol": "legacy"},
-          "weather": {"apikey": "owm-secret-9876"}, "trip_countdown": {"enabled": False, "trip_dates": []},
-          "keep_me": 1}
+CONFIG = {
+    "parks": ["EPCOT"],
+    "websocket": {"enabled": False, "api_key": "tp-secret-1234", "protocol": "legacy"},
+    "weather": {"apikey": "owm-secret-9876"},
+    "trip_countdown": {"enabled": False, "trip_dates": []},
+    "keep_me": 1,
+}
 SAVE = {"park": "EPCOT", "ws_protocol": "legacy", "trip_start_0": "2027-05-05", "trip_name_0": "May"}
 
 
@@ -36,8 +43,18 @@ class FakeUpdates:
         return {"running": self.is_running, "phase": "Installing the new version" if self.is_running else None}
 
     def view(self):
-        return {"version": "2.1.0", "sha": "a" * 40, "branch": "develop-beta", "running": self.is_running,
-                "phase": "idle", "status": None, "from": None, "outcome": None, "check": None, "channel": "releases"}
+        return {
+            "version": "2.1.0",
+            "sha": "a" * 40,
+            "branch": "develop-beta",
+            "running": self.is_running,
+            "phase": "idle",
+            "status": None,
+            "from": None,
+            "outcome": None,
+            "check": None,
+            "channel": "releases",
+        }
 
     def check(self, channel):
         self.asked.append(("check", channel))
@@ -62,24 +79,51 @@ class Board:
         os.chmod(self.config, 0o600)
         self.state = tmp_path / "comitup-state"
         self.cards = tmp_path / "cards"
-        self.cards.write_text(" 0 [Headphones     ]: bcm2835_headpho - bcm2835 Headphones\n"
-                              "                      bcm2835 Headphones\n"
-                              " 1 [Device         ]: USB-Audio - USB Audio Device\n")
+        self.cards.write_text(
+            " 0 [Headphones     ]: bcm2835_headpho - bcm2835 Headphones\n"
+            "                      bcm2835 Headphones\n"
+            " 1 [Device         ]: USB-Audio - USB Audio Device\n"
+        )
         self.gate = PinGate(str(tmp_path / "pin"))
         self.restarts = []
         # A fresh list on disk, so nothing is fetched
         names = tmp_path / "park_names.json"
-        names.write_text(json.dumps({"fetched": time.time(), "parks": [["EPCOT", "Walt Disney World® Resort"],
-                                                                      ["Cedar Point", "Cedar Point"]]}))
+        names.write_text(
+            json.dumps(
+                {
+                    "fetched": time.time(),
+                    "parks": [["EPCOT", "Walt Disney World® Resort"], ["Cedar Point", "Cedar Point"]],
+                }
+            )
+        )
+        rides = tmp_path / "ride_names.json"
+        rides.write_text(
+            json.dumps(
+                {
+                    "format": ride_names.FORMAT,
+                    "fetched": time.time(),
+                    "parks": ["EPCOT"],
+                    "rides": {"EPCOT": ["Test Track", "Soarin' Around the World"]},
+                }
+            )
+        )
         self.model = tmp_path / "model"
         self.model.write_bytes(b"Raspberry Pi 4 Model B Rev 1.5\0")
-        self.settings = Settings(str(self.config), self.gate, state_file=str(self.state), cards_file=str(self.cards),
-                                 park_names=ParkNames(str(names), fetch=self.no_fetch),
-                                 model_file=str(self.model), updates=FakeUpdates())
+        self.settings = Settings(
+            str(self.config),
+            self.gate,
+            state_file=str(self.state),
+            cards_file=str(self.cards),
+            park_names=ParkNames(str(names), fetch=self.no_fetch),
+            model_file=str(self.model),
+            updates=FakeUpdates(),
+            ride_names=RideNames(str(rides), fetch=self.no_fetch),
+        )
         monkeypatch.setattr(self.settings, "restart_app", lambda: self.restarts.append(1) or "restarted")
         self.httpd = make_server(self.settings, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}"
-        threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
+        # The default 0.5 s poll made every shutdown() (each test's teardown) wait half a second.
+        threading.Thread(target=self.httpd.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True).start()
         self.jar = CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar), NoRedirect)
 
@@ -153,6 +197,227 @@ def test_signed_in_the_form_shows_masked_keys_and_saves(board):
     assert oct(os.stat(board.config).st_mode & 0o777) == "0o600", "keeps the file's mode"
     assert json.loads((board.config.parent / "board-config.json.bak").read_text()) == CONFIG
     assert "restarting with the new settings" in board.request("/?saved=restarted")[2]
+
+
+def test_the_surprises_page_needs_the_pin_then_saves_to_its_own_file_and_restarts(board):
+    surprises = board.config.parent / "surprises.json"
+    status, headers, _ = board.request("/surprises")
+    assert status == 303 and headers["Location"] == "/", "not signed in: back to the PIN page"
+    status, _, _ = board.request("/surprises", {"surprises_enabled": "on"})
+    assert status == 303 and not surprises.exists() and board.restarts == []
+    board.sign_in()
+    status, _, html = board.request("/surprises")
+    assert status == 200 and 'action="/surprises"' in html and 'id="chance_genie"' in html
+    assert '"EPCOT": ["Test Track", "Soarin\' Around the World"]' in html, "the ride list, from ride_names.json"
+    os.chmod(board.config, 0o640)  # not the default 600, so the new file following config.json shows
+    form = {
+        "surprises_enabled": "on",
+        "surprise_genie": "on",
+        "surprise_falcon": "on",
+        "chance_genie": "1.5",
+        "ride_chance_falcon": "25",
+        "rides_set_genie": "1",
+        "rides_genie": ["Test Track"],
+    }
+    status, headers, _ = board.request("/surprises", form)
+    assert status == 303 and headers["Location"] == "/surprises?saved=restarted"
+    saved = json.loads(surprises.read_text())
+    assert saved["enabled"] is True and saved["characters"]["genie"] == {"chance": 1.5, "rides": ["Test Track"]}
+    assert saved["characters"]["falcon"] == {"ride_chance": 25} and saved["characters"]["tron"] == {"on": False}
+    assert board.saved() == CONFIG, "config.json isn't touched"
+    assert oct(os.stat(surprises).st_mode & 0o777) == "0o640", (
+        "the new file is made like config.json (the user's, not root's)"
+    )
+    assert board.restarts == [1]
+    assert 'value="1.5"' in board.request("/surprises")[2], "the page shows what was saved"
+    assert "restarting with the new settings" in board.request("/surprises?saved=restarted")[2]
+    assert "restarting" not in board.request("/surprises?saved=bogus")[2]
+
+
+def test_export_gives_all_the_settings_on_the_page_as_it_is_now_without_saving_anything(board):
+    surprises = board.config.parent / "surprises.json"
+    status, _, _ = board.request("/surprises/export", {"surprises_enabled": "on"})
+    assert status == 303 and not surprises.exists(), "needs the PIN"
+    board.sign_in()
+    form = {
+        "surprises_enabled": "on",
+        "surprise_genie": "on",
+        "chance_genie": "1.5",
+        "rides_set_genie": "1",
+        "rides_genie": ["Test Track"],
+    }
+    status, headers, body = board.request("/surprises/export", form)
+    reply = json.loads(body)
+    assert status == 200 and headers["Content-Type"] == "application/json" and reply["ok"] is True
+    exported = json.loads(reply["json"])
+    assert exported["enabled"] is True
+    assert exported["characters"]["genie"] == {"on": True, "chance": 1.5, "ride_chance": 10, "rides": ["Test Track"]}
+    assert exported["characters"]["tron"]["on"] is False, "everything unticked is off"
+    assert exported["characters"]["baymax"] == {"on": False, "chance": 0.7, "ride_chance": 10, "rides": []}, (
+        "and the defaults are spelled out, so the copy is complete on its own"
+    )
+    assert not surprises.exists() and board.restarts == [], "nothing saved, nothing restarted"
+
+
+def test_exporting_a_page_nobody_changed_still_gives_every_character_with_its_numbers_and_rides(board):
+    board.sign_in()
+    html = board.request("/surprises")[2]
+    status, _, body = board.request("/surprises/export", browser_form(html))
+    exported = json.loads(json.loads(body)["json"])
+    assert status == 200 and exported["enabled"] is True
+    characters = exported["characters"]
+    assert len(characters) > 25 and all(c["on"] is True for c in characters.values())
+    assert characters["genie"] == {"on": True, "chance": 0.5, "ride_chance": 10, "rides": []}
+    assert characters["jack_sally"]["ride_chance"] == 50 and characters["falcon"]["chance"] == 0
+    assert "tink" not in characters and "buzz" not in characters
+    assert not (board.config.parent / "surprises.json").exists()
+    # and pasting it back gives the page it came from: nothing is different from the defaults
+    status, _, page = board.request("/surprises/import", {"surprises_json": json.dumps(exported)})
+    assert status == 200 and 'id="chance_genie" name="chance_genie" value=""' in page, "defaults aren't frozen in"
+
+
+def test_export_with_a_problem_says_what_and_gives_nothing(board):
+    board.sign_in()
+    status, _, body = board.request("/surprises/export", {"surprises_enabled": "on", "chance_genie": "500"})
+    reply = json.loads(body)
+    assert status == 400 and reply["ok"] is False and "should be a percent from 0 to 100" in reply["problems"][0]
+
+
+def test_import_fills_the_page_without_saving_and_says_it_is_not_saved_yet(board):
+    surprises = board.config.parent / "surprises.json"
+    status, _, _ = board.request("/surprises/import", {"surprises_json": "{}"})
+    assert status == 303 and not surprises.exists(), "needs the PIN"
+    board.sign_in()
+    paste = json.dumps(
+        {
+            "enabled": True,
+            "characters": {
+                "genie": {"chance": 1.5, "rides": ["Test Track"]},
+                "tron": {"on": False},
+                "new_one": {"chance": 5},
+            },
+        }
+    )
+    status, _, html = board.request("/surprises/import", {"surprises_json": paste})
+    assert (
+        status == 200
+        and "not saved yet" in html
+        and "Left out because this board's version doesn't have them: new_one" in html
+    )
+    assert 'id="chance_genie" name="chance_genie" value="1.5"' in html and 'value="Test Track"' in html
+    assert re.search(r'id="surprise_tron" name="surprise_tron"(?! checked)', html), "unticked, as imported"
+    assert not surprises.exists() and board.restarts == [], "Save and restart does that"
+    assert not os.path.exists(surprises), "still nothing on disk"
+
+
+def browser_form(html, form_id="settings"):
+    """The fields a browser would post for the page's form: text, number and hidden inputs, and the checkboxes that are
+    ticked (a checkbox with no value posts "on")."""
+    from html.parser import HTMLParser
+
+    class Fields(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.inside, self.fields = False, {}
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == "form":
+                self.inside = attrs.get("id") == form_id
+            elif self.inside and tag == "input" and attrs.get("name"):
+                if attrs.get("type") == "checkbox":
+                    if "checked" in attrs:
+                        self.fields.setdefault(attrs["name"], []).append(attrs.get("value") or "on")
+                else:
+                    self.fields.setdefault(attrs["name"], []).append(attrs.get("value") or "")
+
+        def handle_endtag(self, tag):
+            if tag == "form":
+                self.inside = False
+
+    parser = Fields()
+    parser.feed(html)
+    return parser.fields
+
+
+def test_an_imported_page_saves_exactly_what_it_shows_rides_included_without_opening_a_picker(board):
+    """The bug this holds: imported rides sat on the page as hidden inputs, but only a picker that had been opened said
+    they were to be saved, so Save and restart kept the chances and dropped the rides."""
+    board.sign_in()
+    surprises = board.config.parent / "surprises.json"
+    imported = {
+        "enabled": True,
+        "characters": {
+            "genie": {"chance": 1.5, "rides": ["Test Track"]},
+            "falcon": {"ride_chance": 25, "rides": []},
+            "tron": {"on": False},
+        },
+    }
+    status, _, html = board.request("/surprises/import", {"surprises_json": json.dumps(imported)})
+    assert status == 200
+    form = browser_form(html)
+    assert form["rides_genie"] == ["Test Track"] and form["rides_set_genie"] == ["saved"]
+    assert form["rides_set_falcon"] == ["saved"] and "rides_falcon" not in form, "none at all is posted as none"
+    status, headers, _ = board.request("/surprises", form)
+    assert status == 303 and headers["Location"] == "/surprises?saved=restarted"
+    assert json.loads(surprises.read_text()) == imported
+
+
+def test_a_page_that_is_just_opened_and_saved_changes_nothing_not_even_by_writing_the_default_rides_down(board):
+    board.sign_in()
+    surprises = board.config.parent / "surprises.json"
+    html = board.request("/surprises")[2]
+    form = browser_form(html)
+    assert form["rides_set_falcon"] == ["1"], "the default rides are ticked and posted"
+    assert board.request("/surprises", form)[0] == 303
+    assert json.loads(surprises.read_text()) == {"enabled": True, "characters": {}}, "equal to the defaults: not saved"
+
+
+def test_an_import_with_problems_changes_nothing_and_says_why(board):
+    board.sign_in()
+    status, _, html = board.request(
+        "/surprises/import", {"surprises_json": '{"characters": {"genie": {"chance": 500}}}'}
+    )
+    assert status == 400 and "Nothing imported." in html and "should be a percent from 0 to 100" in html
+    status, _, html = board.request("/surprises/import", {"surprises_json": ""})
+    assert status == 400 and "Nothing imported." in html and "Not saved." not in html
+    assert not (board.config.parent / "surprises.json").exists()
+
+
+def test_asking_for_json_checks_a_paste_without_drawing_a_page(board):
+    board.sign_in()
+    status, headers, body = board.request(
+        "/surprises/import", {"surprises_json": '{"enabled": true}'}, {"Accept": "application/json"}
+    )
+    assert status == 200 and headers["Content-Type"] == "application/json" and json.loads(body) == {"ok": True}
+    status, _, body = board.request(
+        "/surprises/import", {"surprises_json": "just some words"}, {"Accept": "application/json"}
+    )
+    reply = json.loads(body)
+    assert status == 400 and reply["ok"] is False and "isn't valid JSON" in reply["problems"][0]
+    status, _, body = board.request(
+        "/surprises/import",
+        {"surprises_json": '{"characters": {"genie": {"chance": 500}}}'},
+        {"Accept": "application/json"},
+    )
+    assert status == 400 and "should be a percent from 0 to 100" in json.loads(body)["problems"][0]
+    assert not (board.config.parent / "surprises.json").exists() and board.restarts == []
+
+
+def test_surprise_problems_are_shown_and_nothing_is_saved(board):
+    board.sign_in()
+    status, _, html = board.request("/surprises", {"surprises_enabled": "on", "chance_genie": "500"})
+    assert status == 400 and "should be a percent from 0 to 100" in html
+    assert board.saved() == CONFIG and board.restarts == []
+    assert not (board.config.parent / "surprises.json").exists()
+
+
+def test_a_surprise_save_waits_for_a_running_update(board):
+    board.sign_in()
+    board.settings.updates.is_running = True
+    status, _, html = board.request("/surprises", {"surprises_enabled": "on"})
+    assert status == 409 and "An update is running" in html
+    assert not (board.config.parent / "surprises.json").exists()
 
 
 def test_problems_are_shown_and_nothing_is_saved(board):
@@ -239,11 +504,15 @@ def test_unknown_paths_are_not_found(board):
 
 # --- restarting the app
 
+
 def test_restart_uses_try_restart_so_a_board_on_another_app_stays_on_it(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(server.shutil, "which", lambda name: "/bin/systemctl")
-    monkeypatch.setattr(server.subprocess, "run", lambda args, **kw: calls.append(args) or
-                        type("Done", (), {"returncode": 0, "stderr": ""})())
+    monkeypatch.setattr(
+        server.subprocess,
+        "run",
+        lambda args, **kw: calls.append(args) or type("Done", (), {"returncode": 0, "stderr": ""})(),
+    )
     assert Settings(str(tmp_path / "c.json")).restart_app() == "restarted"
     assert calls == [["systemctl", "try-restart", "LightningLane-Live-LED.service"]]
 
@@ -252,13 +521,15 @@ def test_a_failed_restart_is_logged_and_reported(monkeypatch, tmp_path):
     errors = []
     monkeypatch.setattr(server.debug, "error", errors.append)
     monkeypatch.setattr(server.shutil, "which", lambda name: "/bin/systemctl")
-    monkeypatch.setattr(server.subprocess, "run", lambda args, **kw: type(
-        "Done", (), {"returncode": 5, "stderr": "Unit not found."})())
+    monkeypatch.setattr(
+        server.subprocess, "run", lambda args, **kw: type("Done", (), {"returncode": 5, "stderr": "Unit not found."})()
+    )
     assert Settings(str(tmp_path / "c.json")).restart_app() == "failed"
     assert "Unit not found." in errors[0]
 
     def hang(args, **kw):
         raise server.subprocess.TimeoutExpired(args, kw["timeout"])
+
     monkeypatch.setattr(server.subprocess, "run", hang)
     assert Settings(str(tmp_path / "c.json")).restart_app() == "failed"
 
@@ -318,10 +589,13 @@ def _volume(board, **fields):
 
 def test_set_volume_sets_the_speaker_and_saves_only_the_volume_with_no_restart(board, monkeypatch):
     set_to = []
-    monkeypatch.setattr(server, "set_volume", lambda settings: set_to.append((settings.volume, settings.device)) or True)
+    monkeypatch.setattr(
+        server, "set_volume", lambda settings: set_to.append((settings.volume, settings.device)) or True
+    )
     board.sign_in()
-    status, reply = _volume(board, volume_action="set", sound_volume="45", sound_device="plughw:CARD=Device,DEV=0",
-                            park="Cedar Point")
+    status, reply = _volume(
+        board, volume_action="set", sound_volume="45", sound_device="plughw:CARD=Device,DEV=0", park="Cedar Point"
+    )
     assert status == 200 and reply == {"ok": True, "message": "Volume set to 45% and saved."}
     assert set_to == [(45, "plughw:CARD=Device,DEV=0")], "on the speaker the form picks"
     assert board.saved() == dict(CONFIG, sound={"volume": 45}), "the parks and the rest stay as saved"
@@ -331,19 +605,29 @@ def test_set_volume_sets_the_speaker_and_saves_only_the_volume_with_no_restart(b
 def test_set_volume_says_when_the_speaker_didnt_change_or_the_volume_is_bad(board, monkeypatch):
     monkeypatch.setattr(server, "set_volume", lambda settings: False)
     board.sign_in()
-    assert _volume(board, volume_action="set", sound_volume="45")[1] == \
-        {"ok": False, "message": "Saved 45%, but the speaker didn't change: the board's log says why."}
-    assert _volume(board, volume_action="set", sound_volume="loud")[1] == \
-        {"ok": False, "message": "Volume should be 0 to 100, not 'loud'."}
+    assert _volume(board, volume_action="set", sound_volume="45")[1] == {
+        "ok": False,
+        "message": "Saved 45%, but the speaker didn't change: the board's log says why.",
+    }
+    assert _volume(board, volume_action="set", sound_volume="loud")[1] == {
+        "ok": False,
+        "message": "Volume should be 0 to 100, not 'loud'.",
+    }
     assert board.saved()["sound"] == {"volume": 45}
 
 
 def test_a_test_sound_plays_at_the_forms_volume_and_saves_nothing(board, monkeypatch):
     played = []
-    monkeypatch.setattr(server, "play_test",
-                        lambda settings: played.append((settings.volume, settings.device)) or (True, "Played a chime at 30%."))
+    monkeypatch.setattr(
+        server,
+        "play_test",
+        lambda settings: played.append((settings.volume, settings.device)) or (True, "Played a chime at 30%."),
+    )
     board.sign_in()
-    assert _volume(board, volume_action="test", sound_volume="30") == (200, {"ok": True, "message": "Played a chime at 30%."})
+    assert _volume(board, volume_action="test", sound_volume="30") == (
+        200,
+        {"ok": True, "message": "Played a chime at 30%."},
+    )
     assert played == [(30, None)] and board.saved() == CONFIG and board.restarts == []
 
 
@@ -438,3 +722,179 @@ def test_while_an_update_runs_its_status_is_followed_and_saving_waits(board):
     status, _, html = board.request("/save", SAVE)
     assert status == 409 and "An update is running" in html and board.saved() == CONFIG and board.restarts == []
     assert 'value="May"' in html, "what was typed stays on the page"
+
+
+# --- the page's pictures
+
+
+def raw(board, path, headers=None):
+    """GET path as bytes, signed out."""
+    req = urllib.request.Request(board.url + path, headers=headers or {})
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            return response.status, dict(response.headers), response.read()
+    except urllib.error.HTTPError as e:
+        return e.code, dict(e.headers), e.read()
+
+
+@pytest.mark.parametrize(
+    "path, kind",
+    [
+        ("/static/icon.svg", "image/svg+xml"),
+        ("/static/apple-touch-icon.png", "image/png"),
+        ("/static/landmark-epcot.png", "image/png"),
+        ("/apple-touch-icon.png", "image/png"),
+    ],
+)
+def test_the_pictures_are_served_to_anyone_since_the_sign_in_page_shows_them(board, path, kind):
+    status, headers, body = raw(board, path)
+    assert status == 200 and headers["Content-Type"] == kind and body
+    assert (
+        headers["Cache-Control"] == f"max-age={server.STATIC_MAX_AGE_S}"
+        and headers["X-Content-Type-Options"] == "nosniff"
+    )
+    name = path.rsplit("/", 1)[1]
+    with open(os.path.join(server.page.STATIC_DIR, name), "rb") as f:
+        assert body == f.read()
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/static/landmarks.json",
+        "/static/missing.png",
+        "/static/../server.py",
+        "/static/%2e%2e/server.py",
+        "/static/..%2fserver.py",
+        "/static/",
+        "/static/.png",
+    ],
+)
+def test_nothing_else_is_served_from_static(board, path):
+    status, headers, body = raw(board, path)
+    assert status == 404 and headers["Content-Type"].startswith("text/html") and b"nothing at this address" in body
+
+
+def test_an_unreadable_picture_is_a_404_and_logged(board, monkeypatch):
+    import builtins
+
+    warnings, real_open = [], builtins.open
+    monkeypatch.setattr(server.debug, "warning", warnings.append)
+
+    def failing(path, *args, **kwargs):
+        if str(path).endswith("icon.svg"):
+            raise PermissionError("no")
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", failing)
+    assert raw(board, "/static/icon.svg")[0] == 404 and "icon.svg" in warnings[0]
+
+
+def test_the_page_says_what_the_heartbeat_says(board, tmp_path):
+    beat = tmp_path / "lll-health"
+    beat.write_text(json.dumps({"at": time.time() - 4, "version": "2.1.5-beta"}))
+    board.settings.heartbeat_file = str(beat)
+    board.sign_in()
+    html = board.request("/")[2]
+    assert '<span class="beat">Running</span>' in html and "Version <b>2.1.5-beta</b>" in html
+    beat.unlink()
+    assert '<span class="beat none">No word yet</span>' in board.request("/")[2]
+
+
+def test_the_svg_logo_goes_gzipped_to_a_browser_that_takes_it_and_plain_to_one_that_doesnt(board):
+    import gzip
+
+    with open(os.path.join(server.page.STATIC_DIR, "icon.svg"), "rb") as f:
+        svg = f.read()
+    status, headers, body = raw(board, "/static/icon.svg", {"Accept-Encoding": "gzip, deflate, br"})
+    assert status == 200 and headers["Content-Encoding"] == "gzip" and headers["Vary"] == "Accept-Encoding"
+    assert gzip.decompress(body) == svg and int(headers["Content-Length"]) == len(body) < len(svg) // 4
+    status, headers, body = raw(board, "/static/icon.svg")
+    assert status == 200 and "Content-Encoding" not in headers and headers["Vary"] == "Accept-Encoding" and body == svg
+
+
+def test_pngs_are_never_gzipped_they_are_compressed_already(board):
+    status, headers, _ = raw(board, "/static/apple-touch-icon.png", {"Accept-Encoding": "gzip"})
+    assert status == 200 and "Content-Encoding" not in headers and "Vary" not in headers
+
+
+# --- POST routing, pinned for the code-health refactor (docs/plans/CODE-HEALTH-PLAN.md, item 2b): every route's
+# answer and the order the gates run in.
+
+ROUTES = (
+    "/pin/show",
+    "/pin/send",
+    "/pin",
+    "/signout",
+    "/save",
+    "/surprises",
+    "/surprises/export",
+    "/surprises/import",
+    "/volume",
+    "/update/check",
+    "/update/start",
+    "/update/rollback",
+)
+PIN_ROUTES = ("/pin/show", "/pin/send", "/pin", "/signout")  # answered before the PIN gate, to anyone
+
+
+def test_signed_out_the_pin_routes_answer_and_every_other_route_goes_home(board):
+    seen = {}
+    for path in ROUTES:
+        status, headers, body = board.request(path, {})
+        seen[path] = (status, headers.get("Location"), headers.get("Set-Cookie"), body)
+    assert seen["/pin/show"][:3] == (303, "/?shown", None)
+    assert seen["/pin/send"][:3] == (303, "/", None), "no Pushover keys"
+    assert seen["/pin"][:3] == (303, "/?wrong", None)
+    assert seen["/signout"][0:2] == (303, "/?signedout") and "Max-Age=0" in seen["/signout"][2]
+    for path in ROUTES:
+        if path not in PIN_ROUTES:
+            assert seen[path] == (303, "/", None, ""), path
+    assert board.saved() == CONFIG and board.restarts == [] and board.settings.updates.asked == []
+
+
+def test_a_wrong_route_is_a_404_before_the_pin_gate_even_signed_out(board):
+    status, headers, body = board.request("/elsewhere", {})
+    assert status == 404 and "Location" not in headers and "nothing at this address." in body
+    assert board.request("/save/", {})[0] == 404 and board.request("/", {})[0] == 404
+    assert board.request("/update/", {})[0] == 404 and board.request("/update/status", {})[0] == 404
+    board.sign_in()
+    assert board.request("/elsewhere", {})[0] == 404
+    assert board.request("/save?x=1", SAVE)[0] == 303, "the query string isn't part of the route"
+
+
+def test_the_gates_run_in_order_origin_then_size_then_route_then_sign_in(board):
+    other = {"Origin": "http://evil.example"}
+    huge = {"force_surprise": "x" * (server.MAX_BODY + 1)}
+    for path in ROUTES + ("/elsewhere",):
+        assert board.request(path, huge, other)[0] == 403, f"{path}: another site before anything"
+        assert board.request(path, huge)[0] == 413, f"{path}: too big before the route is looked at"
+    assert board.request("/elsewhere", {}, other)[0] == 403
+
+
+def test_a_signed_in_board_answers_every_route(board):
+    board.sign_in()
+    assert board.request("/pin/show", {})[1]["Location"] == "/?shown"
+    status, headers, _ = board.request("/pin", {"pin": "wrong"})
+    assert (status, headers["Location"]) == (303, "/?wrong")
+    assert board.request("/save", SAVE)[1]["Location"] == "/?saved=restarted"
+    assert board.request("/surprises", {"surprises_enabled": "on"})[1]["Location"] == "/surprises?saved=restarted"
+    assert board.request("/surprises/export", {"surprises_enabled": "on"})[0] == 200
+    assert board.request("/surprises/import", {"surprises_json": "{}"})[0] == 200
+    assert board.request("/volume", {"volume_action": "nope"})[0] == 400
+    assert board.request("/update/check", {"channel": "beta"})[1]["Location"] == "/#updates"
+    assert board.request("/signout", {})[1]["Location"] == "/?signedout"
+    assert board.request("/save", SAVE)[1]["Location"] == "/", "signed out again"
+
+
+def test_a_save_that_cannot_write_says_so_and_keeps_what_was_typed(board, monkeypatch):
+    board.sign_in()
+
+    def refuse(config):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(board.settings, "save", refuse)
+    status, _, html = board.request("/save", SAVE)
+    assert status == 500 and "Couldn&#x27;t save: disk full" in html and 'value="May"' in html
+    assert board.restarts == [] and board.saved() == CONFIG
+    assert board.request("/surprises", {"surprises_enabled": "on"})[0] == 303, "the other save is separate"

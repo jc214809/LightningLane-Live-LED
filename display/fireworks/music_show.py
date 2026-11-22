@@ -3,6 +3,7 @@ The castle fireworks in time with a show's soundtrack: a copy of fireworks.py's 
 so the everyday and party fireworks don't change) driven by a Score (score.py). The clock decides
 which scene is on, not the frame count, so a slow board still hits each section with the music.
 """
+
 import colorsys
 import math
 import random
@@ -11,8 +12,17 @@ import time
 from display.animation import frame_canvas, present
 from display.animation.characters.tink import TinkReveal
 from display.fireworks import show_actors, show_effects
-from display.fireworks.fireworks import (_CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE,
-                                         castle_sprite)
+from display.fireworks.fireworks import _CASTLE_COLORS, _MICKEY_CIRCLES, DRAG, GRAVITY, MICKEY_LIFE, castle_sprite
+from display.fireworks.music_show_layers import (  # noqa: F401
+    CASTLE_FADE_S,
+    EMBER_RGB,
+    LANTERN_RGB,
+    WIPE_S,
+    WISH_GLOW_RGB,
+    WISH_RGB,
+    FrameLayers,
+    _plotter,
+)
 from display.motion import ease_out, smooth
 from utils import debug, system_stats
 
@@ -41,22 +51,12 @@ CASTLE_LOOKS = {
     "crimson": {"W": (130, 30, 45), "R": (40, 40, 90)},  # the Emperor: crimson on dark navy
     "lavender": {"W": (230, 160, 235), "R": (60, 75, 225)},  # Can You Feel the Love Tonight: pink-lavender, blue roofs
 }
-_STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
-_FLICKERS = {"fire"}
-CASTLE_FADE_S = 1.5
-# "wipe_down": the scene's castle change runs from the spire down to the base over WIPE_S instead
-# (the theme chorus's slow fade to blue): the top row is done halfway through, the bottom row starts then.
-WIPE_S = 8.0
 # The castle's brightness on each of a scene's stages (score.STAGES): a ghost leaves characters the
 # room to stand in front of it; off clears the board for them. It fades between them over CASTLE_FADE_S.
 STAGE_LEVELS = {"castle": 1.0, "ghost": 0.25, "off": 0.0}
-_LIT_KINDS = {"W", "R"}
 
 # The wishing star lands on the spire this far through its scene; the castle turns after that.
 WISH_LANDS_AT = 0.7
-WISH_RGB, WISH_GLOW_RGB = (255, 255, 230), (255, 220, 120)
-LANTERN_RGB = (255, 150, 40)
-EMBER_RGB = (255, 70, 20)
 # Gold willows: most bursts in a "willow" scene hang and droop in long-lived gold.
 WILLOW_CHANCE = 0.7
 WILLOW_RGB = (255, 185, 70)
@@ -81,8 +81,11 @@ def _mickey():
         for i in range(n):
             a = 2 * math.pi * i / n
             px, py = cx + r * math.cos(a), cy + r * math.sin(a)
-            if not any((px - ox) ** 2 + (py - oy) ** 2 < (orr - 0.05) ** 2
-                       for ox, oy, orr in _MICKEY_CIRCLES if (ox, oy, orr) != (cx, cy, r)):
+            if not any(
+                (px - ox) ** 2 + (py - oy) ** 2 < (orr - 0.05) ** 2
+                for ox, oy, orr in _MICKEY_CIRCLES
+                if (ox, oy, orr) != (cx, cy, r)
+            ):
                 points.append((px, py))
     return _unit(points)
 
@@ -98,8 +101,13 @@ def _heart(n=40):
 
 
 def _star(per_edge=5):
-    corners = [(math.cos(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45),
-                math.sin(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45)) for i in range(10)]
+    corners = [
+        (
+            math.cos(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45),
+            math.sin(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45),
+        )
+        for i in range(10)
+    ]
     points = []
     for i in range(10):
         (x0, y0), (x1, y1) = corners[i], corners[(i + 1) % 10]
@@ -108,8 +116,10 @@ def _star(per_edge=5):
 
 
 def _ring(r, n, rgb=None, cx=0.0, cy=0.0, start=0.0, end=2 * math.pi):
-    return [(cx + r * math.cos(start + (end - start) * i / n), cy + r * math.sin(start + (end - start) * i / n), rgb)
-            for i in range(n)]
+    return [
+        (cx + r * math.cos(start + (end - start) * i / n), cy + r * math.sin(start + (end - start) * i / n), rgb)
+        for i in range(n)
+    ]
 
 
 def _lion():
@@ -120,8 +130,11 @@ def _lion():
 
 def _smiley():
     yellow = (255, 220, 40)
-    return (_ring(1.0, 30, yellow) + [(-0.35, -0.3, yellow), (0.35, -0.3, yellow)]
-            + _ring(0.55, 9, yellow, start=math.radians(25), end=math.radians(155)))
+    return (
+        _ring(1.0, 30, yellow)
+        + [(-0.35, -0.3, yellow), (0.35, -0.3, yellow)]
+        + _ring(0.55, 9, yellow, start=math.radians(25), end=math.radians(155))
+    )
 
 
 def _door():
@@ -161,7 +174,7 @@ EFFECTS = _OWN_EFFECTS | set(show_effects.EFFECTS)
 class _Rocket:
     __slots__ = ("x", "y", "vx", "vy", "burst_y", "color", "shape", "style")
 
-    def __init__(self, x, y, vx, vy, burst_y, color, shape=None, style=None):
+    def __init__(self, x, y, vx, vy, burst_y, color, shape=None, style=None):  # noqa: PLR0913
         self.x, self.y, self.vx, self.vy = x, y, vx, vy
         self.burst_y = burst_y
         self.color = color
@@ -179,7 +192,7 @@ class _Spark:
         self.gravity = gravity
 
 
-class MusicShow:
+class MusicShow(FrameLayers):
     """Frame-stepped castle and fireworks that follow the cue set on them; knows nothing about the
     matrix driver or the clock."""
 
@@ -212,8 +225,9 @@ class MusicShow:
         self.rocket_speed = 1.6 if big else 1.1
         self.launch_gap = (6, 16) if big else (10, 26)
         self.shape_radius = 7 if big else 4
-        self.stars = [(self.rng.randrange(width), self.rng.randrange(max(1, self.castle_y + ch // 2)))
-                      for _ in range(width // 5)]
+        self.stars = [
+            (self.rng.randrange(width), self.rng.randrange(max(1, self.castle_y + ch // 2))) for _ in range(width // 5)
+        ]
 
         self.cue = None
         self.t = 0.0
@@ -273,8 +287,10 @@ class MusicShow:
 
     def _castle_now(self):
         blend = smooth((self.t - self.castle_change_t) / (WIPE_S if self.castle_wipe else CASTLE_FADE_S))
-        return {k: tuple(int(a + (b - a) * blend) for a, b in zip(self.castle_from[k], self.castle_to[k]))
-                for k in self.castle_to}
+        return {
+            k: tuple(int(a + (b - a) * blend) for a, b in zip(self.castle_from[k], self.castle_to[k]))
+            for k in self.castle_to
+        }
 
     def castle_level(self):
         """How bright the castle is (1 full, 0 gone), fading to the scene's stage."""
@@ -316,8 +332,9 @@ class MusicShow:
             margin = max(2, self.castle_x - 1)
             x = rng.uniform(1, margin) if rng.random() < 0.5 else rng.uniform(self.width - margin, self.width - 2)
         burst_y = rng.uniform(top, max(top + 1, bottom))
-        self.rockets.append(_Rocket(x, self.height - 1, rng.uniform(-0.12, 0.12), -self.rocket_speed,
-                                    burst_y, self._colour()))
+        self.rockets.append(
+            _Rocket(x, self.height - 1, rng.uniform(-0.12, 0.12), -self.rocket_speed, burst_y, self._colour())
+        )
 
     def _explode(self, rocket):
         rng = self.rng
@@ -327,24 +344,50 @@ class MusicShow:
             travel = (1 - DRAG ** (MICKEY_LIFE * 0.6)) / (1 - DRAG)
             speed = self.shape_radius / travel
             for px, py, rgb in SHAPES[rocket.shape]:
-                self.sparks.append(_Spark(rocket.x, rocket.y, px * speed, py * speed, MICKEY_LIFE,
-                                          rgb or rocket.color, gravity=GRAVITY * 0.2))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        px * speed,
+                        py * speed,
+                        MICKEY_LIFE,
+                        rgb or rocket.color,
+                        gravity=GRAVITY * 0.2,
+                    )
+                )
         elif rocket.style in ("willow", "curtain"):
             # A hit's willow in its own colour; a curtain is bigger and hangs down over the castle.
             curtain = rocket.style == "curtain"
             for _ in range(int(self.spark_count * (1.6 if curtain else 1.0))):
                 angle = rng.uniform(0, 2 * math.pi)
                 speed = self.spark_speed * rng.uniform(0.4, 1.0 if curtain else 0.9)
-                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
-                                          rng.randint(90, 130) if curtain else rng.randint(60, 90), rocket.color,
-                                          gravity=GRAVITY * (0.9 if curtain else 0.6)))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        math.cos(angle) * speed,
+                        math.sin(angle) * speed,
+                        rng.randint(90, 130) if curtain else rng.randint(60, 90),
+                        rocket.color,
+                        gravity=GRAVITY * (0.9 if curtain else 0.6),
+                    )
+                )
         elif "willow" in self.effects and rng.random() < WILLOW_CHANCE:
             # Slow sparks that live long and droop, trailing gold.
             for _ in range(self.spark_count):
                 angle = rng.uniform(0, 2 * math.pi)
                 speed = self.spark_speed * rng.uniform(0.4, 0.9)
-                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
-                                          rng.randint(60, 90), WILLOW_RGB, gravity=GRAVITY * 0.6))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        math.cos(angle) * speed,
+                        math.sin(angle) * speed,
+                        rng.randint(60, 90),
+                        WILLOW_RGB,
+                        gravity=GRAVITY * 0.6,
+                    )
+                )
         else:
             second = self._colour() if rng.random() < 0.35 else None
             ring = rng.random() < 0.3
@@ -352,12 +395,39 @@ class MusicShow:
                 angle = (2 * math.pi * i / self.spark_count) if ring else rng.uniform(0, 2 * math.pi)
                 speed = self.spark_speed * (1.0 if ring else rng.uniform(0.3, 1.0))
                 colour = second if (second and i % 2) else rocket.color
-                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
-                                          rng.randint(28, 44), colour))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        math.cos(angle) * speed,
+                        math.sin(angle) * speed,
+                        rng.randint(28, 44),
+                        colour,
+                    )
+                )
         for c in range(3):
             self.flash[c] = min(1.0, self.flash[c] + rocket.color[c] / 255 * 0.6)
 
     def step(self):
+        self._launch_rockets()
+        self._fire_hits()
+        self.hit_comets.step(False)
+        self._advance_rockets()
+        self._advance_sparks()
+        self._advance_lanterns()
+        self._advance_embers()
+        self._advance_dust()
+        self.flash = [f * 0.85 for f in self.flash]
+        self.white *= 0.93
+        for name, effect in self.extras.items():
+            effect.step(name in self.effects)
+        actors = self.cue.actors if self.cue else ()
+        for name, actor in self.actors.items():
+            actor.follow(name in actors)
+            actor.step(name in actors)
+        self.frame += 1
+
+    def _launch_rockets(self):
         rng = self.rng
         if self.rate > 0:
             if self.frames_to_next_launch <= 0:
@@ -367,9 +437,7 @@ class MusicShow:
                 self.frames_to_next_launch = rng.randint(*self.launch_gap) / self.rate
             self.frames_to_next_launch -= 1
 
-        self._fire_hits()
-        self.hit_comets.step(False)
-
+    def _advance_rockets(self):
         rising = []
         for r in self.rockets:
             r.x += r.vx
@@ -381,6 +449,7 @@ class MusicShow:
                 rising.append(r)
         self.rockets = rising
 
+    def _advance_sparks(self):
         alive = []
         for s in self.sparks:
             s.vx *= DRAG
@@ -392,49 +461,67 @@ class MusicShow:
                 alive.append(s)
         self.sparks = alive
 
+    def _advance_lanterns(self):
+        rng = self.rng
         big = self.height >= 64
         if "lanterns" in self.effects and len(self.lanterns) < 40 and rng.random() < (0.2 if big else 0.12):
             # [x, y, rise speed, wobble phase]
-            self.lanterns.append([rng.uniform(1, self.width - 2), float(self.height),
-                                  rng.uniform(0.08, 0.15) * (1.6 if big else 1.0), rng.uniform(0, 2 * math.pi)])
+            self.lanterns.append(
+                [
+                    rng.uniform(1, self.width - 2),
+                    float(self.height),
+                    rng.uniform(0.08, 0.15) * (1.6 if big else 1.0),
+                    rng.uniform(0, 2 * math.pi),
+                ]
+            )
         for lantern in self.lanterns:
             lantern[1] -= lantern[2]
         self.lanterns = [lantern for lantern in self.lanterns if lantern[1] > -2]
 
+    def _advance_embers(self):
+        rng = self.rng
         if "embers" in self.effects and len(self.embers) < 60 and rng.random() < 0.3:
             # [x, y, vx, vy, life, max life]: drifting down from the burning sky
             life = rng.randint(60, 120)
-            self.embers.append([rng.uniform(0, self.width), rng.uniform(0, self.height * 0.5),
-                                rng.uniform(-0.05, 0.05), rng.uniform(0.04, 0.1), life, life])
+            self.embers.append(
+                [
+                    rng.uniform(0, self.width),
+                    rng.uniform(0, self.height * 0.5),
+                    rng.uniform(-0.05, 0.05),
+                    rng.uniform(0.04, 0.1),
+                    life,
+                    life,
+                ]
+            )
         for ember in self.embers:
             ember[0] += ember[2]
             ember[1] += ember[3]
             ember[4] -= 1
         self.embers = [e for e in self.embers if e[4] > 0 and e[1] < self.height]
 
+    def _advance_dust(self):
+        rng = self.rng
         tink = self.tink_at()
         if tink:
             x, y = tink
             for _ in range(2 * self.tink_scale):
                 life = rng.randint(15, 30)
-                self.dust.append([x + rng.uniform(-self.tink_w / 2, 0), y + rng.uniform(0, self.tink_h / 2),
-                                  rng.uniform(-0.15, 0.05), rng.uniform(0.05, 0.3), life, life,
-                                  rng.choice(TinkReveal.dust_colors)])
+                self.dust.append(
+                    [
+                        x + rng.uniform(-self.tink_w / 2, 0),
+                        y + rng.uniform(0, self.tink_h / 2),
+                        rng.uniform(-0.15, 0.05),
+                        rng.uniform(0.05, 0.3),
+                        life,
+                        life,
+                        rng.choice(TinkReveal.dust_colors),
+                    ]
+                )
         for d in self.dust:
             d[0] += d[2]
             d[1] += d[3]
             d[4] -= 1
         self.dust = [d for d in self.dust if d[4] > 0]
-
-        self.flash = [f * 0.85 for f in self.flash]
-        self.white *= 0.93
-        for name, effect in self.extras.items():
-            effect.step(name in self.effects)
-        actors = self.cue.actors if self.cue else ()
-        for name, actor in self.actors.items():
-            actor.follow(name in actors)
-            actor.step(name in actors)
-        self.frame += 1
 
     def _fire_hits(self):
         """Fire each of the scene's hits once, at its time: a shell launches early by its climb so it
@@ -452,8 +539,11 @@ class MusicShow:
             if self.t > hit.at + 1.0:
                 continue
             if hit.kind == "shell":
-                self.rockets.append(_Rocket(hit.x * self.width, self.height - 1, 0.0, -self.rocket_speed,
-                                            burst_y, hit.rgb, style=hit.style))
+                self.rockets.append(
+                    _Rocket(
+                        hit.x * self.width, self.height - 1, 0.0, -self.rocket_speed, burst_y, hit.rgb, style=hit.style
+                    )
+                )
             elif hit.kind == "roof_fan":
                 self.hit_comets.roof_fan(hit.rgb)
             else:
@@ -480,196 +570,34 @@ class MusicShow:
         sx, sy = self.spire[0], self.spire[1] - self.tink_h / 2
         top = self.height * 0.2
         end_x = self.width + self.tink_w
-        x = sx + (end_x - sx) * p ** 1.5
+        x = sx + (end_x - sx) * p**1.5
         y = sy + (top - sy) * smooth(p / 0.5) + math.sin(p * math.pi * 4) * self.tink_scale
         return x, y
 
     def frame_pixels(self):
-        """Compose the current frame as {(x, y): (r, g, b)}; unlisted pixels are black."""
+        """Compose the current frame as {(x, y): (r, g, b)}; unlisted pixels are black. Each layer is
+        drawn over the last, in this order."""
         out = {}
-        width, height, seen = self.width, self.height, out.get
-
-        # Called for every lit LED of every frame, so it's written out long-hand: a Pi Zero spends
-        # most of a frame here.
-        def put(x, y, rgb):
-            xi, yi = int(round(x)), int(round(y))
-            if 0 <= xi < width and 0 <= yi < height:
-                prev = seen((xi, yi))
-                if prev:
-                    rgb = (max(prev[0], rgb[0]), max(prev[1], rgb[1]), max(prev[2], rgb[2]))
-                out[(xi, yi)] = rgb
-
-        for sx, sy in self.stars:
-            twinkle = 25 + int(25 * self.rng.random())
-            put(sx, sy, (twinkle, twinkle, twinkle + 10))
-
-        for s in self.sparks:
-            f = s.life / s.max_life
-            hot = max(0.0, (f - 0.8) / 0.2)
-            r, g, b = s.color
-            put(s.x, s.y, (int((r + (255 - r) * hot) * f), int((g + (255 - g) * hot) * f),
-                           int((b + (255 - b) * hot) * f)))
-            if f > 0.5:
-                put(s.x - s.vx * 1.5, s.y - s.vy * 1.5, (int(r * f * 0.35), int(g * f * 0.35), int(b * f * 0.35)))
-
-        for r in self.rockets:
-            put(r.x, r.y, (255, 230, 180))
-            put(r.x, r.y + 1, (140, 90, 40))
-            put(r.x, r.y + 2, (50, 30, 10))
-
-        # A lantern is a glowing body (2 LEDs tall, 2x2 on a 64-row board) over a dim halo.
-        size = 2 if self.height >= 64 else 1
-        for x, y, _, phase in self.lanterns:
-            glow = 0.8 + 0.2 * math.sin(self.frame * 0.2 + phase)
-            lx = int(round(x + 0.6 * math.sin(self.frame * 0.05 + phase)))
-            ly = int(round(y))
-            halo = tuple(int(c * glow * 0.25) for c in LANTERN_RGB)
-            for dx in range(-1, size + 1):
-                for dy in range(-1, 3):
-                    put(lx + dx, ly + dy, halo)
-            body = tuple(int(c * glow) for c in LANTERN_RGB)
-            for dx in range(size):
-                for dy in range(2):
-                    put(lx + dx, ly + dy, body)
-
-        for x, y, _, _, life, max_life in self.embers:
-            put(x, y, tuple(int(c * life / max_life) for c in EMBER_RGB))
-
-        if "wishing_star" in self.effects and self.cue is not None:
-            p = self.cue.progress(self.t)
-            for k in range(6, 0, -1):  # a fading trail behind it
-                tx, ty = self._wish_path(max(0.0, p - k * 0.02))
-                put(tx, ty, tuple(int(c * (1 - k / 7) * 0.5) for c in WISH_GLOW_RGB))
-            x, y = self._wish_path(p)
-            for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-                put(x + dx, y + dy, WISH_GLOW_RGB)
-            put(x, y, WISH_RGB)
-
-        for x, y, _, _, life, max_life, rgb in self.dust:
-            put(x, y, tuple(int(c * life / max_life) for c in rgb))
-
+        put = _plotter(out, self.width, self.height)
+        self._draw_stars(put)
+        self._draw_sparks(put)
+        self._draw_rockets(put)
+        self._draw_lanterns(put)
+        self._draw_embers(put)
+        self._draw_wishing_star(put)
+        self._draw_dust(put)
         for name, effect in self.extras.items():
             effect.draw_behind(put, out, name in self.effects)
         self.hit_comets.draw_behind(put, out, True)
-
-        # The castle hides anything launched from behind it; Tink and the effects' fronts don't. Dimmed
-        # for a stage, it's a ghost the sky shows through; gone, it hides nothing.
-        shown = self.castle_level()
-        colours = self._castle_now()
-        flicker = self.castle_look in _FLICKERS
-        wipe = (self.t - self.castle_change_t) / WIPE_S if self.castle_wipe else 1.0
-        wiping = 0 <= wipe < 1
-        rows = {}  # a wipe's colours for each row of the castle, worked out once a frame
-
-        def row_colours(dy):
-            row = rows.get(dy)
-            if row is None:
-                f = smooth(wipe * 2 - dy / self.castle_h)
-                row = rows[dy] = {k: tuple(int(a + (b - a) * f) for a, b in zip(self.castle_from[k], to))
-                                  for k, to in self.castle_to.items()}
-            return row
-        glass = smooth((self.t - self.castle_change_t) / CASTLE_FADE_S) if self.castle_look == "stained_glass" else 0
-        # A lit colour and a dimmed one depend only on the colour going in (and this frame's flash and
-        # stage level), so each is worked out once a frame, not once an LED: the castle is most of a
-        # frame's LEDs.
-        fr, fg, fb = self.flash
-        lit, dimmed = {}, {}
-
-        def glowing(base):
-            glow = lit.get(base)
-            if glow is None:
-                glow = lit[base] = (min(255, int(base[0] * 0.75 + 110 * fr)),
-                                    min(255, int(base[1] * 0.75 + 110 * fg)),
-                                    min(255, int(base[2] * 0.75 + 110 * fb)))
-            return glow
-
-        def dim(base):
-            low = dimmed.get(base)
-            if low is None:
-                low = dimmed[base] = (int(base[0] * shown), int(base[1] * shown), int(base[2] * shown))
-            return low
-
-        if shown > 0.01 and not flicker and not wiping:
-            # Without the fire's flicker every LED of a kind (or of a stained-glass tile) is one colour,
-            # and from one frame to the next usually the same one: the finished castle is kept and
-            # reused while its colours hold.
-            finals = {}
-            for kind, base in colours.items():
-                finals[kind] = glowing(base) if kind in _LIT_KINDS else base
-            if glass:
-                for i, tile in enumerate(_STAINED_GLASS):
-                    base = tuple(int(a + (b - a) * glass) for a, b in zip(colours["W"], tile))
-                    finals[("W", i)] = glowing(base) if "W" in _LIT_KINDS else base
-            if shown < 1:
-                finals = {k: dim(rgb) for k, rgb in finals.items()}
-            key = (tuple(sorted((str(k), rgb) for k, rgb in finals.items())), shown < 1, id(self.castle_shape))
-            if key != self._castle_key:
-                layer = {}
-                for dx, dy, kind in self.castle_shape or self.castle_pixels:
-                    x, y = self.castle_x + dx, self.castle_y + dy
-                    if 0 <= x < width and 0 <= y < height:
-                        if kind == "W" and glass:
-                            kind = ("W", (dx // (2 * self.scale) * 3 + dy // (2 * self.scale)) % 4)
-                        layer[(x, y)] = finals[kind]
-                self._castle_key, self._castle_layer = key, layer
-            if shown < 1:
-                for xy, rgb in self._castle_layer.items():
-                    prev = seen(xy)
-                    out[xy] = (max(prev[0], rgb[0]), max(prev[1], rgb[1]), max(prev[2], rgb[2])) if prev else rgb
-            else:
-                out.update(self._castle_layer)
-        else:
-            for dx, dy, kind in ((self.castle_shape or self.castle_pixels) if shown > 0.01 else ()):
-                x, y = self.castle_x + dx, self.castle_y + dy
-                if not (0 <= x < width and 0 <= y < height):
-                    continue
-                base = row_colours(dy)[kind] if wiping else colours[kind]
-                if kind == "W" and glass:
-                    tile = _STAINED_GLASS[(dx // (2 * self.scale) * 3 + dy // (2 * self.scale)) % 4]
-                    base = tuple(int(a + (b - a) * glass) for a, b in zip(base, tile))
-                if kind in _LIT_KINDS and flicker:
-                    # Each LED on its own phase (a hash of its spot), so the fire doesn't band.
-                    level = 0.75 + 0.25 * math.sin(self.frame * 0.7 + (dx * 7919 + dy * 104729) % 628 / 100)
-                    base = glowing((int(base[0] * level), int(base[1] * level), int(base[2] * level)))
-                elif kind in _LIT_KINDS:
-                    base = glowing(base)
-                if shown < 1:
-                    put(x, y, dim(base))
-                else:
-                    out[(x, y)] = base
-
+        self._draw_castle(put, out)
         for name, effect in self.extras.items():
             effect.draw_front(put, out, name in self.effects)
-
-        tink = self.tink_at()
-        if tink:
-            left = int(round(tink[0] - self.tink_w / 2))
-            top = int(round(tink[1] - self.tink_h / 2))
-            for row, line in enumerate(TinkReveal.art):
-                for col, key in enumerate(line):
-                    if key == ".":
-                        continue
-                    for oy in range(self.tink_scale):
-                        for ox in range(self.tink_scale):
-                            x, y = left + col * self.tink_scale + ox, top + row * self.tink_scale + oy
-                            if 0 <= x < self.width and 0 <= y < self.height:
-                                out[(x, y)] = TinkReveal.colors[key]
-
+        self._draw_tink(out)
         actors = self.cue.actors if self.cue else ()
         for name, actor in self.actors.items():
             actor.draw(put, out, name in actors)
-
         if self.white > 0.02:
-            level = int(255 * min(1.0, self.white))
-            # Every pixel at least `level` on each channel. Written as plain loops, not a tuple(max(...)
-            # for ...) per pixel: this is the biggest frame of the show, and the Pi's build time was in it.
-            for pos, (r, g, b) in out.items():
-                out[pos] = (r if r > level else level, g if g > level else level, b if b > level else level)
-            blank = (level, level, level)
-            for y in range(self.height):
-                for x in range(self.width):
-                    if (x, y) not in out:
-                        out[(x, y)] = blank
+            self._draw_white(out)
         return out
 
 
@@ -685,8 +613,10 @@ def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
     show = MusicShow(matrix.width, matrix.height, rng, score.lips)
     canvas = frame_canvas(matrix)
     frame_time = 1.0 / fps
-    debug.info(f"Playing the {score.name} show ({score.version}) for {score.end:.0f}s "
-               f"(ready in {(clock() - t0) * 1000:.0f} ms).")
+    debug.info(
+        f"Playing the {score.name} show ({score.version}) for {score.end:.0f}s "
+        f"(ready in {(clock() - t0) * 1000:.0f} ms)."
+    )
     cue = None
     frames, late, most_pixels, scene_start = 0, 0, 0, 0.0
     slowest, slowest_build = 0.0, 0.0
@@ -698,12 +628,14 @@ def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
         if cue is not None and t > scene_start:
             wall = t - scene_start
             board = system_stats.describe()
-            debug.info(f"{score.name} {cue.title}: {frames / wall:.1f} fps "
-                       f"(aiming for {fps}), slowest frame {slowest * 1000:.0f} ms "
-                       f"(build {slowest_build * 1000:.0f} / push {(slowest - slowest_build) * 1000:.0f}), "
-                       f"{late} late, {most_pixels} px, "
-                       f"CPU show {(thread - cpu_thread) / wall:.0%} / process {(process - cpu_process) / wall:.0%}"
-                       + (f", {board}" if board else ""))
+            debug.info(
+                f"{score.name} {cue.title}: {frames / wall:.1f} fps "
+                f"(aiming for {fps}), slowest frame {slowest * 1000:.0f} ms "
+                f"(build {slowest_build * 1000:.0f} / push {(slowest - slowest_build) * 1000:.0f}), "
+                f"{late} late, {most_pixels} px, "
+                f"CPU show {(thread - cpu_thread) / wall:.0%} / process {(process - cpu_process) / wall:.0%}"
+                + (f", {board}" if board else "")
+            )
         cpu_thread, cpu_process = thread, process
 
     while True:

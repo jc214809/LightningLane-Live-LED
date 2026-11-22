@@ -18,9 +18,14 @@ circle with PIL at ~10px per LED, tile a few timesteps into one sheet, and open 
 
 ```python
 class C:
-    def __init__(s, w, h): s.width, s.height, s.px = w, h, {}
-    def SetPixel(s, x, y, r, g, b): s.px[(int(x), int(y))] = (r, g, b)
-    def Clear(s): s.px = {}
+    def __init__(s, w, h):
+        s.width, s.height, s.px = w, h, {}
+
+    def SetPixel(s, x, y, r, g, b):
+        s.px[(int(x), int(y))] = (r, g, b)
+
+    def Clear(s):
+        s.px = {}
 ```
 
 Always put a non-black stand-in "screen" behind the character too, or you won't notice
@@ -199,7 +204,8 @@ fine to a test and wrong to a person:
 def distance(a, b):
     return sum(abs(x - y) for x, y in zip(colors[a], colors[b]))
 
-assert distance("P", "T") > 200   # eye against the muzzle it sits on
+
+assert distance("P", "T") > 200  # eye against the muzzle it sits on
 ```
 
 None of this replaces looking at it. It stops a feature you already fixed from
@@ -631,6 +637,23 @@ posing. What was new:
   not the white block beside the cab: ask what a shape is before animating it. 64x32 has no waves yet.
 - **Keep mock code out of /tmp's reach.** A cleanup deleted the first train mock's art mid-design; the
   parts had to be recovered from a pickled render.
+
+### Jollywood Nights (`JollywoodTowerLandmark`)
+
+The Tower of Terror decked out, in place of the plain tower on party nights: chasing bulbs, red and green
+windows, a cupola bow, two wreaths, a pink neon "JOLLYWOOD" sign, tonight's hours in green neon in the
+top-corner clouds, red and green lightning, two searchlights, snow, and a gift for the elevator car that
+bursts into confetti. Picked from five animated mocks (a marquee and a clapperboard + tree were the others).
+
+- **Dress up a landmark by subclassing it.** It inherits the tower's story, beats, tilt and screen times,
+  and decorates in `animate()` after the tower's own. The one change to the tower was a hook
+  (`draw_car`, `CAR_FLOOR`) so the gift replaces the car instead of being painted over it.
+- **Put the hours where both boards can see them.** On the building, in the side sky and in the grass were
+  all rejected; the top-corner storm clouds work, and 64x32 shows them after its tilt.
+- **64x32 lands the gift under the sign** (`CAR_FLOOR` 28) so its burst is in view; the signs wait for the
+  tilt. Keep the burst flash off the lettering (a test holds it).
+- **Precompute anything per-pixel.** The mock's searchlights tested all 4096 pixels per beam per frame; the
+  landmark keeps each beam's sky sorted by angle and looks up only the slice it points at.
 
 ### Before redoing Spaceship Earth
 

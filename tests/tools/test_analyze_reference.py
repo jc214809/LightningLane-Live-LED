@@ -15,8 +15,10 @@ REFS = tool.REFERENCES
 
 def test_every_reference_image_has_a_readme_row():
     missing = tool.missing_rows()
-    assert missing == [], ("add a row to docs/references/README.md for each (measure with "
-                           f"python3 tools/analyze_reference.py <image>): {missing}")
+    assert missing == [], (
+        "add a row to docs/references/README.md for each (measure with "
+        f"python3 tools/analyze_reference.py <image>): {missing}"
+    )
 
 
 def test_every_readme_row_links_an_image_that_exists():
@@ -26,9 +28,11 @@ def test_every_readme_row_links_an_image_that_exists():
 
 
 def test_links_are_read_bare_in_angle_brackets_and_percent_encoded():
-    text = ("| Reference | Character |\n|---|---|\n"
-            "| [a.jpg](a.jpg) | A |\n| [b c.png](<b c.png>) | B |\n| [d e.jpg](d%20e.jpg) | D |\n"
-            "Not a row: [x.png](x.png)\n")
+    text = (
+        "| Reference | Character |\n|---|---|\n"
+        "| [a.jpg](a.jpg) | A |\n| [b c.png](<b c.png>) | B |\n| [d e.jpg](d%20e.jpg) | D |\n"
+        "Not a row: [x.png](x.png)\n"
+    )
     assert tool.readme_links(text) == {"a.jpg", "b c.png", "d e.jpg"}
 
 
@@ -65,16 +69,19 @@ def test_the_hook_never_fails_the_session_over_a_missing_folder(tmp_path, monkey
 
 
 # What the README's table says today, for characters measured by hand.
-@pytest.mark.parametrize("w, h, on_32, on_64", [
-    (23, 28, "Yes", "Yes (2x too)"),               # Forky
-    (26, 31, "Tight", "Yes (2x too)"),             # Tink
-    (35, 30, "Tight", "Yes"),                      # Mike
-    (26, 33, "No (1 row over)", "Yes"),            # Sulley
-    (25, 34, "No (2 rows over)", "Yes"),           # Ralph
-    (20, 64, "No (32 rows over)", "Tight"),        # Pooh and his balloon
-    (67, 60, "No (3 columns too wide)", "No (3 columns too wide)"),  # Tigger and Pooh
-    (74, 86, "No (10 columns too wide)", "No (10 columns too wide, 22 rows too tall)"),  # Tiana
-])
+@pytest.mark.parametrize(
+    "w, h, on_32, on_64",
+    [
+        (23, 28, "Yes", "Yes (2x too)"),  # Forky
+        (26, 31, "Tight", "Yes (2x too)"),  # Tink
+        (35, 30, "Tight", "Yes"),  # Mike
+        (26, 33, "No (1 row over)", "Yes"),  # Sulley
+        (25, 34, "No (2 rows over)", "Yes"),  # Ralph
+        (20, 64, "No (32 rows over)", "Tight"),  # Pooh and his balloon
+        (67, 60, "No (3 columns too wide)", "No (3 columns too wide)"),  # Tigger and Pooh
+        (74, 86, "No (10 columns too wide)", "No (10 columns too wide, 22 rows too tall)"),  # Tiana
+    ],
+)
 def test_fits_match_the_readme(w, h, on_32, on_64):
     assert (tool.fits_64x32(w, h), tool.fits_64x64(w, h)) == (on_32, on_64)
 
@@ -86,20 +93,30 @@ def test_pieces_finds_each_character_and_ignores_stray_cells():
     assert tool.pieces(["..."]) == []
 
 
-def _grid(period=13.0, score=.9):
+def _grid(period=13.0, score=0.9):
     return {"period": period, "offset": 0, "score": score}
 
 
 def _reading(rows, **kw):
-    reading = {"turn": 0, "fx": _grid(), "fy": _grid(), "rows": rows, "colors": {"R": [220, 30, 40]},
-               "extraColors": 0, "box": None, "lines": False}
+    reading = {
+        "turn": 0,
+        "fx": _grid(),
+        "fy": _grid(),
+        "rows": rows,
+        "colors": {"R": [220, 30, 40]},
+        "extraColors": 0,
+        "box": None,
+        "lines": False,
+    }
     reading.update(kw)
     return reading
 
 
 def test_draft_row_measures_the_character_and_lists_its_colours():
     row, notes = tool.draft_row("Forky.jpg", _reading(["R" * 23] * 28))
-    assert row == "| [Forky.jpg](Forky.jpg) | TODO: who it shows | 23 x 28 | Yes | Yes (2x too) | Pattern mode reads it |"
+    assert (
+        row == "| [Forky.jpg](Forky.jpg) | TODO: who it shows | 23 x 28 | Yes | Yes (2x too) | Pattern mode reads it |"
+    )
     assert "13.0 x 13.0 px cells" in notes[0] and notes[-1] == "Colours: R #dc1e28"
 
 
@@ -117,11 +134,14 @@ def test_draft_row_flags_a_sheet_for_one_row_per_character():
     assert any("2 separate pieces (8 x 8, 8 x 8)" in n and "--box" in n for n in notes)
 
 
-@pytest.mark.parametrize("reading", [
-    {"fx": None, "fy": _grid()},                          # nothing repeats across
-    {"fx": _grid(score=.05), "fy": _grid()},              # barely repeats: noise, not a grid
-    {"fx": _grid(14.4), "fy": _grid(44.6, score=.35)},    # RC's enamel pin: cells three times taller than wide
-])
+@pytest.mark.parametrize(
+    "reading",
+    [
+        {"fx": None, "fy": _grid()},  # nothing repeats across
+        {"fx": _grid(score=0.05), "fy": _grid()},  # barely repeats: noise, not a grid
+        {"fx": _grid(14.4), "fy": _grid(44.6, score=0.35)},  # RC's enamel pin: cells three times taller than wide
+    ],
+)
 def test_draft_row_falls_back_to_tracing_without_a_believable_grid(reading):
     row, notes = tool.draft_row("RC.webp", _reading(["RR"] * 4, **reading))
     assert "| | Needs tracing | Needs tracing |" in row and "Calibrate" in row
@@ -140,14 +160,16 @@ def test_a_missing_image_is_an_error_not_a_traceback(tmp_path, caplog):
 
 def test_box_takes_four_numbers():
     assert tool._box("1,2,3.5,4") == [1, 2, 3.5, 4]
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017  _box's failure type is unspecified (a bad unpack); only that it fails
         tool._box("1,2,3")
 
 
 @needs_node
 def test_forky_is_measured_like_the_readme_by_hand(capsys):
     """Forky.jpg was measured by hand at 13 px cells, 23 x 28."""
-    assert tool.main([os.path.join(REFS, "Forky.jpg"), "--art", "--name", "FORKY_ART", "--palette", "FORKY_COLORS"]) == 0
+    assert (
+        tool.main([os.path.join(REFS, "Forky.jpg"), "--art", "--name", "FORKY_ART", "--palette", "FORKY_COLORS"]) == 0
+    )
     out = capsys.readouterr().out
     assert out.startswith("| [Forky.jpg](Forky.jpg) | TODO: who it shows | 23 x 28 | Yes | Yes (2x too) |")
     assert "13.0 x 13.0 px cells" in out

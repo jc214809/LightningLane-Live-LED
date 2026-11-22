@@ -1,0 +1,5 @@
+# Whole-repo formatting commits, skipped by `git blame` (GitHub reads this file by itself; locally run
+# `git config blame.ignoreRevsFile .git-blame-ignore-revs` once).
+
+# Formatting pass 3/4: ruff format (double quotes, 120 columns)
+b1fd02a6077197b6c157183a714550d8f13a48c5

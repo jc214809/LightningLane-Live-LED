@@ -35,8 +35,10 @@ class SpaceshipEarthLandmark(Landmark):
     UNLIT_RGB = (26, 28, 44)  # the sphere before her dust reaches it: a dark silhouette
     LEG_RGB, LEG_LIT_RGB = (48, 54, 78), (110, 120, 160)
     PERCH_DEG = 50  # where she lands: this far from the top, on the sphere's right shoulder
+
     def build(self):
         from display.animation import TinkReveal
+
         tall = self.height >= 64
         if tall:
             # Big and low, like 64x32: the legs just peek out below it (about four rows).
@@ -168,7 +170,7 @@ class SpaceshipEarthLandmark(Landmark):
         k = shade * (1.0 if up else 0.38)  # lit and shaded pyramid faces, as in the photo
         lit = tuple(int(c * k) for c in colour)
         dark = tuple(int(c * shade) for c in self.UNLIT_RGB)
-        return tuple(int(d + (l - d) * on) for d, l in zip(dark, lit))
+        return tuple(int(d + (lit_c - d) * on) for d, lit_c in zip(dark, lit))
 
     def _draw_dust(self, out, t):
         """
@@ -201,8 +203,13 @@ class SpaceshipEarthLandmark(Landmark):
         radius = (2 + landed * 14) * self.scale
         for i in range(8):
             a = i * math.pi / 4
-            self._blend(out, int(round(px + radius * math.cos(a))), int(round(py + radius * math.sin(a))),
-                        self.dust_colors[i % len(self.dust_colors)], 1 - landed / 0.5)
+            self._blend(
+                out,
+                int(round(px + radius * math.cos(a))),
+                int(round(py + radius * math.sin(a))),
+                self.dust_colors[i % len(self.dust_colors)],
+                1 - landed / 0.5,
+            )
 
     def _draw_tink(self, out, cx, cy, front):
         x0, y0 = int(round(cx - self.tink_w / 2)), int(round(cy - self.tink_h / 2))

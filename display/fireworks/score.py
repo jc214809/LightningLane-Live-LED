@@ -7,9 +7,10 @@ A later version of a show (a config.json "shows" entry's "version", like "v2") i
 <show>.<version>.json adds a stage and characters to scenes named by title, so re-timing V1 moves it too.
 <show>.<version>.lips.json, made by tools/lip_sync.py, holds the mouth tracks of the characters who sing.
 """
+
 import json
 import os
-from typing import Dict, FrozenSet, NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 from display.fireworks.music_show import CASTLE_LOOKS, EFFECTS, SHAPES
 from display.fireworks.show_actors import ACTORS
@@ -27,8 +28,20 @@ _MIN_BURST_LEVEL = 80
 # or none (music_show.STAGE_LEVELS has the brightness of each).
 STAGES = ("castle", "ghost", "off")
 # Effects that draw on or from the castle, so a scene with it off can't use them.
-CASTLE_EFFECTS = frozenset({"keyhole_glow", "keyhole_glow_dim", "keyhole_open", "bells", "flame_jets", "gold_burst",
-                            "fountains", "te_fiti", "wishing_star", "tink"})
+CASTLE_EFFECTS = frozenset(
+    {
+        "keyhole_glow",
+        "keyhole_glow_dim",
+        "keyhole_open",
+        "bells",
+        "flame_jets",
+        "gold_burst",
+        "fountains",
+        "te_fiti",
+        "wishing_star",
+        "tink",
+    }
+)
 # A scene's "hits": one firework at a set moment, for the real show's single cues. A roof fan fires comets
 # outward from both side rooftops; a shell bursts at (x, y), fractions of the board; a comet flies up and
 # across from one side.
@@ -40,7 +53,7 @@ SIDES = ("left", "right")
 class Hit(NamedTuple):
     at: float  # seconds into the show: when a shell bursts, or a fan or comet launches
     kind: str  # one of HIT_KINDS
-    rgb: Tuple[int, int, int]
+    rgb: tuple[int, int, int]
     x: float = 0.5  # a shell's burst, as fractions of the board's width and height
     y: float = 0.25
     style: str = "peony"  # a shell's, one of SHELL_STYLES
@@ -52,16 +65,16 @@ class Cue(NamedTuple):
     title: str
     start: float
     end: float
-    palette: Tuple[Tuple[int, int, int], ...]
+    palette: tuple[tuple[int, int, int], ...]
     rate: float  # launches against the everyday show; 0 is dark
-    castle: Optional[str]  # a music_show.CASTLE_LOOKS key, or None for the everyday castle
-    shapes: Tuple[Tuple[str, float], ...]  # (music_show.SHAPES key, chance per launch)
-    effects: FrozenSet[str]
+    castle: str | None  # a music_show.CASTLE_LOOKS key, or None for the everyday castle
+    shapes: tuple[tuple[str, float], ...]  # (music_show.SHAPES key, chance per launch)
+    effects: frozenset[str]
     stage: str = "castle"  # one of STAGES
-    actors: Tuple[str, ...] = ()  # show_actors.ACTORS keys, drawn in front of everything
-    hits: Tuple[Hit, ...] = ()  # set-moment fireworks, by time
-    castle_changes: Tuple[Tuple[float, str], ...] = ()  # (show seconds, CASTLE_LOOKS key) after the start's
-    stage_changes: Tuple[Tuple[float, str], ...] = ()  # (show seconds, one of STAGES) after the start's
+    actors: tuple[str, ...] = ()  # show_actors.ACTORS keys, drawn in front of everything
+    hits: tuple[Hit, ...] = ()  # set-moment fireworks, by time
+    castle_changes: tuple[tuple[float, str], ...] = ()  # (show seconds, CASTLE_LOOKS key) after the start's
+    stage_changes: tuple[tuple[float, str], ...] = ()  # (show seconds, one of STAGES) after the start's
 
     def progress(self, t):
         """0..1 through this scene at t seconds into the show."""
@@ -86,6 +99,7 @@ def _latest(first, changes, t):
 
 class Lips(NamedTuple):
     """A singing character's mouth: one shape per 1/fps second from start (audio seconds)."""
+
     start: float
     fps: float
     track: str  # 0 closed, 1 half, 2 open
@@ -101,8 +115,8 @@ class Lips(NamedTuple):
 class Score(NamedTuple):
     name: str
     end: float
-    cues: Tuple[Cue, ...]
-    lips: Optional[Dict[str, Lips]] = None  # by show_actors.ACTORS name
+    cues: tuple[Cue, ...]
+    lips: dict[str, Lips] | None = None  # by show_actors.ACTORS name
     version: str = "v1"  # the overlay that was applied, for the logs
 
     def cue_at(self, t):
@@ -117,7 +131,7 @@ def _rgb(text):
     text = text.lstrip("#")
     if len(text) != 6:
         raise ValueError(f"not a #RRGGBB colour: {text!r}")
-    return tuple(int(text[i:i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(text[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def _palette(colours):
@@ -134,8 +148,15 @@ def _hits(scene):
         unknown = set(entry) - {"at", "kind", "colour", "x", "y", "style", "side"}
         if unknown:
             raise ValueError(f"{scene['title']}: unknown hit keys {sorted(unknown)}")
-        hit = Hit(float(entry["at"]), entry["kind"], _rgb(entry["colour"]), float(entry.get("x", 0.5)),
-                  float(entry.get("y", 0.25)), entry.get("style", "peony"), entry.get("side", "right"))
+        hit = Hit(
+            float(entry["at"]),
+            entry["kind"],
+            _rgb(entry["colour"]),
+            float(entry.get("x", 0.5)),
+            float(entry.get("y", 0.25)),
+            entry.get("style", "peony"),
+            entry.get("side", "right"),
+        )
         if hit.kind not in HIT_KINDS or hit.style not in SHELL_STYLES or hit.side not in SIDES:
             raise ValueError(f"{scene['title']}: unknown hit {entry}")
         if not float(scene["start"]) <= hit.at < float(scene["end"]):
@@ -178,8 +199,19 @@ def _cue(section, scene):
         raise ValueError(f"unknown effects {sorted(effects - EFFECTS)}")
     start, end = float(scene["start"]), float(scene["end"])
     castle_changes = _changes(scene["title"], scene.get("castle_changes", ()), "castle", CASTLE_LOOKS, start, end)
-    return Cue(section["id"], scene["title"], start, end, palette, max(0.0, rate), castle, shapes, effects,
-               hits=_hits(scene), castle_changes=castle_changes)
+    return Cue(
+        section["id"],
+        scene["title"],
+        start,
+        end,
+        palette,
+        max(0.0, rate),
+        castle,
+        shapes,
+        effects,
+        hits=_hits(scene),
+        castle_changes=castle_changes,
+    )
 
 
 def _overlay(cue, extra):
@@ -204,8 +236,9 @@ def _overlay(cue, extra):
     effects = frozenset(effects)
     if not effects <= EFFECTS:
         raise ValueError(f"{cue.title}: unknown effects {sorted(effects - EFFECTS)}")
-    stage_changes = _changes(cue.title, extra.get("stage_changes", ()), "stage", STAGES, cue.start, cue.end,
-                             relative=True)
+    stage_changes = _changes(
+        cue.title, extra.get("stage_changes", ()), "stage", STAGES, cue.start, cue.end, relative=True
+    )
     if "off" in {stage, *(s for _, s in stage_changes)} and effects & CASTLE_EFFECTS:
         raise ValueError(f"{cue.title}: the castle is off, but {sorted(effects & CASTLE_EFFECTS)} draw on it")
     rate = max(0.0, float(extra.get("rate", cue.rate)))
@@ -216,9 +249,11 @@ def parse_score(name, data, overlay=None):
     """A Score from a show file's JSON, with a version's overlay file's JSON on it if given; raises
     ValueError/KeyError/TypeError on a bad file. An overlay title that matches no scene is an error, so
     renaming a scene can't silently drop what a version adds to it."""
-    cues = tuple(sorted((_cue(section, scene)
-                         for section in data["sections"] for scene in section["scenes"]),
-                        key=lambda c: c.start))
+    cues = tuple(
+        sorted(
+            (_cue(section, scene) for section in data["sections"] for scene in section["scenes"]), key=lambda c: c.start
+        )
+    )
     if not cues:
         raise ValueError("no scenes")
     if overlay is not None:

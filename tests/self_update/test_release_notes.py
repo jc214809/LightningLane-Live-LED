@@ -4,8 +4,10 @@ TEMPLATE = open(".github/pull_request_template.md", encoding="utf-8").read()
 
 
 def test_the_notes_are_the_section_under_their_heading_bullets_and_comments_dropped():
-    body = ("## Release notes\r\n<!-- for the owner -->\r\n- The castle sparkles at night.\r\n"
-            "* Rides that are down blink slower.\r\n\r\n## Summary\r\n- Refactor the sparkle.\r\n")
+    body = (
+        "## Release notes\r\n<!-- for the owner -->\r\n- The castle sparkles at night.\r\n"
+        "* Rides that are down blink slower.\r\n\r\n## Summary\r\n- Refactor the sparkle.\r\n"
+    )
     assert release_notes(body) == ["The castle sparkles at night.", "Rides that are down blink slower."]
     assert release_notes("Intro\n\n### Release Notes:\n1. One thing\n") == ["One thing"], "any level, numbered"
 
@@ -16,8 +18,9 @@ def test_none_is_an_empty_list_and_no_section_is_none():
     assert release_notes("## Summary\nStuff") is None
     assert release_notes("") is None and release_notes(None) is None
     assert release_notes(TEMPLATE) is None, "the template's comment alone isn't notes"
-    assert release_notes("## Release notes\nNone of the screens change colour\n") == \
-        ["None of the screens change colour"], "a sentence starting None is a note"
+    assert release_notes("## Release notes\nNone of the screens change colour\n") == [
+        "None of the screens change colour"
+    ], "a sentence starting None is a note"
 
 
 def test_the_first_line_skips_headings_comments_and_the_notes():

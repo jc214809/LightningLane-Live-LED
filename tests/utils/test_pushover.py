@@ -5,14 +5,15 @@ from urllib.parse import parse_qs
 
 import pytest
 
-import settings_page.pushover as pushover
-from settings_page.pushover import PushoverError, send_pin
+import utils.pushover as pushover
+from utils.pushover import PushoverError, send_pin
 
 KEYS = ("u-user", "t-token")
 
 
 class Urlopen:
     """A fake urllib.request.urlopen: records the request, answers with reply (bytes) or raises it."""
+
     def __init__(self, reply=b'{"status":1,"request":"abc"}'):
         self.reply, self.requests = reply, []
 
@@ -78,3 +79,10 @@ def test_bad_json_and_network_errors_are_raised(urlopen):
     urlopen.reply = urllib.error.URLError("no internet")
     with pytest.raises(OSError):
         send_pin(KEYS, "4821", "DonaldPi", 30)
+
+
+def test_the_old_settings_page_path_still_works_for_a_board_mid_update():
+    import settings_page.pushover as old
+
+    assert old.send is pushover.send and old.send_pin is pushover.send_pin and old.PushoverError is PushoverError
+    assert old.MESSAGES_URL == pushover.MESSAGES_URL and old.TIMEOUT_S == pushover.TIMEOUT_S

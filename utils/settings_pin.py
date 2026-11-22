@@ -2,6 +2,7 @@
 writes "<PIN> <expiry, epoch seconds>" to PIN_FILE when someone on the home network asks for one,
 and removes it once it's used. Asked every frame, so the file is read at most every CHECK_EVERY_S.
 """
+
 import time
 
 from settings_page.pins import PIN_FILE

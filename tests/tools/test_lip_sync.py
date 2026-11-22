@@ -37,7 +37,7 @@ def test_syllables_open_and_close_the_mouth_with_each_one():
 def test_a_quiet_moment_inside_a_loud_phrase_is_half_open():
     phrase = np.concatenate([_tone(0.4, 0.4), _tone(0.2, 0.2), _tone(0.4, 0.4)])  # 6 dB under: half
     track = tool.mouth_track(phrase)
-    middle = track[int(0.45 * tool.FPS):int(0.55 * tool.FPS)]
+    middle = track[int(0.45 * tool.FPS) : int(0.55 * tool.FPS)]
     assert set(middle) <= {"1", "0"} and "1" in track
 
 
@@ -78,8 +78,8 @@ def test_a_sound_lands_in_its_own_frame_however_far_into_the_track():
 def test_muted_stretches_keep_the_mouth_shut():
     sung = np.concatenate([np.concatenate([_tone(0.2), _silence(0.13)]) for _ in range(9)])
     track = tool.mouth_track(sung, muted=[(1.0, 2.0)])
-    assert set(track[tool.FPS:2 * tool.FPS]) == {"0"}
-    assert "2" in track[:tool.FPS] and "2" in track[2 * tool.FPS:]
+    assert set(track[tool.FPS : 2 * tool.FPS]) == {"0"}
+    assert "2" in track[: tool.FPS] and "2" in track[2 * tool.FPS :]
 
 
 def test_main_rejects_a_bad_mute(caplog):
@@ -100,5 +100,5 @@ def test_from_mix_reads_a_reverb_drowned_word_from_the_mix():
     mix = np.concatenate([_tone(1.0), np.concatenate([_tone(0.2), _silence(0.13)] * 3)[:RATE]])
     plain = tool.mouth_track(stem)
     mixed = tool.mouth_track(stem, mix=mix, from_mix=[(1.0, 2.0)])
-    assert set(plain[tool.FPS:]) == {"0"} and "2" in mixed[tool.FPS:], "the word's mouth comes from the mix"
-    assert mixed[:tool.FPS - 3] == plain[:tool.FPS - 3], "and only there"
+    assert set(plain[tool.FPS :]) == {"0"} and "2" in mixed[tool.FPS :], "the word's mouth comes from the mix"
+    assert mixed[: tool.FPS - 3] == plain[: tool.FPS - 3], "and only there"

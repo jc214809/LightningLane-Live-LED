@@ -5,14 +5,14 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas, FakeMatrix, fill
 
 
 def test_slinky_plays_as_a_screen_transition():
     matrix = FakeMatrix()
-    animation.show_screen(matrix, fill((10, 200, 90)), animation.SlinkyReveal.duration + 0.5,
-                          transition="slinky", rng=random.Random(7))
+    animation.show_screen(
+        matrix, fill((10, 200, 90)), animation.SlinkyReveal.duration + 0.5, transition="slinky", rng=random.Random(7)
+    )
     assert matrix.frames[0].get((63, 5)) in (None, (0, 0, 0)), "far side still dark at the start"
     assert matrix.frames[-1][(63, 5)] == (10, 200, 90), "screen fully revealed by the end"
 
@@ -38,7 +38,10 @@ def test_slinky_walks_out_then_the_rear_catches_up_and_both_leave():
     dog = animation.SlinkyReveal(64, 32)
     walk = [dog.front_x(f / animation.FPS) for f in range(int(dog.STRETCH_S * animation.FPS))]
     assert walk == sorted(walk) and walk[-1] > walk[0] + 20, "the front half walks steadily right"
-    gap = lambda t: dog.front_x(t) - dog.rear_x(t)
+
+    def gap(t):
+        return dog.front_x(t) - dog.rear_x(t)
+
     snap_end = dog.STRETCH_S + dog.HOLD_S + dog.SNAP_S
     assert gap(0.0) < gap(dog.STRETCH_S) > gap(snap_end), "stretches out, then snaps back together"
     assert dog.rear_x(dog.duration) >= 64, "and the whole dog has left the board"
@@ -178,8 +181,13 @@ def test_slinky_wrap_looks_down_at_his_rear_and_wags(height):
     for frac in (0.1, 0.3, 0.5, 0.7, 0.9):
         c = FakeCanvas(64, height)
         dog.overlay(c, _at(dog, "look", frac))
-        tails.add(frozenset(p for p, rgb in c.px.items() if rgb in (dog.COLORS["N"], dog.COLORS["C"])
-                            and p[1] < rg - dog.rear_h + 3 and p[0] < rx + dog.rear_w))
+        tails.add(
+            frozenset(
+                p
+                for p, rgb in c.px.items()
+                if rgb in (dog.COLORS["N"], dog.COLORS["C"]) and p[1] < rg - dog.rear_h + 3 and p[0] < rx + dog.rear_w
+            )
+        )
     assert len(tails) >= 2, "the tail swings between poses"
 
 
@@ -189,8 +197,9 @@ def test_slinky_wrap_rear_follows_his_path_round_then_both_leave():
         out = [dog.pose(_at(dog, "follow", f * dog.FOLLOW_OUT))["rear"] for f in (0.1, 0.5, 0.99)]
         assert all(g == height for _, g in out), "leaves along the bottom, the way his front went"
         assert out[0][0] < out[1][0] < out[2][0] and out[2][0] > 64 - 3, "off the right edge"
-        back = [dog.pose(_at(dog, "follow", dog.FOLLOW_OUT + f * (1 - dog.FOLLOW_OUT)))["rear"]
-                for f in (0.01, 0.5, 0.999)]
+        back = [
+            dog.pose(_at(dog, "follow", dog.FOLLOW_OUT + f * (1 - dog.FOLLOW_OUT)))["rear"] for f in (0.01, 0.5, 0.999)
+        ]
         assert all(g == dog.front_h for _, g in back), "and comes back along the top"
         assert back[0][0] < 0, "in from the left edge"
         fx, _ = dog.pose(_at(dog, "follow", 0.999))["front"]

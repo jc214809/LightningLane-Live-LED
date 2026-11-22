@@ -1,21 +1,12 @@
-import time
 from datetime import datetime
-from io import BytesIO
 
-import requests
-from PIL import Image
-
-from display.display import get_text_width, wrap_text, color_dict, loaded_fonts
+from display.display import color_dict, get_text_width, loaded_fonts, wrap_text
 from driver import graphics
+from updater.shared import weather_icons
 from utils import debug
 from utils.special_events import DEFAULT_STAR_RGB, star_rgb
 
-ICON_TIMEOUT_S = 5
-ICON_RETRY_S = 300
 
-# Icon cache for storing loaded weather icons
-icon_cache = {}
-icon_failures = {}
 def render_park_information_screen(matrix, park_obj):
     """
     Renders the park name at the top and the hours/price at the bottom.
@@ -25,7 +16,7 @@ def render_park_information_screen(matrix, park_obj):
     board_height = matrix.height
 
     # Determine bottom area height using info_font's height.
-    info_font_height = getattr(loaded_fonts["info"], "height")
+    info_font_height = loaded_fonts["info"].height
 
     baseline_y = board_height - 1
     # Wrap park name
@@ -40,8 +31,11 @@ def render_park_information_screen(matrix, park_obj):
         render_park_hours(baseline_y, 1, matrix, park_obj)
         render_lightning_lane_multi_pass_price(baseline_y - info_font_height, 1, matrix, llmp_price)
     else:
-        render_lightning_lane_multi_pass_price(baseline_y, matrix.width - get_text_width(loaded_fonts["info"], llmp_price), matrix, llmp_price)
+        render_lightning_lane_multi_pass_price(
+            baseline_y, matrix.width - get_text_width(loaded_fonts["info"], llmp_price), matrix, llmp_price
+        )
         render_park_hours(baseline_y, 1, matrix, park_obj)
+
 
 # The dots of the "info" font's "*" (4x6-legacy on both boards), as (x, y) from the left edge and
 # the baseline, in the order a multicoloured star lists its colours.
@@ -57,10 +51,13 @@ def render_special_ticketed_events(vertical_start, matrix, hours_text, rgb=DEFAU
         return
     graphics.DrawText(matrix, loaded_fonts["info"], x, vertical_start, graphics.Color(*rgb), "*")
 
+
 def render_lightning_lane_multi_pass_price(vertical_start, horizontal_start, matrix, llmp_price):
     if llmp_price and not llmp_price.startswith("$"):
         llmp_price = "$" + llmp_price
-    graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], llmp_price)
+    graphics.DrawText(
+        matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], llmp_price
+    )
 
 
 def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
@@ -74,61 +71,62 @@ def render_park_hours(vertical_start, horizontal_start, matrix, park_obj):
             render_special_ticketed_events(vertical_start, matrix, hours_text, star)
     else:
         hours_text = "??-??"
-    graphics.DrawText(matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], hours_text)
+    graphics.DrawText(
+        matrix, loaded_fonts["info"], horizontal_start, vertical_start, color_dict["disney_blue"], hours_text
+    )
+
 
 def render_weather_icon(icon_code):
-    # Construct the URL for the weather icon
-    # Check if the icon is already cached
-    # Called every animation frame: no logging on this path (a cache hit is the normal case).
-    if icon_code in icon_cache:
-        return icon_cache[icon_code]
-    # The park screen is redrawn every animation frame; don't re-download a failing icon each time.
-    failed_at = icon_failures.get(icon_code)
-    if failed_at is not None and time.monotonic() - failed_at < ICON_RETRY_S:
-        return None
+    """The icon the REST thread has downloaded, or None until it has. No I/O: this runs every frame."""
+    return weather_icons.get(icon_code)
 
-    icon_url = f"https://openweathermap.org/img/wn/{icon_code}.png"
 
-    try:
-        # Fetch the icon image from the URL
-        response = requests.get(icon_url, timeout=ICON_TIMEOUT_S)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        img = Image.open(BytesIO(response.content))
-        img = img.resize((15, 15))  # Resize the image to a smaller display size for the matrix
-        icon_cache[icon_code] = img
-        icon_failures.pop(icon_code, None)
-        debug.log(f"Downloaded weather icon {icon_code}")  # once per new icon, not per frame
-
-        return img
-    except requests.RequestException as e:
-        debug.error(f"Failed to fetch icon from URL: {icon_url} - {e}")  # Log any issues
-    except Exception as e:
-        debug.error(f"Failed to load icon: {e}")  # Log other errors
-    icon_failures[icon_code] = time.monotonic()
-    return None
-
-def display_weather_icon_and_description(matrix, weather_info, font_height,show_icon=True):
+def display_weather_icon_and_description(matrix, weather_info, font_height, show_icon=True):
     """Display the weather icon and its description in the top right corner."""
 
     temp = weather_info.get("temperature", "?")
 
     padding = 7
     if show_icon and "icon" in weather_info:
-        img = render_weather_icon(weather_info['icon'])
+        img = render_weather_icon(weather_info["icon"])
 
         if img:
             icon_width = img.width
             if matrix.height == 32:
                 matrix.SetImage(img.convert("RGB"), matrix.width - icon_width - 1, 1)
-                graphics.DrawText(matrix, loaded_fonts["info"], matrix.width - get_text_width(loaded_fonts["info"], temp), img.height + padding, color_dict["white"], temp)
-                graphics.DrawText(matrix, loaded_fonts["info"], matrix.width - get_text_width(loaded_fonts["info"], weather_info['short_description']), (img.height + font_height + padding), color_dict["white"],weather_info['short_description'])
+                graphics.DrawText(
+                    matrix,
+                    loaded_fonts["info"],
+                    matrix.width - get_text_width(loaded_fonts["info"], temp),
+                    img.height + padding,
+                    color_dict["white"],
+                    temp,
+                )
+                graphics.DrawText(
+                    matrix,
+                    loaded_fonts["info"],
+                    matrix.width - get_text_width(loaded_fonts["info"], weather_info["short_description"]),
+                    (img.height + font_height + padding),
+                    color_dict["white"],
+                    weather_info["short_description"],
+                )
             if matrix.height >= 64:
-                weather_text = temp + ' ' + weather_info['short_description']
-                horizontal_point = int((matrix.width - img.width - get_text_width(loaded_fonts["info"], weather_text)) / 2)
+                weather_text = temp + " " + weather_info["short_description"]
+                horizontal_point = int(
+                    (matrix.width - img.width - get_text_width(loaded_fonts["info"], weather_text)) / 2
+                )
                 vertical_point = int(matrix.height - (loaded_fonts["info"].height * 2.5))
                 matrix.SetImage(img.convert("RGB"), horizontal_point, vertical_point - img.height)
-                graphics.DrawText(matrix, loaded_fonts["info"], horizontal_point + img.width, vertical_point - 3, color_dict["white"], weather_text)
-        # No icon: the fetch already logged why, once per retry window; this runs every frame.
+                graphics.DrawText(
+                    matrix,
+                    loaded_fonts["info"],
+                    horizontal_point + img.width,
+                    vertical_point - 3,
+                    color_dict["white"],
+                    weather_text,
+                )
+        # No icon (not downloaded yet, or the download failed): the REST thread logs why; this runs every frame.
+
 
 def format_iso_time(iso_str):
     """
@@ -148,7 +146,7 @@ def draw_multi_line_park_name_text_block(matrix, text_lines):
     font_height = getattr(loaded_fonts["park"], "height", 9)
     x = 1
     # Start baseline so the entire block is vertically centered.
-    current_y =  font_height
+    current_y = font_height
     for line in text_lines:
         if len(text_lines) == 1:
             if matrix.height == 32:

@@ -3,6 +3,7 @@ the app wouldn't find. Fetched from /v1/destinations at most once a day (a faile
 after RETRY_S) and kept in a file, so a phone on the setup hotspot, with no internet, still gets
 the list. Fetches run in the background: a page never waits on the API.
 """
+
 import json
 import os
 import ssl
@@ -24,8 +25,9 @@ TIMEOUT_S = 10
 def fetch_destinations():
     """/v1/destinations' list. Raises on a network error, a bad status or bad JSON."""
     request = urllib.request.Request(DESTINATIONS_URL, headers={"User-Agent": "LightningLane-Live-LED settings page"})
-    with urllib.request.urlopen(request, timeout=TIMEOUT_S,
-                                context=ssl.create_default_context(cafile=certifi.where())) as response:
+    with urllib.request.urlopen(
+        request, timeout=TIMEOUT_S, context=ssl.create_default_context(cafile=certifi.where())
+    ) as response:
         destinations = json.load(response).get("destinations")
     if not isinstance(destinations, list):
         raise ValueError("no destinations list in the reply")
@@ -80,8 +82,10 @@ class ParkNames:
                 raise ValueError("the reply listed no parks")
             self._write(parks)
         except Exception as e:  # a bad reply or full disk: log it, keep the old list, retry later
-            debug.warning(f"Settings page: couldn't refresh the park list ({type(e).__name__}: {e}); "
-                          f"{'keeping the last one' if self.parks else 'names are not checked until it works'}.")
+            debug.warning(
+                f"Settings page: couldn't refresh the park list ({type(e).__name__}: {e}); "
+                f"{'keeping the last one' if self.parks else 'names are not checked until it works'}."
+            )
             return False
         finally:
             with self.lock:

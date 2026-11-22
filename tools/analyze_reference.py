@@ -13,6 +13,7 @@ Pattern mode finds it (its JS core, run under Node), so the tool and the editor 
 --missing needs only the standard library (the SessionStart hook runs it with whatever python3 is
 on the PATH). Measuring needs Pillow and Node.
 """
+
 import argparse
 import json
 import logging
@@ -30,7 +31,7 @@ README = os.path.join(REFERENCES, "README.md")
 EDITOR = os.path.join(ROOT, "tools", "sprite_editor.html")
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 # findGrid's score is the edge profile's autocorrelation at one cell: near 0 is no grid.
-MIN_GRID_SCORE = .15
+MIN_GRID_SCORE = 0.15
 # LED cells are square: column and row sizes this far apart are a misread (a whole sheet, a pin photo).
 MAX_CELL_ASPECT = 1.15
 # A separate piece this many cells or more counts as a character, not a stray cell of backdrop.
@@ -42,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---- Which images have a README row (stdlib only) ----
+
 
 def readme_links(readme_text):
     """The files the README table's rows link to, from each row's first cell."""
@@ -66,13 +68,16 @@ def missing_report(missing):
     if not missing:
         return ""
     names = "\n".join(f"- docs/references/{f}" for f in missing)
-    return (f"These reference images have no row in docs/references/README.md yet:\n{names}\n"
-            "Before other work, measure each with `python3 tools/analyze_reference.py <image>` (one row per "
-            "character: `--box x0,y0,x1,y1` for each on a sheet), look at the image, fill in who it shows, "
-            "and add the rows. tests/tools/test_analyze_reference.py fails until they're there.")
+    return (
+        f"These reference images have no row in docs/references/README.md yet:\n{names}\n"
+        "Before other work, measure each with `python3 tools/analyze_reference.py <image>` (one row per "
+        "character: `--box x0,y0,x1,y1` for each on a sheet), look at the image, fill in who it shows, "
+        "and add the rows. tests/tools/test_analyze_reference.py fails until they're there."
+    )
 
 
 # ---- From the editor's reading to a README row ----
+
 
 def fits_64x32(w, h):
     if w > 64:
@@ -129,11 +134,15 @@ def draft_row(name, reading):
     link = f"[{name}](<{name}>)" if " " in name else f"[{name}]({name})"
     fx, fy = reading.get("fx"), reading.get("fy")
     if not grid_found(reading):
-        row = (f"| {link} | TODO: who it shows | | Needs tracing | Needs tracing | "
-               f"No grid found: trace it, or Pattern mode's Calibrate (two clicks on cell middles) |")
-        return row, ["No reliable grid: a photo with no cells to count (trace it), a sheet whose characters each "
-                     "sit on their own grid (measure each with --box x0,y0,x1,y1), or one the detection misses "
-                     "(tools/sprite_editor.html, Image to pixels, Pattern mode, Calibrate)."]
+        row = (
+            f"| {link} | TODO: who it shows | | Needs tracing | Needs tracing | "
+            f"No grid found: trace it, or Pattern mode's Calibrate (two clicks on cell middles) |"
+        )
+        return row, [
+            "No reliable grid: a photo with no cells to count (trace it), a sheet whose characters each "
+            "sit on their own grid (measure each with --box x0,y0,x1,y1), or one the detection misses "
+            "(tools/sprite_editor.html, Image to pixels, Pattern mode, Calibrate)."
+        ]
     rows = reading["rows"]
     if not rows:
         return f"| {link} | TODO: who it shows | | | | |", ["A grid, but nothing on it once the background is dropped."]
@@ -155,8 +164,10 @@ def draft_row(name, reading):
     found = pieces(rows)
     if len(found) > 1:
         sizes = ", ".join(f"{pw} x {ph}" for pw, ph in found)
-        notes.append(f"{len(found)} separate pieces ({sizes}): probably a sheet. Give each character its own row, "
-                     "measured with --box x0,y0,x1,y1 (pixels of the image).")
+        notes.append(
+            f"{len(found)} separate pieces ({sizes}): probably a sheet. Give each character its own row, "
+            "measured with --box x0,y0,x1,y1 (pixels of the image)."
+        )
     colors = reading.get("colors", {})
     notes.append("Colours: " + ", ".join(f"{k} {_rgb_hex(c)}" for k, c in colors.items()))
     if reading.get("extraColors"):
@@ -166,6 +177,7 @@ def draft_row(name, reading):
 
 
 # ---- Reading the image with the editor's core under Node ----
+
 
 def _core():
     with open(EDITOR, encoding="utf-8") as f:
@@ -194,10 +206,11 @@ console.log(JSON.stringify(out));
 """
 
 
-def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", palette="COLORS", cell=None):
+def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", palette="COLORS", cell=None):  # noqa: PLR0913
     """Run Pattern mode's pipeline on an image: crop, straighten, find the grid, read the cells. With cell
     (pixels), the grid is that size instead of found, as Pattern mode's Calibrate sets it."""
     from PIL import Image  # only measuring needs Pillow, not --missing
+
     node = shutil.which("node")
     if node is None:
         raise RuntimeError("Node isn't installed: the grid detection is the sprite editor's JS core")
@@ -205,11 +218,22 @@ def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", pa
     with tempfile.NamedTemporaryFile(suffix=".rgba", delete=False) as raw:
         raw.write(im.tobytes())
     try:
-        opt = {"raw": raw.name, "W": im.width, "H": im.height, "box": list(box) if box else None,
-               "lines": lines, "turn": turn, "art": art, "name": name, "palette": palette, "cell": cell}
+        opt = {
+            "raw": raw.name,
+            "W": im.width,
+            "H": im.height,
+            "box": list(box) if box else None,
+            "lines": lines,
+            "turn": turn,
+            "art": art,
+            "name": name,
+            "palette": palette,
+            "cell": cell,
+        }
         # On stdin: the core embeds every sprite and is past Linux's limit for one argument.
-        out = subprocess.run([node], input=_core() + "\n" + _PIPELINE % json.dumps(opt),
-                             capture_output=True, text=True, timeout=120)
+        out = subprocess.run(
+            [node], input=_core() + "\n" + _PIPELINE % json.dumps(opt), capture_output=True, text=True, timeout=120
+        )
     finally:
         os.unlink(raw.name)
     if out.returncode != 0:
@@ -252,8 +276,16 @@ def main(argv=None):
     if not args.image:
         parser.error("give an image, or --missing")
     try:
-        reading = read_image(args.image, box=args.box, lines=args.lines, turn=args.turn, art=args.art,
-                             name=args.name, palette=args.palette, cell=args.cell)
+        reading = read_image(
+            args.image,
+            box=args.box,
+            lines=args.lines,
+            turn=args.turn,
+            art=args.art,
+            name=args.name,
+            palette=args.palette,
+            cell=args.cell,
+        )
     except (OSError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.error("%s: %s", args.image, e)
         return 1

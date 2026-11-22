@@ -1,4 +1,5 @@
 """Rex."""
+
 import pytest
 
 import display.animation as animation
@@ -59,8 +60,11 @@ def test_an_open_jaw_shows_his_mouth_with_teeth_below_it(big):
     assert "M" not in "".join(shut)
     mouth = [(r, c) for r, row in enumerate(wide) for c, k in enumerate(row) if k == "M"]
     assert len(mouth) >= 20, "a mouth you can see, not a line"
+
     # Wider at the front of his face than at the hinge, like a jaw swung open.
-    rows_at = lambda c: sum(1 for _, mc in mouth if mc == c)
+    def rows_at(c):
+        return sum(1 for _, mc in mouth if mc == c)
+
     cols = sorted({c for _, c in mouth})
     assert rows_at(cols[0] + 1) > rows_at(cols[-1])
     # Teeth along the bottom of the mouth (the lower jaw's) and along its top (the upper jaw's).
@@ -84,14 +88,22 @@ def test_he_tips_his_head_back_to_roar(height):
     # His eyes (the top whites) go back, toward his tail on the left, and his snout points up.
     def eyes(art, pad=0):
         """The whites up in his head with no mouth beside them (not teeth)."""
+
         def by_mouth(r, c):
-            return any(0 <= r + pad + dr < len(art) and 0 <= c + dc < rex.w and art[r + pad + dr][c + dc] == "M"
-                       for dr in (-1, 0, 1) for dc in (-1, 0, 1))
+            return any(
+                0 <= r + pad + dr < len(art) and 0 <= c + dc < rex.w and art[r + pad + dr][c + dc] == "M"
+                for dr in (-1, 0, 1)
+                for dc in (-1, 0, 1)
+            )
+
         return [(r, c) for r, c in cells(art, "W", pad) if r < len(shut) // 3 and not by_mouth(r, c)]
 
     assert max(c for _, c in eyes(roar, lift)) < max(c for _, c in eyes(shut))
     mouth = cells(roar, "M")
-    top_at = lambda c: min(r for r, mc in mouth if mc == c)
+
+    def top_at(c):
+        return min(r for r, mc in mouth if mc == c)
+
     cols = sorted({c for _, c in mouth})
     front = min(r for r, c in mouth if c >= (cols[0] + cols[-1]) / 2)
     assert front < top_at(cols[0]), "the upper jaw slopes up toward the front"

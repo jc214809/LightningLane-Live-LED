@@ -10,13 +10,42 @@ on:
   pull_request:
 
 jobs:
+  # Lint and import layers (docs/dev/CODE-QUALITY.md): fast, 3.11 only, no tests.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Ruff format
+        run: ruff format --check .
+
+      - name: Import layers
+        run: lint-imports
+
   test:
     runs-on: ubuntu-latest
-    # 3.11 is what the boards run (Raspberry Pi OS Bookworm); 3.13 is the next OS's (Trixie).
+    # 3.11 is what the boards run (Raspberry Pi OS Bookworm); 3.13 is the next OS's (Trixie). 3.14 is
+    # only there to measure coverage quickly (below).
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.13"]
+        python-version: ["3.11", "3.13", "3.14"]
 
     steps:
       - name: Checkout repository
@@ -29,15 +58,28 @@ jobs:
           cache: pip
           cache-dependency-path: requirements*.txt
 
+      # pygame (RGBMatrixEmulator's) has no 3.14 wheel yet, so pip builds it: that needs SDL's headers.
+      # The built wheel lands in the pip cache.
+      - name: Install SDL headers for pygame
+        if: matrix.python-version == '3.14'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libfreetype6-dev libportmidi-dev
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      # In parallel, one worker per CPU (pytest-xdist). Coverage only on 3.11, the one uploaded:
-      # measuring it slows the run.
+      # In parallel, one worker per CPU (pytest-xdist). Coverage only on 3.14, the one uploaded: there
+      # coverage.py measures branches through sys.monitoring (COVERAGE_CORE=sysmon), which barely slows the
+      # pixel loops. Older Pythons fall back to the line tracer (3.13 can't measure branches with sysmon),
+      # which took the run from about 1.5 to 5.5 minutes. Every version runs every test.
       - name: Run tests with coverage
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
+        env:
+          COVERAGE_CORE: sysmon
         run: |
           pytest -n auto \
             --cov=. \
@@ -45,11 +87,11 @@ jobs:
             --cov-report=term-missing
 
       - name: Run tests
-        if: matrix.python-version != '3.11'
+        if: matrix.python-version != '3.14'
         run: pytest -n auto
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}   # 🔑 add this line

@@ -10,6 +10,7 @@ The player runs under a shell that holds a pipe from the app and kills the playe
 when the block ends, or when the app dies any way at all (a crash, the debugger's Stop, kill -9),
 since the OS closes the pipe then too. Otherwise a 19-minute soundtrack outlives the app.
 """
+
 import math
 import os
 import re
@@ -93,7 +94,9 @@ def set_volume(settings, platform=sys.platform, run=subprocess.run):
         controls = _CONTROL.findall(found.stdout or "")
         control = next((c for c in VOLUME_CONTROLS if c in controls), controls[0] if controls else None)
         if control is None:
-            debug.warning(f"Can't set the volume: amixer lists no controls for {settings.device or 'the default card'}.")
+            debug.warning(
+                f"Can't set the volume: amixer lists no controls for {settings.device or 'the default card'}."
+            )
             return False
         done = run(command + ["-q", "sset", control, f"{settings.volume}%"], capture_output=True, text=True, timeout=5)
     except (OSError, subprocess.TimeoutExpired) as e:
@@ -169,8 +172,12 @@ def _start(command):
     if shutil.which(command[0]) is None:
         debug.warning(f"Can't play sound: {command[0]} isn't installed.")
         return None
-    return subprocess.Popen(["sh", "-c", _GUARD, "sh"] + command, stdin=subprocess.PIPE,
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return subprocess.Popen(
+        ["sh", "-c", _GUARD, "sh"] + command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def _stop(process):
@@ -245,7 +252,7 @@ def _card(device):
     """The card an ALSA device names, by index or name ("plughw:1,0" -> "1",
     "hw:CARD=Device,DEV=0" -> "Device"), or "" for the default."""
     card = device.partition(":")[2].split(",")[0] if device else ""
-    return card[len("CARD="):] if card.startswith("CARD=") else card
+    return card[len("CARD=") :] if card.startswith("CARD=") else card
 
 
 def problem(settings, shows, sounds_dir=None, platform=sys.platform, cards_file=CARDS_FILE):
@@ -285,12 +292,16 @@ def current_problem(clock=time.monotonic):
         found = problem(settings, shows)
         if found != _found:
             if found == CANT_PLAY:
-                debug.warning("Sound is on but can't play: no player installed or no sound card for "
-                              f"{settings.device or 'the default device'}. Showing the speaker badge.")
+                debug.warning(
+                    "Sound is on but can't play: no player installed or no sound card for "
+                    f"{settings.device or 'the default device'}. Showing the speaker badge."
+                )
             elif found == NO_MUSIC:
                 missing = [names[0] for names in shows if find_clip(names) is None]
-                debug.warning(f"Sound is on but {SOUNDS_DIR}/ has no music for {', '.join(missing)} "
-                              f"(nor {shows[0][-1]}.wav). Showing the music badge.")
+                debug.warning(
+                    f"Sound is on but {SOUNDS_DIR}/ has no music for {', '.join(missing)} "
+                    f"(nor {shows[0][-1]}.wav). Showing the music badge."
+                )
             else:
                 debug.info("Sound problem fixed; badge off.")
             _found = found

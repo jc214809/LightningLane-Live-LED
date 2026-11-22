@@ -12,8 +12,19 @@ MIKE = set(MikeAndSulley.MIKE_COLORS.values())
 
 
 def _scene():
-    return Cue("s", "Friendship mash-up", START, END, ((255, 0, 0),), 0.0, "monsters", (), frozenset(),
-               "castle", ("mike_sulley",))
+    return Cue(
+        "s",
+        "Friendship mash-up",
+        START,
+        END,
+        ((255, 0, 0),),
+        0.0,
+        "monsters",
+        (),
+        frozenset(),
+        "castle",
+        ("mike_sulley",),
+    )
 
 
 def _at(show, actor, cue, e, active=True):
@@ -54,8 +65,10 @@ def test_they_stand_side_by_side_over_the_gate(height):
 
 
 def test_mike_stands_a_head_shorter_than_sulley_on_both_boards():
-    for sulley, mike in ((MikeAndSulley.SULLEY_ART, MikeAndSulley.MIKE_ART),
-                         (MikeAndSulley.SULLEY_SMALL_ART, MikeAndSulley.MIKE_SMALL_ART)):
+    for sulley, mike in (
+        (MikeAndSulley.SULLEY_ART, MikeAndSulley.MIKE_ART),
+        (MikeAndSulley.SULLEY_SMALL_ART, MikeAndSulley.MIKE_SMALL_ART),
+    ):
         assert len(mike) < len(sulley)
 
 

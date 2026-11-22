@@ -8,7 +8,10 @@ also send to a phone (pushover.py). Its Updates card (updates.py) checks for and
 Standard library
 and certifi (the app's own requirement) only, so it runs on any board the app runs on.
 """
+
 import argparse
+import functools
+import gzip
 import json
 import logging
 import os
@@ -23,13 +26,23 @@ from ipaddress import ip_address, ip_network
 from urllib.parse import parse_qs, urlsplit
 
 import cli
-from settings_page import page, pushover
-from settings_page.form import apply_form, chosen_device, panel_choices, volume_from_form
+from settings_page import board_status, page, surprises_page
+from settings_page.form import (
+    WDW_PARKS,
+    apply_form,
+    apply_surprises,
+    chosen_device,
+    import_surprises,
+    panel_choices,
+    snapshot_surprises,
+    volume_from_form,
+)
 from settings_page.park_names import ParkNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
+from settings_page.ride_names import RideNames
 from settings_page.updates import STARTS, Updates
-from utils import debug
-from utils.config import CONFIG_FILE, pushover_keys, save_config, sound_settings
+from utils import debug, pushover
+from utils.config import CONFIG_FILE, SURPRISES_FILE, load_surprises, pushover_keys, save_config, sound_settings
 from utils.sound import play_test, set_volume
 from utils.wifi_setup import hotspot_name
 
@@ -42,6 +55,25 @@ MAX_BODY = 64 * 1024
 COOKIE = "lll_settings"
 RESTART_TIMEOUT_S = 30
 PARK_NAMES_FILE = "park_names.json"
+RIDE_NAMES_FILE = "ride_names.json"
+# What /static/ serves, by extension; anything else there is a 404.
+STATIC_TYPES = {".svg": "image/svg+xml", ".png": "image/png"}
+STATIC_MAX_AGE_S = 24 * 3600  # an update can change them, so not forever
+# Sent gzipped to a browser that takes it: the castle logo's SVG is ~100 KB of repeated stonework, ~10 KB gzipped.
+# PNGs are compressed already.
+COMPRESSIBLE = {"image/svg+xml"}
+
+
+@functools.lru_cache(maxsize=8)
+def _gzipped(body):
+    """body gzipped, once per distinct file content (mtime 0, so the same bytes every time)."""
+    return gzip.compress(body, mtime=0)
+
+
+ROOT_ICONS = {
+    "/apple-touch-icon.png": "apple-touch-icon.png",
+    "/apple-touch-icon-precomposed.png": "apple-touch-icon.png",
+}
 
 
 class Settings:
@@ -49,14 +81,31 @@ class Settings:
     park_names.json beside config.json), one save at a time, and the Updates card's updates.Updates.
     send_pushover: pushover.send_pin."""
 
-    def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
-                 state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE,
-                 send_pushover=pushover.send_pin, updates=None):
+    def __init__(  # noqa: PLR0913
+        self,
+        config_path=CONFIG_FILE,
+        gate=None,
+        restart_unit=APP_UNIT,
+        state_file=None,
+        cards_file=SOUND_CARDS,
+        park_names=None,
+        model_file=cli.MODEL_FILE,
+        send_pushover=pushover.send_pin,
+        updates=None,
+        ride_names=None,
+        heartbeat_file=None,
+    ):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
+        self.heartbeat_file = heartbeat_file  # None: utils/heartbeat.py's HEARTBEAT_FILE
+        self.surprises_path = os.path.join(os.path.dirname(os.path.abspath(config_path)), SURPRISES_FILE)
         self.model_file, self.send_pushover = model_file, send_pushover
         self.gate = gate or PinGate()
         self.park_names = park_names or ParkNames(
-            os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE))
+            os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE)
+        )
+        self.ride_names = ride_names or RideNames(
+            os.path.join(os.path.dirname(os.path.abspath(config_path)), RIDE_NAMES_FILE)
+        )
         self.state_file = state_file
         self.updates = updates or Updates()
         self.save_lock = threading.Lock()
@@ -81,14 +130,30 @@ class Settings:
         """config.json, written whole with a .bak and its owner and mode kept (utils.config.save_config)."""
         save_config(config, self.config_path)
 
+    def rides(self):
+        """{park: [rides]} at the board's parks for the Surprise characters page's pickers; {} until the first
+        fetch has worked."""
+        config, _ = self.load()
+        parks = config.get("parks")
+        return self.ride_names.names(parks if isinstance(parks, list) and parks else list(WDW_PARKS))
+
+    def save_surprises(self, data):
+        """surprises.json, beside config.json, written whole with a .bak (utils.config.save_config), and, the first time,
+        with config.json's owner and mode, so it's the user's to read and edit over SSH even though this runs as root."""
+        save_config(data, self.surprises_path, like=self.config_path)
+
     def restart_app(self):
-        """"restarted", "saved" (nothing to restart: no unit set, or no systemd) or "failed" (logged).
+        """ "restarted", "saved" (nothing to restart: no unit set, or no systemd) or "failed" (logged).
         try-restart only restarts the app if it's running, so a board running another app stays on it."""
         if not self.restart_unit or not shutil.which("systemctl"):
             return "saved"
         try:
-            done = subprocess.run(["systemctl", "try-restart", self.restart_unit], capture_output=True,
-                                  text=True, timeout=RESTART_TIMEOUT_S)
+            done = subprocess.run(
+                ["systemctl", "try-restart", self.restart_unit],
+                capture_output=True,
+                text=True,
+                timeout=RESTART_TIMEOUT_S,
+            )
         except (OSError, subprocess.TimeoutExpired) as e:
             debug.error(f"Settings page: restarting {self.restart_unit} failed: {e}")
             return "failed"
@@ -98,6 +163,10 @@ class Settings:
             return "failed"
         debug.info(f"Settings page: restarted {self.restart_unit}.")
         return "restarted"
+
+    def board_now(self):
+        """What the app's heartbeat says, for the "On the board now" card (board_status.board_now)."""
+        return board_status.board_now(self.heartbeat_file)
 
     def pushover_keys(self):
         """config.json's Pushover keys, or None: the sign-in page offers to send the PIN only with them."""
@@ -239,31 +308,96 @@ class Handler(BaseHTTPRequestHandler):
     def _page(self, problems=(), saved=None, config=None, started=None):
         loaded, problem = self.settings.load()
         config = config if config is not None else loaded
-        return page.settings_page(config, self.settings.sound_cards(), self._in_setup(), problems, saved,
-                                  board_name(), problem, self.settings.park_names.names(),
-                                  self.settings.panel_choices(config), self.settings.updates.view(), started)
+        return page.settings_page(
+            config,
+            self.settings.sound_cards(),
+            self._in_setup(),
+            problems,
+            saved,
+            board_name(),
+            problem,
+            self.settings.park_names.names(),
+            self.settings.panel_choices(config),
+            self.settings.updates.view(),
+            started,
+            self.settings.board_now(),
+        )
+
+    def _static(self, name):
+        """GET /static/<name>: the page's pictures (page.STATIC_DIR), open to anyone, as the sign-in page and the
+        browser tab show them. Only a plain file name listed in STATIC_TYPES; nothing else on the board."""
+        kind = STATIC_TYPES.get(os.path.splitext(name)[1])
+        path = os.path.join(page.STATIC_DIR, name)
+        if not kind or "/" in name or "\\" in name or name.startswith(".") or not os.path.isfile(path):
+            return self._send(404, page.message_page("Not found", "There's nothing at this address."))
+        try:
+            with open(path, "rb") as f:
+                body = f.read()
+        except OSError as e:
+            debug.warning(f"Settings page: can't read {path}: {e}")
+            return self._send(404, page.message_page("Not found", "There's nothing at this address."))
+        squeeze = kind in COMPRESSIBLE
+        gzipped = squeeze and "gzip" in (self.headers.get("Accept-Encoding") or "").lower()
+        if gzipped:
+            body = _gzipped(body)
+        self.send_response(200)
+        self.send_header("Content-Type", kind)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", f"max-age={STATIC_MAX_AGE_S}")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        if squeeze:
+            self.send_header("Vary", "Accept-Encoding")
+        if gzipped:
+            self.send_header("Content-Encoding", "gzip")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _surprises_page(self, problems=(), saved=None, data=None, imported=None):
+        data = data if data is not None else load_surprises(self.settings.surprises_path)
+        return surprises_page.surprises_page(
+            data, problems, saved, board_name(), self._in_setup(), self.settings.rides(), imported
+        )
 
     # --- routes
 
     def do_GET(self):
         url = urlsplit(self.path)
+        if url.path.startswith("/static/"):
+            return self._static(url.path[len("/static/") :])
+        if url.path in ROOT_ICONS:  # where phones and browsers look when a page doesn't say
+            return self._static(ROOT_ICONS[url.path])
         if url.path == "/update/status":  # the page's script, following a running update
             if not self._allowed():
                 return self._send_json(403, {"running": False, "phase": None})
             return self._send_json(200, self.settings.updates.status())
+        if url.path == "/surprises":
+            if not self._allowed():
+                return self._redirect("/")
+            saved = parse_qs(url.query).get("saved", [None])[0]
+            return self._send(200, self._surprises_page(saved=saved if saved in page.SAVED else None))
         if url.path != "/":
             return self._send(404, page.message_page("Not found", "There's nothing at this address."))
         # "?wrong", "?shown", "?sent=...", "?signedout", "?saved=...", "?update=..."
         query = parse_qs(url.query, keep_blank_values=True)
         if not self._allowed():
             sent = query.get("sent", [None])[0]
-            return self._send(200, page.pin_page(PIN_SHOWN_S if "shown" in query else None, "wrong" in query,
-                                                 board_name(), bool(self.settings.pushover_keys()),
-                                                 sent if sent in page.SENT else None, "signedout" in query))
+            return self._send(
+                200,
+                page.pin_page(
+                    PIN_SHOWN_S if "shown" in query else None,
+                    "wrong" in query,
+                    board_name(),
+                    bool(self.settings.pushover_keys()),
+                    sent if sent in page.SENT else None,
+                    "signedout" in query,
+                ),
+            )
         saved = query.get("saved", [None])[0]
         started = query.get("update", [None])[0]
-        self._send(200, self._page(saved=saved if saved in page.SAVED else None,
-                                   started=started if started in STARTS else None))
+        self._send(
+            200,
+            self._page(saved=saved if saved in page.SAVED else None, started=started if started in STARTS else None),
+        )
 
     def _volume(self, form):
         """POST /volume, the page script's Volume buttons: volume_action "set" or "test"; answers
@@ -278,40 +412,58 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(200, {"ok": ok, "message": message})
 
     def do_POST(self):
+        """The gates, in order: another site's form (403), a body too big (413), the PIN routes (answered to
+        anyone), a path we don't have (404), no sign-in (back to /). Then the route's handler."""
         path = urlsplit(self.path).path
         if not self._same_origin():
             return self._send(403, page.message_page("Not allowed", "That form came from another site."))
         form = self._form()
         if form is None:
             return self._send(413, page.message_page("Too big", "That's too much to save."))
-        if path == "/pin/show":
-            self.settings.gate.show_pin()
-            return self._redirect("/?shown")
-        if path == "/pin/send":
-            outcome = self.settings.send_pin()
-            return self._redirect("/" if outcome == "off" else f"/?sent={outcome}")
-        if path == "/pin":
-            token = self.settings.gate.try_pin((form.get("pin") or [""])[0])
-            if not token:
-                return self._redirect("/?wrong")
-            return self._redirect("/", [("Set-Cookie", f"{COOKIE}={token}; Max-Age={SESSION_S}; Path=/; "
-                                                       f"HttpOnly; SameSite=Strict")])
-        if path == "/signout":
-            self.settings.gate.sign_out(self._token())
-            return self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; "
-                                                                 f"SameSite=Strict")])
-        if path not in ("/save", "/volume", "/update/check", "/update/start", "/update/rollback"):
-            return self._send(404, page.message_page("Not found", "There's nothing at this address."))
-        if not self._allowed():
-            return self._redirect("/")
-        if path == "/volume":
-            return self._volume(form)
-        if path.startswith("/update/"):
-            return self._update(path, (form.get("channel") or [""])[0])
+        handler = self.PIN_POSTS.get(path)
+        if handler is None:
+            handler = self.SIGNED_IN_POSTS.get(path)
+            if handler is None:
+                return self._send(404, page.message_page("Not found", "There's nothing at this address."))
+            if not self._allowed():
+                return self._redirect("/")
+        return handler(self, form)
+
+    def _show_pin(self, form):
+        """POST /pin/show: put a PIN on the board."""
+        self.settings.gate.show_pin()
+        self._redirect("/?shown")
+
+    def _send_pin(self, form):
+        """POST /pin/send: send the PIN to the phone, if Pushover is set up."""
+        outcome = self.settings.send_pin()
+        self._redirect("/" if outcome == "off" else f"/?sent={outcome}")
+
+    def _sign_in(self, form):
+        """POST /pin: the PIN typed in; a right one starts a session (the cookie)."""
+        token = self.settings.gate.try_pin((form.get("pin") or [""])[0])
+        if not token:
+            return self._redirect("/?wrong")
+        self._redirect(
+            "/", [("Set-Cookie", f"{COOKIE}={token}; Max-Age={SESSION_S}; Path=/; HttpOnly; SameSite=Strict")]
+        )
+
+    def _sign_out(self, form):
+        """POST /signout: end this browser's session."""
+        self.settings.gate.sign_out(self._token())
+        self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict")])
+
+    def _save(self, form):
+        """POST /save: the settings form, saved to config.json, with a restart (or just the volume)."""
         if self.settings.updates.running():  # a rollback would put back config.json as it was, losing the save
             loaded, _ = self.settings.load()
-            return self._send(409, self._page(["An update is running: save once it's done (see Updates)."],
-                                              config=apply_form(loaded, form, self.settings.park_names.names())[0]))
+            return self._send(
+                409,
+                self._page(
+                    ["An update is running: save once it's done (see Updates)."],
+                    config=apply_form(loaded, form, self.settings.park_names.names())[0],
+                ),
+            )
         with self.settings.save_lock:
             config, _ = self.settings.load()
             new, problems = apply_form(config, form, self.settings.park_names.names())
@@ -329,29 +481,103 @@ class Handler(BaseHTTPRequestHandler):
         outcome = self.settings.set_volume(new) if volume_only(config, new) else self.settings.restart_app()
         self._redirect(f"/?saved={outcome}")
 
-    def _update(self, path, channel):
-        """POST /update/check, /update/start (channel) and /update/rollback, the Updates card's buttons.
-        /update/check asking for JSON is the page's own check as it loads: a fresh one is reused, and
-        the answer is {"html": what it found, for the card}."""
+    def _export_surprises(self, form):
+        """POST /surprises/export, the Export button: all the settings on the page as it is now, unsaved edits too
+        and every default spelled out (form.snapshot_surprises), as {"ok": true, "json": the text to copy} or
+        {"ok": false, "problems": [...]}. Saves nothing."""
+        rides = self.settings.rides()
+        new, problems = apply_surprises(load_surprises(self.settings.surprises_path), form, rides)
+        if problems:
+            return self._send_json(400, {"ok": False, "problems": problems})
+        self._send_json(200, {"ok": True, "json": json.dumps(snapshot_surprises(new, rides), indent=2)})
+
+    def _import_surprises(self, form):
+        """POST /surprises/import, the Import button: the pasted settings (import_surprises) fill the page, not yet
+        saved, so they can be looked over and saved with Save and restart. Asking for JSON (the page's script, to check
+        a paste before it leaves the page) gets {"ok": true} or {"ok": false, "problems": [...]} and nothing drawn.
+        Otherwise anything wrong shows the page as it was, with why."""
+        pasted = (form.get("surprises_json") or [""])[0]
+        data, problems, skipped = import_surprises(pasted, self.settings.rides())
+        wants_json = "application/json" in (self.headers.get("Accept") or "")
+        if problems:
+            debug.info(f"Settings page: surprises import refused: {'; '.join(problems)}")
+            if wants_json:
+                return self._send_json(400, {"ok": False, "problems": problems})
+            return self._send(400, self._surprises_page(problems, imported=False))
+        if wants_json:
+            return self._send_json(200, {"ok": True})
+        self._send(200, self._surprises_page(data=data, imported=skipped))
+
+    def _save_surprises(self, form):
+        """POST /surprises: the Surprise characters page's form, saved to surprises.json, with a restart."""
+        if self.settings.updates.running():
+            return self._send(
+                409,
+                self._surprises_page(
+                    ["An update is running: save once it's done (see Updates)."],
+                    data=apply_surprises(load_surprises(self.settings.surprises_path), form, self.settings.rides())[0],
+                ),
+            )
+        with self.settings.save_lock:
+            new, problems = apply_surprises(load_surprises(self.settings.surprises_path), form, self.settings.rides())
+            if problems:
+                debug.info(f"Settings page: surprises not saved: {'; '.join(problems)}")
+                return self._send(400, self._surprises_page(problems, data=new))
+            try:
+                self.settings.save_surprises(new)
+            except OSError as e:
+                debug.error(f"Settings page: can't save {self.settings.surprises_path}: {e}")
+                return self._send(500, self._surprises_page([f"Couldn't save: {e}"], data=new))
+        debug.info(f"Settings page: saved {self.settings.surprises_path} (from {self.client_address[0]}).")
+        self._redirect(f"/surprises?saved={self.settings.restart_app()}")
+
+    def _check_update(self, form):
+        """POST /update/check (channel), the Updates card's Check button. Asking for JSON is the page's own check
+        as it loads: a fresh one is reused, and the answer is {"html": what it found, for the card}."""
+        channel = (form.get("channel") or [""])[0]
         updates = self.settings.updates
-        if path == "/update/check" and "application/json" in (self.headers.get("Accept") or ""):
+        if "application/json" in (self.headers.get("Accept") or ""):
             updates.auto_check(channel)
             return self._send_json(200, {"html": page.check_result(updates.view())})
-        if path == "/update/check":
-            updates.check(channel)
-            return self._redirect("/#updates")
-        started = updates.start("update", channel) if path == "/update/start" else updates.start("rollback")
+        updates.check(channel)
+        self._redirect("/#updates")
+
+    def _start_update(self, form):
+        """POST /update/start (channel), the Update now button."""
+        started = self.settings.updates.start("update", (form.get("channel") or [""])[0])
         self._redirect(f"/?update={started}#updates")
+
+    def _start_rollback(self, form):
+        """POST /update/rollback, the Roll back button."""
+        started = self.settings.updates.start("rollback")
+        self._redirect(f"/?update={started}#updates")
+
+    # Route tables: path -> handler(self, form). The PIN routes answer anyone; the rest need a sign-in.
+    PIN_POSTS = {"/pin/show": _show_pin, "/pin/send": _send_pin, "/pin": _sign_in, "/signout": _sign_out}
+    SIGNED_IN_POSTS = {
+        "/save": _save,
+        "/surprises": _save_surprises,
+        "/surprises/export": _export_surprises,
+        "/surprises/import": _import_surprises,
+        "/volume": _volume,
+        "/update/check": _check_update,
+        "/update/start": _start_update,
+        "/update/rollback": _start_rollback,
+    }
 
 
 def volume_only(old, new):
     """True if the only change from old to new config is sound.volume."""
+
     def without_volume(config):
         config = dict(config)
         if isinstance(config.get("sound"), dict):
             config["sound"] = {k: v for k, v in config["sound"].items() if k != "volume"}
         return config
-    volume = lambda config: (config.get("sound") or {}).get("volume") if isinstance(config.get("sound"), dict) else None
+
+    def volume(config):
+        return (config.get("sound") or {}).get("volume") if isinstance(config.get("sound"), dict) else None
+
     return volume(old) != volume(new) and without_volume(old) == without_volume(new)
 
 
@@ -369,8 +595,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="The board's settings page.")
     parser.add_argument("--port", type=int, default=PORT)
     parser.add_argument("--config", default=CONFIG_FILE, help="config.json's path (default: in the working folder)")
-    parser.add_argument("--restart-unit", default=APP_UNIT, help="the app's systemd unit, restarted after a save; "
-                                                                 "'' for none")
+    parser.add_argument(
+        "--restart-unit", default=APP_UNIT, help="the app's systemd unit, restarted after a save; '' for none"
+    )
     args = parser.parse_args(argv)
     debug.logger.setLevel(logging.INFO)
     # To the journal only: the app's logs/app.log rotates in the app's process, and two writers
@@ -379,6 +606,7 @@ def main(argv=None):
         debug.logger.removeHandler(debug.file_handler)
     settings = Settings(args.config, restart_unit=args.restart_unit)
     settings.park_names.refresh_if_due()  # at boot, so the list is ready before anyone opens the page
+    settings.rides()
     server = make_server(settings, port=args.port)
     debug.info(f"Settings page on port {args.port}, for {os.path.abspath(args.config)}.")
     server.serve_forever()

@@ -6,8 +6,9 @@ from utils import heartbeat
 
 
 class FakeUpdater:
-    def __init__(self, tmp_path, outcome=Outcome("updated", "updated to v2.2.0 (2222222)")):
+    def __init__(self, tmp_path, outcome=Outcome("updated", "updated to v2.2.0 (2222222)")):  # noqa: B008  the fake only returns it
         from self_update.state import State
+
         self.state, self.outcome, self.asked = State(str(tmp_path / "lll-update")), outcome, []
         self.installed_version, self.heartbeat_path, self.clock = "2.1.0", str(tmp_path / "health"), lambda: 1030.0
         self.board = type("B", (), {"head": lambda s: "a" * 40, "branch": lambda s: None})()
@@ -34,13 +35,16 @@ def journal_only(monkeypatch):
 ROOT, USER = (lambda: 0), (lambda: 1000)
 
 
-@pytest.mark.parametrize("argv, asked", [
-    (["update"], ("update", "releases", False)),
-    (["update", "--channel", "beta"], ("update", "beta", False)),
-    (["check", "--channel", "beta"], ("update", "beta", True)),
-    (["rollback"], ("rollback",)),
-    (["recover"], ("recover",)),
-])
+@pytest.mark.parametrize(
+    "argv, asked",
+    [
+        (["update"], ("update", "releases", False)),
+        (["update", "--channel", "beta"], ("update", "beta", False)),
+        (["check", "--channel", "beta"], ("update", "beta", True)),
+        (["rollback"], ("rollback",)),
+        (["recover"], ("recover",)),
+    ],
+)
 def test_commands(tmp_path, capsys, argv, asked):
     updater = FakeUpdater(tmp_path)
     assert cli.main(argv, updater=updater, euid=ROOT) == 0
@@ -51,8 +55,14 @@ def test_commands(tmp_path, capsys, argv, asked):
 def test_update_rollback_and_recovery_keep_their_outcome_for_the_settings_page(tmp_path, capsys):
     updater = FakeUpdater(tmp_path, Outcome("rolled_back", "rolled back to 2.1.0: it crashed", ok=False))
     cli.main(["update", "--channel", "beta"], updater=updater, euid=ROOT)
-    assert updater.state.load_outcome() == {"command": "update", "channel": "beta", "result": "rolled_back",
-                                            "message": "rolled back to 2.1.0: it crashed", "ok": False, "at": 1030.0}
+    assert updater.state.load_outcome() == {
+        "command": "update",
+        "channel": "beta",
+        "result": "rolled_back",
+        "message": "rolled back to 2.1.0: it crashed",
+        "ok": False,
+        "at": 1030.0,
+    }
     updater.outcome = Outcome("blocked", "an update or rollback is already running")
     cli.main(["rollback"], updater=updater, euid=ROOT)
     assert updater.state.load_outcome()["command"] == "rollback" and updater.state.load_outcome()["channel"] is None
@@ -92,14 +102,25 @@ def test_update_and_rollback_need_root_but_check_doesnt(tmp_path, capsys):
 def test_status(tmp_path, capsys):
     updater = FakeUpdater(tmp_path)
     record = updater.state.load()
-    record.update(phase="rolled_back", reason="the app crashed", good=["b" * 40],
-                  to={"ref": "v2.2.0", "sha": "c" * 40}, **{"from": {"version": "2.1.0", "sha": "a" * 40}})
+    record.update(
+        phase="rolled_back",
+        reason="the app crashed",
+        good=["b" * 40],
+        to={"ref": "v2.2.0", "sha": "c" * 40},
+        **{"from": {"version": "2.1.0", "sha": "a" * 40}},
+    )
     updater.state.save(record)
     heartbeat.beat(path=updater.heartbeat_path, clock=lambda: 1000.0)
     assert cli.main(["status"], updater=updater, euid=USER) == 0
     out = capsys.readouterr().out
-    for text in ("Installed: 2.1.0 at aaaaaaa (detached)", "Last update: rolled_back", "to v2.2.0 (ccccccc), from 2.1.0",
-                 "rolled back because: the app crashed", "Good commits: bbbbbbb", "Heartbeat: 30s ago"):
+    for text in (
+        "Installed: 2.1.0 at aaaaaaa (detached)",
+        "Last update: rolled_back",
+        "to v2.2.0 (ccccccc), from 2.1.0",
+        "rolled back because: the app crashed",
+        "Good commits: bbbbbbb",
+        "Heartbeat: 30s ago",
+    ):
         assert text in out
 
 
@@ -116,8 +137,14 @@ def test_status_without_root_says_it_cant_read_the_last_update(tmp_path, capsys,
 
 def test_status_names_a_beta_it_came_from_by_its_commit(tmp_path, capsys):
     updater = FakeUpdater(tmp_path)
-    updater.state.save({"phase": "updated", "good": [], "to": {"ref": "develop-beta", "sha": "c" * 40},
-                        "from": {"version": "2.0.0", "sha": "a" * 40, "channel": "beta"}})
+    updater.state.save(
+        {
+            "phase": "updated",
+            "good": [],
+            "to": {"ref": "develop-beta", "sha": "c" * 40},
+            "from": {"version": "2.0.0", "sha": "a" * 40, "channel": "beta"},
+        }
+    )
     cli.main(["status"], updater=updater, euid=USER)
     assert "to develop-beta (ccccccc), from Beta aaaaaaa" in capsys.readouterr().out
 

@@ -3,17 +3,40 @@ import random
 import pytest
 
 from display.fireworks.actors.lantern_boat import LANTERN_RGB, LanternBoat
-from display.fireworks.music_show import LANTERN_RGB as SHOW_LANTERN_RGB, MusicShow
+from display.fireworks.music_show import LANTERN_RGB as SHOW_LANTERN_RGB
+from display.fireworks.music_show import MusicShow
 from display.fireworks.score import Cue
 
 START, MID, END = 668.0, 697.0, 724.0
 
 
 def _scenes():
-    song = Cue("s", "I See the Light", START, MID, ((255, 255, 255),), 0.35, "blue", (), frozenset(),
-               "ghost", ("lantern_boat",))
-    lanterns = Cue("s", "I See the Light (lanterns)", MID, END, ((255, 211, 107),), 0.15, "blue", (),
-                   frozenset({"lanterns"}), "ghost", ("lantern_boat",))
+    song = Cue(
+        "s",
+        "I See the Light",
+        START,
+        MID,
+        ((255, 255, 255),),
+        0.35,
+        "blue",
+        (),
+        frozenset(),
+        "ghost",
+        ("lantern_boat",),
+    )
+    lanterns = Cue(
+        "s",
+        "I See the Light (lanterns)",
+        MID,
+        END,
+        ((255, 211, 107),),
+        0.15,
+        "blue",
+        (),
+        frozenset({"lanterns"}),
+        "ghost",
+        ("lantern_boat",),
+    )
     return song, lanterns
 
 
@@ -34,6 +57,7 @@ def _frame(show, actor, t, active=True):
     def put(x, y, rgb):
         if 0 <= x < show.width and 0 <= y < show.height:
             out[(x, y)] = rgb
+
     actor.draw(put, out, active)
     return out
 
@@ -76,7 +100,7 @@ def test_boat_drifts_in_from_the_left_and_settles_at_the_castle(height):
     assert actor.top_left(actor.SETTLE_S)[0] == pytest.approx(lefts[-1]), "settled by mid-song"
     assert actor.top_left(actor.SETTLE_S)[1] + actor.h >= height - actor.rock - 1, "at the bottom"
     _, _, mid = _play(height, START + 20)
-    assert len(_boat(mid)) > 50 * actor.scale ** 2, "the whole boat on the board"
+    assert len(_boat(mid)) > 50 * actor.scale**2, "the whole boat on the board"
 
 
 def test_boat_rocks_by_the_clock():
@@ -97,8 +121,9 @@ def test_her_lantern_lights_late_and_rises_from_the_boat(height):
     assert ys == sorted(ys, reverse=True), "rising"
     assert ys[0] - ys[-1] > height * 0.6, "well up the sky by the end"
     _, _, out = _play(height, START + actor.RELEASE_S + 3)
-    assert any(rgb == LANTERN_RGB and y < height - actor.h - actor.rock for (x, y), rgb in out.items()), \
+    assert any(rgb == LANTERN_RGB and y < height - actor.h - actor.rock for (x, y), rgb in out.items()), (
         "drawn above the boat"
+    )
 
 
 def test_boat_draws_nothing_when_inactive():

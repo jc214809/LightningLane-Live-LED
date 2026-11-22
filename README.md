@@ -61,6 +61,7 @@ It asks everything first (hostname, app, whether to set the panel options here (
 - `--branch develop-sound` installs this app from another branch (the default is `develop-beta`; the branch question asks it too).
 - **Wi-Fi setup hotspot (every board, every app):** it installs [comitup](https://davesteele.github.io/comitup/). When no Wi-Fi the board knows is in range, the board opens a hotspot named after it, `<hostname>-setup` (e.g. `Disneypi-setup`), with no password. Join it from a phone, pick your network on the page that opens (or browse to http://10.41.0.1/), and the board joins it. While the hotspot is up, this app's screen says `Wi-Fi setup`, `Join` and the hotspot's name. The hotspot is open, so anyone nearby can join it and see the Wi-Fi password typed into that page, but only while the board is in setup. Networks the board already has are kept and always tried first. It needs NetworkManager (Raspberry Pi OS Bookworm or later): an older board is skipped. `LLL-install.sh` sets it up too (`-w` skips it); `sudo bash board-setup.sh --wifi-setup-only` does just this.
 - **Settings page (LightningLane-Live-LED):** every `config.json` setting (API keys, parks, trips, sound, brightness, shows, and the panel under Advanced) from a browser, so a board can be set up with no SSH. On the setup hotspot, browse to http://10.41.0.1:8080 (the Wi-Fi setup screen shows it next): no password, since you're with the board. On the home network, browse to `http://<hostname>.local:8080` and press **Show a PIN on the board**: the board shows a 4-digit PIN for two minutes, and typing it in signs that browser in for an hour (five wrong tries use a PIN up; **Sign out** in the top bar ends it sooner). For a board you can't see, put your Pushover user key and an app token in the page's **PIN by Pushover** card: the sign-in page then also has **Send the PIN to my phone** (once a minute at most; the PIN still shows on the board, and the message deletes itself when the PIN runs out). Saved API keys show only their last four letters; leave a key blank to keep it. Saving checks everything first, keeps the old file as `config.json.bak`, and restarts the app. It runs as its own service, `lll-settings.service`, so it works even when a bad `config.json` stops the app; `journalctl -u lll-settings.service` has its log. `--wifi-setup-only` from the app's folder (so `LLL-install.sh`) installs it too.
+- **Tailscale (every board, every app):** it installs [Tailscale](https://tailscale.com/) and, last of all, joins the board to your tailnet with Tailscale SSH on, so you can SSH in from any of your devices, from anywhere, with no keys (your tailnet's access rules decide who). Put `TAILSCALE_AUTHKEY=tskey-auth-...` (from the Tailscale admin console's Keys page) in the answers file to join with no login: the key goes to `tailscale up` through a file in `/run`, never on a command line or in the output, and the file is removed straight after. The answers file then holds a secret, so never commit it. Without a key, it prints a link to log in and waits up to 10 minutes. A board already on the tailnet just gets Tailscale SSH turned on. `TAILSCALE=no` skips it. `LLL-install.sh` (`--wifi-setup-only`) installs Tailscale too, but can't log in unattended: on a board that isn't on the tailnet, it says to run `sudo tailscale up --ssh`.
 - `--answers board.txt` answers questions ahead with `KEY=value` lines (`APP=lll`, `LED_ROWS=64`, ...; `--help` lists the keys). `--dry-run` prints everything it would do and changes nothing. The Wi-Fi password is never stored in the answers file or put on a command line.
 
 Reboot afterwards if it says so (boot settings changed).
@@ -136,7 +137,7 @@ That should be it! Your latest version should now be working with whatever new f
 
 #### Version Information
 
-You can check the version information for your installation of LightningLane-Live-LED by running `python3 version.py`.
+You can check the version information for your installation of LightningLane-Live-LED by running `python3 version.py`. It reads the version from git's tags (`git fetch --tags` if it looks old): `2.1.0` is a release, `2.1.5-beta` a Beta, and `-3-g1a2b3c4` on the end means three commits past it.
 
 The latest version of the software is available [here](https://github.com/jc214809/LightningLane-Live-LED/releases).
 
@@ -359,7 +360,7 @@ The board can play the fireworks soundtrack while its castle fireworks run. For 
   ]
   ```
   Only `name` is required. A show not listed, or listed without a field, is `enabled` and `"default"`. `"version": "default"` is the castle fireworks (no title) for five minutes from the showtime, with `sounds/fireworks.wav` if there is one. `"v1"` or `"v2"` plays a scored show's whole synced version in that look, about 18 minutes for Happily Ever After, with its own music (`sounds/happily-ever-after.wav`). `"enabled": false` means the board never cuts in for that show. Only Happily Ever After has a score so far; the party shows are always the default.
-- To hear a show now instead of waiting for showtime, add `"force": true` to its entry in `shows` (like `{"name": "Happily Ever After", "version": "v2", "force": true}`, or a party's show, like `{"name": "Disney's Not-So-Spooky Spectacular", "force": true}`) and restart the service: the board plays it once at start-up, with its sound, then carries on as usual. Restart again to replay it, and remove `"force"` when done. The old top-level `"force_show": "<name>"` still works, with a warning.
+- To hear a show now instead of waiting for showtime, add `"force": true` to its entry in `shows` (like `{"name": "Happily Ever After", "version": "v2", "force": true}`, or a party's show, like `{"name": "Disney's Not-So-Spooky Spectacular", "force": true}` or `{"name": "Minnie's Wonderful Christmastime Fireworks", "force": true}`) and restart the service: the board plays it once at start-up, with its sound, then carries on as usual. Restart again to replay it, and remove `"force"` when done. The old top-level `"force_show": "<name>"` still works, with a warning.
 
 ## Sources and Credits
 This project relies on:
@@ -386,6 +387,8 @@ suite from the repository root directory with:
 ```sh
 pytest
 ```
+
+Lint and import-layer checks (`ruff check . && lint-imports`) run in CI; `pip install pre-commit && pre-commit install` runs ruff on every commit.
 
 ## Licensing
 This project as of v0.1.0 uses the GNU Public License. If you intend to sell these, the code must remain open source.

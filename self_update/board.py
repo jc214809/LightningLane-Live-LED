@@ -4,6 +4,7 @@ command goes through one run function (subprocess.run by default), so tests swap
 The updater runs as root, but the checkout belongs to the user who cloned it (and pulls it by hand
 over SSH), so git runs as that user: files git writes stay theirs.
 """
+
 import os
 import pwd
 import re
@@ -46,7 +47,9 @@ class Board:
             raise CommandFailed(f"{' '.join(args[:3])} failed: {e}") from None
         if check and done.returncode:
             tail = (done.stderr or done.stdout or "").strip().splitlines()[-5:]
-            raise CommandFailed(f"{' '.join(args[:3])} exited {done.returncode}" + (f": {' / '.join(tail)}" if tail else ""))
+            raise CommandFailed(
+                f"{' '.join(args[:3])} exited {done.returncode}" + (f": {' / '.join(tail)}" if tail else "")
+            )
         return done
 
     # git
@@ -87,6 +90,11 @@ class Board:
         """The tags on commit sha."""
         return self.git("tag", "--points-at", sha).stdout.split()
 
+    def describe(self, sha):
+        """sha's version from its tags, as version.py gives it ("2.2.0", "2.1.5-beta"), or None."""
+        done = self.git("describe", "--tags", "--match", "v[0-9]*", sha, check=False)
+        return done.stdout.strip().removeprefix("v") or None if done.returncode == 0 else None
+
     def file_at(self, sha, path):
         """path's text at commit sha, or None if it isn't there."""
         done = self.git("show", f"{sha}:{path}", check=False)
@@ -124,7 +132,17 @@ class Board:
         return any(PR_MERGE.match(line) or PR_TITLED.match(line) for line in merged)
 
     def checkout(self, ref, detach=True):
+        self._drop_installer_shebang()
         self.git("checkout", *(["--detach"] if detach else []), ref)
+
+    def _drop_installer_shebang(self):
+        """LLL-install.sh puts a shebang on disney.py's first line, which a checkout refuses to overwrite
+        when the installer died before git's filter hid it (a rollback after a failed install). Drops that
+        edit and only that one: anything else changed in disney.py is left for the checkout to refuse."""
+        diff = self.git("diff", "HEAD", "--unified=0", "--", "disney.py", check=False).stdout.splitlines()
+        edits = [line for line in diff if line[:1] in "+-" and not line.startswith(("+++", "---"))]
+        if edits and all(line.startswith("+#!") for line in edits):
+            self.git("checkout", "--", "disney.py")
 
     # pip and the installer (as root, like the app)
 
@@ -132,8 +150,14 @@ class Board:
         """pip freeze's pinned lines, without what pip can't reinstall from an index: the rgbmatrix
         driver (built from source by the installer) and anything installed from a path or URL."""
         lines = self._command([self.python, "-m", "pip", "freeze"], PIP_TIMEOUT_S).stdout.splitlines()
-        return [line for line in lines if "==" in line and " @ " not in line and not line.startswith("-e")
-                and not line.lower().startswith("rgbmatrix")]
+        return [
+            line
+            for line in lines
+            if "==" in line
+            and " @ " not in line
+            and not line.startswith("-e")
+            and not line.lower().startswith("rgbmatrix")
+        ]
 
     def pip_install(self, requirements_path):
         self._command([self.python, "-m", "pip", "install", "--prefer-binary", "-r", requirements_path], PIP_TIMEOUT_S)
@@ -144,7 +168,23 @@ class Board:
         args = ["bash", "LLL-install.sh", "-p", "-m", "-w"]
         if skip_requirements and self.installer_skips_requirements():
             args.append(SKIP_REQUIREMENTS)
-        self._command(args, INSTALL_TIMEOUT_S)
+        self._command(args, INSTALL_TIMEOUT_S, **self._as_sudo())
+
+    def _as_sudo(self):
+        """Root's env as `sudo ./LLL-install.sh` by hand gives it: SUDO_UID names the checkout's owner, which
+        git takes as the reason to trust a checkout it would call dubious (the installer runs git add as root;
+        from a systemd unit it died with "dubious ownership")."""
+        owner = os.stat(os.path.join(self.app_dir, ".git"))
+        if self._euid() != 0 or owner.st_uid == 0:
+            return {}
+        return {
+            "env": {
+                **os.environ,
+                "SUDO_UID": str(owner.st_uid),
+                "SUDO_GID": str(owner.st_gid),
+                "SUDO_USER": pwd.getpwuid(owner.st_uid).pw_name,
+            }
+        }
 
     def installer_skips_requirements(self):
         try:
@@ -157,8 +197,9 @@ class Board:
 
     def systemctl_show(self, unit, prop):
         """A unit's property (NRestarts, ActiveState, LoadState), as text."""
-        return self._command(["systemctl", "show", "--property", prop, "--value", unit],
-                             SYSTEMCTL_TIMEOUT_S).stdout.strip()
+        return self._command(
+            ["systemctl", "show", "--property", prop, "--value", unit], SYSTEMCTL_TIMEOUT_S
+        ).stdout.strip()
 
     def unit_exists(self, unit):
         return self.systemctl_show(unit, "LoadState") == "loaded"

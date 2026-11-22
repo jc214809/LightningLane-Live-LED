@@ -1,17 +1,20 @@
 # tests/display/park/test_park_details.py
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
+
 from display.park import park_details
 from display.park.park_details import (
-    render_special_ticketed_events,
-    render_park_hours,
-    render_weather_icon,
     display_weather_icon_and_description,
-    format_iso_time,
     draw_multi_line_park_name_text_block,
-    draw_single_line_park_name_text
+    draw_single_line_park_name_text,
+    format_iso_time,
+    render_park_hours,
+    render_special_ticketed_events,
+    render_weather_icon,
 )
+
 
 # --- Set up dummy dependencies ---
 # Fake font used for testing.
@@ -20,14 +23,17 @@ class FakeFont:
         self.height = height
         self.text_width = text_width
 
+
 # Fake implementations for get_text_width and wrap_text.
 def fake_get_text_width(font, text):
     # Let's assume each character is 'font.text_width' wide.
     return len(text) * font.text_width
 
+
 def fake_wrap_text(font, text, board_width, pad):
     # For simplicity, split the text by spaces.
     return text.split()
+
 
 # Dummy color dictionary.
 dummy_color_dict = {
@@ -35,20 +41,18 @@ dummy_color_dict = {
     "halloween_orange": "#FF8214",
     "disney_blue": "#0033A0",
     "white": "#FFFFFF",
-    "mickey_mouse_red": "#E41A1C"
+    "mickey_mouse_red": "#E41A1C",
 }
 
 # Dummy loaded_fonts dictionary.
-dummy_loaded_fonts = {
-    "info": FakeFont(height=10, text_width=5),
-    "park": FakeFont(height=12, text_width=6)
-}
+dummy_loaded_fonts = {"info": FakeFont(height=10, text_width=5), "park": FakeFont(height=12, text_width=6)}
 
 # Override dependencies in park_details.
 park_details.get_text_width = fake_get_text_width
 park_details.wrap_text = fake_wrap_text
 park_details.color_dict = dummy_color_dict
 park_details.loaded_fonts = dummy_loaded_fonts
+
 
 # Create a FakeMatrix for testing.
 class FakeMatrix:
@@ -57,31 +61,32 @@ class FakeMatrix:
         self.height = height
         self.clear_called = 0
         self.image_set = None
+
     def Clear(self):
         self.clear_called += 1
+
     def SetImage(self, image, x=0, y=0):
         self.image_set = {"image": image, "x": x, "y": y}
+
 
 # Use a recorder to capture calls to graphics.DrawText.
 class TextRecorder:
     def __init__(self):
         self.calls = []
+
     def record(self, matrix, font, x, y, color, text):
-        self.calls.append({
-            "matrix": matrix,
-            "font": font,
-            "x": x,
-            "y": y,
-            "color": color,
-            "text": text
-        })
+        self.calls.append({"matrix": matrix, "font": font, "x": x, "y": y, "color": color, "text": text})
+
 
 text_recorder = TextRecorder()
 # Patch the graphics.DrawText function.
 park_details.graphics.Color = lambda *rgb: rgb
-park_details.graphics.DrawText = lambda matrix, font, x, y, color, text: text_recorder.record(matrix, font, x, y, color, text)
+park_details.graphics.DrawText = lambda matrix, font, x, y, color, text: text_recorder.record(
+    matrix, font, x, y, color, text
+)
 
 # --- Tests ---
+
 
 def test_render_lightning_lane_multi_pass_price():
     fake_matrix = FakeMatrix(width=100, height=32)
@@ -94,11 +99,13 @@ def test_render_lightning_lane_multi_pass_price():
     park_details.render_lightning_lane_multi_pass_price(20, 5, fake_matrix, "$20")
     assert any(call["text"] == "$20" for call in text_recorder.calls)
 
+
 def test_format_iso_time_valid():
     iso_str = "2025-03-17T09:00:00-04:00"
     formatted = format_iso_time(iso_str)
     # Expect the formatted time to end with AM or PM.
     assert formatted.endswith("AM") or formatted.endswith("PM")
+
 
 def test_format_iso_time_invalid(monkeypatch):
     # Create a dummy datetime class that always raises a ValueError.
@@ -106,10 +113,12 @@ def test_format_iso_time_invalid(monkeypatch):
         @staticmethod
         def fromisoformat(s):
             raise ValueError("bad format")
+
     # Patch park_details.datetime with our dummy.
     monkeypatch.setattr(park_details, "datetime", DummyDatetime)
     formatted = format_iso_time("badtime")
     assert formatted == "badtime"
+
 
 def test_draw_multi_line_park_name_text_block():
     fake_matrix = FakeMatrix(width=200, height=64)
@@ -121,11 +130,13 @@ def test_draw_multi_line_park_name_text_block():
     texts = [call["text"] for call in text_recorder.calls]
     assert "Magic" in texts or "Kingdom" in texts
 
+
 def test_draw_single_line_park_name_text():
     fake_matrix = FakeMatrix(width=200, height=64)
     text_recorder.calls = []
     draw_single_line_park_name_text(fake_matrix, dummy_loaded_fonts["info"], "Disney", 200, 64)
     assert any(call["text"] == "Disney" for call in text_recorder.calls)
+
 
 def test_render_special_ticketed_events():
     fake_matrix = FakeMatrix(width=200, height=64)
@@ -151,7 +162,7 @@ def test_render_park_hours():
 def test_park_hours_star_takes_the_partys_color(event, color):
     fake_matrix = FakeMatrix(width=200, height=64)
     text_recorder.calls = []
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")  # no park timezone: UTC
+    today = datetime.now(UTC).strftime("%Y-%m-%d")  # no park timezone: UTC
     park_obj = {
         "openingTime": f"{today}T09:00:00-04:00",
         "closingTime": f"{today}T23:00:00-04:00",
@@ -161,35 +172,42 @@ def test_park_hours_star_takes_the_partys_color(event, color):
     render_park_hours(60, 1, fake_matrix, park_obj)
     assert [call["color"] for call in text_recorder.calls if call["text"] == "*"] == [color]
 
+
 class PixelMatrix(FakeMatrix):
     def __init__(self, width, height):
         super().__init__(width, height)
         self.pixels = {}
+
     def SetPixel(self, x, y, r, g, b):
         self.pixels[(x, y)] = (r, g, b)
 
 
 def test_holiday_star_colours_each_dot():
     from utils.special_events import HOLIDAY_STAR
+
     matrix = PixelMatrix(width=200, height=64)
     text_recorder.calls = []
     render_special_ticketed_events(50, matrix, "9AM-10PM", HOLIDAY_STAR)
     x = 1 + len("9AM-10PM") * 5
     green, red, white = (40, 200, 60), (230, 30, 30), (255, 255, 255)
-    assert matrix.pixels == {(x, 45): green, (x + 2, 45): red, (x + 1, 46): white,
-                             (x, 47): red, (x + 2, 47): green}
+    assert matrix.pixels == {(x, 45): green, (x + 2, 45): red, (x + 1, 46): white, (x, 47): red, (x + 2, 47): green}
     assert not any(call["text"] == "*" for call in text_recorder.calls), "drawn dot by dot, not as text"
 
 
 def test_park_hours_on_a_christmas_party_night_get_the_holiday_star():
     matrix = PixelMatrix(width=200, height=64)
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")  # no park timezone: UTC
-    render_park_hours(60, 1, matrix, {
-        "openingTime": f"{today}T09:00:00-04:00",
-        "closingTime": f"{today}T23:00:00-04:00",
-        "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}],
-        "seasonalEvent": "christmas",
-    })
+    today = datetime.now(UTC).strftime("%Y-%m-%d")  # no park timezone: UTC
+    render_park_hours(
+        60,
+        1,
+        matrix,
+        {
+            "openingTime": f"{today}T09:00:00-04:00",
+            "closingTime": f"{today}T23:00:00-04:00",
+            "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}],
+            "seasonalEvent": "christmas",
+        },
+    )
     assert set(matrix.pixels.values()) == {(40, 200, 60), (230, 30, 30), (255, 255, 255)}
 
 
@@ -197,94 +215,63 @@ def _bdf_glyph_dots(path, encoding):
     """(x, y-from-baseline) of each set pixel of one BDF glyph."""
     lines = open(path).read().splitlines()
     start = lines.index(f"ENCODING {encoding}")
-    bbx = next(l for l in lines[start:] if l.startswith("BBX")).split()
+    bbx = next(line for line in lines[start:] if line.startswith("BBX")).split()
     w, h, xoff, yoff = map(int, bbx[1:])
-    rows = lines[lines.index("BITMAP", start) + 1:][:h]
-    return {(xoff + col, -(yoff + h) + r) for r, row in enumerate(rows)
-            for col in range(w) if int(row, 16) >> (len(row) * 4 - 1 - col) & 1}
+    rows = lines[lines.index("BITMAP", start) + 1 :][:h]
+    return {
+        (xoff + col, -(yoff + h) + r)
+        for r, row in enumerate(rows)
+        for col in range(w)
+        if int(row, 16) >> (len(row) * 4 - 1 - col) & 1
+    }
 
 
 def test_star_dots_match_the_info_fonts_asterisk():
     import os
+
     from display.display import fonts
+
     repo = os.path.join(os.path.dirname(__file__), "..", "..", "..")
     for height in (32, 64):
         path = fonts()[height]["info"]
         assert _bdf_glyph_dots(os.path.join(repo, path), 42) == set(park_details.STAR_DOTS), path
 
 
-def test_render_weather_icon_success(monkeypatch):
-    # Create a dummy response for requests.get.
-    class DummyResponse:
-        def __init__(self, content):
-            self.content = content
-        def raise_for_status(self):
-            pass
-    timeouts = []
-    def dummy_get(url, timeout=None):
-        timeouts.append(timeout)
-        return DummyResponse(b"\x89PNG\r\n\x1a\n")
-    monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
-    # Patch PIL.Image.open to return a fake image.
-    class FakeImage:
-        def __init__(self):
-            self.width = 15
-        def resize(self, size):
-            self.width = size[0]
-            return self
-    monkeypatch.setattr(park_details, "Image", type("PILImage", (), {"open": lambda f: FakeImage()}))
-    logged = []
-    monkeypatch.setattr(park_details.debug, "log", logged.append)
-    park_details.icon_cache.clear()
-    img = render_weather_icon("01d")
-    assert img is not None
-    # Ensure caching: calling again returns the same object.
-    cached = render_weather_icon("01d")
-    assert cached is img
-    assert timeouts == [park_details.ICON_TIMEOUT_S], "one download, with a timeout"
-    assert logged == ["Downloaded weather icon 01d"], "the download is logged once; the cache hit isn't"
+def test_render_weather_icon_reads_what_the_rest_thread_published(monkeypatch):
+    monkeypatch.setattr(park_details, "weather_icons", {"01d": "image"})
+    assert render_weather_icon("01d") == "image"
+    assert render_weather_icon("10d") is None, "not downloaded yet: nothing drawn, as for a failed fetch"
 
-def test_render_weather_icon_failure(monkeypatch):
-    # Dummy get that simulates a network failure.
-    def dummy_get(url, timeout=None):
-        raise Exception("Network error")
-    monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
-    park_details.icon_cache.clear()
-    park_details.icon_failures.clear()
-    img = render_weather_icon("badcode")
-    assert img is None
 
-def test_failed_weather_icon_is_not_redownloaded_every_frame(monkeypatch):
-    calls = []
-    def dummy_get(url, timeout=None):
-        calls.append(url)
-        raise Exception("Network error")
-    monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
-    now = [1000.0]
-    monkeypatch.setattr(park_details.time, "monotonic", lambda: now[0])
-    park_details.icon_cache.clear()
-    park_details.icon_failures.clear()
-    for _ in range(30):
-        assert render_weather_icon("10d") is None
-    assert len(calls) == 1
-    now[0] += park_details.ICON_RETRY_S
-    render_weather_icon("10d")
-    assert len(calls) == 2, "retries once the back-off has passed"
+def test_park_screen_never_imports_requests():
+    import os
+    import subprocess
+    import sys
+
+    root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+    out = subprocess.run(
+        [sys.executable, "-c", "import sys, display.park.park_details; print('requests' in sys.modules)"],
+        capture_output=True,
+        text=True,
+        cwd=root,
+    )
+    assert out.stdout.strip().splitlines()[-1:] == ["False"], out.stderr
+    assert not hasattr(park_details, "requests")
+
 
 def test_display_weather_icon_and_description(monkeypatch):
     fake_matrix = FakeMatrix(width=128, height=32)
     text_recorder.calls = []
-    weather_info = {
-        "temperature": "75°F",
-        "icon": "01d",
-        "short_description": "Sunny"
-    }
+    weather_info = {"temperature": "75°F", "icon": "01d", "short_description": "Sunny"}
+
     class FakeImage:
         def __init__(self):
             self.width = 15
             self.height = 15
+
         def convert(self, mode):
             return self
+
     monkeypatch.setattr(park_details, "render_weather_icon", lambda code: FakeImage())
     display_weather_icon_and_description(fake_matrix, weather_info, font_height=10, show_icon=True)
     texts = [call["text"] for call in text_recorder.calls]
@@ -301,11 +288,7 @@ def test_display_weather_icon_and_description_high_resolution(monkeypatch):
     text_recorder.calls = []  # Clear any previous DrawText records.
 
     # Dummy weather info:
-    weather_info = {
-        "temperature": "75°F",
-        "icon": "01d",
-        "short_description": "Sunny"
-    }
+    weather_info = {"temperature": "75°F", "icon": "01d", "short_description": "Sunny"}
 
     # Define a FakeImage with known dimensions.
     class FakeImage:
@@ -325,8 +308,9 @@ def test_display_weather_icon_and_description_high_resolution(monkeypatch):
     # Expect the weather branch for high resolution to construct a combined weather text.
     expected_weather_text = "75°F Sunny"
     # Check that at least one DrawText call used this expected_weather_text.
-    assert any(expected_weather_text in call["text"] for call in text_recorder.calls), \
+    assert any(expected_weather_text in call["text"] for call in text_recorder.calls), (
         "Expected weather text not found in DrawText calls for high resolution matrix."
+    )
 
 
 # Test render_park_information_screen for low resolution (height == 32)
@@ -366,21 +350,23 @@ def test_render_park_information_screen_low_res(monkeypatch):
         "weather": {"temperature": "70°F", "icon": "01d", "short_description": "Sunny"},
         "llmpPrice": "15",
         "openingTime": "2020-01-01T09:00:00-00:00",
-        "closingTime": "2020-01-01T20:00:00-00:00"
+        "closingTime": "2020-01-01T20:00:00-00:00",
     }
     # Create a FakeMatrix with height 32.
     fake_matrix = FakeMatrix(width=64, height=32)
     baseline = fake_matrix.height - 1
-    info_font_height = getattr(park_details.loaded_fonts["info"], "height")
+    info_font_height = park_details.loaded_fonts["info"].height
 
     # Call render_park_information_screen.
     park_details.render_park_information_screen(fake_matrix, park_obj)
 
     # For board_height == 32 branch:
     # 1. draw_multi_line_park_name_text_block should have been called with wrapped name ["Test Park"].
-    # 2. Because park_obj contains weather, display_weather_icon_and_description should be called with the weather dict and info_font_height.
+    # 2. Because park_obj contains weather, display_weather_icon_and_description should be called with the
+    #    weather dict and info_font_height.
     # 3. render_park_hours is called with vertical = baseline, horizontal = 1.
-    # 4. render_lightning_lane_multi_pass_price is called with vertical = baseline - info_font_height, horizontal = 1, and price "15".
+    # 4. render_lightning_lane_multi_pass_price is called with vertical = baseline - info_font_height,
+    #    horizontal = 1, and price "15".
     assert calls["draw_multi"] == ["Test Park"]
     assert calls["display_weather"] == (park_obj["weather"], info_font_height)
     assert calls["render_hours"] == (baseline, 1)
@@ -418,15 +404,16 @@ def test_render_park_information_screen_high_res(monkeypatch):
         "weather": {"temperature": "70°F", "icon": "01d", "short_description": "Sunny"},
         "llmpPrice": "15",
         "openingTime": "2020-01-01T09:00:00-00:00",
-        "closingTime": "2020-01-01T20:00:00-00:00"
+        "closingTime": "2020-01-01T20:00:00-00:00",
     }
 
     # Create a FakeMatrix with height 64.
     fake_matrix = FakeMatrix(width=128, height=64)
     baseline = fake_matrix.height - 1
     # Calculate expected horizontal for lightning lane price:
-    expected_horizontal = fake_matrix.width - park_details.get_text_width(park_details.loaded_fonts["info"],
-                                                                          park_obj["llmpPrice"])
+    expected_horizontal = fake_matrix.width - park_details.get_text_width(
+        park_details.loaded_fonts["info"], park_obj["llmpPrice"]
+    )
 
     park_details.render_park_information_screen(fake_matrix, park_obj)
 
@@ -435,7 +422,7 @@ def test_render_park_information_screen_high_res(monkeypatch):
     # 2. Because weather exists, display_weather_icon_and_description is called with the weather dict and info_font_height.
     # 3. render_lightning_lane_multi_pass_price is called with vertical = baseline, horizontal = expected_horizontal, and price "15".
     # 4. render_park_hours is called with vertical = baseline, horizontal = 1.
-    info_font_height = getattr(park_details.loaded_fonts["info"], "height")
+    info_font_height = park_details.loaded_fonts["info"].height
     assert calls["draw_multi"] == ["Test Park"]
     assert calls["display_weather"] == (park_obj["weather"], info_font_height)
     assert calls["render_llmp"] == (baseline, expected_horizontal, "15")
@@ -444,9 +431,10 @@ def test_render_park_information_screen_high_res(monkeypatch):
 
 @pytest.mark.parametrize("icon", ["cached", "missing"])
 def test_drawing_the_weather_every_frame_logs_nothing(monkeypatch, icon):
-    # The park screen redraws every animation frame; a cache hit, or an icon that couldn't be
-    # fetched (already logged once, when the fetch failed), mustn't log on each one.
+    # The park screen redraws every animation frame; a published icon, or one the REST
+    # thread hasn't (or couldn't) download, mustn't log on each one.
     from utils import debug
+
     logged = []
     for level in ("log", "info", "warning", "error"):
         monkeypatch.setattr(debug, level, lambda *a, _l=level, **k: logged.append(_l))
@@ -457,10 +445,10 @@ def test_drawing_the_weather_every_frame_logs_nothing(monkeypatch, icon):
         def convert(self, mode):
             return self
 
-    monkeypatch.setitem(park_details.icon_cache, "01d", FakeImage())
+    monkeypatch.setitem(park_details.weather_icons, "01d", FakeImage())
     weather_info = {"temperature": "75°F", "icon": "01d" if icon == "cached" else "zz", "short_description": "Sunny"}
-    if icon == "missing":
-        monkeypatch.setitem(park_details.icon_failures, "zz", __import__("time").monotonic())
     for _ in range(10):
-        display_weather_icon_and_description(FakeMatrix(width=64, height=32), weather_info, font_height=10, show_icon=True)
+        display_weather_icon_and_description(
+            FakeMatrix(width=64, height=32), weather_info, font_height=10, show_icon=True
+        )
     assert logged == []

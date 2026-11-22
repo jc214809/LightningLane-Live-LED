@@ -1,11 +1,21 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
 from utils.special_events import (
-    DATED_LANDMARKS, DEFAULT_STAR_RGB, HOLIDAY_STAR, NIGHTLY_FIREWORKS, SPECIAL_EVENTS, active_party, dated_landmark,
-    fireworks_show, is_special, seasonal_event,
-    special_event_hours, special_event_now, star_rgb,
+    DATED_LANDMARKS,
+    DEFAULT_STAR_RGB,
+    HOLIDAY_STAR,
+    NIGHTLY_FIREWORKS,
+    SPECIAL_EVENTS,
+    active_party,
+    dated_landmark,
+    fireworks_show,
+    is_special,
+    seasonal_event,
+    special_event_hours,
+    special_event_now,
+    star_rgb,
 )
 
 ET = "America/New_York"
@@ -14,13 +24,18 @@ ET = "America/New_York"
 def party(date, opens="19:00", closes_date=None, closes="00:00", description="Special Ticketed Event"):
     """A schedule entry like the live API's: 7pm to midnight, closing on the next day's date."""
     closes_date = closes_date or date
-    return {"type": "TICKETED_EVENT", "date": date, "description": description,
-            "openingTime": f"{date}T{opens}:00-04:00", "closingTime": f"{closes_date}T{closes}:00-04:00"}
+    return {
+        "type": "TICKETED_EVENT",
+        "date": date,
+        "description": description,
+        "openingTime": f"{date}T{opens}:00-04:00",
+        "closingTime": f"{closes_date}T{closes}:00-04:00",
+    }
 
 
 def et(day_time):
     """An aware 'now' from an Orlando wall-clock time, e.g. '2026-09-27 20:00'."""
-    return datetime.fromisoformat(day_time + ":00-04:00").astimezone(timezone.utc)
+    return datetime.fromisoformat(day_time + ":00-04:00").astimezone(UTC)
 
 
 def mk(*events, seasonal="halloween"):
@@ -35,20 +50,29 @@ def test_is_special_matches_ticketed_parties_and_extended_evenings():
     assert not is_special({})
 
 
-@pytest.mark.parametrize("names, expected", [
-    (["Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
-    (["Stitch’s Masquerade Mashup at Mickey’s Not-So-Scary Halloween Party"], "halloween"),
-    (["Space Mountain", "Haunted Mansion"], None),
-    (["Meet Santa at Mickey's Very Merry Christmas Party"], "christmas"),
-    (["Holiday Show at Disney Jollywood Nights"], "jollywood"),
-    (["Disney Enchantment at Disney After Hours at Magic Kingdom"], "after_hours"),
-    # Magic Kingdom's list today: an After Hours show alongside the Halloween party's.
-    (["Disney Enchantment at Disney After Hours at Magic Kingdom",
-      "Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
-    (["Extended Evening Hours"], None),
-    ([{}], None),
-    ([], None),
-])
+@pytest.mark.parametrize(
+    "names, expected",
+    [
+        (["Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
+        (["Stitch’s Masquerade Mashup at Mickey’s Not-So-Scary Halloween Party"], "halloween"),
+        (["Space Mountain", "Haunted Mansion"], None),
+        (["Meet Santa at Mickey's Very Merry Christmas Party"], "christmas"),
+        (["Minnie's Wonderful Christmastime Fireworks at Mickey's Very Merry Christmas Party"], "christmas"),
+        (["Holiday Show at Disney Jollywood Nights"], "jollywood"),
+        (["Disney Enchantment at Disney After Hours at Magic Kingdom"], "after_hours"),
+        # Magic Kingdom's list today: an After Hours show alongside the Halloween party's.
+        (
+            [
+                "Disney Enchantment at Disney After Hours at Magic Kingdom",
+                "Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party",
+            ],
+            "halloween",
+        ),
+        (["Extended Evening Hours"], None),
+        ([{}], None),
+        ([], None),
+    ],
+)
 def test_seasonal_event_names_the_party_from_the_parks_entities(names, expected):
     children = [n if isinstance(n, dict) else {"name": n} for n in names]
     assert seasonal_event(children) == expected
@@ -75,12 +99,19 @@ def test_no_special_event_without_one_in_the_schedule():
 
 
 def test_malformed_times_and_unknown_timezone_fail_safe():
-    park = mk({"type": "TICKETED_EVENT", "date": "2026-09-26", "description": "Special Ticketed Event",
-               "openingTime": "not a time", "closingTime": None})
+    park = mk(
+        {
+            "type": "TICKETED_EVENT",
+            "date": "2026-09-26",
+            "description": "Special Ticketed Event",
+            "openingTime": "not a time",
+            "closingTime": None,
+        }
+    )
     assert not special_event_now(park, et("2026-09-27 20:00"))
     park = mk(party("2026-09-27"))
     park["timezone"] = "Mars/Olympus_Mons"
-    assert special_event_now(park, datetime(2026, 9, 27, 12, tzinfo=timezone.utc)), "falls back to UTC"
+    assert special_event_now(park, datetime(2026, 9, 27, 12, tzinfo=UTC)), "falls back to UTC"
 
 
 def test_active_party_needs_both_a_party_tonight_and_a_known_name():
@@ -106,8 +137,15 @@ def test_fireworks_show_comes_from_tonights_schedule():
     assert fireworks_show({"name": "EPCOT"}, now) == NIGHTLY_FIREWORKS
 
 
+def test_the_christmas_party_has_its_own_fireworks_show():
+    now = et("2026-11-20 21:00")
+    show = fireworks_show(mk(party("2026-11-20"), seasonal="christmas"), now)
+    assert show == ("Minnie's Wonderful Christmastime Fireworks", "christmas")
+
+
 def test_every_fireworks_theme_exists():
     from display.fireworks.fireworks import THEMES
+
     for key, event in SPECIAL_EVENTS.items():
         assert event.get("fireworks_theme") in (None, *THEMES), key
     assert NIGHTLY_FIREWORKS[1] in (None, *THEMES)
@@ -139,14 +177,16 @@ def test_extended_evening_is_named_by_the_schedule_not_the_party_season():
     now = et("2026-09-27 21:30")
     eeh = party("2026-09-27", opens="21:00", closes="23:00", description="Extended Evening")
     assert active_party(mk(eeh), now) == "extended_evening", "even in a park holding a party season"
-    assert star_rgb(mk(eeh, seasonal=None), now) == SPECIAL_EVENTS["extended_evening"]["star_rgb"] == (255, 215, 0), "gold"
+    assert star_rgb(mk(eeh, seasonal=None), now) == SPECIAL_EVENTS["extended_evening"]["star_rgb"] == (255, 215, 0), (
+        "gold"
+    )
     assert fireworks_show(mk(eeh), now) == NIGHTLY_FIREWORKS
 
 
 def test_a_party_named_after_hours_colours_the_star():
     now = et("2026-09-27 20:00")
     assert star_rgb(mk(party("2026-09-27"), seasonal="after_hours"), now) == SPECIAL_EVENTS["after_hours"]["star_rgb"]
-    assert fireworks_show(mk(party("2026-09-27"), seasonal="christmas"), now) == NIGHTLY_FIREWORKS
+    assert fireworks_show(mk(party("2026-09-27"), seasonal="jollywood"), now) == NIGHTLY_FIREWORKS
 
 
 def test_the_wine_and_dine_races_are_epcots_landmarks_on_their_race_days_only():
@@ -162,7 +202,7 @@ def test_the_wine_and_dine_races_are_epcots_landmarks_on_their_race_days_only():
 
 
 def test_dated_landmarks_match_park_names_loosely_and_survive_missing_fields():
-    when = datetime(2026, 10, 23, 15, tzinfo=timezone.utc)
+    when = datetime(2026, 10, 23, 15, tzinfo=UTC)
     assert dated_landmark({"name": "Epcot", "timezone": ET}, when) == "WineAndDine5KLandmark"
     assert dated_landmark({"name": "EPCOT"}, when) == "WineAndDine5KLandmark", "no timezone: UTC's date"
     assert dated_landmark({}, when) is None
@@ -185,16 +225,20 @@ def test_special_event_hours_reads_tonights_start_and_end():
     now = et("2026-12-05 18:00")
     assert special_event_hours(mk(party("2026-12-05", closes_date="2026-12-06")), now) == ("7PM", "12AM")
     assert special_event_hours(mk(party("2026-12-05", opens="18:00", closes="23:00")), now) == ("6PM", "11PM")
-    assert special_event_hours(mk(party("2026-12-05", opens="18:57", closes="23:59")), now) == ("7PM", "12AM"), \
+    assert special_event_hours(mk(party("2026-12-05", opens="18:57", closes="23:59")), now) == ("7PM", "12AM"), (
         "a minute to midnight is midnight"
+    )
 
 
-@pytest.mark.parametrize("park", [
-    mk(),  # no party tonight
-    mk(party("2026-12-04")),  # last night's, over
-    mk(dict(party("2026-12-05"), closingTime="soon")),  # a bad time
-    mk({k: v for k, v in party("2026-12-05").items() if k != "openingTime"}),  # a missing one
-    None,
-])
+@pytest.mark.parametrize(
+    "park",
+    [
+        mk(),  # no party tonight
+        mk(party("2026-12-04")),  # last night's, over
+        mk(dict(party("2026-12-05"), closingTime="soon")),  # a bad time
+        mk({k: v for k, v in party("2026-12-05").items() if k != "openingTime"}),  # a missing one
+        None,
+    ],
+)
 def test_special_event_hours_is_none_without_a_usable_party(park):
     assert special_event_hours(park, et("2026-12-05 18:00")) is None

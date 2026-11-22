@@ -14,6 +14,7 @@ once its CI has passed. An update:
    settings page answers. Pass: it joins the good commits. Fail, or any step erroring: roll back
    (the old commit, the freeze, config.json, restart) and say why by Pushover.
 """
+
 import json
 import os
 import re
@@ -22,10 +23,10 @@ import socket
 import time
 from dataclasses import dataclass
 
-from settings_page import pushover
-from self_update import github, state as states
+from self_update import github
+from self_update import state as states
 from self_update.board import CommandFailed
-from utils import debug, heartbeat
+from utils import debug, heartbeat, pushover
 from utils.config import pushover_keys
 
 RELEASES, BETA = "releases", "beta"
@@ -79,9 +80,37 @@ def parse_version(text):
     return tuple(int(n) for n in found.groups()) if found else None
 
 
+# What version.py gives (git describe without the "v"): "2.1.0", "2.1.5-beta", or either with
+# "-3-g1a2b3c4" for three commits past it.
+DESCRIBED = re.compile(r"v?(\d+)\.(\d+)\.(\d+)(-beta)?(?:-\d+-g[0-9a-f]+)?")
+
+
+def installed_number(text):
+    """(major, minor, patch) of an installed version as version.py gives it, a Beta counting as its
+    number (2.1.5-beta is newer than v2.1.0, older than v2.2.0), or None."""
+    found = DESCRIBED.fullmatch(str(text).strip())
+    return tuple(int(n) for n in found.groups()[:3]) if found else None
+
+
+def beta_number(text):
+    """ "2.1.5" for exactly the Beta v2.1.5-beta (not a commit past it), else None."""
+    found = DESCRIBED.fullmatch(str(text).strip())
+    return ".".join(found.groups()[:3]) if found and found.group(4) and found.group(0).endswith("-beta") else None
+
+
+def release_of(text):
+    """The release a version grew from: X.Y.0 for a Beta (Betas count up from their release), else
+    its X.Y.Z; text itself if it isn't a version."""
+    found = DESCRIBED.fullmatch(str(text).strip())
+    if not found:
+        return str(text)
+    major, minor, patch, beta = found.groups()
+    return f"{major}.{minor}.0" if beta else f"{major}.{minor}.{patch}"
+
+
 def newest_release(tags, installed):
     """The newest release tag at least MIN_RELEASE and newer than the installed version, or None."""
-    current = parse_version(installed) or (0, 0, 0)
+    current = installed_number(installed) or (0, 0, 0)
     found = [(v, tag) for tag in tags if (v := parse_version(tag)) and v >= MIN_RELEASE and v > current]
     return max(found)[1] if found else None
 
@@ -105,18 +134,31 @@ def channel_of(board, sha, branch, record):
 
 
 def name_of(old):
-    """A rollback point (state.json's "from") as people read it: a Beta by its commit (its version.py
-    still says the release it grew from, which reads like that release), else its version and commit."""
+    """A rollback point (state.json's "from") as people read it: a Beta by its number when it was
+    exactly one, else by its commit; a release by its version and commit."""
     sha = str(old.get("sha") or "?")[:7]
-    return f"Beta {sha}" if old.get("channel") == BETA else f"{old.get('version')} ({sha})"
+    if old.get("channel") == BETA:
+        return f"Beta {beta_number(old.get('version')) or sha}"
+    return f"{old.get('version')} ({sha})"
 
 
 class Updater:
-    def __init__(self, board, state=None, gh=github, installed_version=None, config_path=None,
-                 heartbeat_path=None, notify=None, clock=time.time, sleep=time.sleep):
-        from version import SCRIPT_VERSION
+    def __init__(  # noqa: PLR0913
+        self,
+        board,
+        state=None,
+        gh=github,
+        installed_version=None,
+        config_path=None,
+        heartbeat_path=None,
+        notify=None,
+        clock=time.time,
+        sleep=time.sleep,
+    ):
+        from version import version
+
         self.board, self.state, self.gh = board, state or states.State(), gh
-        self.installed_version = installed_version or SCRIPT_VERSION
+        self.installed_version = installed_version or version(board.app_dir)
         self.config_path = config_path or os.path.join(board.app_dir, "config.json")
         self.heartbeat_path, self.clock, self.sleep = heartbeat_path, clock, sleep
         self.notify = notify or self._pushover
@@ -131,14 +173,18 @@ class Updater:
             problems.append(f"only {free // 2**20} MB free; an update needs {REQUIRED_FREE_BYTES // 2**20} MB")
         flags = self.board.throttled()
         if flags and flags & THROTTLED_NOW:
-            problems.append(f"the Pi is under-voltage or throttled right now ({flags:#x}): fix its power or cooling first")
+            problems.append(
+                f"the Pi is under-voltage or throttled right now ({flags:#x}): fix its power or cooling first"
+            )
         show = heartbeat.show_playing(heartbeat.read(self.heartbeat_path), self.clock())
         if show:
             problems.append(f"{show} is playing")
         changes = self.board.changes()
         if changes:
-            problems.append(f"the checkout has changes: {', '.join(c.strip() for c in changes[:3])}"
-                            + (f" and {len(changes) - 3} more" if len(changes) > 3 else ""))
+            problems.append(
+                f"the checkout has changes: {', '.join(c.strip() for c in changes[:3])}"
+                + (f" and {len(changes) - 3} more" if len(changes) > 3 else "")
+            )
         return problems
 
     def plan(self, channel):
@@ -167,7 +213,9 @@ class Updater:
         if sha == self.board.head():
             return Outcome(CURRENT, f"already on {target.ref} ({sha[:7]})")
         if self.board.file_at(sha, UPDATER_FILE) is None:
-            return Outcome(BLOCKED, f"{target.ref} ({sha[:7]}) predates the updater: it couldn't update or roll back again")
+            return Outcome(
+                BLOCKED, f"{target.ref} ({sha[:7]}) predates the updater: it couldn't update or roll back again"
+            )
         return None
 
     # updating
@@ -187,22 +235,12 @@ class Updater:
     def _update(self, channel, dry_run=False):
         record = self.state.load()
         if record["phase"] in states.UNFINISHED:
-            return Outcome(BLOCKED, f"an earlier update didn't finish (it stopped at {record['phase']}): "
-                                    "roll it back first (python3 -m self_update rollback)")
-        problems = self.preflight()
-        target = None
-        try:
-            target, nothing = self.plan(channel)
-        except github.GitHubError as e:
-            problems.append(str(e))
-        if problems:
-            return Outcome(BLOCKED, "; ".join(problems))
-        if target is None:
-            return nothing
-        try:
-            stop = self._resolve(target)
-        except CommandFailed as e:
-            return Outcome(BLOCKED, str(e))
+            return Outcome(
+                BLOCKED,
+                f"an earlier update didn't finish (it stopped at {record['phase']}): "
+                "roll it back first (python3 -m self_update rollback)",
+            )
+        target, stop = self._find_target(channel)
         if stop:
             return stop
         if dry_run:
@@ -212,18 +250,7 @@ class Updater:
         except (CommandFailed, OSError) as e:
             return Outcome(BLOCKED, f"couldn't take a rollback point, so nothing changed: {e}")
         debug.info(f"Updating from {record['from']['sha'][:7]} to {target.ref} ({target.sha[:7]}).")
-        try:
-            self.board.checkout(target.sha)
-            self.state.set_phase(record, states.SWITCHED)
-            self.board.install(skip_requirements=not record["from"]["requirements_changed"])
-            self.state.set_phase(record, states.INSTALLED)
-            self.state.set_phase(record, states.CHECKING)
-            problem = self._restart_and_check()
-        except CommandFailed as e:
-            problem = str(e)
-        except Exception as e:  # anything at all: the board mustn't be left half-updated
-            debug.exception("The update failed unexpectedly.")
-            problem = f"the update failed unexpectedly: {e}"
+        problem = self._switch_and_check(record, target)
         if problem is None:
             states.remember_good(record, target.sha)
             self.state.set_phase(record, states.UPDATED, reason=None)
@@ -232,6 +259,39 @@ class Updater:
         debug.error(f"The update to {target.ref} ({target.sha[:7]}) failed: {problem}. Rolling back.")
         undone = self._roll_back(record, problem)
         return Outcome(undone.result, undone.message, ok=False)  # back where it was, but not updated
+
+    def _find_target(self, channel):
+        """(Target, None) when there's something to install, else (None, the Outcome saying why not)."""
+        problems = self.preflight()
+        target = None
+        try:
+            target, nothing = self.plan(channel)
+        except github.GitHubError as e:
+            problems.append(str(e))
+        if problems:
+            return None, Outcome(BLOCKED, "; ".join(problems))
+        if target is None:
+            return None, nothing
+        try:
+            stop = self._resolve(target)
+        except CommandFailed as e:
+            return None, Outcome(BLOCKED, str(e))
+        return (None, stop) if stop else (target, None)
+
+    def _switch_and_check(self, record, target):
+        """Check out and install target, restart, and wait for health. Returns the problem, or None."""
+        try:
+            self.board.checkout(target.sha)
+            self.state.set_phase(record, states.SWITCHED)
+            self.board.install(skip_requirements=not record["from"]["requirements_changed"])
+            self.state.set_phase(record, states.INSTALLED)
+            self.state.set_phase(record, states.CHECKING)
+            return self._restart_and_check()
+        except CommandFailed as e:
+            return str(e)
+        except Exception as e:  # anything at all: the board mustn't be left half-updated
+            debug.exception("The update failed unexpectedly.")
+            return f"the update failed unexpectedly: {e}"
 
     def _take_rollback_point(self, record, target):
         head = self.board.head()
@@ -244,12 +304,20 @@ class Updater:
             shutil.copy2(self.config_path, self.state.config_path)
         branch = self.board.branch()
         record.update(
-            {"from": {"sha": head, "branch": branch, "version": self.installed_version,
-                      "channel": channel_of(self.board, head, branch, record),
-                      "requirements_changed": self.board.changed(head, target.sha, "requirements.txt"),
-                      "config_saved": has_config},
-             "to": {"sha": target.sha, "ref": target.ref, "channel": target.channel},
-             "started_at": self.clock(), "reason": None})
+            {
+                "from": {
+                    "sha": head,
+                    "branch": branch,
+                    "version": self.installed_version,
+                    "channel": channel_of(self.board, head, branch, record),
+                    "requirements_changed": self.board.changed(head, target.sha, "requirements.txt"),
+                    "config_saved": has_config,
+                },
+                "to": {"sha": target.sha, "ref": target.ref, "channel": target.channel},
+                "started_at": self.clock(),
+                "reason": None,
+            }
+        )
         return self.state.set_phase(record, states.READY)
 
     def _restart_and_check(self):
@@ -306,8 +374,9 @@ class Updater:
                 if record["phase"] not in states.UNFINISHED or not record.get("from"):
                     return Outcome(NOTHING_TO_UNDO, f"no unfinished update (last: {record['phase']})")
                 debug.warning(f"An update stopped midway (at {record['phase']}): rolling it back.")
-                return self._roll_back(record, f"the update stopped midway (at {record['phase']}), "
-                                               "probably a power cut")
+                return self._roll_back(
+                    record, f"the update stopped midway (at {record['phase']}), probably a power cut"
+                )
         except states.Busy as e:
             return Outcome(BLOCKED, str(e))
 
@@ -341,9 +410,11 @@ class Updater:
             return Outcome(ROLLED_BACK, f"rolled back to {name}: {reason}")
         self.state.set_phase(record, states.ROLLBACK_FAILED, rollback_problem=problem)
         debug.error(f"Rolling back to {name} failed: {problem}.")
-        self.notify("Update rollback FAILED",
-                    f"Couldn't get back to {name}: {problem}. The update had failed because: {reason}. "
-                    "Over SSH: sudo venv/bin/python3 -m self_update rollback")
+        self.notify(
+            "Update rollback FAILED",
+            f"Couldn't get back to {name}: {problem}. The update had failed because: {reason}. "
+            "Over SSH: sudo venv/bin/python3 -m self_update rollback",
+        )
         return Outcome(ROLLBACK_FAILED, f"rolling back to {name} failed: {problem} (the update failed: {reason})")
 
     def _pushover(self, title, message):
@@ -359,4 +430,4 @@ class Updater:
         try:
             pushover.send(keys, f"{board}: {title}", message)
         except (OSError, ValueError, pushover.PushoverError) as e:
-            debug.warning(f"Couldn't Pushover \"{title}\": {e}")
+            debug.warning(f'Couldn\'t Pushover "{title}": {e}')

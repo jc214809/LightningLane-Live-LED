@@ -6,7 +6,6 @@ import pytest
 
 import display.landmarks as landmarks
 from display.landmarks import penguin_waiters as pw
-
 from tests.display.landmarks.support import _scene_s
 
 BOARDS = [(64, 32), (64, 64)]
@@ -62,7 +61,9 @@ def test_the_title_says_half_marathon_and_stays_clear_of_them_at_rest(w, h):
     assert all(0 <= x < w and 0 <= y < h for x, y in scene.text), "the title isn't clipped"
     for name in pw.ORDER:
         assert not set(scene.text) & _drawn(scene, name), name
-    by_colour = {rgb: " ".join(text for _, text, _, _, c in scene.title_spec if c == rgb) for rgb in (pw.WHITE, pw.GOLD)}
+    by_colour = {
+        rgb: " ".join(text for _, text, _, _, c in scene.title_spec if c == rgb) for rgb in (pw.WHITE, pw.GOLD)
+    }
     assert by_colour[pw.GOLD] == "HALF MARATHON"
     assert by_colour[pw.WHITE].replace(" ", "") == "WINE&DINE"
 

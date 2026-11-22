@@ -6,7 +6,6 @@ import pytest
 
 import display.landmarks as landmarks
 from display.landmarks import wine_and_dine as wd
-
 from tests.display.landmarks.support import _scene_s
 
 BOARDS = [(64, 32), (64, 64)]
@@ -137,8 +136,11 @@ def test_64x64_marie_faces_the_title_and_64x32_peeks_over_the_table():
 
 
 def test_the_sprites_are_rectangular_and_use_only_their_palettes():
-    for art, colors in ((wd.TALL_MARIE, wd.TALL_COLORS), (wd.PEEK_MARIE, wd.PEEK_COLORS),
-                        (wd.WINE_GLASS, wd.GLASS_COLORS)):
+    for art, colors in (
+        (wd.TALL_MARIE, wd.TALL_COLORS),
+        (wd.PEEK_MARIE, wd.PEEK_COLORS),
+        (wd.WINE_GLASS, wd.GLASS_COLORS),
+    ):
         assert len({len(row) for row in art}) == 1
         assert set("".join(art)) - {"."} <= set(colors)
 

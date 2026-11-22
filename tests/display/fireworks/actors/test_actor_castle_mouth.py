@@ -11,8 +11,19 @@ TRACK = "0" * 15 + "1" * 15 + "2" * 15  # a second each: shut, half, open
 
 
 def _scene():
-    return Cue("s", "That's What Friends Are For", START, END, ((255, 210, 100),), 0.0, "friends", (),
-               frozenset(), "castle", ("castle_sings",))
+    return Cue(
+        "s",
+        "That's What Friends Are For",
+        START,
+        END,
+        ((255, 210, 100),),
+        0.0,
+        "friends",
+        (),
+        frozenset(),
+        "castle",
+        ("castle_sings",),
+    )
 
 
 def _show(height, track=TRACK):

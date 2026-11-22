@@ -1,5 +1,6 @@
 import math
 
+from display.animation.characters import bluey_art
 from display.animation.drawing import _blackout, walking_pixels
 from display.animation.motion import FPS
 from display.motion import smooth
@@ -37,176 +38,41 @@ class GranniesReveal:
     # P pupils, S shorts, Q shorts' edge; the frame: R handle, G pole, T base, K feet. Bluey:
     # A light blue, B red, C gown, U purple hair, F dark blue, W white, P pupils, E blue fur,
     # T tan snout, L its shading, J nose, G shorts, H their edge.
-    BINGO_ART = [
-        "...KKKKKKKK......",
-        "..KDDWWDDWWK.....",
-        ".KDDWWWDDWWWK....",
-        "KDDKKKKKKKKKDK...",
-        "KDKOOOWWWOOOKK...",
-        "KDKOOWWWWWOOKK...",
-        "KDKOWPWWWPWOKK...",
-        "KDKOWPWWWPNOKK...",
-        "KDKOWWWWWNNOKK...",
-        "KDKOWLWWWWLOKKKK.",
-        "KDKTWWLLLLTTKDDDK",
-        "KDKTTWWWWWTTKDDK.",
-        "KDKTTTTTTTTKKKKK.",
-        "KDDKKKKKKKKDDDK..",
-        "KDDDDDDKDDDDDK...",
-        "KDDDDDDKDDDDDK...",
-        "QSSSSSSQSSSSSQ...",
-        "QSSSSSSQSSSSSQ...",
-        ".QQQQQQQQQQQQ....",
-        "...WW....WW......",
-        "...WWW...WWW.....",
-    ]
-    WALKER_ART = [
-        "..WW.",
-        ".RWWR",
-        ".R..R",
-        ".RRRR",
-        "..G..",
-        "..G..",
-        "..G..",
-        "..G..",
-        ".TTT.",
-        "KTTTK",
-        "KK.KK",
-    ]
-    BIG_BINGO_ART = [
-        "....KKKKKKKKKKK......",
-        "...KDDDDDDDDDDDK.....",
-        "..KDDDDWWDDDDWWDK....",
-        ".KDDDDWWWWDDWWWWDK...",
-        "KDDDDWWWDDDDDDWWDK...",
-        "KDDDKKKKKKKKKKKKDK...",
-        "KDDKKOOOOWWWOOOOKK...",
-        "KDDKOOOWWWWWWWOOKK...",
-        "KDDKOOWWPWWWPWWOKK...",
-        "KDDKOOWWPWWWPWWOKK...",
-        "KDDKOOWWWWWWWNNOKK...",
-        "KDDKOOOWWWWWWNNOKK...",
-        "KDDKOOOWWLWWWWLOKK...",
-        "KDDKOOWWLWWWWWLOKK...",
-        "KDDKOWWLWLWWWWLOKKKDK",
-        "KDDKTWWWWWLLLLTTKKDDD",
-        "KDDKTTWWWWWWWTTTKKDDD",
-        "KDDKTTTTTTTTTTTTKKDDD",
-        "KDDKTTTTTTTTTTTKDKDDK",
-        "KDDDKTTTWWWWWTTKDKDK.",
-        "KDDDDKKKKKKKKKKDDKK..",
-        "KDDDDDDDDDKKDDDDDK...",
-        "KDDDDDDDDDKKDDDDDK...",
-        "KDDDDDDDDKDKDDDDDK...",
-        "QSSSSSSSSSSQSSSSSQ...",
-        "QSSSSSSSSSSQSSSSSQ...",
-        "QSSSSSSSSSSQSSSSSQ...",
-        "QSSSSSSSSSSQSSSSSQ...",
-        "..QQQQQQQQQWQQQQQ....",
-        ".....WWW...WW........",
-        ".....WWWW..WWWW......",
-        ".....WWWW..WWWW......",
-        ".....WWWW..WWWW......",
-    ]
-    BIG_WALKER_ART = [
-        ".KWWW...",
-        "KKWWW...",
-        "..RWRRR.",
-        "..RKKKR.",
-        "..R...R.",
-        "..RRRRR.",
-        "...RRR..",
-        "...GGG..",
-        "...GGG..",
-        "...GGG..",
-        "...GGG..",
-        "...GGG..",
-        "...GGG..",
-        "...GGG..",
-        "...GGG..",
-        "..TTTTT.",
-        "..TTTTT.",
-        ".KKTTTKK",
-        ".KK...KK",
-        ".KKK.KKK",
-        ".KKK.KKK",
-    ]
-    BLUEY_ART = [
-        "...BBAAABBAAA...",
-        "...BCCCAACCCAA..",
-        "..BCCCCCCCCCCCB.",
-        ".BCCBBBBBBBBBBB.",
-        "BCCBUUUUUUUUUUUU",
-        "BCCBUFFWWUUWWFFU",
-        "BCCBUFWWPUUPWWFU",
-        "BCCBUFWWPEUPWWFU",
-        "BCCBFUUUUEEATJJJ",
-        "BCCBEEEEEEATTTTJ",
-        "BCCBEEEEATTTTTTL",
-        "BCCBEEEATTTTTTTL",
-        "BCCBEEEATLLLLLLB",
-        "BCCCBEEAAAAEEBCB",
-        "BCCCCBAAEEEEBCCB",
-        "BCCCCCBBBBBBCCCB",
-        "BCCCCCCBBCCCCCCB",
-        "BCCCCCBCCBCCCCCB",
-        "BCCCCCBCCCCCCCCB",
-        "HGGGGGHGGGGGGGGH",
-        "HGGGGGHGGGGGGGGH",
-        ".HHHHHAHHHHHHHH.",
-        "...AAA....AAA...",
-        "...AAAA...AAAA..",
-    ]
-    BIG_BLUEY_ART = [
-        ".....BBBAAAABBBAAAA...",
-        "....BCCAAAAACCCAAAAA..",
-        "...BCCCCAAACCCCCAAAB..",
-        "..BCCCCCCCCCCCCCCCCCB.",
-        ".BCCCBBBBBBBBBBBBBBBB.",
-        "BCCCBUUUUUUUEEEUUUUUUU",
-        "BCCCBUUUFFWUUEUUWFFUUU",
-        "BCCCBFUFFWWWUUUWWWFBUU",
-        "BCCBUUUFWWPWUUUPWWFBUU",
-        "BCCBUUUFWWPWUEUPWWFBUU",
-        "BCCBFFUWWWPWUEEATTTJJJ",
-        "BCCBFUUUWWWUEEEATTTJJJ",
-        "BCCBFUUUUUUEEAAATTTTJL",
-        "BCCBFFFFEEEAATTTTTTTTL",
-        "BCCBEEEEEAATLTTTTTTTTL",
-        "BCCBEEEEEATLTTTTTTTTTL",
-        "BCCBEEEEEALTLTTTTTTTLB",
-        "BCCBEEEEEATTTLLLLLLLCB",
-        "BCCCBEEEEATTTTTTAEEBCB",
-        "BCCCCBEEEAAAAAAAAEEBCB",
-        "BCCCCBEEEEEEEEEEEEEBCB",
-        "BCCCCCBBAAAAEEEEEEEBCB",
-        "BCCCCCCCBBAAAAEEEEBCCB",
-        "BCCCCCCCCCBBAAAEEBCCCB",
-        "BCCCCCCCCCBBBBBBBCCCCB",
-        "BCCCCCCCCCBBBCCCCCCCCB",
-        "BCCCCCCCCBCBBCCCCCCCCB",
-        "BCCCCCCCBCCBCBCCCCCCCB",
-        "BCCCCCCBCCCBCCBCCCCCCB",
-        "BCCCCCCCCCCBCCCCCCCCCB",
-        "BCCCCCCCCCCBCCCCCCCCCB",
-        "HGGGGGGGGGGHGGGGGGGGGH",
-        "HGGGGGGGGGGHGGGGGGGGGH",
-        "HGGGGGGGGGGHGGGGGGGGGH",
-        "HGGGGGGGGGGHGGGGGGGGGH",
-        ".HHHHHHHHHHAHHHHHHHHH.",
-        "...AAAA....AAAA.......",
-        "...AAAAA...AAAAA......",
-        "...AAAAAA..AAAAAA.....",
-        "...AAAAAA..AAAAAA.....",
-    ]
-    BINGO_COLORS = {"K": (101, 21, 179), "D": (180, 107, 255), "W": (251, 255, 251),
-                    "O": (251, 148, 39), "T": (241, 193, 76), "L": (190, 151, 44), "N": (91, 45, 10),
-                    "P": (36, 37, 37), "S": (253, 160, 252), "Q": (248, 43, 228), "R": (230, 42, 40),
-                    "G": (184, 181, 182)}
-    BLUEY_COLORS = {"A": (198, 226, 244), "B": (230, 42, 40), "C": (241, 113, 116),
-                    "U": (180, 107, 255), "F": (50, 67, 213), "W": (251, 255, 251), "P": (36, 37, 37),
-                    "E": (127, 195, 245), "T": (241, 193, 76), "L": (190, 151, 44), "J": (80, 80, 90),
-                    "G": (156, 211, 42), "H": (82, 115, 26)}
+    BINGO_ART = bluey_art.GRANNIES_BINGO_ART
+    WALKER_ART = bluey_art.GRANNIES_WALKER_ART
+    BIG_BINGO_ART = bluey_art.GRANNIES_BIG_BINGO_ART
+    BIG_WALKER_ART = bluey_art.GRANNIES_BIG_WALKER_ART
+    BLUEY_ART = bluey_art.GRANNIES_BLUEY_ART
+    BIG_BLUEY_ART = bluey_art.GRANNIES_BIG_BLUEY_ART
+    BINGO_COLORS = {
+        "K": (101, 21, 179),
+        "D": (180, 107, 255),
+        "W": (251, 255, 251),
+        "O": (251, 148, 39),
+        "T": (241, 193, 76),
+        "L": (190, 151, 44),
+        "N": (91, 45, 10),
+        "P": (36, 37, 37),
+        "S": (253, 160, 252),
+        "Q": (248, 43, 228),
+        "R": (230, 42, 40),
+        "G": (184, 181, 182),
+    }
+    BLUEY_COLORS = {
+        "A": (198, 226, 244),
+        "B": (230, 42, 40),
+        "C": (241, 113, 116),
+        "U": (180, 107, 255),
+        "F": (50, 67, 213),
+        "W": (251, 255, 251),
+        "P": (36, 37, 37),
+        "E": (127, 195, 245),
+        "T": (241, 193, 76),
+        "L": (190, 151, 44),
+        "J": (80, 80, 90),
+        "G": (156, 211, 42),
+        "H": (82, 115, 26),
+    }
     # (first foot row, columns of the back foot, columns of the front foot) in each one's art,
     # and the column where the walking frame's art starts in Bingo's.
     BINGO_FEET, BIG_BINGO_FEET = (19, range(0, 7), range(7, 13)), (29, range(0, 10), range(10, 18))
@@ -288,11 +154,18 @@ class GranniesReveal:
         ahead, lifted = self.walker_ahead(t)
         bob = 0 if pose is None else pose % 2
         pixels = self._bingo_pixels(x, self.height - len(self.bingo) - bob, pose, ahead)
-        pixels += art_pixels(self.walker, x + self.walker_x + ahead, self.height - len(self.walker) - lifted,
-                             self.BINGO_COLORS)
+        pixels += art_pixels(
+            self.walker, x + self.walker_x + ahead, self.height - len(self.walker) - lifted, self.BINGO_COLORS
+        )
         pose = self.bluey_pose(t)
-        pixels += walking_pixels(self.bluey, self.bluey_x(t), self.height - len(self.bluey) - pose % 2,
-                                 self.BLUEY_COLORS, self.bluey_feet, pose)
+        pixels += walking_pixels(
+            self.bluey,
+            self.bluey_x(t),
+            self.height - len(self.bluey) - pose % 2,
+            self.BLUEY_COLORS,
+            self.bluey_feet,
+            pose,
+        )
         paint(canvas, pixels, self.width, self.height)
         return True
 
@@ -323,157 +196,39 @@ class KeepyUppyReveal:
     # Bingo: '.' empty, B outline, O orange, T tan, C cream, E cream edge, W white, P pupils
     # and eye rims, N nose, K feet band. Bluey: N navy, O orange, L light blue, M blue, W white,
     # P pupils, nose and mouth, R tongue. The balloon: R red, H shine, D shade, K knot, S string.
-    BINGO_ART = [
-        ".......B....B...",
-        ".....BOB..BOB...",
-        "....BOCB.BOCB...",
-        "...BOOOBBOOOB...",
-        "...BOWWWCCWWB...",
-        "...BOWPWCCPWB...",
-        "...BOWPWCCPWB.E.",
-        "E.EBOWWWCCCNBECE",
-        "CECBOOCCCCCNTTCE",
-        "ECCTOOCCWWCBTTE.",
-        ".EETTTTCCCTTB...",
-        "...BTTTTTTTTB...",
-        "...BOTTTTTTTB...",
-        "...BOTCCCCCCB...",
-        "...BTTCCCCCCB...",
-        "...BTTCCCCCCB...",
-        "ECTTBKKBKKBE....",
-        "ECCTTBTTBTTB....",
-        ".ECB.ECCECCE....",
-        "..E..EEEEEEEE...",
-    ]
-    BIG_BINGO_ART = [
-        "..........B.....B.....",
-        ".........BB....BB.....",
-        "........BOB...BOB.....",
-        ".......BOCB..BOCB.....",
-        "......BOCCB..BCCB.....",
-        ".....BOOOOBBBOOOB.....",
-        "....BOOPPPPCPPPOB.....",
-        "....BOPWWWPCPWWWP.....",
-        "....BOPWWWPCPWPWP.....",
-        "....BOPWPWPCPWPWP..EE.",
-        "....BOPWPWPCPWPWP.ECCE",
-        "....BOPWWWPCCPPPBECCCE",
-        ".E.EBOPWWWPCCCNNBTCCE.",
-        "ECECBOOPPPCCCCNNBTTE..",
-        "ECCCTOOOCCCCCCCBTTE...",
-        ".ECCTTOOCCWWWCBTTB....",
-        "..EETTTTTCCCCCTTB.....",
-        "....BTTTTTTTTTTTB.....",
-        "....BOTTTTTTTTTTB.....",
-        "....BOTTCCCCCCCCB.....",
-        "....BOTTCCCCCCCCB.....",
-        "....BTTTCCCCCCCCB.....",
-        "....BTTTCCCCCCCCB.....",
-        "EEBOTBTTCCCCCCCE......",
-        "ECCTTTBKKKBKKKB.......",
-        "ECCCTTBTTTBTTTB.......",
-        ".ECCB.ECCCECCCE.......",
-        "..EE..ECCCECCCCE......",
-        "......EEEE.EEEEE......",
-    ]
-    BLUEY_ART = [
-        ".........N...N......",
-        "........NN..NN......",
-        ".......NON.NON......",
-        ".......NLNNNLN......",
-        ".......NWWLWWWN.....",
-        ".......NWPLWPWNPP...",
-        ".......NWPLOOOPPP...",
-        ".......NMLOOOOOO....",
-        "...L..NMMOWWWOO..L..",
-        "..LLL.LMMORPPO..LLL.",
-        "..LLMMMMMMOOOMMMLLL.",
-        "...LLLMMMMMMMMMLL...",
-        "......MMLLLLLLM.....",
-        "......NMLLLLLLM.....",
-        "......NMLLLLLLM.....",
-        ".NNMMMNMLLLLLLM.....",
-        "NNNNMMMMLLLLLM......",
-        ".NNN...MMM.MMM......",
-        ".......MM...MM......",
-        "......MMM...MMM.....",
-        ".....LLMM...MMLL....",
-        ".....LLL.....LLL....",
-    ]
-    BIG_BLUEY_ART = [
-        "..............N.....N.......",
-        ".............NN....NN.......",
-        "............NNN...NNN.......",
-        "...........NNON..NNON.......",
-        "..........NNOON.NNOON.......",
-        "..........NNLLN.NLLLN.......",
-        "..........NNNLLLLLLNN.......",
-        "..........NNLWWWLWWWN.......",
-        "..........NNWWWWLWWWN.......",
-        "..........NNWWPPLWPWNPP.....",
-        "..........NNWWPPLOOOPPP.....",
-        "..........NNLLLLOOOOOOO.....",
-        "..........NNMMLOOOOOOOO.....",
-        "......L...NMMMMOWWWWOO...L..",
-        "....LLLL.LMMMMMORRPPO..LLLL.",
-        "....LLLMMMMMMMMOOOOOMMMLLLL.",
-        ".....LLLMMMMMMMMMMMMMMMLLL..",
-        "........LMMMMMLLLLLLMM......",
-        ".........MMMLLLLLLLLM.......",
-        ".........NMMLLLLLLLLM.......",
-        ".........NMMLLLLLLLLM.......",
-        "...MM....NMMLLLLLLLLM.......",
-        ".NNNMMMMMNMMLLLLLLLLM.......",
-        "NNNNMMMMMMMMLLLLLLLM........",
-        "NNNNNMMM..MMLLLLLLLM........",
-        ".NNNNMM...MMMM..MMMM........",
-        "..........MMM....MMM........",
-        ".........MMMM....MMMM.......",
-        ".........MMM......MMM.......",
-        ".......LLMMM......MMMLL.....",
-        ".......LLLLL......LLLLL.....",
-        "........LLL........LLL......",
-    ]
-    BALLOON_ART = [
-        "..RRRR..",
-        ".RHRRRR.",
-        "RHHRRRRD",
-        "RHRRRRRD",
-        "RRRRRRRD",
-        "RRRRRRDD",
-        ".RRRRRD.",
-        "..RRDD..",
-        "...KK...",
-        "....S...",
-        "...S....",
-    ]
-    BIG_BALLOON_ART = [
-        ".....RRRR.....",
-        "...RRRRRRRR...",
-        "..RRHHRRRRRR..",
-        ".RRHHRRRRRRRR.",
-        ".RHHRRRRRRRRD.",
-        "RRHRRRRRRRRRRD",
-        "RRRRRRRRRRRRRD",
-        "RRRRRRRRRRRRRD",
-        "RRRRRRRRRRRRDD",
-        ".RRRRRRRRRRRD.",
-        ".RRRRRRRRRRDD.",
-        "..RRRRRRRRDD..",
-        "...RRRRRRDD...",
-        ".....RRDD.....",
-        "......KK......",
-        ".......S......",
-        "......S.......",
-        ".......S......",
-    ]
-    BINGO_COLORS = {"B": (150, 75, 40), "O": (246, 130, 36), "T": (252, 175, 110),
-                    "C": (255, 245, 200), "E": (215, 205, 150), "W": (250, 250, 250), "P": (55, 50, 50),
-                    "N": (110, 60, 45), "K": (196, 136, 79)}
-    BLUEY_COLORS = {"N": (27, 59, 120), "O": (240, 160, 40), "L": (150, 215, 245), "M": (60, 165, 215),
-                    "W": (250, 250, 250), "P": (60, 60, 70), "R": (220, 40, 60)}
-    BALLOON_COLORS = {"R": (230, 30, 40), "H": (255, 150, 150), "D": (150, 15, 25), "K": (150, 15, 25),
-                      "S": (180, 180, 180)}
+    BINGO_ART = bluey_art.KEEPY_BINGO_ART
+    BIG_BINGO_ART = bluey_art.KEEPY_BIG_BINGO_ART
+    BLUEY_ART = bluey_art.KEEPY_BLUEY_ART
+    BIG_BLUEY_ART = bluey_art.KEEPY_BIG_BLUEY_ART
+    BALLOON_ART = bluey_art.KEEPY_BALLOON_ART
+    BIG_BALLOON_ART = bluey_art.KEEPY_BIG_BALLOON_ART
+    BINGO_COLORS = {
+        "B": (150, 75, 40),
+        "O": (246, 130, 36),
+        "T": (252, 175, 110),
+        "C": (255, 245, 200),
+        "E": (215, 205, 150),
+        "W": (250, 250, 250),
+        "P": (55, 50, 50),
+        "N": (110, 60, 45),
+        "K": (196, 136, 79),
+    }
+    BLUEY_COLORS = {
+        "N": (27, 59, 120),
+        "O": (240, 160, 40),
+        "L": (150, 215, 245),
+        "M": (60, 165, 215),
+        "W": (250, 250, 250),
+        "P": (60, 60, 70),
+        "R": (220, 40, 60),
+    }
+    BALLOON_COLORS = {
+        "R": (230, 30, 40),
+        "H": (255, 150, 150),
+        "D": (150, 15, 25),
+        "K": (150, 15, 25),
+        "S": (180, 180, 180),
+    }
     # (first foot row, columns of the back foot, columns of the front foot), facing right.
     BINGO_FEET, BIG_BINGO_FEET = (16, range(4, 8), range(8, 13)), (24, range(6, 10), range(10, 16))
     BLUEY_FEET, BIG_BLUEY_FEET = (17, range(4, 11), range(11, 20)), (26, range(0, 15), range(15, 28))
@@ -503,17 +258,20 @@ class KeepyUppyReveal:
         self.contacts = [self.run_s + self.TURN_S + i * self.HIT_S for i in range(len(self.HITS))]
         self.leave_at = self.contacts[-1] + self.CHASE_S
         off = width - self.bingo_stop  # Bingo, last, off the right edge
-        self.duration = max(self.leave_at + (off + off % 2) / (self.STEP * FPS),
-                            self.contacts[-1] + self.FLY_S)
+        self.duration = max(self.leave_at + (off + off % 2) / (self.STEP * FPS), self.contacts[-1] + self.FLY_S)
         bingo_hand = self.BIG_BINGO_HAND if big else self.BINGO_HAND
         bluey_hand = self.BIG_BLUEY_HAND if big else self.BLUEY_HAND
         # Where the balloon's left edge and top sit as each one bats it, the balloon's body
         # resting on the hand, a little inside it.
         self.spot = {
-            "bingo": (self.bingo_stop + bingo_hand[0] - self.balloon_w // 2,
-                      height - len(self.bingo) + bingo_hand[1] - self.balloon_body),
-            "bluey": (self.bluey_stop + bluey_hand[0] - self.balloon_w // 2,
-                      height - len(self.bluey) + bluey_hand[1] - self.balloon_body),
+            "bingo": (
+                self.bingo_stop + bingo_hand[0] - self.balloon_w // 2,
+                height - len(self.bingo) + bingo_hand[1] - self.balloon_body,
+            ),
+            "bluey": (
+                self.bluey_stop + bluey_hand[0] - self.balloon_w // 2,
+                height - len(self.bluey) + bluey_hand[1] - self.balloon_body,
+            ),
         }
         self.top = 0 if not big else 4  # the balloon's highest, between hits
         self.arts = {
@@ -569,7 +327,7 @@ class KeepyUppyReveal:
                 (x0, y0), (x1, y1) = self.spot[hitter], self.spot[self.HITS[i + 1]]
                 s = (t - at) / self.HIT_S
                 x = x0 + (x1 - x0) * smooth(s)
-                y = y0 + (y1 - y0) * s - (min(y0, y1) - self.top) * math.sin(math.pi * s ** 0.6)
+                y = y0 + (y1 - y0) * s - (min(y0, y1) - self.top) * math.sin(math.pi * s**0.6)
                 return int(round(x)), int(round(y))
         # The last hit: up and away off the right edge.
         x0, y0 = self.spot[self.HITS[-1]]
@@ -588,8 +346,10 @@ class KeepyUppyReveal:
             return False
         _blackout(canvas, self.front(t), self.width, self.height)
         pixels = []
-        for who, x, facing, offset in (("bingo", self.bingo_x(t), 1, 0),
-                                       ("bluey", self.bluey_x(t), self.bluey_facing(t), 1)):
+        for who, x, facing, offset in (
+            ("bingo", self.bingo_x(t), 1, 0),
+            ("bluey", self.bluey_x(t), self.bluey_facing(t), 1),
+        ):
             art = self.arts[who][facing]
             top, behind, ahead = self.bingo_feet if who == "bingo" else self.bluey_feet
             if facing < 0:

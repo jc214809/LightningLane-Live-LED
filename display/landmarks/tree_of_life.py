@@ -9,27 +9,41 @@ class TreeOfLifeLandmark(Landmark):
     CANOPY = [(40, 95, 45), (60, 125, 55), (85, 155, 75), (120, 180, 105)]
 
     def build(self):
-        s = self.scale
-        w, h = self.width, self.height
-        self.cx = w // 2
-        self.trunk_top = int(h * 0.6)
-        # Trunk: short and massive, flaring into wide roots at the ground.
+        self.cx = self.width // 2
+        self.trunk_top = int(self.height * 0.6)
+        self._draw_trunk()
+        self._draw_canopy()
+        self._draw_branches()
+        self.flies = [
+            (self.rng.uniform(0, 2 * math.pi), self.rng.uniform(0.7, 1.25), self.rng.uniform(0, 2 * math.pi))
+            for _ in range(10 * self.scale)
+        ]
+
+    def _draw_trunk(self):
+        """Short and massive, flaring into wide roots at the ground."""
+        s, w, h = self.scale, self.width, self.height
         top_half, base_half = w * 0.1, w * 0.27
         for y in range(self.trunk_top, h):
             p = (y - self.trunk_top) / max(1, h - 1 - self.trunk_top)
-            half = top_half + (base_half - top_half) * p ** 2.2
+            half = top_half + (base_half - top_half) * p**2.2
             for x in range(int(self.cx - half), int(self.cx + half) + 1):
                 twist = int(2 * s * math.sin(y / (3 * s) + x / (5 * s)))
                 groove = (x + twist) % (3 * s) == 0
-                if p > 0.8 and _noise(x // s, y // s) > 0.55:
-                    rgb = (175, 155, 130)  # rocky roots at the base
-                elif groove:
-                    rgb = (125, 90, 62)
-                else:
-                    shade = 0.85 + 0.25 * _noise(x // s, y // s)
-                    rgb = tuple(min(255, int(c * shade)) for c in (200, 160, 118))
-                self.put(self.base, x, y, rgb)
-        # Canopy: a wide dome with a bumpy edge; clumps of greens, brighter on top.
+                self.put(self.base, x, y, self._trunk_rgb(p, groove, x // s, y // s))
+
+    @staticmethod
+    def _trunk_rgb(p, groove, noise_x, noise_y):
+        """One trunk pixel: rocky at the roots (p is how far down the trunk, 0 to 1), grooved, or bark."""
+        if p > 0.8 and _noise(noise_x, noise_y) > 0.55:
+            return (175, 155, 130)
+        if groove:
+            return (125, 90, 62)
+        shade = 0.85 + 0.25 * _noise(noise_x, noise_y)
+        return tuple(min(255, int(c * shade)) for c in (200, 160, 118))
+
+    def _draw_canopy(self):
+        """A wide dome with a bumpy edge; clumps of greens, brighter on top."""
+        s, w, h = self.scale, self.width, self.height
         self.canopy_c = (self.cx, int(h * 0.36))
         self.rx, self.ry = w * 0.46, h * 0.3
         cx, cy = self.canopy_c
@@ -48,7 +62,10 @@ class TreeOfLifeLandmark(Landmark):
                 if _noise(x, y) > 0.93:
                     rgb = (170, 210, 150)
                 self.put(self.base, x, y, rgb)
-        # Branches from the top of the trunk up into the canopy.
+
+    def _draw_branches(self):
+        """From the top of the trunk up into the canopy."""
+        cx, cy = self.canopy_c
         branch = (105, 75, 50)
         for spread, rise in ((-0.75, 0.22), (-0.4, 0.3), (0.4, 0.3), (0.75, 0.22)):
             x_end, y_end = cx + spread * self.rx, cy + self.ry * rise
@@ -57,10 +74,8 @@ class TreeOfLifeLandmark(Landmark):
                 q = i / steps
                 x = int(self.cx + (x_end - self.cx) * q)
                 y = int(self.trunk_top + (y_end - self.trunk_top) * q)
-                for d in range(s):
+                for d in range(self.scale):
                     self.put(self.base, x, y + d, branch)
-        self.flies = [(self.rng.uniform(0, 2 * math.pi), self.rng.uniform(0.7, 1.25), self.rng.uniform(0, 2 * math.pi))
-                      for _ in range(10 * s)]
 
     def animate(self, out, t):
         cx, cy = self.canopy_c

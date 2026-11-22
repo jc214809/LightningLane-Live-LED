@@ -5,4 +5,8 @@ pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
 # Runs the tests in parallel: pytest -n auto (CI does)
 pytest-xdist>=3.5
-coverage>=6.5.0
+# 7.4+ for COVERAGE_CORE=sysmon (CI's coverage run)
+coverage>=7.4
+# Pinned: CI's lint job and .pre-commit-config.yaml use the same versions.
+ruff==0.17.5
+import-linter==2.17

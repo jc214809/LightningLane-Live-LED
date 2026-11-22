@@ -1,4 +1,5 @@
 """display.motion: easing and progress, shared across the board."""
+
 import pytest
 
 from display import motion

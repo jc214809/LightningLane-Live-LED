@@ -10,7 +10,9 @@ def fake_graphics(monkeypatch):
     import display.animation as animation
     from tests.display.animation.support import FakeColor, _draw_line
 
-    monkeypatch.setattr(animation.drawing, "graphics", type("G", (), {"Color": FakeColor, "DrawLine": staticmethod(_draw_line)}))
+    monkeypatch.setattr(
+        animation.drawing, "graphics", type("G", (), {"Color": FakeColor, "DrawLine": staticmethod(_draw_line)})
+    )
     monkeypatch.setattr(animation.time, "sleep", lambda s: None)
     animation._canvases.clear()
     animation._last_screen.clear()

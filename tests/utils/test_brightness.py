@@ -8,8 +8,9 @@ from utils.config import BrightnessSchedule
 SCHEDULE = BrightnessSchedule(80, 15, time(7, 0), time(22, 0))
 
 
-@pytest.mark.parametrize("at, level", [("06:59", 15), ("07:00", 80), ("12:00", 80), ("21:59", 80), ("22:00", 15),
-                                       ("00:30", 15)])
+@pytest.mark.parametrize(
+    "at, level", [("06:59", 15), ("07:00", 80), ("12:00", 80), ("21:59", 80), ("22:00", 15), ("00:30", 15)]
+)
 def test_day_from_day_start_to_night_start(at, level):
     assert brightness.scheduled_brightness(SCHEDULE, time.fromisoformat(at)) == level
 
@@ -33,6 +34,7 @@ def test_the_level_is_worked_out_at_most_every_30_seconds():
 
     def ask():
         return brightness.current(lambda: clock[0], lambda: now[0])
+
     assert ask() == 80
     now[0] = datetime(2026, 11, 1, 22, 0, 5)
     clock[0] += 15

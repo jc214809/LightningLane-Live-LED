@@ -4,16 +4,38 @@ page.py): apply_form takes the posted fields and returns the config to save, or 
 Only the keys the page shows change; anything else in config.json (old keys, keys a newer
 version adds) is kept as it is. Every check is the app's own, so a saved config starts the app.
 """
-import ast
+
 import copy
-import os
 import re
 from datetime import time
 from typing import NamedTuple
 
 import cli
-from utils.config import (DEFAULT_VOLUME, SHOW_VERSIONS, WS_PROTOCOLS, has_api_key, parse_brightness_schedule,
-                          pushover_keys)
+
+# Re-exported: callers (server.py, the pages, tests) import all of these from settings_page.form.
+from settings_page.surprise_form import (  # noqa: F401
+    CHARACTER_NAMES,
+    MAX_RIDE_NAME,
+    MAX_RIDES_PER_CHARACTER,
+    SurpriseRow,
+    apply_surprises,
+    character_label,
+    default_rides,
+    import_surprises,
+    percent_text,
+    snapshot_surprises,
+    surprise_characters,
+    surprise_names,
+    surprise_rows,
+)
+from utils.config import (
+    DEFAULT_VOLUME,
+    SHOW_VERSIONS,
+    WS_PROTOCOLS,
+    has_api_key,
+    parse_brightness_schedule,
+    pushover_keys,
+)
 from utils.special_events import NIGHTLY_FIREWORKS, SPECIAL_EVENTS
 from utils.trips import parse_date
 
@@ -25,9 +47,6 @@ BRIGHTNESS = "led_brightness"
 SHOWN_KEY_LETTERS = 4
 _TRIP_FIELD = re.compile(r"trip_start_(\d+)$")
 _SHOW_FIELD = re.compile(r"show_name_(\d+)$")
-# Where TRANSITIONS lives. Read, not imported: importing it loads every character's art.
-_CHARACTERS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "display", "animation", "characters", "__init__.py")
 
 
 def masked(key):
@@ -35,21 +54,6 @@ def masked(key):
     if not has_api_key(key):
         return ""
     return "•" * 4 + key.strip()[-SHOWN_KEY_LETTERS:]
-
-
-def surprise_names(path=_CHARACTERS):
-    """The characters force_surprise can name: TRANSITIONS' keys but "wipe", as disney.py's
-    set_forced_surprise takes them. [] if the file can't be read."""
-    try:
-        with open(path, encoding="utf-8") as f:
-            tree = ast.parse(f.read())
-    except (OSError, SyntaxError):
-        return []
-    for node in tree.body:
-        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
-                and any(isinstance(t, ast.Name) and t.id == "TRANSITIONS" for t in node.targets)):
-            return [k.value for k in node.value.keys if isinstance(k, ast.Constant) and k.value != "wipe"]
-    return []
 
 
 class PanelChoices(NamedTuple):
@@ -83,10 +87,15 @@ def panel_choices(config, detected, detected_text):
             else:
                 found[key] = f"Default: {_shown(value)}" if value not in (None, "") else "Default"
         return found
+
     blanks = {model: texts(cli.MODEL_NAMES[model], defaults) for model, defaults in cli.MODEL_DEFAULTS.items()}
     blanks[""] = texts(None, cli.BONNET if detected_text else {})  # a Pi we don't know gets the bonnet's
-    return PanelChoices([(cli.AUTO, f"Automatic ({auto})")] + [(m, n) for m, n in cli.MODEL_NAMES.items()],
-                        [(z, z) for z in sizes], auto_model or "", blanks)
+    return PanelChoices(
+        [(cli.AUTO, f"Automatic ({auto})")] + [(m, n) for m, n in cli.MODEL_NAMES.items()],
+        [(z, z) for z in sizes],
+        auto_model or "",
+        blanks,
+    )
 
 
 def _shown(value):
@@ -109,14 +118,26 @@ def show_names(config):
 
 
 def trip_rows(config):
-    """config.json's trips as (start, end, name) strings for the form's date fields."""
+    """config.json's trips as (start, end, name) strings for the form's date fields, soonest start first (one whose
+    start isn't a date goes last, as it was)."""
     entries = (config.get("trip_countdown") or {}).get("trip_dates")
     rows = []
     for entry in entries if isinstance(entries, list) else []:
         entry = entry if isinstance(entry, dict) else {"start": entry}
-        rows.append(tuple(_date_text(entry.get(k)) if k != "name" else str(entry.get(k) or "")
-                          for k in ("start", "end", "name")))
-    return rows
+        rows.append(
+            tuple(
+                _date_text(entry.get(k)) if k != "name" else str(entry.get(k) or "") for k in ("start", "end", "name")
+            )
+        )
+    return sorted(rows, key=lambda row: _by_start(row[0]))
+
+
+def _by_start(text):
+    """A sort key: a trip's start date, or after every date when it isn't one."""
+    try:
+        return 0, parse_date(text)
+    except (TypeError, ValueError):
+        return 1, None
 
 
 def _date_text(value):
@@ -128,7 +149,10 @@ def _date_text(value):
 
 def chosen_device(form):
     """The speaker the form picks: one from the list, one typed under Other device, or None."""
-    one = lambda name: (form.get(name) or [""])[0].strip()
+
+    def one(name):
+        return (form.get(name) or [""])[0].strip()
+
     return (one("sound_device_custom") if one("sound_device") == "custom" else one("sound_device")) or None
 
 
@@ -142,56 +166,93 @@ def volume_from_form(form):
     return None, f"Volume should be 0 to 100, not {text!r}."
 
 
+def _one(form, name, default=""):
+    """A form field's first value, stripped; default when the form doesn't have it (or has it empty)."""
+    return (form.get(name) or [default])[0].strip()
+
+
+def _checked(form, name):
+    return _one(form, name) == "on"
+
+
+def _section(new, key):
+    """new[key] as a dict, made (replacing anything else) if it isn't one."""
+    if not isinstance(new.get(key), dict):
+        new[key] = {}
+    return new[key]
+
+
+def _field_indexes(pattern, form):
+    """The numbers in the form's field names that match pattern (trip_start_3: 3), in order."""
+    return sorted(int(m.group(1)) for m in map(pattern.match, form) if m)
+
+
 def apply_form(config, form, park_names=()):
     """(the config to save, [problems]) from the posted form: {field: [values]}, as
     urllib.parse.parse_qs(..., keep_blank_values=True) gives it. With any problem, nothing
     should be saved. park_names: park_names.ParkNames.names(), the names a park may have."""
     new = copy.deepcopy(config)
     problems = []
+    _apply_live_updates(new, form, problems)
+    _apply_pushover(new, form, problems)
+    _apply_parks(new, form, problems, park_names)
+    _apply_trips(new, form, problems)
+    _apply_sound(new, form, problems)
+    _apply_shows(new, form, problems)
+    _apply_panel(new, form, problems)
+    _apply_brightness_schedule(new, form, problems)
+    new["debug"] = _checked(form, "debug")
+    _apply_force_surprise(new, form, problems)
+    return new, problems
 
-    def one(name, default=""):
-        return (form.get(name) or [default])[0].strip()
 
-    def checked(name):
-        return one(name) == "on"
-
-    def section(key):
-        if not isinstance(new.get(key), dict):
-            new[key] = {}
-        return new[key]
-
-    # API keys and live updates
-    ws = section("websocket")
-    ws["enabled"] = checked("ws_enabled")
-    protocol = one("ws_protocol", "legacy")
+def _apply_live_updates(new, form, problems):
+    """API keys and live updates."""
+    ws = _section(new, "websocket")
+    ws["enabled"] = _checked(form, "ws_enabled")
+    protocol = _one(form, "ws_protocol", "legacy")
     if protocol in WS_PROTOCOLS:
         ws["protocol"] = protocol
     else:
         problems.append(f"Live update protocol should be one of {', '.join(WS_PROTOCOLS)}, not {protocol!r}.")
-    if one("themeparks_key"):
-        ws["api_key"] = one("themeparks_key")
+    if _one(form, "themeparks_key"):
+        ws["api_key"] = _one(form, "themeparks_key")
     if ws["enabled"] and not has_api_key(ws.get("api_key")):
         problems.append("Live updates need a ThemeParks.wiki API key (or turn them off).")
-    if one("weather_key"):
-        section("weather")["apikey"] = one("weather_key")
+    if _one(form, "weather_key"):
+        _section(new, "weather")["apikey"] = _one(form, "weather_key")
 
-    # Pushover, for sending the sign-in PIN to a phone: kept out of config.json until a key is typed
-    if "pushover_user" in form:  # the page always posts it; a form without it leaves Pushover alone
-        typed = {key: one(field) for key, field in (("user_key", "pushover_user"), ("app_token", "pushover_token"))
-                 if one(field)}
-        if typed or isinstance(new.get("pushover"), dict):
-            pushover = section("pushover")
-            pushover.update(typed)
-            pushover["enabled"] = checked("pushover_enabled")
-            if pushover["enabled"] and not pushover_keys(new):
-                problems.append("Sending the PIN needs both a Pushover user key and an app token (or turn it off).")
 
-    # Parks: the chips in order, less any ticked to remove, then the added one(s), named as the
-    # list has them. With no list (never fetched), names can't be checked, so they're taken as typed.
-    known = {name.lower(): name for name, _ in park_names}
+def _apply_pushover(new, form, problems):
+    """Pushover, for sending the sign-in PIN to a phone: kept out of config.json until a key is typed."""
+    if "pushover_user" not in form:  # the page always posts it; a form without it leaves Pushover alone
+        return
+    typed = {
+        key: _one(form, field)
+        for key, field in (("user_key", "pushover_user"), ("app_token", "pushover_token"))
+        if _one(form, field)
+    }
+    if not (typed or isinstance(new.get("pushover"), dict)):
+        return
+    pushover = _section(new, "pushover")
+    pushover.update(typed)
+    pushover["enabled"] = _checked(form, "pushover_enabled")
+    if pushover["enabled"] and not pushover_keys(new):
+        problems.append("Sending the PIN needs both a Pushover user key and an app token (or turn it off).")
+
+
+def _typed_parks(form):
+    """The park names the form names, in order: the chips less any ticked to remove, then the added one(s)."""
     removed = {p.strip().lower() for p in form.get("park_remove", [])}
+    return [p for p in form.get("park", []) if p.strip().lower() not in removed] + _one(form, "park_add").split(",")
+
+
+def _apply_parks(new, form, problems, park_names):
+    """Parks: the chips in order, less any ticked to remove, then the added one(s), named as the
+    list has them. With no list (never fetched), names can't be checked, so they're taken as typed."""
+    known = {name.lower(): name for name, _ in park_names}
     parks = []
-    for typed in [p for p in form.get("park", []) if p.strip().lower() not in removed] + one("park_add").split(","):
+    for typed in _typed_parks(form):
         typed = " ".join(typed.split())
         if not typed or typed.lower() in (p.lower() for p in parks):
             continue
@@ -202,123 +263,174 @@ def apply_form(config, form, park_names=()):
         problems.append("Pick at least one park.")
     new["parks"] = parks
 
-    # Trip countdown
-    countdown = section("trip_countdown")
-    countdown["enabled"] = checked("trips_enabled")
+
+def _apply_trips(new, form, problems):
+    """Trip countdown."""
+    countdown = _section(new, "trip_countdown")
+    countdown["enabled"] = _checked(form, "trips_enabled")
     trips = []
-    for index in sorted((int(m.group(1)) for m in map(_TRIP_FIELD.match, form) if m)):
-        start, end, name = (one(f"trip_{k}_{index}") for k in ("start", "end", "name"))
-        if checked(f"trip_remove_{index}") or not (start or end or name):
-            continue
-        try:
-            first = parse_date(start)
-            if end and parse_date(end) < first:
-                problems.append(f"Trip {name or start}: it ends before it starts.")
-                continue
-        except ValueError:
-            problems.append(f"Trip {name or start or '(no name)'}: the start date should be a date, not {start!r}.")
-            continue
-        trips.append({"start": start, **({"end": end} if end else {}), **({"name": name} if name else {})}
-                     if end or name else start)
-    countdown["trip_dates"] = trips
+    for index in _field_indexes(_TRIP_FIELD, form):
+        trip = _trip_from_form(form, index, problems)
+        if trip is not None:
+            trips.append(trip)
+    # Soonest first, so config.json reads in order as the page does (every start here is a date).
+    countdown["trip_dates"] = sorted(trips, key=lambda t: parse_date(t["start"] if isinstance(t, dict) else t))
     countdown.pop("trip_date", None)  # the old single date; trip_dates replaces it
 
-    # Sound
-    sound = section("sound")
-    sound["enabled"] = checked("sound_enabled")
-    sound["device"] = chosen_device(form)
-    if "sound_volume" in form:  # the page always posts it; a form without it leaves the volume alone
-        volume, problem = volume_from_form(form)
-        if problem:
-            problems.append(problem)
-        elif one("sound_volume"):
-            sound["volume"] = volume
-        else:
-            sound.pop("volume", None)
-    quiet = one("quiet_start"), one("quiet_end")
-    if any(quiet):
-        try:
-            time.fromisoformat(quiet[0]), time.fromisoformat(quiet[1])
-            sound["quiet_hours"] = {"start": quiet[0], "end": quiet[1]}
-        except ValueError:
-            problems.append("Quiet hours need both a start and an end time (or neither).")
-    else:
-        sound.pop("quiet_hours", None)
 
-    # Shows
+def _trip_from_form(form, index, problems):
+    """One trip row as config.json holds it (a bare start date, or {start, end, name}), or None for a row
+    that's removed, blank or refused (its problem is added)."""
+    start, end, name = (_one(form, f"trip_{k}_{index}") for k in ("start", "end", "name"))
+    if _checked(form, f"trip_remove_{index}") or not (start or end or name):
+        return None
+    try:
+        first = parse_date(start)
+        if end and parse_date(end) < first:
+            problems.append(f"Trip {name or start}: it ends before it starts.")
+            return None
+    except ValueError:
+        problems.append(f"Trip {name or start or '(no name)'}: the start date should be a date, not {start!r}.")
+        return None
+    return (
+        {"start": start, **({"end": end} if end else {}), **({"name": name} if name else {})} if end or name else start
+    )
+
+
+def _apply_sound(new, form, problems):
+    sound = _section(new, "sound")
+    sound["enabled"] = _checked(form, "sound_enabled")
+    sound["device"] = chosen_device(form)
+    _apply_volume(sound, form, problems)
+    _apply_quiet_hours(sound, form, problems)
+
+
+def _apply_volume(sound, form, problems):
+    if "sound_volume" not in form:  # the page always posts it; a form without it leaves the volume alone
+        return
+    volume, problem = volume_from_form(form)
+    if problem:
+        problems.append(problem)
+    elif _one(form, "sound_volume"):
+        sound["volume"] = volume
+    else:
+        sound.pop("volume", None)
+
+
+def _apply_quiet_hours(sound, form, problems):
+    quiet = _one(form, "quiet_start"), _one(form, "quiet_end")
+    if not any(quiet):
+        sound.pop("quiet_hours", None)
+        return
+    try:
+        time.fromisoformat(quiet[0]), time.fromisoformat(quiet[1])
+        sound["quiet_hours"] = {"start": quiet[0], "end": quiet[1]}
+    except ValueError:
+        problems.append("Quiet hours need both a start and an end time (or neither).")
+
+
+def _apply_shows(new, form, problems):
     shows = new.get("shows") if isinstance(new.get("shows"), list) else []
     by_name = {e["name"]: e for e in shows if isinstance(e, dict) and isinstance(e.get("name"), str)}
-    for index in sorted((int(m.group(1)) for m in map(_SHOW_FIELD.match, form) if m)):
-        name = one(f"show_name_{index}")
-        version = one(f"show_version_{index}", "default")
-        if version not in SHOW_VERSIONS:
-            problems.append(f"{name}: the version should be one of {', '.join(SHOW_VERSIONS)}, not {version!r}.")
-            continue
-        entry = by_name.get(name)
-        if entry is None:
-            entry = by_name[name] = {"name": name}
-            shows.append(entry)
-        entry.update(enabled=checked(f"show_enabled_{index}"), version=version)
-        if checked(f"show_force_{index}"):
-            entry["force"] = True
-        else:
-            entry.pop("force", None)
+    for index in _field_indexes(_SHOW_FIELD, form):
+        _apply_show(shows, by_name, form, index, problems)
     if [e for e in shows if isinstance(e, dict) and e.get("force")][1:]:
         problems.append("Only one show can be forced to play at start-up.")
     new["shows"] = shows
 
-    # The panel: the Pi model, size and the settings the model sets in the Panel card, the rest
-    # under Advanced. A blank setting is the Pi model's default (or the driver's).
-    if "pi_model" in form:
-        model = one("pi_model", cli.AUTO)
-        if model == cli.AUTO:
-            new.pop("pi_model", None)
-        elif model in cli.MODEL_DEFAULTS:
-            new["pi_model"] = model
-        else:
-            problems.append(f"Pi model: {model!r} isn't one of {', '.join(cli.MODEL_NAMES.values())}.")
-    matrix = section("matrix")
-    if "panel_size" in form:
-        found = re.fullmatch(r"(\d+)x(\d+)", one("panel_size"))
-        if found:
-            matrix["led_cols"], matrix["led_rows"] = int(found.group(1)), int(found.group(2))
-        else:
-            problems.append(f"Panel size should be like 64x32, not {one('panel_size')!r}.")
-    for key, _, _, switch, number in cli.matrix_settings():
-        field = f"matrix_{key}"
-        if field not in form:
-            continue
-        text = one(field)
-        if text == "":
-            matrix[key] = None
-        elif switch:
-            matrix[key] = text == "true"
-        else:  # a bad number stays text, for matrix_problem to name
-            matrix[key] = int(text) if number and re.fullmatch(r"-?\d+", text) else text
+
+def _apply_show(shows, by_name, form, index, problems):
+    """One show row onto the shows list: its entry updated, or added at the end if the list lacks it."""
+    name = _one(form, f"show_name_{index}")
+    version = _one(form, f"show_version_{index}", "default")
+    if version not in SHOW_VERSIONS:
+        problems.append(f"{name}: the version should be one of {', '.join(SHOW_VERSIONS)}, not {version!r}.")
+        return
+    entry = by_name.get(name)
+    if entry is None:
+        entry = by_name[name] = {"name": name}
+        shows.append(entry)
+    entry.update(enabled=_checked(form, f"show_enabled_{index}"), version=version)
+    if _checked(form, f"show_force_{index}"):
+        entry["force"] = True
+    else:
+        entry.pop("force", None)
+
+
+def _apply_panel(new, form, problems):
+    """The panel: the Pi model, size and the settings the model sets in the Panel card, the rest
+    under Advanced. A blank setting is the Pi model's default (or the driver's)."""
+    _apply_pi_model(new, form, problems)
+    matrix = _section(new, "matrix")
+    _apply_panel_size(matrix, form, problems)
+    _apply_matrix_fields(matrix, form)
     problem = cli.matrix_problem(matrix)
     if problem:
         problems.append(f"Panel: {problem}.")
     brightness = matrix.get(BRIGHTNESS)
     if brightness is not None and not (isinstance(brightness, int) and 1 <= brightness <= 100):
         problems.append(f"Brightness should be 1 to 100, not {brightness!r}.")
-    if "bright_day" in form:  # the page always posts it; a form without it leaves the schedule alone
-        if checked("brightness_schedule"):
-            levels = {}
-            for key, field in (("day", "bright_day"), ("night", "bright_night")):
-                text = one(field)
-                levels[key] = int(text) if re.fullmatch(r"\d+", text) else text
-            schedule = {**levels, "day_start": one("day_start"), "night_start": one("night_start")}
-            _, problem = parse_brightness_schedule(schedule)
-            if problem:
-                problems.append(f"Day and night brightness: {problem}.")
-            new["brightness_schedule"] = schedule
-        else:
-            new["brightness_schedule"] = None
 
-    new["debug"] = checked("debug")
-    surprise = one("force_surprise")
+
+def _apply_pi_model(new, form, problems):
+    if "pi_model" not in form:
+        return
+    model = _one(form, "pi_model", cli.AUTO)
+    if model == cli.AUTO:
+        new.pop("pi_model", None)
+    elif model in cli.MODEL_DEFAULTS:
+        new["pi_model"] = model
+    else:
+        problems.append(f"Pi model: {model!r} isn't one of {', '.join(cli.MODEL_NAMES.values())}.")
+
+
+def _apply_panel_size(matrix, form, problems):
+    if "panel_size" not in form:
+        return
+    found = re.fullmatch(r"(\d+)x(\d+)", _one(form, "panel_size"))
+    if found:
+        matrix["led_cols"], matrix["led_rows"] = int(found.group(1)), int(found.group(2))
+    else:
+        problems.append(f"Panel size should be like 64x32, not {_one(form, 'panel_size')!r}.")
+
+
+def _matrix_value(text, switch, number):
+    """A matrix field's text as config.json holds it: None when blank, true/false for a switch, an int for
+    a number; a bad number stays text, for cli.matrix_problem to name."""
+    if text == "":
+        return None
+    if switch:
+        return text == "true"
+    return int(text) if number and re.fullmatch(r"-?\d+", text) else text
+
+
+def _apply_matrix_fields(matrix, form):
+    for key, _, _, switch, number in cli.matrix_settings():
+        field = f"matrix_{key}"
+        if field in form:
+            matrix[key] = _matrix_value(_one(form, field), switch, number)
+
+
+def _apply_brightness_schedule(new, form, problems):
+    if "bright_day" not in form:  # the page always posts it; a form without it leaves the schedule alone
+        return
+    if not _checked(form, "brightness_schedule"):
+        new["brightness_schedule"] = None
+        return
+    levels = {}
+    for key, field in (("day", "bright_day"), ("night", "bright_night")):
+        text = _one(form, field)
+        levels[key] = int(text) if re.fullmatch(r"\d+", text) else text
+    schedule = {**levels, "day_start": _one(form, "day_start"), "night_start": _one(form, "night_start")}
+    _, problem = parse_brightness_schedule(schedule)
+    if problem:
+        problems.append(f"Day and night brightness: {problem}.")
+    new["brightness_schedule"] = schedule
+
+
+def _apply_force_surprise(new, form, problems):
+    surprise = _one(form, "force_surprise")
     if surprise and surprise not in surprise_names():
         problems.append(f"Surprise on every ride screen: {surprise!r} isn't a character.")
     else:
         new["force_surprise"] = surprise
-    return new, problems

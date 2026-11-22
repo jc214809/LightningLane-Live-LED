@@ -60,12 +60,22 @@ class MickeyReveal(CapturesScreens):
         "RRRRRRRRRRRRRRRRRRRR....",
     ]
     COLORS = {
-        "K": (74, 72, 88), "T": (245, 200, 160),
-        "E": (255, 255, 255), "P": (18, 18, 24), "N": (26, 24, 30),
-        "M": (255, 248, 238), "U": (155, 45, 58),
-        "H": (50, 80, 205), "S": (255, 220, 80), "B": (28, 45, 130),
-        "R": (195, 32, 44), "D": (130, 18, 28), "C": (240, 240, 245),
-        "G": (252, 252, 252), "W": (215, 195, 150), "Y": (255, 250, 200),
+        "K": (74, 72, 88),
+        "T": (245, 200, 160),
+        "E": (255, 255, 255),
+        "P": (18, 18, 24),
+        "N": (26, 24, 30),
+        "M": (255, 248, 238),
+        "U": (155, 45, 58),
+        "H": (50, 80, 205),
+        "S": (255, 220, 80),
+        "B": (28, 45, 130),
+        "R": (195, 32, 44),
+        "D": (130, 18, 28),
+        "C": (240, 240, 245),
+        "G": (252, 252, 252),
+        "W": (215, 195, 150),
+        "Y": (255, 250, 200),
     }
     SPARK_COLORS = [(255, 245, 190), (255, 255, 255), (170, 210, 255), (255, 205, 110)]
 
@@ -94,11 +104,16 @@ class MickeyReveal(CapturesScreens):
             born = self.RISE_S + self._sweep_t(x) * self.CAST_S
             angle = r.uniform(0, 2 * math.pi)
             dist = r.uniform(6, 22)
-            self.motes.append((
-                x, y,
-                x + math.cos(angle) * dist, y + math.sin(angle) * dist,
-                born, rgb,
-            ))
+            self.motes.append(
+                (
+                    x,
+                    y,
+                    x + math.cos(angle) * dist,
+                    y + math.sin(angle) * dist,
+                    born,
+                    rgb,
+                )
+            )
 
     def _sweep_t(self, x):
         """0..1 — how far into the cast this column is reached by the sweep."""
@@ -145,11 +160,16 @@ class MickeyReveal(CapturesScreens):
                 wx, wy = self.wand_tip(ft)
                 r = self.rng
                 for _ in range(3 * self.scale):
-                    self.sparks.append([
-                        wx + r.uniform(-1, 1) * self.scale, wy + r.uniform(-1, 1) * self.scale,
-                        r.uniform(-0.4, 0.4), r.uniform(-0.2, 0.5),
-                        r.randint(8, 18), r.choice(self.SPARK_COLORS),
-                    ])
+                    self.sparks.append(
+                        [
+                            wx + r.uniform(-1, 1) * self.scale,
+                            wy + r.uniform(-1, 1) * self.scale,
+                            r.uniform(-0.4, 0.4),
+                            r.uniform(-0.2, 0.5),
+                            r.randint(8, 18),
+                            r.choice(self.SPARK_COLORS),
+                        ]
+                    )
             for s in self.sparks:
                 s[0] += s[2]
                 s[1] += s[3]
@@ -174,8 +194,11 @@ class MickeyReveal(CapturesScreens):
             # Fading up from a white-hot mote into its final colour.
             f = 0.35 + 0.65 * e
             if 0 <= px < self.width and 0 <= py < self.height:
-                canvas.SetPixel(px, py, *(int(c + (255 - c) * (1 - e) * 0.7) for c in
-                                          (int(rgb[0] * f), int(rgb[1] * f), int(rgb[2] * f))))
+                canvas.SetPixel(
+                    px,
+                    py,
+                    *(int(c + (255 - c) * (1 - e) * 0.7) for c in (int(rgb[0] * f), int(rgb[1] * f), int(rgb[2] * f))),
+                )
         for sx, sy, _, _, life, rgb in self.sparks:
             px, py = int(round(sx)), int(round(sy))
             f = min(1.0, life / 12)

@@ -13,8 +13,15 @@ def _open_jaw(art, jaw, opening):
     ahead of the hinge swing open, more toward the front of his face, like a jaw on a hinge, and
     the gap fills with his mouth, teeth along its top and bottom. Everything above the jaw is head.
     """
-    split, bottom, hinge, drop = jaw
     grid = [["."] * len(art[0]) for _ in range(len(art))]
+    head = _swing_jaw(art, grid, jaw, opening)
+    _fill_mouth(art, grid, head, jaw, opening)
+    return grid, head
+
+
+def _swing_jaw(art, grid, jaw, opening):
+    """Copy art into grid with the lower jaw swung open; returns the cells (row, col) of his head."""
+    split, bottom, hinge, drop = jaw
     head, moving = set(), []
     for r, row in enumerate(art):
         for c, k in enumerate(row):
@@ -29,6 +36,12 @@ def _open_jaw(art, jaw, opening):
     for r, c, k in moving:  # the swinging jaw goes over anything it swings across (his arm)
         grid[r][c] = k
         head.add((r, c))
+    return head
+
+
+def _fill_mouth(art, grid, head, jaw, opening):
+    """Fill the gap the jaw left with his mouth, a tooth above each of the lower jaw's."""
+    split, _, hinge, drop = jaw
     for c in range(hinge):
         if art[split - 1][c] != "." and art[split][c] != ".":
             gap = round(drop * (hinge - c) / hinge * opening)
@@ -37,7 +50,6 @@ def _open_jaw(art, jaw, opening):
                 head.add((r, c))
             if gap and art[split][c] == "W":
                 grid[split - 1][c] = "W"  # a tooth above each of the lower jaw's, on the upper jaw
-    return grid, head
 
 
 NECK_COLS = 6  # how far ahead of and above the neck its cells stay put as his head tips back
@@ -190,8 +202,16 @@ class RexReveal(CapturesScreens):
         ".........gggggggggggGGg.......ggggGggggggGgggg...............",
         ".........ggggggggggggg........gggggggggggggggg...............",
     ]
-    colors = {"G": (97, 184, 17), "g": (34, 92, 8), "Y": (199, 214, 115), "A": (78, 149, 11),
-              "B": (155, 230, 17), "K": (5, 7, 5), "W": (248, 250, 247), "M": (10, 16, 6)}
+    colors = {
+        "G": (97, 184, 17),
+        "g": (34, 92, 8),
+        "Y": (199, 214, 115),
+        "A": (78, 149, 11),
+        "B": (155, 230, 17),
+        "K": (5, 7, 5),
+        "W": (248, 250, 247),
+        "M": (10, 16, 6),
+    }
     # The jaw for _open_jaw: (first row of the lower jaw, its last row, hinge column, rows it
     # drops). The tilt for _roar_pose: (his neck's column and row, degrees his head tips back).
     JAW, TILT = (12, 15, 12, 5), (14, 14, 25)
@@ -271,7 +291,8 @@ class RexReveal(CapturesScreens):
         art = self.mouth(self.opening(t))
         lift = len(art) - len(self.art)
         walking = int(t * FPS) // self.POSE_F if not self.stop_at <= t < self.leave_at else None
-        pixels = walking_pixels(art, x + dx, self.y0 - lift + dy, self.colors,
-                                (self.feet[0] + lift, *self.feet[1:]), walking)
+        pixels = walking_pixels(
+            art, x + dx, self.y0 - lift + dy, self.colors, (self.feet[0] + lift, *self.feet[1:]), walking
+        )
         paint(canvas, pixels, self.width, self.height)
         return True

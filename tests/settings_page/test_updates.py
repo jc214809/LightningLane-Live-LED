@@ -1,4 +1,5 @@
 """The Updates card's logic, with a fake updater and board (no git, systemd or GitHub)."""
+
 import subprocess
 
 import pytest
@@ -21,8 +22,8 @@ class FakeBoard:
             raise self.log
         return self.log
 
-    def file_at(self, sha, path):
-        return 'SCRIPT_NAME = "x"\nSCRIPT_VERSION = "2.2.0"\n' if path == "version.py" else None
+    def describe(self, sha):
+        return "2.2.0"
 
     def changed(self, old, new, path):
         return path == "requirements.txt"
@@ -46,8 +47,15 @@ class FakeBoard:
 
 
 class FakeUpdater:
-    def __init__(self, tmp_path, outcome=Outcome("would_update", "would update to v2.2.0 (2222222)",
-                                                 target=Target("releases", "v2.2.0", "2" * 40))):
+    def __init__(
+        self,
+        tmp_path,
+        outcome=Outcome(  # noqa: B008  the fake only returns it
+            "would_update",
+            "would update to v2.2.0 (2222222)",
+            target=Target("releases", "v2.2.0", "2" * 40),  # noqa: B008  likewise
+        ),
+    ):
         self.board, self.state, self.outcome, self.asked = FakeBoard(), State(str(tmp_path / "s")), outcome, []
         self.installed_version = "2.1.0"
 
@@ -72,6 +80,7 @@ def make(tmp_path, run=None, **kwargs):
     def fake_run(args, **_):
         calls.append(args)
         return subprocess.CompletedProcess(args, 0, "", "")
+
     updates = Updates("/app", updater, run=run or fake_run, python="/app/venv/bin/python3", clock=clock)
     return updates, updater, clock, calls
 
@@ -134,16 +143,30 @@ def test_a_check_is_a_dry_run_kept_for_ten_minutes(tmp_path):
     updates.check("beta")
     assert updater.asked == [("beta", True)] and calls == [], "a dry run: nothing started"
     assert updates.view()["check"] == {
-        "channel": "beta", "result": "would_update", "message": "would update to v2.2.0 (2222222)", "ok": True,
-        "at": 1000.0, "ref": "v2.2.0", "sha": "2" * 40, "version": "2.2.0", "packages": True,
-        "changes": [[201, "Show what an update brings", None], [200, "Roll back at boot", ["Rolls back at boot."]]]}
+        "channel": "beta",
+        "result": "would_update",
+        "message": "would update to v2.2.0 (2222222)",
+        "ok": True,
+        "at": 1000.0,
+        "ref": "v2.2.0",
+        "sha": "2" * 40,
+        "version": "2.2.0",
+        "packages": True,
+        "changes": [[201, "Show what an update brings", None], [200, "Roll back at boot", ["Rolls back at boot."]]],
+    }
     clock.now += upd.CHECK_FRESH_S + 1
     assert updates.view()["check"] is None
 
 
 def test_a_check_waiting_on_ci_keeps_its_runs(tmp_path):
-    updates, _, _, _ = make(tmp_path, outcome=Outcome("waiting", "3333333's CI is still running (test (3.11))",
-                                                      runs=[("test (3.11)", "running"), ("test (3.13)", "passed")]))
+    updates, _, _, _ = make(
+        tmp_path,
+        outcome=Outcome(
+            "waiting",
+            "3333333's CI is still running (test (3.11))",
+            runs=[("test (3.11)", "running"), ("test (3.13)", "passed")],
+        ),
+    )
     updates.check("beta")
     check = updates.view()["check"]
     assert check["result"] == "waiting" and check["runs"] == [["test (3.11)", "running"], ["test (3.13)", "passed"]]
@@ -169,9 +192,21 @@ def test_an_update_starts_as_its_own_unit_and_drops_the_check(tmp_path):
     updates, _, _, calls = make(tmp_path)
     updates.check("beta")
     assert updates.start("update", "beta") == upd.STARTED
-    assert calls == [["systemd-run", "--unit=lll-update", "--collect", "--working-directory=/app",
-                      "--description=LightningLane-Live-LED update", "/app/venv/bin/python3", "-m", "self_update",
-                      "update", "--channel", "beta"]]
+    assert calls == [
+        [
+            "systemd-run",
+            "--unit=lll-update",
+            "--collect",
+            "--working-directory=/app",
+            "--description=LightningLane-Live-LED update",
+            "/app/venv/bin/python3",
+            "-m",
+            "self_update",
+            "update",
+            "--channel",
+            "beta",
+        ]
+    ]
     assert updates.last_check is None
     assert updates.start("rollback") == upd.STARTED and calls[1][-1] == "rollback"
 
@@ -187,15 +222,19 @@ def test_one_already_running_is_busy(tmp_path):
     assert updates.start("rollback") == upd.BUSY and calls == []
     updater.board.running = False
     updates.run = lambda args, **_: subprocess.CompletedProcess(
-        args, 1, "", "Failed to start transient service unit: Unit lll-update.service was already loaded")
+        args, 1, "", "Failed to start transient service unit: Unit lll-update.service was already loaded"
+    )
     assert updates.start("rollback") == upd.BUSY, "systemd refused a second"
 
 
-@pytest.mark.parametrize("run", [
-    lambda args, **_: subprocess.CompletedProcess(args, 1, "", "Failed to connect to bus"),
-    lambda args, **_: (_ for _ in ()).throw(FileNotFoundError("systemd-run")),
-    lambda args, **_: (_ for _ in ()).throw(subprocess.TimeoutExpired(args, 30)),
-])
+@pytest.mark.parametrize(
+    "run",
+    [
+        lambda args, **_: subprocess.CompletedProcess(args, 1, "", "Failed to connect to bus"),
+        lambda args, **_: (_ for _ in ()).throw(FileNotFoundError("systemd-run")),
+        lambda args, **_: (_ for _ in ()).throw(subprocess.TimeoutExpired(args, 30)),
+    ],
+)
 def test_a_start_that_fails_is_logged(tmp_path, monkeypatch, run):
     errors = []
     monkeypatch.setattr(upd.debug, "error", errors.append)
@@ -208,8 +247,9 @@ def test_status_says_what_a_running_update_is_doing(tmp_path):
     updates, updater, _, _ = make(tmp_path)
     assert updates.status() == {"running": False, "phase": None, "step": None}
     updater.board.running = True
-    assert updates.status() == {"running": True, "phase": "Checking it can update", "step": 0}, \
+    assert updates.status() == {"running": True, "phase": "Checking it can update", "step": 0}, (
         "before its rollback point"
+    )
     for phase, step in (("ready", 1), ("switched", 2), ("installed", 3), ("checking", 3)):
         updater.state.save({"phase": phase, "good": []})
         assert updates.status()["step"] == step and updates.view()["step"] == step
@@ -249,7 +289,9 @@ def test_while_it_runs_the_card_knows_what_is_being_installed(tmp_path):
     updates.start("update", "releases")
     updater.board.running = True
     to = updates.view()["to"]
-    assert to["ref"] == "v2.2.0" and to["changes"][0] == [201, "Show what an update brings", None], "before its rollback point"
+    assert to["ref"] == "v2.2.0" and to["changes"][0] == [201, "Show what an update brings", None], (
+        "before its rollback point"
+    )
     updates.starting = None  # the settings page restarted mid-update: state.json still says
     updater.state.save({"phase": "checking", "to": {"ref": "v2.2.0", "sha": "2" * 40}, "good": []})
     assert updates.view()["to"] == {"ref": "v2.2.0", "sha": "2" * 40}

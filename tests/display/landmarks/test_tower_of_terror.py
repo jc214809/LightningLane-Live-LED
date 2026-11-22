@@ -20,6 +20,7 @@ def test_tower_screen_is_longer_than_the_other_landmarks_and_longest_on_64x32():
 def _tower_scene_s(tower):
     """Scene time the tower gets: its screen minus the sweep and the wipe in front of it."""
     import display.animation as animation
+
     return tower.SCREEN_S - animation.COVER_S - animation.TRANSITIONS["wipe"].duration
 
 
@@ -37,8 +38,7 @@ def test_tower_story_plays_out_inside_its_screen(height):
 @pytest.mark.parametrize("height", [32, 64])
 def test_tower_lightning_strikes_once_out_of_the_cloud(height):
     tower = landmarks.TowerOfTerrorLandmark(64, height, random.Random(3))
-    struck = [f for f in range(int(_tower_scene_s(tower) * 30))
-              if tower.BOLT_RGB in tower.frame(f / 30).values()]
+    struck = [f for f in range(int(_tower_scene_s(tower) * 30)) if tower.BOLT_RGB in tower.frame(f / 30).values()]
     assert struck, "the bolt appears"
     assert struck == list(range(struck[0], struck[-1] + 1)), "one continuous strike"
     assert len(struck) < 10, "a quick flash"

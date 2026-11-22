@@ -83,8 +83,15 @@ class LuxoBallReveal:
         "........KLLLLLLLLLLLLLK",
     ]
     BALL_SCALE = LUXO_SCALE = 1
-    colors = {"Y": (240, 195, 65), "R": (190, 50, 30), "B": (45, 100, 180),
-              "K": (20, 20, 22), "W": (250, 250, 250), "L": (170, 169, 165), "D": (98, 95, 90)}
+    colors = {
+        "Y": (240, 195, 65),
+        "R": (190, 50, 30),
+        "B": (45, 100, 180),
+        "K": (20, 20, 22),
+        "W": (250, 250, 250),
+        "L": (170, 169, 165),
+        "D": (98, 95, 90),
+    }
     BULB = (4.5, 8.0)  # the bulb's centre in LUXO_ART (col, row), where his light comes from
     # Story "light": the bulb is dark until he switches on, then bright pale yellow, so it never matches
     # the ball's yellow or his white shade, and the light can't look on from the start.
@@ -131,10 +138,10 @@ class LuxoBallReveal:
         gaps = []
         for y in range(max(ball_top, luxo_top), self.height):
             b = resting[y - ball_top]
-            l = self.LUXO_ART[y - luxo_top]
-            if b.strip(".") and l.strip("."):
+            luxo_row = self.LUXO_ART[y - luxo_top]
+            if b.strip(".") and luxo_row.strip("."):
                 ball_right = ball_left + len(b.rstrip(".")) - 1
-                luxo_first = len(l) - len(l.lstrip("."))  # his leftmost pixel on this row
+                luxo_first = len(luxo_row) - len(luxo_row.lstrip("."))  # his leftmost pixel on this row
                 gaps.append(luxo_first - ball_right)
         # With his art's left edge at x0, the nearest gap on a shared row is x0 + min(gaps);
         # at the lunge's peak that must be 1 (touching).
@@ -151,8 +158,9 @@ class LuxoBallReveal:
         elif s == "light":
             # Sitting in the dark until the beam finds it; a happy hop, then off to the left.
             if t < self.LEAVE:
-                x, lift, done = _hops(t, self.FOUND, self.FOUND + 0.5, self.ball_rest, self.ball_rest,
-                                      2, self.hop * 0.7)
+                x, lift, done = _hops(
+                    t, self.FOUND, self.FOUND + 0.5, self.ball_rest, self.ball_rest, 2, self.hop * 0.7
+                )
                 turns = -3 - done
             else:
                 x, lift, done = _hops(t, self.LEAVE, self.duration, self.ball_rest, off_left, 3, self.hop)
@@ -180,18 +188,27 @@ class LuxoBallReveal:
         off_left, off_right = -w / 2 - 1, self.width + w / 2 + 1
         ground = self.height - self.luxo_h
         if s == "chase":
-            if t < 0.6:
-                return None
-            x, lift, _ = _hops(t, 0.6, 3.6, off_left, off_right, 5, 4)
-            return x, ground - lift, False  # turned round to chase it
+            return self._luxo_chase(t, ground, off_left, off_right)
         if s == "light":
-            if t < 1.0:
-                x, lift, _ = _hops(t, 0.0, 1.0, off_right, self.search_x, 2, 4)
-            elif t < self.LEAVE:
-                x, lift = self.search_x, 0.0
-            else:
-                x, lift, _ = _hops(t, self.LEAVE, self.duration, self.search_x, off_right, 2, 4)
-            return x, ground - lift, True
+            return self._luxo_light(t, ground, off_right)
+        return self._luxo_bat(t, ground, off_right)
+
+    def _luxo_chase(self, t, ground, off_left, off_right):
+        if t < 0.6:
+            return None
+        x, lift, _ = _hops(t, 0.6, 3.6, off_left, off_right, 5, 4)
+        return x, ground - lift, False  # turned round to chase it
+
+    def _luxo_light(self, t, ground, off_right):
+        if t < 1.0:
+            x, lift, _ = _hops(t, 0.0, 1.0, off_right, self.search_x, 2, 4)
+        elif t < self.LEAVE:
+            x, lift = self.search_x, 0.0
+        else:
+            x, lift, _ = _hops(t, self.LEAVE, self.duration, self.search_x, off_right, 2, 4)
+        return x, ground - lift, True
+
+    def _luxo_bat(self, t, ground, off_right):
         if t < 1.0:
             return None
         if t < 2.0:
@@ -287,30 +304,41 @@ class LuxoBallReveal:
                 for x in range(self.width):
                     if (x, y) not in lit:
                         out[(x, y)] = (0, 0, 0)
-        ball = self.ball(t)
-        if ball:
-            x, y, turns = ball
-            art = _rotate_art(self.BALL_ART, turns)
-            # In the dark, the ball shows only where the beam touches it.
-            self._stamp(out, art, int(round(x - self.ball_size / 2)), int(round(y)), only=lit)
-        lux = self.luxo(t)
-        if lux:
-            x, y, facing_left = lux
-            x0, y0 = int(round(x - self.luxo_w / 2)), int(round(y))
-            colors = self.colors
-            if self.story == "light":
-                colors = {**colors, "Y": self.BULB_ON if t >= self.LIGHT_ON else self.BULB_OFF}
-            for (c, r), kind in self.luxo_pose(self.head_tilt(t) if facing_left else 0.0).items():
-                if not facing_left:
-                    c = self.luxo_w - 1 - c
-                if 0 <= x0 + c < self.width and 0 <= y0 + r < self.height:
-                    out[(x0 + c, y0 + r)] = colors[kind]
+        self._draw_ball(out, t, lit)
+        self._draw_luxo(out, t)
         return out
+
+    def _draw_ball(self, out, t, lit):
+        ball = self.ball(t)
+        if not ball:
+            return
+        x, y, turns = ball
+        art = _rotate_art(self.BALL_ART, turns)
+        # In the dark, the ball shows only where the beam touches it.
+        self._stamp(out, art, int(round(x - self.ball_size / 2)), int(round(y)), only=lit)
+
+    def _draw_luxo(self, out, t):
+        lux = self.luxo(t)
+        if not lux:
+            return
+        x, y, facing_left = lux
+        x0, y0 = int(round(x - self.luxo_w / 2)), int(round(y))
+        colors = self.colors
+        if self.story == "light":
+            colors = {**colors, "Y": self.BULB_ON if t >= self.LIGHT_ON else self.BULB_OFF}
+        for (c, r), kind in self.luxo_pose(self.head_tilt(t) if facing_left else 0.0).items():
+            if not facing_left:
+                c = self.luxo_w - 1 - c
+            if 0 <= x0 + c < self.width and 0 <= y0 + r < self.height:
+                out[(x0 + c, y0 + r)] = colors[kind]
 
     def _stamp(self, out, art, x0, y0, only=None):
         """Add art to the scene's pixels, keeping to the board (and to `only`, if given)."""
-        out.update(((x, y), rgb) for (x, y), rgb in art_pixels(art, x0, y0, self.colors)
-                   if 0 <= x < self.width and 0 <= y < self.height and (only is None or (x, y) in only))
+        out.update(
+            ((x, y), rgb)
+            for (x, y), rgb in art_pixels(art, x0, y0, self.colors)
+            if 0 <= x < self.width and 0 <= y < self.height and (only is None or (x, y) in only)
+        )
 
     def overlay(self, canvas, t):
         if t >= self.duration:

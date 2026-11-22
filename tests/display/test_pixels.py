@@ -1,4 +1,5 @@
 """display.pixels: putting pixels on the board, shared across the board."""
+
 import math
 
 import pytest

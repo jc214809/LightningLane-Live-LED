@@ -7,6 +7,10 @@ import time
 # costs one frame of slightly inconsistent pixels, not corrupted state.
 parks_data_lock = threading.Lock()
 
+# Weather icon images by OpenWeatherMap code, put here by the REST thread (api/weather_icons.py does
+# the download) and read by the park screen, which does no I/O. Whole-key assignments, so no lock.
+weather_icons = {}
+
 # Set when the updater threads can't reach the ThemeParks API, cleared as soon as
 # data gets through again; the display draws a badge while it's set. A lone bool
 # written by the updaters and read by the display needs no lock.
@@ -24,6 +28,7 @@ def note_network_result(ok):
     _network_issues = not ok
     # Imported here so the display thread's import of this module stays dependency-free.
     from utils import debug
+
     if ok:
         debug.info("Network connection restored.")
     else:
@@ -54,8 +59,11 @@ def note_live_feed_down():
 
 def live_feed_healthy():
     """True while the preview WebSocket is synced and has sent something in the last 90s."""
-    return (_live_feed_synced.is_set() and _live_feed_last_frame is not None
-            and time.monotonic() - _live_feed_last_frame <= LIVE_FEED_SILENCE_SECS)
+    return (
+        _live_feed_synced.is_set()
+        and _live_feed_last_frame is not None
+        and time.monotonic() - _live_feed_last_frame <= LIVE_FEED_SILENCE_SECS
+    )
 
 
 def wait_for_live_feed(timeout_s):

@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeMatrix, fill
 
 
@@ -19,6 +18,7 @@ def test_run_frames_stops_redrawing_once_static_and_sleeps_out_the_rest(clock):
 
 def test_a_static_screen_is_redrawn_when_the_settings_pin_comes_and_goes(clock, monkeypatch):
     import display.animation.player as player
+
     monkeypatch.setattr(player, "shown_pin", lambda: "1234" if 3 <= clock.now < 6 else None)
     matrix = FakeMatrix()
     calls = []
@@ -40,6 +40,7 @@ def test_canvases_follow_the_brightness_schedule_as_they_are_handed_out(monkeypa
 
         def SwapOnVSync(self, canvas):
             return Canvas()
+
     level = [None]
     monkeypatch.setattr(player.brightness, "current", lambda: level[0])
     matrix = Matrix()
@@ -52,7 +53,9 @@ def test_canvases_follow_the_brightness_schedule_as_they_are_handed_out(monkeypa
 
 def test_run_frames_reports_frames_drawn_and_time_spent_animating(clock):
     calls = []
-    drawn, spent = animation.run_frames(FakeMatrix(), lambda canvas, t: calls.append(t) or len(calls) < 30, duration_s=8)
+    drawn, spent = animation.run_frames(
+        FakeMatrix(), lambda canvas, t: calls.append(t) or len(calls) < 30, duration_s=8
+    )
     assert drawn == 30 and drawn / spent == pytest.approx(animation.FPS), "a board that keeps up reports 30 fps"
 
     def slow(canvas, t):
@@ -104,6 +107,7 @@ def test_canvas_is_created_once_and_reused_across_screens():
 
 def test_network_badge_is_drawn_over_every_frame_while_offline():
     from updater.shared import note_network_result
+
     note_network_result(False)
     matrix = FakeMatrix()
     animation.show_screen(matrix, fill((0, 0, 255)), 1)
@@ -115,6 +119,7 @@ def test_sound_badge_is_drawn_over_every_frame_beside_the_network_one(monkeypatc
     import display.sound_badges as sound_badges
     from updater.shared import note_network_result
     from utils.sound import NO_MUSIC
+
     monkeypatch.setattr(sound_badges, "current_problem", lambda: NO_MUSIC)
     note_network_result(False)
     matrix = FakeMatrix()
@@ -182,9 +187,11 @@ def test_surprises_let_the_screen_underneath_keep_animating():
         matrix = FakeMatrix()
         # A new matrix can reuse a collected one's id() and inherit its last screen.
         animation.forget_screen(matrix)
-        animation.show_screen(matrix, lambda canvas, t: seen.append(t) or True, 0.5,
-                              transition=transition, rng=random.Random(0))
+        animation.show_screen(
+            matrix, lambda canvas, t: seen.append(t) or True, 0.5, transition=transition, rng=random.Random(0)
+        )
         return seen
+
     assert max(times("baymax")) > 0.3, "under a surprise the ride screen plays on"
     assert max(times("wipe")) == 0, "a reveal still holds it at its first frame"
 
@@ -197,10 +204,21 @@ def _half_lit_screen(canvas, t):
     return False
 
 
-@pytest.mark.parametrize("transition,t", [("army_men", 0.3), ("falcon", 1.2), ("ralph", 0.3), ("pooh", 1.0), ("forky", 1.0),
-                                          ("saber_clash", 1.0), ("saber_duel", 2.0),
-                                          ("saber_duel_obiwan", 2.0), ("saber_duel_yoda", 2.0),
-                                          ("saber_duel_kylo", 2.0)])
+@pytest.mark.parametrize(
+    "transition,t",
+    [
+        ("army_men", 0.3),
+        ("falcon", 1.2),
+        ("ralph", 0.3),
+        ("pooh", 1.0),
+        ("forky", 1.0),
+        ("saber_clash", 1.0),
+        ("saber_duel", 2.0),
+        ("saber_duel_obiwan", 2.0),
+        ("saber_duel_yoda", 2.0),
+        ("saber_duel_kylo", 2.0),
+    ],
+)
 def test_new_screen_never_shows_through_the_old_screens_dark_pixels(transition, t):
     # show_screen draws the new screen first and the transition paints over it, so a
     # transition that draws only the old screen's lit pixels lets the new one bleed through.
@@ -221,6 +239,7 @@ def test_a_screen_can_ask_to_keep_playing_while_the_wipe_uncovers_it(plays_under
     def screen(canvas, t):
         seen.append(t)
         return True
+
     if plays_under:
         screen.plays_under_reveal = True
     matrix = FakeMatrix()
@@ -228,7 +247,7 @@ def test_a_screen_can_ask_to_keep_playing_while_the_wipe_uncovers_it(plays_under
     seen.clear()
     animation.show_screen(matrix, screen, animation.COVER_S + animation.WIPE_S + 0.2)
     # The screen isn't drawn during the sweep, so its first frames are the wipe's.
-    during_wipe = [t for t in seen[:int(animation.WIPE_S * animation.FPS) - 1] if t > 0]
+    during_wipe = [t for t in seen[: int(animation.WIPE_S * animation.FPS) - 1] if t > 0]
     if plays_under:
         assert during_wipe, "its clock runs from the start of the wipe"
     else:
@@ -237,7 +256,9 @@ def test_a_screen_can_ask_to_keep_playing_while_the_wipe_uncovers_it(plays_under
 
 def test_a_reveal_longer_than_the_screen_keeps_the_screen_up_after_it(monkeypatch):
     holds = []
-    monkeypatch.setattr(animation.player, "run_frames", lambda matrix, frame, hold_s, play_s: holds.append(hold_s) or (0, 0))
+    monkeypatch.setattr(
+        animation.player, "run_frames", lambda matrix, frame, hold_s, play_s: holds.append(hold_s) or (0, 0)
+    )
     animation.show_screen(FakeMatrix(), fill((1, 2, 3)), 8, transition="mine_train_snow", rng=random.Random(0))
     train = animation.MineTrainSnowReveal(64, 32, random.Random(0))
     assert holds[-1] >= train.duration + train.hold_after_s

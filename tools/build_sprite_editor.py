@@ -6,6 +6,7 @@ always opens on the art the board draws.
 
 Run from anywhere after changing character art:  python3 tools/build_sprite_editor.py
 """
+
 import importlib
 import json
 import logging
@@ -32,13 +33,18 @@ def load_animation():
         sys.path.insert(0, ROOT)
     sys.modules.setdefault("driver", types.SimpleNamespace(graphics=types.SimpleNamespace(Color=lambda *rgb: rgb)))
     from display import animation
+
     return animation
 
 
 def _is_art(value):
-    return (isinstance(value, list) and len(value) > 1
-            and all(isinstance(row, str) for row in value)
-            and len({len(row) for row in value}) == 1 and len(value[0]) > 1)
+    return (
+        isinstance(value, list)
+        and len(value) > 1
+        and all(isinstance(row, str) for row in value)
+        and len({len(row) for row in value}) == 1
+        and len(value[0]) > 1
+    )
 
 
 def _palette(cls):
@@ -62,7 +68,7 @@ def collect_sprites(animation):
             # A sprite drawn at a fixed size on every board declares it: per sprite
             # (Genie's LAMP_ART has LAMP_SCALE) or for the whole class (SCALE).
             # The rest double on 64-row boards.
-            fixed = getattr(cls, attr[:-len("ART")] + "SCALE", None) if attr.endswith("ART") else None
+            fixed = getattr(cls, attr[: -len("ART")] + "SCALE", None) if attr.endswith("ART") else None
             fixed = fixed if fixed is not None else getattr(cls, "SCALE", None)
             _add(sprites, seen, character, attr, getattr(cls, attr), palette_attr, palette, fixed)
     for character, module in landmark_modules():
@@ -75,6 +81,7 @@ def collect_sprites(animation):
 def landmark_modules():
     """[(name, module)] of the display/landmarks/ modules that list art for the editor in EDITOR_SPRITES."""
     from display import landmarks
+
     out = []
     for info in pkgutil.iter_modules(landmarks.__path__):
         module = importlib.import_module(f"display.landmarks.{info.name}")
@@ -83,7 +90,7 @@ def landmark_modules():
     return out
 
 
-def _add(sprites, seen, character, attr, value, palette_attr, palette, fixed):
+def _add(sprites, seen, character, attr, value, palette_attr, palette, fixed):  # noqa: PLR0913
     if _is_art(value):
         frames = [value]
     elif isinstance(value, list) and value and all(_is_art(f) for f in value):
@@ -100,10 +107,14 @@ def _add(sprites, seen, character, attr, value, palette_attr, palette, fixed):
         unmapped = [k for k in used if k not in colors]
         colors.update({k: list(UNMAPPED_RGB) for k in unmapped})
         sprites[f"{character}/{label}"] = {
-            "character": character, "attr": attr, "label": label,
+            "character": character,
+            "attr": attr,
+            "label": label,
             "scale": fixed if isinstance(fixed, int) else None,
-            "palette_attr": palette_attr, "rows": list(rows),
-            "colors": colors, "unmapped": unmapped,
+            "palette_attr": palette_attr,
+            "rows": list(rows),
+            "colors": colors,
+            "unmapped": unmapped,
         }
 
 

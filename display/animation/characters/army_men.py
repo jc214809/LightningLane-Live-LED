@@ -89,10 +89,18 @@ class ArmyMenReveal(CapturesScreens):
     BASE_COLS = (0, 10)  # the base's two ends, where landing dust kicks out
 
     COLORS = {
-        "C": (22, 34, 16), "N": (72, 110, 45), "O": (170, 145, 60), "M": (40, 62, 28),
+        "C": (22, 34, 16),
+        "N": (72, 110, 45),
+        "O": (170, 145, 60),
+        "M": (40, 62, 28),
         "*": (250, 250, 240),
-        "K": (12, 50, 16), "L": (140, 215, 100), "G": (70, 165, 60), "D": (35, 105, 38),
-        "R": (20, 68, 24), "S": (60, 140, 55), "B": (45, 120, 45),
+        "K": (12, 50, 16),
+        "L": (140, 215, 100),
+        "G": (70, 165, 60),
+        "D": (35, 105, 38),
+        "R": (20, 68, 24),
+        "S": (60, 140, 55),
+        "B": (45, 120, 45),
     }
     RIG_RGB = (170, 170, 160)
     DUST_RGB = (190, 170, 120)
@@ -196,37 +204,45 @@ class ArmyMenReveal(CapturesScreens):
         if t >= self.duration:
             return False
         self._cy = self._curtain_y(t)
-        for (x, y), rgb in self.new_px.items():
-            if y < self._cy:
-                canvas.SetPixel(x, y, *rgb)
-        # Below the curtain, every pixel is the old screen's, black included: show_screen
-        # has already drawn the new screen underneath, and it mustn't show through.
-        for y in range(self._cy, self.height):
-            for x in range(self.width):
-                canvas.SetPixel(x, y, *self.prev_px.get((x, y), (0, 0, 0)))
-
-        march, lift = self._hop(t)
-        hop_age = self._last_hop_landing(t)
+        self._draw_screens(canvas)
         # Slumped chutes lie on the ground behind the soldiers, so draw them all first.
-        for i, (frac, delay) in enumerate(self.UNITS):
+        for frac, delay in self.UNITS:
             since = t - self._unit_land_time(delay)
             if 0 <= since < self.COLLAPSE_S:
                 self._draw_collapsing_chute(canvas, int(frac * self.width), since / self.COLLAPSE_S)
+        march, lift = self._hop(t)
+        hop_age = self._last_hop_landing(t)
         for i, (frac, delay) in enumerate(self.UNITS):
             home = int(frac * self.width)
             since = t - self._unit_land_time(delay)
             if since < 0:
-                canopy_dx, soldier_dx = self._sway(i, delay, t)
-                top = int(round(self._soldier_top(delay, t)))
-                self._draw_hanging(canvas, home + canopy_dx, home + soldier_dx, top)
+                self._draw_falling_unit(canvas, i, home, delay, t)
             else:
-                x = home + march
-                self._draw_soldier(canvas, x, self.ground_top - lift)
-                if since < self.DUST_S:
-                    self._draw_dust(canvas, x, since / self.DUST_S, 1.0)
-                elif hop_age is not None and hop_age < self.DUST_S * 0.7:
-                    self._draw_dust(canvas, x, hop_age / (self.DUST_S * 0.7), 0.6)
+                self._draw_landed_unit(canvas, home + march, self.ground_top - lift, since, hop_age)
         return True
+
+    def _draw_screens(self, canvas):
+        """The new screen above the curtain; below it the old one, black included:
+        show_screen has already drawn the new screen underneath, and it mustn't show through."""
+        for (x, y), rgb in self.new_px.items():
+            if y < self._cy:
+                canvas.SetPixel(x, y, *rgb)
+        for y in range(self._cy, self.height):
+            for x in range(self.width):
+                canvas.SetPixel(x, y, *self.prev_px.get((x, y), (0, 0, 0)))
+
+    def _draw_falling_unit(self, canvas, i, home, delay, t):
+        canopy_dx, soldier_dx = self._sway(i, delay, t)
+        top = int(round(self._soldier_top(delay, t)))
+        self._draw_hanging(canvas, home + canopy_dx, home + soldier_dx, top)
+
+    def _draw_landed_unit(self, canvas, x, top, since, hop_age):
+        """A soldier on the ground at x, kicking up dust as he lands and as each hop comes down."""
+        self._draw_soldier(canvas, x, top)
+        if since < self.DUST_S:
+            self._draw_dust(canvas, x, since / self.DUST_S, 1.0)
+        elif hop_age is not None and hop_age < self.DUST_S * 0.7:
+            self._draw_dust(canvas, x, hop_age / (self.DUST_S * 0.7), 0.6)
 
     def _draw_hanging(self, canvas, canopy_cx, soldier_cx, soldier_top):
         """A falling soldier: canopy, rigging converging above his helmet, and him."""

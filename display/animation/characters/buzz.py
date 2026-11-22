@@ -48,8 +48,16 @@ class BuzzReveal(FlyByReveal):
     # and fills too much of the board. Set SIZE to "big" or "small" to pin one everywhere.
     SIZE = None
     art = SIZES["big"]
-    colors = {"D": (130, 180, 235), "P": (160, 90, 235), "S": (255, 205, 170), "R": (235, 45, 45),
-              "W": (235, 235, 245), "G": (60, 210, 60), "B": (60, 130, 255), "K": (70, 70, 80)}
+    colors = {
+        "D": (130, 180, 235),
+        "P": (160, 90, 235),
+        "S": (255, 205, 170),
+        "R": (235, 45, 45),
+        "W": (235, 235, 245),
+        "G": (60, 210, 60),
+        "B": (60, 130, 255),
+        "K": (70, 70, 80),
+    }
     flame_colors = [(255, 240, 150), (255, 170, 30), (255, 90, 20), (230, 40, 20)]
     FLASH_RGB = (255, 250, 220)
 
@@ -60,9 +68,14 @@ class BuzzReveal(FlyByReveal):
         body = [c for row in self.art for c, ch in enumerate(row) if ch in "SDBK"]
         lo, hi = min(body) - 1, max(body) + 1
         self.folded = ["".join(ch if lo <= c <= hi else "." for c, ch in enumerate(row)) for row in self.art]
-        self.wing_tips = [(c, r) for r, row in enumerate(self.art) for c, ch in enumerate(row)
-                          if ch in "PR" and (c == 0 or c == len(row) - 1 or row[c - 1] == "." or row[c + 1] == ".")
-                          and not lo <= c <= hi]
+        self.wing_tips = [
+            (c, r)
+            for r, row in enumerate(self.art)
+            for c, ch in enumerate(row)
+            if ch in "PR"
+            and (c == 0 or c == len(row) - 1 or row[c - 1] == "." or row[c + 1] == ".")
+            and not lo <= c <= hi
+        ]
 
     def wings_open(self, t):
         return t >= self.RISE_S
@@ -84,10 +97,17 @@ class BuzzReveal(FlyByReveal):
         r = self.rng
         blasting = y < self.height * self.HOVER_AT - self.sprite_h / 2 - 0.5
         feet = y + self.sprite_h
-        return [[x + self.sprite_w * r.uniform(0.38, 0.62), feet,
-                 r.uniform(-0.25, 0.25) * self.scale, r.uniform(0.4, 1.0) * self.scale,
-                 r.randint(10, 18), r.choice(self.flame_colors)]
-                for _ in range((6 if blasting else 4) * self.scale)]
+        return [
+            [
+                x + self.sprite_w * r.uniform(0.38, 0.62),
+                feet,
+                r.uniform(-0.25, 0.25) * self.scale,
+                r.uniform(0.4, 1.0) * self.scale,
+                r.randint(10, 18),
+                r.choice(self.flame_colors),
+            ]
+            for _ in range((6 if blasting else 4) * self.scale)
+        ]
 
     def overlay(self, canvas, t):
         self._step_particles(t)

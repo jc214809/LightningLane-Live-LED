@@ -1,6 +1,6 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Iterable, Optional
 
 from utils import debug
 
@@ -13,8 +13,8 @@ WELCOME_HOME_DAYS = 2
 @dataclass(frozen=True)
 class Trip:
     start: date
-    end: Optional[date] = None
-    name: Optional[str] = None
+    end: date | None = None
+    name: str | None = None
 
     def shown_until(self):
         """Last day this trip still owns the countdown screen."""
@@ -61,7 +61,7 @@ def parse_trips(config):
     return trips
 
 
-def active_trip(trips: Iterable[Trip], today: Optional[date] = None) -> Optional[Trip]:
+def active_trip(trips: Iterable[Trip], today: date | None = None) -> Trip | None:
     """
     The one trip the countdown shows: a trip under way (or just finished) wins,
     the latest-starting one if several are; otherwise the nearest upcoming trip.
@@ -72,3 +72,26 @@ def active_trip(trips: Iterable[Trip], today: Optional[date] = None) -> Optional
         return max(current, key=lambda t: t.start)
     upcoming = [t for t in trips if t.start > today]
     return min(upcoming, key=lambda t: t.start) if upcoming else None
+
+
+def countdown_message(trip, today=None):
+    """
+    What the countdown says, as (number, lines): big text with a label under it, or
+    number None and a message on the days that deserve one. A trip's name, when it
+    has one, stands in for "DISNEY" under the day count (render falls back to
+    "DISNEY" if the name doesn't fit). Here, not in display/countdown, so the settings
+    page can show the same words without loading the display code.
+    """
+    today = today or date.today()
+    days = (trip.start - today).days
+    if days > 1:
+        return str(days), ("DAYS TO", (trip.name or "DISNEY").upper())
+    if days == 1:
+        return None, ("DISNEY", "TOMORROW")
+    if days == 0:
+        return None, ("IT'S", "DISNEY", "DAY!")
+    if trip.end is None:
+        return None, ("HAVE A", "MAGICAL", "TRIP!")
+    if today <= trip.end:
+        return f"DAY {1 - days}", (f"OF {(trip.end - trip.start).days + 1}",)
+    return None, ("WELCOME", "HOME!")

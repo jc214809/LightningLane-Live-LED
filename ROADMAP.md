@@ -180,7 +180,7 @@ Other references, unused:
 **7. Santa Goofy / Mickey in a Santa hat (Christmas party, Jollywood Nights).** The hat's red
 and white would echo the green/red/white holiday star on the park-hours screen.
 Partly done: the Christmas party's landmark (`SantaTrainLandmark`) has Santa-hat Mickey, Donald and
-Goofy riding Santa's train, bobbing, blinking and (on 64x64) waving. Still open: the 64x32 waves, a cameo on the ride screens, and anything for Jollywood Nights.
+Goofy riding Santa's train, bobbing, blinking and (on 64x64) waving. Jollywood Nights has its own landmark now (`JollywoodTowerLandmark`, the Tower of Terror decked out), but no character. Still open: the 64x32 waves, a cameo on the ride screens, and a Santa-hat character for Jollywood Nights.
 
 **8. Remy.** Scurries along the bottom edge with a chef-hat hop. Caveat: a small grey rat is
 Figment's original "purple blob" problem all over again. It only works close-up and large,
@@ -1019,8 +1019,11 @@ Switching from Beta to Releases stays put until a release newer than what's inst
 downgrade). Manual only to start; nightly beta updates can come once rollback has proven itself.
 Test board: TinyPi, including a deliberately broken commit to watch the auto-rollback.
 
-- Releases: built (`.github/workflows/release.yml`): a pushed `v*` tag becomes a release only if it
-  matches `version.py`. v1.1.0 and older predate the settings page, so the page lists only releases
+- Releases: built, by tags only (`.github/workflows/auto-tag.yml`, `tools/auto_tag.py`; 2026-11-04):
+  each PR merged into develop-beta tags its merge `vX.Y.N-beta`, and develop-beta merged into main
+  tags `vX.(Y+1).0` and makes the release, with the PRs' release notes. No workflow commits (a
+  GITHUB_TOKEN push gets no CI run, and Beta installs only a tip whose CI passed); `version.py`
+  reads `git describe`. The first release is v2.1.0. v1.1.0 and older predate the settings page, so the page lists only releases
   from a minimum version up: the first one that has the updater, so a downgrade can't remove the
   way back.
 - The update runs as its own process (`systemd-run --unit=lll-update`), not in the settings
@@ -1074,8 +1077,23 @@ Test board: TinyPi, including a deliberately broken commit to watch the auto-rol
   ("the app crashed"); `sudo systemctl stop` instead fails the health window after 5 min ("the app
   isn't running"). Then `sudo venv/bin/python3 -m self_update status` says `rolled_back` (without
   sudo it can't read state.json and says so), `git log -1` is the old commit, and the card's Last
-  rollback says why ("Rolled back to Beta 0dddb41", not version.py's release). A power cut during
+  rollback says why ("Rolled back to Beta 2.1.5", or "Beta 0dddb41" for an untagged commit). A power cut during
   "Installing the new version" checks `lll-update-recover` at the next boot.
 
 Order, one PR each: releases (done) → updater and heartbeat (done) → boot recovery and
 `lll-rollback` (done) → the Updates card (done, #201) → a board check once it's merged.
+
+## 18. ~~The settings page's logo, and the board's own art on it~~ Built (2026-11-08, untested on a Pi)
+
+The castle logo (`settings_page/static/icon.svg`, with square PNGs for phones) as the tab icon, the top bar's
+mark and the sign-in page's, with the wordmark "LightningLane" over "LED", in a storybook navy-and-gold theme.
+The cards show what the board draws and knows: "On the board now" from the heartbeat, each park's landmark
+(`tools/build_settings_art.py`), the countdown in the board's own words, the castle under the brightness,
+rotation and show settings, and the surprise characters by name.
+
+Still to do:
+- **Group the character variants on the Surprise characters card.** It lists every transition by name, so the
+  count says 45 with "Saber Duel Kylo", "Saber Duel Luke", "Mine Train Snow" and the like each counted. Group them
+  under one name each, as the Surprise characters page does (`SURPRISE_LOOKS`), and count characters, not looks.
+- A board check: open the page on a Pi Zero board and a Pi 4, light and dark, and add the castle to a phone's
+  home screen.

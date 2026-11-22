@@ -34,25 +34,28 @@ def test_every_cue_uses_known_looks_shapes_and_effects(hea):
 
 
 # Times from watching the real show (docs/shows/happily-ever-after/README.md).
-@pytest.mark.parametrize("t, title, rate, castle, effects", [
-    (0, "Theme fanfare", 0, "grey", {"searchlights_fanfare", "keyhole_glow"}),
-    (46, "Magic from the keyhole", 0, "grey", {"starfield", "keyhole_magic"}),
-    (100, "Theme chorus", 2.2, "red", {"gold_trace"}),
-    (130, "Theme chorus (gold canopy)", 1.6, "blue", {"willow", "wipe_down"}),
-    (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
-    (230, "Out There", 0.35, "blue", {"bells"}),
-    (270, "Touch the Sky", 0.9, "jungle", {"comet_fan", "willow"}),
-    (400, "Aladdin: a best friend by your side", 0, "blue", {"smoke"}),
-    (700, "I See the Light (lanterns)", 0.15, "blue", {"lanterns", "willow"}),
-    (780, "He's a Pirate", 1.4, "fire", {"flame_jets"}),
-    (808, "He's a Pirate (green barrage)", 2.2, "fire", {"flame_jets", "green_fire"}),
-    (865, "Embers", 0, "dark", {"embers"}),
-    (930, "Go the Distance", 1.6, "blue", {"willow", "comet_fan"}),
-    (950, "Go the Distance (hero mosaic)", 1.6, "stained_glass", {"willow", "comet_fan"}),
-    (1000, "Narrator closing", 0, "stained_glass", {"keyhole_glow"}),
-    (1095, "Final chorus, keyhole opens", 2.6, "gold", {"rainbow", "keyhole_open", "comet_fan"}),
-    (1100, "The last hit", 0.6, "gold", {"final_flash", "keyhole_open", "willow"}),
-])
+@pytest.mark.parametrize(
+    "t, title, rate, castle, effects",
+    [
+        (0, "Theme fanfare", 0, "grey", {"searchlights_fanfare", "keyhole_glow"}),
+        (46, "Magic from the keyhole", 0, "grey", {"starfield", "keyhole_magic"}),
+        (100, "Theme chorus", 2.2, "red", {"gold_trace"}),
+        (130, "Theme chorus (gold canopy)", 1.6, "blue", {"willow", "wipe_down"}),
+        (140, "Wishing star lands on the castle", 0, "blue", {"wishing_star"}),
+        (230, "Out There", 0.35, "blue", {"bells"}),
+        (270, "Touch the Sky", 0.9, "jungle", {"comet_fan", "willow"}),
+        (400, "Aladdin: a best friend by your side", 0, "blue", {"smoke"}),
+        (700, "I See the Light (lanterns)", 0.15, "blue", {"lanterns", "willow"}),
+        (780, "He's a Pirate", 1.4, "fire", {"flame_jets"}),
+        (808, "He's a Pirate (green barrage)", 2.2, "fire", {"flame_jets", "green_fire"}),
+        (865, "Embers", 0, "dark", {"embers"}),
+        (930, "Go the Distance", 1.6, "blue", {"willow", "comet_fan"}),
+        (950, "Go the Distance (hero mosaic)", 1.6, "stained_glass", {"willow", "comet_fan"}),
+        (1000, "Narrator closing", 0, "stained_glass", {"keyhole_glow"}),
+        (1095, "Final chorus, keyhole opens", 2.6, "gold", {"rainbow", "keyhole_open", "comet_fan"}),
+        (1100, "The last hit", 0.6, "gold", {"final_flash", "keyhole_open", "willow"}),
+    ],
+)
 def test_cue_at(hea, t, title, rate, castle, effects):
     cue = hea.cue_at(t)
     assert (cue.title, cue.rate, cue.castle, set(cue.effects)) == (title, pytest.approx(rate), castle, effects)
@@ -92,33 +95,45 @@ def test_progress_through_a_scene(hea):
 
 
 def _show(**scene):
-    return {"show_end": 10, "sections": [{"id": "s", "palette": ["#FF0000"], "intensity": 0.6,
-                                          "scenes": [{"start": 0, "end": 10, "title": "x", **scene}]}]}
+    return {
+        "show_end": 10,
+        "sections": [
+            {
+                "id": "s",
+                "palette": ["#FF0000"],
+                "intensity": 0.6,
+                "scenes": [{"start": 0, "end": 10, "title": "x", **scene}],
+            }
+        ],
+    }
 
 
 def test_a_missing_score_is_none(tmp_path):
     assert load_score("no-such-show", shows_dir=str(tmp_path)) is None
 
 
-@pytest.mark.parametrize("data", [
-    "{not json",
-    json.dumps({"sections": []}),
-    json.dumps(_show(castle="plaid")),
-    json.dumps(_show(shapes={"dragon": 0.5})),
-    json.dumps(_show(effects=["confetti"])),
-    json.dumps(_show(palette=["#000000"])),  # nothing bright enough
-    json.dumps(_show(palette=["red"])),
-    json.dumps({"show_end": 10, "sections": [{"id": "s"}]}),
-    json.dumps(_show(hits=[{"at": 5, "kind": "rocket", "colour": "#FF0000"}])),
-    json.dumps(_show(hits=[{"at": 12, "kind": "shell", "colour": "#FF0000"}])),  # past the scene's end
-    json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "style": "ring"}])),
-    json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "x": 1.5}])),
-    json.dumps(_show(hits=[{"at": 5, "kind": "comet", "colour": "#FF0000", "side": "up"}])),
-    json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "when": 3}])),
-    json.dumps(_show(castle_changes=[{"at": 5, "castle": "plaid"}])),
-    json.dumps(_show(castle_changes=[{"at": 12, "castle": "gold"}])),  # past the scene's end
-    json.dumps(_show(castle_changes=[{"after": 5, "castle": "gold"}])),  # V1 times are show seconds
-])
+@pytest.mark.parametrize(
+    "data",
+    [
+        "{not json",
+        json.dumps({"sections": []}),
+        json.dumps(_show(castle="plaid")),
+        json.dumps(_show(shapes={"dragon": 0.5})),
+        json.dumps(_show(effects=["confetti"])),
+        json.dumps(_show(palette=["#000000"])),  # nothing bright enough
+        json.dumps(_show(palette=["red"])),
+        json.dumps({"show_end": 10, "sections": [{"id": "s"}]}),
+        json.dumps(_show(hits=[{"at": 5, "kind": "rocket", "colour": "#FF0000"}])),
+        json.dumps(_show(hits=[{"at": 12, "kind": "shell", "colour": "#FF0000"}])),  # past the scene's end
+        json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "style": "ring"}])),
+        json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "x": 1.5}])),
+        json.dumps(_show(hits=[{"at": 5, "kind": "comet", "colour": "#FF0000", "side": "up"}])),
+        json.dumps(_show(hits=[{"at": 5, "kind": "shell", "colour": "#FF0000", "when": 3}])),
+        json.dumps(_show(castle_changes=[{"at": 5, "castle": "plaid"}])),
+        json.dumps(_show(castle_changes=[{"at": 12, "castle": "gold"}])),  # past the scene's end
+        json.dumps(_show(castle_changes=[{"after": 5, "castle": "gold"}])),  # V1 times are show seconds
+    ],
+)
 def test_a_broken_score_is_logged_and_none(tmp_path, data):
     (tmp_path / "show.json").write_text(data)
     assert load_score("show", shows_dir=str(tmp_path)) is None
@@ -131,18 +146,24 @@ def test_a_good_score_from_a_folder(tmp_path):
 
 
 def test_a_scenes_hits_are_read_in_time_order(tmp_path):
-    (tmp_path / "show.json").write_text(json.dumps(_show(hits=[
-        {"at": 7, "kind": "roof_fan", "colour": "#FFFFFF"},
-        {"at": 5, "kind": "shell", "colour": "#FF0000", "x": 0.3, "style": "willow"},
-    ])))
+    (tmp_path / "show.json").write_text(
+        json.dumps(
+            _show(
+                hits=[
+                    {"at": 7, "kind": "roof_fan", "colour": "#FFFFFF"},
+                    {"at": 5, "kind": "shell", "colour": "#FF0000", "x": 0.3, "style": "willow"},
+                ]
+            )
+        )
+    )
     hits = load_score("show", shows_dir=str(tmp_path)).cue_at(1).hits
-    assert hits == (Hit(5.0, "shell", (255, 0, 0), 0.3, 0.25, "willow", "right"),
-                    Hit(7.0, "roof_fan", (255, 255, 255)))
+    assert hits == (Hit(5.0, "shell", (255, 0, 0), 0.3, 0.25, "willow", "right"), Hit(7.0, "roof_fan", (255, 255, 255)))
 
 
 def test_a_scenes_castle_changes_at_its_timed_moments(tmp_path):
-    (tmp_path / "show.json").write_text(json.dumps(_show(castle="green", castle_changes=[
-        {"at": 7, "castle": "blue"}, {"at": 4, "castle": "pink"}])))
+    (tmp_path / "show.json").write_text(
+        json.dumps(_show(castle="green", castle_changes=[{"at": 7, "castle": "blue"}, {"at": 4, "castle": "pink"}]))
+    )
     cue = load_score("show", shows_dir=str(tmp_path)).cue_at(1)
     assert [cue.castle_at(t) for t in (0, 3.9, 4, 6.9, 7, 9.9)] == ["green", "green", "pink", "pink", "blue", "blue"]
 
@@ -153,6 +174,7 @@ def test_shows_dir_is_next_to_the_module_not_the_cwd():
 
 # ---- versions: an overlay file on V1's scenes ----
 
+
 def _write(tmp_path, show, overlay=None):
     (tmp_path / "show.json").write_text(json.dumps(show))
     if overlay is not None:
@@ -160,8 +182,17 @@ def _write(tmp_path, show, overlay=None):
 
 
 def _two_scenes(**second):
-    return {"show_end": 20, "sections": [{"id": "s", "palette": ["#FF0000"], "intensity": 0.6, "scenes": [
-        {"start": 0, "end": 10, "title": "one"}, {"start": 10, "end": 20, "title": "two", **second}]}]}
+    return {
+        "show_end": 20,
+        "sections": [
+            {
+                "id": "s",
+                "palette": ["#FF0000"],
+                "intensity": 0.6,
+                "scenes": [{"start": 0, "end": 10, "title": "one"}, {"start": 10, "end": 20, "title": "two", **second}],
+            }
+        ],
+    }
 
 
 def test_v1_scenes_keep_the_castle_and_have_no_actors(hea):
@@ -179,8 +210,11 @@ def test_an_overlay_adds_a_stage_actors_and_rate_to_its_scene_only(tmp_path, mon
 
 
 def test_an_overlays_stage_changes_count_from_its_scenes_start(tmp_path):
-    _write(tmp_path, _two_scenes(), {"overlays": {"two": {"stage": "off", "stage_changes": [
-        {"after": 4.5, "stage": "castle"}]}}})
+    _write(
+        tmp_path,
+        _two_scenes(),
+        {"overlays": {"two": {"stage": "off", "stage_changes": [{"after": 4.5, "stage": "castle"}]}}},
+    )
     two = load_score("show", shows_dir=str(tmp_path), version="v2").cues[1]
     assert two.stage_changes == ((14.5, "castle"),)
     assert [two.stage_at(t) for t in (10, 14.4, 14.5, 19)] == ["off", "off", "castle", "castle"]
@@ -205,20 +239,23 @@ def test_without_an_overlay_file_v2_plays_v1(tmp_path):
     assert load_score("show", shows_dir=str(tmp_path), version="v2") == load_score("show", shows_dir=str(tmp_path))
 
 
-@pytest.mark.parametrize("overlay", [
-    {"overlays": {"three": {"stage": "off"}}},  # a renamed or missing scene can't drop silently
-    {"overlays": {"two": {"stage": "aside"}}},
-    {"overlays": {"two": {"actors": ["nobody"]}}},
-    {"overlays": {"two": {"actors": "genie"}}},
-    {"overlays": {"two": {"costume": "red"}}},
-    {"overlays": {"two": {"effects": ["glitter"]}}},
-    {"overlays": {"two": {"effects": "blocks"}}},
-    {"overlays": {"two": {"stage_changes": [{"after": 3, "stage": "aside"}]}}},
-    {"overlays": {"two": {"stage_changes": [{"after": 12, "stage": "off"}]}}},  # past the scene's end
-    {"overlays": {"two": {"stage_changes": [{"at": 13, "stage": "off"}]}}},  # overlay times are seconds in
-    {"scenes": {}},
-    "{not json",
-])
+@pytest.mark.parametrize(
+    "overlay",
+    [
+        {"overlays": {"three": {"stage": "off"}}},  # a renamed or missing scene can't drop silently
+        {"overlays": {"two": {"stage": "aside"}}},
+        {"overlays": {"two": {"actors": ["nobody"]}}},
+        {"overlays": {"two": {"actors": "genie"}}},
+        {"overlays": {"two": {"costume": "red"}}},
+        {"overlays": {"two": {"effects": ["glitter"]}}},
+        {"overlays": {"two": {"effects": "blocks"}}},
+        {"overlays": {"two": {"stage_changes": [{"after": 3, "stage": "aside"}]}}},
+        {"overlays": {"two": {"stage_changes": [{"after": 12, "stage": "off"}]}}},  # past the scene's end
+        {"overlays": {"two": {"stage_changes": [{"at": 13, "stage": "off"}]}}},  # overlay times are seconds in
+        {"scenes": {}},
+        "{not json",
+    ],
+)
 def test_a_broken_overlay_is_logged_and_v1_plays(tmp_path, overlay, monkeypatch):
     warnings = []
     monkeypatch.setattr(score_module.debug, "warning", warnings.append)
@@ -232,8 +269,11 @@ def test_a_broken_overlay_is_logged_and_v1_plays(tmp_path, overlay, monkeypatch)
 def test_the_castle_cant_be_off_in_a_scene_whose_effects_draw_on_it(tmp_path, effect):
     _write(tmp_path, _two_scenes(effects=[effect]), {"overlays": {"two": {"stage": "off"}}})
     assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage == "castle", "fell back to v1"
-    _write(tmp_path, _two_scenes(effects=[effect]),
-           {"overlays": {"two": {"stage_changes": [{"after": 5, "stage": "off"}]}}})
+    _write(
+        tmp_path,
+        _two_scenes(effects=[effect]),
+        {"overlays": {"two": {"stage_changes": [{"after": 5, "stage": "off"}]}}},
+    )
     assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage_changes == (), "fell back to v1"
     _write(tmp_path, _two_scenes(effects=[effect]), {"overlays": {"two": {"stage": "ghost"}}})
     assert load_score("show", shows_dir=str(tmp_path), version="v2").cues[1].stage == "ghost"
@@ -259,6 +299,7 @@ def test_happily_ever_afters_v2_overlay_parses_onto_v1():
 
 # ---- mouth tracks (<show>.<version>.lips.json) ----
 
+
 def _lips(tmp_path, data):
     (tmp_path / "show.v2.lips.json").write_text(data if isinstance(data, str) else json.dumps(data))
 
@@ -267,19 +308,23 @@ def test_a_versions_mouth_tracks_come_with_it(tmp_path, monkeypatch):
     monkeypatch.setitem(score_module.ACTORS, "someone", object)
     _write(tmp_path, _two_scenes(), {"overlays": {"two": {"actors": ["someone"]}}})
     _lips(tmp_path, {"lips": {"someone": {"start": 10, "fps": 10, "track": "0122"}}})
-    assert load_score("show", shows_dir=str(tmp_path), version="v2").lips == \
-        {"someone": score_module.Lips(10.0, 10.0, "0122")}
+    assert load_score("show", shows_dir=str(tmp_path), version="v2").lips == {
+        "someone": score_module.Lips(10.0, 10.0, "0122")
+    }
     assert load_score("show", shows_dir=str(tmp_path)).lips is None, "v1 has none"
 
 
-@pytest.mark.parametrize("data", [
-    "{not json",
-    {"lips": {"nobody": {"start": 0, "fps": 15, "track": "01"}}},
-    {"lips": {"someone": {"start": 0, "fps": 15, "track": "013"}}},
-    {"lips": {"someone": {"start": 0, "fps": 15, "track": ""}}},
-    {"lips": {"someone": {"start": 0, "fps": 0, "track": "01"}}},
-    {"lips": {"someone": {"fps": 15, "track": "01"}}},
-])
+@pytest.mark.parametrize(
+    "data",
+    [
+        "{not json",
+        {"lips": {"nobody": {"start": 0, "fps": 15, "track": "01"}}},
+        {"lips": {"someone": {"start": 0, "fps": 15, "track": "013"}}},
+        {"lips": {"someone": {"start": 0, "fps": 15, "track": ""}}},
+        {"lips": {"someone": {"start": 0, "fps": 0, "track": "01"}}},
+        {"lips": {"someone": {"fps": 15, "track": "01"}}},
+    ],
+)
 def test_broken_mouth_tracks_are_dropped_but_the_version_still_plays(tmp_path, monkeypatch, data):
     monkeypatch.setitem(score_module.ACTORS, "someone", object)
     monkeypatch.setattr(score_module.debug, "warning", lambda msg: None)

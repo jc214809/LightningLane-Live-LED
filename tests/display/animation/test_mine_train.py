@@ -1,4 +1,5 @@
 """The Seven Dwarfs Mine Train."""
+
 import random
 
 import pytest
@@ -6,8 +7,11 @@ import pytest
 import display.animation as animation
 from tests.display.animation.support import FakeCanvas, fill
 
-VARIANTS = {"mine_train": animation.MineTrainReveal, "mine_train_all": animation.MineTrainAllReveal,
-            "mine_train_snow": animation.MineTrainSnowReveal}
+VARIANTS = {
+    "mine_train": animation.MineTrainReveal,
+    "mine_train_all": animation.MineTrainAllReveal,
+    "mine_train_snow": animation.MineTrainSnowReveal,
+}
 
 
 def _sprites(cls):

@@ -7,6 +7,7 @@ state.json: "phase" (below), "from" (the rollback point: "sha", "branch" (None w
 last one rolled back) and "good" (the last KEEP_GOOD commits that passed their health check,
 newest first). A phase in UNFINISHED means an update stopped midway: a power cut, or a crash.
 """
+
 import fcntl
 import json
 import os
@@ -15,8 +16,14 @@ from contextlib import contextmanager
 STATE_DIR = "/var/lib/lll-update"
 KEEP_GOOD = 3
 
-IDLE, READY, SWITCHED, INSTALLED, CHECKING, ROLLING_BACK = \
-    "idle", "ready", "switched", "installed", "checking", "rolling_back"
+IDLE, READY, SWITCHED, INSTALLED, CHECKING, ROLLING_BACK = (
+    "idle",
+    "ready",
+    "switched",
+    "installed",
+    "checking",
+    "rolling_back",
+)
 UPDATED, ROLLED_BACK, ROLLBACK_FAILED = "updated", "rolled_back", "rollback_failed"
 UNFINISHED = (READY, SWITCHED, INSTALLED, CHECKING, ROLLING_BACK)
 

@@ -5,14 +5,13 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas
 
 
 def _old_screen(height):
     """Two lines of 3x5 'letters' with a blank column between each, and a bar along the bottom."""
     px = {}
-    for line, (top, count, rgb) in enumerate(((2, 5, (255, 255, 255)), (12, 3, (80, 200, 255)))):
+    for top, count, rgb in ((2, 5, (255, 255, 255)), (12, 3, (80, 200, 255))):
         for i in range(count):
             for dx in range(3):
                 for dy in range(5):
@@ -79,13 +78,17 @@ def test_he_crosses_the_board_and_is_all_there_midway(height):
 def test_his_board_stands_out_from_the_water_and_from_him():
     def distance(a, b):
         return sum(abs(x - y) for x, y in zip(a, b))
+
     for water in (Surf.WATER, Surf.FACE, Surf.WATER_DEEP):
         assert distance(Surf.BOARD, water) > 250
-    assert min(distance(Surf.BOARD, rgb) for rgb in Surf.colors.values()) > 150, "red against all of his blues and pinks"
+    assert min(distance(Surf.BOARD, rgb) for rgb in Surf.colors.values()) > 150, (
+        "red against all of his blues and pinks"
+    )
     assert distance(Surf.colors["B"], Surf.FACE) > 80, "his fur against the face of the wave he rides"
     assert animation.TRANSITIONS["stitch_surf"] is Surf and Surf.wants_prev
 
 
 def test_only_the_surfing_scene_is_left():
-    assert {name for name in animation.TRANSITIONS if name.startswith("stitch")} == {"stitch_surf"}, \
+    assert {name for name in animation.TRANSITIONS if name.startswith("stitch")} == {"stitch_surf"}, (
         "the chomp peek and the screen-eating scene were scrapped"
+    )

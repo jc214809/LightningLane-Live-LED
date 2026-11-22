@@ -47,6 +47,7 @@ def fill(rgb):
             for y in range(canvas.height):
                 canvas.SetPixel(x, y, *rgb)
         return False
+
     return draw
 
 

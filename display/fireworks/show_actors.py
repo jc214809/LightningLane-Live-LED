@@ -7,6 +7,7 @@ board keeps it with the music. Actors draw in front of the castle and
 the fireworks, under the final flash. One who sings moves its mouth to the score's track for it
 (score.Lips, from tools/lip_sync.py), looked up by the clock like everything else.
 """
+
 import math
 
 from display.animation.characters.genie import GenieReveal
@@ -22,6 +23,7 @@ class GenieOrbit(Actor):
     height, so there it's mostly a side-to-side swing), trailing smoke. When his scenes end he vanishes
     in another puff. He mouths his song (MOUTHS) to the score's track; without one he keeps his grin.
     """
+
     NAME = "Genie"
     ARRIVE_S = 1.6  # the puff, then he swells out of it
     EASE_IN_S = 1.5  # from where he formed onto his orbit
@@ -32,12 +34,8 @@ class GenieOrbit(Actor):
     # thinner red; 0 closed is a toothy grin line.
     MOUTH_ROW = 11
     MOUTHS = {
-        1: [".....SBRWWWWWRBS.....",
-            ".....SBBRRRRRBBS.....",
-            ".....SBBBBBBBBBS....."],
-        0: [".....SBBBBBBBBBS.....",
-            ".....SBSWWWWWSBS.....",
-            ".....SBBBBBBBBBS....."],
+        1: [".....SBRWWWWWRBS.....", ".....SBBRRRRRBBS.....", ".....SBBBBBBBBBS....."],
+        0: [".....SBBBBBBBBBS.....", ".....SBSWWWWWSBS.....", ".....SBBBBBBBBBS....."],
     }
 
     def __init__(self, show):
@@ -47,10 +45,14 @@ class GenieOrbit(Actor):
         for shape in (0, 1, 2):
             art = list(GenieReveal.ART)
             if shape in self.MOUTHS:
-                art[self.MOUTH_ROW:self.MOUTH_ROW + 3] = self.MOUTHS[shape]
+                art[self.MOUTH_ROW : self.MOUTH_ROW + 3] = self.MOUTHS[shape]
             art = [row for i, row in enumerate(art) if i not in trim]
-            self.cells[shape] = [(col, row, GenieReveal.COLORS[kind]) for row, line in enumerate(art)
-                                 for col, kind in enumerate(line) if kind != "."]
+            self.cells[shape] = [
+                (col, row, GenieReveal.COLORS[kind])
+                for row, line in enumerate(art)
+                for col, kind in enumerate(line)
+                if kind != "."
+            ]
         self.w, self.h = len(art[0]), len(art)
         self.puffs = []
         self.last = None  # his top-left on the last frame he was on, for the puff he vanishes in
@@ -77,8 +79,15 @@ class GenieOrbit(Actor):
 
     def _puff(self, x, y, spread, rise):
         r = self.rng
-        return [x + r.uniform(-spread, spread), y + r.uniform(-spread, spread), r.uniform(-0.4, 0.4),
-                r.uniform(-rise, 0.1), r.randint(16, 28), r.choice(GenieReveal.SMOKE_COLORS), r.uniform(0.6, 1.4)]
+        return [
+            x + r.uniform(-spread, spread),
+            y + r.uniform(-spread, spread),
+            r.uniform(-0.4, 0.4),
+            r.uniform(-rise, 0.1),
+            r.randint(16, 28),
+            r.choice(GenieReveal.SMOKE_COLORS),
+            r.uniform(0.6, 1.4),
+        ]
 
     def step(self, active):
         e = self.elapsed()
@@ -92,8 +101,9 @@ class GenieOrbit(Actor):
                 self.last = (left, top)
         elif self.last is not None:
             left, top = self.last
-            self.puffs += [self._puff(left + self.w / 2, top + self.h / 2, self.w / 3, 0.6)
-                           for _ in range(self.VANISH_PUFFS)]
+            self.puffs += [
+                self._puff(left + self.w / 2, top + self.h / 2, self.w / 3, 0.6) for _ in range(self.VANISH_PUFFS)
+            ]
             self.last = None
         for p in self.puffs:
             p[0] += p[2]

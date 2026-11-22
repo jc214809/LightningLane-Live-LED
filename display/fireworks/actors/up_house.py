@@ -1,4 +1,5 @@
 """Carl's house from Up for the synced show (see show_actors.py)."""
+
 import math
 import random
 
@@ -15,13 +16,13 @@ class UpHouseFloats(Actor):
     corner, gone by CROSS_S (the scene is 22 s). Anything below the castle's roofline is hidden, so it
     passes behind the castle's towers.
     """
+
     NAME = "The Up house"
     CROSS_S = 21.5  # from off the left edge to off the top-right corner
     BOB_S = 3.2  # one bob
     SCALE = 1  # 1x on both boards: the chart is 46 rows tall
     # The 64x32 bunch's colours: V1's Balloons effect (show_effects.py), so it matches them.
-    BALLOON_COLOURS = ((240, 50, 50), (250, 200, 40), (60, 120, 255), (60, 200, 80), (240, 110, 200),
-                       (255, 140, 40))
+    BALLOON_COLOURS = ((240, 50, 50), (250, 200, 40), (60, 120, 255), (60, 200, 80), (240, 110, 200), (255, 140, 40))
     STRING_RGB = (190, 190, 190)
 
     # From docs/references/Up house with balloons chart.png, cell for cell (its sky left out).
@@ -104,52 +105,67 @@ class UpHouseFloats(Actor):
         self.w, self.h = len(self.ART[0]), len(self.ART)
         cells = {}
         if self.big:
-            self.above = len(self.BALLOONS_ART)  # rows of balloons and string over the house's top
-            for row, line in enumerate(self.BALLOONS_ART):
-                for col, kind in enumerate(line):
-                    if kind != ".":
-                        cells[(col, row - self.above)] = self.COLORS[kind]
+            self.above = self._add_balloon_art(cells)
         else:
-            # The bunch: an ellipse of dots over the house, strings from its underside to the chimney.
-            rx, ry = 8.0, 3.0
-            gap = 2  # rows of string between the bunch and the chimney's top
-            self.above = gap + int(2 * ry)
-            cx, cy = self.w / 2 - 0.5, -gap - ry - 0.5
-            art_rng = random.Random(5)  # the same bunch every show
-            for dy in range(-self.above, -gap):
-                for dx in range(int(cx - rx) - 1, int(cx + rx) + 2):
-                    if ((dx - cx) / rx) ** 2 + ((dy - cy) / ry) ** 2 <= 1 and art_rng.random() < 0.9:
-                        cells[(dx, dy)] = art_rng.choice(self.BALLOON_COLOURS)
-            for k in (-3, 0, 3):
-                ex, ey = cx + k, -gap - 0.5  # where the string leaves the bunch
-                n = 2 * int(max(abs(self.CHIMNEY_COL - ex), gap)) + 1
-                for i in range(n + 1):
-                    f = i / n
-                    x, y = round(ex + (self.CHIMNEY_COL - ex) * f), round(ey + f * gap)
-                    if y < 0:
-                        cells.setdefault((x, y), self.STRING_RGB)
+            self.above = self._add_balloon_bunch(cells)
         for row, line in enumerate(self.ART):
             for col, kind in enumerate(line):
                 if kind != ".":
                     cells[(col, row)] = self.COLORS[kind]
         self.cells = [(dx, dy, rgb) for (dx, dy), rgb in cells.items()]
         self.min_dx = min(dx for dx, _, _ in self.cells)
-        # The castle's roofline per column: anything at or below it is behind the castle.
-        self.clip = [show.height] * show.width
+        self.clip = self._castle_clip(show)
+        self.hover = self.above  # its top as it comes in: the balloons just under the board's top
+        self.max_dx = max(dx for dx, _, _ in self.cells)
+
+    def _add_balloon_art(self, cells):
+        """Add the 64x64 board's drawn balloons to cells; return the rows over the house's top."""
+        above = len(self.BALLOONS_ART)  # rows of balloons and string over the house's top
+        for row, line in enumerate(self.BALLOONS_ART):
+            for col, kind in enumerate(line):
+                if kind != ".":
+                    cells[(col, row - above)] = self.COLORS[kind]
+        return above
+
+    def _add_balloon_bunch(self, cells):
+        """Add the 64x32 board's bunch to cells; return the rows over the house's top."""
+        # The bunch: an ellipse of dots over the house, strings from its underside to the chimney.
+        rx, ry = 8.0, 3.0
+        gap = 2  # rows of string between the bunch and the chimney's top
+        above = gap + int(2 * ry)
+        cx, cy = self.w / 2 - 0.5, -gap - ry - 0.5
+        art_rng = random.Random(5)  # the same bunch every show
+        for dy in range(-above, -gap):
+            for dx in range(int(cx - rx) - 1, int(cx + rx) + 2):
+                if ((dx - cx) / rx) ** 2 + ((dy - cy) / ry) ** 2 <= 1 and art_rng.random() < 0.9:
+                    cells[(dx, dy)] = art_rng.choice(self.BALLOON_COLOURS)
+        for k in (-3, 0, 3):
+            ex, ey = cx + k, -gap - 0.5  # where the string leaves the bunch
+            n = 2 * int(max(abs(self.CHIMNEY_COL - ex), gap)) + 1
+            for i in range(n + 1):
+                f = i / n
+                x, y = round(ex + (self.CHIMNEY_COL - ex) * f), round(ey + f * gap)
+                if y < 0:
+                    cells.setdefault((x, y), self.STRING_RGB)
+        return above
+
+    @staticmethod
+    def _castle_clip(show):
+        """The castle's roofline per column: anything at or below it is behind the castle."""
+        clip = [show.height] * show.width
         for dx, dy, _ in show.castle_pixels:
             x = show.castle_x + dx
             if 0 <= x < show.width:
-                self.clip[x] = min(self.clip[x], show.castle_y + dy)
+                clip[x] = min(clip[x], show.castle_y + dy)
         # Past the castle's sides it hides what its end walls would, so nothing comes up from the
         # board's bottom there.
         left_end, right_end = max(0, show.castle_x), min(show.width, show.castle_x + show.castle_w) - 1
         for x in range(show.width):
             if x < left_end:
-                self.clip[x] = self.clip[left_end]
+                clip[x] = clip[left_end]
             elif x > right_end:
-                self.clip[x] = self.clip[right_end]
-        self.hover = self.above  # its top as it comes in: the balloons just under the board's top
-        self.max_dx = max(dx for dx, _, _ in self.cells)
+                clip[x] = clip[right_end]
+        return clip
 
     def top_left(self, e):
         """The house's top-left e seconds into the scene."""

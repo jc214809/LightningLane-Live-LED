@@ -23,6 +23,7 @@ lives in its own venv under build/, not the app's:
 (torchaudio 2.9+ can't save without torchcodec, so demucs 4.0.1 fails on its last step there.)
 Needs ffmpeg and the show's music in sounds/ (gitignored; copy it from a board).
 """
+
 import argparse
 import json
 import logging
@@ -58,7 +59,7 @@ def loudness(samples, rate=RATE, per_s=FPS * SUB):
     k = int(len(samples) * per_s / rate)
     edges = np.round(np.arange(k + 1) * rate / per_s).astype(int)
     power = np.asarray(samples, dtype=np.float64) ** 2
-    sums = np.add.reduceat(power[:edges[-1]], edges[:-1])
+    sums = np.add.reduceat(power[: edges[-1]], edges[:-1])
     return 20 * np.log10(np.sqrt(sums / np.diff(edges)) + 1e-6)
 
 
@@ -77,11 +78,11 @@ def mouth_track(samples, rate=RATE, fps=FPS, muted=(), closes=(), mix=None, from
             lo, hi = max(0, int(a * fps * SUB)), min(n, int(b * fps * SUB))
             fine[lo:hi] = from_mix_fine[lo:hi]
     frames = len(fine) // SUB
-    db = fine[:frames * SUB].reshape(frames, SUB).mean(1)
+    db = fine[: frames * SUB].reshape(frames, SUB).mean(1)
     reach = max(1, round(PEAK_S * fps))
     shapes = []
     for i in range(frames):
-        peak = db[max(0, i - reach):i + reach + 1].max()
+        peak = db[max(0, i - reach) : i + reach + 1].max()
         if db[i] < SILENT_DB:
             shape = 0
         elif db[i] - peak > OPEN_DB:
@@ -90,7 +91,7 @@ def mouth_track(samples, rate=RATE, fps=FPS, muted=(), closes=(), mix=None, from
             shape = 1
         else:
             shape = 0
-        rise = fine[(i + 1) * SUB:(i + 2) * SUB].max(initial=-999) - fine[i * SUB:(i + 1) * SUB].min()
+        rise = fine[(i + 1) * SUB : (i + 2) * SUB].max(initial=-999) - fine[i * SUB : (i + 1) * SUB].min()
         if shape == 2 and rise > ONSET_DB:
             shape = 1
         if any(a <= i / fps < b for a, b in muted) or any(c <= (i + 0.5) / fps < c + CLOSE_S for c in closes):
@@ -100,8 +101,11 @@ def mouth_track(samples, rate=RATE, fps=FPS, muted=(), closes=(), mix=None, from
 
 
 def read_mono(path, rate=RATE):
-    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", path, "-ac", "1", "-ar", str(rate), "-f", "f32le", "-"],
-                         capture_output=True, check=True).stdout
+    raw = subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-i", path, "-ac", "1", "-ar", str(rate), "-f", "f32le", "-"],
+        capture_output=True,
+        check=True,
+    ).stdout
     return np.frombuffer(raw, np.float32)
 
 
@@ -114,19 +118,42 @@ def separate_vocals(music, start, end, name, model=MODEL):
         raise RuntimeError(f"demucs isn't installed: see the top of {__file__}")
     os.makedirs(WORK_DIR, exist_ok=True)
     clip = os.path.join(WORK_DIR, f"{name}.wav")
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", f"{start}", "-t", f"{end - start}", "-i", music,
-                    "-ac", "2", "-ar", "44100", clip], check=True)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-loglevel",
+            "error",
+            "-y",
+            "-ss",
+            f"{start}",
+            "-t",
+            f"{end - start}",
+            "-i",
+            music,
+            "-ac",
+            "2",
+            "-ar",
+            "44100",
+            clip,
+        ],
+        check=True,
+    )
     out = os.path.join(WORK_DIR, "sep")
-    subprocess.run([DEMUCS_PYTHON, "-m", "demucs", "--two-stems", "vocals", "-n", model, "-o", out, clip],
-                   check=True, capture_output=True)
+    subprocess.run(
+        [DEMUCS_PYTHON, "-m", "demucs", "--two-stems", "vocals", "-n", model, "-o", out, clip],
+        check=True,
+        capture_output=True,
+    )
     return os.path.join(out, model, name, "vocals.wav")
 
 
 def write_lips(path, actor, entry):
     """Add or replace one actor's track in the lips file, keeping the others."""
-    data = {"note": "Mouth tracks made by tools/lip_sync.py from the vocals: one shape per 1/fps second "
-                    "from start (audio seconds), 0 closed, 1 half, 2 open. Don't edit by hand; re-run the tool.",
-            "lips": {}}
+    data = {
+        "note": "Mouth tracks made by tools/lip_sync.py from the vocals: one shape per 1/fps second "
+        "from start (audio seconds), 0 closed, 1 half, 2 open. Don't edit by hand; re-run the tool.",
+        "lips": {},
+    }
     if os.path.exists(path):
         with open(path) as f:
             data = json.load(f)
@@ -144,12 +171,28 @@ def main(argv=None):
     parser.add_argument("--show", default="happily-ever-after")
     parser.add_argument("--version", default="v2")
     parser.add_argument("--model", default=MODEL, help="the demucs model that splits the voice out")
-    parser.add_argument("--mute", action="append", default=[], metavar="FROM-TO",
-                        help="audio seconds where someone else sings, like 551-559.7 (repeatable)")
-    parser.add_argument("--from-mix", action="append", default=[], metavar="FROM-TO",
-                        help="audio seconds where the voice is drowned in reverb: read the mouth from the mix")
-    parser.add_argument("--close", action="append", default=[], type=float, metavar="SECONDS",
-                        help="audio seconds where the lips meet but the loudness doesn't dip (repeatable)")
+    parser.add_argument(
+        "--mute",
+        action="append",
+        default=[],
+        metavar="FROM-TO",
+        help="audio seconds where someone else sings, like 551-559.7 (repeatable)",
+    )
+    parser.add_argument(
+        "--from-mix",
+        action="append",
+        default=[],
+        metavar="FROM-TO",
+        help="audio seconds where the voice is drowned in reverb: read the mouth from the mix",
+    )
+    parser.add_argument(
+        "--close",
+        action="append",
+        default=[],
+        type=float,
+        metavar="SECONDS",
+        help="audio seconds where the lips meet but the loudness doesn't dip (repeatable)",
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -173,9 +216,13 @@ def main(argv=None):
         logger.info("splitting the vocals from %g to %g s...", args.start, args.end)
         vocals = separate_vocals(music, args.start, args.end, name, args.model)
         mix = read_mono(os.path.join(WORK_DIR, f"{name}.wav")) if from_mix else None
-        track = mouth_track(read_mono(vocals), muted=[(a - args.start, b - args.start) for a, b in muted],
-                            closes=[c - args.start for c in args.close], mix=mix,
-                            from_mix=[(a - args.start, b - args.start) for a, b in from_mix])
+        track = mouth_track(
+            read_mono(vocals),
+            muted=[(a - args.start, b - args.start) for a, b in muted],
+            closes=[c - args.start for c in args.close],
+            mix=mix,
+            from_mix=[(a - args.start, b - args.start) for a, b in from_mix],
+        )
     except (OSError, RuntimeError, subprocess.CalledProcessError) as e:
         logger.error("%s", e)
         return 1
@@ -190,7 +237,7 @@ def main(argv=None):
         entry["from_mix"] = [list(m) for m in from_mix]
     write_lips(path, args.actor, entry)
     for s in range(0, len(track), FPS):
-        logger.info("%6.0f %s", args.start + s / FPS, track[s:s + FPS].translate(str.maketrans("012", "_-O")))
+        logger.info("%6.0f %s", args.start + s / FPS, track[s : s + FPS].translate(str.maketrans("012", "_-O")))
     logger.info("wrote %s (%d shapes)", path, len(track))
     return 0
 

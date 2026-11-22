@@ -1,4 +1,5 @@
 """Mike and Sulley for the synced show's friendship mash-up (see show_actors.py)."""
+
 from display.fireworks.actors.base import Actor, stamp
 from display.motion import ease_out
 
@@ -13,6 +14,7 @@ class MikeAndSulley(Actor):
     64x32: a small pair redrawn in the same styles. Placed by the clock: everything is a function of
     (elapsed - START_S) s.
     """
+
     NAME = "Mike and Sulley"
     START_S, END_S = 32.2, 37.7
     ENTERS_S = START_S
@@ -63,8 +65,14 @@ class MikeAndSulley(Actor):
         "...SSCSCCCCC...CCCCCSCSS...",
     )
     SULLEY_COLORS = {
-        "C": (18, 183, 243), "c": (169, 250, 250), "P": (179, 80, 242), "S": (126, 132, 134),
-        "B": (78, 102, 243), "W": (242, 250, 247), "b": (9, 9, 133), "K": (31, 27, 31),
+        "C": (18, 183, 243),
+        "c": (169, 250, 250),
+        "P": (179, 80, 242),
+        "S": (126, 132, 134),
+        "B": (78, 102, 243),
+        "W": (242, 250, 247),
+        "b": (9, 9, 133),
+        "K": (31, 27, 31),
     }
     SULLEY_SMALL_ART = (
         ".S........S.",
@@ -128,9 +136,19 @@ class MikeAndSulley(Actor):
         ".gWWg..gWWg..",
     )
     MIKE_COLORS = {
-        "G": (180, 205, 101), "g": (80, 96, 25), "A": (125, 150, 43), "Y": (53, 62, 7), "K": (6, 7, 6),
-        "W": (248, 249, 244), "S": (199, 203, 214), "O": (178, 149, 109), "B": (206, 227, 138),
-        "s": (108, 108, 108), "N": (112, 71, 44), "n": (86, 45, 18), "C": (86, 87, 87),
+        "G": (180, 205, 101),
+        "g": (80, 96, 25),
+        "A": (125, 150, 43),
+        "Y": (53, 62, 7),
+        "K": (6, 7, 6),
+        "W": (248, 249, 244),
+        "S": (199, 203, 214),
+        "O": (178, 149, 109),
+        "B": (206, 227, 138),
+        "s": (108, 108, 108),
+        "N": (112, 71, 44),
+        "n": (86, 45, 18),
+        "C": (86, 87, 87),
     }
     # Where each one's eyes close: {row: (from col, to col, the kinds a lid covers)}, and the lid's colour.
     SULLEY_LIDS = {
@@ -181,7 +199,11 @@ class MikeAndSulley(Actor):
 
     def mike_now(self, t):
         """Mike's art at t s in: eye shut in a blink, his raised hand rocked over by a column in a wave."""
-        art = self._shut(self.mike, self.mike_lids, "G") if self._blinking(t, self.MIKE_BLINKS, self.BLINK_S)             else list(self.mike)
+        art = (
+            self._shut(self.mike, self.mike_lids, "G")
+            if self._blinking(t, self.MIKE_BLINKS, self.BLINK_S)
+            else list(self.mike)
+        )
         if self.WAVE[0] <= t < self.WAVE[1] and int((t - self.WAVE[0]) / self.WAVE_S) % 2:
             col, last_row = self.hand
             art = [r[:col] + "." + r[col:] if i <= last_row else r for i, r in enumerate(art)]
@@ -200,9 +222,11 @@ class MikeAndSulley(Actor):
         if rise <= 0:
             return
         show = self.show
-        for art, colors, left in ((self.sulley_now(t), self.SULLEY_COLORS, self.sulley_x),
-                                  (self.mike_now(t), self.MIKE_COLORS, self.mike_x)):
+        for art, colors, left in (
+            (self.sulley_now(t), self.SULLEY_COLORS, self.sulley_x),
+            (self.mike_now(t), self.MIKE_COLORS, self.mike_x),
+        ):
             top = round(self.bottom + 1 - len(art) * rise)
             # Clipped at their feet's line, so they come up out of the gate rather than the board's edge.
-            shown = art[:self.bottom + 1 - top]
+            shown = art[: self.bottom + 1 - top]
             stamp(out, shown, colors, left, top, 1, show.width, show.height)

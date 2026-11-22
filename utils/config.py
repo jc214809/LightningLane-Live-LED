@@ -4,11 +4,12 @@ place. Read on demand, not cached: weather re-reads it each fetch so a new key t
 without a restart. Feature-specific sections (trip_countdown, force_surprise) are read by
 the code that validates them (utils/trips.py, disney.py).
 """
+
 import json
 import os
 import shutil
 from datetime import time
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 from utils import debug
 
@@ -18,29 +19,37 @@ CONFIG_FILE = "config.json"
 
 def load_config(file_path=CONFIG_FILE):
     """Load the configuration from a JSON file."""
-    with open(file_path, 'r') as file:
+    with open(file_path) as file:
         return json.load(file)
 
 
-def save_config(config, path=CONFIG_FILE):
+def save_config(config, path=CONFIG_FILE, like=None):
     """Write config.json whole or not at all, keeping the last one as config.json.bak, with the
-    old file's owner and mode (the user's, 600, as board-setup.sh made it), even when run as root."""
+    old file's owner and mode (the user's, 600, as board-setup.sh made it), even when run as root.
+    A file that doesn't exist yet takes the owner and mode of `like` (another file beside it, config.json for
+    surprises.json) if that exists, else 600 and the writer's own: so a file made by the settings service, which runs
+    as root, is still one its owner can read and edit over SSH."""
     temp = path + ".new"
     try:
         old = os.stat(path)
     except FileNotFoundError:
         old = None
-    fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, old.st_mode & 0o777 if old else 0o600)
+    try:
+        model = old or (os.stat(like) if like else None)
+    except OSError:
+        model = None
+    fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, model.st_mode & 0o777 if model else 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
         f.write("\n")
         f.flush()
         os.fsync(f.fileno())
-    if old:
+    if model:
         try:
-            os.chown(temp, old.st_uid, old.st_gid)
+            os.chown(temp, model.st_uid, model.st_gid)
         except PermissionError:  # not root (a dev machine): it's ours already
             pass
+    if old:
         shutil.copy2(path, path + ".bak")
     os.replace(temp, path)
 
@@ -70,7 +79,9 @@ def websocket_settings(config):
     if section is None:
         api_key = config.get("themeparks_api_key")
         if has_api_key(api_key):
-            debug.info('Using the top-level "themeparks_api_key"; move it to "websocket": {"api_key": ...} in config.json.')
+            debug.info(
+                'Using the top-level "themeparks_api_key"; move it to "websocket": {"api_key": ...} in config.json.'
+            )
         return has_api_key(api_key), api_key
     if not isinstance(section, dict):
         debug.warning('config.json "websocket" should be {"enabled": true, "api_key": "..."}; using REST polling only.')
@@ -79,12 +90,16 @@ def websocket_settings(config):
     enabled = section.get("enabled", True)
     api_key = section.get("api_key")
     if not isinstance(enabled, bool):
-        debug.warning(f'config.json "websocket.enabled" should be true or false, not {enabled!r}; using REST polling only.')
+        debug.warning(
+            f'config.json "websocket.enabled" should be true or false, not {enabled!r}; using REST polling only.'
+        )
         return False, api_key
     if not enabled:
         return False, api_key
     if not has_api_key(api_key):
-        debug.warning('config.json "websocket.enabled" is true but "websocket.api_key" is not set; using REST polling only.')
+        debug.warning(
+            'config.json "websocket.enabled" is true but "websocket.api_key" is not set; using REST polling only.'
+        )
         return False, api_key
     return True, api_key
 
@@ -107,9 +122,132 @@ def websocket_protocol(config):
     section = config.get("websocket")
     protocol = section.get("protocol", "legacy") if isinstance(section, dict) else "legacy"
     if protocol not in WS_PROTOCOLS:
-        debug.warning(f'config.json "websocket.protocol" should be "legacy" or "preview", not {protocol!r}; using "legacy".')
+        debug.warning(
+            f'config.json "websocket.protocol" should be "legacy" or "preview", not {protocol!r}; using "legacy".'
+        )
         return "legacy"
     return protocol
+
+
+# Surprise characters with more than one look (or their own ride's version): turning the character
+# off, under its key here (the one in disney.SURPRISES), turns all of its looks off too.
+SURPRISE_LOOKS = {
+    "walle_side": ("walle",),
+    "chip_dale": ("chip_dale_swing",),
+    "saber_duel": ("saber_duel_luke", "saber_duel_obiwan", "saber_duel_yoda", "saber_duel_kylo"),
+    "mine_train": ("mine_train_all", "mine_train_snow"),
+    "aliens": ("aliens_toys",),
+}
+# Transitions no roll ever picks (only force_surprise can): the settings page doesn't offer them.
+SURPRISES_UNUSED = ("figment", "mickey", "dumbo", "donald", "slinky")
+
+
+class SurpriseSettings(NamedTuple):
+    enabled: bool = True
+    off: frozenset = frozenset()  # transition names that never play, every look of each character turned off
+    # Chances set on the settings page, as fractions of the roll: {character: chance} on any ride
+    # screen, and {character: chance} on its own rides. A character not here keeps utils/surprises.py's.
+    chances: dict = {}
+    ride_chances: dict = {}
+    # Rides chosen on the settings page, {character: (ride name, lowercased, ...)}: exactly the rides a character
+    # visits, instead of utils/surprises.py's (an empty tuple is none). A character not here keeps its own.
+    rides: dict = {}
+
+    def chance(self, name, default):
+        """The chance (0 to 1) of this character on any ride screen."""
+        return self.chances.get(name, default)
+
+    def ride_chance(self, name, default):
+        """The chance (0 to 1) of this character on one of its own rides."""
+        return self.ride_chances.get(name, default)
+
+    def allows(self, transition):
+        """Whether a roll that picked this transition may play it; the plain wipe always may."""
+        return transition == "wipe" or (self.enabled and transition not in self.off)
+
+
+# Relative to the working directory, like config.json. Only what someone changed on the Surprise
+# characters page: the defaults are utils/surprises.py's.
+SURPRISES_FILE = "surprises.json"
+
+
+def load_surprises(path=SURPRISES_FILE):
+    """surprises.json as a dict: {} when it's missing (everything default), and {} with a warning when it
+    can't be read, so a bad file never stops the app."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as e:
+        debug.warning(f"{path} can't be read ({e}); every surprise character keeps its defaults.")
+        return {}
+    if not isinstance(data, dict):
+        debug.warning(f"{path} should be an object, not {data!r}; every surprise character keeps its defaults.")
+        return {}
+    return data
+
+
+def _surprise_on(name, entry, off):
+    """Add a character (and every look of it) to `off` when its "on" is false."""
+    on = entry.get("on", True)
+    if not isinstance(on, bool):
+        debug.warning(f'surprises.json {name!r} "on" should be true or false, not {on!r}; using true.')
+    elif not on:
+        off.add(name)
+        off.update(SURPRISE_LOOKS.get(name, ()))
+
+
+def _surprise_percent(name, entry, key, found):
+    """Record entry[key], a percent from 0 to 100, in `found` as a fraction; warn about anything else."""
+    if key not in entry:
+        return
+    percent = entry[key]
+    if isinstance(percent, bool) or not isinstance(percent, (int, float)) or not 0 <= percent <= 100:
+        debug.warning(
+            f'surprises.json {name!r} "{key}" should be a percent from 0 to 100, not {percent!r}; using its default.'
+        )
+    else:
+        found[name] = percent / 100
+
+
+def _surprise_rides(name, entry, rides):
+    """Record entry["rides"], lowercased and trimmed, in `rides`; warn about anything but a list of names."""
+    if "rides" not in entry:
+        return
+    chosen = entry["rides"]
+    if not isinstance(chosen, list) or not all(isinstance(r, str) for r in chosen):
+        debug.warning(
+            f'surprises.json {name!r} "rides" should be a list of ride names, not {chosen!r}; using its default rides.'
+        )
+    else:  # exactly these rides, so [] is none at all
+        rides[name] = tuple(r.strip().lower() for r in chosen if r.strip())
+
+
+def surprise_settings(data):
+    """surprises.json (load_surprises): {"enabled": true, "characters": {"tron": {"on": false},
+    "genie": {"chance": 1.5}, "falcon": {"ride_chance": 25, "rides": ["Space Mountain"]}}}. Which characters may visit on ride screens
+    and park titles, and each one's percent of ride screens anywhere ("chance") and on their own rides
+    ("ride_chance"), and the rides ("rides") it visits. All on at their defaults unless it says otherwise: a character a newer version
+    adds is on. A bad field is warned about and takes its default."""
+    enabled = data.get("enabled", True)
+    if not isinstance(enabled, bool):
+        debug.warning(f'surprises.json "enabled" should be true or false, not {enabled!r}; using true.')
+        enabled = True
+    characters = data.get("characters", {})
+    if not isinstance(characters, dict):
+        debug.warning(f'surprises.json "characters" should be {{"name": {{...}}}}, not {characters!r}; ignoring it.')
+        characters = {}
+    off, chances, ride_chances, rides = set(), {}, {}, {}
+    for name, entry in characters.items():
+        if not isinstance(entry, dict):
+            debug.warning(f'surprises.json "characters": skipping {name!r}, whose settings should be an object.')
+            continue
+        _surprise_on(name, entry, off)
+        _surprise_percent(name, entry, "chance", chances)
+        _surprise_percent(name, entry, "ride_chance", ride_chances)
+        _surprise_rides(name, entry, rides)
+    return SurpriseSettings(enabled, frozenset(off), chances, ride_chances, rides)
 
 
 SHOW_VERSIONS = ("default", "v1", "v2")
@@ -130,8 +268,9 @@ def show_settings(config):
     if section is None:
         return {}
     if not isinstance(section, list):
-        debug.warning('config.json "shows" should be a list of {"name": ..., "enabled": ..., "version": ...}; '
-                      'ignoring it.')
+        debug.warning(
+            'config.json "shows" should be a list of {"name": ..., "enabled": ..., "version": ...}; ignoring it.'
+        )
         return {}
     shows = {}
     for entry in section:
@@ -141,12 +280,16 @@ def show_settings(config):
             continue
         enabled = entry.get("enabled", True)
         if not isinstance(enabled, bool):
-            debug.warning(f'config.json "shows": {name!r} "enabled" should be true or false, not {enabled!r}; using true.')
+            debug.warning(
+                f'config.json "shows": {name!r} "enabled" should be true or false, not {enabled!r}; using true.'
+            )
             enabled = True
         version = entry.get("version", "default")
         if version not in SHOW_VERSIONS:
-            debug.warning(f'config.json "shows": {name!r} "version" should be "default", "v1" or "v2", '
-                          f'not {version!r}; using "default".')
+            debug.warning(
+                f'config.json "shows": {name!r} "version" should be "default", "v1" or "v2", '
+                f'not {version!r}; using "default".'
+            )
             version = "default"
         force = entry.get("force", False)
         if not isinstance(force, bool):
@@ -166,8 +309,10 @@ def forced_show_name(config):
         return forced[0]
     legacy = config.get("force_show")
     if legacy:
-        debug.warning(f'config.json "force_show" has moved: set "force": true on its entry in "shows" '
-                      f'(like {{"name": {legacy!r}, "force": true}}). Playing {legacy!r} for now.')
+        debug.warning(
+            f'config.json "force_show" has moved: set "force": true on its entry in "shows" '
+            f'(like {{"name": {legacy!r}, "force": true}}). Playing {legacy!r} for now.'
+        )
         return legacy
     return None
 
@@ -178,8 +323,8 @@ DEFAULT_VOLUME = 80
 
 class SoundSettings(NamedTuple):
     enabled: bool = False
-    device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card
-    quiet_hours: Optional[Tuple[time, time]] = None  # (start, end) in the board's local time
+    device: str | None = None  # aplay -D on a Pi; None is ALSA's default card
+    quiet_hours: tuple[time, time] | None = None  # (start, end) in the board's local time
     volume: int = DEFAULT_VOLUME  # percent, set with amixer before each clip
 
 
@@ -200,8 +345,9 @@ def sound_settings(config):
         return SoundSettings()
     device = section.get("device")
     if device is not None and not (isinstance(device, str) and device.strip()):
-        debug.warning(f'config.json "sound.device" should be an ALSA device like "plughw:1,0", not {device!r}; '
-                      'using the default.')
+        debug.warning(
+            f'config.json "sound.device" should be an ALSA device like "plughw:1,0", not {device!r}; using the default.'
+        )
         device = None
 
     volume = section.get("volume")
@@ -217,8 +363,10 @@ def sound_settings(config):
         try:
             quiet_hours = (time.fromisoformat(quiet["start"]), time.fromisoformat(quiet["end"]))
         except (TypeError, KeyError, ValueError):
-            debug.warning(f'config.json "sound.quiet_hours" should be {{"start": "22:00", "end": "08:00"}}, '
-                          f'not {quiet!r}; sound is off.')
+            debug.warning(
+                f'config.json "sound.quiet_hours" should be {{"start": "22:00", "end": "08:00"}}, '
+                f"not {quiet!r}; sound is off."
+            )
             return SoundSettings()
     return SoundSettings(enabled, device, quiet_hours, volume)
 

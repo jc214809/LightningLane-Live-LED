@@ -155,7 +155,9 @@ if [ "$SKIP_VENV" = false ]; then
             cat .git-config-template >> .git/config
         fi
 
-        git add disney.py
+        # As root in the user's checkout, git calls it "dubious ownership" and stops, unless sudo set
+        # SUDO_UID: an update from the settings page runs this from systemd, which doesn't. Trust it here.
+        git -c safe.directory="$PWD" add disney.py
     fi
 fi
 PYTHON=$(which python3)

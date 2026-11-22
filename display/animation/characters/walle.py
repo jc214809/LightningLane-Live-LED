@@ -24,8 +24,7 @@ class WallEReveal(CapturesScreens):
     ENTER_S, LOOK_S, SWEEP_S, FLY_S, DROP_S, LEAVE_S = 0.8, 0.9, 0.9, 0.3, 0.3, 1.0
     COMPACT_S = SWEEP_S + FLY_S
     # The visit, in order; "compact" is when the old screen is eaten and "leave" is last.
-    PHASES = (("enter", ENTER_S), ("look", LOOK_S), ("compact", COMPACT_S), ("drop", DROP_S),
-              ("leave", LEAVE_S))
+    PHASES = (("enter", ENTER_S), ("look", LOOK_S), ("compact", COMPACT_S), ("drop", DROP_S), ("leave", LEAVE_S))
     duration = sum(s for _, s in PHASES)
     STOP_X = 3
     BLINK_AT, BLINK_S = 0.55, 0.14  # into the look
@@ -97,8 +96,7 @@ class WallEReveal(CapturesScreens):
         super().capture_prev(prev_draw, prev_t)
         ix, iy = self.intake()
         # Nearest first: each pixel lifts off when the sweep front reaches it.
-        self.flights = sorted(
-            (math.hypot(x - ix, y - iy), x, y, rgb) for (x, y), rgb in self.prev_px.items())
+        self.flights = sorted((math.hypot(x - ix, y - iy), x, y, rgb) for (x, y), rgb in self.prev_px.items())
         # The cube is made of what he ate: its most common colours, dimmed by the squash.
         counts = {}
         for rgb in self.prev_px.values():
@@ -207,8 +205,9 @@ class WallEReveal(CapturesScreens):
                 x = self.walle_x(at)
                 for side_x, push in ((x, -1), (x + self.sprite_w - 1, 1)):
                     for _ in range(4):
-                        self.dust.append([side_x, self.height - 1.5, at,
-                                          push * self.rng.uniform(4, 10), -self.rng.uniform(2, 6)])
+                        self.dust.append(
+                            [side_x, self.height - 1.5, at, push * self.rng.uniform(4, 10), -self.rng.uniform(2, 6)]
+                        )
         self.dust = [d for d in self.dust if t - d[2] < 0.5]
         self._t = t
 
@@ -288,9 +287,17 @@ class WallESideReveal(WallEReveal):
     ENTER_S, LOOK_S, SWEEP_S, FLY_S, LEAVE_S = 0.8, 0.8, 0.9, 0.3, 1.0
     OPEN_S, CLOSE_S, PRESS_S, EJECT_S, PICKUP_S = 0.15, 0.15, 0.5, 0.45, 0.45
     COMPACT_S = SWEEP_S + FLY_S
-    PHASES = (("enter", ENTER_S), ("look", LOOK_S), ("open", OPEN_S), ("compact", COMPACT_S),
-              ("close", CLOSE_S), ("press", PRESS_S), ("eject", EJECT_S), ("pickup", PICKUP_S),
-              ("leave", LEAVE_S))
+    PHASES = (
+        ("enter", ENTER_S),
+        ("look", LOOK_S),
+        ("open", OPEN_S),
+        ("compact", COMPACT_S),
+        ("close", CLOSE_S),
+        ("press", PRESS_S),
+        ("eject", EJECT_S),
+        ("pickup", PICKUP_S),
+        ("leave", LEAVE_S),
+    )
     duration = sum(s for _, s in PHASES)
     BLINK_AT = 0.45
 
@@ -388,7 +395,10 @@ class WallESideReveal(WallEReveal):
     def door_angle(self, t):
         """0 shut to 1 lying flat open: it swings open to collect and to eject, and shut after each."""
         phase, p = self._phase(t)
-        swing = lambda q: ease_out(min(1.0, q / self.DOOR_SWING_S))
+
+        def swing(q):
+            return ease_out(min(1.0, q / self.DOOR_SWING_S))
+
         if phase == "open":
             return swing(p)
         if phase == "compact":
@@ -431,8 +441,9 @@ class WallESideReveal(WallEReveal):
         if phase == "eject":
             q = p / self.EJECT_S
             if q < 0.6:  # slides out of the door...
-                return self.FRONT_COL - self.CUBE_SIZE + ease_out(q / 0.6) * (ground_x - self.FRONT_COL + self.CUBE_SIZE), \
-                    self.CUBE_OUT_ROW
+                return self.FRONT_COL - self.CUBE_SIZE + ease_out(q / 0.6) * (
+                    ground_x - self.FRONT_COL + self.CUBE_SIZE
+                ), self.CUBE_OUT_ROW
             fall = ((q - 0.6) / 0.4) ** 2  # ...and drops to the ground
             return ground_x, self.CUBE_OUT_ROW + fall * (ground_y - self.CUBE_OUT_ROW)
         if phase == "pickup" and p < self.PICKUP_S / 2:
@@ -446,45 +457,62 @@ class WallESideReveal(WallEReveal):
 
     def _draw_walle(self, canvas, t, x):
         x0 = int(round(x)) + self.jolt(t)
-        phase, p = self._phase(t)
-        rolling = phase in ("enter", "leave") and int(x) % 2
-        blinking = phase == "look" and self.BLINK_AT <= p < self.BLINK_AT + self.BLINK_S
-        front, bob, drop = self.facing_us(t), self.head_bob(t), self.arm_drop(t)
-        door = self.door_open(t)
-        for row, line in enumerate(self.art):
-            for col, kind in enumerate(line):
-                if kind == ".":
-                    continue
-                dy = 0
-                if row in self.HEAD_ROWS:
-                    dy = bob
-                    if front:
-                        continue  # drawn below, turned toward us
-                    if blinking and kind in "LG":
-                        kind = "H"
-                if self._is_arm(row, col, kind):
-                    continue  # the arm is drawn on top of everything, below
-                if door and row in self.DOOR_ROWS and col in self.DOOR_COLS:
-                    kind = "K"  # the dark inside of his chest
-                if door and (col, row) == self.DOOR_HINGE:
-                    kind = "Y"  # the hinge: yellow, joining the open door to his body
-                if rolling and kind in "TV":
-                    kind = "V" if kind == "T" else "T"
-                self._px(canvas, x0 + col, self.y0 + row + dy, self.COLORS[kind])
+        front, bob = self.facing_us(t), self.head_bob(t)
+        self._draw_body(canvas, t, x, x0, front, bob)
         if front:
-            left = x0 + self.sprite_w - self.HEAD_COL - len(self.HEAD_FRONT[0])
-            for row, line in enumerate(self.HEAD_FRONT):
-                for col, kind in enumerate(line):
-                    if blinking and kind in "LG":
-                        kind = "K" if row == 2 else "E"
-                    self._px(canvas, left + col, self.y0 + row + bob, self.COLORS[kind])
-        if door:
+            self._draw_front_head(canvas, t, x0, bob)
+        if self.door_open(t):
             for col, row in self.door_cells(self.door_angle(t)):
                 self._px(canvas, x0 + col, self.y0 + row, self.COLORS["Y"])
         cube = self.cube_at(t)
         if cube:
-            self._draw_cube(canvas, x0, cube, clip=phase == "eject")
-        self._draw_arm(canvas, x0, drop)
+            self._draw_cube(canvas, x0, cube, clip=self._phase(t)[0] == "eject")
+        self._draw_arm(canvas, x0, self.arm_drop(t))
+
+    def _blinking(self, t):
+        phase, p = self._phase(t)
+        return phase == "look" and self.BLINK_AT <= p < self.BLINK_AT + self.BLINK_S
+
+    def _door_recolors(self, door):
+        """{(col, row): kind} the open door changes: the dark inside of his chest, and the
+        yellow hinge joining the open door to his body."""
+        if not door:
+            return {}
+        recolors = {(col, row): "K" for row in self.DOOR_ROWS for col in self.DOOR_COLS}
+        recolors[self.DOOR_HINGE] = "Y"
+        return recolors
+
+    def _draw_body(self, canvas, t, x, x0, front, bob):
+        """Every cell of the sprite but the arm, and but the head when it is drawn turned to us."""
+        phase = self._phase(t)[0]
+        rolling = phase in ("enter", "leave") and int(x) % 2
+        tread_swap = {"T": "V", "V": "T"} if rolling else {}
+        blink_swap = {"L": "H", "G": "H"} if self._blinking(t) else {}
+        door_swap = self._door_recolors(self.door_open(t))
+        for row, line in enumerate(self.art):
+            is_head = row in self.HEAD_ROWS
+            if is_head and front:
+                continue  # drawn turned toward us instead
+            dy = bob if is_head else 0
+            for col, kind in enumerate(line):
+                if kind == ".":
+                    continue
+                if is_head:
+                    kind = blink_swap.get(kind, kind)
+                if self._is_arm(row, col, kind):
+                    continue  # the arm is drawn on top of everything
+                kind = door_swap.get((col, row), kind)
+                kind = tread_swap.get(kind, kind)
+                self._px(canvas, x0 + col, self.y0 + row + dy, self.COLORS[kind])
+
+    def _draw_front_head(self, canvas, t, x0, bob):
+        left = x0 + self.sprite_w - self.HEAD_COL - len(self.HEAD_FRONT[0])
+        blinking = self._blinking(t)
+        for row, line in enumerate(self.HEAD_FRONT):
+            for col, kind in enumerate(line):
+                if blinking and kind in "LG":
+                    kind = "K" if row == 2 else "E"
+                self._px(canvas, left + col, self.y0 + row + bob, self.COLORS[kind])
 
     def _draw_arm(self, canvas, x0, drop):
         """The cuff and claw, lowered by `drop`, on a grey forearm down from his shoulder."""

@@ -1,8 +1,13 @@
 import math
 import random
+from functools import partial
 
 from display.animation.drawing import paint
 from display.animation.motion import ease_out, progress
+
+
+def _put(px, x, y, rgb):
+    px[(int(round(x)), int(round(y)))] = rgb
 
 
 class MikeReveal:
@@ -95,45 +100,66 @@ class MikeReveal:
                 cx += 1 if int(since * 20) % 2 else -1
         body = self._body(scare, self.look(t), self.lid(t), self.grin(t))
         oy = int(round(cy))
-        return {(cx + x, oy + y): rgb for (x, y), rgb in body.items()
-                if 0 <= cx + x < self.width and 0 <= oy + y < self.height}
+        return {
+            (cx + x, oy + y): rgb
+            for (x, y), rgb in body.items()
+            if 0 <= cx + x < self.width and 0 <= oy + y < self.height
+        }
 
     def _body(self, scare, look, lid, grin):
         """Mike centred on (0, 0), later parts painting over earlier ones."""
-        r, ry = self.r, self.ry
         px = {}
+        self._draw_limbs(px, scare)
+        self._draw_horns(px)
+        self._draw_torso(px)
+        self._draw_eye(px, look, lid)
+        if scare:
+            self._draw_scare_mouth(px)
+        else:
+            self._draw_grin(px, grin)
+        return px
 
-        def put(x, y, rgb):
-            px[(int(round(x)), int(round(y)))] = rgb
-
-        # Legs and arms go down first, so the body covers where they join.
+    def _draw_limbs(self, px, scare):
+        """Legs and arms go down first, so the body covers where they join."""
+        r, ry = self.r, self.ry
+        put = partial(_put, px)
         for side in (-1, 1):
             lx = side * r * 0.38
             for i in range(max(3, round(r * 0.6))):
                 put(lx, ry - 1 + i, self.DARK)
         for side in (-1, 1):
             if scare:
-                # Elbows out at shoulder height and forearms straight up, fingers spread:
-                # a straight diagonal from the shoulder reads as an antenna, not an arm.
-                ey = -r * 0.1
-                reach = r + max(2, round(r * 0.3))
-                for x in range(int(r) - 1, int(reach) + 1):
-                    put(side * x, ey, self.DARK)
-                top = ey - max(3, round(r * 0.55))
-                for y in range(int(round(top)), int(round(ey)) + 1):
-                    put(side * reach, y, self.DARK)
-                self._hand(put, side * reach, round(top) - 1, side, up=True)
+                self._raised_arm(put, side)
             else:
-                # Long thin arms hanging down and a little out, hands at the ends.
-                n = math.hypot(0.35, 1.0)
-                dx, dy = side * 0.35 / n, 1.0 / n
-                sx, sy = side * (r - 0.5), r * 0.1
-                length = max(4, round(r * 0.9))
-                for i in range(length):
-                    put(sx + dx * i, sy + dy * i, self.DARK)
-                self._hand(put, round(sx + dx * length), round(sy + dy * length), side, up=False)
+                self._hanging_arm(put, side)
 
-        # Two little cone horns, their bases tucked into the top of his head.
+    def _raised_arm(self, put, side):
+        """Elbows out at shoulder height and forearms straight up, fingers spread:
+        a straight diagonal from the shoulder reads as an antenna, not an arm."""
+        r = self.r
+        ey = -r * 0.1
+        reach = r + max(2, round(r * 0.3))
+        for x in range(int(r) - 1, int(reach) + 1):
+            put(side * x, ey, self.DARK)
+        top = ey - max(3, round(r * 0.55))
+        for y in range(int(round(top)), int(round(ey)) + 1):
+            put(side * reach, y, self.DARK)
+        self._hand(put, side * reach, round(top) - 1, side, up=True)
+
+    def _hanging_arm(self, put, side):
+        """Long thin arms hanging down and a little out, hands at the ends."""
+        r = self.r
+        n = math.hypot(0.35, 1.0)
+        dx, dy = side * 0.35 / n, 1.0 / n
+        sx, sy = side * (r - 0.5), r * 0.1
+        length = max(4, round(r * 0.9))
+        for i in range(length):
+            put(sx + dx * i, sy + dy * i, self.DARK)
+        self._hand(put, round(sx + dx * length), round(sy + dy * length), side, up=False)
+
+    def _draw_horns(self, px):
+        """Two little cone horns, their bases tucked into the top of his head."""
+        r, ry = self.r, self.ry
         for side in (-1, 1):
             hx = side * round(r * 0.42)
             edge = int(round(-ry * math.sqrt(1 - (hx / r) ** 2)))
@@ -143,7 +169,9 @@ class MikeReveal:
                 for x in range(hx - half, hx + half + 1):
                     px[(x, y)] = self.HORN
 
-        # The body: an egg, a touch wider below, lit from the upper left with a darker rim.
+    def _draw_torso(self, px):
+        """An egg, a touch wider below, lit from the upper left with a darker rim."""
+        r, ry = self.r, self.ry
         for y in range(-math.ceil(ry) - 1, math.ceil(ry) + 2):
             for x in range(-math.ceil(r) - 1, math.ceil(r) + 2):
                 ny = y / ry
@@ -156,8 +184,10 @@ class MikeReveal:
                 else:
                     px[(x, y)] = self.LIGHT if -0.55 * wx - 0.65 * ny > 0.35 else self.GREEN
 
-        # The eye: white, a teal iris round a dark pupil that looks about, a glint,
-        # and a green lid that slides down over it to blink.
+    def _draw_eye(self, px, look, lid):
+        """White, a teal iris round a dark pupil that looks about, a glint, and a green
+        lid that slides down over it to blink."""
+        r = self.r
         er = max(2.5, r * 0.46)
         ecy = -r * 0.28
         lid_y = ecy - er + lid * 2 * er
@@ -177,6 +207,11 @@ class MikeReveal:
                     px[(x, y)] = self.IRIS
                 else:
                     px[(x, y)] = self.WHITE
+        self._draw_eye_marks(px, lid, (ecy, er, ir, icx), lid_y)
+
+    def _draw_eye_marks(self, px, lid, eye, lid_y):
+        """The glint while the lid is mostly open, the lid's line once it is shut."""
+        ecy, er, ir, icx = eye
         if lid < 0.4:
             gy = int(round(ecy - ir * 0.4))
             if gy >= lid_y:
@@ -185,46 +220,49 @@ class MikeReveal:
             for x in range(int(-er) + 1, int(er)):
                 px[(x, int(round(ecy + er * 0.3)))] = self.EDGE
 
+    def _draw_scare_mouth(self, px):
+        """Mouth wide open: a row of sharp teeth hanging from the top, and a couple
+        of fangs pointing up from the bottom."""
+        r = self.r
         my = r * 0.42
-        if scare:
-            # Mouth wide open: a row of sharp teeth hanging from the top, and a couple
-            # of fangs pointing up from the bottom.
-            half, h = r * 0.55, r * 0.55
-            mcy = my + h / 2 - 0.5
-            cols = {}
-            for y in range(int(my - 1), int(my + h) + 1):
-                for x in range(int(-half), int(half) + 1):
-                    if (x / half) ** 2 + ((y - mcy) / (h / 2 + 0.5)) ** 2 <= 1:
-                        px[(x, y)] = self.MOUTH
-                        cols.setdefault(x, []).append(y)
-            big = r >= 12
-            for x, ys in cols.items():
-                if abs(x) >= half - 1:
-                    continue
-                top, bottom = min(ys), max(ys)
-                # How far each column's tooth reaches: a sawtooth, its points at the
-                # centre and every 2nd (small) or 4th (big) column out from it.
-                down = (3, 2, 1, 2)[abs(x) % 4] if big else (2, 1)[abs(x) % 2]
-                up = {1: 1, 2: 2, 3: 1}.get(abs(x), 0) if big else (1 if abs(x) == 2 else 0)
-                room = bottom - top - 1  # always leave a row of open mouth between them
-                down = min(down, room - min(up, 1))
-                up = min(up, room - down)
-                for y in range(top, top + down):
-                    px[(x, y)] = self.WHITE
-                for y in range(bottom - up + 1, bottom + 1):
-                    px[(x, y)] = self.WHITE
-        else:
-            # A toothy grin that curls up at the corners and widens as he warms up.
-            g = 1.0 + 0.6 * grin
-            half = r * (0.45 + 0.15 * g)
+        half, h = r * 0.55, r * 0.55
+        mcy = my + h / 2 - 0.5
+        cols = {}
+        for y in range(int(my - 1), int(my + h) + 1):
             for x in range(int(-half), int(half) + 1):
-                top = my - (x / half) ** 2 * r * 0.12
-                sag = (1 - (x / half) ** 2) * (1.5 + 1.2 * g) * r / 10
-                y0, y1 = round(top), round(top + sag + 0.5)
-                for y in range(y0, y1 + 1):
+                if (x / half) ** 2 + ((y - mcy) / (h / 2 + 0.5)) ** 2 <= 1:
                     px[(x, y)] = self.MOUTH
-                px[(x, y0)] = self.WHITE
-        return px
+                    cols.setdefault(x, []).append(y)
+        big = r >= 12
+        for x, ys in cols.items():
+            if abs(x) >= half - 1:
+                continue
+            top, bottom = min(ys), max(ys)
+            # How far each column's tooth reaches: a sawtooth, its points at the
+            # centre and every 2nd (small) or 4th (big) column out from it.
+            down = (3, 2, 1, 2)[abs(x) % 4] if big else (2, 1)[abs(x) % 2]
+            up = {1: 1, 2: 2, 3: 1}.get(abs(x), 0) if big else (1 if abs(x) == 2 else 0)
+            room = bottom - top - 1  # always leave a row of open mouth between them
+            down = min(down, room - min(up, 1))
+            up = min(up, room - down)
+            for y in range(top, top + down):
+                px[(x, y)] = self.WHITE
+            for y in range(bottom - up + 1, bottom + 1):
+                px[(x, y)] = self.WHITE
+
+    def _draw_grin(self, px, grin):
+        """A toothy grin that curls up at the corners and widens as he warms up."""
+        r = self.r
+        my = r * 0.42
+        g = 1.0 + 0.6 * grin
+        half = r * (0.45 + 0.15 * g)
+        for x in range(int(-half), int(half) + 1):
+            top = my - (x / half) ** 2 * r * 0.12
+            sag = (1 - (x / half) ** 2) * (1.5 + 1.2 * g) * r / 10
+            y0, y1 = round(top), round(top + sag + 0.5)
+            for y in range(y0, y1 + 1):
+                px[(x, y)] = self.MOUTH
+            px[(x, y0)] = self.WHITE
 
     def _hand(self, put, x, y, side, up):
         """

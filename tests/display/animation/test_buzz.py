@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas, fill
 
 
@@ -18,7 +17,10 @@ def test_buzz_launches_from_below_hovers_then_blasts_off_the_top():
         assert buzz.position(buzz.duration)[1] + buzz.sprite_h <= 0, "gone off the top"
         xs = {buzz.position(f / animation.FPS)[0] for f in range(int(buzz.duration * animation.FPS))}
         assert xs == {(64 - buzz.sprite_w) / 2}, "straight up the middle"
-        ys = [buzz.position(buzz.RISE_S + buzz.HOVER_S + f / animation.FPS)[1] for f in range(int(buzz.BLAST_S * animation.FPS))]
+        ys = [
+            buzz.position(buzz.RISE_S + buzz.HOVER_S + f / animation.FPS)[1]
+            for f in range(int(buzz.BLAST_S * animation.FPS))
+        ]
         steps = [a - b for a, b in zip(ys, ys[1:])]
         assert steps == sorted(steps), "accelerating as he blasts off"
 
@@ -56,7 +58,10 @@ def test_buzz_wings_snap_open_with_a_flash_as_he_hovers():
         return canvas.px
 
     before, after = drawn(buzz.RISE_S - 0.05), drawn(buzz.RISE_S + buzz.FLASH_S + 0.05)
-    width = lambda px: max(x for x, _ in px) - min(x for x, _ in px)
+
+    def width(px):
+        return max(x for x, _ in px) - min(x for x, _ in px)
+
     assert width(after) > width(before) + 6, "folded, then spread"
     assert buzz.FLASH_RGB in drawn(buzz.RISE_S + 0.02).values(), "a flash at the wing tips as they open"
     assert buzz.FLASH_RGB not in after.values()

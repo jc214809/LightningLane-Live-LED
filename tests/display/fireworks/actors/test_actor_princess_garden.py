@@ -11,8 +11,9 @@ SLOT = (END - START) / 4
 
 
 def _scene():
-    return Cue("s", "Princess garden", START, END, ((255, 0, 0),), 0.0, None, (), frozenset(), "ghost",
-               ("princess_garden",))
+    return Cue(
+        "s", "Princess garden", START, END, ((255, 0, 0),), 0.0, None, (), frozenset(), "ghost", ("princess_garden",)
+    )
 
 
 def _frame(show, actor, t, active=True):

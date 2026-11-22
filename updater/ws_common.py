@@ -3,6 +3,7 @@ What both WebSocket protocols share: the address, the entity types we subscribe 
 reconnect backoff and the watchdog that reconnects a connection that's up but silent.
 The loops are in ws_legacy.py and ws_preview.py; websocket_updater.py picks one.
 """
+
 import asyncio
 import time
 
@@ -27,6 +28,7 @@ def _next_delay(current_delay, connection_duration):
     if connection_duration is not None and connection_duration >= _STABLE_CONNECTION_SECS:
         return _RECONNECT_DELAY_INITIAL
     return min(max(current_delay, _RECONNECT_DELAY_INITIAL) * 2, _RECONNECT_DELAY_MAX)
+
 
 _WATCHDOG_INTERVAL_SECS = 300
 

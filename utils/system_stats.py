@@ -4,6 +4,7 @@ whether a slow stretch of the show came from the board (too hot, under-voltage, 
 drawing. Reads small sysfs files only, no subprocess, so it's cheap enough to call from the show's loop.
 A value the machine doesn't have (any of them, off a Pi) is left out of the text, not an error.
 """
+
 import os
 
 THERMAL_PATH = "/sys/class/thermal/thermal_zone0/temp"  # millidegrees C

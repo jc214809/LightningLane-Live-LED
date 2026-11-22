@@ -1,4 +1,5 @@
 """Olaf for "Some people are worth melting for" (see show_actors.py)."""
+
 import math
 import random
 
@@ -22,6 +23,7 @@ class OlafStands(Actor):
     is left, his carrot and coal buttons lying in it, and it fades out by his scene's end. Without a
     track he melts over his scene's last MELT_S + PUDDLE_S.
     """
+
     NAME = "Olaf"
     ENTER_S = 0.8
     WAVE_S = 1.0  # one full swing of his arm, up and back
@@ -48,7 +50,8 @@ class OlafStands(Actor):
     # drawn; 1 half lifts the D's bottom; 0 closed leaves the lip's line as a grin.
     MOUTH_ROW = 13
     MOUTHS = {
-        1: [".EWWMWWWWOOOOOWWWWE..",
+        1: [
+            ".EWWMWWWWOOOOOWWWWE..",
             ".EWWMMWWWWOOOWWWWWE..",
             "EWWWMMMWWWWWWWWWWWE..",
             "EWWWMMWMWWWWWWWWWWE..",
@@ -58,8 +61,10 @@ class OlafStands(Actor):
             ".EWWWMMMMMMMWWWE.....",
             ".EWWWWWWWWWWWWE......",
             ".EWWWWWWWWWWWE.......",
-            "EWWWWWWWWWWWE........"],
-        0: [".EWWMWWWWOOOOOWWWWE..",
+            "EWWWWWWWWWWWE........",
+        ],
+        0: [
+            ".EWWMWWWWOOOOOWWWWE..",
             ".EWWWMWWWWOOOWWWWWE..",
             "EWWWWWMWWWWWWWWWWWE..",
             "EWWWWWWMWWWWWWWWWWE..",
@@ -69,7 +74,8 @@ class OlafStands(Actor):
             ".EWWWWWWWWWWWWWE.....",
             ".EWWWWWWWWWWWWE......",
             ".EWWWWWWWWWWWE.......",
-            "EWWWWWWWWWWWE........"],
+            "EWWWWWWWWWWWE........",
+        ],
     }
 
     def __init__(self, show):
@@ -84,9 +90,9 @@ class OlafStands(Actor):
         for shape in (0, 1, 2):
             if self.big:
                 art = list(OlafReveal.BIG_HEAD_ART)
-                art[:len(self.BIG_DOME)] = self.BIG_DOME
+                art[: len(self.BIG_DOME)] = self.BIG_DOME
                 if shape in self.MOUTHS:
-                    art[self.MOUTH_ROW:self.MOUTH_ROW + len(self.MOUTHS[shape])] = self.MOUTHS[shape]
+                    art[self.MOUTH_ROW : self.MOUTH_ROW + len(self.MOUTHS[shape])] = self.MOUTHS[shape]
                 olaf.head_art = art
             self.poses[shape] = [olaf.pixels(a + period * i / self.POSES) for i in range(self.POSES)]
         top = min(y for pose in self.poses[2] for _, y in pose)
@@ -191,22 +197,32 @@ class OlafStands(Actor):
         once he's gone, all at glow brightness."""
         if glow <= 0.05:  # too dim for the LEDs
             return
-        h, w = self.show.height, self.show.width
-        dim = lambda rgb: tuple(int(c * glow) for c in rgb)
-        half = self.feet_half * (0.8 + 1.2 * p)
+
+        def dim(rgb):
+            return tuple(int(c * glow) for c in rgb)
+
         rows = max(1, round(self.puddle_rows * p))
+        self._draw_water(out, p, rows, dim)
+        if p >= 1:
+            self._draw_keepsakes(out, rows, dim)
+
+    def _draw_water(self, out, p, rows, dim):
+        h, w = self.show.height, self.show.width
+        half = self.feet_half * (0.8 + 1.2 * p)
         for k in range(rows):
             span = half * (1 - (k / rows) ** 2) ** 0.5
             for x in range(math.floor(self.cx - span + 0.5), math.floor(self.cx + span + 0.5) + 1):
                 if 0 <= x < w:
                     edge = k == rows - 1 or abs(x - self.cx) > span - 1
                     out[(x, h - 1 - k)] = dim(self.WATER_EDGE if edge else self.WATER)
-        if p >= 1:
-            y = h - 1 - (rows // 2)
-            cx = round(self.cx)
-            for x in range(cx - 4, cx - 1):  # his carrot, lying on its side
-                if 0 <= x < w:
-                    out[(x, y)] = dim(OlafReveal.CARROT)
-            for x in (cx + 1, cx + 3, cx + 5):  # his coal buttons
-                if 0 <= x < w:
-                    out[(x, y)] = dim(OlafReveal.COAL)
+
+    def _draw_keepsakes(self, out, rows, dim):
+        h, w = self.show.height, self.show.width
+        y = h - 1 - (rows // 2)
+        cx = round(self.cx)
+        for x in range(cx - 4, cx - 1):  # his carrot, lying on its side
+            if 0 <= x < w:
+                out[(x, y)] = dim(OlafReveal.CARROT)
+        for x in (cx + 1, cx + 3, cx + 5):  # his coal buttons
+            if 0 <= x < w:
+                out[(x, y)] = dim(OlafReveal.COAL)

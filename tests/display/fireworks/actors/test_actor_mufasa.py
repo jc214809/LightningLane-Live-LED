@@ -66,7 +66,10 @@ def test_mufasa_fades_in_holds_and_fades_out_by_the_end(height):
 
 def test_the_bottom_of_his_mane_melts_into_the_sky():
     _, actor, out = _play(64, START + 20)
-    row = lambda y: [out[(x, y)] for x in range(64) if (x, y) in out]
+
+    def row(y):
+        return [out[(x, y)] for x in range(64) if (x, y) in out]
+
     top_level = max(max(rgb) for rgb in row(10))
     low_level = max(max(rgb) for rgb in row(actor.h - 2))
     assert low_level < top_level * 0.3
@@ -93,24 +96,31 @@ def test_his_outline_is_all_mane():
     """No gold face or cream muzzle on his border, or within two pixels of it: the mane frames him."""
     art = MufasaInTheStars.ART
     h, w = len(art), len(art[0])
-    lit = lambda x, y: 0 <= x < w and 0 <= y < h and art[y][x] != "."
+
+    def lit(x, y):
+        return 0 <= x < w and 0 <= y < h and art[y][x] != "."
+
     for y in range(h):
         for x in range(w):
-            if lit(x, y) and any(not lit(x + dx, y + dy) for dx in range(-2, 3) for dy in range(-2, 3)
-                                 if abs(dx) + abs(dy) <= 2):
+            if lit(x, y) and any(
+                not lit(x + dx, y + dy) for dx in range(-2, 3) for dy in range(-2, 3) if abs(dx) + abs(dy) <= 2
+            ):
                 assert art[y][x] not in "FC", f"gold or cream at ({x}, {y}) on his outline"
 
 
 def test_mufasa_mouths_his_lines_by_the_clock():
     from display.fireworks.score import Lips
+
     # 20 s shut, then a second each of half, open, shut; a last line well after, so he isn't fading yet
     track = "0" * 300 + "1" * 15 + "2" * 15 + "0" * 60 + "2" * 15
     show = MusicShow(64, 64, random.Random(9), {"mufasa": Lips(START, 15.0, track)})
     actor, cue = MufasaInTheStars(show), _scene()
     for t in range(0, 19):
         _frame(show, actor, cue, START + t)
+
     def light(t, x, y):  # how bright a cell of his mouth is
         return sum(_frame(show, actor, cue, t).get((actor.left + x, y), (0, 0, 0)))
+
     assert light(START + 19.5, 11, 28) > 400, "shut: his chin's cream under the smile"
     assert light(START + 20.5, 11, 27) < 250 and light(START + 20.5, 11, 28) < 250, "half: open, then his lip"
     assert light(START + 21.5, 11, 28) < 250 and light(START + 21.5, 11, 29) < 250, "open: deeper"
@@ -119,6 +129,7 @@ def test_mufasa_mouths_his_lines_by_the_clock():
 
 def test_on_64x32_his_halved_face_mouths_too():
     from display.fireworks.score import Lips
+
     show = MusicShow(64, 32, random.Random(10), {"mufasa": Lips(START, 15.0, "2" * 600)})
     actor = MufasaInTheStars(show)
     assert actor.cells[2] != actor.cells[0], "the open mouth survives halving"
@@ -127,7 +138,9 @@ def test_on_64x32_his_halved_face_mouths_too():
 def test_mufasa_is_on_the_board_for_every_word_he_says():
     """Through to his echoing last "Remember": he's still clearly there while his mouth moves."""
     import json
+
     from display.fireworks.score import SHOWS_DIR, parse_lips
+
     with open(f"{SHOWS_DIR}/happily-ever-after.v2.lips.json") as f:
         lips = parse_lips(json.load(f))["mufasa"]
     show = MusicShow(64, 64, random.Random(13), {"mufasa": lips})
@@ -143,6 +156,7 @@ def test_mufasa_is_on_the_board_for_every_word_he_says():
 def test_he_fades_away_as_he_says_his_last_line():
     """As in the film, he fades while saying "Remember who you are": the fade starts with his last line."""
     from display.fireworks.score import Lips
+
     track = "0" * 150 + "2" * 30 + "0" * 60 + "2" * 45  # lines at 10-12 s and 16-19 s into the scene
     show = MusicShow(64, 64, random.Random(11), {"mufasa": Lips(START, 15.0, track)})
     actor, cue = MufasaInTheStars(show), _scene()
@@ -154,4 +168,3 @@ def test_he_fades_away_as_he_says_his_last_line():
     no_track = MufasaInTheStars(MusicShow(64, 64, random.Random(12)))
     _frame(no_track.show, no_track, cue, START)
     assert no_track.last_line_s() is None and no_track.glow(30) > 0.8, "without a track: the scene's last seconds"
-

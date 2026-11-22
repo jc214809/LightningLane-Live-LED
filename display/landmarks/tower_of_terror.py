@@ -26,21 +26,34 @@ class TowerOfTerrorLandmark(Landmark):
     # Scene times of (strike, doors open, car drops, car lands), without and with the tilt.
     BEATS = {False: (0.6, 1.2, 1.9, 2.5), True: (1.6, 2.2, 2.9, 3.5)}
     FLASH_S, DOORS_OPEN_S = 0.15, 0.25
+    CAR_FLOOR = 52  # the car's top row when it lands, at the arches
     BOLT_RGB, BOLT_EDGE_RGB, CAR_RGB = (235, 235, 255), (170, 170, 230), (255, 235, 180)
     COLORS = {
-        "wall": (200, 124, 96), "shade": (150, 88, 70), "lit_wall": (225, 150, 115),
-        "strip": (96, 68, 60), "strip_dark": (70, 48, 44),
-        "roof": (170, 52, 40), "roof_dark": (120, 34, 28), "spire": (95, 115, 160),
-        "win": (45, 26, 26), "win_lit": (255, 200, 110), "arch": (240, 170, 60),
-        "tree": (22, 48, 28), "tree_lit": (34, 70, 38),
-        "cloud_top": (96, 88, 118), "cloud": (68, 62, 88), "cloud_under": (52, 47, 68),
+        "wall": (200, 124, 96),
+        "shade": (150, 88, 70),
+        "lit_wall": (225, 150, 115),
+        "strip": (96, 68, 60),
+        "strip_dark": (70, 48, 44),
+        "roof": (170, 52, 40),
+        "roof_dark": (120, 34, 28),
+        "spire": (95, 115, 160),
+        "win": (45, 26, 26),
+        "win_lit": (255, 200, 110),
+        "arch": (240, 170, 60),
+        "tree": (22, 48, 28),
+        "tree_lit": (34, 70, 38),
+        "cloud_top": (96, 88, 118),
+        "cloud": (68, 62, 88),
+        "cloud_under": (52, 47, 68),
     }
     # Storm clouds as (centre x, centre y, puffs of (dx, dy, radius)). The first is the one
     # the lightning comes out of.
-    CLOUDS = ((9, 5, ((-6, 1, 4), (0, -1, 5), (6, 1, 4), (11, 2, 3))),
-              (55, 4, ((-5, 1, 3), (0, 0, 4), (5, 1, 3))),
-              (5, 25, ((-3, 0, 3), (2, -1, 3), (6, 0, 2))),
-              (58, 21, ((-4, 0, 2), (0, -1, 3), (4, 0, 2))))
+    CLOUDS = (
+        (9, 5, ((-6, 1, 4), (0, -1, 5), (6, 1, 4), (11, 2, 3))),
+        (55, 4, ((-5, 1, 3), (0, 0, 4), (5, 1, 3))),
+        (5, 25, ((-3, 0, 3), (2, -1, 3), (6, 0, 2))),
+        (58, 21, ((-4, 0, 2), (0, -1, 3), (4, 0, 2))),
+    )
 
     def __init__(self, width, height, rng=None, park=None):
         self.view_h = height
@@ -52,62 +65,106 @@ class TowerOfTerrorLandmark(Landmark):
         super().__init__(width, 64, rng, park)
 
     def build(self):
-        c, rect = self.COLORS, self._rect
-        # Stormy sky: a purple-gray gradient with soft cloud banks.
+        self._draw_sky()
+        self._clouds()
+        self._draw_wings()
+        self._draw_shaft()
+        self._draw_pillars()
+        self._draw_roofs()
+        self._draw_cupola()
+        self._draw_doors()
+        self._draw_arches()
+        self._draw_trees()
+        self._place_windows()
+        self.bolt = self._bolt()
+
+    def _draw_sky(self):
+        """A purple-gray gradient with soft cloud banks."""
         for y in range(self.height):
             for x in range(self.width):
                 k = 0.55 + 0.45 * (_noise(x // 5, y // 3) * 0.5 + _noise(x // 9 + 7, y // 5 + 3) * 0.5)
                 self.put(self.base, x, y, (int((18 + y * 0.35) * k), int((14 + y * 0.2) * k), int((34 + y * 0.3) * k)))
-        self._clouds()
-        L, R, SL, SR = self.TOWER_L, self.TOWER_R, self.STRIP_L, self.STRIP_R
-        # Lower wings with red roofs.
+
+    def _draw_wings(self):
+        """The lower wings with red roofs."""
+        c, rect, L, R = self.COLORS, self._rect, self.TOWER_L, self.TOWER_R
         rect(L - 9, 46, L - 1, 57, c["shade"])
         rect(R + 1, 42, R + 9, 57, c["shade"])
         for i in range(4):
             rect(L - 9 + i, 45 - i, L - 1, 45 - i, c["roof"])
             rect(R + 1, 41 - i, R + 9 - i, 41 - i, c["roof"])
-        rect(L, 12, R, 57, c["wall"])
-        rect(SL, 13, SR, 57, c["strip"])
+
+    def _draw_shaft(self):
+        """The tower's wall, with the weathered elevator strip down the middle."""
+        c, L, R, SL, SR = self.COLORS, self.TOWER_L, self.TOWER_R, self.STRIP_L, self.STRIP_R
+        self._rect(L, 12, R, 57, c["wall"])
+        self._rect(SL, 13, SR, 57, c["strip"])
         for y in range(13, 58):
             for x in range(SL, SR + 1):
                 if _noise(x, y) > 0.72:
                     self.put(self.base, x, y, c["strip_dark"])
-        # Slim corner pillars up past the roof, each with a red cap and a blue spire.
-        for x0 in (L, R - 2):
+
+    def _draw_pillars(self):
+        """Slim corner pillars up past the roof, each with a red cap and a blue spire."""
+        c, rect = self.COLORS, self._rect
+        for x0 in (self.TOWER_L, self.TOWER_R - 2):
             rect(x0, 6, x0 + 2, 12, c["lit_wall"])
             rect(x0, 5, x0 + 2, 5, c["roof"])
             self.put(self.base, x0 + 1, 4, c["roof"])
             rect(x0 + 1, 1, x0 + 1, 3, c["spire"])
-        # Red hipped roofs between the pillars and the cupola.
+
+    def _draw_roofs(self):
+        """Red hipped roofs between the pillars and the cupola."""
+        c, rect, L, R, SL, SR = self.COLORS, self._rect, self.TOWER_L, self.TOWER_R, self.STRIP_L, self.STRIP_R
         for x0, x1 in ((L + 3, SL - 2), (SR + 2, R - 3)):
             rect(x0, 11, x1, 12, c["roof"])
             rect(x0 + 1, 10, x1 - 1, 10, c["roof"])
             rect(x0 + 2, 9, x1 - 2, 9, c["roof_dark"])
-        # The domed cupola, with a spire.
+
+    def _draw_cupola(self):
+        """The domed cupola, with a spire."""
+        c, rect, SL, SR = self.COLORS, self._rect, self.STRIP_L, self.STRIP_R
         rect(SL, 5, SR, 12, c["wall"])
         for dy, inset in ((4, -1), (3, 0), (2, 1), (1, 2)):
             rect(SL + inset, dy, SR - inset, dy, c["roof"])
         rect(31, 0, 32, 0, c["spire"])
-        # The arched window at the top of the shaft: the elevator doors.
+
+    def _draw_doors(self):
+        """The arched window at the top of the shaft: the elevator doors."""
+        c, rect, SL, SR = self.COLORS, self._rect, self.STRIP_L, self.STRIP_R
         self.doors = (SL + 2, 14, SR - 2, 19)
         rect(SL + 2, 15, SR - 2, 19, c["win"])
         rect(SL + 3, 14, SR - 3, 14, c["win"])
-        # Gold-lit arches at the foot of the shaft.
+
+    def _draw_arches(self):
+        """Gold-lit arches at the foot of the shaft."""
+        c, rect, SL = self.COLORS, self._rect, self.STRIP_L
         for x0 in (SL, SL + 3, SL + 6):
             rect(x0, 53, x0 + 1, 57, c["arch"])
             self.put(self.base, x0, 52, c["arch"])
-        # Trees along the bottom.
+
+    def _draw_trees(self):
+        """Trees along the bottom."""
+        c = self.COLORS
         for x in range(self.width):
             top = 57 + int(3 * _noise(x // 3, 1)) - (2 if (x // 7) % 2 else 0)
             for y in range(top, self.height):
                 self.put(self.base, x, y, c["tree_lit"] if _noise(x, y) > 0.6 else c["tree"])
-        # Windows: a grid down both sides of the shaft, a few on the wings, two in the cupola.
-        self.windows = [(x, y, self.rng.random()) for y in range(15, 54, 3)
-                        for x in list(range(L + 3, SL - 1, 2)) + list(range(SR + 2, R - 2, 2))]
-        self.windows += [(x, y, self.rng.random()) for y in range(48, 55, 3)
-                         for x in list(range(L - 8, L - 1, 2)) + list(range(R + 2, R + 8, 2))]
+
+    def _place_windows(self):
+        """A grid down both sides of the shaft, a few on the wings, two in the cupola."""
+        L, R, SL, SR = self.TOWER_L, self.TOWER_R, self.STRIP_L, self.STRIP_R
+        self.windows = [
+            (x, y, self.rng.random())
+            for y in range(15, 54, 3)
+            for x in list(range(L + 3, SL - 1, 2)) + list(range(SR + 2, R - 2, 2))
+        ]
+        self.windows += [
+            (x, y, self.rng.random())
+            for y in range(48, 55, 3)
+            for x in list(range(L - 8, L - 1, 2)) + list(range(R + 2, R + 8, 2))
+        ]
         self.windows += [(30, 7, 0.95), (33, 7, 0.95)]
-        self.bolt = self._bolt()
 
     def _rect(self, x0, y0, x1, y1, rgb):
         for y in range(y0, y1 + 1):
@@ -158,41 +215,58 @@ class TowerOfTerrorLandmark(Landmark):
         top = round((self.height - self.view_h) * (1 - min(1.0, t / self.PAN_S)) ** 3)
         return {(x, y - top): rgb for (x, y), rgb in out.items() if top <= y < top + self.view_h}
 
+    def draw_car(self, out, left, top):
+        """The falling car, 5x4 with its top-left corner at (left, top)."""
+        for y in range(top, top + 4):
+            for x in range(left, left + 5):
+                self.put(out, x, y, self.CAR_RGB)
+
     def animate(self, out, t):
+        self._light_windows(out, t)
+        if self.DOORS_AT <= t < self.DROP_AT:
+            self._open_doors(out, t)
+        elif self.DROP_AT <= t < self.LAND_AT:
+            self._drop_car(out, t)
+        if 0 <= t - self.STRIKE_AT < self.FLASH_S:
+            self._flash(out)
+
+    def _light_windows(self, out, t):
         c = self.COLORS
         for x, y, phase in self.windows:
             lit = phase > 0.8 or (phase > 0.6 and math.sin(t * 9 + phase * 40) > 0.3)
             for dy in (0, 1):
                 self.put(out, x, y + dy, c["win_lit"] if lit else c["win"])
+
+    def _open_doors(self, out, t):
+        """The doors slide apart from the middle onto the lit car."""
         x0, y0, x1, y1 = self.doors
-        if self.DOORS_AT <= t < self.DROP_AT:
-            # The doors slide apart from the middle onto the lit car.
-            half = (x1 - x0) / 2 * min(1.0, (t - self.DOORS_AT) / self.DOORS_OPEN_S)
-            for y in range(y0, y1 + 1):
-                for x in range(x0, x1 + 1):
-                    if abs(x - (x0 + x1) / 2) <= half + 0.01 and not (y == y0 and x in (x0, x1)):
-                        self.put(out, x, y, c["win_lit"])
-        elif self.DROP_AT <= t < self.LAND_AT:
-            # The car falls, accelerating, down the shaft to the arches, trailing its light.
-            p = (t - self.DROP_AT) / (self.LAND_AT - self.DROP_AT)
-            car_y = y0 + 1 + int((52 - y0 - 1) * p * p)
-            left = (self.STRIP_L + self.STRIP_R + 1) // 2 - 2
-            for tail in range(1, 6):
-                f = 1 - tail / 6
-                if car_y - tail * 2 >= y0:
-                    for x in range(left, left + 5):
-                        self.put(out, x, car_y - tail * 2, tuple(int(v * f) for v in c["win_lit"]))
-            for y in range(car_y, car_y + 4):
+        half = (x1 - x0) / 2 * min(1.0, (t - self.DOORS_AT) / self.DOORS_OPEN_S)
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                if abs(x - (x0 + x1) / 2) <= half + 0.01 and not (y == y0 and x in (x0, x1)):
+                    self.put(out, x, y, self.COLORS["win_lit"])
+
+    def _drop_car(self, out, t):
+        """The car falls, accelerating, down the shaft to the arches, trailing its light."""
+        y0 = self.doors[1]
+        p = (t - self.DROP_AT) / (self.LAND_AT - self.DROP_AT)
+        car_y = y0 + 1 + int((self.CAR_FLOOR - y0 - 1) * p * p)
+        left = (self.STRIP_L + self.STRIP_R + 1) // 2 - 2
+        for tail in range(1, 6):
+            f = 1 - tail / 6
+            if car_y - tail * 2 >= y0:
                 for x in range(left, left + 5):
-                    self.put(out, x, y, self.CAR_RGB)
-        if 0 <= t - self.STRIKE_AT < self.FLASH_S:
-            for p, (r, g, b) in list(out.items()):
-                if r < 70 and g < 70:
-                    out[p] = (min(255, r + 35), min(255, g + 30), min(255, b + 60))
-            # The cloud it comes out of lights up from inside.
-            for p in self.clouds[0] & out.keys():  # the cloud runs off the board's edge
-                r, g, b = out[p]
-                out[p] = (min(255, r + 60), min(255, g + 60), min(255, b + 80))
-            for x, y in self.bolt:
-                self.put(out, x, y, self.BOLT_RGB)
-                self.put(out, x + 1, y, self.BOLT_EDGE_RGB)
+                    self.put(out, x, car_y - tail * 2, tuple(int(v * f) for v in self.COLORS["win_lit"]))
+        self.draw_car(out, left, car_y)
+
+    def _flash(self, out):
+        """The lightning strikes: the dark sky brightens, the cloud lights up from inside, the bolt is drawn."""
+        for p, (r, g, b) in list(out.items()):
+            if r < 70 and g < 70:
+                out[p] = (min(255, r + 35), min(255, g + 30), min(255, b + 60))
+        for p in self.clouds[0] & out.keys():  # the cloud runs off the board's edge
+            r, g, b = out[p]
+            out[p] = (min(255, r + 60), min(255, g + 60), min(255, b + 80))
+        for x, y in self.bolt:
+            self.put(out, x, y, self.BOLT_RGB)
+            self.put(out, x + 1, y, self.BOLT_EDGE_RGB)

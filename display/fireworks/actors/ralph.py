@@ -15,6 +15,7 @@ class RalphSmashes(Actor):
     he drops off the bottom of the board. Everything, pieces included, is placed by the clock, in seconds
     into his window (elapsed - START_S).
     """
+
     NAME = "Ralph"
     START_S, END_S = 7.0, 13.0
     ENTERS_S = START_S
@@ -57,8 +58,15 @@ class RalphSmashes(Actor):
             for row, line in enumerate(self.BRICK):
                 for col, kind in enumerate(line):
                     side = -1 if i % 2 == 0 else 1  # thrown outward, away from his head
-                    pieces.append((col, row, colors[kind], side * self.rng.uniform(6, 22) + (col - 1) * 4,
-                                   -self.rng.uniform(10, 28) * show.height / 32))
+                    pieces.append(
+                        (
+                            col,
+                            row,
+                            colors[kind],
+                            side * self.rng.uniform(6, 22) + (col - 1) * 4,
+                            -self.rng.uniform(10, 28) * show.height / 32,
+                        )
+                    )
             self.bricks.append((hit, left, colors, pieces))
             hit += self.HIT_EVERY_S
             i += 1
@@ -93,8 +101,16 @@ class RalphSmashes(Actor):
         W, H = show.width, show.height
         left, top = self.left_top(e)
         if self.swinging(e):
-            stamp(out, self.raised, RalphReveal.COLORS, left - (self.mid - self.raised_left),
-                  top - (self.ground - self.raised_top), 1, W, H)
+            stamp(
+                out,
+                self.raised,
+                RalphReveal.COLORS,
+                left - (self.mid - self.raised_left),
+                top - (self.ground - self.raised_top),
+                1,
+                W,
+                H,
+            )
         else:
             stamp(out, self.stand, RalphReveal.COLORS, left, top, 1, W, H)
         for hit, bx, colors, pieces in self.bricks:

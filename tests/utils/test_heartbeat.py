@@ -2,7 +2,7 @@ import json
 import os
 
 import utils.heartbeat as heartbeat
-from version import SCRIPT_VERSION
+from version import version
 
 
 def test_a_beat_says_when_and_who(tmp_path):
@@ -10,7 +10,7 @@ def test_a_beat_says_when_and_who(tmp_path):
     assert heartbeat.beat(path=path, clock=lambda: 1000.0) is True
     with open(path) as f:
         found = json.load(f)
-    assert found == {"at": 1000.0, "pid": os.getpid(), "version": SCRIPT_VERSION}
+    assert found == {"at": 1000.0, "pid": os.getpid(), "version": version()}
     assert heartbeat.read(path) == found
     assert not [name for name in os.listdir(tmp_path) if name.endswith(".new")], "written through a temp file"
 

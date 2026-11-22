@@ -1,4 +1,5 @@
 """Merida's baked poses for Touch the Sky: every frame whole (no holes where the bow or her hand was)."""
+
 import pytest
 
 from display.animation.characters.archer import ArcherReveal as Archer
@@ -65,8 +66,9 @@ def test_the_planted_bow_stands_string_out_and_is_caught_string_in(frames):
     assert s > w, "planted: the string on the far side of the wood"
     s, w = string_and_wood(frames["held"])
     assert s < w, "caught: the string toward her, ready to draw"
-    assert max(y for (x, y), k in frames["talk/0"].items() if k in "OPK" and x > 30) >= poses.GROUND, \
+    assert max(y for (x, y), k in frames["talk/0"].items() if k in "OPK" and x > 30) >= poses.GROUND, (
         "its foot on the ground"
+    )
 
 
 def test_the_toss_throws_the_bow_up_over_her(frames):

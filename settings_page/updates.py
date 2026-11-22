@@ -8,8 +8,8 @@ what's installed by itself when it loads (auto_check), at most once per CHECK_FR
 An update restarts this service, so it runs as its own transient unit (systemd-run
 --unit=lll-update), which also means only one runs at a time: systemd refuses a second.
 """
+
 import os
-import re
 import subprocess
 import sys
 import threading
@@ -26,9 +26,13 @@ START_TIMEOUT_S = 30
 # A check older than this is dropped: what's newest may have moved on.
 CHECK_FRESH_S = 10 * 60
 # What a running update is doing, by state.json's phase (before its rollback point, it's checking).
-PHASE_TEXT = {states.READY: "Saving a rollback point", states.SWITCHED: "Installing the new version",
-              states.INSTALLED: "Restarting the board", states.CHECKING: "Checking the new version works",
-              states.ROLLING_BACK: "Rolling back"}
+PHASE_TEXT = {
+    states.READY: "Saving a rollback point",
+    states.SWITCHED: "Installing the new version",
+    states.INSTALLED: "Restarting the board",
+    states.CHECKING: "Checking the new version works",
+    states.ROLLING_BACK: "Rolling back",
+}
 CHECKING_TEXT = "Checking it can update"
 ROLLING_BACK_TEXT = "Rolling back"
 # An update's steps, as the card lists them while one runs, and the step each phase is on.
@@ -95,19 +99,32 @@ class Updates:
         running = self.running()
         # What's being installed: state.json's once the update has its rollback point (it survives
         # this page's restart), else what was started.
-        to = record.get("to") if record["phase"] in states.UNFINISHED and isinstance(record.get("to"), dict) \
+        to = (
+            record.get("to")
+            if record["phase"] in states.UNFINISHED and isinstance(record.get("to"), dict)
             else self.starting
+        )
         if running and to and self.starting and self.starting.get("sha") == to.get("sha"):
             to = {**self.starting, **to}
         installed = self.installed_channel(sha, branch, record)
         status, step = self._progress(record["phase"]) if running else (None, None)
-        return {"version": updater.installed_version, "sha": sha, "branch": branch, "running": running,
-                "to": to if running else None, "phase": record["phase"], "status": status, "step": step,
-                "from": record.get("from") if isinstance(record.get("from"), dict) else None,
-                "outcome": updater.state.load_outcome(), "check": check, "installed_channel": installed,
-                "channel": (check or {}).get("channel") or installed,
-                # No check yet: the page's script asks for one (auto_check) once it's loaded.
-                "auto_check": not check and not running}
+        return {
+            "version": updater.installed_version,
+            "sha": sha,
+            "branch": branch,
+            "running": running,
+            "to": to if running else None,
+            "phase": record["phase"],
+            "status": status,
+            "step": step,
+            "from": record.get("from") if isinstance(record.get("from"), dict) else None,
+            "outcome": updater.state.load_outcome(),
+            "check": check,
+            "installed_channel": installed,
+            "channel": (check or {}).get("channel") or installed,
+            # No check yet: the page's script asks for one (auto_check) once it's loaded.
+            "auto_check": not check and not running,
+        }
 
     def auto_check(self, channel):
         """The page's own check when it loads: check(channel), unless one from the last CHECK_FRESH_S
@@ -135,21 +152,28 @@ class Updates:
                 except (CommandFailed, OSError) as e:
                     result, message, ok, found = BLOCKED, str(e), False, {}
         debug.info(f"Settings page: checked for updates on {channel}: {result}: {message}")
-        self.last_check = {"channel": channel, "result": result, "message": message, "ok": ok, "at": self.clock(),
-                           **found}
+        self.last_check = {
+            "channel": channel,
+            "result": result,
+            "message": message,
+            "ok": ok,
+            "at": self.clock(),
+            **found,
+        }
 
     def details(self, target):
-        """What an update to target brings: {"ref", "sha", "version" (its version.py's, or None),
+        """What an update to target brings: {"ref", "sha", "version" (from its tags, as version.py gives it, or None),
         "changes" ([PR number or None, title, release notes], newest first: Board.what_changed), "packages" (whether requirements.txt
         changes: pip runs, which takes ages on a Pi Zero)}. Only ref and sha if git can't say."""
         found = {"ref": target.ref, "sha": target.sha}
         board = self.updater.board
         try:
             head = board.head()
-            version = re.search(r'SCRIPT_VERSION\s*=\s*"([^"]+)"', board.file_at(target.sha, "version.py") or "")
-            found.update(version=version.group(1) if version else None,
-                         changes=[list(change) for change in board.what_changed(head, target.sha)],
-                         packages=board.changed(head, target.sha, "requirements.txt"))
+            found.update(
+                version=board.describe(target.sha),
+                changes=[list(change) for change in board.what_changed(head, target.sha)],
+                packages=board.changed(head, target.sha, "requirements.txt"),
+            )
         except CommandFailed as e:
             debug.warning(f"Settings page: can't list what's in {target.ref}: {e}")
         return found
@@ -157,8 +181,17 @@ class Updates:
     def start(self, command, channel=None):
         """Start python3 -m self_update update --channel channel, or rollback, as its own unit.
         STARTED, BUSY (one is running already) or START_FAILED (logged)."""
-        args = ["systemd-run", f"--unit={UPDATE_UNIT}", "--collect", f"--working-directory={self.app_dir}",
-                "--description=LightningLane-Live-LED update", self.python, "-m", "self_update", command]
+        args = [
+            "systemd-run",
+            f"--unit={UPDATE_UNIT}",
+            "--collect",
+            f"--working-directory={self.app_dir}",
+            "--description=LightningLane-Live-LED update",
+            self.python,
+            "-m",
+            "self_update",
+            command,
+        ]
         if command == "update":
             if channel not in CHANNELS:
                 return START_FAILED
@@ -177,9 +210,18 @@ class Updates:
             debug.error(f"Settings page: can't start the {command}: {problem}")
             return START_FAILED
         self.started = command
-        self.starting = self.last_check if command == "update" and self.last_check \
-            and self.last_check.get("channel") == channel and self.last_check.get("sha") else None
-        debug.info(f"Settings page: started the {command}" + (f" on {channel}" if channel else "")
-                   + f" ({UPDATE_UNIT}.service; journalctl -u {UPDATE_UNIT} has how it goes).")
+        self.starting = (
+            self.last_check
+            if command == "update"
+            and self.last_check
+            and self.last_check.get("channel") == channel
+            and self.last_check.get("sha")
+            else None
+        )
+        debug.info(
+            f"Settings page: started the {command}"
+            + (f" on {channel}" if channel else "")
+            + f" ({UPDATE_UNIT}.service; journalctl -u {UPDATE_UNIT} has how it goes)."
+        )
         self.last_check = None
         return STARTED

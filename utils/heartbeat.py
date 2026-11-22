@@ -7,12 +7,13 @@ has written a heartbeat since it was restarted. The updater also won't start whi
 /run is cleared at boot, so a heartbeat never outlives the app's run. Written atomically (a temp
 file renamed over it) and never raises: a board that can't write it only fails its health check.
 """
+
 import json
 import os
 import time
 
 from utils import debug
-from version import SCRIPT_VERSION
+from version import version
 
 HEARTBEAT_FILE = "/run/lll-health"
 
@@ -24,7 +25,7 @@ def beat(show=None, show_s=0, path=None, clock=time.time):
     global _last_problem
     path = path or HEARTBEAT_FILE
     now = clock()
-    beat_data = {"at": now, "pid": os.getpid(), "version": SCRIPT_VERSION}
+    beat_data = {"at": now, "pid": os.getpid(), "version": version()}
     if show:
         beat_data.update(show=show, show_until=now + max(0, show_s))
     temp = f"{path}.{os.getpid()}.new"
