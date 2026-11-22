@@ -22,10 +22,9 @@ import socket
 import time
 from dataclasses import dataclass
 
-from settings_page import pushover
 from self_update import github, state as states
 from self_update.board import CommandFailed
-from utils import debug, heartbeat
+from utils import debug, heartbeat, pushover
 from utils.config import pushover_keys
 
 RELEASES, BETA = "releases", "beta"
