@@ -1,3 +1,18 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  // Hide ignored build output, caches and logs from the Explorer (they stay on disk).
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.DS_Store": true,
+    ".coverage": true,
+    "coverage.xml": true,
+    ".import_linter_cache": true,
+    ".mypy_cache": true,
+    ".pytest_cache": true,
+    ".ruff_cache": true,
+    "*.egg-info": true,
+    "build": true,
+    "logs": true,
+    ".idea": true
+  }
 }

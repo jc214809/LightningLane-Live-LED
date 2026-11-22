@@ -112,3 +112,10 @@ follow_imports = "silent"
 # api/ has no __init__.py (a namespace package, imported from the repo root like the other layers).
 namespace_packages = true
 explicit_package_bases = true
+
+# Coverage settings (CI's --cov=. overrides `source`).
+[tool.coverage.run]
+branch = true
+relative_files = true
+source = ["api", "display", "updater", "utils"]
+omit = ["driver/*", "version.py"]
