@@ -474,6 +474,19 @@ def test_the_pages_own_forms_are_let_in_as_a_browser_posts_them(board):
     assert board.request("/pin/show", {}, {"Origin": "null"})[0] == 403
 
 
+def test_a_post_the_pages_script_sends_with_fetch_is_let_in_and_another_sites_is_not(board):
+    # fetch() from the page sends the page's Origin and, with credentials: same-origin, the session cookie, as a plain
+    # form post does (the script sends each form this way, to dodge Safari's insecure-form prompt over http).
+    host = board.url.removeprefix("http://")
+    fetched = {"Origin": "http://" + host, "Accept": "*/*", "Content-Type": "application/x-www-form-urlencoded"}
+    board.sign_in()
+    cross = dict(fetched, Origin="http://evil.example")
+    assert board.request("/save", SAVE, cross)[0] == 403 and board.request("/signout", {}, cross)[0] == 403
+    assert board.request("/save", SAVE, fetched)[0] == 303
+    status, headers, _ = board.request("/signout", {}, fetched)
+    assert status == 303 and headers["Location"] == "/?signedout"
+
+
 def test_a_broken_config_can_still_be_fixed_from_the_page(board):
     board.hotspot()
     board.config.write_text("{not json")

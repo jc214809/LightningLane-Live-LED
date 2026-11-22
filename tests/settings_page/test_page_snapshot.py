@@ -26,6 +26,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 FIXTURES = os.path.join(HERE, "fixtures", "page")
 STYLE_MARK, SCRIPT_MARK, SURPRISES_SCRIPT_MARK = "@@STYLE@@", "@@SCRIPT@@", "@@SURPRISES_SCRIPT@@"
+FORM_SCRIPT_MARK = "@@FORM_SCRIPT@@"  # the sign-in page's only script: the form helper
 TODAY = date(2027, 1, 15)
 PANEL = panel_choices({}, "pi4", "Raspberry Pi 4 Model B Rev 1.5")
 
@@ -330,6 +331,7 @@ def marked(html):
         html.replace(page.STYLE, STYLE_MARK)
         .replace(page.SCRIPT, SCRIPT_MARK)
         .replace(surprises_page.SCRIPT, SURPRISES_SCRIPT_MARK)
+        .replace(page.FORM_SCRIPT, FORM_SCRIPT_MARK)
     )
 
 
@@ -360,6 +362,7 @@ def test_the_html_is_byte_for_byte_what_it_was(name):
 def test_the_stylesheet_and_scripts_are_byte_for_byte_what_they_were():
     assert page.STYLE == read(os.path.join(FIXTURES, "style.css"))
     assert page.SCRIPT == read(os.path.join(FIXTURES, "script.js"))
+    assert page.FORM_SCRIPT == read(os.path.join(FIXTURES, "form_script.js"))
 
 
 def test_every_case_has_a_stored_page_and_none_is_left_over():
@@ -386,5 +389,6 @@ def test_regenerate_fixtures_when_asked():
         os.remove(os.path.join(FIXTURES, old))
     write(os.path.join(FIXTURES, "style.css"), page.STYLE)
     write(os.path.join(FIXTURES, "script.js"), page.SCRIPT)
+    write(os.path.join(FIXTURES, "form_script.js"), page.FORM_SCRIPT)
     for name, make in all_cases().items():
         write(path_of(name), marked(make()))

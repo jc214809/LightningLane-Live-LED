@@ -80,13 +80,9 @@ const importText = async text => {
     reply = await response.json();
   } catch (error) { say("Couldn't reach the board to import. Try again.", true); return; }
   if (!reply.ok) { say('Nothing imported: ' + reply.problems.join(' '), true); return; }
-  const send = document.createElement('form');  // the board draws the page filled from the settings
-  send.method = 'post'; send.action = '/surprises/import'; send.hidden = true;
-  const field = document.createElement('textarea');
-  field.name = 'surprises_json'; field.value = text;
-  send.appendChild(field);
-  document.body.appendChild(send);
-  send.submit();
+  // The board draws the page filled from the settings (a hidden form's submit() would get Safari's insecure-form prompt).
+  try { await sendForm('/surprises/import', new URLSearchParams({surprises_json: text})); }
+  catch (error) { say("Couldn't reach the board to import. Try again.", true); }
 };
 let waiting = null;
 const onPaste = event => {

@@ -77,7 +77,7 @@ from settings_page.markup import (  # noqa: F401  (re-exported)
     notices,
     wordmark,
 )
-from settings_page.page_script import SCRIPT
+from settings_page.page_script import FORM_SCRIPT, SCRIPT
 from settings_page.page_style import STYLE  # noqa: F401  (re-exported)
 
 SECTIONS = (  # id, nav title, icon
@@ -235,4 +235,4 @@ def pin_page(shown_s=None, wrong=False, board=None, phone=False, sent=None, sign
         'autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" required autofocus aria-label="PIN">'
         '<button type="submit" class="primary block">Sign in</button></form></div></div>' + "</div></div>"
     )
-    return document("Sign in · Board settings", body)
+    return document("Sign in · Board settings", body, FORM_SCRIPT)
