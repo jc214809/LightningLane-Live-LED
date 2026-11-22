@@ -15,7 +15,7 @@ from display.fireworks.fireworks import render_castle_fireworks
 from display.fireworks.music_show import render_music_show
 from display.fireworks.score import SHOWS_DIR, load_score
 from cli import arguments, describe, led_matrix_options, model_defaults
-from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
+from api.disney_api import resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen
@@ -99,7 +99,7 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
         debug.info("WebSocket off; using REST polling only.")
 
 
-def main():
+def main():  # noqa: C901, PLR0912, PLR0915
     # Settings first, as in mlb-led-scoreboard: a bad flag or matrix setting exits before anything
     # starts, and --emulated must switch the driver before the matrix is built.
     config = load_config()

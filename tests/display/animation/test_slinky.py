@@ -38,7 +38,8 @@ def test_slinky_walks_out_then_the_rear_catches_up_and_both_leave():
     dog = animation.SlinkyReveal(64, 32)
     walk = [dog.front_x(f / animation.FPS) for f in range(int(dog.STRETCH_S * animation.FPS))]
     assert walk == sorted(walk) and walk[-1] > walk[0] + 20, "the front half walks steadily right"
-    gap = lambda t: dog.front_x(t) - dog.rear_x(t)
+    def gap(t):
+        return dog.front_x(t) - dog.rear_x(t)
     snap_end = dog.STRETCH_S + dog.HOLD_S + dog.SNAP_S
     assert gap(0.0) < gap(dog.STRETCH_S) > gap(snap_end), "stretches out, then snaps back together"
     assert dog.rear_x(dog.duration) >= 64, "and the whole dog has left the board"

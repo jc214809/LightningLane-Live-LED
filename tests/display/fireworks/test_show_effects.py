@@ -4,7 +4,7 @@ import random
 import pytest
 
 from display.fireworks import show_effects
-from display.fireworks.music_show import CASTLE_LOOKS, EFFECTS, SHAPES, MusicShow
+from display.fireworks.music_show import CASTLE_LOOKS, EFFECTS, MusicShow
 from display.fireworks.score import Cue, load_score
 
 
@@ -64,7 +64,8 @@ def test_each_effect_clears_away_after_its_scene(name):
 def _leftovers(show):
     """Anything an effect still draws once its scene is long over."""
     pixels = {}
-    put = lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb)
+    def put(x, y, rgb):
+        return pixels.__setitem__((int(x), int(y)), rgb)
     for effect in show.extras.values():
         effect.draw_behind(put, pixels, False)
         effect.draw_front(put, pixels, False)
@@ -210,7 +211,7 @@ def test_the_narrators_gate_is_the_yellow_glow_at_half_brightness():
     seen = []
     for name in ("keyhole_glow", "keyhole_glow_dim"):
         pixels = {}
-        show.extras[name].draw_front(lambda x, y, rgb: pixels.__setitem__((x, y), rgb), pixels, True)
+        show.extras[name].draw_front(lambda x, y, rgb, pixels=pixels: pixels.__setitem__((x, y), rgb), pixels, True)
         seen.append(next(iter(pixels.values())))
     bright, dim = seen
     assert all(abs(d * 2 - c) <= 3 for c, d in zip(bright, dim))
@@ -223,7 +224,7 @@ def test_the_gold_gate_glows_steadily():
     for i in range(60):
         show.set_cue(_cue(effects=("keyhole_glow",)), i / 30)
         pixels = {}
-        glow.draw_front(lambda x, y, rgb: pixels.__setitem__((x, y), rgb), pixels, True)
+        glow.draw_front(lambda x, y, rgb, pixels=pixels: pixels.__setitem__((x, y), rgb), pixels, True)
         levels.append(next(iter(pixels.values()))[0] / glow.COLOUR[0])
     assert min(levels) >= 0.79, "never fades towards black"
 

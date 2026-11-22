@@ -27,7 +27,7 @@ _WS_HEARTBEAT_SECS = 30
 _WS_RECEIVE_TIMEOUT_SECS = 120
 
 
-def _apply_live_update(data, parks_data):
+def _apply_live_update(data, parks_data):  # noqa: C901, PLR0912
     """Apply a single WebSocket live-data event to the shared parks_data list."""
     event = data.get("event")
     debug.log(f"WS message: {data}")
@@ -93,7 +93,7 @@ def _apply_live_update(data, parks_data):
                 return
 
 
-async def _ws_loop(api_key, parks_data):
+async def _ws_loop(api_key, parks_data):  # noqa: C901, PLR0912, PLR0915
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     delay = _RECONNECT_DELAY_INITIAL
     is_reconnect = False

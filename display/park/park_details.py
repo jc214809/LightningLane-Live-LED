@@ -25,7 +25,7 @@ def render_park_information_screen(matrix, park_obj):
     board_height = matrix.height
 
     # Determine bottom area height using info_font's height.
-    info_font_height = getattr(loaded_fonts["info"], "height")
+    info_font_height = loaded_fonts["info"].height
 
     baseline_y = board_height - 1
     # Wrap park name

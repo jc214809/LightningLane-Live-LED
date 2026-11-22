@@ -72,6 +72,6 @@ from display.landmarks.screen import (  # noqa: F401
 )
 
 # Shared objects the tests patch attributes of (graphics.DrawText, loaded_fonts[...]).
-from driver import graphics  # noqa: F401,E402
-from display.display import loaded_fonts  # noqa: F401,E402
-from utils.special_events import DATED_LANDMARKS, SPECIAL_EVENTS  # noqa: F401,E402  (tests check every party's and day's landmark exists)
+from driver import graphics  # noqa: F401
+from display.display import loaded_fonts  # noqa: F401
+from utils.special_events import DATED_LANDMARKS, SPECIAL_EVENTS  # noqa: F401  (tests check every party's and day's landmark exists)

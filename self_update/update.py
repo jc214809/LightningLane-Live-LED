@@ -142,7 +142,7 @@ def name_of(old):
 
 
 class Updater:
-    def __init__(self, board, state=None, gh=github, installed_version=None, config_path=None,
+    def __init__(self, board, state=None, gh=github, installed_version=None, config_path=None,  # noqa: PLR0913
                  heartbeat_path=None, notify=None, clock=time.time, sleep=time.sleep):
         from version import version
         self.board, self.state, self.gh = board, state or states.State(), gh
@@ -214,7 +214,7 @@ class Updater:
         except states.Busy as e:
             return Outcome(BLOCKED, str(e))
 
-    def _update(self, channel, dry_run=False):
+    def _update(self, channel, dry_run=False):  # noqa: C901
         record = self.state.load()
         if record["phase"] in states.UNFINISHED:
             return Outcome(BLOCKED, f"an earlier update didn't finish (it stopped at {record['phase']}): "

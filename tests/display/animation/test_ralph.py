@@ -67,7 +67,8 @@ def test_his_fists_go_up_before_the_slam(height, pose):
     standing = FakeCanvas(64, height)
     _ralph(height).overlay(standing, ralph.WALK_S - 0.01)
     skin = Ralph.COLORS["S"]
-    top_skin = lambda canvas: min(y for (x, y), rgb in canvas.px.items() if rgb == skin)
+    def top_skin(canvas):
+        return min(y for (x, y), rgb in canvas.px.items() if rgb == skin)
     assert top_skin(winding) <= top_skin(standing), "his fists are up at or above his face"
     if height == 64:
         hair = Ralph.COLORS["H"]

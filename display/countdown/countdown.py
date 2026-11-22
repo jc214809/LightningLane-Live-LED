@@ -3,7 +3,7 @@ import math
 from display.motion import ease_out
 from display.display import draw_text, get_text_width, loaded_fonts, color_dict
 from display.fireworks.fireworks import castle_sprite, _CASTLE_COLORS
-from utils.trips import countdown_message  # noqa: F401 (its words live with the trips; re-exported here)
+from utils.trips import countdown_message  # its words live with the trips; re-exported here
 
 # The castle stays 1x on 64-row boards too: doubled it leaves no room for the number.
 CASTLE_PIXELS, CASTLE_W, CASTLE_H = castle_sprite(32)

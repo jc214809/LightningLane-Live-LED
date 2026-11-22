@@ -923,7 +923,7 @@ def _rotation_preview():
             'picture. Pick the one that puts the castle the right way up on your panel.</p></div>')
 
 
-def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),
+def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),  # noqa: PLR0913, PLR0915
                   panel=None, updates=None, started=None, now=None, today=None):
     """The settings form, filled from config. sound_cards: ALSA device names for the dropdown.
     note: why config.json couldn't be read, if it couldn't. park_names: [(name, destination)]
@@ -1076,9 +1076,9 @@ def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, bo
             f'<label><span class="mini">Version</span>'
             + _options(f"show_version_{i}", [(v, v.upper() if v != "default" else "Default") for v in SHOW_VERSIONS],
                        entry.get("version", "default"), f' aria-label="{label} version"')
-            + f'</label><label><span class="mini">Play</span>'
+            + '</label><label><span class="mini">Play</span>'
             + _switch_input(f"show_enabled_{i}", entry.get("enabled", True), f' aria-label="Play {label}"')
-            + f'</label><label><span class="mini">Test</span>'
+            + '</label><label><span class="mini">Test</span>'
             + _switch_input(f"show_force_{i}", entry.get("force"), f' aria-label="Play {label} at start-up"')
             + "</label></div></div>")
     castle = landmarks().get(CASTLE_KEY)
@@ -1189,7 +1189,7 @@ def _short(sha):
     return escape(str(sha)[:7]) if sha else "?"
 
 
-def _post(action, label, glyph, busy, kind="secondary", fields="", confirm=None, disabled=False):
+def _post(action, label, glyph, busy, kind="secondary", fields="", confirm=None, disabled=False):  # noqa: PLR0913
     """A one-button form of the Updates card. busy: the button's text while it works."""
     extra = f' data-confirm="{_attr(confirm)}"' if confirm else ""
     return (f'<form method="post" action="{action}" data-busy="{_attr(busy)}"{extra}>{fields}'
@@ -1304,7 +1304,7 @@ def updates_card(view, started=None):
         installed = (f'<p><strong>{escape(str(view["version"]))}</strong> <span class="mono">{_short(view["sha"])}'
                      f'</span></p><p class="hint">{where}</p>')
     channel = view["channel"]
-    check_form = (f'<form method="post" action="/update/check" data-busy="Checking\u2026" class="add-row">'
+    check_form = ('<form method="post" action="/update/check" data-busy="Checking\u2026" class="add-row">'
                   + _options("channel", [(RELEASES, "Releases"), (BETA, "Beta")], channel)
                   + f'<button type="submit" class="secondary"{" disabled" if running else ""}>{icon("refresh")}'
                     '<span>Check</span></button></form>')

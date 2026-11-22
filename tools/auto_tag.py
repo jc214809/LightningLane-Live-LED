@@ -21,7 +21,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from self_update.board import Board  # noqa: E402
+from self_update.board import Board
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BETA, RELEASE = "beta", "release"

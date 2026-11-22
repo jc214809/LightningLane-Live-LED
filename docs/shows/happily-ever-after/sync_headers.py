@@ -3,7 +3,9 @@ asks about what the board does now. Scenes pair up in order; answers, checks and
 
     python3 docs/shows/happily-ever-after/sync_headers.py
 """
-import json, math, re
+import json
+import math
+import re
 
 WATCH = "docs/shows/happily-ever-after/WATCH.md"
 SCORE = "display/fireworks/shows/happily-ever-after.json"

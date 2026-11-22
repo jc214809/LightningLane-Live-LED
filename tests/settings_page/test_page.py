@@ -217,7 +217,8 @@ def test_an_imported_page_says_it_is_not_saved_and_a_refused_one_says_why():
 
 def test_the_rides_on_the_page_are_posted_with_a_marker_whenever_they_are_the_ones_to_save():
     from settings_page.surprises_page import surprises_page
-    marker = lambda html, name: re.findall(rf'<input type="hidden" name="rides_set_{name}" value="(\w*)">', html)
+    def marker(html, name):
+        return re.findall(rf'<input type="hidden" name="rides_set_{name}" value="(\w*)">', html)
     html = surprises_page({"characters": {"genie": {"rides": ["Test Track"]}, "falcon": {"rides": []}}}, rides=RIDES)
     assert marker(html, "genie") == ["saved"] and marker(html, "falcon") == ["saved"], "saved rides, even none"
     assert marker(html, "rex") == ["1"], "the default rides, ticked and known"

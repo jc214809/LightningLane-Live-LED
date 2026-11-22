@@ -357,7 +357,8 @@ def test_mickey_pumpkin_head_is_filled_in_around_its_face_on_both_boards(radius)
     # The dark gap round the carved face once joined up on the small pumpkin and left its head
     # an outline and a face (8% filled); the old "any fill at all" check passed on the ears alone.
     points = fireworks._mickey_pumpkin_points(radius)
-    led = lambda x, y: (round(x * radius), round(y * radius))
+    def led(x, y):
+        return (round(x * radius), round(y * radius))
     fill = {led(x, y) for x, y, c in points if c == fireworks.PUMPKIN_FILL_RGB}
     face = {led(x, y) for x, y, c in points if c == fireworks.FACE_RGB}
     head = [(x, y) for x in range(-radius, radius + 1) for y in range(-radius, radius + 1)
@@ -514,11 +515,13 @@ def test_snowflake_has_six_white_arms_with_icy_tips(radius):
 @pytest.mark.parametrize("radius", [5, 9])  # the ornament's size on 64x32 and on 64x64
 def test_mickey_ornament_has_a_red_outline_a_filled_head_a_gold_cap_and_a_shine(radius):
     points = fireworks._mickey_ornament_points(radius)
-    count = lambda rgb: sum(1 for p in points if p[2] == rgb)
+    def count(rgb):
+        return sum(1 for p in points if p[2] == rgb)
     assert count(fireworks.ORNAMENT_RGB) > count(fireworks.CAP_RGB) > 0
     assert count(fireworks.ORNAMENT_FILL_RGB) > count(fireworks.CAP_RGB), "filled in"
     assert 2 <= count(fireworks.SHINE_RGB) <= 4
-    led = lambda x, y: (round(x * radius), round(y * radius))
+    def led(x, y):
+        return (round(x * radius), round(y * radius))
     shine = {led(x, y) for x, y, c in points if c == fireworks.SHINE_RGB}
     assert all(x < 0 and y < 0 for x, y in shine), "upper left"
     fill = {led(x, y) for x, y, c in points if c == fireworks.ORNAMENT_FILL_RGB}
@@ -650,7 +653,8 @@ def test_the_sleigh_flies_and_is_drawn_over_the_sky_facing_the_way_it_goes():
     left = show._sleigh_pixels(left_sleigh)
     base = int(round(left_sleigh[0]))
     width = len(show.sleigh_art[0])
-    rudolph = lambda pixels, x0: {x - x0 for x, y, c in pixels if c in (fireworks._NOSE_BRIGHT, fireworks._NOSE_DIM)}
+    def rudolph(pixels, x0):
+        return {x - x0 for x, y, c in pixels if c in (fireworks._NOSE_BRIGHT, fireworks._NOSE_DIM)}
     assert rudolph(right, base) and min(rudolph(right, base)) > width * 0.9, "Rudolph leads"
     assert rudolph(left, base) == {width - 1 - x for x in rudolph(right, base)}, "mirrored"
     assert {(x - base, y) for x, y, _ in left} == {(width - 1 - x + base, y) for x, y, _ in right}

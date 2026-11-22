@@ -83,7 +83,7 @@ class SantaTrainLandmark(Landmark):
 
     SCREEN_S = 16.0  # 64x64's; each board sets its own in build: the sweep and wipe, the drive and the hold
 
-    def build(self):
+    def build(self):  # noqa: C901
         w, h = self.width, self.height
         big = h >= 64
         train = TRAIN_64 if big else TRAIN_32
@@ -198,7 +198,7 @@ class SantaTrainLandmark(Landmark):
         """Which of the SPIN_STEPS wheel positions shows at scene time t: they roll, turning clockwise."""
         return int(self.travelled(t) / self.roll_r / (2 * math.pi) * SPIN_STEPS) % SPIN_STEPS
 
-    def frame(self, t):
+    def frame(self, t):  # noqa: C901
         out = dict(self.base)
         for x, y, phase in self.stars:
             if y < self.rail_y:
@@ -286,7 +286,7 @@ def rider_state(kind, big, t, travelled, order, blinks):
     return bob, blink, wave, wag, pant
 
 
-def rider_patch(piece, kind, big, state):
+def rider_patch(piece, kind, big, state):  # noqa: C901
     """The rider's art in `state` (rider_state's): the wave, blink, tail and tongue laid over it, then the bob."""
     bob, blink, wave, wag, pant = state
     rows = [list(row) for row in piece]

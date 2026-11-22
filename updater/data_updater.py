@@ -29,7 +29,7 @@ def merge_live_data(existing_attractions, new_live_data):
 
     # Create a mapping from attraction id to the existing attraction object.
     attraction_map = {attr["id"]: attr for attr in existing_attractions}
-    debug.log(f"Starting to update new live data for attractions.")
+    debug.log("Starting to update new live data for attractions.")
     for new_attr in new_live_data:
         attr_id = new_attr.get("id")
 

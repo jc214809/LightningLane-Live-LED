@@ -189,7 +189,7 @@ class OlafReveal:
         """[(x, y)] of the snowflakes falling over the whole board at t."""
         out = []
         span = self.height + 2
-        for k, (x0, speed, start, sway) in enumerate(self.flakes):
+        for x0, speed, start, sway in self.flakes:
             if t < start:
                 continue
             fallen = (t - start) * speed
@@ -242,7 +242,7 @@ class OlafReveal:
                     kind = "W"
                 px[(x0 + col, y0 + row)] = self.colors[kind]
 
-    def pixels(self, t):
+    def pixels(self, t):  # noqa: C901
         """Every pixel he and the snow cover at time t, {(x, y): rgb}, clipped to the board."""
         if t >= self.duration:
             return {}

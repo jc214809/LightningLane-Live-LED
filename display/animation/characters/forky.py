@@ -186,7 +186,8 @@ class ForkyReveal(CapturesScreens):
     def _order_prev(self):
         """The old screen's lit pixels with when each one's pulled in: nearest the hole first."""
         far = math.hypot(max(self.hole_x, self.width - self.hole_x), self.height)
-        reach = lambda x, y: math.hypot(x - self.hole_x, y - self.height) / far * 0.65
+        def reach(x, y):
+            return math.hypot(x - self.hole_x, y - self.height) / far * 0.65
         self.prev_order = [(x, y, rgb, reach(x, y) + self.rng.uniform(0, 0.1))
                            for (x, y), rgb in self.prev_px.items()]
         # Its dark pixels stay black until the hole reaches them, then simply go.

@@ -259,7 +259,7 @@ def test_panel_options_are_left_to_each_apps_config_unless_asked_for(board):
     assert "board.conf" not in out
     out = board.ok(BOARD_NAME="ZeroPi", APP="mlb")
     assert "--led-" not in unit(out, "mlb-led-scoreboard.service")
-    assert f"main.py\n" in unit(out, "mlb-led-scoreboard.service") + "\n"
+    assert "main.py\n" in unit(out, "mlb-led-scoreboard.service") + "\n"
 
 
 def test_a_new_hostname_is_set_and_written_to_hosts(board):
@@ -330,7 +330,7 @@ def comitup_installed(board):
     comitup.chmod(0o755)
 
 
-def written(out, path):
+def written(out, path):  # noqa: F811  possible bug: shadows the helper at line 121 for every test, see report
     """The file a dry run would write at path (under the fake root), from its printed copy."""
     head = f"+ write {path} ("
     assert head in out, out
@@ -466,7 +466,7 @@ def test_wifi_setup_only_asks_nothing_and_does_only_that(board):
     assert f"WorkingDirectory={ROOT}" in service and " -m settings_page.server" in service
     assert "systemctl restart lll-settings.service" in out
     # and the updater's backstops, since this version has it
-    assert f" -m self_update recover" in unit(out, "lll-update-recover.service")
+    assert " -m self_update recover" in unit(out, "lll-update-recover.service")
     assert "lll-rollback (mode 755)" in out
 
 

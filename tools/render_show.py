@@ -152,7 +152,7 @@ def download_recording(url, out):
                     "--merge-output-format", "mp4", "-o", out, url], check=True)
 
 
-def main(argv=None):
+def main(argv=None):  # noqa: C901, PLR0912, PLR0915
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--show", default="happily-ever-after", help="the show's clip name (its score's file name)")
     parser.add_argument("--height", type=int, choices=HEIGHTS, action="append", help="one board (default both)")

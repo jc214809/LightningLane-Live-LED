@@ -66,7 +66,7 @@ class Settings:
     park_names.json beside config.json), one save at a time, and the Updates card's updates.Updates.
     send_pushover: pushover.send_pin."""
 
-    def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,
+    def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,  # noqa: PLR0913
                  state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE,
                  send_pushover=pushover.send_pin, updates=None, ride_names=None, heartbeat_file=None):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
@@ -358,7 +358,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_json(400, {"ok": False, "message": "That isn't a volume button."})
         self._send_json(200, {"ok": ok, "message": message})
 
-    def do_POST(self):
+    def do_POST(self):  # noqa: C901, PLR0912
         path = urlsplit(self.path).path
         if not self._same_origin():
             return self._send(403, page.message_page("Not allowed", "That form came from another site."))
@@ -484,7 +484,8 @@ def volume_only(old, new):
         if isinstance(config.get("sound"), dict):
             config["sound"] = {k: v for k, v in config["sound"].items() if k != "volume"}
         return config
-    volume = lambda config: (config.get("sound") or {}).get("volume") if isinstance(config.get("sound"), dict) else None
+    def volume(config):
+        return (config.get("sound") or {}).get("volume") if isinstance(config.get("sound"), dict) else None
     return volume(old) != volume(new) and without_volume(old) == without_volume(new)
 
 

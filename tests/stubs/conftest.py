@@ -3,7 +3,6 @@ import sys
 import types
 
 import io
-import json
 
 # Dummy JSON config that will be used whenever someone tries to open "config.json"
 DUMMY_CONFIG = '{"debug": true, "trip_countdown": {"trip_date": "2023-10-01", "enabled": true}}'
@@ -18,7 +17,7 @@ def dummy_open(file, mode='r', *args, **kwargs):
 
 # Patch builtins.open so that tests that import disney.py (which calls load_config)
 # will use our dummy_open function. This is done early in conftest.py.
-import builtins
+import builtins  # noqa: E402  (the dummy open above must exist first)
 builtins.open = dummy_open
 
 # (Optional) Add stubs directory to sys.path if needed.

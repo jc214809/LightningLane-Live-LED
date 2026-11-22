@@ -1,6 +1,6 @@
 # Code health: plan
 
-Status: not started (written 2026-11-22). Next: phase 1.
+Status: phase 1 in review (written 2026-11-22). Next: phase 2 after phase 1 merges.
 
 Goal: raise code quality and make the structure easier to work in, without changing what
 any board shows or does. Tests check behaviour today (pytest, 90% coverage); nothing checks
@@ -181,6 +181,11 @@ beats preference. Not a reason to change behaviour: every refactor in this plan 
 byte-identical in output.
 
 ## Measured baseline (2026-11-22, ruff 0.17.5, `--isolated`)
+
+Recorded in the code by phase 1 (`noqa` directives per code, 2026-11-22): `C901` 38, `PLR0912` 23,
+`PLR0913` 16, `PLR0915` 11 (88 in 55 lines). `C901` is one above the 37 measured below because
+turning an assigned lambda into a `def` (E731) adds a branch to the function around it. The
+non-structural hits (E731, F401, B007, ...) are fixed or carry a `noqa` with its reason.
 
 | Check | Hits |
 |---|---|

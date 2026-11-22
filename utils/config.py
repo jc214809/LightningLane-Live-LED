@@ -179,7 +179,7 @@ def load_surprises(path=SURPRISES_FILE):
     return data
 
 
-def surprise_settings(data):
+def surprise_settings(data):  # noqa: C901, PLR0912
     """surprises.json (load_surprises): {"enabled": true, "characters": {"tron": {"on": false},
     "genie": {"chance": 1.5}, "falcon": {"ride_chance": 25, "rides": ["Space Mountain"]}}}. Which characters may visit on ride screens
     and park titles, and each one's percent of ride screens anywhere ("chance") and on their own rides

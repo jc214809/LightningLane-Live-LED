@@ -99,7 +99,7 @@ class UpHouseFloats(Actor):
     }
     CHIMNEY_COL = 12
 
-    def __init__(self, show):
+    def __init__(self, show):  # noqa: C901, PLR0912
         super().__init__(show)
         self.w, self.h = len(self.ART[0]), len(self.ART)
         cells = {}

@@ -251,7 +251,7 @@ class GenieReveal:
                           for sy in range(s) for sx in range(s)]
         return self._full
 
-    def _draw_genie(self, canvas, t):
+    def _draw_genie(self, canvas, t):  # noqa: C901
         """
         Draw him at `grow(t)` of full size. Below full size every cell is pulled toward
         the spout by that factor, so he swells out of the smoke rather than fading in.

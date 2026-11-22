@@ -115,14 +115,15 @@ def default_rides(name, rides):
                    if any(piece in ride.lower() for piece in pieces)}, key=str.lower)
 
 
-def apply_surprises(data, form, rides=None):
+def apply_surprises(data, form, rides=None):  # noqa: C901, PLR0912
     """(the surprises.json to save, [problems]) from the Surprise characters page's form. A ticked box lets
     that character visit; a chance left blank is the default (utils/surprises.py), so a character at its
     defaults has no entry at all, and no rides chosen means its usual rides. Characters and settings the
     page doesn't know (a newer version's) stay."""
     new = copy.deepcopy(data) if isinstance(data, dict) else {}
     problems = []
-    one = lambda name: (form.get(name) or [""])[0].strip()
+    def one(name):
+        return (form.get(name) or [""])[0].strip()
     characters = new.get("characters") if isinstance(new.get("characters"), dict) else {}
     for name, anywhere, own, _ in surprise_rows():
         old = characters.get(name) if isinstance(characters.get(name), dict) else {}
@@ -131,7 +132,7 @@ def apply_surprises(data, form, rides=None):
             entry.pop("rides", None)
         if one(f"surprise_{name}") != "on":
             entry["on"] = False
-        for key, default in (("chance", anywhere), ("ride_chance", own)):
+        for key, _ in (("chance", anywhere), ("ride_chance", own)):
             text = one(f"{key}_{name}")
             if not text:
                 continue
@@ -191,7 +192,7 @@ def _percent(value):
     return not isinstance(value, bool) and isinstance(value, (int, float)) and 0 <= value <= 100
 
 
-def import_surprises(text, rides=None):
+def import_surprises(text, rides=None):  # noqa: C901, PLR0912, PLR0915
     """(the surprises.json the pasted text makes, [problems], [names skipped]), for moving one board's Surprise
     characters settings to another: the text is what the Export button copied (or a surprises.json). Only what the
     page itself would save is kept, and what is only a default (an "on" of true, a chance, or rides that are the
@@ -352,7 +353,8 @@ def _date_text(value):
 
 def chosen_device(form):
     """The speaker the form picks: one from the list, one typed under Other device, or None."""
-    one = lambda name: (form.get(name) or [""])[0].strip()
+    def one(name):
+        return (form.get(name) or [""])[0].strip()
     return (one("sound_device_custom") if one("sound_device") == "custom" else one("sound_device")) or None
 
 
@@ -366,7 +368,7 @@ def volume_from_form(form):
     return None, f"Volume should be 0 to 100, not {text!r}."
 
 
-def apply_form(config, form, park_names=()):
+def apply_form(config, form, park_names=()):  # noqa: C901, PLR0912, PLR0915
     """(the config to save, [problems]) from the posted form: {field: [values]}, as
     urllib.parse.parse_qs(..., keep_blank_values=True) gives it. With any problem, nothing
     should be saved. park_names: park_names.ParkNames.names(), the names a park may have."""

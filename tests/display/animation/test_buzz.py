@@ -56,7 +56,8 @@ def test_buzz_wings_snap_open_with_a_flash_as_he_hovers():
         return canvas.px
 
     before, after = drawn(buzz.RISE_S - 0.05), drawn(buzz.RISE_S + buzz.FLASH_S + 0.05)
-    width = lambda px: max(x for x, _ in px) - min(x for x, _ in px)
+    def width(px):
+        return max(x for x, _ in px) - min(x for x, _ in px)
     assert width(after) > width(before) + 6, "folded, then spread"
     assert buzz.FLASH_RGB in drawn(buzz.RISE_S + 0.02).values(), "a flash at the wing tips as they open"
     assert buzz.FLASH_RGB not in after.values()

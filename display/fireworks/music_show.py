@@ -161,7 +161,7 @@ EFFECTS = _OWN_EFFECTS | set(show_effects.EFFECTS)
 class _Rocket:
     __slots__ = ("x", "y", "vx", "vy", "burst_y", "color", "shape", "style")
 
-    def __init__(self, x, y, vx, vy, burst_y, color, shape=None, style=None):
+    def __init__(self, x, y, vx, vy, burst_y, color, shape=None, style=None):  # noqa: PLR0913
         self.x, self.y, self.vx, self.vy = x, y, vx, vy
         self.burst_y = burst_y
         self.color = color
@@ -357,7 +357,7 @@ class MusicShow:
         for c in range(3):
             self.flash[c] = min(1.0, self.flash[c] + rocket.color[c] / 255 * 0.6)
 
-    def step(self):
+    def step(self):  # noqa: C901, PLR0912, PLR0915
         rng = self.rng
         if self.rate > 0:
             if self.frames_to_next_launch <= 0:
@@ -484,7 +484,7 @@ class MusicShow:
         y = sy + (top - sy) * smooth(p / 0.5) + math.sin(p * math.pi * 4) * self.tink_scale
         return x, y
 
-    def frame_pixels(self):
+    def frame_pixels(self):  # noqa: C901, PLR0912, PLR0915
         """Compose the current frame as {(x, y): (r, g, b)}; unlisted pixels are black."""
         out = {}
         width, height, seen = self.width, self.height, out.get

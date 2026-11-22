@@ -188,14 +188,17 @@ def test_walle_side_works_like_a_baler_in_order():
 
 def test_walle_side_door_is_open_to_collect_and_eject_and_shut_to_press():
     walle = _walle_side()
-    during = lambda name: walle.phase_start(name) + 0.05
+    def during(name):
+        return walle.phase_start(name) + 0.05
     assert not walle.door_open(during("look"))
     assert walle.door_open(during("compact")) and walle.door_open(during("eject"))
-    shut = lambda name: walle.phase_start(name) + walle.DOOR_SWING_S + 0.01
+    def shut(name):
+        return walle.phase_start(name) + walle.DOOR_SWING_S + 0.01
     assert not walle.door_open(shut("press")) and not walle.door_open(shut("pickup"))
     canvas = FakeCanvas(64, 32)
     walle.overlay(canvas, during("compact"))
-    yellow = lambda cells: all(canvas.px.get((walle.STOP_X + c, walle.y0 + r)) == walle.COLORS["Y"] for c, r in cells)
+    def yellow(cells):
+        return all(canvas.px.get((walle.STOP_X + c, walle.y0 + r)) == walle.COLORS["Y"] for c, r in cells)
     hx, hy = walle.DOOR_HINGE
     assert yellow([(hx + i, hy) for i in range(walle.DOOR_LEN + 1)]), "flat open, joined to him by a yellow hinge"
 

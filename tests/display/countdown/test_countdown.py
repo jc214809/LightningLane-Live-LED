@@ -172,5 +172,6 @@ def test_everything_stays_on_the_board_and_off_the_castle(height, trip):
 
 def test_castle_stays_1x_on_64_row_boards():
     small, big = render(42, 32).px, render(42, 64).px
-    width = lambda px: max(x for x, _ in px) - min(x for x, _ in px)
+    def width(px):
+        return max(x for x, _ in px) - min(x for x, _ in px)
     assert width(small) == width(big)

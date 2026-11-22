@@ -279,7 +279,8 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
         lit = self._lit(t)
         if not lit:
             return []
-        fade = lambda rgb, k=lit: tuple(int(c * k) for c in rgb)
+        def fade(rgb, k=lit):
+            return tuple(int(c * k) for c in rgb)
         if self.short:
             return self._short_title(t, fade)
         lines = [(text, self.width / 2, 1 + i * (self.TITLE_ROW_H + 1), fade(rgb))

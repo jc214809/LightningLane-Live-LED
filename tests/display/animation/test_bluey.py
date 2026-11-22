@@ -41,7 +41,7 @@ def test_bluey_faces_the_way_they_walk_with_her_nose_showing(attr):
 @pytest.mark.parametrize("attr", ["BINGO_ART", "BIG_BINGO_ART"])
 def test_bingos_eyes_sit_in_white_inside_her_purple_hood(attr):
     art = getattr(GRANNIES, attr)
-    for r, row in enumerate(art):
+    for row in art:
         for c, ch in enumerate(row):
             if ch == "P":
                 assert "W" in (row[c - 1], row[c + 1]), "a pupil in the white of her eye"

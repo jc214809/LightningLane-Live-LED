@@ -133,7 +133,7 @@ class StitchSurfReveal(CapturesScreens):
             return self.crest * (1 - (u / self.face) ** 0.6)  # steep under the lip, easing out
         return 0
 
-    def overlay(self, canvas, t):
+    def overlay(self, canvas, t):  # noqa: C901, PLR0912
         if t >= self.duration:
             return False
         w, h = self.width, self.height

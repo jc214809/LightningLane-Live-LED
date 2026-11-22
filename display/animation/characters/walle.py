@@ -388,7 +388,8 @@ class WallESideReveal(WallEReveal):
     def door_angle(self, t):
         """0 shut to 1 lying flat open: it swings open to collect and to eject, and shut after each."""
         phase, p = self._phase(t)
-        swing = lambda q: ease_out(min(1.0, q / self.DOOR_SWING_S))
+        def swing(q):
+            return ease_out(min(1.0, q / self.DOOR_SWING_S))
         if phase == "open":
             return swing(p)
         if phase == "compact":
@@ -444,7 +445,7 @@ class WallESideReveal(WallEReveal):
 
     # --- drawing ---
 
-    def _draw_walle(self, canvas, t, x):
+    def _draw_walle(self, canvas, t, x):  # noqa: C901, PLR0912
         x0 = int(round(x)) + self.jolt(t)
         phase, p = self._phase(t)
         rolling = phase in ("enter", "leave") and int(x) % 2

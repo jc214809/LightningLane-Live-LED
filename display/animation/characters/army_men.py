@@ -192,7 +192,7 @@ class ArmyMenReveal(CapturesScreens):
 
     # --- drawing -----------------------------------------------------------------
 
-    def overlay(self, canvas, t):
+    def overlay(self, canvas, t):  # noqa: C901
         if t >= self.duration:
             return False
         self._cy = self._curtain_y(t)
@@ -208,7 +208,7 @@ class ArmyMenReveal(CapturesScreens):
         march, lift = self._hop(t)
         hop_age = self._last_hop_landing(t)
         # Slumped chutes lie on the ground behind the soldiers, so draw them all first.
-        for i, (frac, delay) in enumerate(self.UNITS):
+        for frac, delay in self.UNITS:
             since = t - self._unit_land_time(delay)
             if 0 <= since < self.COLLAPSE_S:
                 self._draw_collapsing_chute(canvas, int(frac * self.width), since / self.COLLAPSE_S)

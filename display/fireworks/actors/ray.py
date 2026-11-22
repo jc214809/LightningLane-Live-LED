@@ -67,7 +67,7 @@ class RayGlows(Actor):
         """0.55 (dimmest) to 1 (brightest), swelling slowly."""
         return 0.775 + 0.225 * math.sin(2 * math.pi * e / self.PULSE_S)
 
-    def draw(self, put, out, active):
+    def draw(self, put, out, active):  # noqa: C901
         if not active:
             return
         show = self.show

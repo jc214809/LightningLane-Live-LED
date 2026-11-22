@@ -6,7 +6,7 @@ from utils import heartbeat
 
 
 class FakeUpdater:
-    def __init__(self, tmp_path, outcome=Outcome("updated", "updated to v2.2.0 (2222222)")):
+    def __init__(self, tmp_path, outcome=Outcome("updated", "updated to v2.2.0 (2222222)")):  # noqa: B008  the fake only returns it
         from self_update.state import State
         self.state, self.outcome, self.asked = State(str(tmp_path / "lll-update")), outcome, []
         self.installed_version, self.heartbeat_path, self.clock = "2.1.0", str(tmp_path / "health"), lambda: 1030.0

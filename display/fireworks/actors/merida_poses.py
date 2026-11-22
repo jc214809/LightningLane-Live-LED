@@ -192,7 +192,7 @@ def _apply(cells, rows):
             cells[(x, y)] = k
 
 
-def split(pose, release=None):
+def split(pose, release=None):  # noqa: C901, PLR0912
     """
     Her layers {(x, y): kind} for 'rest' (her bow arm free, her other hand on her hip) or 'draw' (the art as
     drawn), release seconds after she lets go: (skirt, body, bow arm, bow and string).

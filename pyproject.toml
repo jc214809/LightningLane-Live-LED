@@ -18,3 +18,73 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["api*", "display*", "driver*", "parks*", "updater*", "utils*"]
+
+# Code-health checks: see docs/dev/CODE-QUALITY.md.
+[tool.ruff]
+# The boards run 3.11 (docs/dev/CODE-QUALITY.md).
+target-version = "py311"
+# Ignored folders that can hold Python (virtualenvs, build output).
+extend-exclude = [".venv*", "build", "dist"]
+
+[tool.ruff.lint]
+# E/F/W/B: pycodestyle, pyflakes, bugbear. C901, PLR0912/0913/0915: complexity, branches, arguments,
+# statements. RUF100: fails on a `noqa` that no longer suppresses anything, so the baseline only shrinks.
+select = ["E", "F", "W", "B", "C901", "PLR0912", "PLR0913", "PLR0915", "RUF100"]
+# E501 (line length) and B905 (zip strict=, a behaviour change) are phase 3 of the plan.
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.mccabe]
+# Ruff's default, written down so it is visible.
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+# Draw helpers legitimately take many arguments: 7, not the default 5.
+max-args = 7
+
+# Which package may import which: see docs/dev/CODE-QUALITY.md. Run with `lint-imports`.
+[tool.importlinter]
+root_packages = [
+    "api",
+    "parks",
+    "updater",
+    "display",
+    "driver",
+    "utils",
+    "settings_page",
+    "self_update",
+]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "api and parks stay below the display, the services and the driver"
+type = "forbidden"
+source_modules = ["api", "parks"]
+forbidden_modules = ["updater", "display", "settings_page", "self_update", "driver"]
+
+[[tool.importlinter.contracts]]
+name = "display does not fetch: no api, aiohttp, requests or updater (but updater.shared)"
+type = "forbidden"
+source_modules = ["display"]
+forbidden_modules = ["api", "aiohttp", "requests", "updater"]
+allow_indirect_imports = true
+ignore_imports = [
+    "display.* -> updater.shared",
+    # Weather icon fetch; see the plan's phase 3 (docs/plans/CODE-HEALTH-PLAN.md).
+    "display.park.park_details -> requests",
+]
+
+[[tool.importlinter.contracts]]
+name = "driver is a foundation: it imports no other package of this app"
+type = "forbidden"
+source_modules = ["driver"]
+forbidden_modules = ["api", "parks", "updater", "display", "settings_page", "self_update"]
+
+[[tool.importlinter.contracts]]
+name = "utils is a foundation: it imports nothing above it"
+type = "forbidden"
+source_modules = ["utils"]
+forbidden_modules = ["api", "parks", "updater", "display", "self_update", "settings_page"]
+ignore_imports = [
+    # The PIN file's path is owned by the settings service.
+    "utils.settings_pin -> settings_page.pins",
+]

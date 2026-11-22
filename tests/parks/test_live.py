@@ -38,7 +38,8 @@ def _parks_with_show(name="Happily Ever After", starts=(HEA_START,)):
 
 def test_show_start_due_only_inside_the_window_after_a_start():
     parks = _parks_with_show()
-    at = lambda **kw: HEA_START + timedelta(**kw)
+    def at(**kw):
+        return HEA_START + timedelta(**kw)
     assert show_start_due(parks, "Happily Ever After", 300, now=at(seconds=-1)) is None, "not before it starts"
     assert show_start_due(parks, "Happily Ever After", 300, now=at(seconds=0)) == HEA_START
     assert show_start_due(parks, "Happily Ever After", 300, now=at(seconds=299)) == HEA_START

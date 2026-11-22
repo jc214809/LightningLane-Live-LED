@@ -42,7 +42,7 @@ class Capture:
         self.px = {}
 
 
-def _glyphs(path):
+def _glyphs(path):  # noqa: C901
     """{codepoint: (advance, height, x_offset, y_offset, rows, width)} from a BDF file, rows as bit strings."""
     if path not in _glyph_cache:
         glyphs, current, rows = {}, None, None

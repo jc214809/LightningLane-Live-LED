@@ -2,7 +2,6 @@ import math
 
 from display.animation.drawing import walking_pixels
 from display.animation.motion import FPS
-from display.motion import progress, smooth
 from display.pixels import art_pixels, paint
 
 

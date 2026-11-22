@@ -83,7 +83,7 @@ def landmark_modules():
     return out
 
 
-def _add(sprites, seen, character, attr, value, palette_attr, palette, fixed):
+def _add(sprites, seen, character, attr, value, palette_attr, palette, fixed):  # noqa: PLR0913
     if _is_art(value):
         frames = [value]
     elif isinstance(value, list) and value and all(_is_art(f) for f in value):

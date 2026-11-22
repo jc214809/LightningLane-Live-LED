@@ -419,7 +419,8 @@ function readLined(img) {
 @needs_node
 def test_grid_lines_only_keeps_art_that_matches_the_sky_and_drops_a_busy_backdrop():
     result = _run_core(_OVER_PICTURE_JS + "console.log(JSON.stringify(readLined(overPicture(12, 9, 11))));")
-    shape = lambda rows: ["".join("." if k == "." else "#" for k in row) for row in rows]
+    def shape(rows):
+        return ["".join("." if k == "." else "#" for k in row) for row in rows]
     assert shape(result["lined"]) == shape(_PATTERN), "sky, cloud and floor go; the sky-blue cell and the dark bottom stay"
     assert result["lined"][2][3] == "B" and result["lined"][-1][3] not in "R.", "the sky-blue middle, and the navy tip as its own key"
     assert result["byColor"] != _PATTERN, "by color alone the sky-blue cell would go with the sky"

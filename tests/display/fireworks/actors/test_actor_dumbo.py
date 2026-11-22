@@ -108,16 +108,20 @@ def test_nothing_when_his_scene_is_off():
 def test_dumbo_flaps_both_ears_over_his_hat_and_paddles_his_legs():
     dumbo = DumboFlies(MusicShow(64, 64, random.Random(6)))
     level, up, down = (dumbo.frames[i] for i in (0, 2, 6))
-    cells = lambda art, keys: {(x, y) for y, row in enumerate(art) for x, k in enumerate(row) if k in keys}
+    def cells(art, keys):
+        return {(x, y) for y, row in enumerate(art) for x, k in enumerate(row) if k in keys}
     pink = "Ii"  # the near ear's insides
     assert min(y for _, y in cells(up, pink)) < min(y for _, y in cells(level, pink)) - 2, "the near ear lifts"
-    tip = lambda art: sum(y for x, y in cells(art, pink) if x < 12) / len([1 for x, _ in cells(art, pink) if x < 12])
+    def tip(art):
+        return sum(y for x, y in cells(art, pink) if x < 12) / len([1 for x, _ in cells(art, pink) if x < 12])
     assert tip(down) > tip(level) + 1, "and drops"
-    far = lambda art: min(y for x, y in cells(art, "BD") if x > 40)
+    def far(art):
+        return min(y for x, y in cells(art, "BD") if x > 40)
     assert far(up) < far(level), "the far ear lifts too"
     ears = cells(up, "sSKkIiABD")  # wherever an ear lies over the hat in the raised frame
     assert cells(level, "YO") - ears <= cells(up, "YO"), "the hat stays put; the ear only covers it"
-    legs = lambda art: cells(art[len(art) - 6:], "sSKkA")
+    def legs(art):
+        return cells(art[len(art) - 6:], "sSKkA")
     assert legs(dumbo.frames[1]) != legs(dumbo.frames[5]), "the legs step"
     assert [dumbo.frame(e) for e in (0, DumboFlies.FLAP_S / 4, DumboFlies.FLAP_S)] == [0, 2, 0], "by the clock"
 
