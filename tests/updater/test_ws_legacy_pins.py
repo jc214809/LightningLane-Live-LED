@@ -129,6 +129,7 @@ def test_pin_server_error_logs_a_warning(trace, data, shown):
     {},
     {"event": "livedata", "entityType": "RESTAURANT", "entityId": "a1", "data": {"status": "OPERATING"}},
     {"event": "livedata", "entityId": "a1", "data": {"status": "OPERATING"}},
+    {"event": ["livedata"], "entityType": "ATTRACTION", "entityId": "a1"},  # malformed: not a string
 ])
 def test_pin_ignored_events_only_log_the_message(trace, data):
     parks = _parks()

@@ -77,7 +77,8 @@ class _PreviewFeed:
     def handle(self, frame):
         kind = frame.get("type")
         debug.log(f"WS frame: {kind}")
-        handler = self._FRAME_HANDLERS.get(kind)
+        # Only a string can name a frame type (a malformed one, like a list, can't be a dict key): ignored.
+        handler = self._FRAME_HANDLERS.get(kind) if isinstance(kind, str) else None
         # Anything else (unsubscribed, a type added later) is ignored: the protocol asks for tolerant readers.
         replies = handler(self, frame.get("data"), frame) if handler else []
 

@@ -169,7 +169,8 @@ def test_pin_error_hands_a_dict_to_the_error_handler_and_returns_its_replies(tra
     assert seen == [passed] and feed.cursor is None
 
 
-@pytest.mark.parametrize("frame", [{"type": "unsubscribed", "cursor": "no"}, {"data": 1}, {}])
+@pytest.mark.parametrize("frame", [{"type": "unsubscribed", "cursor": "no"}, {"data": 1}, {},
+                                   {"type": ["update"], "cursor": "no"}])  # malformed: not a string
 def test_pin_unknown_frames_are_only_logged(trace, frame):
     feed = _feed(trace)
     assert feed.handle(frame) == []

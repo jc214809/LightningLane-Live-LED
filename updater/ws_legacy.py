@@ -30,7 +30,9 @@ _WS_RECEIVE_TIMEOUT_SECS = 120
 def _apply_live_update(data, parks_data):
     """Apply a single WebSocket live-data event to the shared parks_data list."""
     debug.log(f"WS message: {data}")
-    handler = _EVENT_HANDLERS.get(data.get("event"))
+    event = data.get("event")
+    # Only a string can name an event (a malformed one, like a list, can't be a dict key): ignored.
+    handler = _EVENT_HANDLERS.get(event) if isinstance(event, str) else None
     if handler:
         handler(data, parks_data)
 
