@@ -40,3 +40,51 @@ max-complexity = 10
 [tool.ruff.lint.pylint]
 # Draw helpers legitimately take many arguments: 7, not the default 5.
 max-args = 7
+
+# Which package may import which: see docs/dev/CODE-QUALITY.md. Run with `lint-imports`.
+[tool.importlinter]
+root_packages = [
+    "api",
+    "parks",
+    "updater",
+    "display",
+    "driver",
+    "utils",
+    "settings_page",
+    "self_update",
+]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "api and parks stay below the display, the services and the driver"
+type = "forbidden"
+source_modules = ["api", "parks"]
+forbidden_modules = ["updater", "display", "settings_page", "self_update", "driver"]
+
+[[tool.importlinter.contracts]]
+name = "display does not fetch: no api, aiohttp, requests or updater (but updater.shared)"
+type = "forbidden"
+source_modules = ["display"]
+forbidden_modules = ["api", "aiohttp", "requests", "updater"]
+allow_indirect_imports = true
+ignore_imports = [
+    "display.* -> updater.shared",
+    # Weather icon fetch; see the plan's phase 3 (docs/plans/CODE-HEALTH-PLAN.md).
+    "display.park.park_details -> requests",
+]
+
+[[tool.importlinter.contracts]]
+name = "driver is a foundation: it imports no other package of this app"
+type = "forbidden"
+source_modules = ["driver"]
+forbidden_modules = ["api", "parks", "updater", "display", "settings_page", "self_update"]
+
+[[tool.importlinter.contracts]]
+name = "utils is a foundation: it imports nothing above it"
+type = "forbidden"
+source_modules = ["utils"]
+forbidden_modules = ["api", "parks", "updater", "display", "self_update", "settings_page"]
+ignore_imports = [
+    # The PIN file's path is owned by the settings service.
+    "utils.settings_pin -> settings_page.pins",
+]
