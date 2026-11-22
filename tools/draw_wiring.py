@@ -283,11 +283,11 @@ def speaker_icon(x, y, r=26):
     circle(x, y, r * 0.2, "#777")
 
 
-def sound(x0, y0, zero):  # noqa: PLR0915
-    w = 670
+def sound_option_a(x0, y0, w, zero):
+    """Option A's card; the spot where the cable from the Pi reaches the speaker."""
     rect(x0, y0, w, 128, "#f4f8ff", "#9bb8e8", 1.5, rx=8)
     text(x0 + 16, y0 + 24, "Sound, option A (recommended): a USB speaker", 15, weight="bold")
-    usb_in = (x0 + 30, y0 + 78)  # where the cable from the Pi reaches the speaker
+    usb_in = (x0 + 30, y0 + 78)
     speaker_icon(x0 + 56, y0 + 78)
     text(x0 + 96, y0 + 58, "Mini USB stereo speaker (Adafruit 3369)", 12, weight="bold")
     text(x0 + 96, y0 + 74, "power and sound over the one USB cable", 12, color=C["dim"])
@@ -300,21 +300,22 @@ def sound(x0, y0, zero):  # noqa: PLR0915
     text(x0 + w - 166, y0 + 64, "then on the Pi:", 11, color=C["dim"])
     text(x0 + w - 166, y0 + 82, "aplay -l", 12, weight="bold")
     text(x0 + w - 166, y0 + 98, "config.json: sound.device", 11)
+    return usb_in
 
-    # option B
-    by = y0 + 150
-    rect(x0, by, w, 310, "#fafafa", "#9aa0a6", 1.5, rx=8, dash="8 5")
-    text(x0 + 16, by + 24, "Option B, instead of A: a small speaker built into the case", 15, weight="bold")
-    text(x0 + 16, by + 42, "Some soldering; most likely to pick up buzz from the panel. Details in SOUND.md.", 12,
-         color=C["dim"])
-    # USB audio adapter
+
+def usb_audio_adapter(x0, by):
+    """The USB audio adapter and its cable from the Pi; (ax, ay) is its top left."""
     ax, ay = x0 + 20, by + 120
     rect(ax, ay, 112, 46, "#2b2d31", "#111", 1.5, rx=6)
     text(ax + 56, ay + 20, "USB audio", 11, "middle", "bold", "#ffffff")
     text(ax + 56, ay + 35, "adapter (1475)", 11, "middle", color="#c7cad0")
     wire([(ax + 56, ay - 34), (ax + 56, ay)], C["cable"], 7)
     text(ax + 64, ay - 20, "from the Pi", 11, color=C["dim"])
-    # 3.5 mm plug terminal block
+    return ax, ay
+
+
+def plug_terminal_block(x0, by, ax, ay):
+    """The 3.5 mm plug's terminal block and the adapter's cable to it; its terminals by name."""
     tx, ty = x0 + 168, by + 92
     wire([(ax + 112, ay + 23), (tx, ay + 23)], C["cable"], 6)
     text(ax + 129, ay + 14, "3.5 mm", 10, "middle", color=C["dim"])
@@ -327,7 +328,11 @@ def sound(x0, y0, zero):  # noqa: PLR0915
         circle(tx + 90, cy, 7, C["metal"], C["metal_edge"])
         text(tx + 10, cy + 4, f"{name}  {label}", 10, color="#ffffff")
         terms[name] = (tx + 90, cy)
-    # PAM8302 amp
+    return terms, tx
+
+
+def pam8302_amp(x0, by):
+    """The PAM8302 amp board; its pads and speaker terminals by name, and its top left."""
     px, py = x0 + 380, by + 82
     rect(px, py, 150, 150, C["pcb"], C["pcb_edge"], 1.5, rx=6)
     text(px + 75, py - 8, "PAM8302 amp (2130)", 11, "middle", "bold")
@@ -343,6 +348,18 @@ def sound(x0, y0, zero):  # noqa: PLR0915
         rect(px + 126, cy - 12, 20, 24, "#2f7de1", "#1c5bb0", 1, rx=2)
         text(px + 116, cy + 5, name, 13, "end", "bold", "#ffffff")
         amp["spk" + name] = (px + 146, cy)
+    return amp, px, py
+
+
+def sound_option_b(x0, by, w):
+    """Option B's card: a USB audio adapter, a 3.5 mm plug's terminal block, the amp and a small speaker."""
+    rect(x0, by, w, 310, "#fafafa", "#9aa0a6", 1.5, rx=8, dash="8 5")
+    text(x0 + 16, by + 24, "Option B, instead of A: a small speaker built into the case", 15, weight="bold")
+    text(x0 + 16, by + 42, "Some soldering; most likely to pick up buzz from the panel. Details in SOUND.md.", 12,
+         color=C["dim"])
+    ax, ay = usb_audio_adapter(x0, by)
+    terms, tx = plug_terminal_block(x0, by, ax, ay)
+    amp, px, py = pam8302_amp(x0, by)
     # audio wires
     wire([terms["T"], (tx + 130, terms["T"][1]), (tx + 130, amp["A+"][1]), amp["A+"]], C["blue"], 3.5)
     wire([terms["S"], (tx + 140, terms["S"][1]), (tx + 140, amp["A−"][1]), amp["A−"]], C["gnd"], 3.5)
@@ -360,6 +377,12 @@ def sound(x0, y0, zero):  # noqa: PLR0915
     text(sx, sy + 58, "speaker (6486)", 11, "middle")
     text(x0 + 16, by + 292, "One speaker, two channels: wire only the tip and mix left and right in ALSA (SOUND.md, Mono).",
          11, color=C["dim"])
+
+
+def sound(x0, y0, zero):
+    w = 670
+    usb_in = sound_option_a(x0, y0, w, zero)
+    sound_option_b(x0, y0 + 150, w)
     return usb_in
 
 
