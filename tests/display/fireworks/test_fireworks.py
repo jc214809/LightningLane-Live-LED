@@ -215,6 +215,19 @@ def test_render_castle_fireworks_draws_every_frame(monkeypatch):
     assert matrix.cleared
 
 
+@pytest.mark.parametrize("theme, label", [(None, "everyday"), ("christmas", "christmas"), ("halloween", "halloween")])
+def test_render_castle_fireworks_logs_one_timing_summary(monkeypatch, theme, label):
+    lines = []
+    monkeypatch.setattr(fireworks.time, "sleep", lambda s: None)
+    monkeypatch.setattr(fireworks, "loaded_fonts", {})
+    monkeypatch.setattr(fireworks.debug, "info", lines.append)
+    render_castle_fireworks(FakeMatrix(64, 32), duration=1.0, fps=30, rng=random.Random(8), theme=theme)
+    summaries = [line for line in lines if "fps (aiming for 30)" in line]
+    assert len(summaries) == 1
+    assert summaries[0].startswith(f"{label} fireworks 64x32:")
+    assert "30/30 frames" in summaries[0]
+
+
 def test_title_alpha_waits_then_fades_in_and_holds():
     assert fireworks.title_alpha(0) == 0
     assert fireworks.title_alpha(fireworks.TITLE_DELAY_S) == 0
