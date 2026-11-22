@@ -12,7 +12,6 @@ MAX_LINES = 600
 
 # path: the most lines it may have. Baseline measured 2026-11-22.
 ALLOWED_LONG = {
-    "settings_page/page.py": 1442,
     "display/landmarks/santa_train.py": 1231,
     "display/fireworks/show_effects.py": 1020,
     "display/fireworks/fireworks.py": 834,

@@ -358,43 +358,50 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_json(400, {"ok": False, "message": "That isn't a volume button."})
         self._send_json(200, {"ok": ok, "message": message})
 
-    def do_POST(self):  # noqa: C901, PLR0912
+    def do_POST(self):
+        """The gates, in order: another site's form (403), a body too big (413), the PIN routes (answered to
+        anyone), a path we don't have (404), no sign-in (back to /). Then the route's handler."""
         path = urlsplit(self.path).path
         if not self._same_origin():
             return self._send(403, page.message_page("Not allowed", "That form came from another site."))
         form = self._form()
         if form is None:
             return self._send(413, page.message_page("Too big", "That's too much to save."))
-        if path == "/pin/show":
-            self.settings.gate.show_pin()
-            return self._redirect("/?shown")
-        if path == "/pin/send":
-            outcome = self.settings.send_pin()
-            return self._redirect("/" if outcome == "off" else f"/?sent={outcome}")
-        if path == "/pin":
-            token = self.settings.gate.try_pin((form.get("pin") or [""])[0])
-            if not token:
-                return self._redirect("/?wrong")
-            return self._redirect("/", [("Set-Cookie", f"{COOKIE}={token}; Max-Age={SESSION_S}; Path=/; "
-                                                       f"HttpOnly; SameSite=Strict")])
-        if path == "/signout":
-            self.settings.gate.sign_out(self._token())
-            return self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; "
-                                                                 f"SameSite=Strict")])
-        if path not in ("/save", "/surprises", "/surprises/export", "/surprises/import", "/volume", "/update/check", "/update/start", "/update/rollback"):
-            return self._send(404, page.message_page("Not found", "There's nothing at this address."))
-        if not self._allowed():
-            return self._redirect("/")
-        if path == "/volume":
-            return self._volume(form)
-        if path.startswith("/update/"):
-            return self._update(path, (form.get("channel") or [""])[0])
-        if path == "/surprises":
-            return self._save_surprises(form)
-        if path == "/surprises/export":
-            return self._export_surprises(form)
-        if path == "/surprises/import":
-            return self._import_surprises(form)
+        handler = self.PIN_POSTS.get(path)
+        if handler is None:
+            handler = self.SIGNED_IN_POSTS.get(path)
+            if handler is None:
+                return self._send(404, page.message_page("Not found", "There's nothing at this address."))
+            if not self._allowed():
+                return self._redirect("/")
+        return handler(self, form)
+
+    def _show_pin(self, form):
+        """POST /pin/show: put a PIN on the board."""
+        self.settings.gate.show_pin()
+        self._redirect("/?shown")
+
+    def _send_pin(self, form):
+        """POST /pin/send: send the PIN to the phone, if Pushover is set up."""
+        outcome = self.settings.send_pin()
+        self._redirect("/" if outcome == "off" else f"/?sent={outcome}")
+
+    def _sign_in(self, form):
+        """POST /pin: the PIN typed in; a right one starts a session (the cookie)."""
+        token = self.settings.gate.try_pin((form.get("pin") or [""])[0])
+        if not token:
+            return self._redirect("/?wrong")
+        self._redirect("/", [("Set-Cookie", f"{COOKIE}={token}; Max-Age={SESSION_S}; Path=/; "
+                                            f"HttpOnly; SameSite=Strict")])
+
+    def _sign_out(self, form):
+        """POST /signout: end this browser's session."""
+        self.settings.gate.sign_out(self._token())
+        self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; "
+                                                      f"SameSite=Strict")])
+
+    def _save(self, form):
+        """POST /save: the settings form, saved to config.json, with a restart (or just the volume)."""
         if self.settings.updates.running():  # a rollback would put back config.json as it was, losing the save
             loaded, _ = self.settings.load()
             return self._send(409, self._page(["An update is running: save once it's done (see Updates)."],
@@ -462,20 +469,32 @@ class Handler(BaseHTTPRequestHandler):
         debug.info(f"Settings page: saved {self.settings.surprises_path} (from {self.client_address[0]}).")
         self._redirect(f"/surprises?saved={self.settings.restart_app()}")
 
-    def _update(self, path, channel):
-        """POST /update/check, /update/start (channel) and /update/rollback, the Updates card's buttons.
-        /update/check asking for JSON is the page's own check as it loads: a fresh one is reused, and
-        the answer is {"html": what it found, for the card}."""
+    def _check_update(self, form):
+        """POST /update/check (channel), the Updates card's Check button. Asking for JSON is the page's own check
+        as it loads: a fresh one is reused, and the answer is {"html": what it found, for the card}."""
+        channel = (form.get("channel") or [""])[0]
         updates = self.settings.updates
-        if path == "/update/check" and "application/json" in (self.headers.get("Accept") or ""):
+        if "application/json" in (self.headers.get("Accept") or ""):
             updates.auto_check(channel)
             return self._send_json(200, {"html": page.check_result(updates.view())})
-        if path == "/update/check":
-            updates.check(channel)
-            return self._redirect("/#updates")
-        started = updates.start("update", channel) if path == "/update/start" else updates.start("rollback")
+        updates.check(channel)
+        self._redirect("/#updates")
+
+    def _start_update(self, form):
+        """POST /update/start (channel), the Update now button."""
+        started = self.settings.updates.start("update", (form.get("channel") or [""])[0])
         self._redirect(f"/?update={started}#updates")
 
+    def _start_rollback(self, form):
+        """POST /update/rollback, the Roll back button."""
+        started = self.settings.updates.start("rollback")
+        self._redirect(f"/?update={started}#updates")
+
+    # Route tables: path -> handler(self, form). The PIN routes answer anyone; the rest need a sign-in.
+    PIN_POSTS = {"/pin/show": _show_pin, "/pin/send": _send_pin, "/pin": _sign_in, "/signout": _sign_out}
+    SIGNED_IN_POSTS = {"/save": _save, "/surprises": _save_surprises, "/surprises/export": _export_surprises,
+                       "/surprises/import": _import_surprises, "/volume": _volume, "/update/check": _check_update,
+                       "/update/start": _start_update, "/update/rollback": _start_rollback}
 
 def volume_only(old, new):
     """True if the only change from old to new config is sound.volume."""

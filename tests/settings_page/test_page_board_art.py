@@ -7,7 +7,7 @@ from datetime import date
 
 import pytest
 
-from settings_page import page
+from settings_page import markup, page
 from settings_page.board_status import NONE, QUIET, RUNNING, SHOW, BoardNow
 from settings_page.page import SCRIPT, document, landmark_src, landmarks, pin_page, settings_page
 from utils.trips import Trip, countdown_message
@@ -105,7 +105,7 @@ def test_a_bad_landmark_index_means_no_pictures_and_a_warning_not_a_broken_page(
     monkeypatch.setattr(page.debug, "warning", warnings.append)
     bad = tmp_path / "landmarks.json"
     bad.write_text(text)
-    monkeypatch.setattr(page, "STATIC_DIR", str(tmp_path))
+    monkeypatch.setattr(markup, "STATIC_DIR", str(tmp_path))
     assert landmarks() == {} and len(warnings) == 1
     html = settings_page({"parks": ["Magic Kingdom"]}, [], now=BoardNow(RUNNING, 5))
     assert "Title only" in html and 'id="pv-all"' not in html and 'id="pv-rot"' not in html
@@ -114,7 +114,7 @@ def test_a_bad_landmark_index_means_no_pictures_and_a_warning_not_a_broken_page(
 
 def test_an_index_entry_with_a_path_in_it_is_ignored(tmp_path, monkeypatch):
     (tmp_path / "landmarks.json").write_text(json.dumps({"epcot": "../../config.json", "magic kingdom": "mk.png"}))
-    monkeypatch.setattr(page, "STATIC_DIR", str(tmp_path))
+    monkeypatch.setattr(markup, "STATIC_DIR", str(tmp_path))
     assert landmarks() == {"magic kingdom": "/static/mk.png"}
 
 
