@@ -1,0 +1,6098 @@
+{
+ "full": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "Animal Kingdom",
+    "Hollywood Studios"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-new-5555",
+    "protocol": "preview"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-02-01",
+      "end": "2027-02-03"
+     },
+     {
+      "start": "2027-03-14",
+      "name": "Spring"
+     },
+     {
+      "start": "2027-09-01",
+      "end": "2027-09-05",
+      "name": "Fall"
+     }
+    ]
+   },
+   "sound": {
+    "enabled": true,
+    "device": "hw:1,0",
+    "volume": 55,
+    "quiet_hours": {
+     "start": "21:30",
+     "end": "07:15"
+    }
+   },
+   "weather": {
+    "apikey": "owm-new"
+   },
+   "pushover": {
+    "enabled": true,
+    "user_key": "u-1",
+    "app_token": "t-2"
+   },
+   "pi_model": "pi4",
+   "matrix": {
+    "led_rows": 32,
+    "led_cols": 64,
+    "led_chain": 2,
+    "led_parallel": 1,
+    "led_pwm_bits": 9,
+    "led_brightness": 60,
+    "led_gpio_mapping": "adafruit-hat",
+    "led_scan_mode": 1,
+    "led_pwm_lsb_nanoseconds": 130,
+    "led_show_refresh": true,
+    "led_slowdown_gpio": 2,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": "RGB",
+    "led_panel_type": "FM6126A",
+    "led_pixel_mapper": null,
+    "led_row_addr_type": 0,
+    "led_multiplexing": 0,
+    "led_limit_refresh": 0,
+    "led_pwm_dither_bits": 0,
+    "emulated": false,
+    "drop_privileges": true
+   },
+   "brightness_schedule": {
+    "day": 90,
+    "night": 20,
+    "day_start": "07:00",
+    "night_start": "21:00"
+   },
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "v2",
+     "force": true
+    },
+    {
+     "name": "Brand New Show",
+     "enabled": false,
+     "version": "v1"
+    },
+    {
+     "name": "Christmas Party",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "tink",
+   "debug": true
+  },
+  "problems": []
+ },
+ "full_no_park_list": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "Animal Kingdom",
+    "hollywood studios"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-new-5555",
+    "protocol": "preview"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-02-01",
+      "end": "2027-02-03"
+     },
+     {
+      "start": "2027-03-14",
+      "name": "Spring"
+     },
+     {
+      "start": "2027-09-01",
+      "end": "2027-09-05",
+      "name": "Fall"
+     }
+    ]
+   },
+   "sound": {
+    "enabled": true,
+    "device": "hw:1,0",
+    "volume": 55,
+    "quiet_hours": {
+     "start": "21:30",
+     "end": "07:15"
+    }
+   },
+   "weather": {
+    "apikey": "owm-new"
+   },
+   "pushover": {
+    "enabled": true,
+    "user_key": "u-1",
+    "app_token": "t-2"
+   },
+   "pi_model": "pi4",
+   "matrix": {
+    "led_rows": 32,
+    "led_cols": 64,
+    "led_chain": 2,
+    "led_parallel": 1,
+    "led_pwm_bits": 9,
+    "led_brightness": 60,
+    "led_gpio_mapping": "adafruit-hat",
+    "led_scan_mode": 1,
+    "led_pwm_lsb_nanoseconds": 130,
+    "led_show_refresh": true,
+    "led_slowdown_gpio": 2,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": "RGB",
+    "led_panel_type": "FM6126A",
+    "led_pixel_mapper": null,
+    "led_row_addr_type": 0,
+    "led_multiplexing": 0,
+    "led_limit_refresh": 0,
+    "led_pwm_dither_bits": 0,
+    "emulated": false,
+    "drop_privileges": true
+   },
+   "brightness_schedule": {
+    "day": 90,
+    "night": 20,
+    "day_start": "07:00",
+    "night_start": "21:00"
+   },
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "v2",
+     "force": true
+    },
+    {
+     "name": "Brand New Show",
+     "enabled": false,
+     "version": "v1"
+    },
+    {
+     "name": "Christmas Party",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "tink",
+   "debug": true
+  },
+  "problems": []
+ },
+ "untouched": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "empty_form": {
+  "config": {
+   "parks": [],
+   "websocket": {
+    "enabled": false,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": false,
+    "trip_dates": []
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Pick at least one park."
+  ]
+ },
+ "minimal": {
+  "config": {
+   "parks": [
+    "EPCOT"
+   ],
+   "websocket": {
+    "enabled": false,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": false,
+    "trip_dates": []
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "minimal_on_empty_config": {
+  "config": {
+   "websocket": {
+    "enabled": false,
+    "protocol": "legacy"
+   },
+   "parks": [
+    "EPCOT"
+   ],
+   "trip_countdown": {
+    "enabled": false,
+    "trip_dates": []
+   },
+   "sound": {
+    "enabled": false,
+    "device": null
+   },
+   "shows": [],
+   "matrix": {},
+   "debug": false,
+   "force_surprise": ""
+  },
+  "problems": []
+ },
+ "minimal_on_odd_sections": {
+  "config": {
+   "websocket": {
+    "enabled": false,
+    "protocol": "legacy"
+   },
+   "matrix": {},
+   "sound": {
+    "enabled": false,
+    "device": null
+   },
+   "trip_countdown": {
+    "enabled": false,
+    "trip_dates": []
+   },
+   "shows": [],
+   "pushover": "no",
+   "weather": 1,
+   "old": {
+    "keep": true
+   },
+   "parks": [
+    "EPCOT"
+   ],
+   "debug": false,
+   "force_surprise": ""
+  },
+  "problems": []
+ },
+ "bad_protocol": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Live update protocol should be one of legacy, preview, not 'carrier-pigeon'."
+  ]
+ },
+ "protocol_blank_field_absent": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "live_updates_without_key": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "<THEMEPARKS_API_KEY_HERE>",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Live updates need a ThemeParks.wiki API key (or turn them off)."
+  ]
+ },
+ "live_updates_off": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": false,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "pushover_nothing_typed": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": true,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Sending the PIN needs both a Pushover user key and an app token (or turn it off)."
+  ]
+ },
+ "pushover_nothing_typed_none_saved": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": null,
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "pushover_one_key_on": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": true,
+    "user_key": "u-1",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Sending the PIN needs both a Pushover user key and an app token (or turn it off)."
+  ]
+ },
+ "pushover_one_key_off": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "u-1",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "pushover_both_keys": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": true,
+    "user_key": "u-1",
+    "app_token": "t-2"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "pushover_saved_keys_blank_form": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "unknown_park": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "Narnia"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "'Narnia' isn't a ThemeParks.wiki park: pick one from the list."
+  ]
+ },
+ "no_parks": {
+  "config": {
+   "parks": [],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Pick at least one park."
+  ]
+ },
+ "all_parks_removed": {
+  "config": {
+   "parks": [],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Pick at least one park."
+  ]
+ },
+ "park_added_unknown_and_duplicate": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom",
+    "Narnia"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "'Narnia' isn't a ThemeParks.wiki park: pick one from the list."
+  ]
+ },
+ "trip_end_before_start": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Trip Backwards: it ends before it starts."
+  ]
+ },
+ "trip_end_before_start_no_name": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Trip 2027-03-14: it ends before it starts."
+  ]
+ },
+ "trip_bad_start": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Trip Someday: the start date should be a date, not 'soon'."
+  ]
+ },
+ "trip_bad_start_no_name": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Trip soon: the start date should be a date, not 'soon'."
+  ]
+ },
+ "trip_no_start_with_name": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Trip Nameless: the start date should be a date, not ''."
+  ]
+ },
+ "trip_bad_end": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Trip 2027-03-14: the start date should be a date, not '2027-03-14'."
+  ]
+ },
+ "trip_removed_and_blank": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": []
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "trips_off_old_single_date": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": false,
+    "trip_dates": []
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "volume_set": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 0,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "volume_bad": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Volume should be 0 to 100, not 'loud'."
+  ]
+ },
+ "volume_over": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Volume should be 0 to 100, not '101'."
+  ]
+ },
+ "volume_blank_clears": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "volume_absent_keeps": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "sound_device_listed": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": true,
+    "device": "plughw:2,0",
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "quiet_hours_cleared": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "quiet_hours_half": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Quiet hours need both a start and an end time (or neither)."
+  ]
+ },
+ "quiet_hours_garbage": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Quiet hours need both a start and an end time (or neither)."
+  ]
+ },
+ "show_bad_version": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    },
+    {
+     "name": "Another",
+     "enabled": false,
+     "version": "v1"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Happily Ever After: the version should be one of default, v1, v2, not 'v9'."
+  ]
+ },
+ "show_new_added_and_old_updated": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "v1"
+    },
+    {
+     "name": "Other",
+     "enabled": true,
+     "version": "v2"
+    },
+    "junk",
+    {
+     "name": 5
+    },
+    {
+     "name": "Third",
+     "enabled": false,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "show_two_forced": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default",
+     "force": true
+    },
+    {
+     "name": "Second",
+     "enabled": false,
+     "version": "v1",
+     "force": true
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Only one show can be forced to play at start-up."
+  ]
+ },
+ "show_two_forced_already_saved": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    },
+    {
+     "name": "Other",
+     "enabled": false,
+     "version": "v1"
+    },
+    "junk",
+    {
+     "name": 5
+    },
+    {
+     "name": "Z",
+     "force": true
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "show_no_default_version_field": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    },
+    {
+     "name": "Late",
+     "enabled": false,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "shows_not_a_list": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "pi_model_auto": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "pi_model_blank": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "pi4",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Pi model: '' isn't one of Pi 4, Pi 3, Pi Zero 2 W."
+  ]
+ },
+ "pi_model_pi3": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "pi3",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "pi_model_unknown": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Pi model: 'pi9' isn't one of Pi 4, Pi 3, Pi Zero 2 W."
+  ]
+ },
+ "panel_size_good": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": 32,
+    "led_cols": 128,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "panel_size_bad": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Panel size should be like 64x32, not 'big'."
+  ]
+ },
+ "matrix_blank_text_and_number_fields": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_brightness": null,
+    "emulated": null,
+    "led_gpio_mapping": "x"
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Panel: argument --led-gpio-mapping: invalid choice: 'x' (choose from 'regular', 'adafruit-hat', 'adafruit-hat-pwm')."
+  ]
+ },
+ "matrix_bad_number_stays_text": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": "tall",
+    "led_cols": null,
+    "led_chain": -3,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Panel: argument --led-rows: invalid int value: 'tall'."
+  ]
+ },
+ "matrix_negative_number": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": -1,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Panel: argument --led-slowdown-gpio: invalid choice: -1 (choose from 0, 1, 2, 3, 4)."
+  ]
+ },
+ "matrix_switch_values": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": false,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": true,
+    "drop_privileges": false
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "matrix_not_a_dict": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": 32
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "brightness_low": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": 0,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Brightness should be 1 to 100, not 0."
+  ]
+ },
+ "brightness_high": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": 101,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Brightness should be 1 to 100, not 101."
+  ]
+ },
+ "brightness_text": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": "bright",
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Panel: argument --led-brightness: invalid int value: 'bright'.",
+   "Brightness should be 1 to 100, not 'bright'."
+  ]
+ },
+ "brightness_ok": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": 100,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "brightness_saved_bad_and_not_posted": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_brightness": true
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Panel: argument --led-brightness: invalid int value: 'True'."
+  ]
+ },
+ "schedule_on": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": {
+    "day": 80,
+    "night": 10,
+    "day_start": "06:30",
+    "night_start": "20:30"
+   },
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "schedule_bad": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": {
+    "day": "bright",
+    "night": 500,
+    "day_start": "nope",
+    "night_start": ""
+   },
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Day and night brightness: \"day\" should be 1 to 100, not 'bright'."
+  ]
+ },
+ "schedule_off": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "schedule_absent_keeps": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": {
+    "day": 1
+   },
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "debug_on": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": true
+  },
+  "problems": []
+ },
+ "surprise_forced": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "buzz",
+   "debug": false
+  },
+  "problems": []
+ },
+ "surprise_unknown": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "old",
+   "debug": false
+  },
+  "problems": [
+   "Surprise on every ride screen: 'not_a_character' isn't a character."
+  ]
+ },
+ "surprise_absent_clears": {
+  "config": {
+   "parks": [
+    "Magic Kingdom",
+    "EPCOT",
+    "Hollywood Studios",
+    "Animal Kingdom"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": true,
+    "trip_dates": [
+     {
+      "start": "2027-03-14",
+      "end": "2027-03-19",
+      "name": "Spring Break"
+     },
+     "2027-06-01"
+    ]
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": false,
+    "user_key": "<PUSHOVER_USER_KEY>",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": null,
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": null,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": null,
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": []
+ },
+ "many_problems_in_order": {
+  "config": {
+   "parks": [
+    "Narnia"
+   ],
+   "websocket": {
+    "enabled": true,
+    "api_key": "tp-secret-1234",
+    "protocol": "legacy"
+   },
+   "trip_countdown": {
+    "enabled": false,
+    "trip_dates": []
+   },
+   "sound": {
+    "enabled": false,
+    "device": null,
+    "volume": 80,
+    "quiet_hours": {
+     "start": "22:00",
+     "end": "08:00"
+    }
+   },
+   "weather": {
+    "apikey": "<API_KEY_HERE>"
+   },
+   "pushover": {
+    "enabled": true,
+    "user_key": "u",
+    "app_token": "<PUSHOVER_APP_TOKEN>"
+   },
+   "pi_model": "auto",
+   "matrix": {
+    "led_rows": "tall",
+    "led_cols": null,
+    "led_chain": null,
+    "led_parallel": null,
+    "led_pwm_bits": null,
+    "led_brightness": 0,
+    "led_gpio_mapping": null,
+    "led_scan_mode": null,
+    "led_pwm_lsb_nanoseconds": null,
+    "led_show_refresh": null,
+    "led_slowdown_gpio": null,
+    "led_no_hardware_pulse": null,
+    "led_rgb_sequence": null,
+    "led_panel_type": null,
+    "led_pixel_mapper": null,
+    "led_row_addr_type": null,
+    "led_multiplexing": null,
+    "led_limit_refresh": null,
+    "led_pwm_dither_bits": null,
+    "emulated": null,
+    "drop_privileges": null
+   },
+   "brightness_schedule": {
+    "day": "x",
+    "night": "",
+    "day_start": "",
+    "night_start": ""
+   },
+   "shows": [
+    {
+     "name": "Happily Ever After",
+     "enabled": true,
+     "version": "default"
+    }
+   ],
+   "force_surprise": "",
+   "debug": false
+  },
+  "problems": [
+   "Live update protocol should be one of legacy, preview, not 'x'.",
+   "Sending the PIN needs both a Pushover user key and an app token (or turn it off).",
+   "'Narnia' isn't a ThemeParks.wiki park: pick one from the list.",
+   "Trip soon: the start date should be a date, not 'soon'.",
+   "Volume should be 0 to 100, not 'x'.",
+   "Quiet hours need both a start and an end time (or neither).",
+   "s: the version should be one of default, v1, v2, not 'zz'.",
+   "Pi model: 'zz' isn't one of Pi 4, Pi 3, Pi Zero 2 W.",
+   "Panel size should be like 64x32, not 'q'.",
+   "Panel: argument --led-rows: invalid int value: 'tall'.",
+   "Brightness should be 1 to 100, not 0.",
+   "Day and night brightness: \"day\" should be 1 to 100, not 'x'.",
+   "Surprise on every ride screen: 'zzz' isn't a character."
+  ]
+ },
+ "s_empty": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": []
+ },
+ "s_data_not_dict": {
+  "data": {
+   "enabled": false,
+   "characters": {
+    "ralph": {
+     "on": false
+    },
+    "baymax": {
+     "on": false
+    },
+    "genie": {
+     "on": false
+    },
+    "slinky_wrap": {
+     "on": false
+    },
+    "walle_side": {
+     "on": false
+    },
+    "army_men": {
+     "on": false
+    },
+    "falcon": {
+     "on": false
+    },
+    "mike": {
+     "on": false
+    },
+    "tron": {
+     "on": false
+    },
+    "olaf": {
+     "on": false
+    },
+    "goofy": {
+     "on": false
+    },
+    "luxo_ball": {
+     "on": false
+    },
+    "mcqueen": {
+     "on": false
+    },
+    "mater": {
+     "on": false
+    },
+    "chip_dale": {
+     "on": false
+    },
+    "tigger": {
+     "on": false
+    },
+    "pooh": {
+     "on": false
+    },
+    "stitch_surf": {
+     "on": false
+    },
+    "jack_sally": {
+     "on": false
+    },
+    "mine_train": {
+     "on": false
+    },
+    "grannies": {
+     "on": false
+    },
+    "keepy_uppy": {
+     "on": false
+    },
+    "rex": {
+     "on": false
+    },
+    "aliens": {
+     "on": false
+    },
+    "forky": {
+     "on": false
+    },
+    "kevin": {
+     "on": false
+    },
+    "saber_clash": {
+     "on": false
+    },
+    "saber_duel": {
+     "on": false
+    },
+    "archer": {
+     "on": false
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_everything_off_no_switch": {
+  "data": {
+   "enabled": false,
+   "characters": {
+    "ralph": {
+     "on": false
+    },
+    "baymax": {
+     "on": false
+    },
+    "genie": {
+     "on": false
+    },
+    "slinky_wrap": {
+     "on": false
+    },
+    "walle_side": {
+     "on": false
+    },
+    "army_men": {
+     "on": false
+    },
+    "falcon": {
+     "on": false
+    },
+    "mike": {
+     "on": false
+    },
+    "tron": {
+     "on": false
+    },
+    "olaf": {
+     "on": false
+    },
+    "goofy": {
+     "on": false
+    },
+    "luxo_ball": {
+     "on": false
+    },
+    "mcqueen": {
+     "on": false
+    },
+    "mater": {
+     "on": false
+    },
+    "chip_dale": {
+     "on": false
+    },
+    "tigger": {
+     "on": false
+    },
+    "pooh": {
+     "on": false
+    },
+    "stitch_surf": {
+     "on": false
+    },
+    "jack_sally": {
+     "on": false
+    },
+    "mine_train": {
+     "on": false
+    },
+    "grannies": {
+     "on": false
+    },
+    "keepy_uppy": {
+     "on": false
+    },
+    "rex": {
+     "on": false
+    },
+    "aliens": {
+     "on": false
+    },
+    "forky": {
+     "on": false
+    },
+    "kevin": {
+     "on": false
+    },
+    "saber_clash": {
+     "on": false
+    },
+    "saber_duel": {
+     "on": false
+    },
+    "archer": {
+     "on": false
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_saved_state_kept": {
+  "data": {
+   "enabled": true,
+   "future": 1,
+   "characters": {
+    "genie": {
+     "rides": [
+      "x"
+     ],
+     "junk": 1
+    },
+    "falcon": {
+     "rides": [
+      "Tower of Terror"
+     ]
+    },
+    "newer_one": {
+     "on": false
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_saved_cleared_by_defaults": {
+  "data": {
+   "enabled": true,
+   "future": 1,
+   "characters": {
+    "genie": {
+     "rides": [
+      "x"
+     ],
+     "junk": 1
+    },
+    "newer_one": {
+     "on": false
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_characters_not_dict": {
+  "data": {
+   "characters": {},
+   "enabled": true
+  },
+  "problems": []
+ },
+ "s_chances": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "baymax": {
+     "on": false
+    },
+    "genie": {
+     "chance": 1.5
+    },
+    "falcon": {
+     "ride_chance": 25
+    },
+    "mike": {
+     "ride_chance": 12
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_bad_chances": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: the chance should be a percent from 0 to 100, not 'lots'.",
+   "Mike Wazowski: the chance should be a percent from 0 to 100, not '-1'.",
+   "Tron: the chance should be a percent from 0 to 100, not '101'.",
+   "Olaf: the chance should be a percent from 0 to 100, not '1e3'."
+  ]
+ },
+ "s_total_over_100": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "genie": {
+     "chance": 60
+    },
+    "tron": {
+     "chance": 50
+    }
+   }
+  },
+  "problems": [
+   "Together the characters' chances on any ride screen come to 121.6%: they can't pass 100%."
+  ]
+ },
+ "s_total_over_100_with_defaults_added": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "genie": {
+     "chance": 99.5
+    },
+    "tron": {
+     "chance": 0.8
+    }
+   }
+  },
+  "problems": [
+   "Together the characters' chances on any ride screen come to 111.9%: they can't pass 100%."
+  ]
+ },
+ "s_rides_picked": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "falcon": {
+     "rides": [
+      "Millennium Falcon: Smugglers Run",
+      "Space Mountain",
+      "Star Wars: Rise of the Resistance"
+     ]
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_rides_default_set_is_dropped": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": []
+ },
+ "s_rides_none_for_visitor": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "falcon": {
+     "rides": []
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_rides_none_saved": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "falcon": {
+     "rides": []
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_rides_none_saved_non_visitor": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": []
+ },
+ "s_rides_none_not_saved": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": []
+ },
+ "s_rides_deduped_and_stripped": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "tron": {
+     "rides": [
+      "a",
+      "B"
+     ]
+    }
+   }
+  },
+  "problems": []
+ },
+ "s_rides_too_many": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Tron: that's too many rides, or a ride name that's too long."
+  ]
+ },
+ "s_rides_name_too_long": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Tron: that's too many rides, or a ride name that's too long."
+  ]
+ },
+ "s_rides_untouched_picker_keeps_saved": {
+  "data": {
+   "characters": {
+    "falcon": {
+     "rides": [
+      "Tower of Terror"
+     ]
+    }
+   },
+   "enabled": true
+  },
+  "problems": []
+ },
+ "s_rides_picker_replaces_saved": {
+  "data": {
+   "characters": {},
+   "enabled": true
+  },
+  "problems": []
+ },
+ "s_many_problems_in_order": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "mike": {
+     "chance": 70
+    },
+    "olaf": {
+     "chance": 70
+    }
+   }
+  },
+  "problems": [
+   "Genie: the chance should be a percent from 0 to 100, not 'x'.",
+   "Genie: the chance should be a percent from 0 to 100, not 'x'.",
+   "Tron: that's too many rides, or a ride name that's too long.",
+   "Together the characters' chances on any ride screen come to 151.6%: they can't pass 100%."
+  ]
+ },
+ "i_export": {
+  "data": {
+   "enabled": false,
+   "characters": {
+    "genie": {
+     "on": false,
+     "chance": 1.5,
+     "ride_chance": 20,
+     "rides": [
+      "Space Mountain",
+      "Test Track"
+     ]
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_export_with_rides": {
+  "data": {
+   "enabled": false,
+   "characters": {
+    "genie": {
+     "on": false,
+     "chance": 1.5,
+     "ride_chance": 20,
+     "rides": [
+      "Space Mountain",
+      "Test Track"
+     ]
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_empty_object": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_invalid_json": {
+  "data": null,
+  "problems": [
+   "That isn't settings the Export button copied: it isn't valid JSON (Expecting property name enclosed in double quotes: line 1 column 2 (char 1))."
+  ],
+  "skipped": []
+ },
+ "i_array": {
+  "data": null,
+  "problems": [
+   "That isn't settings the Export button copied: it should be an object in {braces}."
+  ],
+  "skipped": []
+ },
+ "i_string": {
+  "data": null,
+  "problems": [
+   "That isn't settings the Export button copied: it should be an object in {braces}."
+  ],
+  "skipped": []
+ },
+ "i_enabled_not_bool": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "\"enabled\" should be true or false."
+  ],
+  "skipped": []
+ },
+ "i_characters_not_object": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "\"characters\" should be an object of characters."
+  ],
+  "skipped": []
+ },
+ "i_enabled_and_characters_bad": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "\"enabled\" should be true or false.",
+   "\"characters\" should be an object of characters."
+  ],
+  "skipped": []
+ },
+ "i_unknown_and_park_titles_skipped": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "genie": {
+     "chance": 2
+    }
+   }
+  },
+  "problems": [],
+  "skipped": [
+   "new_one",
+   "tink"
+  ]
+ },
+ "i_entry_not_object": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "tron": {
+     "on": false
+    }
+   }
+  },
+  "problems": [
+   "Genie: its settings should be an object."
+  ],
+  "skipped": []
+ },
+ "i_on_not_bool": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: \"on\" should be true or false."
+  ],
+  "skipped": []
+ },
+ "i_on_true_dropped_on_false_kept": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "tron": {
+     "on": false
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_chance_over": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: \"chance\" should be a percent from 0 to 100, not 101."
+  ],
+  "skipped": []
+ },
+ "i_chance_bool": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: \"chance\" should be a percent from 0 to 100, not True."
+  ],
+  "skipped": []
+ },
+ "i_chance_negative_string_and_ride_chance_text": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: \"chance\" should be a percent from 0 to 100, not -1.",
+   "Genie: \"ride_chance\" should be a percent from 0 to 100, not '5'."
+  ],
+  "skipped": []
+ },
+ "i_chances_at_default_dropped": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "falcon": {
+     "ride_chance": 11
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_chance_edge_values": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "genie": {
+     "chance": 0,
+     "ride_chance": 100
+    },
+    "tron": {
+     "chance": 25
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_rides_not_list": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: \"rides\" should be a list of ride names."
+  ],
+  "skipped": []
+ },
+ "i_rides_not_strings": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: \"rides\" should be a list of ride names."
+  ],
+  "skipped": []
+ },
+ "i_rides_too_many": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: that's too many rides, or a ride name that's too long."
+  ],
+  "skipped": []
+ },
+ "i_rides_name_too_long": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [
+   "Genie: that's too many rides, or a ride name that's too long."
+  ],
+  "skipped": []
+ },
+ "i_rides_sorted_deduped": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "tron": {
+     "rides": [
+      "A",
+      "a",
+      "b"
+     ]
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_rides_none_for_non_visitor_dropped": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_rides_none_for_visitor_kept": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "falcon": {
+     "rides": []
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_rides_defaults_by_name_dropped": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_rides_defaults_by_pieces_dropped": {
+  "data": {
+   "enabled": true,
+   "characters": {}
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_rides_other_kept": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "falcon": {
+     "rides": [
+      "Space Mountain"
+     ]
+    }
+   }
+  },
+  "problems": [],
+  "skipped": []
+ },
+ "i_total_over_100": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "genie": {
+     "chance": 60
+    },
+    "tron": {
+     "chance": 50
+    }
+   }
+  },
+  "problems": [
+   "Together the characters' chances on any ride screen come to 121.6%: they can't pass 100%."
+  ],
+  "skipped": []
+ },
+ "i_many_problems_in_order": {
+  "data": {
+   "enabled": true,
+   "characters": {
+    "mike": {
+     "chance": 70
+    },
+    "olaf": {
+     "chance": 70
+    }
+   }
+  },
+  "problems": [
+   "\"enabled\" should be true or false.",
+   "Genie: \"on\" should be true or false.",
+   "Genie: \"chance\" should be a percent from 0 to 100, not 200.",
+   "Genie: \"ride_chance\" should be a percent from 0 to 100, not 'x'.",
+   "Genie: \"rides\" should be a list of ride names.",
+   "Tron: its settings should be an object.",
+   "Mike Wazowski: that's too many rides, or a ride name that's too long.",
+   "Together the characters' chances on any ride screen come to 151.6%: they can't pass 100%."
+  ],
+  "skipped": [
+   "gone"
+  ]
+ }
+}
