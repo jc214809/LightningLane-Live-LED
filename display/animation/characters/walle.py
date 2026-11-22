@@ -445,7 +445,7 @@ class WallESideReveal(WallEReveal):
 
     # --- drawing ---
 
-    def _draw_walle(self, canvas, t, x):
+    def _draw_walle(self, canvas, t, x):  # noqa: C901, PLR0912
         x0 = int(round(x)) + self.jolt(t)
         phase, p = self._phase(t)
         rolling = phase in ("enter", "leave") and int(x) % 2

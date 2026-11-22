@@ -74,7 +74,7 @@ class _PreviewFeed:
         self.retries = {}
         return frames
 
-    def handle(self, frame):
+    def handle(self, frame):  # noqa: C901
         kind = frame.get("type")
         data = frame.get("data")
         debug.log(f"WS frame: {kind}")
@@ -171,7 +171,7 @@ async def _send_later(ws, delay_s, frame):
         await ws.send_json(frame)
 
 
-async def _preview_ws_loop(api_key, parks_data):
+async def _preview_ws_loop(api_key, parks_data):  # noqa: C901, PLR0912, PLR0915
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     feed = _PreviewFeed(parks_data)
     delay = _RECONNECT_DELAY_INITIAL

@@ -43,7 +43,7 @@ def _letters(text, font):
 WALK_CYCLE = (((-1, 0), (1, 0)), ((0, -1), (0, 0)), ((1, 0), (-1, 0)), ((0, 0), (0, -1)))
 
 
-def walking_pixels(art, x0, y0, colors, feet, pose, facing=1, scale=1):
+def walking_pixels(art, x0, y0, colors, feet, pose, facing=1, scale=1):  # noqa: PLR0913
     """
     ((x, y), rgb) for art (see art_pixels) with its feet stepping through WALK_CYCLE[pose % 4]
     (None stands still). feet is (first foot row, columns of the foot behind, columns of the

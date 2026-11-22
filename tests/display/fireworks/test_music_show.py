@@ -9,7 +9,7 @@ from display.animation.characters.tink import TinkReveal
 from display.fireworks.score import Cue, Hit, Score, load_score
 
 
-def _cue(title="x", start=0.0, end=10.0, palette=((255, 0, 0),), rate=1.0, castle=None, shapes=(),
+def _cue(title="x", start=0.0, end=10.0, palette=((255, 0, 0),), rate=1.0, castle=None, shapes=(),  # noqa: PLR0913
          effects=()):
     return Cue("s", title, start, end, tuple(palette), rate, castle, tuple(shapes), frozenset(effects))
 

@@ -8,7 +8,7 @@ class TreeOfLifeLandmark(Landmark):
 
     CANOPY = [(40, 95, 45), (60, 125, 55), (85, 155, 75), (120, 180, 105)]
 
-    def build(self):
+    def build(self):  # noqa: C901, PLR0912
         s = self.scale
         w, h = self.width, self.height
         self.cx = w // 2

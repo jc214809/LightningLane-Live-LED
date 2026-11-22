@@ -175,7 +175,7 @@ class LuxoBallReveal:
             return None
         return where
 
-    def _luxo(self, t):
+    def _luxo(self, t):  # noqa: C901
         w, s = self.luxo_w, self.story
         off_left, off_right = -w / 2 - 1, self.width + w / 2 + 1
         ground = self.height - self.luxo_h
@@ -277,7 +277,7 @@ class LuxoBallReveal:
                     out.add((x, y))
         return out
 
-    def pixels(self, t):
+    def pixels(self, t):  # noqa: C901
         """{(x, y): rgb} of everything the scene draws at t (the dark board and beam included)."""
         out = {}
         lit = None

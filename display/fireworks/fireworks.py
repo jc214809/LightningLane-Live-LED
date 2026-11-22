@@ -426,7 +426,7 @@ def castle_sprite(board_height):
 class _Rocket:
     __slots__ = ("x", "y", "vx", "vy", "burst_y", "color", "mickey", "shape", "tilt")
 
-    def __init__(self, x, y, vx, vy, burst_y, color, mickey=False, shape=None, tilt=0):
+    def __init__(self, x, y, vx, vy, burst_y, color, mickey=False, shape=None, tilt=0):  # noqa: PLR0913
         self.x, self.y, self.vx, self.vy = x, y, vx, vy
         self.burst_y = burst_y
         self.color = color
@@ -438,7 +438,7 @@ class _Rocket:
 class _Spark:
     __slots__ = ("x", "y", "vx", "vy", "life", "max_life", "color", "gravity", "hold")
 
-    def __init__(self, x, y, vx, vy, life, color, gravity=GRAVITY, hold=1.0):
+    def __init__(self, x, y, vx, vy, life, color, gravity=GRAVITY, hold=1.0):  # noqa: PLR0913
         self.x, self.y, self.vx, self.vy = x, y, vx, vy
         self.life = self.max_life = life
         self.color = color
@@ -665,7 +665,7 @@ class FireworksShow:
         for c in range(3):
             self.flash[c] = min(1.0, self.flash[c] + color[c] / 255 * 0.6)
 
-    def step(self):
+    def step(self):  # noqa: C901, PLR0912
         if self.frames_to_next_launch <= 0:
             self.launch()
             if self.rng.random() < 0.3:
@@ -716,7 +716,7 @@ class FireworksShow:
             if not self.sleighs and self.rng.random() < 0.003:
                 self._add_sleigh(self.rng.random() < 0.5, self.rng.uniform(0, self._sleigh_lowest()))
 
-    def frame_pixels(self):
+    def frame_pixels(self):  # noqa: C901, PLR0912
         """Compose the current frame as {(x, y): (r, g, b)}; unlisted pixels are black."""
         # Sparks and stars blend over the sky with max(), so a burst still reads on purple.
         out = dict(self.sky)

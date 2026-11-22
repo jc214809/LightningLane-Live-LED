@@ -923,7 +923,7 @@ def _rotation_preview():
             'picture. Pick the one that puts the castle the right way up on your panel.</p></div>')
 
 
-def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),
+def settings_page(config, sound_cards, hotspot=None, problems=(), saved=None, board=None, note=None, park_names=(),  # noqa: PLR0913, PLR0915
                   panel=None, updates=None, started=None, now=None, today=None):
     """The settings form, filled from config. sound_cards: ALSA device names for the dropdown.
     note: why config.json couldn't be read, if it couldn't. park_names: [(name, destination)]
@@ -1189,7 +1189,7 @@ def _short(sha):
     return escape(str(sha)[:7]) if sha else "?"
 
 
-def _post(action, label, glyph, busy, kind="secondary", fields="", confirm=None, disabled=False):
+def _post(action, label, glyph, busy, kind="secondary", fields="", confirm=None, disabled=False):  # noqa: PLR0913
     """A one-button form of the Updates card. busy: the button's text while it works."""
     extra = f' data-confirm="{_attr(confirm)}"' if confirm else ""
     return (f'<form method="post" action="{action}" data-busy="{_attr(busy)}"{extra}>{fields}'

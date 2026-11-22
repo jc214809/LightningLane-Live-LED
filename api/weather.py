@@ -72,7 +72,7 @@ def _key_rejected(api_key, now):
     _rejected = {"key": api_key, "until": now + wait, "wait": wait}
 
 
-def fetch_weather_data(lat, lon):
+def fetch_weather_data(lat, lon):  # noqa: C901, PLR0912
     """Current weather at lat/lon, or the last good reading if this fetch fails.
 
     Never raises: every failure is logged and falls back, so one park's weather

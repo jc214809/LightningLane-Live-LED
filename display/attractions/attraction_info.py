@@ -221,7 +221,7 @@ def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0,
     render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color,
                  gap_px + wait_drop)
 
-def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color=None, gap_px=None):
+def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color=None, gap_px=None):  # noqa: PLR0913
     """
     Render each line of text at the specified position on the matrix.
     """

@@ -40,7 +40,7 @@ class Actor:
         pass
 
 
-def stamp(out, art, colors, left, top, scale, width, height):
+def stamp(out, art, colors, left, top, scale, width, height):  # noqa: PLR0913
     """Draw pixel art ('.' empty) over whatever is at out, its top-left at (left, top), each cell
     scale x scale; cells off the board are skipped. Sprites are solid: they cover what's behind."""
     left, top = int(round(left)), int(round(top))

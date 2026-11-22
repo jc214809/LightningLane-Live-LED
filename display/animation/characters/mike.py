@@ -98,7 +98,7 @@ class MikeReveal:
         return {(cx + x, oy + y): rgb for (x, y), rgb in body.items()
                 if 0 <= cx + x < self.width and 0 <= oy + y < self.height}
 
-    def _body(self, scare, look, lid, grin):
+    def _body(self, scare, look, lid, grin):  # noqa: C901, PLR0912, PLR0915
         """Mike centred on (0, 0), later parts painting over earlier ones."""
         r, ry = self.r, self.ry
         px = {}

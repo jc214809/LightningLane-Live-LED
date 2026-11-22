@@ -194,7 +194,7 @@ console.log(JSON.stringify(out));
 """
 
 
-def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", palette="COLORS", cell=None):
+def read_image(path, box=None, lines=False, turn=True, art=False, name="ART", palette="COLORS", cell=None):  # noqa: PLR0913
     """Run Pattern mode's pipeline on an image: crop, straighten, find the grid, read the cells. With cell
     (pixels), the grid is that size instead of found, as Pattern mode's Calibrate sets it."""
     from PIL import Image  # only measuring needs Pillow, not --missing

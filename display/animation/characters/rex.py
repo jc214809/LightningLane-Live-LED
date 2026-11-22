@@ -6,7 +6,7 @@ from display.animation.motion import FPS
 from display.pixels import paint
 
 
-def _open_jaw(art, jaw, opening):
+def _open_jaw(art, jaw, opening):  # noqa: C901
     """
     (art with its mouth opened `opening`, 0 shut to 1 wide, as a grid of cells; the cells of his
     head). jaw is (first row of the lower jaw, its last row, hinge column, rows it drops): columns

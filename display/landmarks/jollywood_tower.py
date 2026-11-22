@@ -193,7 +193,7 @@ class JollywoodTowerLandmark(TowerOfTerrorLandmark):
     def gift_left(self):
         return (self.STRIP_L + self.STRIP_R + 1) // 2 - 2
 
-    def animate(self, out, t):
+    def animate(self, out, t):  # noqa: C901, PLR0912
         super().animate(out, t)
         for cells, swing, phase in self.beams:
             self._beam(out, cells, swing * (0.3 + 0.3 * math.sin(t * 1.2 + phase)))

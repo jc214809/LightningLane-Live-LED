@@ -52,7 +52,7 @@ class TowerOfTerrorLandmark(Landmark):
         # The scene is always built 64 tall; frame() shows a window of it on a short board.
         super().__init__(width, 64, rng, park)
 
-    def build(self):
+    def build(self):  # noqa: C901
         c, rect = self.COLORS, self._rect
         # Stormy sky: a purple-gray gradient with soft cloud banks.
         for y in range(self.height):
@@ -165,7 +165,7 @@ class TowerOfTerrorLandmark(Landmark):
             for x in range(left, left + 5):
                 self.put(out, x, y, self.CAR_RGB)
 
-    def animate(self, out, t):
+    def animate(self, out, t):  # noqa: C901, PLR0912
         c = self.COLORS
         for x, y, phase in self.windows:
             lit = phase > 0.8 or (phase > 0.6 and math.sin(t * 9 + phase * 40) > 0.3)

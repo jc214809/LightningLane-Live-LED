@@ -25,14 +25,14 @@ def add(s):
     out.append(s)
 
 
-def text(x, y, s, size=14, anchor="start", weight="normal", color=None, italic=False):
+def text(x, y, s, size=14, anchor="start", weight="normal", color=None, italic=False):  # noqa: PLR0913
     style = ' font-style="italic"' if italic else ""
     s = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     add(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" text-anchor="{anchor}" font-weight="{weight}"'
         f' fill="{color or C["text"]}"{style}>{s}</text>')
 
 
-def rect(x, y, w, h, fill, stroke="none", sw=1, rx=0, dash=None, opacity=None):
+def rect(x, y, w, h, fill, stroke="none", sw=1, rx=0, dash=None, opacity=None):  # noqa: PLR0913
     d = f' stroke-dasharray="{dash}"' if dash else ""
     o = f' fill-opacity="{opacity}"' if opacity is not None else ""
     add(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{rx}" fill="{fill}"{o}'
@@ -74,7 +74,7 @@ def holes(ox, oy, pts):
         circle(ox + x * S, oy + y * S, 1.4 * S, "#ffffff", C["pcb_edge"], 1)
 
 
-def port(ox, oy, x, y, w, h, label=None, inner=None):
+def port(ox, oy, x, y, w, h, label=None, inner=None):  # noqa: PLR0913
     rect(ox + x * S, oy + y * S, w * S, h * S, C["metal"], C["metal_edge"], 1.2, rx=2)
     if inner:
         rect(ox + (x + w * 0.2) * S, oy + (y + h * 0.3) * S, w * 0.6 * S, h * 0.4 * S, inner, rx=1)
@@ -283,7 +283,7 @@ def speaker_icon(x, y, r=26):
     circle(x, y, r * 0.2, "#777")
 
 
-def sound(x0, y0, zero):
+def sound(x0, y0, zero):  # noqa: PLR0915
     w = 670
     rect(x0, y0, w, 128, "#f4f8ff", "#9bb8e8", 1.5, rx=8)
     text(x0 + 16, y0 + 24, "Sound, option A (recommended): a USB speaker", 15, weight="bold")

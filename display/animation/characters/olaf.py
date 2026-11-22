@@ -242,7 +242,7 @@ class OlafReveal:
                     kind = "W"
                 px[(x0 + col, y0 + row)] = self.colors[kind]
 
-    def pixels(self, t):
+    def pixels(self, t):  # noqa: C901
         """Every pixel he and the snow cover at time t, {(x, y): rgb}, clipped to the board."""
         if t >= self.duration:
             return {}

@@ -99,7 +99,7 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
         debug.info("WebSocket off; using REST polling only.")
 
 
-def main():
+def main():  # noqa: C901, PLR0912, PLR0915
     # Settings first, as in mlb-led-scoreboard: a bad flag or matrix setting exits before anything
     # starts, and --emulated must switch the driver before the matrix is built.
     config = load_config()

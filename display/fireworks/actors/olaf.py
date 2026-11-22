@@ -186,7 +186,7 @@ class OlafStands(Actor):
         if p > 0:
             self.draw_puddle(out, p, 1.0)
 
-    def draw_puddle(self, out, p, glow):
+    def draw_puddle(self, out, p, glow):  # noqa: C901
         """The puddle he leaves: wider and deeper as he melts (p), with his carrot and buttons in it
         once he's gone, all at glow brightness."""
         if glow <= 0.05:  # too dim for the LEDs

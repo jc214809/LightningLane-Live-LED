@@ -192,7 +192,7 @@ class ArmyMenReveal(CapturesScreens):
 
     # --- drawing -----------------------------------------------------------------
 
-    def overlay(self, canvas, t):
+    def overlay(self, canvas, t):  # noqa: C901
         if t >= self.duration:
             return False
         self._cy = self._curtain_y(t)
