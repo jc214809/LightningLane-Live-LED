@@ -16,7 +16,6 @@ ALLOWED_LONG = {
     "display/landmarks/santa_train.py": 1231,
     "display/fireworks/show_effects.py": 1020,
     "display/fireworks/fireworks.py": 834,
-    "display/fireworks/music_show.py": 740,
     "display/animation/characters/bluey.py": 604,
 }
 
