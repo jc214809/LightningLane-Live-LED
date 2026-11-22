@@ -7,6 +7,7 @@ has written a heartbeat since it was restarted. The updater also won't start whi
 /run is cleared at boot, so a heartbeat never outlives the app's run. Written atomically (a temp
 file renamed over it) and never raises: a board that can't write it only fails its health check.
 """
+
 import json
 import os
 import time

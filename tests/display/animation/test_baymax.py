@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FLYBYS, FakeCanvas, FakeMatrix, fill
 
 
@@ -60,7 +59,7 @@ def test_baymax_inflation_curve_peaks_at_full_size_and_returns_to_nothing():
     assert inflations[-1] < 0.05, "back to nothing by the end"
     rising = inflations[: int(baymax.INFLATE_S * 100)]
     assert rising == sorted(rising), "fills monotonically"
-    falling = inflations[-int(baymax.DEFLATE_S * 100):]
+    falling = inflations[-int(baymax.DEFLATE_S * 100) :]
     assert falling == sorted(falling, reverse=True), "empties monotonically"
 
 
@@ -90,8 +89,9 @@ def test_baymax_has_two_eyes_joined_by_a_line_once_inflated(height):
         else:
             groups.append([x])
     assert len(groups) == 2, "two eyes, with white between them"
-    assert abs((groups[0][0] + groups[0][-1]) / 2 + (groups[1][0] + groups[1][-1]) / 2 - 2 * baymax.cx) <= 1.5, \
+    assert abs((groups[0][0] + groups[0][-1]) / 2 + (groups[1][0] + groups[1][-1]) / 2 - 2 * baymax.cx) <= 1.5, (
         "the eyes sit symmetrically about his centre"
+    )
 
 
 def test_baymax_blinks_and_waves_while_he_holds():
@@ -114,8 +114,9 @@ def test_baymax_is_big_on_both_boards():
 
 def test_baymax_leaves_the_rest_of_the_new_screen_visible():
     matrix = FakeMatrix()
-    animation.show_screen(matrix, fill((0, 140, 200)), animation.BaymaxReveal.duration + 0.5,
-                          transition="baymax", rng=random.Random(9))
+    animation.show_screen(
+        matrix, fill((0, 140, 200)), animation.BaymaxReveal.duration + 0.5, transition="baymax", rng=random.Random(9)
+    )
     assert matrix.frames[0][(0, 0)] == (0, 140, 200), "no blackout: he pops up over the new screen"
     assert matrix.frames[-1][(32, 31)] == (0, 140, 200), "and he is gone by the end"
 

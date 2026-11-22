@@ -4,11 +4,25 @@ resolve, rollback point, board, state, restart and health check, rollback) in or
 and Outcome each one ends in. They exist so _update can be split into named steps with no change in
 behaviour; each case here passed on the code before the split.
 """
+
 import pytest
 
-from self_update import github, state as states, update as update_module
+from self_update import github
+from self_update import state as states
+from self_update import update as update_module
 from self_update.board import CommandFailed
-from self_update.update import BLOCKED, CURRENT, Outcome, ROLLED_BACK, ROLLBACK_FAILED, Target, Updater, UPDATED, WAITING, WOULD_UPDATE
+from self_update.update import (
+    BLOCKED,
+    CURRENT,
+    ROLLBACK_FAILED,
+    ROLLED_BACK,
+    UPDATED,
+    WAITING,
+    WOULD_UPDATE,
+    Outcome,
+    Target,
+    Updater,
+)
 
 
 class _Board:
@@ -74,13 +88,20 @@ def run(monkeypatch):
     they do: phase, problems, plan, plan_error, resolve, resolve_error, point_error, board_fail,
     board_error, restart (a problem string, an exception to raise, or None), dry_run, undone,
     requirements_changed."""
+
     def go(**opts):
         log = []
         target = Target("beta", "develop-beta", "b" * 40)
         record_from = {"sha": "a" * 40, "requirements_changed": opts.get("requirements_changed", True)}
         board = _Board(log, opts.get("board_fail"), opts.get("board_error"))
-        updater = Updater(board, state=_State(log, opts.get("phase", "idle")), gh=None,
-                          installed_version="2.0.0", config_path="/nowhere/config.json", notify=lambda *a: None)
+        updater = Updater(
+            board,
+            state=_State(log, opts.get("phase", "idle")),
+            gh=None,
+            installed_version="2.0.0",
+            config_path="/nowhere/config.json",
+            notify=lambda *a: None,
+        )
 
         def preflight():
             log.append("preflight")
@@ -116,14 +137,18 @@ def run(monkeypatch):
         monkeypatch.setattr(states, "remember_good", lambda record, sha: log.append(("remember_good", sha)))
         outcome = updater._update("beta", dry_run=opts.get("dry_run", False))
         return outcome, log, target
+
     return go
 
 
 def test_pin_an_unfinished_update_blocks_before_anything_else(run):
     outcome, log, _ = run(phase="switched")
     assert log == ["load"]
-    assert outcome == Outcome(BLOCKED, "an earlier update didn't finish (it stopped at switched): "
-                                       "roll it back first (python3 -m self_update rollback)")
+    assert outcome == Outcome(
+        BLOCKED,
+        "an earlier update didn't finish (it stopped at switched): "
+        "roll it back first (python3 -m self_update rollback)",
+    )
 
 
 def test_pin_preflight_problems_still_ask_the_plan_and_are_all_reported(run):
@@ -178,7 +203,11 @@ def test_pin_a_healthy_update_walks_every_phase_and_remembers_the_commit(run):
     outcome, log, target = run(restart=None)
     sha = "b" * 40
     assert log == [
-        "load", "preflight", ("plan", "beta"), ("resolve", target), ("rollback point", target),
+        "load",
+        "preflight",
+        ("plan", "beta"),
+        ("resolve", target),
+        ("rollback point", target),
         ("info", f"Updating from {'a' * 7} to develop-beta ({'b' * 7})."),
         ("checkout", sha),
         ("set_phase", "switched", {}),
@@ -198,11 +227,13 @@ def test_pin_pip_is_skipped_when_requirements_did_not_change(run):
     assert ("install", True) in log and ("install", False) not in log
 
 
-@pytest.mark.parametrize("fail_on, upto", [("checkout", ["checkout"]), ("install", ["checkout", "switched", "install"])])
+@pytest.mark.parametrize(
+    "fail_on, upto", [("checkout", ["checkout"]), ("install", ["checkout", "switched", "install"])]
+)
 def test_pin_a_failed_step_rolls_back_with_the_commands_message(run, fail_on, upto):
     outcome, log, target = run(board_fail=fail_on, board_error=CommandFailed(f"{fail_on} failed"))
     steps = [e[1] if e[0] == "set_phase" else e[0] for e in log[6:] if isinstance(e, tuple)]
-    assert steps[:len(upto)] == upto
+    assert steps[: len(upto)] == upto
     assert log[-2:] == [
         ("error", f"The update to develop-beta ({'b' * 7}) failed: {fail_on} failed. Rolling back."),
         ("roll back", f"{fail_on} failed"),
@@ -213,8 +244,10 @@ def test_pin_a_failed_step_rolls_back_with_the_commands_message(run, fail_on, up
 
 def test_pin_an_unhealthy_restart_rolls_back_with_the_health_problem(run):
     outcome, log, _ = run(restart="the app crashed")
-    assert log[-2:] == [("error", f"The update to develop-beta ({'b' * 7}) failed: the app crashed. Rolling back."),
-                          ("roll back", "the app crashed")]
+    assert log[-2:] == [
+        ("error", f"The update to develop-beta ({'b' * 7}) failed: the app crashed. Rolling back."),
+        ("roll back", "the app crashed"),
+    ]
     assert not any(e[0] == "set_phase" and e[1] == "updated" for e in log if isinstance(e, tuple))
     assert outcome.ok is False
 
@@ -230,7 +263,8 @@ def test_pin_any_other_error_is_logged_with_its_traceback_and_rolled_back(run):
     assert ("exception", "The update failed unexpectedly.") in log
     assert ("roll back", "the update failed unexpectedly: weird") in log
     assert log.index(("exception", "The update failed unexpectedly.")) < log.index(
-        ("roll back", "the update failed unexpectedly: weird"))
+        ("roll back", "the update failed unexpectedly: weird")
+    )
 
 
 def test_pin_the_outcome_of_a_failed_rollback_is_carried_with_ok_false(run):

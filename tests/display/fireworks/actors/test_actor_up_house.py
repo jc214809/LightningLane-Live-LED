@@ -10,8 +10,9 @@ START, END = 303.0, 325.0
 
 
 def _scene():
-    return Cue("s", "Touch the Sky / Up", START, END, ((255, 0, 0),), 0.0, None, (), frozenset(),
-               "ghost", ("up_house",))
+    return Cue(
+        "s", "Touch the Sky / Up", START, END, ((255, 0, 0),), 0.0, None, (), frozenset(), "ghost", ("up_house",)
+    )
 
 
 def _frame(show, actor, cue, t, active=True):
@@ -86,9 +87,12 @@ def test_up_house_bobs_as_it_goes():
 
 def test_up_house_is_the_chart_on_64x64_and_its_house_on_64x32():
     big, small = UpHouseFloats(MusicShow(64, 64, random.Random(1))), UpHouseFloats(MusicShow(64, 32, random.Random(1)))
-    art = {(col, row - len(UpHouseFloats.BALLOONS_ART)): UpHouseFloats.COLORS[c]
-           for row, line in enumerate(UpHouseFloats.BALLOONS_ART + UpHouseFloats.ART)
-           for col, c in enumerate(line) if c != "."}
+    art = {
+        (col, row - len(UpHouseFloats.BALLOONS_ART)): UpHouseFloats.COLORS[c]
+        for row, line in enumerate(UpHouseFloats.BALLOONS_ART + UpHouseFloats.ART)
+        for col, c in enumerate(line)
+        if c != "."
+    }
     assert {(dx, dy): rgb for dx, dy, rgb in big.cells} == art
     assert (big.w, big.h, big.above) == (24, 24, 22)
     house = {(dx, dy): rgb for dx, dy, rgb in small.cells if dy >= 0}

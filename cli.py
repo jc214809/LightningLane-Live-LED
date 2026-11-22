@@ -5,6 +5,7 @@ if asked, so importing the driver never reads sys.argv. As upstream, config.json
 section holds the same settings ({"led_rows": 64, ...}): each board's own, set on the settings page.
 Precedence: command line, config.json's matrix, the Pi model's defaults (MODEL_DEFAULTS), the driver's.
 """
+
 import argparse
 import sys
 
@@ -72,8 +73,9 @@ def arguments(argv=None, matrix=None, defaults=None, model=None):
     setting, or a value the boards can't use; under unittest, test runners' own flags on sys.argv
     are ignored instead."""
     parser = _make_parser()
-    tokens = (_matrix_tokens(parser, defaults, f"the {MODEL_NAMES.get(model, 'Pi')} defaults")
-              + _matrix_tokens(parser, matrix, 'config.json "matrix"'))
+    tokens = _matrix_tokens(parser, defaults, f"the {MODEL_NAMES.get(model, 'Pi')} defaults") + _matrix_tokens(
+        parser, matrix, 'config.json "matrix"'
+    )
     if argv is None and "unittest" in sys.modules:
         parsed, _ = parser.parse_known_args(tokens + sys.argv[1:])
     else:
@@ -92,15 +94,26 @@ def _check_sizes(parser, parsed):
 def matrix_settings():
     """config.json "matrix" keys, for the settings page: (key, help, choices or None, is a switch,
     takes a number) for each flag, in the parser's order."""
-    return [(action.dest, action.help, list(action.choices) if action.choices is not None else None,
-             action.nargs == 0, action.type is int)
-            for action in _make_parser()._actions if action.option_strings and action.dest != "help"]
+    return [
+        (
+            action.dest,
+            action.help,
+            list(action.choices) if action.choices is not None else None,
+            action.nargs == 0,
+            action.type is int,
+        )
+        for action in _make_parser()._actions
+        if action.option_strings and action.dest != "help"
+    ]
 
 
 def matrix_defaults():
     """Each config.json "matrix" key's driver default, for the settings page."""
-    return {action.dest: action.default for action in _make_parser()._actions
-            if action.option_strings and action.dest != "help"}
+    return {
+        action.dest: action.default
+        for action in _make_parser()._actions
+        if action.option_strings and action.dest != "help"
+    }
 
 
 def matrix_problem(matrix):
@@ -110,6 +123,7 @@ def matrix_problem(matrix):
 
     def fail(message):
         raise ValueError(message)
+
     parser.error = fail  # argparse reports bad types and choices through it too
     try:
         _check_sizes(parser, parser.parse_args(_matrix_tokens(parser, matrix, 'config.json "matrix"')))
@@ -124,8 +138,11 @@ def describe(parsed, argv=None, matrix=None, defaults=None, model=None, why=None
     precedence as arguments()."""
     parser = _make_parser()
     by_flag = parser._option_string_actions
-    from_command_line = {by_flag[token.split("=", 1)[0]].dest
-                         for token in (sys.argv[1:] if argv is None else argv) if token.split("=", 1)[0] in by_flag}
+    from_command_line = {
+        by_flag[token.split("=", 1)[0]].dest
+        for token in (sys.argv[1:] if argv is None else argv)
+        if token.split("=", 1)[0] in by_flag
+    }
     name = MODEL_NAMES.get(model, "Pi")
 
     def source(dest):
@@ -135,10 +152,13 @@ def describe(parsed, argv=None, matrix=None, defaults=None, model=None, why=None
             return "config"
         return f"{name} default" if (defaults or {}).get(dest) is not None else "default"
 
-    changed = [f"{action.dest}={getattr(parsed, action.dest)} ({source(action.dest)})"
-               for action in parser._actions
-               if action.option_strings and action.dest != "help"
-               and getattr(parsed, action.dest, action.default) != action.default]
+    changed = [
+        f"{action.dest}={getattr(parsed, action.dest)} ({source(action.dest)})"
+        for action in parser._actions
+        if action.option_strings
+        and action.dest != "help"
+        and getattr(parsed, action.dest, action.default) != action.default
+    ]
     pi = f"{name}, {why}" if model else f"no Pi model: {why}" if why else "no Pi model"
     return f"Board settings ({pi}): " + (", ".join(changed) + "; the rest default" if changed else "all default")
 
@@ -157,8 +177,7 @@ def _matrix_tokens(parser, matrix, where):
     for key, value in matrix.items():
         action = flags.get(key)
         if action is None:
-            parser.error(f'{where} has no setting "{key}" '
-                         '(use a flag\'s name with underscores, like "led_rows")')
+            parser.error(f'{where} has no setting "{key}" (use a flag\'s name with underscores, like "led_rows")')
         if value is None:  # null: not set, as if the flag weren't given
             continue
         if action.nargs == 0:  # a switch like --led-show-refresh: present or not
@@ -278,13 +297,14 @@ def _make_parser():
         type=int,
     )
     parser.add_argument(
-        "--led-pwm-dither-bits", action="store", help="Time dithering of lower bits (Default: 0)", default=0, type=int,
+        "--led-pwm-dither-bits",
+        action="store",
+        help="Time dithering of lower bits (Default: 0)",
+        default=0,
+        type=int,
     )
     parser.add_argument(
-        "--emulated",
-        action="store_const",
-        help="Force using emulator mode over default matrix display.",
-        const=True
+        "--emulated", action="store_const", help="Force using emulator mode over default matrix display.", const=True
     )
     parser.add_argument(
         "--drop-privileges", action="store_true", help="Force the matrix driver to drop root privileges after setup."
@@ -351,4 +371,3 @@ def led_matrix_options(args):
         options.disable_hardware_pulsing = True
 
     return options
-

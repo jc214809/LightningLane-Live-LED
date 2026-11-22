@@ -2,6 +2,7 @@
 The WebSocket thread's entry point: runs the protocol config.json picks (utils/config.py's
 websocket_protocol) until the process exits. The protocols are in ws_legacy.py and ws_preview.py.
 """
+
 import asyncio
 import time
 

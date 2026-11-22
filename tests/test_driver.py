@@ -1,5 +1,6 @@
 """The real driver/__init__.py. Every other test sees tests/stubs/conftest.py's stand-in, so this
 loads the package for the test and puts the stand-in back after."""
+
 import importlib
 import sys
 import types
@@ -71,6 +72,7 @@ def test_emulated_on_a_pi_switches_graphics_imported_before_the_switch(real_driv
 
     real_driver.set_mode(real_driver.DriverMode.SOFTWARE_EMULATION)
     import RGBMatrixEmulator
+
     assert graphics.DrawText is RGBMatrixEmulator.graphics.DrawText
     assert real_driver.RGBMatrix is RGBMatrixEmulator.RGBMatrix
 
@@ -89,4 +91,5 @@ def test_swapping_a_graphics_function_patches_the_drivers_and_restores_cleanly(r
 
     real_driver.set_mode(real_driver.DriverMode.SOFTWARE_EMULATION)
     import RGBMatrixEmulator
+
     assert graphics.DrawText is RGBMatrixEmulator.graphics.DrawText, "nothing pinned to the old driver"

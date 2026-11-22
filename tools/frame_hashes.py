@@ -25,6 +25,7 @@ is a fixture (no network), and the script re-runs itself with PYTHONHASHSEED=0 s
 Nothing opens the browser emulator. A thing that raises is recorded as "error: ..." (and so differs).
 A synced show needs only its score under display/fireworks/shows/ (in git), not its WAV.
 """
+
 import argparse
 import contextlib
 import hashlib
@@ -62,9 +63,9 @@ def frame_bytes(pixels, width, height):
         if 0 <= x < width and 0 <= y < height:
             o = (int(y) * width + int(x)) * 3
             try:
-                buf[o:o + 3] = bytes(rgb)
+                buf[o : o + 3] = bytes(rgb)
             except (ValueError, TypeError):  # a float or an out-of-range channel: clamp the way a panel would
-                buf[o:o + 3] = bytes(max(0, min(255, int(c))) for c in rgb)
+                buf[o : o + 3] = bytes(max(0, min(255, int(c))) for c in rgb)
     return bytes(buf)
 
 
@@ -121,9 +122,20 @@ FROZEN_DAY = "2026-10-31"
 
 def party_park():
     """Magic Kingdom on a party night, 7 PM to midnight, dated the frozen day: the scenes that print hours use it."""
-    return {"name": "Magic Kingdom", "timezone": "America/New_York", "seasonalEvent": "halloween",
-            "schedule": [{"type": "TICKETED_EVENT", "date": FROZEN_DAY, "description": "Special Ticketed Event",
-                          "openingTime": f"{FROZEN_DAY}T19:00:00-04:00", "closingTime": f"{FROZEN_DAY}T23:59:00-04:00"}]}
+    return {
+        "name": "Magic Kingdom",
+        "timezone": "America/New_York",
+        "seasonalEvent": "halloween",
+        "schedule": [
+            {
+                "type": "TICKETED_EVENT",
+                "date": FROZEN_DAY,
+                "description": "Special Ticketed Event",
+                "openingTime": f"{FROZEN_DAY}T19:00:00-04:00",
+                "closingTime": f"{FROZEN_DAY}T23:59:00-04:00",
+            }
+        ],
+    }
 
 
 @contextlib.contextmanager
@@ -161,6 +173,7 @@ def landmark_classes():
             if sub.__module__.startswith("display.landmarks"):
                 found[sub.__name__] = sub
             walk(sub)
+
     walk(Landmark)
     pumpkin = landmarks.FriendlyJackOLanternLandmark
     for motion in pumpkin.MOTIONS:  # MOTION None picks one at random per showing: pin each
@@ -171,6 +184,7 @@ def landmark_classes():
 def _landmark_run_s(scene):
     """How long the scene itself runs: its screen minus the sweep, and minus the wipe unless it plays under it."""
     import display.animation as animation
+
     wipe = 0 if scene.PLAYS_UNDER_WIPE else animation.TRANSITIONS["wipe"].duration
     return scene.SCREEN_S - animation.COVER_S - wipe
 
@@ -208,11 +222,15 @@ def hash_landmark_screen(cls, width, height):
 
 def _fixture_screen(salt):
     """A busy, colourful screen (no text, no fonts) for transitions to cover and reveal."""
+
     def draw(canvas, t):
         for y in range(canvas.height):
             for x in range(canvas.width):
-                canvas.SetPixel(x, y, (x * 4 + salt * 40) % 256, (y * 7 + salt * 90) % 256, ((x + y) * 3 + salt * 20) % 256)
+                canvas.SetPixel(
+                    x, y, (x * 4 + salt * 40) % 256, (y * 7 + salt * 90) % 256, ((x + y) * 3 + salt * 20) % 256
+                )
         return False
+
     return draw
 
 
@@ -279,8 +297,11 @@ def hash_fireworks_title(width, height):
     layout = title_layout(font, width, height)
     digest = Digest()
     for alpha in (0.0, 0.5, 1.0):
-        digest.frame(capture_screen(lambda canvas, t, a=alpha: draw_title(canvas, font, layout, a), 0.0, width, height),
-                     width, height)
+        digest.frame(
+            capture_screen(lambda canvas, t, a=alpha: draw_title(canvas, font, layout, a), 0.0, width, height),
+            width,
+            height,
+        )
     return digest.hex()
 
 
@@ -326,6 +347,7 @@ def hash_show(name, version, width, height):
 def _icon():
     """A 15x15 stand-in for the weather icon the board downloads: a fixed gradient."""
     from PIL import Image
+
     img = Image.new("RGB", (15, 15))
     for y in range(15):
         for x in range(15):
@@ -336,12 +358,24 @@ def _icon():
 def _park_fixtures():
     def iso(h, m):
         return f"{FROZEN_DAY}T{h:02d}:{m:02d}:00-04:00"
+
     weather = {"temperature": "72F", "short_description": "Clear", "icon": "01d"}
     return {
-        "everyday": {"name": "Magic Kingdom", "timezone": "America/New_York", "openingTime": iso(9, 0),
-                     "closingTime": iso(22, 0), "llmpPrice": "15", "weather": weather},
-        "party": {**party_park(), "openingTime": iso(9, 0), "closingTime": iso(23, 59), "llmpPrice": "$20",
-                  "weather": weather},
+        "everyday": {
+            "name": "Magic Kingdom",
+            "timezone": "America/New_York",
+            "openingTime": iso(9, 0),
+            "closingTime": iso(22, 0),
+            "llmpPrice": "15",
+            "weather": weather,
+        },
+        "party": {
+            **party_park(),
+            "openingTime": iso(9, 0),
+            "closingTime": iso(23, 59),
+            "llmpPrice": "$20",
+            "weather": weather,
+        },
         "no-hours": {"name": "Disney's Hollywood Studios", "timezone": "America/New_York", "llmpPrice": ""},
     }
 
@@ -352,9 +386,12 @@ def hash_park_info(fixture, width, height):
 
     initialize_fonts(height)
     from updater.shared import weather_icons
+
     weather_icons["01d"] = _icon()  # no download: the icon is a fixture
     park = _park_fixtures()[fixture]
-    return screen_digest(lambda canvas, t: park_details.render_park_information_screen(canvas, park), (0.0,), width, height)
+    return screen_digest(
+        lambda canvas, t: park_details.render_park_information_screen(canvas, park), (0.0,), width, height
+    )
 
 
 RIDE_FIXTURES = {
@@ -372,16 +409,21 @@ def hash_ride(fixture, width, height):
 
     initialize_fonts(height)
     ride = RIDE_FIXTURES[fixture]
-    return screen_digest(lambda canvas, t: draw_attraction_frame(canvas, ride, t, expected=40), RIDE_TIMES, width, height)
+    return screen_digest(
+        lambda canvas, t: draw_attraction_frame(canvas, ride, t, expected=40), RIDE_TIMES, width, height
+    )
 
 
 def _trip_fixtures():
     from datetime import date
 
     from utils.trips import Trip
+
     today = date.fromisoformat(FROZEN_DAY)
+
     def day(n):
         return date.fromordinal(today.toordinal() + n)
+
     return {
         "days-to-go": (Trip(day(42)), today),
         "named-trip": (Trip(day(9), day(16), "Our Big Trip"), today),
@@ -397,8 +439,9 @@ def hash_countdown(fixture, width, height):
 
     initialize_fonts(height)
     trip, today = _trip_fixtures()[fixture]
-    return screen_digest(lambda canvas, t: render_countdown_to_disney(canvas, trip, t, today), (0.0, 0.7, 1.5, 3.0, 6.5),
-                            width, height)
+    return screen_digest(
+        lambda canvas, t: render_countdown_to_disney(canvas, trip, t, today), (0.0, 0.7, 1.5, 3.0, 6.5), width, height
+    )
 
 
 def screen_digest(draw, times, width, height):
@@ -426,8 +469,9 @@ def catalog():
         for name, cls in TRANSITIONS.items():
             things[f"transition/{name}{board}"] = lambda n=name, h=height: hash_transition(n, WIDTH, h)
             for story in story_choices(cls):
-                things[f"transition/{name}-{story}{board}"] = (
-                    lambda n=name, h=height, s=story: hash_transition(n, WIDTH, h, s))
+                things[f"transition/{name}-{story}{board}"] = lambda n=name, h=height, s=story: hash_transition(
+                    n, WIDTH, h, s
+                )
         for theme in (None, *THEMES):
             things[f"fireworks/{theme or 'everyday'}{board}"] = lambda th=theme, h=height: hash_fireworks(th, WIDTH, h)
         things[f"fireworks-title{board}"] = lambda h=height: hash_fireworks_title(WIDTH, h)
@@ -488,6 +532,7 @@ def _setup():
         sys.path.insert(0, ROOT)
     os.chdir(ROOT)  # fonts and the shows are found relative to the repo root
     import driver
+
     if hasattr(driver, "set_mode"):  # not the test stub: never the hardware driver, never the browser emulator's server
         driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
 
@@ -495,7 +540,9 @@ def _setup():
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--out", help="write {name: sha256} here as JSON (default: print it)")
-    parser.add_argument("--compare", metavar="OLD.json", help="compare with an earlier run; list every difference; exit 1 if any")
+    parser.add_argument(
+        "--compare", metavar="OLD.json", help="compare with an earlier run; list every difference; exit 1 if any"
+    )
     parser.add_argument("--only", action="append", metavar="TEXT", help="only names containing TEXT (repeatable)")
     parser.add_argument("--list", action="store_true", help="list the names and stop")
     args = parser.parse_args(argv)

@@ -5,16 +5,14 @@ previous screen away and reveals the next with a transition from TRANSITIONS.
 
 import time
 
+from display.animation.characters import TRANSITIONS
+from display.animation.drawing import _blackout, _edge
+from display.animation.motion import COVER_S, FPS, ease_out
 from display.network import draw_if_offline
 from display.settings_pin import draw_if_pin_shown
 from display.sound_badges import draw_if_sound_problem
 from utils import brightness, debug
 from utils.settings_pin import shown_pin
-
-from display.animation.characters import TRANSITIONS
-from display.animation.drawing import _blackout, _edge
-from display.animation.motion import COVER_S, FPS, ease_out
-
 
 _canvases = {}
 _last_screen = {}

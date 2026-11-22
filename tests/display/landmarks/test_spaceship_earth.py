@@ -6,7 +6,6 @@ import random
 import pytest
 
 import display.landmarks as landmarks
-
 from tests.display.landmarks.support import _scene_s
 
 
@@ -107,8 +106,9 @@ def test_spaceship_earth_tink_circles_three_even_laps_ending_where_she_began():
     earth = _earth()
     assert earth.TURNS == 3
     start, end = earth.angle(0.0), earth.angle(1.0)
-    assert math.isclose(math.sin(start), math.sin(end), abs_tol=1e-9) and \
-        math.isclose(math.cos(start), math.cos(end), abs_tol=1e-9), "whole laps: same spot, higher up"
+    assert math.isclose(math.sin(start), math.sin(end), abs_tol=1e-9) and math.isclose(
+        math.cos(start), math.cos(end), abs_tol=1e-9
+    ), "whole laps: same spot, higher up"
     ys = [earth.tink_at(earth.SPIRAL_S * k / 3 - (1e-6 if k == 3 else 0))[1] for k in range(4)]
     gaps = [a - b for a, b in zip(ys, ys[1:])]
     assert all(g > 0 for g in gaps), "climbing"
@@ -123,8 +123,12 @@ def test_spaceship_earth_tink_is_hidden_while_behind_the_sphere():
         x, y, front = earth.tink_at(t)
         if not front and earth._on_sphere(x, y):
             frame = earth.frame(t)
-            near = [frame.get((int(x) + dx, int(y) + dy)) for dx in range(-2, 3) for dy in range(-2, 3)
-                    if earth._on_sphere(int(x) + dx, int(y) + dy)]
+            near = [
+                frame.get((int(x) + dx, int(y) + dy))
+                for dx in range(-2, 3)
+                for dy in range(-2, 3)
+                if earth._on_sphere(int(x) + dx, int(y) + dy)
+            ]
             assert wing not in near, f"her wings show through the sphere at t={t:.2f}"
 
 

@@ -51,8 +51,16 @@ def _every_pose(scene, big):
 
 def _every_wheel(big):
     train = st.TRAIN_64 if big else st.TRAIN_32
-    return [(st.wheels(piece, big), [sorted(st.spin_pixels(piece, big, step, engine=i == len(train) - 1).items())
-                                     for step in range(st.SPIN_STEPS)]) for i, piece in enumerate(train)]
+    return [
+        (
+            st.wheels(piece, big),
+            [
+                sorted(st.spin_pixels(piece, big, step, engine=i == len(train) - 1).items())
+                for step in range(st.SPIN_STEPS)
+            ],
+        )
+        for i, piece in enumerate(train)
+    ]
 
 
 def _edges():
@@ -63,8 +71,12 @@ def _edges():
 
 
 PINNED_FRAMES = {
-    ("none", 32): "60b6db7d2d38c811", ("evening", 32): "2073be62d0fb0360", ("wide", 32): "0b28e84be73e223f",
-    ("none", 64): "c4ca9140260c48a5", ("evening", 64): "f332fe7bb74feac9", ("wide", 64): "4387a4ea07f68ab5",
+    ("none", 32): "60b6db7d2d38c811",
+    ("evening", 32): "2073be62d0fb0360",
+    ("wide", 32): "0b28e84be73e223f",
+    ("none", 64): "c4ca9140260c48a5",
+    ("evening", 64): "f332fe7bb74feac9",
+    ("wide", 64): "4387a4ea07f68ab5",
 }
 PINNED_POSES = {32: "fb84a8d8931c8e02", 64: "21f3230dce53bd40"}
 PINNED_WHEELS = {32: "6867be6d464dfe2d", 64: "c6843f88d715276e"}

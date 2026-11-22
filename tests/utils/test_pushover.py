@@ -13,6 +13,7 @@ KEYS = ("u-user", "t-token")
 
 class Urlopen:
     """A fake urllib.request.urlopen: records the request, answers with reply (bytes) or raises it."""
+
     def __init__(self, reply=b'{"status":1,"request":"abc"}'):
         self.reply, self.requests = reply, []
 
@@ -82,5 +83,6 @@ def test_bad_json_and_network_errors_are_raised(urlopen):
 
 def test_the_old_settings_page_path_still_works_for_a_board_mid_update():
     import settings_page.pushover as old
+
     assert old.send is pushover.send and old.send_pin is pushover.send_pin and old.PushoverError is PushoverError
     assert old.MESSAGES_URL == pushover.MESSAGES_URL and old.TIMEOUT_S == pushover.TIMEOUT_S

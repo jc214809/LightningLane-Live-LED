@@ -1,4 +1,5 @@
 """Mater."""
+
 import pytest
 
 import display.animation as animation

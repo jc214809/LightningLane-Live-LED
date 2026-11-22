@@ -119,8 +119,14 @@ class TiggerReveal:
         "...............KGGGGGGGK.......KGGGGGGKKGGGGGGKKKKKK......",
         "................KKKKKKK.........KKKKKKKKKKKKKK............",
     ]
-    colors = {"K": (60, 34, 20), "O": (253, 103, 38), "G": (255, 162, 0), "Y": (254, 254, 129),
-              "C": (232, 228, 151), "N": (245, 166, 202)}
+    colors = {
+        "K": (60, 34, 20),
+        "O": (253, 103, 38),
+        "G": (255, 162, 0),
+        "Y": (254, 254, 129),
+        "C": (232, 228, 151),
+        "N": (245, 166, 202),
+    }
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height

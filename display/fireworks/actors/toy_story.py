@@ -1,12 +1,12 @@
 """You've Got a Friend in Me: Woody slides in and waves while alphabet blocks fill the castle, then slides
 off, and Buzz flies through and knocks them down."""
+
 import math
 import random
 
 from display.animation.characters.buzz import BuzzReveal
 from display.fireworks.actors.base import Actor, stamp
 from display.motion import smooth
-
 
 # Woody as a chibi, from docs/references/Woody - New.jpg cell for cell (19 x 26), with two empty columns
 # on the right for his raised hand. Drawn for this scene only: the claw scene's 14 x 18 Woody was too
@@ -39,15 +39,43 @@ WOODY_ART = [
     "....KNNNK.KNNNK......",
     "....KKKKK.KKKKK......",
 ]
-WOODY_COLORS = {"K": (0, 0, 0), "N": (146, 75, 47), "n": (95, 50, 11), "O": (234, 200, 175),
-                "o": (233, 184, 80), "W": (255, 255, 254), "R": (230, 38, 5), "B": (50, 86, 136),
-                "w": (216, 217, 216)}
+WOODY_COLORS = {
+    "K": (0, 0, 0),
+    "N": (146, 75, 47),
+    "n": (95, 50, 11),
+    "O": (234, 200, 175),
+    "o": (233, 184, 80),
+    "W": (255, 255, 254),
+    "R": (230, 38, 5),
+    "B": (50, 86, 136),
+    "w": (216, 217, 216),
+}
 # His right arm (on our right, by the holster) raised: the hand beside his hat brim and the yellow
 # sleeve down to his shoulder; the same arm tipped out a column is the other half of the wave.
-_ARM_UP = {6: (18, "K"), 7: (17, "OOK"), 8: (17, "OOK"), 9: (17, "ooK"), 10: (16, "KooK"), 11: (16, "KooK"),
-           12: (15, "KKooK"), 13: (14, "KKooK"), 14: (15, "ooK"), 15: (14, "ooK")}
-_ARM_OUT = {6: (18, "KK"), 7: (18, "OOK"), 8: (18, "OOK"), 9: (17, "KooK"), 10: (17, "ooK"),
-            11: (16, "KooK"), 12: (15, "KKooK"), 13: (14, "KKooK"), 14: (15, "ooK"), 15: (14, "ooK")}
+_ARM_UP = {
+    6: (18, "K"),
+    7: (17, "OOK"),
+    8: (17, "OOK"),
+    9: (17, "ooK"),
+    10: (16, "KooK"),
+    11: (16, "KooK"),
+    12: (15, "KKooK"),
+    13: (14, "KKooK"),
+    14: (15, "ooK"),
+    15: (14, "ooK"),
+}
+_ARM_OUT = {
+    6: (18, "KK"),
+    7: (18, "OOK"),
+    8: (18, "OOK"),
+    9: (17, "KooK"),
+    10: (17, "ooK"),
+    11: (16, "KooK"),
+    12: (15, "KKooK"),
+    13: (14, "KKooK"),
+    14: (15, "ooK"),
+    15: (14, "ooK"),
+}
 
 
 def _waving(arm_out):
@@ -57,7 +85,7 @@ def _waving(arm_out):
     for row in (16, 17, 18):
         art[row][14:18] = "K..."
     for row, (col, cells) in (_ARM_OUT if arm_out else _ARM_UP).items():
-        art[row][col:col + len(cells)] = cells
+        art[row][col : col + len(cells)] = cells
     return ["".join(row) for row in art]
 
 
@@ -91,10 +119,21 @@ BUZZ_ART = [
     "DKKDAIKHDAAA............................",
     "AEE.....................................",
 ]
-BUZZ_COLORS = {"A": (0x1D, 0x16, 0x2B), "B": (0x20, 0x9F, 0xB9), "C": (0x45, 0x40, 0x53), "D": (0x55, 0x28, 0x7D),
-               "E": (0x5D, 0xAC, 0x1C), "F": (0x70, 0x74, 0x84), "G": (0x87, 0x4D, 0xB0), "H": (0x9B, 0xAB, 0xBC),
-               "I": (0xA3, 0xE7, 0x39), "J": (0xF0, 0x2B, 0x35), "K": (0xF8, 0xFA, 0xFF), "L": (0xFF, 0xBE, 0x9E),
-               "M": (0xFF, 0xD8, 0xB9)}
+BUZZ_COLORS = {
+    "A": (0x1D, 0x16, 0x2B),
+    "B": (0x20, 0x9F, 0xB9),
+    "C": (0x45, 0x40, 0x53),
+    "D": (0x55, 0x28, 0x7D),
+    "E": (0x5D, 0xAC, 0x1C),
+    "F": (0x70, 0x74, 0x84),
+    "G": (0x87, 0x4D, 0xB0),
+    "H": (0x9B, 0xAB, 0xBC),
+    "I": (0xA3, 0xE7, 0x39),
+    "J": (0xF0, 0x2B, 0x35),
+    "K": (0xF8, 0xFA, 0xFF),
+    "L": (0xFF, 0xBE, 0x9E),
+    "M": (0xFF, 0xD8, 0xB9),
+}
 BUZZ_BOOTS_ROW = 23  # his boots' middle row (bottom left in the art), where his rocket trail streams from
 
 # Toy blocks in primary colours (red, blue, yellow, green), and on 64x64 a letter on each: A, B, C in turn.
@@ -116,10 +155,11 @@ class BuzzAndWoody(Actor):
     the castle's pixels, like a projection (its outline and doorway kept): 5x5 ABC blocks on 64x64, 3x3
     shaded ones on 64x32. Then Buzz (BUZZ_ART, flying, 1x on both boards) flies through from SWOOP_AT,
     right to left, fist first, low through the castle's middle (wholly on the board), a short flickering
-    rocket trail streaming back from his boots: each block comes loose as he reaches its column, the ones he hits flying off ahead of him and
-    the rest toppling, all tumbling to the ground and fading out. Everything is placed by the clock, as
+    rocket trail streaming back from his boots: each block comes loose as he reaches its column, the ones he
+    hits flying off ahead of him and the rest toppling, all tumbling to the ground and fading out. Everything is placed by the clock, as
     a function of the seconds into the scene.
     """
+
     NAME = "Buzz and Woody"
     WAVE_S = 0.3  # each half of Woody's wave
     SLIDE_S = 0.8  # Woody's slide on, and off
@@ -159,8 +199,11 @@ class BuzzAndWoody(Actor):
         rng = random.Random(show.height)
         slots = []
         for r, top in enumerate(range(show.castle_y + show.castle_h - n, show.castle_y - n, -n)):
-            row = [(c, left) for c, left in enumerate(range(show.castle_x, show.castle_x + show.castle_w, n))
-                   if 2 * sum((left + i, top + j) in self.facade for i in range(n) for j in range(n)) >= n * n]
+            row = [
+                (c, left)
+                for c, left in enumerate(range(show.castle_x, show.castle_x + show.castle_w, n))
+                if 2 * sum((left + i, top + j) in self.facade for i in range(n) for j in range(n)) >= n * n
+            ]
             rng.shuffle(row)
             slots += [(r, c, left, top) for c, left in row]
         step = self.FILL_S / max(1, len(slots))
@@ -173,8 +216,18 @@ class BuzzAndWoody(Actor):
                 vx, vy = -speed * (0.4 + 0.3 * rng.random()), -(12 + 10 * rng.random()) * s
             else:
                 vx, vy = (rng.random() - 0.5) * 16 * s, -4 * rng.random() * s
-            blocks.append((left, top, BLOCK_COLOURS[(c + 2 * r) % 4], LETTERS[(c + r) % len(LETTERS)],
-                           self.FILL_START + (k + 1) * step, loose, vx, vy))
+            blocks.append(
+                (
+                    left,
+                    top,
+                    BLOCK_COLOURS[(c + 2 * r) % 4],
+                    LETTERS[(c + r) % len(LETTERS)],
+                    self.FILL_START + (k + 1) * step,
+                    loose,
+                    vx,
+                    vy,
+                )
+            )
         return blocks
 
     def block_at(self, block, e):

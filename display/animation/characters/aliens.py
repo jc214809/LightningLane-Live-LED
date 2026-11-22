@@ -44,8 +44,8 @@ class AliensReveal:
     TEXT = ("YOU'VE BEEN", "CHOSEN!")
     HANGING_BELOW = 0  # rows of anything hanging under the chosen one as he's lifted
     hold_after_s = 3.0  # the ride screen, after they leave
-    ENTER_S, WAIT_S, CLAW_S, GRAB_S, LIFT_S, TEXT_S, EXIT_S = 1.0, .3, 1.0, .35, 1.0, 1.6, 1.0
-    STEP_S = .12  # each bob of their shuffle
+    ENTER_S, WAIT_S, CLAW_S, GRAB_S, LIFT_S, TEXT_S, EXIT_S = 1.0, 0.3, 1.0, 0.35, 1.0, 1.6, 1.0
+    STEP_S = 0.12  # each bob of their shuffle
     TEXT_RGB, EDGE_RGB = (255, 230, 60), (0, 0, 0)
 
     # Redrawn small from the Toy Story 4 sheet's alien (docs/references/toy_story_4_sheet.png):
@@ -72,8 +72,16 @@ class AliensReveal:
         "...BBB..BBB...",
         "..bbbb..bbbb..",
     ]
-    colors = {"g": (40, 140, 40), "G": (120, 206, 75), "W": (240, 248, 244), "K": (10, 10, 10),
-              "m": (15, 100, 30), "P": (110, 60, 170), "B": (20, 70, 190), "b": (10, 30, 110)}
+    colors = {
+        "g": (40, 140, 40),
+        "G": (120, 206, 75),
+        "W": (240, 248, 244),
+        "K": (10, 10, 10),
+        "m": (15, 100, 30),
+        "P": (110, 60, 170),
+        "B": (20, 70, 190),
+        "b": (10, 30, 110),
+    }
     # The claw, open and shut: k hub, S steel prongs.
     CLAW_OPEN_ART = [
         "....kkk....",
@@ -108,16 +116,25 @@ class AliensReveal:
         self.rng = rng or random.Random()
         self.w, self.h = len(self.ART[0]), len(self.ART)
         rows = self.BIG_ROWS if height >= 64 else self.ROWS
-        self.spots = [(off + i * self.PITCH, y) for y, off in rows
-                      for i in range(width // self.PITCH + 2) if -self.w // 2 <= off + i * self.PITCH <= width - self.w // 2]
+        self.spots = [
+            (off + i * self.PITCH, y)
+            for y, off in rows
+            for i in range(width // self.PITCH + 2)
+            if -self.w // 2 <= off + i * self.PITCH <= width - self.w // 2
+        ]
         # A different one each time: any wholly on the board, and low enough that the whole claw is in
         # sight when it grabs him (on 64x32, the front row).
         grab_low = len(self.CLAW_OPEN_ART) - 1 - self.CLAW_GRIP
-        self.choices = [s for s in self.spots if 0 <= s[0] <= width - self.w and s[1] >= grab_low and self.can_choose(s)]
+        self.choices = [
+            s for s in self.spots if 0 <= s[0] <= width - self.w and s[1] >= grab_low and self.can_choose(s)
+        ]
         self.chosen = self.rng.choice(self.choices)
         self.up = _looking_up(self.ART)
         big = height >= 64
-        self.lines = [_text_cells(self.TEXT[0], "5x8.bdf"), _text_cells(self.TEXT[1], "7x13B.bdf" if big else "5x8.bdf")]
+        self.lines = [
+            _text_cells(self.TEXT[0], "5x8.bdf"),
+            _text_cells(self.TEXT[1], "7x13B.bdf" if big else "5x8.bdf"),
+        ]
         t = 0.0
         self.claw_at = t = t + self.ENTER_S + self.WAIT_S
         self.grab_at = t = t + self.CLAW_S
@@ -229,7 +246,7 @@ class AliensToysReveal(AliensReveal):
 
     TEXT = ("THE CLAW", "CHOOSES")
     LIFT_S = 1.4  # a longer haul, with Woody hanging on
-    LEAP_S = .2  # Woody's jump up to Buzz's boot, once it's within his reach
+    LEAP_S = 0.2  # Woody's jump up to Buzz's boot, once it's within his reach
     # Redrawn alien-sized from the Toy Story 4 sheet: Buzz in his dome helmet and purple hood, white
     # suit with a green and purple chest; Woody's hat and wide brim, bandana, cow-spot vest, jeans.
     # Woody also hangs by his right hand, raised past his hat. c helmet, P purple, O skin, o mouth,
@@ -297,9 +314,19 @@ class AliensToysReveal(AliensReveal):
         "....bb..bb....",
         "....DD..DD....",
     ]
-    colors = {**AliensReveal.colors, "c": (150, 200, 230), "O": (240, 205, 175), "o": (190, 110, 90),
-              "R": (220, 30, 30), "V": (60, 120, 230), "S": (150, 150, 160), "A": (130, 75, 35),
-              "N": (80, 40, 20), "Y": (245, 210, 40), "D": (90, 50, 25)}
+    colors = {
+        **AliensReveal.colors,
+        "c": (150, 200, 230),
+        "O": (240, 205, 175),
+        "o": (190, 110, 90),
+        "R": (220, 30, 30),
+        "V": (60, 120, 230),
+        "S": (150, 150, 160),
+        "A": (130, 75, 35),
+        "N": (80, 40, 20),
+        "Y": (245, 210, 40),
+        "D": (90, 50, 25),
+    }
     HAND = (0, 12)  # (row, column) of Woody's raised hand in WOODY_HANGING_ART
     BOOT = 10  # the column of Buzz's boot he grabs
     HANGING_BELOW = len(WOODY_HANGING_ART) - 1  # his hand overlaps Buzz's boot by a row
@@ -310,7 +337,11 @@ class AliensToysReveal(AliensReveal):
 
     def _beside(self, spot):
         x, y = spot
-        return [(nx, y) for nx in (x - self.PITCH, x + self.PITCH) if 0 <= nx <= self.width - self.w and (nx, y) in self.spots]
+        return [
+            (nx, y)
+            for nx in (x - self.PITCH, x + self.PITCH)
+            if 0 <= nx <= self.width - self.w and (nx, y) in self.spots
+        ]
 
     def __init__(self, width, height, rng=None):
         super().__init__(width, height, rng)
@@ -337,8 +368,10 @@ class AliensToysReveal(AliensReveal):
         """Woody's top-left once he's jumped: up to Buzz's boot, then hanging from it."""
         hang = self._hang(t)
         p = ease_out(progress(t, self.jump_at, self.jump_at + self.LEAP_S))
-        return (round(self.reach[0] + (hang[0] - self.reach[0]) * p),
-                round(self.reach[1] + (hang[1] - self.reach[1]) * p))
+        return (
+            round(self.reach[0] + (hang[0] - self.reach[0]) * p),
+            round(self.reach[1] + (hang[1] - self.reach[1]) * p),
+        )
 
     def carried(self, t):
         buzz = list(art_pixels(self.BUZZ_ART, self.chosen[0], self.chosen_y(t), self.colors))

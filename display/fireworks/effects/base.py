@@ -27,6 +27,7 @@ class Effect:
 
 class _Level(Effect):
     """An effect that fades in while its scene is on and out after it."""
+
     fade_frames = 45
 
     def __init__(self, show):
@@ -40,6 +41,7 @@ class _Level(Effect):
 
 class _Particles(Effect):
     """Particles [x, y, vx, vy, life, max life, rgb]; spawn() makes one, `chance` per frame."""
+
     chance = 0.5
     cap = 80
     front = False

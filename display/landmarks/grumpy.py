@@ -7,13 +7,11 @@ against the penguin waiters each showing (utils/special_events.py DATED_LANDMARK
 
 import math
 
-from display.pixels import art_pixels
-
-from display.landmarks.scene import Landmark
 from display.landmarks.penguin_waiters import title_pixels
+from display.landmarks.scene import Landmark
 from display.landmarks.three_caballeros import SKY_BOTTOM, SKY_TOP, SMALL_FONT, TINY_FONT, WHITE
 from display.landmarks.wine_and_dine import GOLD
-
+from display.pixels import art_pixels
 
 # Traced from the Disney wiki's outlined render (docs/references/Grumpy arms folded render.png), keeping
 # its line art (a cell 18%+ line stays black: its outlines are thin), then his brows and eyes redrawn.
@@ -112,10 +110,17 @@ TOE_32 = (21, 24, 11, 14)
 
 # His race, not the half: three lines over him on 64x64 (ending the row above his hat; mid-hop it draws
 # over the hat's top, as the 10K's title does); down the left beside him on 64x32, with no room over him.
-TITLE_64 = [(TINY_FONT, "WINE & DINE", 32, 0, WHITE), (SMALL_FONT, "CHALLENGE", 32, 5, GOLD),
-            (SMALL_FONT, "19.3", 32, 12, GOLD)]
-SIDE_TITLE_32 = [(TINY_FONT, "WINE&", 20, 0, WHITE), (TINY_FONT, "DINE", 19, 6, WHITE),
-                 (TINY_FONT, "CHALLENGE", 20, 14, GOLD), (SMALL_FONT, "19.3", 20, 21, GOLD)]
+TITLE_64 = [
+    (TINY_FONT, "WINE & DINE", 32, 0, WHITE),
+    (SMALL_FONT, "CHALLENGE", 32, 5, GOLD),
+    (SMALL_FONT, "19.3", 32, 12, GOLD),
+]
+SIDE_TITLE_32 = [
+    (TINY_FONT, "WINE&", 20, 0, WHITE),
+    (TINY_FONT, "DINE", 19, 6, WHITE),
+    (TINY_FONT, "CHALLENGE", 20, 14, GOLD),
+    (SMALL_FONT, "19.3", 20, 21, GOLD),
+]
 
 TAP_FROM, TAP_TO = 0.4, 2.8  # scene seconds he taps his foot
 TAP_BEAT = 0.2  # toe up for one beat, down for the next

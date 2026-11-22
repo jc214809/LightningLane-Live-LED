@@ -7,6 +7,7 @@ needs no GitHub call to say what's new. CI refuses a pull request without them:
 
 Plain text, no imports beyond the standard library: CI runs it without the app's requirements.
 """
+
 import logging
 import os
 import re
@@ -65,8 +66,10 @@ def problem(body, head_branch=None):
     if head_branch == "develop-beta":
         return None
     if release_notes(body) is None:
-        return ('add a "## Release notes" section to the description: what changes on the board, in a '
-                'sentence for the person who owns it, or "None" if nothing they\'d notice')
+        return (
+            'add a "## Release notes" section to the description: what changes on the board, in a '
+            'sentence for the person who owns it, or "None" if nothing they\'d notice'
+        )
     return None
 
 

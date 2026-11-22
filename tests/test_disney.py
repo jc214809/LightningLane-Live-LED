@@ -1,13 +1,13 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
 import disney  # Import your main module (disney.py)
-from utils.trips import Trip
 import display.animation as disney_animation
-
+from utils.trips import Trip
 
 # ---- Helper/Fake Classes ----
+
 
 class FakeMatrix:
     def __init__(self, width=64, height=32):
@@ -22,12 +22,15 @@ class FakeMatrix:
     def SetImage(self, img):
         pass
 
+
 # ---- Tests for rendering functions ----
+
 
 @pytest.fixture(autouse=True)
 def disable_sleep(monkeypatch):
     # Override time.sleep globally to avoid delays during tests
     monkeypatch.setattr(__import__("time"), "sleep", lambda x: None)
+
 
 def test_the_startup_intro_is_the_castle_fireworks(monkeypatch):
     fake_matrix = FakeMatrix()
@@ -35,6 +38,7 @@ def test_the_startup_intro_is_the_castle_fireworks(monkeypatch):
     monkeypatch.setattr(disney, "render_castle_fireworks", lambda matrix: played.append(matrix))
     disney.render_logo(fake_matrix)
     assert played == [fake_matrix]
+
 
 class PixelCanvas:
     def SetPixel(self, x, y, r, g, b):
@@ -80,10 +84,15 @@ def test_party_night_swaps_the_castle_for_the_partys_landmark(monkeypatch, scree
     monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
     shown = []
     real_landmark_screen = disney.landmark_screen
-    monkeypatch.setattr(disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene))
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    party_night = {"name": "Magic Kingdom", "seasonalEvent": "halloween",
-                   "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}]}
+    monkeypatch.setattr(
+        disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene)
+    )
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    party_night = {
+        "name": "Magic Kingdom",
+        "seasonalEvent": "halloween",
+        "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}],
+    }
     disney.initialize_park_information_screen(FakeMatrix(), party_night)
     disney.initialize_park_information_screen(FakeMatrix(), dict(party_night, schedule=[]))
     assert [cls.__name__ for cls in shown] == ["FriendlyJackOLanternLandmark", "CastleLandmark"]
@@ -91,13 +100,17 @@ def test_party_night_swaps_the_castle_for_the_partys_landmark(monkeypatch, scree
 
 def test_race_day_swaps_epcots_landmark_for_the_races(monkeypatch, screens):
     import utils.special_events as special_events
+
     monkeypatch.setattr(disney, "render_park_information_screen", lambda canvas, park: None)
     shown = []
     real_landmark_screen = disney.landmark_screen
-    monkeypatch.setattr(disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene))
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    monkeypatch.setattr(special_events, "DATED_LANDMARKS",
-                        [{"date": today, "park": "epcot", "landmark": "WineAndDine5KLandmark"}])
+    monkeypatch.setattr(
+        disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene)
+    )
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    monkeypatch.setattr(
+        special_events, "DATED_LANDMARKS", [{"date": today, "park": "epcot", "landmark": "WineAndDine5KLandmark"}]
+    )
     disney.initialize_park_information_screen(FakeMatrix(), {"name": "EPCOT"})
     disney.initialize_park_information_screen(FakeMatrix(), {"name": "Magic Kingdom"})
     assert [cls.__name__ for cls in shown] == ["WineAndDine5KLandmark", "CastleLandmark"]
@@ -118,6 +131,7 @@ def test_park_screens_are_revealed_by_both_tink_and_buzz(monkeypatch, screens):
     assert {s["transition"] for s in titles} == {"tink", "buzz"}
     assert set(disney.PARK_REVEALS) <= set(disney_animation.TRANSITIONS)
 
+
 def test_loop_through_attractions(monkeypatch, screens):
     fake_matrix = FakeMatrix()
     drawn = []
@@ -132,26 +146,39 @@ def test_loop_through_attractions(monkeypatch, screens):
     assert drawn[0] is not attraction, "the updater threads mutate the live dict; animate a snapshot"
     assert screens == [{"hold": 8, "transition": "wipe", "animating": True}]
 
+
 def test_each_ride_screen_beats_the_heartbeat_once_shown(monkeypatch, screens):
     beats = []
     monkeypatch.setattr(disney.heartbeat, "beat", lambda **kwargs: beats.append((len(screens), kwargs)))
     monkeypatch.setattr(disney.random, "random", lambda: 1.0)
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: True)
-    rides = [{"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
-             {"name": "Haunted Mansion", "waitTime": 20, "status": "OPERATING"}]
+    rides = [
+        {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
+        {"name": "Haunted Mansion", "waitTime": 20, "status": "OPERATING"},
+    ]
     disney.loop_through_attractions(FakeMatrix(), {"name": "Magic Kingdom", "attractions": rides})
     assert beats == [(1, {}), (2, {})], "after each screen, so the updater knows the new app draws"
+
 
 def test_loop_through_attractions_passes_this_hours_forecast(monkeypatch, screens):
     seen = []
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: seen.append(expected))
     monkeypatch.setattr(disney, "forecast_wait_now", lambda forecast: forecast[0]["waitTime"] if forecast else None)
-    park = {"name": "MK", "attractions": [
-        {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING", "forecast": [{"time": "x", "waitTime": 40}]},
-        {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
-    ]}
+    park = {
+        "name": "MK",
+        "attractions": [
+            {
+                "name": "Space Mountain",
+                "waitTime": 30,
+                "status": "OPERATING",
+                "forecast": [{"time": "x", "waitTime": 40}],
+            },
+            {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
+        ],
+    }
     disney.loop_through_attractions(FakeMatrix(), park)
     assert seen == [40, None]
+
 
 def test_each_attraction_screen_keeps_its_own_ride(monkeypatch):
     """The next screen's sweep redraws the previous one; it must still show the previous ride."""
@@ -159,13 +186,17 @@ def test_each_attraction_screen_keeps_its_own_ride(monkeypatch):
     monkeypatch.setattr(disney, "show_screen", lambda matrix, draw, hold_s, transition="wipe": screens.append(draw))
     drawn = []
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: drawn.append(ride["name"]))
-    park = {"name": "MK", "attractions": [
-        {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
-        {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
-    ]}
+    park = {
+        "name": "MK",
+        "attractions": [
+            {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
+            {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
+        ],
+    }
     disney.loop_through_attractions(FakeMatrix(), park)
     screens[0]("canvas", 1.0)
     assert drawn == ["Space Mountain"]
+
 
 def test_show_trip_countdown(monkeypatch, screens):
     drawn = []
@@ -216,7 +247,9 @@ def test_play_trip_countdown_skipped_when_disabled_or_no_trip(monkeypatch):
 
 
 def test_log_configured_trips(infos):
-    disney.log_configured_trips(_trip_config(True, "2026-11-10", {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring"}))
+    disney.log_configured_trips(
+        _trip_config(True, "2026-11-10", {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring"})
+    )
     disney.log_configured_trips({})
     assert infos == [
         "Configured trips: ['2026-11-10', 'Spring (2027-03-14 to 2027-03-19)']",
@@ -229,7 +262,7 @@ def test_loop_through_attractions_skips_closed(monkeypatch, screens):
     fake_matrix = FakeMatrix()
 
     def fake_draw(canvas, attraction_info, t, expected):
-        fake_matrix.rendered_attractions.append(attraction_info['name'])
+        fake_matrix.rendered_attractions.append(attraction_info["name"])
 
     monkeypatch.setattr(disney, "draw_attraction_frame", fake_draw)
 
@@ -238,8 +271,8 @@ def test_loop_through_attractions_skips_closed(monkeypatch, screens):
         "name": "Magic Kingdom",
         "attractions": [
             {"name": "Haunted Mansion", "waitTime": "N/A", "status": "CLOSED"},
-            {"name": "Splash Mountain", "waitTime": "20", "status": "OPERATING"}
-        ]
+            {"name": "Splash Mountain", "waitTime": "20", "status": "OPERATING"},
+        ],
     }
     disney.loop_through_attractions(fake_matrix, park)
 
@@ -252,7 +285,7 @@ def test_loop_through_attractions_skips_empty_wait_time(monkeypatch, screens):
     fake_matrix = FakeMatrix()
 
     def fake_draw(canvas, attraction_info, t, expected):
-        fake_matrix.rendered_attractions.append(attraction_info['name'])
+        fake_matrix.rendered_attractions.append(attraction_info["name"])
 
     monkeypatch.setattr(disney, "draw_attraction_frame", fake_draw)
 
@@ -260,8 +293,8 @@ def test_loop_through_attractions_skips_empty_wait_time(monkeypatch, screens):
         "name": "Hollywood Studios",
         "attractions": [
             {"name": "Meet Disney Jr. Stars", "waitTime": "", "status": ""},
-            {"name": "Tron", "waitTime": "25", "status": "OPERATING"}
-        ]
+            {"name": "Tron", "waitTime": "25", "status": "OPERATING"},
+        ],
     }
     disney.loop_through_attractions(fake_matrix, park)
 
@@ -271,6 +304,7 @@ def test_loop_through_attractions_skips_empty_wait_time(monkeypatch, screens):
 
 def test_park_filter_limits_parks(monkeypatch):
     from api.disney_api import clean_park_name
+
     all_parks = [
         {"name": "Disney's Animal Kingdom Theme Park", "id": "ak-id"},
         {"name": "Magic Kingdom Park", "id": "mk-id"},
@@ -285,6 +319,7 @@ def test_park_filter_limits_parks(monkeypatch):
 
 # Note: Testing main() is more challenging because it runs an infinite loop.
 # If needed, you could refactor main() for better testability (e.g., extract functionality into smaller functions)a
+
 
 def _roll_for(name):
     """A roll in the middle of `name`'s slice of SURPRISES, whatever order they're in."""
@@ -325,8 +360,10 @@ def test_the_falcon_stays_out_of_the_random_rotation():
 
 def test_mike_visits_the_laugh_floor_one_time_in_ten(monkeypatch, screens):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
-    park = {"name": "MK", "attractions": [{"name": "Monsters, Inc. Laugh Floor", "waitTime": 10,
-                                           "status": "OPERATING"}]}
+    park = {
+        "name": "MK",
+        "attractions": [{"name": "Monsters, Inc. Laugh Floor", "waitTime": 10, "status": "OPERATING"}],
+    }
     monkeypatch.setattr(disney.random, "random", lambda: 0.09)
     disney.loop_through_attractions(FakeMatrix(), park)
     monkeypatch.setattr(disney.random, "random", lambda: 0.13)  # past the visitor and, under the cap, every surprise
@@ -353,9 +390,14 @@ def test_the_falcon_never_visits_other_rides(monkeypatch, screens):
     assert screens[-1]["transition"] != "falcon"
 
 
-@pytest.mark.parametrize("ride, rolls", [("Star Wars: Rise of the Resistance", [0.5, 0.09]),
-                                         ("Millennium Falcon: Smugglers Run", [0.5, 0.09]),
-                                         ("Star Tours – The Adventures Continue", [0.09])])
+@pytest.mark.parametrize(
+    "ride, rolls",
+    [
+        ("Star Wars: Rise of the Resistance", [0.5, 0.09]),
+        ("Millennium Falcon: Smugglers Run", [0.5, 0.09]),
+        ("Star Tours – The Adventures Continue", [0.09]),
+    ],
+)
 def test_the_lightsabers_clash_on_the_star_wars_rides_one_time_in_ten(monkeypatch, screens, ride, rolls):
     assert "saber_clash" not in disney.SURPRISES, "only on the Star Wars rides"
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
@@ -366,9 +408,14 @@ def test_the_lightsabers_clash_on_the_star_wars_rides_one_time_in_ten(monkeypatc
     assert screens[-1]["transition"] == "saber_clash"
 
 
-@pytest.mark.parametrize("ride, rolls", [("Star Wars: Rise of the Resistance", [0.5, 0.5, 0.09]),
-                                         ("Millennium Falcon: Smugglers Run", [0.5, 0.5, 0.09]),
-                                         ("Star Tours – The Adventures Continue", [0.5, 0.09])])
+@pytest.mark.parametrize(
+    "ride, rolls",
+    [
+        ("Star Wars: Rise of the Resistance", [0.5, 0.5, 0.09]),
+        ("Millennium Falcon: Smugglers Run", [0.5, 0.5, 0.09]),
+        ("Star Tours – The Adventures Continue", [0.5, 0.09]),
+    ],
+)
 def test_luke_and_vader_duel_on_the_star_wars_rides_one_time_in_ten(monkeypatch, screens, ride, rolls):
     assert "saber_duel" not in disney.SURPRISES, "only on the Star Wars rides"
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
@@ -402,8 +449,10 @@ def test_rex_stomps_through_toy_story_land_one_time_in_ten(monkeypatch, screens,
 
 def test_pooh_floats_through_his_own_ride_one_time_in_ten(monkeypatch, screens):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
-    park = {"name": "MK", "attractions": [{"name": "The Many Adventures of Winnie the Pooh", "waitTime": 20,
-                                           "status": "OPERATING"}]}
+    park = {
+        "name": "MK",
+        "attractions": [{"name": "The Many Adventures of Winnie the Pooh", "waitTime": 20, "status": "OPERATING"}],
+    }
     monkeypatch.setattr(disney.random, "random", lambda: 0.09)
     disney.loop_through_attractions(FakeMatrix(), park)
     monkeypatch.setattr(disney.random, "random", lambda: 0.13)  # past the visitor and, under the cap, every surprise
@@ -422,10 +471,16 @@ def test_the_claw_chooses_an_alien_on_their_rides_one_time_in_ten(monkeypatch, s
     assert screens[-1]["transition"] == "aliens"
 
 
-@pytest.mark.parametrize("wait, expected", [(5, "aliens_toys"), (3, "aliens_toys"), (0, "aliens_toys"), (6, "wipe"), ("Down", "wipe"), (True, "wipe")])
+@pytest.mark.parametrize(
+    "wait, expected",
+    [(5, "aliens_toys"), (3, "aliens_toys"), (0, "aliens_toys"), (6, "wipe"), ("Down", "wipe"), (True, "wipe")],
+)
 def test_buzz_and_woody_are_in_the_claw_scene_every_time_at_a_short_wait(monkeypatch, screens, wait, expected):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
-    park = {"name": "Hollywood Studios", "attractions": [{"name": "Alien Swirling Saucers", "waitTime": wait, "status": "OPERATING"}]}
+    park = {
+        "name": "Hollywood Studios",
+        "attractions": [{"name": "Alien Swirling Saucers", "waitTime": wait, "status": "OPERATING"}],
+    }
     monkeypatch.setattr(disney.random, "random", lambda: 0.99)  # no roll would bring anyone
     disney.loop_through_attractions(FakeMatrix(), park)
     assert screens[-1]["transition"] == expected
@@ -433,7 +488,10 @@ def test_buzz_and_woody_are_in_the_claw_scene_every_time_at_a_short_wait(monkeyp
 
 def test_the_aliens_stay_off_slinky_dog_dash(monkeypatch, screens):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
-    park = {"name": "Hollywood Studios", "attractions": [{"name": "Slinky Dog Dash", "waitTime": 30, "status": "OPERATING"}]}
+    park = {
+        "name": "Hollywood Studios",
+        "attractions": [{"name": "Slinky Dog Dash", "waitTime": 30, "status": "OPERATING"}],
+    }
     rolls = iter([0.5, 0.0, 0.5])
     monkeypatch.setattr(disney.random, "random", lambda: next(rolls))
     disney.loop_through_attractions(FakeMatrix(), park)
@@ -442,8 +500,10 @@ def test_the_aliens_stay_off_slinky_dog_dash(monkeypatch, screens):
 
 def test_rex_never_visits_other_rides(monkeypatch, screens):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
-    park = {"name": "Hollywood Studios", "attractions": [{"name": "Tower of Terror", "waitTime": 30,
-                                                         "status": "OPERATING"}]}
+    park = {
+        "name": "Hollywood Studios",
+        "attractions": [{"name": "Tower of Terror", "waitTime": 30, "status": "OPERATING"}],
+    }
     monkeypatch.setattr(disney.random, "random", lambda: 0.0)
     disney.loop_through_attractions(FakeMatrix(), park)
     assert screens[-1]["transition"] != "rex"
@@ -463,8 +523,9 @@ def test_jack_sally_and_zero_visit_their_meet_half_the_time(monkeypatch, screens
     assert [s["transition"] for s in screens[-2:]] == ["jack_sally", "wipe"]
 
 
-@pytest.mark.parametrize("ride", ["Captain Jack’s Buccaneer Bash at Mickey’s Not-So-Scary Halloween Party",
-                                  "Space Mountain"])
+@pytest.mark.parametrize(
+    "ride", ["Captain Jack’s Buccaneer Bash at Mickey’s Not-So-Scary Halloween Party", "Space Mountain"]
+)
 def test_jack_sally_and_zero_keep_to_their_own_meet(monkeypatch, screens, ride):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
     park = {"name": "Magic Kingdom", "attractions": [{"name": ride, "waitTime": 15, "status": "OPERATING"}]}
@@ -476,13 +537,16 @@ def test_jack_sally_and_zero_keep_to_their_own_meet(monkeypatch, screens, ride):
 def test_surprise_slices_match_their_chances_and_stay_rare():
     chances = disney.SURPRISES
     assert all(0 < c < 0.05 for c in chances.values()), "each kept rare on purpose"
-    assert sum(chances.values()) < 0.13, "so the plain wipe is still the norm (the cap went from 10% to 12% for Tigger, 13% for Forky; Kevin takes it to 12.9%)"
+    assert sum(chances.values()) < 0.13, (
+        "so the plain wipe is still the norm (the cap went from 10% to 12% for Tigger, 13% for Forky; Kevin takes it to 12.9%)"
+    )
     assert sum(chances.values()) == pytest.approx(0.129), "12.9% since Kevin joined; change this with the map"
     samples = [i / 100000 for i in range(100000)]
     seen = [disney._surprise(r) for r in samples]
     for name, chance in chances.items():
-        assert seen.count(name) / len(samples) == pytest.approx(chance, abs=1e-4), \
+        assert seen.count(name) / len(samples) == pytest.approx(chance, abs=1e-4), (
             "a visitor's odds are its own chance, not shifted by where it sits in the map"
+        )
     edge = 0.0
     for chance in chances.values():
         edge += chance  # added up like _surprise does; sum() rounds differently since Python 3.12
@@ -492,10 +556,12 @@ def test_surprise_slices_match_their_chances_and_stay_rare():
 
 # ---- surprises on the settings page ----
 
+
 @pytest.fixture
 def surprises_set(monkeypatch):
     def use(config):
         monkeypatch.setattr(disney, "surprises", disney.surprise_settings(config))
+
     return use
 
 
@@ -629,22 +695,32 @@ def test_park_titles_pick_only_the_allowed_reveal(surprises_set):
 
 def test_every_surprise_the_settings_page_hides_is_never_rolled():
     from utils.config import SURPRISES_UNUSED
+
     rolled = set(disney.SURPRISES) | set(disney.RIDE_VISITORS) | set(disney.PARK_REVEALS)
     assert not rolled & set(SURPRISES_UNUSED)
 
 
 # ---- Happily Ever After fireworks ----
 
-HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
-HEA_PARKS = [{"name": "Magic Kingdom", "attractions": [
-    {"name": "Happily Ever After", "status": "OPERATING", "waitTime": None, "showtimes": [HEA_START]}]}]
+HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=UTC)
+HEA_PARKS = [
+    {
+        "name": "Magic Kingdom",
+        "attractions": [
+            {"name": "Happily Ever After", "status": "OPERATING", "waitTime": None, "showtimes": [HEA_START]}
+        ],
+    }
+]
 
 
 @pytest.fixture
 def fireworks_played(monkeypatch):
     played = []
-    monkeypatch.setattr(disney, "render_castle_fireworks",
-                        lambda matrix, duration, title=True, theme=None: played.append((duration, title, theme)))
+    monkeypatch.setattr(
+        disney,
+        "render_castle_fireworks",
+        lambda matrix, duration, title=True, theme=None: played.append((duration, title, theme)),
+    )
     monkeypatch.setattr(disney, "_shows_played", set())
     monkeypatch.setattr(disney, "load_score", lambda name, **kwargs: None)  # the random fireworks; see the score tests
     return played
@@ -678,16 +754,18 @@ def test_fireworks_play_the_shows_sound_until_they_end(monkeypatch):
     monkeypatch.setattr(disney, "sound", disney.SoundSettings(True))
     now = HEA_START + timedelta(seconds=8)
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=now) is True
-    assert events == [("sound", ["fireworks"], disney.SoundSettings(True), now),
-                      "start", "fireworks", "stop"], "a default-length show plays only the generic clip"
+    assert events == [("sound", ["fireworks"], disney.SoundSettings(True), now), "start", "fireworks", "stop"], (
+        "a default-length show plays only the generic clip"
+    )
 
 
 def test_a_playing_show_is_in_the_heartbeat_until_it_ends(monkeypatch, fireworks_played):
     beats = []
     monkeypatch.setattr(disney.heartbeat, "beat", lambda **kwargs: beats.append((len(fireworks_played), kwargs)))
     disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=8))
-    assert beats == [(0, {"show": "Happily Ever After", "show_s": disney.FIREWORKS_SHOW_S - 8}), (1, {})], \
+    assert beats == [(0, {"show": "Happily Ever After", "show_s": disney.FIREWORKS_SHOW_S - 8}), (1, {})], (
         "no update starts mid-show"
+    )
 
 
 def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypatch):
@@ -711,8 +789,9 @@ def test_a_show_with_a_score_plays_the_whole_synced_show_with_its_music(monkeypa
     # The real score: Happily Ever After has one in display/fireworks/shows/.
     late = HEA_START + timedelta(seconds=90)
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=late) is True
-    assert events == [("sound", "happily-ever-after"), "start", ("synced", "happily-ever-after"), "stop"], \
+    assert events == [("sound", "happily-ever-after"), "start", ("synced", "happily-ever-after"), "stop"], (
         "the whole show from the top, however late the board cut in"
+    )
 
 
 def test_the_synced_show_plays_in_the_configured_version(monkeypatch):
@@ -720,8 +799,7 @@ def test_the_synced_show_plays_in_the_configured_version(monkeypatch):
     monkeypatch.setattr(disney, "load_score", lambda name, version: asked.append((name, version)))
     monkeypatch.setattr(disney, "render_castle_fireworks", lambda *a, **k: None)
     monkeypatch.setattr(disney, "_shows_played", set())
-    monkeypatch.setattr(disney, "show_settings_by_clip",
-                        {"happily-ever-after": disney.ShowSettings(True, "v2")})
+    monkeypatch.setattr(disney, "show_settings_by_clip", {"happily-ever-after": disney.ShowSettings(True, "v2")})
     assert disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=5))
     assert asked == [("happily-ever-after", "v2")]
 
@@ -753,7 +831,8 @@ def test_show_setting_matches_loosely_and_defaults_to_enabled_and_default(monkey
 def test_no_fireworks_outside_the_show_or_without_magic_kingdom(fireworks_played):
     assert not disney.play_fireworks_show_if_due(FakeMatrix(), HEA_PARKS, now=HEA_START - timedelta(minutes=1))
     assert not disney.play_fireworks_show_if_due(
-        FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=disney.FIREWORKS_SHOW_S))
+        FakeMatrix(), HEA_PARKS, now=HEA_START + timedelta(seconds=disney.FIREWORKS_SHOW_S)
+    )
     epcot = [{"name": "EPCOT", "attractions": [{"name": "Spaceship Earth", "status": "OPERATING", "waitTime": 15}]}]
     assert not disney.play_fireworks_show_if_due(FakeMatrix(), epcot, now=HEA_START + timedelta(seconds=5))
     assert fireworks_played == []
@@ -765,12 +844,23 @@ SPOOKY_START = HEA_START + timedelta(hours=1)  # 10:30pm in Orlando on Sep 26
 def _mk_tonight(party_date, seasonal="halloween"):
     """Magic Kingdom listing both nightly shows at 10:30pm, on a night that may be a party night."""
     # The API's name after the party suffix is stripped, with its curly apostrophe.
-    return [{"name": "Magic Kingdom", "timezone": "America/New_York", "seasonalEvent": seasonal,
-             "schedule": [{"type": "TICKETED_EVENT", "date": party_date, "description": "Special Ticketed Event"}],
-             "attractions": [
-                 {"name": "Disney\u2019s Not-So-Spooky Spectacular", "status": "OPERATING", "waitTime": None,
-                  "showtimes": [SPOOKY_START]},
-                 {"name": "Happily Ever After", "status": "OPERATING", "waitTime": None, "showtimes": [SPOOKY_START]}]}]
+    return [
+        {
+            "name": "Magic Kingdom",
+            "timezone": "America/New_York",
+            "seasonalEvent": seasonal,
+            "schedule": [{"type": "TICKETED_EVENT", "date": party_date, "description": "Special Ticketed Event"}],
+            "attractions": [
+                {
+                    "name": "Disney\u2019s Not-So-Spooky Spectacular",
+                    "status": "OPERATING",
+                    "waitTime": None,
+                    "showtimes": [SPOOKY_START],
+                },
+                {"name": "Happily Ever After", "status": "OPERATING", "waitTime": None, "showtimes": [SPOOKY_START]},
+            ],
+        }
+    ]
 
 
 def test_party_night_plays_the_partys_show_in_its_theme(fireworks_played):
@@ -791,15 +881,19 @@ def test_ride_loop_checks_for_the_show_before_each_screen(monkeypatch, screens):
     monkeypatch.setattr(disney, "play_fireworks_show_if_due", lambda matrix, parks: order.append("check"))
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: order.append("ride"))
     monkeypatch.setattr(disney.random, "random", lambda: 1.0)
-    park = {"name": "MK", "attractions": [
-        {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
-        {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
-    ]}
+    park = {
+        "name": "MK",
+        "attractions": [
+            {"name": "Space Mountain", "waitTime": 30, "status": "OPERATING"},
+            {"name": "Haunted Mansion", "waitTime": 10, "status": "OPERATING"},
+        ],
+    }
     disney.loop_through_attractions(FakeMatrix(), park, HEA_PARKS)
     assert order == ["check", "ride", "check", "ride"]
 
 
 # ---- force_surprise ----
+
 
 def test_force_surprise_plays_that_visitor_on_every_ride_screen(monkeypatch, screens):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, ride, t, expected: False)
@@ -824,11 +918,23 @@ def test_force_surprise_ignores_names_that_are_not_characters(monkeypatch):
     assert disney.forced_surprise is None and len(warnings) == 2, "unset is silent"
 
 
-@pytest.mark.parametrize("wait, train", [
-    (0, "mine_train_snow"), (5, "mine_train_snow"), (7, "mine_train_snow"),
-    (6, "mine_train_all"), (10, "mine_train_all"), (15, "mine_train_all"),
-    (16, None), (45, None), ("Down", None), ("Groups 1-5", None), (None, None), (True, None),
-])
+@pytest.mark.parametrize(
+    "wait, train",
+    [
+        (0, "mine_train_snow"),
+        (5, "mine_train_snow"),
+        (7, "mine_train_snow"),
+        (6, "mine_train_all"),
+        (10, "mine_train_all"),
+        (15, "mine_train_all"),
+        (16, None),
+        (45, None),
+        ("Down", None),
+        ("Groups 1-5", None),
+        (None, None),
+        (True, None),
+    ],
+)
 def test_the_mine_train_wait_decides_who_rides(wait, train):
     assert disney._mine_train_for_wait(wait) == train
 
@@ -837,16 +943,14 @@ def test_the_mine_train_wait_decides_who_rides(wait, train):
 def test_the_whole_mine_train_comes_every_time_at_a_short_wait(monkeypatch, screens, wait, train):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
     monkeypatch.setattr(disney.random, "random", lambda: 0.99)  # no roll would bring a visitor
-    park = {"name": "MK", "attractions": [{"name": "Seven Dwarfs Mine Train", "waitTime": wait,
-                                           "status": "OPERATING"}]}
+    park = {"name": "MK", "attractions": [{"name": "Seven Dwarfs Mine Train", "waitTime": wait, "status": "OPERATING"}]}
     disney.loop_through_attractions(FakeMatrix(), park)
     assert screens[-1]["transition"] == train
 
 
 def test_a_few_dwarfs_ride_the_mine_train_one_time_in_ten_at_a_longer_wait(monkeypatch, screens):
     monkeypatch.setattr(disney, "draw_attraction_frame", lambda canvas, r, t, expected: False)
-    park = {"name": "MK", "attractions": [{"name": "Seven Dwarfs Mine Train", "waitTime": 45,
-                                           "status": "OPERATING"}]}
+    park = {"name": "MK", "attractions": [{"name": "Seven Dwarfs Mine Train", "waitTime": 45, "status": "OPERATING"}]}
     monkeypatch.setattr(disney.random, "random", lambda: 0.09)
     disney.loop_through_attractions(FakeMatrix(), park)
     monkeypatch.setattr(disney.random, "random", lambda: 0.13)  # past the visitor and, under the cap, every surprise
@@ -865,6 +969,7 @@ def test_the_mine_train_stays_on_its_own_ride(monkeypatch, screens):
 
 # ---- Live updater threads ----
 
+
 class _RecordingThread:
     started = []
 
@@ -875,10 +980,16 @@ class _RecordingThread:
         _RecordingThread.started.append(self)
 
 
-@pytest.mark.parametrize("config", [{}, {"websocket": {"enabled": True, "api_key": ""}},
-                                    {"websocket": {"enabled": True, "api_key": "<KEY>"}},
-                                    {"websocket": {"enabled": False, "api_key": "real-key"}},
-                                    {"themeparks_api_key": None, "websocket_only": True}])
+@pytest.mark.parametrize(
+    "config",
+    [
+        {},
+        {"websocket": {"enabled": True, "api_key": ""}},
+        {"websocket": {"enabled": True, "api_key": "<KEY>"}},
+        {"websocket": {"enabled": False, "api_key": "real-key"}},
+        {"themeparks_api_key": None, "websocket_only": True},
+    ],
+)
 def test_websocket_off_or_without_a_key_never_starts_the_websocket(monkeypatch, config):
     _RecordingThread.started = []
     monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
@@ -918,15 +1029,24 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
     monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}, "pi_model": "pi4"})
     picked = []
-    monkeypatch.setattr(disney, "model_defaults", lambda choice: picked.append(choice) or (
-        "pi4", {"led_rows": 32, "led_cols": 64, "led_slowdown_gpio": 4}, "picked in config.json"))
+    monkeypatch.setattr(
+        disney,
+        "model_defaults",
+        lambda choice: (
+            picked.append(choice)
+            or ("pi4", {"led_rows": 32, "led_cols": 64, "led_slowdown_gpio": 4}, "picked in config.json")
+        ),
+    )
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)
     monkeypatch.setattr(disney.driver, "set_mode", lambda mode: calls.append(("set_mode", mode)), raising=False)
     monkeypatch.setattr(disney.driver, "is_emulated", lambda: True, raising=False)
     monkeypatch.setattr(disney.driver, "hardware_load_failed", False, raising=False)
     monkeypatch.setattr(disney.driver, "RGBMatrix", build_matrix)
-    monkeypatch.setattr(disney, "led_matrix_options",
-                        lambda args: f"rows={args.led_rows} cols={args.led_cols} slowdown={args.led_slowdown_gpio}")
+    monkeypatch.setattr(
+        disney,
+        "led_matrix_options",
+        lambda args: f"rows={args.led_rows} cols={args.led_cols} slowdown={args.led_slowdown_gpio}",
+    )
     with pytest.raises(_Built):
         disney.main()
     # slowdown and cols from the Pi model's defaults, rows from config over them
@@ -934,12 +1054,15 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
     assert picked == ["pi4"]
 
 
-@pytest.mark.parametrize("shows, expected", [
-    ([], []),  # every show is the default five-minute show, so none is meant to have its own music
-    ([{"name": "Happily Ever After", "version": "v2"}], [["happily-ever-after", "fireworks"]]),
-    ([{"name": "Happily Ever After", "version": "v1", "enabled": False}], []),
-    ([{"name": "Disney's Not-So-Spooky Spectacular", "version": "v2"}], []),  # no score, so no music of its own
-])
+@pytest.mark.parametrize(
+    "shows, expected",
+    [
+        ([], []),  # every show is the default five-minute show, so none is meant to have its own music
+        ([{"name": "Happily Ever After", "version": "v2"}], [["happily-ever-after", "fireworks"]]),
+        ([{"name": "Happily Ever After", "version": "v1", "enabled": False}], []),
+        ([{"name": "Disney's Not-So-Spooky Spectacular", "version": "v2"}], []),  # no score, so no music of its own
+    ],
+)
 def test_main_watches_the_full_scored_shows_for_the_sound_badges(monkeypatch, shows, expected):
     class _Watched(Exception):
         pass
@@ -966,6 +1089,7 @@ def disney_driver_modes():
 
 
 # ---- Wi-Fi setup ----
+
 
 def test_no_setup_hotspot_carries_straight_on(monkeypatch, screens):
     monkeypatch.setattr(disney, "hotspot_name", lambda: None)
@@ -1024,6 +1148,7 @@ def test_main_shows_the_setup_screen_before_it_needs_the_network(monkeypatch):
 
 # ---- force_show ----
 
+
 def test_force_show_matches_a_known_show_loosely(monkeypatch):
     monkeypatch.setattr(disney.debug, "warning", lambda message: None)
     try:
@@ -1066,7 +1191,7 @@ def test_force_show_plays_the_whole_synced_show_with_its_music_now(monkeypatch):
     monkeypatch.setattr(disney, "render_music_show", lambda matrix, score: events.append(("synced", score.name)))
     monkeypatch.setattr(disney.debug, "warning", lambda message: None)
     monkeypatch.setattr(disney, "show_settings_by_clip", {"happily-ever-after": disney.ShowSettings(True, "v1")})
-    now = datetime(2026, 10, 13, 18, 0, tzinfo=timezone.utc)  # nowhere near showtime
+    now = datetime(2026, 10, 13, 18, 0, tzinfo=UTC)  # nowhere near showtime
     disney.set_forced_show("Happily Ever After")
     try:
         assert disney.play_forced_show(FakeMatrix(), now=now) is True

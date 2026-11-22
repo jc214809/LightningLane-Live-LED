@@ -155,8 +155,15 @@ class ChipDaleReveal:
         "KBBBBKKKKBBBBK..",
         "KKKKKK..KKKKKK..",
     ]
-    colors = {"K": (62, 54, 50), "P": (12, 12, 14), "B": (153, 98, 67), "C": (205, 164, 142),
-              "W": (250, 250, 250), "R": (231, 29, 39), "Y": (250, 201, 18)}
+    colors = {
+        "K": (62, 54, 50),
+        "P": (12, 12, 14),
+        "B": (153, 98, 67),
+        "C": (205, 164, 142),
+        "W": (250, 250, 250),
+        "R": (231, 29, 39),
+        "Y": (250, 201, 18),
+    }
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height
@@ -223,8 +230,7 @@ class ChipDaleReveal:
     def swing_place(self, who, t):
         """(x, y, hanging) of who's art at t in story "swing", or None before he grabs the rope."""
         hx, hy = self.HAND
-        grab, let_go = ((self.chip_grab, self.chip_lets_go) if who == "chip"
-                        else (self.dale_grab, self.bonk_at))
+        grab, let_go = (self.chip_grab, self.chip_lets_go) if who == "chip" else (self.dale_grab, self.bonk_at)
         floor = self.chip_floor if who == "chip" else self.dale_floor
         if t < grab:
             return None
@@ -304,8 +310,9 @@ class ChipDaleReveal:
             return []
         (ax, ay), (ex, ey) = self.anchor, self.rope_end(who, angle)
         n = max(1, int(max(abs(ex - ax), abs(ey - ay))))
-        return [((int(round(ax + (ex - ax) * i / n)), int(round(ay + (ey - ay) * i / n))), self.ROPE)
-                for i in range(n + 1)]
+        return [
+            ((int(round(ax + (ex - ax) * i / n)), int(round(ay + (ey - ay) * i / n))), self.ROPE) for i in range(n + 1)
+        ]
 
     def reveal_x(self, t):
         """Story "swing": the first column still dark at t, from Chip's middle (his wobble doesn't

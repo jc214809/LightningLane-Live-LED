@@ -1,5 +1,6 @@
 """The one-time move of each board's boards.json settings into its config.json. The file is
 "board-config.json": tests/stubs/conftest.py fakes every "config.json" read."""
+
 import json
 import os
 

@@ -28,16 +28,23 @@ def test_a_commit_that_has_its_tag_keeps_it():
 
 
 def test_release_notes_list_each_pull_request_with_its_notes():
-    changes = [(205, "Sparkle the castle", ["The castle sparkles.", "So do the rides."]),
-               (204, "Faster CI", []), (203, "Old one", None), (None, "A straight commit", None), (202, "Docs", [])]
+    changes = [
+        (205, "Sparkle the castle", ["The castle sparkles.", "So do the rides."]),
+        (204, "Faster CI", []),
+        (203, "Old one", None),
+        (None, "A straight commit", None),
+        (202, "Docs", []),
+    ]
     assert release_notes(changes) == (
         "- Sparkle the castle (#205)\n  - The castle sparkles.\n  - So do the rides.\n"
-        "- Old one (#203)\n- A straight commit\n\nBehind the scenes, nothing you'd notice: #204, #202\n")
+        "- Old one (#203)\n- A straight commit\n\nBehind the scenes, nothing you'd notice: #204, #202\n"
+    )
     assert release_notes([]) == "No changes.\n"
 
 
 class Git:
     """A fake subprocess.run for git: a remote whose tags another run can take first."""
+
     def __init__(self, tags, remote_taken=(), points_at=""):
         self.tags, self.remote_taken, self.points_at, self.calls = list(tags), set(remote_taken), points_at, []
 
@@ -76,6 +83,7 @@ def test_a_number_another_merge_took_is_retried_with_the_next(tmp_path):
         if args[1] == "push" and not git.remote_taken:
             git.remote_taken.add("v2.0.3-beta")
         return original(args, **kwargs)
+
     tagger = Tagger(str(tmp_path), taken_once)
     assert tagger.tag("beta", "abc1234") == "v2.0.4-beta"
     assert ["git", "tag", "--delete", "v2.0.3-beta"] in git.calls
@@ -90,6 +98,7 @@ def test_it_gives_up_after_a_few_tries(tmp_path):
     def always_taken(args, **kwargs):
         code = 1 if args[1] == "push" else 0
         return subprocess.CompletedProcess(args, code, "", "")
+
     with pytest.raises(RuntimeError, match="couldn't push"):
         Tagger(str(tmp_path), always_taken).tag("beta", "abc1234")
 
@@ -97,6 +106,7 @@ def test_it_gives_up_after_a_few_tries(tmp_path):
 def test_a_failing_git_command_is_an_error(tmp_path):
     def broken(args, **kwargs):
         return subprocess.CompletedProcess(args, 128, "", "not a git repository")
+
     with pytest.raises(RuntimeError, match="not a git repository"):
         Tagger(str(tmp_path), broken).tag("beta", "abc1234")
 
@@ -111,6 +121,7 @@ def test_release_notes_cover_the_pull_requests_since_the_last_release(tmp_path, 
         def what_changed(self, old, new):
             seen.append((old, new))
             return [(210, "Auto tags", ["Versions come from tags."])]
+
     monkeypatch.setattr(auto_tag, "Board", FakeBoard)
     tagger = Tagger(str(tmp_path), Git(TAGS + ["v2.1.0"]))
     assert tagger.notes("v2.1.0", "m") == "- Auto tags (#210)\n  - Versions come from tags.\n"
@@ -152,10 +163,16 @@ def _git(cwd, *args):
 
 def test_with_real_git_merges_get_betas_then_a_release_and_describe_reads_them(tmp_path):
     from version import version
+
     remote, work = tmp_path / "remote.git", tmp_path / "work"
     _git(tmp_path, "init", "--quiet", "--bare", str(remote))
     _git(tmp_path, "init", "--quiet", "-b", "develop-beta", str(work))
-    for key, value in (("user.name", "t"), ("user.email", "t@t"), ("commit.gpgsign", "false"), ("tag.gpgsign", "false")):
+    for key, value in (
+        ("user.name", "t"),
+        ("user.email", "t@t"),
+        ("commit.gpgsign", "false"),
+        ("tag.gpgsign", "false"),
+    ):
         _git(work, "config", key, value)
     _git(work, "remote", "add", "origin", str(remote))
     _git(work, "commit", "--quiet", "--allow-empty", "-m", "start")
@@ -165,7 +182,9 @@ def test_with_real_git_merges_get_betas_then_a_release_and_describe_reads_them(t
         _git(work, "checkout", "--quiet", "-b", f"f{number}")
         _git(work, "commit", "--quiet", "--allow-empty", "-m", "work")
         _git(work, "checkout", "--quiet", "develop-beta")
-        _git(work, "merge", "--quiet", "--no-ff", f"f{number}", "-m", f"{title} (#{number})\n\n## Release notes\n{notes}")
+        _git(
+            work, "merge", "--quiet", "--no-ff", f"f{number}", "-m", f"{title} (#{number})\n\n## Release notes\n{notes}"
+        )
         _git(work, "push", "--quiet", "origin", "develop-beta", "v2.0.0")
         return _git(work, "rev-parse", "HEAD")
 
@@ -182,8 +201,9 @@ def test_with_real_git_merges_get_betas_then_a_release_and_describe_reads_them(t
     _git(work, "merge", "--quiet", "--no-ff", "develop-beta", "-m", "Release (#3)")
     release = _git(work, "rev-parse", "HEAD")
     assert tagger.tag("release", release) == "v2.1.0"
-    assert tagger.notes("v2.1.0", release) == ("- Sparkles (#1)\n  - The castle sparkles.\n\n"
-                                               "Behind the scenes, nothing you'd notice: #2\n")
+    assert tagger.notes("v2.1.0", release) == (
+        "- Sparkles (#1)\n  - The castle sparkles.\n\nBehind the scenes, nothing you'd notice: #2\n"
+    )
     version.cache_clear()
     assert version(str(work)) == "2.1.0"
     _git(work, "checkout", "--quiet", "develop-beta")

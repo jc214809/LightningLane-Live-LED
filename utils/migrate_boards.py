@@ -9,6 +9,7 @@ the old rotation back.
 Only what isn't the Pi model's (cli.MODEL_DEFAULTS covers the GPIO mapping and timing): the panel's
 size, its rotation, and the Mac's emulator switch. Delete this once every board has updated.
 """
+
 import socket
 import sys
 

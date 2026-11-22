@@ -206,4 +206,4 @@ const spy = new IntersectionObserver(entries => entries.forEach(e => {
   if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.hash === '#' + e.target.id));
 }), {rootMargin: '-80px 0px -65% 0px'});
 document.querySelectorAll('main .card[id]').forEach(s => spy.observe(s));
-"""
+"""  # noqa: E501  (served as written: a browser script, not Python)

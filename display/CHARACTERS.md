@@ -18,9 +18,14 @@ circle with PIL at ~10px per LED, tile a few timesteps into one sheet, and open 
 
 ```python
 class C:
-    def __init__(s, w, h): s.width, s.height, s.px = w, h, {}
-    def SetPixel(s, x, y, r, g, b): s.px[(int(x), int(y))] = (r, g, b)
-    def Clear(s): s.px = {}
+    def __init__(s, w, h):
+        s.width, s.height, s.px = w, h, {}
+
+    def SetPixel(s, x, y, r, g, b):
+        s.px[(int(x), int(y))] = (r, g, b)
+
+    def Clear(s):
+        s.px = {}
 ```
 
 Always put a non-black stand-in "screen" behind the character too, or you won't notice
@@ -199,7 +204,8 @@ fine to a test and wrong to a person:
 def distance(a, b):
     return sum(abs(x - y) for x, y in zip(colors[a], colors[b]))
 
-assert distance("P", "T") > 200   # eye against the muzzle it sits on
+
+assert distance("P", "T") > 200  # eye against the muzzle it sits on
 ```
 
 None of this replaces looking at it. It stops a feature you already fixed from

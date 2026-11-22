@@ -1,4 +1,5 @@
 """Zero, then Jack and Sally."""
+
 import pytest
 
 import display.animation as animation
@@ -66,16 +67,21 @@ def test_they_walk_in_from_opposite_sides_lean_in_kiss_and_walk_back_off(height)
     run = J(64, height)
     frames = _frames(run)
     first = run.figures(run.walk_in_at)
-    assert all(x < 1 for x, _ in first["sally"]) and all(x >= 63 for x, _ in first["jack"]), \
+    assert all(x < 1 for x, _ in first["sally"]) and all(x >= 63 for x, _ in first["jack"]), (
         "each starts at their own edge"
+    )
     walk = [t for t in frames if run.walk_in_at <= t < run.lean_at] + [run.lean_at]
     steps = {round(run.apart(a) - run.apart(b), 6) for a, b in zip(walk, walk[1:])}
     assert steps == {float(run.STEP)}, "every step steady"
     assert run.apart(run.lean_at) == run.APART, "a step apart"
     assert run.apart(run.kiss_at) == 0, "then lean in"
     kiss = run.figures(run.kiss_at + 0.1)
-    pair = {(run.pair_x + x, run.pair_y + y): J.colors[c] for y, row in enumerate(J.PAIR_ART)
-            for x, c in enumerate(row) if c != "."}
+    pair = {
+        (run.pair_x + x, run.pair_y + y): J.colors[c]
+        for y, row in enumerate(J.PAIR_ART)
+        for x, c in enumerate(row)
+        if c != "."
+    }
     assert {**kiss["sally"], **kiss["jack"]} == pair, "the kiss is the pattern's pose"
     gone = run.figures(frames[-1])
     assert not gone["sally"] or max(x for x, _ in gone["sally"]) < 4, "Sally off the left"

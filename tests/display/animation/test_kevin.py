@@ -3,9 +3,7 @@
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas
-
 
 Kevin = animation.KevinReveal
 BLUE = Kevin.colors["B"]

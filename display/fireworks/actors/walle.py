@@ -1,4 +1,5 @@
 """WALL-E's space dance for the synced show (see show_actors.py)."""
+
 import math
 
 from display.animation.characters.walle import WallEReveal
@@ -13,6 +14,7 @@ class WallEFloats(Actor):
     the right edge by CROSS_S, before the castle comes back (7 s in). Every couple of seconds he
     gives his fire extinguisher a squirt: a short burst of white specks puffs out behind him and fades.
     """
+
     NAME = "WALL-E"
     CROSS_S = 6.5  # edge to edge, gone before the castle comes back 7 s in
     BOB_S = 2.6  # one bob
@@ -34,8 +36,11 @@ class WallEFloats(Actor):
         """His top-left e seconds into the scene: off the left edge at 0, off the right by CROSS_S."""
         k = e / self.CROSS_S
         left = -self.w + (self.show.width + self.w) * k
-        top = self.mid - self.arc * math.sin(math.pi * min(1.0, max(0.0, k))) \
+        top = (
+            self.mid
+            - self.arc * math.sin(math.pi * min(1.0, max(0.0, k)))
             + self.bob * math.sin(2 * math.pi * e / self.BOB_S)
+        )
         return left, max(0.0, min(top, self.show.height - self.h))
 
     def squirting(self, e):
@@ -48,8 +53,15 @@ class WallEFloats(Actor):
             r = self.rng
             # Out of his left side (behind him) at arm height, pushing him on to the right.
             for _ in range(2):
-                self.specks.append([left - 1, top + 11 * self.scale + r.uniform(-1, 1),
-                                    -r.uniform(0.3, 0.8), r.uniform(-0.15, 0.15), r.randint(10, 20)])
+                self.specks.append(
+                    [
+                        left - 1,
+                        top + 11 * self.scale + r.uniform(-1, 1),
+                        -r.uniform(0.3, 0.8),
+                        r.uniform(-0.15, 0.15),
+                        r.randint(10, 20),
+                    ]
+                )
         for s in self.specks:
             s[0] += s[2]
             s[1] += s[3]
@@ -66,5 +78,13 @@ class WallEFloats(Actor):
         if not active:
             return
         left, top = self.top_left(self.elapsed())
-        stamp(out, self.art, self.colors, math.floor(left + 0.5), math.floor(top + 0.5), self.scale,
-              show.width, show.height)
+        stamp(
+            out,
+            self.art,
+            self.colors,
+            math.floor(left + 0.5),
+            math.floor(top + 0.5),
+            self.scale,
+            show.width,
+            show.height,
+        )

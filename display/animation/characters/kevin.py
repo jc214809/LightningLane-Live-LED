@@ -97,18 +97,52 @@ class KevinReveal:
         "DDSDSDDDDSDSDD",
         "..SDDS..SDDS..",
     ]
-    colors = {"L": (200, 200, 205), "C": (1, 230, 230), "B": (10, 20, 252), "Y": (252, 240, 1),
-              "k": (45, 35, 30), "R": (253, 0, 1), "r": (203, 25, 49), "P": (210, 113, 252),
-              "A": (138, 1, 1), "O": (253, 137, 0), "G": (70, 70, 70),
-              "D": (252, 180, 40), "S": (110, 100, 90), "W": (255, 255, 255), "T": (230, 80, 120),
-              "s": (171, 170, 166)}
+    colors = {
+        "L": (200, 200, 205),
+        "C": (1, 230, 230),
+        "B": (10, 20, 252),
+        "Y": (252, 240, 1),
+        "k": (45, 35, 30),
+        "R": (253, 0, 1),
+        "r": (203, 25, 49),
+        "P": (210, 113, 252),
+        "A": (138, 1, 1),
+        "O": (253, 137, 0),
+        "G": (70, 70, 70),
+        "D": (252, 180, 40),
+        "S": (110, 100, 90),
+        "W": (255, 255, 255),
+        "T": (230, 80, 120),
+        "s": (171, 170, 166),
+    }
 
     # The balloons, Up's mix, 3 x 3 with the bottom corners off and a pale shine top left.
     # BUNCH is each one's top-left corner from the knot; the lower ones have strings.
-    BALLOON_RGB = [(230, 30, 40), (250, 210, 20), (40, 110, 250), (40, 200, 70), (250, 110, 180),
-                   (255, 130, 20), (160, 70, 230), (90, 200, 250)]
-    BUNCH = [(-6, -9), (-3, -10), (0, -11), (3, -10), (-7, -6), (-4, -7), (-1, -8), (2, -7), (5, -7),
-             (-5, -4), (-2, -5), (1, -4), (4, -4)]
+    BALLOON_RGB = [
+        (230, 30, 40),
+        (250, 210, 20),
+        (40, 110, 250),
+        (40, 200, 70),
+        (250, 110, 180),
+        (255, 130, 20),
+        (160, 70, 230),
+        (90, 200, 250),
+    ]
+    BUNCH = [
+        (-6, -9),
+        (-3, -10),
+        (0, -11),
+        (3, -10),
+        (-7, -6),
+        (-4, -7),
+        (-1, -8),
+        (2, -7),
+        (5, -7),
+        (-5, -4),
+        (-2, -5),
+        (1, -4),
+        (4, -4),
+    ]
     STRUNG_FROM = -5  # balloons this low or lower show their strings
     STRING = (190, 190, 190)
 
@@ -132,7 +166,7 @@ class KevinReveal:
         if self.height < 64:
             rows = rows[:first] + [rows[first], rows[end - 1]] + rows[end:]
         if pumped:
-            rows = ["." + row[:-1] for row in rows[:self.HEAD_ROWS]] + rows[self.HEAD_ROWS:]
+            rows = ["." + row[:-1] for row in rows[: self.HEAD_ROWS]] + rows[self.HEAD_ROWS :]
         return rows
 
     def dug(self, f):
@@ -140,7 +174,7 @@ class KevinReveal:
         from the ground as he comes on to his head at the top row as he goes off the right."""
         x = self.kevin(f)[0] - self.DUG_BEHIND
         across = min(1.0, max(0.0, (x + self.dug_w) / (self.width + self.dug_w)))
-        lifted = round(self.ground * across ** self.LIFT_EASE)
+        lifted = round(self.ground * across**self.LIFT_EASE)
         trot = (f // self.TROT_F) % 2 if lifted == 0 else 0
         return x, self.ground - lifted - trot
 

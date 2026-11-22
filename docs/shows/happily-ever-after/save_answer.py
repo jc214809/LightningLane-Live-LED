@@ -1,10 +1,12 @@
 """Put a /watch report's answer at the top of a WATCH.md scene's Answers (used by watch-scenes.sh).
 
-    python3 save_answer.py 4.1 report.md 5:10-5:38
+python3 save_answer.py 4.1 report.md 5:10-5:38
 """
+
+import datetime
 import re
 import sys
-import datetime
+
 num, path, window = sys.argv[1], sys.argv[2], sys.argv[3]
 report = open(path).read()
 model = re.search(r"\*\*Engine:\*\* (\S+)", report).group(1)
@@ -20,13 +22,15 @@ sec = re.search(rf"^### {re.escape(num)} .+?$(.*?)(?=^### |^## |\Z)", s, re.M | 
 body = sec.group(1)
 notes = re.search(r"\*\*Your notes for this scene:\*\*\n\n(.*?)\n\n\*\*Answers", body, re.S).group(1).strip()
 noted = "none" if notes.startswith("> _(add what") else "as in the notes above, at the time"
-entry = (f"<details><summary><b>{datetime.date.today().isoformat()}</b> · {model} · video {window} · "
-         f"notes: {noted}</summary>\n\n{answer}\n\n</details>\n")
+entry = (
+    f"<details><summary><b>{datetime.date.today().isoformat()}</b> · {model} · video {window} · "
+    f"notes: {noted}</summary>\n\n{answer}\n\n</details>\n"
+)
 head = "**Answers** (newest first):\n\n"
 i = body.index(head) + len(head)
 rest = body[i:]
 rest = rest.replace("_None yet._\n", "", 1) if rest.lstrip().startswith("_None yet._") else rest
 body = body[:i] + entry + ("\n" + rest.lstrip("\n") if rest.strip() else "\n")
-s = s[:sec.start(1)] + body + s[sec.end(1):]
+s = s[: sec.start(1)] + body + s[sec.end(1) :]
 open(p, "w").write(s)
 print("saved", num, model)

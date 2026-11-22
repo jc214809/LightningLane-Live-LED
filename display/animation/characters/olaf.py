@@ -101,8 +101,17 @@ class OlafReveal:
     FLAKE = (255, 255, 255)
     EYE_RING = (110, 165, 230)
     BROW = (70, 50, 45)
-    colors = {"E": EDGE, "W": WHITE, "S": SHADE, "K": EYE_RING, "P": COAL, "O": CARROT,
-              "M": MOUTH, "R": BROW, "B": TWIG}
+    colors = {
+        "E": EDGE,
+        "W": WHITE,
+        "S": SHADE,
+        "K": EYE_RING,
+        "P": COAL,
+        "O": CARROT,
+        "M": MOUTH,
+        "R": BROW,
+        "B": TWIG,
+    }
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height
@@ -122,9 +131,15 @@ class OlafReveal:
         last = self.head_art[-1]
         self.neck_col = (len(last) - len(last.lstrip(".")) + len(last.rstrip(".")) - 1) / 2
         # Snowflakes: where each starts across the board, how fast it falls, when it starts.
-        self.flakes = [(self.rng.uniform(0, width), self.rng.uniform(8, 14) * s,
-                        self.rng.uniform(0, 1.0), self.rng.uniform(0, 2 * math.pi))
-                       for _ in range(16 * s)]
+        self.flakes = [
+            (
+                self.rng.uniform(0, width),
+                self.rng.uniform(8, 14) * s,
+                self.rng.uniform(0, 1.0),
+                self.rng.uniform(0, 2 * math.pi),
+            )
+            for _ in range(16 * s)
+        ]
 
     def _phase(self, t, span):
         return progress(t, *span)
@@ -196,16 +211,17 @@ class OlafReveal:
             # No new flakes once he starts to walk off; the ones already falling finish.
             if start + (fallen // span) * span / speed >= self.WALK[0]:
                 continue
-            out.append((int(round(x0 + math.sin(t * 2 + sway) * 0.8 * self.s)) % self.width,
-                        int(fallen % span) - 1))
+            out.append((int(round(x0 + math.sin(t * 2 + sway) * 0.8 * self.s)) % self.width, int(fallen % span) - 1))
         return out
 
     def _blob(self, px, cx, cy, rx, ry, roll=None):
         """A shaded snowball; `roll` (radians) puts a speck on it that turns as it rolls."""
         for y in range(int(math.floor(cy - ry)), int(math.ceil(cy + ry)) + 1):
             for x in range(int(math.floor(cx - rx)), int(math.ceil(cx + rx)) + 1):
+
                 def inside(ax, ay):
                     return ((ax + 0.5 - cx) / rx) ** 2 + ((ay + 0.5 - cy) / ry) ** 2 <= 1.0
+
                 if not inside(x, y):
                     continue
                 shade = max(1, int(round(0.8 * self.s)))
@@ -237,7 +253,7 @@ class OlafReveal:
                     continue
                 if not face and kind not in "EWSB":
                     # Blank snow inside his rim; the carrot's tip past the rim isn't there yet.
-                    if not ("E" in line[:col] and "E" in line[col + 1:]):
+                    if not ("E" in line[:col] and "E" in line[col + 1 :]):
                         continue
                     kind = "W"
                 px[(x0 + col, y0 + row)] = self.colors[kind]
@@ -283,15 +299,24 @@ class OlafReveal:
             ex, ey = sx + side * 4.5 * s, sy - lift
             self._line(body, sx, sy, ex, ey, self.TWIG)
             # a twig finger forking off near the end
-            self._line(body, ex - side * 1.2 * s, ey + 0.3 * s * (lift / (3.0 * s) if lift else 1),
-                       ex - side * 0.4 * s, ey - 1.4 * s, self.TWIG)
+            self._line(
+                body,
+                ex - side * 1.2 * s,
+                ey + 0.3 * s * (lift / (3.0 * s) if lift else 1),
+                ex - side * 0.4 * s,
+                ey - 1.4 * s,
+                self.TWIG,
+            )
 
     def _draw_buttons(self, body, where):
         """Coal buttons: one on the middle snowball, two on the bottom one."""
         s = self.s
         hx, _ = where["head"]
-        for bx, by in ((-0.5, where["middle"][1] + 0.3 * s),
-                       (-0.5, where["bottom"][1] - 1.3 * s), (1.5 * s, where["bottom"][1] + 0.9 * s)):
+        for bx, by in (
+            (-0.5, where["middle"][1] + 0.3 * s),
+            (-0.5, where["bottom"][1] - 1.3 * s),
+            (1.5 * s, where["bottom"][1] + 0.9 * s),
+        ):
             for ddx in range(s):
                 for ddy in range(s):
                     body[(int(round(hx + bx)) + ddx, int(round(by)) + ddy)] = self.COAL

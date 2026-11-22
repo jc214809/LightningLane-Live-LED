@@ -2,9 +2,9 @@
 says. The app writes it after the intro and each screen (every park closed included) and while a show plays, so
 its age says whether the app is up, without the settings page loading any of the app's own code.
 """
+
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 from utils import heartbeat
 
@@ -18,9 +18,9 @@ RUNNING, SHOW, QUIET, NONE = "running", "show", "quiet", "none"
 @dataclass(frozen=True)
 class BoardNow:
     state: str  # RUNNING, SHOW (a fireworks show is playing), QUIET (no screen for QUIET_S) or NONE (no heartbeat)
-    age_s: Optional[float] = None  # since the last screen
-    version: Optional[str] = None
-    show: Optional[str] = None
+    age_s: float | None = None  # since the last screen
+    version: str | None = None
+    show: str | None = None
 
 
 def board_now(path=None, now=None):

@@ -19,6 +19,7 @@ The scene, in seconds from its start (settled with the user from mocks, 2026-10-
   (FOLLOW_PX in FOLLOW_S), drops through one in-between frame at DROP_AT and hangs at her side from
   DROP_AT + DROP_S; she eases out of the lean to AIM - RELAX.
 """
+
 import json
 import math
 import os
@@ -31,26 +32,67 @@ BAKED = os.path.join(os.path.dirname(os.path.abspath(__file__)), "merida_poses.j
 
 # The archer's palette, and what the poses add: the string (S), the nocked arrow (a shaft, f fletching,
 # t tip; the shaft edged K so it shows over her hair), and the inside of her open mouth (X).
-COLORS = dict(Archer.COLORS, S=Archer.STRING_RGB, a=Archer.SHAFT_RGB, f=Archer.FLETCH_RGB, t=Archer.TIP_RGB,
-              X=(110, 35, 40))
+COLORS = dict(
+    Archer.COLORS, S=Archer.STRING_RGB, a=Archer.SHAFT_RGB, f=Archer.FLETCH_RGB, t=Archer.TIP_RGB, X=(110, 35, 40)
+)
 
 ART = Archer.ART
 H = len(ART)
 GROUND, WAIST = H - 1, 33
 # The bow's cells, per art row (inclusive), and her bow arm's (from her shoulder to her hand).
-BOW = {0: (18, 18), 1: (17, 19), 2: (17, 19), 3: (17, 20), 4: (18, 22), 5: (18, 23), 6: (20, 24), 7: (22, 25),
-       8: (23, 25), 9: (23, 26), 10: (24, 26), 11: (24, 27), 12: (25, 27), 13: (25, 28), 14: (26, 28),
-       15: (26, 28), 16: (26, 29), 17: (27, 29), 18: (27, 28), 19: (27, 28), 20: (27, 28), 21: (27, 29),
-       22: (27, 29), 23: (27, 30), 24: (27, 30), 25: (26, 30), 26: (25, 29), 27: (27, 28), 28: (27, 29),
-       29: (26, 29), 30: (26, 28), 31: (26, 28), 32: (25, 28), 33: (25, 27), 34: (24, 27), 35: (24, 26),
-       36: (23, 26), 37: (23, 25), 38: (22, 25), 39: (20, 24), 40: (19, 23), 41: (18, 22), 42: (17, 20),
-       43: (17, 19), 44: (17, 19)}
+BOW = {
+    0: (18, 18),
+    1: (17, 19),
+    2: (17, 19),
+    3: (17, 20),
+    4: (18, 22),
+    5: (18, 23),
+    6: (20, 24),
+    7: (22, 25),
+    8: (23, 25),
+    9: (23, 26),
+    10: (24, 26),
+    11: (24, 27),
+    12: (25, 27),
+    13: (25, 28),
+    14: (26, 28),
+    15: (26, 28),
+    16: (26, 29),
+    17: (27, 29),
+    18: (27, 28),
+    19: (27, 28),
+    20: (27, 28),
+    21: (27, 29),
+    22: (27, 29),
+    23: (27, 30),
+    24: (27, 30),
+    25: (26, 30),
+    26: (25, 29),
+    27: (27, 28),
+    28: (27, 29),
+    29: (26, 29),
+    30: (26, 28),
+    31: (26, 28),
+    32: (25, 28),
+    33: (25, 27),
+    34: (24, 27),
+    35: (24, 26),
+    36: (23, 26),
+    37: (23, 25),
+    38: (22, 25),
+    39: (20, 24),
+    40: (19, 23),
+    41: (18, 22),
+    42: (17, 20),
+    43: (17, 19),
+    44: (17, 19),
+}
 ARM = {24: (13, 26), 25: (14, 25), 26: (14, 24), 27: (20, 24)}
 REST_ARM_ROWS = {**ARM, 24: (17, 26), 25: (16, 25)}  # past her wider chin and her bodice beside it
-SHOULDER = (15.5, 25.5)      # her bow arm's
-HAND = (28.5, 24.5)          # her bow hand, on the grip
+SHOULDER = (15.5, 25.5)  # her bow arm's
+HAND = (28.5, 24.5)  # her bow hand, on the grip
 DRAW_SHOULDER = (8.5, 25.0)  # her drawing arm's
-PIVOT = (12.5, 33.5)         # her waist
+PIVOT = (12.5, 33.5)  # her waist
 NECK, CHEST = (12.5, 24.0), (12.5, 27.5)
 BOW_CENTRE = (18.5, 22.5)
 MIRROR = 36  # the bow string-out: mirrored about x = 18 (a cell x goes to MIRROR - 1 - x, a point to MIRROR - x)
@@ -107,16 +149,32 @@ CHIN_ROWS = {
 MOUTHS = {
     0: {(11, 23): "m", (12, 23): "m", (13, 23): "m", (10, 22): "m", (14, 22): "m"},
     1: {(11, 23): "X", (12, 23): "X", (13, 23): "X"},
-    2: {(10, 23): "X", (11, 23): "X", (12, 23): "X", (13, 23): "X", (14, 23): "X",
-        (11, 24): "X", (12, 24): "X", (13, 24): "X"},
+    2: {
+        (10, 23): "X",
+        (11, 23): "X",
+        (12, 23): "X",
+        (13, 23): "X",
+        (14, 23): "X",
+        (11, 24): "X",
+        (12, 24): "X",
+        (13, 24): "X",
+    },
 }
 # Her skirt where the bow's lower limb covered it (rows 40-44): its edge runs on from row 39's to row 45's.
 SKIRT_BEHIND_BOW = {
     (19, 40): "K",
-    (18, 41): "D", (19, 41): "K",
-    (17, 42): "D", (18, 42): "D", (19, 42): "D", (20, 42): "K",
-    (17, 43): "D", (18, 43): "D", (19, 43): "N",
-    (17, 44): "D", (18, 44): "D", (19, 44): "N",
+    (18, 41): "D",
+    (19, 41): "K",
+    (17, 42): "D",
+    (18, 42): "D",
+    (19, 42): "D",
+    (20, 42): "K",
+    (17, 43): "D",
+    (18, 43): "D",
+    (19, 43): "N",
+    (17, 44): "D",
+    (18, 44): "D",
+    (19, 44): "N",
 }
 
 # Her bow hand as a fist (the art's is two 1px fingers round the grip, black between them and her cuff, so
@@ -138,7 +196,7 @@ LEAN_AT, LEAN_S, AIM = 25.9, 0.8, 20.0
 RELEASE = 27.36  # 295.36: "touch"
 FOLLOW_S, FOLLOW_PX = 0.1, (-3, -2)
 DROP_AT, DROP_S = 0.3, 0.12
-LOOSE_S = 0.6     # baked frame by frame this long after the release (the string rings, her arm drops)
+LOOSE_S = 0.6  # baked frame by frame this long after the release (the string rings, her arm drops)
 RELAX = 8.0
 TORSO_SHARE, HEAD_BACK, HIP_PX = 0.35, 0.3, 1.5
 REST_HOLD = (23.5, 8.5)  # where she holds the planted bow's top limb (bow coords)
@@ -173,8 +231,9 @@ def tension(s):
 
 def _drawing_arm(cells):
     """Her drawing arm and the hand at her chin, in the drawn pose."""
-    return {p for p in cells if 23 <= p[1] <= 27
-            and (p[0] <= 9 or (p[0] <= 14 and p[1] >= 24) or p in ((10, 23), (11, 23)))}
+    return {
+        p for p in cells if 23 <= p[1] <= 27 and (p[0] <= 9 or (p[0] <= 14 and p[1] >= 24) or p in ((10, 23), (11, 23)))
+    }
 
 
 def _patch(cells, rows, top=23):
@@ -298,7 +357,7 @@ def _string(bow, pose, release):
 
 def _fill_behind_arm(body, arm):
     """Where her bow arm swings away: her bodice by her shoulder, her hair further out."""
-    for (x, y) in arm:
+    for x, y in arm:
         if (x, y) in body:
             continue
         if x <= 17:
@@ -503,9 +562,14 @@ def frame_key(e, mouth=None):
 
 def frame_keys():
     """Every frame the scene can show, in order."""
-    return (["talk/%d" % m for m in MOUTHS] + ["toss/%d" % i for i in range(TOSS_FRAMES)] + ["held"]
-            + ["aim/%d" % d for d in range(int(AIM) + 2)] + ["loose/%d" % i for i in range(int(LOOSE_S * FPS))]
-            + ["after/%d" % d for d in range(int(AIM - RELAX), int(AIM) + 1)])
+    return (
+        ["talk/%d" % m for m in MOUTHS]
+        + ["toss/%d" % i for i in range(TOSS_FRAMES)]
+        + ["held"]
+        + ["aim/%d" % d for d in range(int(AIM) + 2)]
+        + ["loose/%d" % i for i in range(int(LOOSE_S * FPS))]
+        + ["after/%d" % d for d in range(int(AIM - RELAX), int(AIM) + 1)]
+    )
 
 
 def _toss(e):
@@ -549,8 +613,7 @@ def pack(cells):
     """Cells as {"x", "y", "rows"}: the top-left and rows of kinds ('.' empty, trailing ones dropped)."""
     xs, ys = [p[0] for p in cells], [p[1] for p in cells]
     x0, y0 = min(xs), min(ys)
-    rows = ["".join(cells.get((x, y), ".") for x in range(x0, max(xs) + 1)).rstrip(".")
-            for y in range(y0, max(ys) + 1)]
+    rows = ["".join(cells.get((x, y), ".") for x in range(x0, max(xs) + 1)).rstrip(".") for y in range(y0, max(ys) + 1)]
     return {"x": x0, "y": y0, "rows": rows}
 
 

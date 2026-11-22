@@ -23,29 +23,64 @@ holds there, the sign saying the party's name and tonight's hours (the park's sc
 without them; on 64x32 the hours lead, as "TONIGHT 7PM-12AM"), a ring of bulbs chasing round its red frame.
 """
 
-
 import math
 
-from utils.special_events import special_event_hours
-
-from display.pixels import blend
-from display.landmarks.scene import SKY_RGB, Landmark
 from display.landmarks.santa_train_art import (  # noqa: F401  the art and palette lived here: tests and tools read them from this module
-    BULBS, COLORS, DONALD_32, DONALD_64, ENGINE_32, ENGINE_64, GIFT_32, GIFT_64, GOOFY_32, GOOFY_64, MICKEY_32,
-    MICKEY_64, PLUTO_32, PLUTO_64, RIDERS, SANTA_WAVE_64, SANTA_WAVE_AT, TRAIN_32, TRAIN_64, TREE_32, TREE_64,
+    BULBS,
+    COLORS,
+    DONALD_32,
+    DONALD_64,
+    ENGINE_32,
+    ENGINE_64,
+    GIFT_32,
+    GIFT_64,
+    GOOFY_32,
+    GOOFY_64,
+    MICKEY_32,
+    MICKEY_64,
+    PLUTO_32,
+    PLUTO_64,
+    RIDERS,
+    SANTA_WAVE_64,
+    SANTA_WAVE_AT,
+    TRAIN_32,
+    TRAIN_64,
+    TREE_32,
+    TREE_64,
 )
 from display.landmarks.santa_train_riders import (  # noqa: F401  the riders' code lived here too
-    BLINKS, RIM_EDGE, RIM_ROW, blink_times, mickey_wave, pluto_tail, rider_patch, rider_state,
+    BLINKS,
+    RIM_EDGE,
+    RIM_ROW,
+    blink_times,
+    mickey_wave,
+    pluto_tail,
+    rider_patch,
+    rider_state,
 )
 from display.landmarks.santa_train_sign import (  # noqa: F401  and the billboard's
-    FRAME_PX, NAME, SIGN_INK, SIGN_RGB, TONIGHT_SPACE_PX, billboard, line_pixels, ring, sign_lines, sign_pixels,
+    FRAME_PX,
+    NAME,
+    SIGN_INK,
+    SIGN_RGB,
+    TONIGHT_SPACE_PX,
+    billboard,
+    line_pixels,
+    ring,
+    sign_lines,
+    sign_pixels,
     text_width,
 )
 from display.landmarks.santa_train_wheels import (  # noqa: F401  and the wheels'
-    RIM_32, SPIN_STEPS, spin_pixels, wheels,
+    RIM_32,
+    SPIN_STEPS,
+    spin_pixels,
+    wheels,
 )
+from display.landmarks.scene import SKY_RGB, Landmark
 from display.landmarks.three_caballeros import SMALL_FONT, TINY_FONT  # noqa: F401  the sign's fonts, which tests read here
-
+from display.pixels import blend
+from utils.special_events import special_event_hours
 
 RAIL_RGB, SNOW_RGB = (110, 70, 35), (225, 228, 240)
 COVER_AND_WIPE_S = 1.2  # of the screen, before the scene's clock starts
@@ -66,7 +101,11 @@ PUFF_R = {True: (1.5, 4.5), False: (1.0, 2.5)}  # its radius when puffed and whe
 PUFF_FADE = 0.6  # how much of it is gone by then
 # The art is in santa_train_art.py, santa_train_cars_64.py and santa_train_cars_32.py; the riders' poses in
 # santa_train_riders.py, the wheels in santa_train_wheels.py, the sign in santa_train_sign.py.
-EDITOR_SPRITES = ["ENGINE_64", "SANTA_WAVE_64", "ENGINE_32"]  # art tools/build_sprite_editor.py puts in the sprite editor
+EDITOR_SPRITES = [
+    "ENGINE_64",
+    "SANTA_WAVE_64",
+    "ENGINE_32",
+]  # art tools/build_sprite_editor.py puts in the sprite editor
 
 
 class SantaTrainLandmark(Landmark):
@@ -91,8 +130,10 @@ class SantaTrainLandmark(Landmark):
             rgb = SKY_RGB if y < self.rail_y else RAIL_RGB if y == self.rail_y else SNOW_RGB
             for x in range(w):
                 self.base[(x, y)] = rgb
-        self.flakes = [(self.rng.randrange(w), self.rng.uniform(0, self.rail_y), self.rng.uniform(3, 7))
-                       for _ in range(FLAKES * h // 64)]
+        self.flakes = [
+            (self.rng.randrange(w), self.rng.uniform(0, self.rail_y), self.rng.uniform(3, 7))
+            for _ in range(FLAKES * h // 64)
+        ]
         self._seat_riders(pieces, big)
         self._poses = {}
 
@@ -106,13 +147,18 @@ class SantaTrainLandmark(Landmark):
 
     def _index_columns(self, art, sign, big):
         """self.columns: [(y, rgb)] per column of the train and its sign, so a frame only walks the columns on the board."""
-        self.columns = [[(self.train_y + r, COLORS[row[c]]) for r, row in enumerate(art) if row[c] != "."]
-                        for c in range(self.train_w)]
+        self.columns = [
+            [(self.train_y + r, COLORS[row[c]]) for r, row in enumerate(art) if row[c] != "."]
+            for c in range(self.train_w)
+        ]
         # The dark under each car, between its wheels, is sky the snow and stars don't show through.
         for c, column in enumerate(self.columns):
             body = next((r for r, row in enumerate(art) if row[c] != "."), self.train_h)
-            column += [(self.train_y + r, SKY_RGB) for r in range(max(body + 1, self.train_h - WHEEL_ROWS[big]),
-                                                                  self.train_h) if art[r][c] == "."]
+            column += [
+                (self.train_y + r, SKY_RGB)
+                for r in range(max(body + 1, self.train_h - WHEEL_ROWS[big]), self.train_h)
+                if art[r][c] == "."
+            ]
         for (x, y), rgb in sign.items():
             self.columns[x].append((y, rgb))
 
@@ -192,8 +238,12 @@ class SantaTrainLandmark(Landmark):
             key = (x0, state)
             if key not in self._poses:
                 posed = rider_patch(piece, kind, big, state)
-                self._poses[key] = [(x0 + x, self.train_y + y, SKY_RGB if posed[y][x] == "." else COLORS[posed[y][x]])
-                                    for y, row in enumerate(piece) for x, ch in enumerate(row) if posed[y][x] != ch]
+                self._poses[key] = [
+                    (x0 + x, self.train_y + y, SKY_RGB if posed[y][x] == "." else COLORS[posed[y][x]])
+                    for y, row in enumerate(piece)
+                    for x, ch in enumerate(row)
+                    if posed[y][x] != ch
+                ]
             out += self._poses[key]
         return out
 
@@ -240,5 +290,4 @@ def flatcar(car, deck_row, width):
     its middle column, which falls between its wheels."""
     mid = len(car[0]) // 2
     grow = width - len(car[0])
-    return [("." * width) if r < deck_row else row[:mid] + row[mid] * grow + row[mid:]
-            for r, row in enumerate(car)]
+    return [("." * width) if r < deck_row else row[:mid] + row[mid] * grow + row[mid:] for r, row in enumerate(car)]

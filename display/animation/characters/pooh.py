@@ -123,8 +123,10 @@ class PoohReveal(CapturesScreens):
 
     def sway(self, t):
         """(balloon, Pooh) columns off centre: the same swing, Pooh's a beat behind."""
+
         def at(s):
             return round(self.SWAY * math.sin(2 * math.pi * (s + self.phase) / self.SWAY_S))
+
         return at(t), at(t - self.LAG_S)
 
     def overlay(self, canvas, t):
@@ -141,11 +143,11 @@ class PoohReveal(CapturesScreens):
             for x in range(w):
                 frame[(x, seam)] = EDGE_RGB
         balloon, pooh = self.sway(t)
-        frame.update(dict(art_pixels(self.ART[:self.BALLOON_ROWS], self.x0 + balloon, top, self.colors)))
+        frame.update(dict(art_pixels(self.ART[: self.BALLOON_ROWS], self.x0 + balloon, top, self.colors)))
         string = self.POOH_ROW - self.BALLOON_ROWS
         for i in range(string):
             shift = balloon + (pooh - balloon) * (i + 1) / (string + 1)
             frame[(self.x0 + self.STRING_COL + round(shift), top + self.BALLOON_ROWS + i)] = self.colors["S"]
-        frame.update(dict(art_pixels(self.ART[self.POOH_ROW:], self.x0 + pooh, top + self.POOH_ROW, self.colors)))
+        frame.update(dict(art_pixels(self.ART[self.POOH_ROW :], self.x0 + pooh, top + self.POOH_ROW, self.colors)))
         paint(canvas, frame, w, h)
         return True

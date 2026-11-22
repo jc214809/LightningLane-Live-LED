@@ -1,4 +1,5 @@
 """Ray the firefly for the synced show (see show_actors.py)."""
+
 import math
 
 from display.fireworks.actors.base import Actor
@@ -14,6 +15,7 @@ class RayGlows(Actor):
     the fanfare starts he drifts over to the castle's spire (DRIFT_S) and circles it until his scenes
     end. Everything, the trail included, is placed by the clock, so he leaves nothing behind when off.
     """
+
     NAME = "Ray"
     FIRST_S = 24.0  # the prologue's length; the fanfare follows
     EIGHT_S = 8.0  # one figure-eight
@@ -39,8 +41,7 @@ class RayGlows(Actor):
             self.orbit_r = (7.0, 3.0)
 
     def _on_board(self, x, y):
-        return (max(1.0, min(x, self.show.width - 1 - self.size)),
-                max(1.0, min(y, self.show.height - 1 - self.size)))
+        return (max(1.0, min(x, self.show.width - 1 - self.size)), max(1.0, min(y, self.show.height - 1 - self.size)))
 
     def _eight(self, e):
         a = 2 * math.pi * e / self.EIGHT_S

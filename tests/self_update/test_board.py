@@ -9,13 +9,14 @@ from self_update.board import Board, CommandFailed
 
 class Run:
     """A fake subprocess.run: answers by the command's start, records every call."""
+
     def __init__(self, answers=None):
         self.answers, self.calls = answers or {}, []
 
     def __call__(self, args, **kwargs):
         self.calls.append((args, kwargs))
         for start, answer in self.answers.items():
-            if tuple(args[:len(start)]) == start:
+            if tuple(args[: len(start)]) == start:
                 if isinstance(answer, Exception):
                     raise answer
                 code, out = answer if isinstance(answer, tuple) else (0, answer)
@@ -109,28 +110,36 @@ def test_changed_compares_one_file_between_commits(checkout):
 
 
 def test_what_changed_lists_the_pull_requests_merged_but_not_release_merges(checkout):
-    log = ("p1 p2\x1fMerge pull request #201 from jc214809/feature/updates-card\x1fShow what an update brings\n\x1e\n"
-           "p1 p2\x1fMerge branch 'feature/updater' into feature/update-recovery\x1f\x1e\n"
-           "p1 p2\x1fMerge pull request #197 from jc214809/develop-beta\x1fRelease v2.0.0\x1e\n"
-           "p1 p2\x1fMerge pull request #200 from jc214809/feature/update-recovery\x1f\nRoll back at boot\n\nMore words\x1e\n")
+    log = (
+        "p1 p2\x1fMerge pull request #201 from jc214809/feature/updates-card\x1fShow what an update brings\n\x1e\n"
+        "p1 p2\x1fMerge branch 'feature/updater' into feature/update-recovery\x1f\x1e\n"
+        "p1 p2\x1fMerge pull request #197 from jc214809/develop-beta\x1fRelease v2.0.0\x1e\n"
+        "p1 p2\x1fMerge pull request #200 from jc214809/feature/update-recovery\x1f\nRoll back at boot\n\nMore words\x1e\n"
+    )
     board, run = _board(checkout, {("git", "log", "--merges"): log})
-    assert board.what_changed("a", "b") == [(201, "Show what an update brings", None),
-                                            (200, "Roll back at boot", None)], "merges from before release notes"
+    assert board.what_changed("a", "b") == [
+        (201, "Show what an update brings", None),
+        (200, "Roll back at boot", None),
+    ], "merges from before release notes"
     assert run.calls[0][0] == ["git", "log", "--merges", "--format=%P%x1f%s%x1f%b%x1e", "a..b"]
     assert len(run.calls) == 1, "the old subjects name the branch: no need to look inside"
 
 
 def test_with_no_pull_requests_what_changed_lists_the_commits(checkout):
-    board, _ = _board(checkout, {("git", "log", "--merges"): "", ("git", "log", "--no-merges"): "Fix a typo\nBump it\n"})
+    board, _ = _board(
+        checkout, {("git", "log", "--merges"): "", ("git", "log", "--no-merges"): "Fix a typo\nBump it\n"}
+    )
     assert board.what_changed("a", "b") == [(None, "Fix a typo", None), (None, "Bump it", None)]
 
 
 def test_what_changed_reads_pr_titled_merges_with_their_release_notes(checkout):
-    log = ("m1 f1\x1fSparkle the castle (#205)\x1f## Release notes\n- The castle sparkles.\n"
-           "- So do the rides.\n\n## Summary\nNew effect\n\x1e\n"
-           "m2 f2\x1fFaster CI (#204)\x1f## Release notes\nNone\n\n## Summary\nxdist\x1e\n"
-           "m3 b3\x1fRelease v2.1.0 (#210)\x1f\x1e\n"
-           "m4 f4\x1fNo notes yet (#203)\x1f## Summary\nx\x1e\n")
+    log = (
+        "m1 f1\x1fSparkle the castle (#205)\x1f## Release notes\n- The castle sparkles.\n"
+        "- So do the rides.\n\n## Summary\nNew effect\n\x1e\n"
+        "m2 f2\x1fFaster CI (#204)\x1f## Release notes\nNone\n\n## Summary\nxdist\x1e\n"
+        "m3 b3\x1fRelease v2.1.0 (#210)\x1f\x1e\n"
+        "m4 f4\x1fNo notes yet (#203)\x1f## Summary\nx\x1e\n"
+    )
     inside = {"a..b": log, "m3..b3": "Faster CI (#204)\nMerge branch 'main'\n"}
 
     class ByRange(Run):
@@ -138,10 +147,14 @@ def test_what_changed_reads_pr_titled_merges_with_their_release_notes(checkout):
             self.calls.append((args, kwargs))
             out = inside.get(args[-1], "Merge branch 'develop-beta' into feature/x\n")
             return subprocess.CompletedProcess(args, 0, out, "")
+
     run = ByRange()
     board = Board(str(checkout), run=run, euid=lambda: 1000)
-    assert board.what_changed("a", "b") == [(205, "Sparkle the castle", ["The castle sparkles.", "So do the rides."]),
-                                            (204, "Faster CI", []), (203, "No notes yet", None)]
+    assert board.what_changed("a", "b") == [
+        (205, "Sparkle the castle", ["The castle sparkles.", "So do the rides."]),
+        (204, "Faster CI", []),
+        (203, "No notes yet", None),
+    ]
     assert ["git", "log", "--merges", "--format=%s", "m3..b3"] in run.args(), "a release: it brings in PR merges"
 
 
@@ -149,8 +162,10 @@ def test_checkout_detaches_unless_going_back_to_a_branch(checkout):
     board, run = _board(checkout)
     board.checkout("abc")
     board.checkout("develop-beta", detach=False)
-    assert [a for a in run.args() if a[1] == "checkout"] == [["git", "checkout", "--detach", "abc"],
-                                                              ["git", "checkout", "develop-beta"]]
+    assert [a for a in run.args() if a[1] == "checkout"] == [
+        ["git", "checkout", "--detach", "abc"],
+        ["git", "checkout", "develop-beta"],
+    ]
 
 
 SHEBANG = "+#!/usr/bin/sudo /usr/bin/python3"
@@ -205,8 +220,9 @@ def test_the_freeze_leaves_out_what_pip_cant_reinstall(checkout):
 def test_pip_install_uses_the_apps_python(checkout):
     board, run = _board(checkout)
     board.pip_install("/var/lib/lll-update/pip-freeze.txt")
-    assert run.args() == [["/app/venv/bin/python3", "-m", "pip", "install", "--prefer-binary",
-                           "-r", "/var/lib/lll-update/pip-freeze.txt"]]
+    assert run.args() == [
+        ["/app/venv/bin/python3", "-m", "pip", "install", "--prefer-binary", "-r", "/var/lib/lll-update/pip-freeze.txt"]
+    ]
 
 
 def test_the_installer_skips_pip_only_when_it_has_the_flag(checkout):
@@ -216,9 +232,11 @@ def test_the_installer_skips_pip_only_when_it_has_the_flag(checkout):
     (checkout / "LLL-install.sh").write_text("-r | --skip-requirements)")
     board.install(skip_requirements=True)
     board.install(skip_requirements=False)
-    assert run.args() == [["bash", "LLL-install.sh", "-p", "-m", "-w"],
-                          ["bash", "LLL-install.sh", "-p", "-m", "-w", "--skip-requirements"],
-                          ["bash", "LLL-install.sh", "-p", "-m", "-w"]]
+    assert run.args() == [
+        ["bash", "LLL-install.sh", "-p", "-m", "-w"],
+        ["bash", "LLL-install.sh", "-p", "-m", "-w", "--skip-requirements"],
+        ["bash", "LLL-install.sh", "-p", "-m", "-w"],
+    ]
 
 
 def test_the_real_installer_has_the_flag():
@@ -245,10 +263,17 @@ def test_git_takes_the_installers_safe_directory_override(tmp_path):
 
 def test_systemd_states(checkout):
     unit = "LightningLane-Live-LED.service"
-    board, run = _board(checkout, {("systemctl", "show", "--property", "NRestarts"): "2\n",
-                                   ("systemctl", "show", "--property", "ActiveState"): "active\n",
-                                   ("systemctl", "show", "--property", "LoadState"): "not-found\n"})
-    assert board.restarts(unit) == 2 and board.active(unit) is True and board.unit_exists("lll-settings.service") is False
+    board, run = _board(
+        checkout,
+        {
+            ("systemctl", "show", "--property", "NRestarts"): "2\n",
+            ("systemctl", "show", "--property", "ActiveState"): "active\n",
+            ("systemctl", "show", "--property", "LoadState"): "not-found\n",
+        },
+    )
+    assert (
+        board.restarts(unit) == 2 and board.active(unit) is True and board.unit_exists("lll-settings.service") is False
+    )
     board.restart(unit)
     assert run.args()[-1] == ["systemctl", "restart", unit]
     board, _ = _board(checkout, {("systemctl", "show"): "[not set]\n"})

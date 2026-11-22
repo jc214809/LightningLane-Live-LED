@@ -1,4 +1,5 @@
 """Chip 'n' Dale."""
+
 import random
 
 import pytest
@@ -39,8 +40,9 @@ def test_they_run_in_from_opposite_sides_meet_in_the_middle_and_run_back(meet, h
     assert run.chip_x(meet) + run.chip_w + run.GAP == run.dale_x(meet), "nose to nose"
     assert abs(run.chip_x(meet) + run.chip_w / 2 + run.dale_x(meet) + run.dale_w / 2 - 64) <= 2, "mid-board"
     assert run.facing(0) == (1, -1) and run.facing(run.duration - 0.01) == (-1, 1)
-    assert round(run.chip_x(run.duration)) <= -run.chip_w and round(run.dale_x(run.duration)) >= 64, \
+    assert round(run.chip_x(run.duration)) <= -run.chip_w and round(run.dale_x(run.duration)) >= 64, (
         "each gone off his own side"
+    )
 
 
 def test_they_stand_nose_to_nose_then_turn_round_before_running_off(meet):
@@ -96,9 +98,9 @@ def test_hanging_lifts_one_short_arm_to_beside_the_head(stand, hang):
     stand, hang = getattr(cls, stand), getattr(cls, hang)
     assert len(hang) == len(stand) and len(hang[0]) == len(stand[0])
     hx, hy = cls.HAND
-    assert hang[hy + 1][hx:hx + 2] == "CC", "the hand the rope meets"
-    assert all(row[:hx + 2].strip(".") == "" for row in hang[:hy]), "not above the head"
-    assert all("C" not in row[:5] for row in hang[hy + 2:]), "the arm by his side is gone"
+    assert hang[hy + 1][hx : hx + 2] == "CC", "the hand the rope meets"
+    assert all(row[: hx + 2].strip(".") == "" for row in hang[:hy]), "not above the head"
+    assert all("C" not in row[:5] for row in hang[hy + 2 :]), "the arm by his side is gone"
     assert hang[-5:] == stand[-5:], "legs and feet untouched"
 
 

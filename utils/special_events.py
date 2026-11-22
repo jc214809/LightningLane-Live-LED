@@ -9,8 +9,9 @@ To add a party, add an entry to SPECIAL_EVENTS.
 Days the park data can't name at all (a runDisney race is run before the park opens) are in
 DATED_LANDMARKS, matched by the park's local date. To add one, add an entry there.
 """
+
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from utils import debug
@@ -81,7 +82,8 @@ def is_special(event):
     """A schedule entry for a special ticketed event or extended evening hours."""
     description = event.get("description", "").lower()
     return event.get("type") == "TICKETED_EVENT" and (
-        "special ticketed event" in description or "extended evening" in description)
+        "special ticketed event" in description or "extended evening" in description
+    )
 
 
 def _parse(when):
@@ -93,17 +95,17 @@ def _parse(when):
 
 def _local_today(park, now):
     try:
-        tz = ZoneInfo(park["timezone"]) if park.get("timezone") else timezone.utc
+        tz = ZoneInfo(park["timezone"]) if park.get("timezone") else UTC
     except Exception:
         debug.warning(f"{park.get('name')}: unknown timezone {park.get('timezone')!r}; using UTC for special events.")
-        tz = timezone.utc
+        tz = UTC
     return now.astimezone(tz).strftime("%Y-%m-%d")
 
 
 def dated_landmark(park, now=None, choose=random.choice):
     """The DATED_LANDMARKS class name for this park today (its local date), or None. An entry that
     lists several gives one of them, picked by choose (at random)."""
-    today = _local_today(park, now or datetime.now(timezone.utc))
+    today = _local_today(park, now or datetime.now(UTC))
     name = (park.get("name") or "").lower()
     for entry in DATED_LANDMARKS:
         if entry["date"] == today and entry["park"] in name:
@@ -117,7 +119,7 @@ def special_event_now(park, now=None):
     running now; None if there isn't one. The second case is a party that runs past midnight:
     dated yesterday, still going. Once it ends, yesterday's event no longer counts, even though
     the schedule still holds it."""
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     today = _local_today(park, now)
     for event in park.get("schedule") or []:
         if not is_special(event):

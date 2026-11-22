@@ -10,8 +10,9 @@ SCENE_S = 14.0
 
 
 def _scene(start=623.0, end=623.0 + SCENE_S):
-    return Cue("s", "You'll Be in My Heart", start, end, ((255, 0, 0),), 0.0, None, (), frozenset(), "ghost",
-               ("dumbo",))
+    return Cue(
+        "s", "You'll Be in My Heart", start, end, ((255, 0, 0),), 0.0, None, (), frozenset(), "ghost", ("dumbo",)
+    )
 
 
 def _frame(show, dumbo, cue, t, active=True):
@@ -62,7 +63,7 @@ def test_dumbo_stays_on_the_board_and_swoops(height):
         tops.append(top)
     mid = len(tops) // 2
     if height == 64:  # 64x32 spends its spare rows on his raised ear instead
-        assert sum(tops[mid - 15:mid + 15]) / 30 > sum(tops[:30]) / 30 + 2, "lower mid-scene than as he enters"
+        assert sum(tops[mid - 15 : mid + 15]) / 30 > sum(tops[:30]) / 30 + 2, "lower mid-scene than as he enters"
 
 
 def test_dumbo_is_his_whole_flying_body_from_the_reference_in_its_own_colours():
@@ -85,7 +86,9 @@ def test_dumbo_glides_up_and_down_by_the_clock():
     _frame(show, dumbo, cue, cue.start)
     half = DumboFlies.BOB_S / 2
     tops = [dumbo.top_left(7.0 + k * half)[1] for k in range(3)]
-    assert abs(tops[0] - tops[1]) > 2 and abs(tops[0] - tops[2]) < 1, "down and back up (plus the slow swoop), one glide each BOB_S"
+    assert abs(tops[0] - tops[1]) > 2 and abs(tops[0] - tops[2]) < 1, (
+        "down and back up (plus the slow swoop), one glide each BOB_S"
+    )
 
 
 def test_dumbo_follows_the_clock_not_the_frames():
@@ -108,20 +111,28 @@ def test_nothing_when_his_scene_is_off():
 def test_dumbo_flaps_both_ears_over_his_hat_and_paddles_his_legs():
     dumbo = DumboFlies(MusicShow(64, 64, random.Random(6)))
     level, up, down = (dumbo.frames[i] for i in (0, 2, 6))
+
     def cells(art, keys):
         return {(x, y) for y, row in enumerate(art) for x, k in enumerate(row) if k in keys}
+
     pink = "Ii"  # the near ear's insides
     assert min(y for _, y in cells(up, pink)) < min(y for _, y in cells(level, pink)) - 2, "the near ear lifts"
+
     def tip(art):
         return sum(y for x, y in cells(art, pink) if x < 12) / len([1 for x, _ in cells(art, pink) if x < 12])
+
     assert tip(down) > tip(level) + 1, "and drops"
+
     def far(art):
         return min(y for x, y in cells(art, "BD") if x > 40)
+
     assert far(up) < far(level), "the far ear lifts too"
     ears = cells(up, "sSKkIiABD")  # wherever an ear lies over the hat in the raised frame
     assert cells(level, "YO") - ears <= cells(up, "YO"), "the hat stays put; the ear only covers it"
+
     def legs(art):
-        return cells(art[len(art) - 6:], "sSKkA")
+        return cells(art[len(art) - 6 :], "sSKkA")
+
     assert legs(dumbo.frames[1]) != legs(dumbo.frames[5]), "the legs step"
     assert [dumbo.frame(e) for e in (0, DumboFlies.FLAP_S / 4, DumboFlies.FLAP_S)] == [0, 2, 0], "by the clock"
 
@@ -135,4 +146,3 @@ def test_his_raised_ear_stays_on_the_board(height):
         if 8 < dumbo.top_left(dumbo.elapsed())[0] < 64 - dumbo.w - 8 and dumbo.frame(dumbo.elapsed()) == 2:
             pink_top = min((y for (x, y), rgb in out.items() if rgb == DumboFlies.COLORS["I"]), default=None)
             assert pink_top is not None and pink_top >= 0
-

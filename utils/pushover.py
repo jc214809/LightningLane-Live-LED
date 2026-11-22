@@ -3,6 +3,7 @@ board you can't see, and the updater's (self_update) news of a failed update. Op
 config.json's "pushover" keys (utils.config.pushover_keys). The PIN goes only in the message, never
 in a log or an error.
 """
+
 import json
 import ssl
 import urllib.error
@@ -24,9 +25,12 @@ def send_pin(keys, pin, board, seconds_left):
     the PIN runs out (Pushover's ttl). Raises OSError (network), ValueError (a bad reply) or
     PushoverError."""
     minutes = max(1, round(seconds_left / 60))
-    send(keys, f"{board} settings",
-         f"PIN for {board}'s settings page: {pin}\nIt works for {minutes} minute{'s' if minutes > 1 else ''}.",
-         ttl=max(1, int(seconds_left)))
+    send(
+        keys,
+        f"{board} settings",
+        f"PIN for {board}'s settings page: {pin}\nIt works for {minutes} minute{'s' if minutes > 1 else ''}.",
+        ttl=max(1, int(seconds_left)),
+    )
 
 
 def send(keys, title, message, ttl=None):
@@ -37,11 +41,13 @@ def send(keys, title, message, ttl=None):
     if ttl is not None:
         fields["ttl"] = ttl
     data = urllib.parse.urlencode(fields).encode()
-    request = urllib.request.Request(MESSAGES_URL, data=data,
-                                     headers={"User-Agent": "LightningLane-Live-LED settings page"})
+    request = urllib.request.Request(
+        MESSAGES_URL, data=data, headers={"User-Agent": "LightningLane-Live-LED settings page"}
+    )
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_S,
-                                    context=ssl.create_default_context(cafile=certifi.where())) as response:
+        with urllib.request.urlopen(
+            request, timeout=TIMEOUT_S, context=ssl.create_default_context(cafile=certifi.where())
+        ) as response:
             reply = json.load(response)
     except urllib.error.HTTPError as e:  # 4xx: Pushover says why in the body
         raise PushoverError(_reason(e) or f"HTTP {e.code}") from None

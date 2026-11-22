@@ -8,6 +8,7 @@ also send to a phone (pushover.py). Its Updates card (updates.py) checks for and
 Standard library
 and certifi (the app's own requirement) only, so it runs on any board the app runs on.
 """
+
 import argparse
 import functools
 import gzip
@@ -26,10 +27,19 @@ from urllib.parse import parse_qs, urlsplit
 
 import cli
 from settings_page import board_status, page, surprises_page
-from settings_page.form import WDW_PARKS, apply_form, apply_surprises, chosen_device, import_surprises, snapshot_surprises, panel_choices, volume_from_form
+from settings_page.form import (
+    WDW_PARKS,
+    apply_form,
+    apply_surprises,
+    chosen_device,
+    import_surprises,
+    panel_choices,
+    snapshot_surprises,
+    volume_from_form,
+)
 from settings_page.park_names import ParkNames
-from settings_page.ride_names import RideNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
+from settings_page.ride_names import RideNames
 from settings_page.updates import STARTS, Updates
 from utils import debug, pushover
 from utils.config import CONFIG_FILE, SURPRISES_FILE, load_surprises, pushover_keys, save_config, sound_settings
@@ -58,7 +68,12 @@ COMPRESSIBLE = {"image/svg+xml"}
 def _gzipped(body):
     """body gzipped, once per distinct file content (mtime 0, so the same bytes every time)."""
     return gzip.compress(body, mtime=0)
-ROOT_ICONS = {"/apple-touch-icon.png": "apple-touch-icon.png", "/apple-touch-icon-precomposed.png": "apple-touch-icon.png"}
+
+
+ROOT_ICONS = {
+    "/apple-touch-icon.png": "apple-touch-icon.png",
+    "/apple-touch-icon-precomposed.png": "apple-touch-icon.png",
+}
 
 
 class Settings:
@@ -66,18 +81,31 @@ class Settings:
     park_names.json beside config.json), one save at a time, and the Updates card's updates.Updates.
     send_pushover: pushover.send_pin."""
 
-    def __init__(self, config_path=CONFIG_FILE, gate=None, restart_unit=APP_UNIT,  # noqa: PLR0913
-                 state_file=None, cards_file=SOUND_CARDS, park_names=None, model_file=cli.MODEL_FILE,
-                 send_pushover=pushover.send_pin, updates=None, ride_names=None, heartbeat_file=None):
+    def __init__(  # noqa: PLR0913
+        self,
+        config_path=CONFIG_FILE,
+        gate=None,
+        restart_unit=APP_UNIT,
+        state_file=None,
+        cards_file=SOUND_CARDS,
+        park_names=None,
+        model_file=cli.MODEL_FILE,
+        send_pushover=pushover.send_pin,
+        updates=None,
+        ride_names=None,
+        heartbeat_file=None,
+    ):
         self.config_path, self.restart_unit, self.cards_file = config_path, restart_unit, cards_file
         self.heartbeat_file = heartbeat_file  # None: utils/heartbeat.py's HEARTBEAT_FILE
         self.surprises_path = os.path.join(os.path.dirname(os.path.abspath(config_path)), SURPRISES_FILE)
         self.model_file, self.send_pushover = model_file, send_pushover
         self.gate = gate or PinGate()
         self.park_names = park_names or ParkNames(
-            os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE))
+            os.path.join(os.path.dirname(os.path.abspath(config_path)), PARK_NAMES_FILE)
+        )
         self.ride_names = ride_names or RideNames(
-            os.path.join(os.path.dirname(os.path.abspath(config_path)), RIDE_NAMES_FILE))
+            os.path.join(os.path.dirname(os.path.abspath(config_path)), RIDE_NAMES_FILE)
+        )
         self.state_file = state_file
         self.updates = updates or Updates()
         self.save_lock = threading.Lock()
@@ -115,13 +143,17 @@ class Settings:
         save_config(data, self.surprises_path, like=self.config_path)
 
     def restart_app(self):
-        """"restarted", "saved" (nothing to restart: no unit set, or no systemd) or "failed" (logged).
+        """ "restarted", "saved" (nothing to restart: no unit set, or no systemd) or "failed" (logged).
         try-restart only restarts the app if it's running, so a board running another app stays on it."""
         if not self.restart_unit or not shutil.which("systemctl"):
             return "saved"
         try:
-            done = subprocess.run(["systemctl", "try-restart", self.restart_unit], capture_output=True,
-                                  text=True, timeout=RESTART_TIMEOUT_S)
+            done = subprocess.run(
+                ["systemctl", "try-restart", self.restart_unit],
+                capture_output=True,
+                text=True,
+                timeout=RESTART_TIMEOUT_S,
+            )
         except (OSError, subprocess.TimeoutExpired) as e:
             debug.error(f"Settings page: restarting {self.restart_unit} failed: {e}")
             return "failed"
@@ -276,10 +308,20 @@ class Handler(BaseHTTPRequestHandler):
     def _page(self, problems=(), saved=None, config=None, started=None):
         loaded, problem = self.settings.load()
         config = config if config is not None else loaded
-        return page.settings_page(config, self.settings.sound_cards(), self._in_setup(), problems, saved,
-                                  board_name(), problem, self.settings.park_names.names(),
-                                  self.settings.panel_choices(config), self.settings.updates.view(), started,
-                                  self.settings.board_now())
+        return page.settings_page(
+            config,
+            self.settings.sound_cards(),
+            self._in_setup(),
+            problems,
+            saved,
+            board_name(),
+            problem,
+            self.settings.park_names.names(),
+            self.settings.panel_choices(config),
+            self.settings.updates.view(),
+            started,
+            self.settings.board_now(),
+        )
 
     def _static(self, name):
         """GET /static/<name>: the page's pictures (page.STATIC_DIR), open to anyone, as the sign-in page and the
@@ -312,15 +354,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def _surprises_page(self, problems=(), saved=None, data=None, imported=None):
         data = data if data is not None else load_surprises(self.settings.surprises_path)
-        return surprises_page.surprises_page(data, problems, saved, board_name(), self._in_setup(),
-                                             self.settings.rides(), imported)
+        return surprises_page.surprises_page(
+            data, problems, saved, board_name(), self._in_setup(), self.settings.rides(), imported
+        )
 
     # --- routes
 
     def do_GET(self):
         url = urlsplit(self.path)
         if url.path.startswith("/static/"):
-            return self._static(url.path[len("/static/"):])
+            return self._static(url.path[len("/static/") :])
         if url.path in ROOT_ICONS:  # where phones and browsers look when a page doesn't say
             return self._static(ROOT_ICONS[url.path])
         if url.path == "/update/status":  # the page's script, following a running update
@@ -338,13 +381,23 @@ class Handler(BaseHTTPRequestHandler):
         query = parse_qs(url.query, keep_blank_values=True)
         if not self._allowed():
             sent = query.get("sent", [None])[0]
-            return self._send(200, page.pin_page(PIN_SHOWN_S if "shown" in query else None, "wrong" in query,
-                                                 board_name(), bool(self.settings.pushover_keys()),
-                                                 sent if sent in page.SENT else None, "signedout" in query))
+            return self._send(
+                200,
+                page.pin_page(
+                    PIN_SHOWN_S if "shown" in query else None,
+                    "wrong" in query,
+                    board_name(),
+                    bool(self.settings.pushover_keys()),
+                    sent if sent in page.SENT else None,
+                    "signedout" in query,
+                ),
+            )
         saved = query.get("saved", [None])[0]
         started = query.get("update", [None])[0]
-        self._send(200, self._page(saved=saved if saved in page.SAVED else None,
-                                   started=started if started in STARTS else None))
+        self._send(
+            200,
+            self._page(saved=saved if saved in page.SAVED else None, started=started if started in STARTS else None),
+        )
 
     def _volume(self, form):
         """POST /volume, the page script's Volume buttons: volume_action "set" or "test"; answers
@@ -391,21 +444,26 @@ class Handler(BaseHTTPRequestHandler):
         token = self.settings.gate.try_pin((form.get("pin") or [""])[0])
         if not token:
             return self._redirect("/?wrong")
-        self._redirect("/", [("Set-Cookie", f"{COOKIE}={token}; Max-Age={SESSION_S}; Path=/; "
-                                            f"HttpOnly; SameSite=Strict")])
+        self._redirect(
+            "/", [("Set-Cookie", f"{COOKIE}={token}; Max-Age={SESSION_S}; Path=/; HttpOnly; SameSite=Strict")]
+        )
 
     def _sign_out(self, form):
         """POST /signout: end this browser's session."""
         self.settings.gate.sign_out(self._token())
-        self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; "
-                                                      f"SameSite=Strict")])
+        self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict")])
 
     def _save(self, form):
         """POST /save: the settings form, saved to config.json, with a restart (or just the volume)."""
         if self.settings.updates.running():  # a rollback would put back config.json as it was, losing the save
             loaded, _ = self.settings.load()
-            return self._send(409, self._page(["An update is running: save once it's done (see Updates)."],
-                                              config=apply_form(loaded, form, self.settings.park_names.names())[0]))
+            return self._send(
+                409,
+                self._page(
+                    ["An update is running: save once it's done (see Updates)."],
+                    config=apply_form(loaded, form, self.settings.park_names.names())[0],
+                ),
+            )
         with self.settings.save_lock:
             config, _ = self.settings.load()
             new, problems = apply_form(config, form, self.settings.park_names.names())
@@ -425,7 +483,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _export_surprises(self, form):
         """POST /surprises/export, the Export button: all the settings on the page as it is now, unsaved edits too
-        and every default spelled out (form.snapshot_surprises), as {"ok": true, "json": the text to copy} or {"ok": false, "problems": [...]}. Saves nothing."""
+        and every default spelled out (form.snapshot_surprises), as {"ok": true, "json": the text to copy} or
+        {"ok": false, "problems": [...]}. Saves nothing."""
         rides = self.settings.rides()
         new, problems = apply_surprises(load_surprises(self.settings.surprises_path), form, rides)
         if problems:
@@ -452,10 +511,13 @@ class Handler(BaseHTTPRequestHandler):
     def _save_surprises(self, form):
         """POST /surprises: the Surprise characters page's form, saved to surprises.json, with a restart."""
         if self.settings.updates.running():
-            return self._send(409, self._surprises_page(
-                ["An update is running: save once it's done (see Updates)."],
-                data=apply_surprises(load_surprises(self.settings.surprises_path), form,
-                                     self.settings.rides())[0]))
+            return self._send(
+                409,
+                self._surprises_page(
+                    ["An update is running: save once it's done (see Updates)."],
+                    data=apply_surprises(load_surprises(self.settings.surprises_path), form, self.settings.rides())[0],
+                ),
+            )
         with self.settings.save_lock:
             new, problems = apply_surprises(load_surprises(self.settings.surprises_path), form, self.settings.rides())
             if problems:
@@ -492,19 +554,30 @@ class Handler(BaseHTTPRequestHandler):
 
     # Route tables: path -> handler(self, form). The PIN routes answer anyone; the rest need a sign-in.
     PIN_POSTS = {"/pin/show": _show_pin, "/pin/send": _send_pin, "/pin": _sign_in, "/signout": _sign_out}
-    SIGNED_IN_POSTS = {"/save": _save, "/surprises": _save_surprises, "/surprises/export": _export_surprises,
-                       "/surprises/import": _import_surprises, "/volume": _volume, "/update/check": _check_update,
-                       "/update/start": _start_update, "/update/rollback": _start_rollback}
+    SIGNED_IN_POSTS = {
+        "/save": _save,
+        "/surprises": _save_surprises,
+        "/surprises/export": _export_surprises,
+        "/surprises/import": _import_surprises,
+        "/volume": _volume,
+        "/update/check": _check_update,
+        "/update/start": _start_update,
+        "/update/rollback": _start_rollback,
+    }
+
 
 def volume_only(old, new):
     """True if the only change from old to new config is sound.volume."""
+
     def without_volume(config):
         config = dict(config)
         if isinstance(config.get("sound"), dict):
             config["sound"] = {k: v for k, v in config["sound"].items() if k != "volume"}
         return config
+
     def volume(config):
         return (config.get("sound") or {}).get("volume") if isinstance(config.get("sound"), dict) else None
+
     return volume(old) != volume(new) and without_volume(old) == without_volume(new)
 
 
@@ -522,8 +595,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="The board's settings page.")
     parser.add_argument("--port", type=int, default=PORT)
     parser.add_argument("--config", default=CONFIG_FILE, help="config.json's path (default: in the working folder)")
-    parser.add_argument("--restart-unit", default=APP_UNIT, help="the app's systemd unit, restarted after a save; "
-                                                                 "'' for none")
+    parser.add_argument(
+        "--restart-unit", default=APP_UNIT, help="the app's systemd unit, restarted after a save; '' for none"
+    )
     args = parser.parse_args(argv)
     debug.logger.setLevel(logging.INFO)
     # To the journal only: the app's logs/app.log rotates in the app's process, and two writers

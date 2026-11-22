@@ -1,4 +1,5 @@
 """Merida for the synced show's Touch the Sky (see show_actors.py)."""
+
 import math
 
 from display.animation.characters.archer import ArcherReveal as Archer
@@ -10,16 +11,17 @@ from utils import debug
 
 class MeridaShoots(Actor):
     """
-    Touch the Sky: Merida, the archer's art full size at the bottom left (on 64x32, too short for her, from
-    the waist up: her waist on the bottom row, and all she does happens above it), rises in her first ENTER_S and says her line, "Your destiny lies within you...", to the
-    score's mouth track, holding her bow by its top, its foot planted at her side, her other hand on her
-    hip. Then she tosses it up, catches it, draws and leans back to aim; on "chase the wind" a firework
-    bursts into a bullseye high on the right (TARGET_S) and hangs there; on "touch" (LOOSE_S) she lets go:
-    the string snaps, her hand flies back and drops to her side, and the arrow flies off the string at the
-    archer's speed into the bullseye's centre, which shatters into sparks of its own colours. LEAVE_S after
-    the hit she sinks away, over ENTER_S (sooner if her scene ends first). Her poses (merida_poses.py has the scene's timings) are baked, so a
-    frame only stamps one. Times are seconds into her scene.
+    Touch the Sky: Merida, the archer's art full size at the bottom left (on 64x32, too short for her, from the
+    waist up: her waist on the bottom row, and all she does happens above it), rises in her first ENTER_S and says
+    her line, "Your destiny lies within you...", to the score's mouth track, holding her bow by its top, its foot
+    planted at her side, her other hand on her hip. Then she tosses it up, catches it, draws and leans back to aim;
+    on "chase the wind" a firework bursts into a bullseye high on the right (TARGET_S) and hangs there; on "touch"
+    (LOOSE_S) she lets go: the string snaps, her hand flies back and drops to her side, and the arrow flies off the
+    string at the archer's speed into the bullseye's centre, which shatters into sparks of its own colours. LEAVE_S
+    after the hit she sinks away, over ENTER_S (sooner if her scene ends first). Her poses (merida_poses.py has the
+    scene's timings) are baked, so a frame only stamps one. Times are seconds into her scene.
     """
+
     NAME = "Merida"
     ENTER_S = 0.6
     TARGET_S = 26.3  # 294.3: "chase the wind"
@@ -95,8 +97,16 @@ class MeridaShoots(Actor):
         dy = self.drop(e)
         if dy < self.rise:
             f = self.frame(poses.frame_key(e, self.mouth("merida")))
-            stamp(out, f["rows"], self.COLORS, self.LEFT + f["x"], self.top + f["y"] + dy, 1,
-                  self.show.width, self.show.height)
+            stamp(
+                out,
+                f["rows"],
+                self.COLORS,
+                self.LEFT + f["x"],
+                self.top + f["y"] + dy,
+                1,
+                self.show.width,
+                self.show.height,
+            )
         self.draw_arrow(out, e)
 
     def _put(self, out, x, y, rgb):

@@ -12,6 +12,7 @@ Run it from a folder whose emulator_config.json sets the browser port (the repo 
 two boards can loop side by side; fonts and config.json resolve from there too. The music clip is
 cut once into build/loop_show/ (gitignored). Needs ffmpeg for --sound.
 """
+
 import argparse
 import logging
 import os
@@ -36,6 +37,7 @@ def offset_clock(start_s, now=time.monotonic):
             first[0] = False
             return t - start_s
         return t
+
     return clock
 
 
@@ -49,8 +51,22 @@ def cut_clip(start_s, end_s, show=SHOW):
     path = clip_path(start_s, end_s, show)
     if not os.path.exists(path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(start_s), "-to", str(end_s), "-i",
-                        os.path.join(ROOT, "sounds", f"{show}.wav"), path], check=True)
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-y",
+                "-ss",
+                str(start_s),
+                "-to",
+                str(end_s),
+                "-i",
+                os.path.join(ROOT, "sounds", f"{show}.wav"),
+                path,
+            ],
+            check=True,
+        )
     return path
 
 
@@ -73,8 +89,9 @@ def main(argv=None):
     from display.fireworks.score import load_score
 
     driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
-    matrix = driver.RGBMatrix(options=led_matrix_options(
-        arguments(["--emulated", "--led-cols=64", f"--led-rows={args.rows}"])))
+    matrix = driver.RGBMatrix(
+        options=led_matrix_options(arguments(["--emulated", "--led-cols=64", f"--led-rows={args.rows}"]))
+    )
     initialize_fonts(matrix.height)
     score = load_score(SHOW, version=args.version)
     if score is None:

@@ -35,12 +35,14 @@ class Fetch:
 @pytest.fixture
 def run_now(monkeypatch):
     """Background fetches run at once, in the test's thread."""
+
     class Thread:
         def __init__(self, target, args=(), **_):
             self.target, self.args = target, args
 
         def start(self):
             self.target(*self.args)
+
     monkeypatch.setattr(ride_names.threading, "Thread", Thread)
 
 
@@ -59,8 +61,12 @@ def test_a_day_old_list_is_fetched_again_and_saved(tmp_path, run_now):
     path = tmp_path / "rides.json"
     saved(path, clock.now - MAX_AGE_S)
     assert RideNames(str(path), fetch, clock).names(PARKS) == {"Magic Kingdom": ["Haunted Mansion"]}
-    assert json.loads(path.read_text()) == {"format": FORMAT, "fetched": clock.now, "parks": PARKS,
-                                            "rides": {"Magic Kingdom": ["Haunted Mansion"]}}
+    assert json.loads(path.read_text()) == {
+        "format": FORMAT,
+        "fetched": clock.now,
+        "parks": PARKS,
+        "rides": {"Magic Kingdom": ["Haunted Mansion"]},
+    }
 
 
 def test_a_change_of_parks_fetches_at_once_even_if_the_list_is_fresh(tmp_path, run_now):
@@ -92,8 +98,15 @@ def test_no_parks_means_no_fetch_and_no_list(tmp_path, run_now):
     assert RideNames(str(tmp_path / "rides.json"), fetch, Clock()).names([]) == {} and fetch.calls == []
 
 
-@pytest.mark.parametrize("content", ["{not json", f'{{"format": {FORMAT}, "fetched": 1}}',
-                                     f'{{"format": {FORMAT}, "fetched": 1, "parks": [], "rides": [1]}}', "[]"])
+@pytest.mark.parametrize(
+    "content",
+    [
+        "{not json",
+        f'{{"format": {FORMAT}, "fetched": 1}}',
+        f'{{"format": {FORMAT}, "fetched": 1, "parks": [], "rides": [1]}}',
+        "[]",
+    ],
+)
 def test_a_bad_file_is_ignored_with_a_warning(tmp_path, monkeypatch, content):
     warnings = []
     monkeypatch.setattr(ride_names.debug, "warning", warnings.append)
@@ -117,8 +130,13 @@ def test_a_refresh_hands_the_last_list_to_the_fetch_so_a_closed_ride_does_not_fa
     assert fetch.keeps == [{"Magic Kingdom": ["Space Mountain"]}]
 
 
-DESTINATIONS = [{"id": "e957da41-3552-4cf6-b636-5babc5cbc4e5", "name": "WDW", "parks": [
-    {"id": "mk", "name": "Magic Kingdom Park"}, {"id": "ec", "name": "EPCOT"}]}]
+DESTINATIONS = [
+    {
+        "id": "e957da41-3552-4cf6-b636-5babc5cbc4e5",
+        "name": "WDW",
+        "parks": [{"id": "mk", "name": "Magic Kingdom Park"}, {"id": "ec", "name": "EPCOT"}],
+    }
+]
 CHILDREN = [
     {"id": "a1", "entityType": "ATTRACTION", "name": "Tron\u2122 Lightcycle Run"},
     {"id": "a2", "entityType": "ATTRACTION", "name": "Space Mountain"},
@@ -128,12 +146,21 @@ CHILDREN = [
     {"id": "m1", "entityType": "SHOW", "name": "Meet Mickey at Town Square Theater"},  # a meet: a SHOW with a queue
     {"id": "s1", "entityType": "SHOW", "name": "Festival of Fantasy Parade"},  # no queue
     {"id": "r1", "entityType": "RESTAURANT", "name": "Be Our Guest"},
-    {"id": "x1", "entityType": "ATTRACTION"}, "junk"]
+    {"id": "x1", "entityType": "ATTRACTION"},
+    "junk",
+]
 LIVE = [
-    {"id": "a1", "queue": {"STANDBY": {"waitTime": 40}}}, {"id": "a2", "queue": {"STANDBY": {"waitTime": None}}},
-    {"id": "a3", "status": "CLOSED", "queue": {"STANDBY": {"waitTime": None}}}, {"id": "a4", "queue": {}},
-    {"id": "a5", "queue": {"BOARDING_GROUP": {"currentGroupStart": 1}}}, {"id": "m1", "queue": {"STANDBY": {"waitTime": 5}}},
-    {"id": "s1"}, {"id": "r1", "queue": {"STANDBY": {"waitTime": 10}}}, {"id": "x1", "queue": None}, "junk"]
+    {"id": "a1", "queue": {"STANDBY": {"waitTime": 40}}},
+    {"id": "a2", "queue": {"STANDBY": {"waitTime": None}}},
+    {"id": "a3", "status": "CLOSED", "queue": {"STANDBY": {"waitTime": None}}},
+    {"id": "a4", "queue": {}},
+    {"id": "a5", "queue": {"BOARDING_GROUP": {"currentGroupStart": 1}}},
+    {"id": "m1", "queue": {"STANDBY": {"waitTime": 5}}},
+    {"id": "s1"},
+    {"id": "r1", "queue": {"STANDBY": {"waitTime": 10}}},
+    {"id": "x1", "queue": None},
+    "junk",
+]
 
 
 @pytest.fixture
@@ -144,22 +171,33 @@ def api(monkeypatch):
     def get(url):
         asked.append(url)
         return {"children": CHILDREN} if url.endswith("/children") else {"liveData": LIVE}
+
     monkeypatch.setattr(ride_names, "_get_json", get)
     return asked
 
 
 def test_the_rides_are_the_attractions_and_meets_with_a_wait_queue_named_as_the_app_names_them(api):
-    assert fetch_rides(["Magic Kingdom"]) == {"Magic Kingdom": [
-        "Kali River Rapids", "Meet Mickey at Town Square Theater", "Rise of the Resistance", "Space Mountain",
-        "Tron Lightcycle Run"]}
-    assert api == ["https://api.themeparks.wiki/v1/entity/mk/children", "https://api.themeparks.wiki/v1/entity/mk/live"], \
-        "only the parks asked for"
+    assert fetch_rides(["Magic Kingdom"]) == {
+        "Magic Kingdom": [
+            "Kali River Rapids",
+            "Meet Mickey at Town Square Theater",
+            "Rise of the Resistance",
+            "Space Mountain",
+            "Tron Lightcycle Run",
+        ]
+    }
+    assert api == [
+        "https://api.themeparks.wiki/v1/entity/mk/children",
+        "https://api.themeparks.wiki/v1/entity/mk/live",
+    ], "only the parks asked for"
 
 
 def test_a_ride_with_a_queue_but_no_wait_right_now_stays_on_the_list(api):
     rides = fetch_rides(["Magic Kingdom"])["Magic Kingdom"]
     assert "Kali River Rapids" in rides and "Space Mountain" in rides, "closed, or no wait posted at the moment"
-    assert "Cinderella Castle" not in rides and "Festival of Fantasy Parade" not in rides and "Be Our Guest" not in rides
+    assert (
+        "Cinderella Castle" not in rides and "Festival of Fantasy Parade" not in rides and "Be Our Guest" not in rides
+    )
 
 
 def test_a_ride_seen_before_stays_while_it_is_still_there_but_not_once_it_is_gone(api):
@@ -185,6 +223,7 @@ def test_one_parks_outage_keeps_that_parks_last_list_and_the_others_are_fetched(
         if "/ec/" in url:
             raise urllib.error.URLError("down")
         return good(url)
+
     monkeypatch.setattr(ride_names, "_get_json", get)
     rides = fetch_rides(["Magic Kingdom", "EPCOT"], {"EPCOT": ["Test Track"]})
     assert rides["EPCOT"] == ["Test Track"], "its last list, not nothing"
@@ -195,6 +234,7 @@ def test_one_parks_outage_keeps_that_parks_last_list_and_the_others_are_fetched(
 def test_every_park_down_is_a_failed_fetch(monkeypatch, api):
     def get(url):
         raise urllib.error.URLError("down")
+
     monkeypatch.setattr(ride_names, "_get_json", get)
     with pytest.raises(ValueError):
         fetch_rides(["Magic Kingdom"])

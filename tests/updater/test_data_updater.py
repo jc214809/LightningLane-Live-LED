@@ -1,7 +1,7 @@
 import asyncio
 import copy
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -9,26 +9,23 @@ from updater import shared
 from updater.data_updater import (
     LIVE_FEED_STARTUP_WAIT_SECS,
     REST_INTERVAL_WITH_LIVE_FEED_SECS,
+    live_data_updater,
     merge_live_data,
     rest_poll_due,
     update_parks_live_data,
-    live_data_updater
 )
 
 # Dummy parks list used for testing.
-DUMMY_PARKS = [{
-    "id": "park1",
-    "name": "Fantasy Land",
-    "attractions": [{
-        "id": "1",
-        "waitTime": 10,
-        "status": "OPERATING",
-        "down_since": "",
-        "lastUpdatedTs": "old"
-    }]
-}]
+DUMMY_PARKS = [
+    {
+        "id": "park1",
+        "name": "Fantasy Land",
+        "attractions": [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}],
+    }
+]
 
 # --- Existing Tests ---
+
 
 def test_update_parks_live_data(monkeypatch):
     """
@@ -36,12 +33,7 @@ def test_update_parks_live_data(monkeypatch):
     using live data. For testing, we patch updater.data_updater.fetch_park_live_data to return dummy live data.
     """
     # Dummy live data that should update the attraction.
-    dummy_live_data = [{
-        "id": "1",
-        "waitTime": 25,
-        "status": "OPERATING",
-        "lastUpdatedTs": "new"
-    }]
+    dummy_live_data = [{"id": "1", "waitTime": 25, "status": "OPERATING", "lastUpdatedTs": "new"}]
 
     async def dummy_fetch_live_data(attractions):
         return dummy_live_data
@@ -70,12 +62,7 @@ def test_live_data_updater(monkeypatch):
     parks_data = []
 
     # Dummy live data to update the attraction.
-    dummy_live_data = [{
-        "id": "1",
-        "waitTime": 30,
-        "status": "OPERATING",
-        "lastUpdatedTs": "new_live"
-    }]
+    dummy_live_data = [{"id": "1", "waitTime": 30, "status": "OPERATING", "lastUpdatedTs": "new_live"}]
 
     async def dummy_fetch_live_data(attractions):
         return dummy_live_data
@@ -95,9 +82,7 @@ def test_live_data_updater(monkeypatch):
 
     # Run live_data_updater in a thread. It takes parameters: (parks_list, update_interval, parks_data)
     updater_thread = threading.Thread(
-        target=live_data_updater,
-        args=(copy.deepcopy(DUMMY_PARKS), 0, parks_data),
-        daemon=True
+        target=live_data_updater, args=(copy.deepcopy(DUMMY_PARKS), 0, parks_data), daemon=True
     )
     try:
         updater_thread.start()
@@ -163,19 +148,23 @@ def test_live_data_updater_logs_consecutive_failure_count(monkeypatch):
 
 
 def test_merge_live_data_updates_existing():
-    existing = [{
-        "id": "1",
-        "waitTime": 10,
-        "status": "OPERATING",
-        "down_since": "",
-        "lastUpdatedTs": "old",
-    }]
-    new_live = [{
-        "id": "1",
-        "waitTime": 20,
-        "status": "OPERATING",
-        "lastUpdatedTs": "new",
-    }]
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 10,
+            "status": "OPERATING",
+            "down_since": "",
+            "lastUpdatedTs": "old",
+        }
+    ]
+    new_live = [
+        {
+            "id": "1",
+            "waitTime": 20,
+            "status": "OPERATING",
+            "lastUpdatedTs": "new",
+        }
+    ]
     result = merge_live_data(copy.deepcopy(existing), new_live)
     assert len(result) == 1
     updated = result[0]
@@ -186,30 +175,36 @@ def test_merge_live_data_updates_existing():
 
 
 def test_merge_live_data_down_since_handling():
-    existing = [{
-        "id": "1",
-        "waitTime": 5,
-        "status": "OPERATING",
-        "down_since": "",
-        "lastUpdatedTs": "old",
-    }]
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 5,
+            "status": "OPERATING",
+            "down_since": "",
+            "lastUpdatedTs": "old",
+        }
+    ]
 
-    new_down = [{
-        "id": "1",
-        "waitTime": 0,
-        "status": "DOWN",
-        "lastUpdatedTs": "tsdown",
-    }]
+    new_down = [
+        {
+            "id": "1",
+            "waitTime": 0,
+            "status": "DOWN",
+            "lastUpdatedTs": "tsdown",
+        }
+    ]
     result = merge_live_data(copy.deepcopy(existing), new_down)
     assert result[0]["status"] == "DOWN"
     assert result[0]["down_since"] == "tsdown"
 
-    new_up = [{
-        "id": "1",
-        "waitTime": 15,
-        "status": "OPERATING",
-        "lastUpdatedTs": "tsup",
-    }]
+    new_up = [
+        {
+            "id": "1",
+            "waitTime": 15,
+            "status": "OPERATING",
+            "lastUpdatedTs": "tsup",
+        }
+    ]
     result2 = merge_live_data(result, new_up)
     assert result2[0]["status"] == "OPERATING"
     assert result2[0]["down_since"] == ""
@@ -219,21 +214,25 @@ def test_merge_live_data_down_wait_time_uses_down_since_not_last_updated():
     """Regression test: waitTime for a DOWN attraction must reflect elapsed
     time since down_since (when the ride actually went down), not the raw
     per-poll lastUpdatedTs, which stays recent on every REST poll."""
-    down_since_ts = (datetime.now(timezone.utc) - timedelta(minutes=42)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    existing = [{
-        "id": "1",
-        "waitTime": 5,
-        "status": "DOWN",
-        "down_since": down_since_ts,
-        "lastUpdatedTs": down_since_ts,
-    }]
+    down_since_ts = (datetime.now(UTC) - timedelta(minutes=42)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 5,
+            "status": "DOWN",
+            "down_since": down_since_ts,
+            "lastUpdatedTs": down_since_ts,
+        }
+    ]
 
     # A fresh REST poll re-reports DOWN with a lastUpdatedTs from "just now".
-    new_still_down = [{
-        "id": "1",
-        "status": "DOWN",
-        "lastUpdatedTs": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    }]
+    new_still_down = [
+        {
+            "id": "1",
+            "status": "DOWN",
+            "lastUpdatedTs": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+    ]
     result = merge_live_data(copy.deepcopy(existing), new_still_down)
 
     assert result[0]["down_since"] == down_since_ts
@@ -243,13 +242,15 @@ def test_merge_live_data_down_wait_time_uses_down_since_not_last_updated():
 def test_merge_live_data_ignores_unknown_ids():
     """Live updates carry no name/entityType, so unknown ids must be skipped —
     roster additions are handled by refresh_park_attractions."""
-    existing = [{
-        "id": "1",
-        "waitTime": 10,
-        "status": "OPERATING",
-        "down_since": "",
-        "lastUpdatedTs": "old",
-    }]
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 10,
+            "status": "OPERATING",
+            "down_since": "",
+            "lastUpdatedTs": "old",
+        }
+    ]
     new_live = [
         {
             "id": "1",
@@ -273,17 +274,22 @@ def test_merge_live_data_ignores_unknown_ids():
 def test_merge_live_data_mutates_in_place():
     """merge must return the same list and same dict objects it was given —
     rebuilding either would drop concurrent WS-thread updates."""
-    existing = [{
-        "id": "1",
-        "waitTime": 10,
-        "status": "OPERATING",
-        "down_since": "",
-        "lastUpdatedTs": "old",
-    }]
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 10,
+            "status": "OPERATING",
+            "down_since": "",
+            "lastUpdatedTs": "old",
+        }
+    ]
     original_attr = existing[0]
-    result = merge_live_data(existing, [
-        {"id": "1", "waitTime": 15, "status": "OPERATING", "lastUpdatedTs": "new"},
-    ])
+    result = merge_live_data(
+        existing,
+        [
+            {"id": "1", "waitTime": 15, "status": "OPERATING", "lastUpdatedTs": "new"},
+        ],
+    )
     assert result is existing
     assert result[0] is original_attr
     assert original_attr["waitTime"] == 15
@@ -362,13 +368,15 @@ def test_rest_merge_and_ws_write_interleave_safely_under_lock(monkeypatch):
 
 def test_merge_live_data_preserves_wait_time_when_omitted():
     """A CLOSED update omits waitTime; the last known value must survive."""
-    existing = [{
-        "id": "1",
-        "waitTime": 25,
-        "status": "OPERATING",
-        "down_since": "",
-        "lastUpdatedTs": "old",
-    }]
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 25,
+            "status": "OPERATING",
+            "down_since": "",
+            "lastUpdatedTs": "old",
+        }
+    ]
     new_live = [{"id": "1", "status": "CLOSED", "lastUpdatedTs": "new"}]
     result = merge_live_data(copy.deepcopy(existing), new_live)
     assert result[0]["status"] == "CLOSED"
@@ -378,6 +386,7 @@ def test_merge_live_data_preserves_wait_time_when_omitted():
 
 def test_update_parks_live_data_fetch_failure_keeps_data_and_flags_stale(monkeypatch):
     """A failed park fetch (429/timeout) must keep existing data and set live_data_stale."""
+
     async def failing_fetch(park):
         return None
 
@@ -404,18 +413,14 @@ def test_update_parks_live_data_success_clears_stale_flag(monkeypatch):
 
 # --- Additional Tests to Increase Coverage ---
 
+
 def test_update_parks_live_data_no_change(monkeypatch):
     """
     Test update_parks_live_data when dummy live data is identical to the existing attractions,
     so no changes should occur.
     """
     # Dummy live data equal to existing.
-    dummy_live_data = [{
-        "id": "1",
-        "waitTime": 10,
-        "status": "OPERATING",
-        "lastUpdatedTs": "old"
-    }]
+    dummy_live_data = [{"id": "1", "waitTime": 10, "status": "OPERATING", "lastUpdatedTs": "old"}]
 
     async def dummy_fetch_live_data(attractions):
         return dummy_live_data
@@ -436,40 +441,20 @@ def test_update_parks_live_data_multiple_attractions(monkeypatch):
     Test update_parks_live_data with a park containing multiple attractions.
     We patch fetch_live_data to return updated data for each attraction.
     """
-    parks = [{
-        "id": "park1",
-        "name": "Fantasy Land",
-        "attractions": [
-            {
-                "id": "1",
-                "waitTime": 10,
-                "status": "OPERATING",
-                "down_since": "",
-                "lastUpdatedTs": "old1"
-            },
-            {
-                "id": "2",
-                "waitTime": 20,
-                "status": "OPERATING",
-                "down_since": "",
-                "lastUpdatedTs": "old2"
-            }
-        ]
-    }]
+    parks = [
+        {
+            "id": "park1",
+            "name": "Fantasy Land",
+            "attractions": [
+                {"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old1"},
+                {"id": "2", "waitTime": 20, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old2"},
+            ],
+        }
+    ]
 
     dummy_live_data = [
-        {
-            "id": "1",
-            "waitTime": 12,
-            "status": "OPERATING",
-            "lastUpdatedTs": "new1"
-        },
-        {
-            "id": "2",
-            "waitTime": 18,
-            "status": "OPERATING",
-            "lastUpdatedTs": "new2"
-        }
+        {"id": "1", "waitTime": 12, "status": "OPERATING", "lastUpdatedTs": "new1"},
+        {"id": "2", "waitTime": 18, "status": "OPERATING", "lastUpdatedTs": "new2"},
     ]
 
     async def dummy_fetch_live_data(attractions):
@@ -494,10 +479,20 @@ def test_update_parks_live_data_fetches_multiple_parks_concurrently(monkeypatch)
     simultaneously rather than strictly sequential.
     """
     parks = [
-        {"id": "park1", "name": "Fantasy Land",
-         "attractions": [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
-        {"id": "park2", "name": "Adventure Land",
-         "attractions": [{"id": "2", "waitTime": 5, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
+        {
+            "id": "park1",
+            "name": "Fantasy Land",
+            "attractions": [
+                {"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}
+            ],
+        },
+        {
+            "id": "park2",
+            "name": "Adventure Land",
+            "attractions": [
+                {"id": "2", "waitTime": 5, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}
+            ],
+        },
     ]
 
     in_flight = []
@@ -522,10 +517,20 @@ def test_update_parks_live_data_one_park_failure_does_not_block_another(monkeypa
     """One park's fetch failing (returns None) must not prevent another park's
     successful fetch from being merged."""
     parks = [
-        {"id": "park1", "name": "Fantasy Land",
-         "attractions": [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
-        {"id": "park2", "name": "Adventure Land",
-         "attractions": [{"id": "2", "waitTime": 5, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]},
+        {
+            "id": "park1",
+            "name": "Fantasy Land",
+            "attractions": [
+                {"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}
+            ],
+        },
+        {
+            "id": "park2",
+            "name": "Adventure Land",
+            "attractions": [
+                {"id": "2", "waitTime": 5, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}
+            ],
+        },
     ]
 
     async def flaky_fetch(park):
@@ -546,19 +551,23 @@ def test_merge_live_data_no_change():
     """
     Test merge_live_data when new_live data is identical to the existing data.
     """
-    existing = [{
-        "id": "1",
-        "waitTime": 10,
-        "status": "OPERATING",
-        "down_since": "",
-        "lastUpdatedTs": "old",
-    }]
-    new_live = [{
-        "id": "1",
-        "waitTime": 10,
-        "status": "OPERATING",
-        "lastUpdatedTs": "old",
-    }]
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 10,
+            "status": "OPERATING",
+            "down_since": "",
+            "lastUpdatedTs": "old",
+        }
+    ]
+    new_live = [
+        {
+            "id": "1",
+            "waitTime": 10,
+            "status": "OPERATING",
+            "lastUpdatedTs": "old",
+        }
+    ]
     result = merge_live_data(copy.deepcopy(existing), new_live)
     # Expect the output to be identical to the original existing data.
     assert result == existing
@@ -662,18 +671,20 @@ def test_live_data_updater_websocket_loop_updates_operating_status(monkeypatch):
     # schedule fetching enabled (the REST thread is where blocking HTTP belongs).
     assert status_calls == [True, True]
 
+
 def test_merge_live_data_copies_forecast_and_keeps_it_when_an_update_has_none():
     forecast = [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
     existing = [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]
-    merge_live_data(existing, [{"id": "1", "waitTime": 20, "status": "OPERATING", "lastUpdatedTs": "a", "forecast": forecast}])
+    merge_live_data(
+        existing, [{"id": "1", "waitTime": 20, "status": "OPERATING", "lastUpdatedTs": "a", "forecast": forecast}]
+    )
     assert existing[0]["forecast"] == forecast
     merge_live_data(existing, [{"id": "1", "waitTime": 25, "status": "OPERATING", "lastUpdatedTs": "b"}])
     assert existing[0]["forecast"] == forecast
 
 
-
 def test_merge_live_data_copies_showtimes_and_an_empty_list_clears_them():
-    start = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+    start = datetime(2026, 9, 27, 1, 30, tzinfo=UTC)
     existing = [{"id": "hea", "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]
     merge_live_data(existing, [{"id": "hea", "status": "OPERATING", "lastUpdatedTs": "a", "showtimes": [start]}])
     assert existing[0]["showtimes"] == [start]
@@ -681,6 +692,7 @@ def test_merge_live_data_copies_showtimes_and_an_empty_list_clears_them():
     assert existing[0]["showtimes"] == [start], "an update without showtimes keeps them"
     merge_live_data(existing, [{"id": "hea", "status": "OPERATING", "lastUpdatedTs": "c", "showtimes": []}])
     assert existing[0]["showtimes"] == []
+
 
 # --- network badge flag ---
 
@@ -693,11 +705,13 @@ TWO_PARKS = [
 def _fetch_results(monkeypatch, by_park):
     async def fetch(park):
         return by_park[park["id"]]
+
     monkeypatch.setattr("updater.data_updater.fetch_park_live_data", fetch)
 
 
 def test_every_park_failing_flags_a_network_issue(monkeypatch):
     from updater.shared import network_issues
+
     _fetch_results(monkeypatch, {"park1": None, "park2": None})
     update_parks_live_data(copy.deepcopy(TWO_PARKS))
     assert network_issues() is True
@@ -705,6 +719,7 @@ def test_every_park_failing_flags_a_network_issue(monkeypatch):
 
 def test_one_park_getting_through_clears_the_network_issue(monkeypatch):
     from updater.shared import network_issues, note_network_result
+
     note_network_result(False)
     _fetch_results(monkeypatch, {"park1": None, "park2": []})
     update_parks_live_data(copy.deepcopy(TWO_PARKS))
@@ -713,6 +728,7 @@ def test_one_park_getting_through_clears_the_network_issue(monkeypatch):
 
 def test_no_fetchable_parks_leaves_the_network_flag_alone(monkeypatch):
     from updater.shared import network_issues, note_network_result
+
     note_network_result(False)
     _fetch_results(monkeypatch, {})
     update_parks_live_data([{"id": "park1", "name": "MK", "attractions": []}])
@@ -721,16 +737,37 @@ def test_no_fetchable_parks_leaves_the_network_flag_alone(monkeypatch):
 
 def test_merge_live_data_marks_a_ride_last_written_by_rest():
     from api.disney_api import build_live_updates
-    existing = [{"id": "1", "waitTime": 10, "status": "OPERATING", "down_since": "",
-                 "lastUpdatedTs": "ws-time", "updateSource": "websocket"}]
-    merge_live_data(existing, build_live_updates([{
-        "id": "1", "entityType": "ATTRACTION", "status": "OPERATING",
-        "lastUpdated": "rest-time", "queue": {"STANDBY": {"waitTime": 25}}}]))
+
+    existing = [
+        {
+            "id": "1",
+            "waitTime": 10,
+            "status": "OPERATING",
+            "down_since": "",
+            "lastUpdatedTs": "ws-time",
+            "updateSource": "websocket",
+        }
+    ]
+    merge_live_data(
+        existing,
+        build_live_updates(
+            [
+                {
+                    "id": "1",
+                    "entityType": "ATTRACTION",
+                    "status": "OPERATING",
+                    "lastUpdated": "rest-time",
+                    "queue": {"STANDBY": {"waitTime": 25}},
+                }
+            ]
+        ),
+    )
     assert existing[0]["updateSource"] == "rest"
     assert existing[0]["lastUpdatedTs"] == "rest-time"
 
 
 # ---- Newer data wins (preview WebSocket replays, late REST polls) ----
+
 
 def _ride(ts, wait=20):
     return {"id": "a1", "name": "Ride", "status": "OPERATING", "waitTime": wait, "lastUpdatedTs": ts, "down_since": ""}
@@ -738,18 +775,23 @@ def _ride(ts, wait=20):
 
 def test_merge_live_data_skips_an_update_older_than_what_the_ride_has():
     rides = [_ride("2026-10-04T16:30:00Z", wait=60)]
-    merge_live_data(rides, [{"id": "a1", "status": "OPERATING", "waitTime": 45, "lastUpdatedTs": "2026-10-04T16:10:00Z"}])
+    merge_live_data(
+        rides, [{"id": "a1", "status": "OPERATING", "waitTime": 45, "lastUpdatedTs": "2026-10-04T16:10:00Z"}]
+    )
     assert rides[0]["waitTime"] == 60
 
 
-@pytest.mark.parametrize("existing_ts, new_ts", [
-    ("2026-10-04T16:30:00Z", "2026-10-04T16:30:00Z"),       # the same time: applied
-    ("2026-10-04T16:30:00Z", "2026-10-04T16:31:00+00:00"),  # newer
-    ("", "2026-10-04T16:10:00Z"),                           # nothing yet
-    ("old", "2026-10-04T16:10:00Z"),                        # unparseable existing
-    ("2026-10-04T16:30:00Z", None),                         # update without a time
-    ("2026-10-04T16:30:00", "2026-10-04T16:10:00Z"),        # naive vs aware: can't compare, applied
-])
+@pytest.mark.parametrize(
+    "existing_ts, new_ts",
+    [
+        ("2026-10-04T16:30:00Z", "2026-10-04T16:30:00Z"),  # the same time: applied
+        ("2026-10-04T16:30:00Z", "2026-10-04T16:31:00+00:00"),  # newer
+        ("", "2026-10-04T16:10:00Z"),  # nothing yet
+        ("old", "2026-10-04T16:10:00Z"),  # unparseable existing
+        ("2026-10-04T16:30:00Z", None),  # update without a time
+        ("2026-10-04T16:30:00", "2026-10-04T16:10:00Z"),  # naive vs aware: can't compare, applied
+    ],
+)
 def test_merge_live_data_applies_updates_it_cant_prove_are_older(existing_ts, new_ts):
     rides = [_ride(existing_ts, wait=60)]
     merge_live_data(rides, [{"id": "a1", "status": "OPERATING", "waitTime": 45, "lastUpdatedTs": new_ts}])
@@ -759,12 +801,15 @@ def test_merge_live_data_applies_updates_it_cant_prove_are_older(existing_ts, ne
 # ---- REST polling alongside the preview WebSocket ----
 
 
-@pytest.mark.parametrize("healthy, last_fetch, now, expected", [
-    (False, 100.0, 101.0, True),                                  # feed down: poll every cycle
-    (True, None, 101.0, True),                                    # never polled
-    (True, 100.0, 100.0 + REST_INTERVAL_WITH_LIVE_FEED_SECS - 1, False),
-    (True, 100.0, 100.0 + REST_INTERVAL_WITH_LIVE_FEED_SECS, True),  # the 30-minute backstop
-])
+@pytest.mark.parametrize(
+    "healthy, last_fetch, now, expected",
+    [
+        (False, 100.0, 101.0, True),  # feed down: poll every cycle
+        (True, None, 101.0, True),  # never polled
+        (True, 100.0, 100.0 + REST_INTERVAL_WITH_LIVE_FEED_SECS - 1, False),
+        (True, 100.0, 100.0 + REST_INTERVAL_WITH_LIVE_FEED_SECS, True),  # the 30-minute backstop
+    ],
+)
 def test_rest_poll_due(monkeypatch, healthy, last_fetch, now, expected):
     monkeypatch.setattr("updater.data_updater.live_feed_healthy", lambda: healthy)
     assert rest_poll_due(last_fetch, now) is expected
@@ -800,13 +845,19 @@ def _run_preview_updater(monkeypatch, snapshot_arrives, healthy):
 
     monkeypatch.setattr("updater.data_updater.fetch_park_live_data", fetch)
     monkeypatch.setattr("updater.data_updater.fetch_parks_and_attractions", lambda parks: copy.deepcopy(DUMMY_PARKS))
-    monkeypatch.setattr("updater.data_updater.update_parks_operating_status",
-                        lambda parks, fetch_schedules=True: checks.append(fetch_schedules) or parks)
+    monkeypatch.setattr(
+        "updater.data_updater.update_parks_operating_status",
+        lambda parks, fetch_schedules=True: checks.append(fetch_schedules) or parks,
+    )
     monkeypatch.setattr("updater.data_updater.wait_for_live_feed", wait)
     monkeypatch.setattr("updater.data_updater.live_feed_healthy", lambda: healthy)
     monkeypatch.setattr("updater.data_updater.time.sleep", fake_sleep)
-    thread = threading.Thread(target=live_data_updater, args=([], 0, []),
-                              kwargs={"use_websocket": True, "ws_protocol": "preview"}, daemon=True)
+    thread = threading.Thread(
+        target=live_data_updater,
+        args=([], 0, []),
+        kwargs={"use_websocket": True, "ws_protocol": "preview"},
+        daemon=True,
+    )
     thread.start()
     thread.join(timeout=2)
     return fetches, checks, waits
@@ -815,8 +866,8 @@ def _run_preview_updater(monkeypatch, snapshot_arrives, healthy):
 def test_preview_snapshot_replaces_the_startup_rest_fetch(monkeypatch):
     fetches, checks, waits = _run_preview_updater(monkeypatch, snapshot_arrives=True, healthy=True)
     assert waits == [LIVE_FEED_STARTUP_WAIT_SECS]
-    assert fetches == []        # no startup fetch, and the first cycle skips too
-    assert checks == [True]     # operating status and schedules still run every cycle
+    assert fetches == []  # no startup fetch, and the first cycle skips too
+    assert checks == [True]  # operating status and schedules still run every cycle
 
 
 def test_preview_without_a_snapshot_falls_back_to_rest(monkeypatch):
@@ -831,6 +882,7 @@ def test_preview_polls_rest_when_the_feed_turns_unhealthy(monkeypatch):
 
 
 # ---- Live feed health (updater/shared.py) ----
+
 
 def test_live_feed_healthy_needs_a_sync_and_a_recent_frame(monkeypatch):
     clock = [1000.0]
@@ -856,6 +908,7 @@ def test_wait_for_live_feed_returns_once_synced():
 
 # --- Weather icons: downloaded here, on the REST thread, outside parks_data_lock ---
 
+
 class HeldLock:
     def __init__(self):
         self.held = False
@@ -870,8 +923,13 @@ class HeldLock:
 
 
 def _weather_park():
-    return {"id": "p", "name": "Magic Kingdom", "operating": True,
-            "location": {"latitude": 1.0, "longitude": 2.0}, "attractions": []}
+    return {
+        "id": "p",
+        "name": "Magic Kingdom",
+        "operating": True,
+        "location": {"latitude": 1.0, "longitude": 2.0},
+        "attractions": [],
+    }
 
 
 @pytest.fixture
@@ -896,7 +954,9 @@ def test_rest_cycle_downloads_the_weather_icon_outside_the_lock(monkeypatch, ico
     park["attractions"] = [{"id": "1"}]
     monkeypatch.setattr("updater.data_updater.fetch_park_live_data", ok_fetch)
     monkeypatch.setattr("updater.data_updater.parks_data_lock", lock)
-    monkeypatch.setattr("updater.data_updater.fetch_weather_data", lambda lat, lon: {"icon": "01d", "temperature": "70\N{DEGREE SIGN}"})
+    monkeypatch.setattr(
+        "updater.data_updater.fetch_weather_data", lambda lat, lon: {"icon": "01d", "temperature": "70\N{DEGREE SIGN}"}
+    )
     monkeypatch.setattr("updater.data_updater.fetch_icon", fake_icon)
     update_parks_live_data([park])
     assert held_during_fetch == [False]

@@ -122,6 +122,7 @@ def test_a_pin_file_that_cant_be_written_is_logged_not_raised(tmp_path, clock, m
 
 class Sends:
     """A fake pushover.send_pin with the keys bound: records (pin, seconds left), or raises."""
+
     def __init__(self, error=None):
         self.sent, self.error = [], error
 
@@ -148,7 +149,8 @@ def test_one_send_a_minute_whoever_presses_it(gate, clock):
 
 
 def test_a_failed_send_is_logged_without_the_pin_counts_toward_the_limit_and_leaves_it_on_the_board(
-        gate, clock, monkeypatch):
+    gate, clock, monkeypatch
+):
     errors = []
     monkeypatch.setattr(pins.debug, "error", errors.append)
     assert gate.send_pin(Sends(OSError("no route to host"))) == "failed"

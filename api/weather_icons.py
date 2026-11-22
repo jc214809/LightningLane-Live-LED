@@ -4,6 +4,7 @@ The display never fetches (see the import-linter contract): the REST thread call
 `fetch_icon` after each weather reading and publishes the image in
 `updater.shared.weather_icons`, which the park screen reads.
 """
+
 import time
 from io import BytesIO
 
@@ -16,7 +17,7 @@ ICON_TIMEOUT_S = 5
 ICON_RETRY_S = 300
 ICON_SIZE = (15, 15)
 
-_cache = {}     # icon code -> resized PIL image
+_cache = {}  # icon code -> resized PIL image
 _failures = {}  # icon code -> monotonic time of its last failed download
 
 

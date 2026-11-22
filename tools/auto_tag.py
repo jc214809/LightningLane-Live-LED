@@ -13,6 +13,7 @@ a tag someone else pushed first (two quick merges) is retried with the next numb
 
 Runs in CI without the app's requirements: the standard library and self_update.board only.
 """
+
 import argparse
 import logging
 import os
@@ -47,8 +48,11 @@ def next_tag(kind, tags):
     major, minor, _ = releases[-1] if releases else (0, 0, 0)
     if kind == RELEASE:
         return f"v{major}.{minor + 1}.0"
-    betas = [int(found.group(3)) for tag in tags
-             if (found := BETA_TAG.fullmatch(tag)) and (int(found.group(1)), int(found.group(2))) == (major, minor)]
+    betas = [
+        int(found.group(3))
+        for tag in tags
+        if (found := BETA_TAG.fullmatch(tag)) and (int(found.group(1)), int(found.group(2))) == (major, minor)
+    ]
     return f"v{major}.{minor}.{max(betas, default=0) + 1}-beta"
 
 

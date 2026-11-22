@@ -11,10 +11,34 @@ START, MID, END = 147.0, 171.0, 192.0
 
 
 def _scenes():
-    return (Cue("p", "Down in New Orleans (prologue)", START, MID, ((255, 200, 120),), 0.0, None, (),
-                frozenset({"evening_star"}), "ghost", ("ray",)),
-            Cue("f", "When You Wish Upon a Star (fanfare)", MID, END, ((255, 255, 255),), 0.0, None, (),
-                frozenset({"comet_fan"}), "castle", ("ray",)))
+    return (
+        Cue(
+            "p",
+            "Down in New Orleans (prologue)",
+            START,
+            MID,
+            ((255, 200, 120),),
+            0.0,
+            None,
+            (),
+            frozenset({"evening_star"}),
+            "ghost",
+            ("ray",),
+        ),
+        Cue(
+            "f",
+            "When You Wish Upon a Star (fanfare)",
+            MID,
+            END,
+            ((255, 255, 255),),
+            0.0,
+            None,
+            (),
+            frozenset({"comet_fan"}),
+            "castle",
+            ("ray",),
+        ),
+    )
 
 
 def _frame(show, actor, t, active=True):
@@ -60,7 +84,7 @@ def test_ray_stays_on_the_board_through_both_scenes(height):
         out = {}
         actor.draw(lambda *a: None, out, True)
         assert out and all(0 <= x < 64 and 0 <= y < height for x, y in out)
-        assert len(_core(actor, out)) == actor.size ** 2
+        assert len(_core(actor, out)) == actor.size**2
     assert actor.elapsed() == pytest.approx(END - START), "carries across the cut"
 
 

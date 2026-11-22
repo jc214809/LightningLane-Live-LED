@@ -4,6 +4,7 @@ parks, the updater threads, trips) and the display loop's calls, in order, with 
 replaced by a recorder. They exist so main can be split into named steps with no change in behaviour;
 each case here passed on the code before the split.
 """
+
 from datetime import time as clock_time
 from types import SimpleNamespace
 
@@ -41,8 +42,11 @@ class _DebugRecorder:
         self._log.append(("log", msg % args if args else msg))
 
 
-PARKS = [{"name": "Magic Kingdom", "operating": True}, {"name": "EPCOT", "operating": False},
-         {"name": "Hollywood Studios", "operating": True}]
+PARKS = [
+    {"name": "Magic Kingdom", "operating": True},
+    {"name": "EPCOT", "operating": False},
+    {"name": "Hollywood Studios", "operating": True},
+]
 SCHEDULE = SimpleNamespace(day="day", night="night", day_start=clock_time(7, 0), night_start=clock_time(19, 0))
 
 
@@ -53,12 +57,32 @@ class _Boot:
     stop_at (the render_logo call that raises _Stop), version_info, stop_in (the name of a call that raises
     _Stop after recording itself)."""
 
-    FAKES = ("load_config", "model_defaults", "arguments", "describe", "set_forced_surprise", "load_surprises",
-             "surprise_settings", "brightness_schedule", "forced_show_name", "set_forced_show", "sound_settings",
-             "watch_sound", "led_matrix_options", "initialize_fonts", "show_wifi_setup_while_needed",
-             "resolve_parks_from_config", "start_live_updaters", "log_configured_trips", "play_forced_show",
-             "play_fireworks_show_if_due", "play_trip_countdown", "initialize_park_information_screen",
-             "loop_through_attractions", "render_logo")
+    FAKES = (
+        "load_config",
+        "model_defaults",
+        "arguments",
+        "describe",
+        "set_forced_surprise",
+        "load_surprises",
+        "surprise_settings",
+        "brightness_schedule",
+        "forced_show_name",
+        "set_forced_show",
+        "sound_settings",
+        "watch_sound",
+        "led_matrix_options",
+        "initialize_fonts",
+        "show_wifi_setup_while_needed",
+        "resolve_parks_from_config",
+        "start_live_updaters",
+        "log_configured_trips",
+        "play_forced_show",
+        "play_fireworks_show_if_due",
+        "play_trip_countdown",
+        "initialize_park_information_screen",
+        "loop_through_attractions",
+        "render_logo",
+    )
 
     def __init__(self, opts):
         self.opts, self.log = opts, []
@@ -162,6 +186,7 @@ class _Boot:
             if name == self.opts.get("stop_in"):
                 raise _Stop
             return result
+
         return wrapper
 
     def install(self, monkeypatch):
@@ -176,8 +201,9 @@ class _Boot:
         monkeypatch.setattr(disney.driver, "set_mode", lambda mode: log.append(("set_mode", mode)), raising=False)
         monkeypatch.setattr(disney.driver, "DriverMode", SimpleNamespace(SOFTWARE_EMULATION="EMU"), raising=False)
         monkeypatch.setattr(disney.driver, "is_emulated", lambda: self.opts.get("emulated", True), raising=False)
-        monkeypatch.setattr(disney.driver, "hardware_load_failed", self.opts.get("hardware_failed", False),
-                            raising=False)
+        monkeypatch.setattr(
+            disney.driver, "hardware_load_failed", self.opts.get("hardware_failed", False), raising=False
+        )
         monkeypatch.setattr(disney.driver, "__version__", "9.9", raising=False)
         monkeypatch.setattr(disney.driver, "RGBMatrix", lambda options: log.append(("RGBMatrix", options)) or matrix)
         # main assigns these module globals; setting them here makes monkeypatch put them back.
@@ -190,6 +216,7 @@ class _Boot:
 @pytest.fixture
 def boot(monkeypatch):
     """boot(**opts) runs main() against _Boot's recorders; returns (log, matrix, raised, result)."""
+
     def go(**opts):
         harness = _Boot(opts)
         harness.install(monkeypatch)
@@ -199,7 +226,10 @@ def boot(monkeypatch):
         except BaseException as e:  # SystemExit from the version check is one of them
             raised = e
         return harness.log, harness.matrix, raised, result
+
     return go
+
+
 STARTUP = [
     "load_config",
     ("model_defaults", "pi4"),
@@ -238,8 +268,8 @@ def _ends_in_the_error_handler(log, matrix, message):
 def test_pin_startup_runs_settings_driver_matrix_fonts_wifi_parks_updaters_trips_in_order(boot):
     log, matrix, raised, result = boot(config=CONFIG, stop_in="play_forced_show")
     assert raised is None and result is None  # the loop's except swallowed the stop
-    assert log[:len(STARTUP)] == STARTUP
-    assert log[len(STARTUP):len(STARTUP) + 1] == [("play_forced_show", True)]
+    assert log[: len(STARTUP)] == STARTUP
+    assert log[len(STARTUP) : len(STARTUP) + 1] == [("play_forced_show", True)]
     _ends_in_the_error_handler(log, matrix, "An error occurred: ")
     assert len(log) == len(STARTUP) + 1 + 4
 
@@ -256,10 +286,13 @@ def test_pin_a_failed_hardware_load_says_it_fell_back_to_the_emulator(boot):
     assert log[i + 1] == ("log", "Using RGBMatrixEmulator version 9.9")
 
 
-@pytest.mark.parametrize("settings, line", [
-    (disney.SurpriseSettings(enabled=False), "Surprise characters: all off."),
-    (disney.SurpriseSettings(off={"b", "a"}), "Surprise characters: off for a, b."),
-])
+@pytest.mark.parametrize(
+    "settings, line",
+    [
+        (disney.SurpriseSettings(enabled=False), "Surprise characters: all off."),
+        (disney.SurpriseSettings(off={"b", "a"}), "Surprise characters: off for a, b."),
+    ],
+)
 def test_pin_surprise_settings_are_logged_when_anything_is_off(boot, settings, line):
     log, *_ = boot(config=CONFIG, surprises=settings, stop_in="play_forced_show")
     assert log[log.index("load_surprises") + 1] == ("info", line)
@@ -274,8 +307,10 @@ def test_pin_nothing_is_logged_for_surprises_when_all_are_on(boot):
 def test_pin_a_brightness_schedule_is_used_then_logged(boot):
     log, *_ = boot(config=CONFIG, schedule=SCHEDULE, stop_in="play_forced_show")
     i = log.index("brightness_schedule")
-    assert log[i + 1:i + 3] == [("brightness.use", SCHEDULE),
-                                ("info", "Brightness schedule: day from 07:00, night from 19:00.")]
+    assert log[i + 1 : i + 3] == [
+        ("brightness.use", SCHEDULE),
+        ("info", "Brightness schedule: day from 07:00, night from 19:00."),
+    ]
 
 
 def test_pin_an_old_python_exits_before_the_driver_and_matrix(boot):
@@ -298,49 +333,78 @@ def test_pin_no_configured_parks_asks_for_an_empty_list(boot):
 
 def test_pin_the_loop_plays_each_operating_park_and_skips_the_closed_one(boot):
     log, matrix, raised, _ = boot(config=CONFIG, parks_data=PARKS, stop_at=3)
-    loop = log[len(STARTUP):]
+    loop = log[len(STARTUP) :]
     assert loop == [
         ("play_forced_show", True),
         # cycle 1
-        ("wifi_setup", True), ("fireworks_if_due", 3), ("render_logo", True), "beat", ("play_trip_countdown", True, None),
-        ("fireworks_if_due", 3), ("park_screen", "Magic Kingdom"), ("attractions", "Magic Kingdom"),
+        ("wifi_setup", True),
+        ("fireworks_if_due", 3),
+        ("render_logo", True),
+        "beat",
+        ("play_trip_countdown", True, None),
+        ("fireworks_if_due", 3),
+        ("park_screen", "Magic Kingdom"),
+        ("attractions", "Magic Kingdom"),
         ("logging.info", "Skipping EPCOT because no attractions are operating."),
-        ("fireworks_if_due", 3), ("park_screen", "Hollywood Studios"), ("attractions", "Hollywood Studios"),
+        ("fireworks_if_due", 3),
+        ("park_screen", "Hollywood Studios"),
+        ("attractions", "Hollywood Studios"),
         "clear",
         # cycle 2: the trip shown last comes back in
-        ("wifi_setup", True), ("fireworks_if_due", 3), ("render_logo", True), "beat",
+        ("wifi_setup", True),
+        ("fireworks_if_due", 3),
+        ("render_logo", True),
+        "beat",
         ("play_trip_countdown", True, "trip-a"),
-        ("fireworks_if_due", 3), ("park_screen", "Magic Kingdom"), ("attractions", "Magic Kingdom"),
+        ("fireworks_if_due", 3),
+        ("park_screen", "Magic Kingdom"),
+        ("attractions", "Magic Kingdom"),
         ("logging.info", "Skipping EPCOT because no attractions are operating."),
-        ("fireworks_if_due", 3), ("park_screen", "Hollywood Studios"), ("attractions", "Hollywood Studios"),
+        ("fireworks_if_due", 3),
+        ("park_screen", "Hollywood Studios"),
+        ("attractions", "Hollywood Studios"),
         "clear",
         # cycle 3 stops at the intro
-        ("wifi_setup", True), ("fireworks_if_due", 3), ("render_logo", True),
-        "clear", ("error", "An error occurred: "), loop[-2], "clear",
+        ("wifi_setup", True),
+        ("fireworks_if_due", 3),
+        ("render_logo", True),
+        "clear",
+        ("error", "An error occurred: "),
+        loop[-2],
+        "clear",
     ]
     assert loop[-2][0] == "error" and loop[-2][1].startswith("Traceback")
 
 
 def test_pin_with_no_park_data_yet_it_waits_five_seconds_and_goes_round_again(boot):
     log, *_ = boot(config=CONFIG, parks_data=[], stop_at=2)
-    loop = log[len(STARTUP):]
+    loop = log[len(STARTUP) :]
     assert loop[:9] == [
         ("play_forced_show", True),
-        ("wifi_setup", True), ("fireworks_if_due", 0), ("render_logo", True), "beat", ("play_trip_countdown", True, None),
-        ("info", "No parks data yet, waiting..."), ("sleep", 5), "clear",
+        ("wifi_setup", True),
+        ("fireworks_if_due", 0),
+        ("render_logo", True),
+        "beat",
+        ("play_trip_countdown", True, None),
+        ("info", "No parks data yet, waiting..."),
+        ("sleep", 5),
+        "clear",
     ]
     assert loop[9:12] == [("wifi_setup", True), ("fireworks_if_due", 0), ("render_logo", True)]
 
 
-@pytest.mark.parametrize("stop_in", ["loop_through_attractions", "initialize_park_information_screen",
-                                     "play_trip_countdown"])
+@pytest.mark.parametrize(
+    "stop_in", ["loop_through_attractions", "initialize_park_information_screen", "play_trip_countdown"]
+)
 def test_pin_an_error_anywhere_after_the_matrix_exists_clears_it_logs_and_ends(boot, stop_in):
     log, matrix, raised, result = boot(config=CONFIG, parks_data=PARKS, stop_in=stop_in)
     assert raised is None and result is None
     _ends_in_the_error_handler(log, matrix, "An error occurred: ")
 
 
-@pytest.mark.parametrize("stop_in", ["initialize_fonts", "led_matrix_options", "start_live_updaters", "log_configured_trips"])
+@pytest.mark.parametrize(
+    "stop_in", ["initialize_fonts", "led_matrix_options", "start_live_updaters", "log_configured_trips"]
+)
 def test_pin_an_error_before_the_loop_is_not_caught_by_it(boot, stop_in):
     log, matrix, raised, result = boot(config=CONFIG, stop_in=stop_in)
     assert isinstance(raised, _Stop) and "clear" not in log

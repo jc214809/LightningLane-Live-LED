@@ -4,14 +4,14 @@ import math
 import random
 
 import display.animation as animation
-
 from tests.display.animation.support import FLYBYS, FakeCanvas, fill
 
 
 def test_genie_is_registered_and_is_not_a_flyby():
     assert animation.TRANSITIONS["genie"] is animation.GenieReveal
-    assert not issubclass(animation.GenieReveal, animation.FlyByReveal), \
+    assert not issubclass(animation.GenieReveal, animation.FlyByReveal), (
         "the lamp emerge needs its own timeline, so it isn't a fly-by"
+    )
     assert animation.GenieReveal not in FLYBYS
 
 
@@ -25,21 +25,25 @@ def test_genie_sits_on_his_lamp_tail_on_the_spout_filling_the_board_height():
     """He comes out of the spout's upturned tip, not the lid."""
     for height in (32, 64):
         genie = animation.GenieReveal(64, height, random.Random(0))
-        assert (genie.lamp_w, genie.lamp_h) == (len(genie.lamp_art[0]), len(genie.lamp_art)), \
+        assert (genie.lamp_w, genie.lamp_h) == (len(genie.lamp_art[0]), len(genie.lamp_art)), (
             "1x on both boards: doubled, it swamps the 64x64 board"
+        )
         assert genie.lamp_x >= 0 and genie.lamp_x + genie.lamp_w <= 64
         x, y = genie.position(0.0)
         assert x >= 0 and x + genie.sprite_w <= 64, "he starts wholly on the board"
-        assert y + genie.sprite_h == genie.lamp_y and genie.lamp_y + genie.lamp_h == height, \
+        assert y + genie.sprite_h == genie.lamp_y and genie.lamp_y + genie.lamp_h == height, (
             "Genie on lamp on the bottom edge, filling the height exactly"
+        )
         tip = [c for c, ch in enumerate(genie.lamp_art[0]) if ch != "." and c > len(genie.lamp_art[0]) / 2]
         assert tip and all(genie.lamp_art[0][c] == "G" for c in tip), "the spout's gold tip, right of the lid"
         sx, sy = genie.spout()
-        assert genie.lamp_x + tip[0] <= sx <= genie.lamp_x + tip[-1] + 1 and sy == genie.lamp_y, \
+        assert genie.lamp_x + tip[0] <= sx <= genie.lamp_x + tip[-1] + 1 and sy == genie.lamp_y, (
             "smoke leaves the spout's tip"
+        )
         tail = [c for c, ch in enumerate(genie.art[-1]) if ch != "."]
-        assert int(x) + tail[0] * genie.scale <= sx <= int(x) + (tail[-1] + 1) * genie.scale, \
+        assert int(x) + tail[0] * genie.scale <= sx <= int(x) + (tail[-1] + 1) * genie.scale, (
             "the tip of his tail is on the spout"
+        )
 
 
 def test_genie_trims_whole_rows_and_keeps_the_pattern_on_the_64x64_lamp():
@@ -49,8 +53,9 @@ def test_genie_trims_whole_rows_and_keeps_the_pattern_on_the_64x64_lamp():
     assert big.lamp_art == animation.GenieReveal.LAMP_ART, "the whole lamp on 64x64"
     for genie in (small, big):
         assert all(row in animation.GenieReveal.ART for row in genie.art), "rows dropped, never redrawn"
-        assert genie.art[0] == animation.GenieReveal.ART[0] and genie.art[-1] == animation.GenieReveal.ART[-1], \
+        assert genie.art[0] == animation.GenieReveal.ART[0] and genie.art[-1] == animation.GenieReveal.ART[-1], (
             "topknot and tail tip always kept"
+        )
 
 
 def test_genie_lamp_does_not_share_colors_with_genie():
@@ -205,8 +210,13 @@ def test_genie_full_size_fast_path_draws_exactly_his_art():
         genie._draw_genie(canvas, t)
         x0, y0 = (math.floor(v + 0.5) for v in genie.position(t))
         s = genie.scale
-        expected = {(x0 + c * s + sx, y0 + r * s + sy): genie.COLORS[k]
-                    for r, line in enumerate(genie.art) for c, k in enumerate(line) if k != "."
-                    for sy in range(s) for sx in range(s)}
+        expected = {
+            (x0 + c * s + sx, y0 + r * s + sy): genie.COLORS[k]
+            for r, line in enumerate(genie.art)
+            for c, k in enumerate(line)
+            if k != "."
+            for sy in range(s)
+            for sx in range(s)
+        }
         expected = {p: rgb for p, rgb in expected.items() if 0 <= p[0] < 64 and 0 <= p[1] < height}
         assert canvas.px == expected

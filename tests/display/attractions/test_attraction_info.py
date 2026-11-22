@@ -17,14 +17,14 @@ graphics_stub.Font = Font
 graphics_stub.DrawText = lambda *a, **k: None
 graphics_stub.Color = lambda r, g, b: (r, g, b)
 
-sys.modules['driver'] = types.SimpleNamespace(graphics=graphics_stub)
+sys.modules["driver"] = types.SimpleNamespace(graphics=graphics_stub)
 
 from display.attractions.attraction_info import (  # noqa: E402  (after the stubs above)
-    get_longest_line_width,
     calculate_x_position,
     calculate_y_position,
-    render_attraction_info,
+    get_longest_line_width,
     loaded_fonts,
+    render_attraction_info,
 )
 
 
@@ -105,11 +105,12 @@ def test_boarding_group_3digit_fits_32row(monkeypatch):
 
     class FakeMatrix:
         width, height = 32, 32
-        def Clear(self): pass
+
+        def Clear(self):
+            pass
 
     mod.render_attraction_info(
-        FakeMatrix(),
-        {"name": "Tron", "entityType": "ATTRACTION", "waitTime": "Groups 100-200", "status": "OPERATING"}
+        FakeMatrix(), {"name": "Tron", "entityType": "ATTRACTION", "waitTime": "Groups 100-200", "status": "OPERATING"}
     )
     assert calls, "No DrawText calls were made"
     for y, text in calls:
@@ -128,11 +129,12 @@ def test_boarding_group_3digit_fits_64row(monkeypatch):
 
     class FakeMatrix:
         width, height = 64, 64
-        def Clear(self): pass
+
+        def Clear(self):
+            pass
 
     mod.render_attraction_info(
-        FakeMatrix(),
-        {"name": "Tron", "entityType": "ATTRACTION", "waitTime": "Groups 100-200", "status": "OPERATING"}
+        FakeMatrix(), {"name": "Tron", "entityType": "ATTRACTION", "waitTime": "Groups 100-200", "status": "OPERATING"}
     )
     assert calls, "No DrawText calls were made"
     for y, text in calls:
@@ -142,22 +144,30 @@ def test_boarding_group_3digit_fits_64row(monkeypatch):
 def test_wait_time_formatting_integer():
     """Numeric wait times get ' Mins' appended."""
     from display.attractions.attraction_info import _format_wait_time
+
     assert _format_wait_time(45) == "45 Mins"
+
 
 def test_wait_time_formatting_down():
     """'Down X' strings still get ' Mins' appended."""
     from display.attractions.attraction_info import _format_wait_time
+
     assert _format_wait_time("Down 15") == "Down 15 Mins"
+
 
 def test_wait_time_formatting_boarding_group_range():
     """Boarding group range strings are used as-is."""
     from display.attractions.attraction_info import _format_wait_time
+
     assert _format_wait_time("Groups 1-50") == "Groups 1-50"
+
 
 def test_wait_time_formatting_boarding_group_single():
     """Single boarding group strings are used as-is."""
     from display.attractions.attraction_info import _format_wait_time
+
     assert _format_wait_time("Group 1+") == "Group 1+"
+
 
 # ---- Animated attraction screen ----
 
@@ -177,11 +187,15 @@ def frame_recorder(monkeypatch):
     loaded_fonts["ride"] = DummyFont(width=4, height=6)
     loaded_fonts["waittime"] = DummyFont(width=4, height=6)
     record = {"text": [], "lines": []}
-    fake = type("G", (), {
-        "Color": staticmethod(lambda r, g, b: (r, g, b)),
-        "DrawText": staticmethod(lambda c, font, x, y, color, text: record["text"].append((text, color))),
-        "DrawLine": staticmethod(lambda c, x0, y0, x1, y1, color: record["lines"].append((x0, y0, x1, y1, color))),
-    })
+    fake = type(
+        "G",
+        (),
+        {
+            "Color": staticmethod(lambda r, g, b: (r, g, b)),
+            "DrawText": staticmethod(lambda c, font, x, y, color, text: record["text"].append((text, color))),
+            "DrawLine": staticmethod(lambda c, x0, y0, x1, y1, color: record["lines"].append((x0, y0, x1, y1, color))),
+        },
+    )
     # Ride text is drawn through display.display.draw_text, so fake graphics in both modules.
     monkeypatch.setattr(attraction_mod, "graphics", fake)
     monkeypatch.setattr(display_mod, "graphics", fake)
@@ -213,11 +227,13 @@ def test_wait_bar_color_bands(minutes, band):
 
 def test_wait_bar_length_tracks_minutes_and_caps_at_full_width(frame_recorder):
     attraction_mod.draw_wait_bar(RecordingCanvas(64, 32), 45)
-    (x0, y0, x1, y1, _), = frame_recorder["lines"]
+    ((x0, y0, x1, y1, _),) = frame_recorder["lines"]
     assert (x0, x1, y0, y1) == (0, 31, 31, 31)
     frame_recorder["lines"].clear()
     attraction_mod.draw_wait_bar(RecordingCanvas(64, 64), 500)
-    assert [(line[0], line[2]) for line in frame_recorder["lines"]] == [(0, 63), (0, 63)], "2 rows tall on 64-row boards"
+    assert [(line[0], line[2]) for line in frame_recorder["lines"]] == [(0, 63), (0, 63)], (
+        "2 rows tall on 64-row boards"
+    )
     frame_recorder["lines"].clear()
     attraction_mod.draw_wait_bar(RecordingCanvas(), 0)
     assert frame_recorder["lines"] == []
@@ -268,14 +284,18 @@ def test_a_long_down_name_moves_up_rather_than_run_into_the_bar(frame_recorder, 
     canvas = RecordingCanvas(64, 32)
     reserve, gap = attraction_mod.bar_layout(canvas, ride)
     assert reserve and not attraction_mod.centered_clears_bar(canvas, ride, reserve, gap)
-    above = _baselines(monkeypatch, lambda: attraction_mod.render_attraction_info(canvas, ride, reserve_bottom=reserve, gap=gap))
+    above = _baselines(
+        monkeypatch, lambda: attraction_mod.render_attraction_info(canvas, ride, reserve_bottom=reserve, gap=gap)
+    )
     framed = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(canvas, ride, 0))
     assert framed == above
 
 
 def test_down_bar_is_two_rows_on_64_row_boards(frame_recorder):
     attraction_mod.draw_attraction_frame(RecordingCanvas(64, 64), {"name": "Big Thunder", "waitTime": "Down"}, 0)
-    assert [line[:4] for line in frame_recorder["lines"]] == [(0, 63, 63, 63), (0, 62, 63, 62)], "no tick without a forecast"
+    assert [line[:4] for line in frame_recorder["lines"]] == [(0, 63, 63, 63), (0, 62, 63, 62)], (
+        "no tick without a forecast"
+    )
 
 
 def test_boarding_group_ride_is_static(frame_recorder):
@@ -327,7 +347,9 @@ def test_roomy_names_keep_normal_spacing(frame_recorder):
 
 def _baselines(monkeypatch, draw):
     ys = []
-    monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text, ys=ys: ys.append(y)))
+    monkeypatch.setattr(
+        attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text, ys=ys: ys.append(y))
+    )
     draw()
     return sorted(set(ys))  # draw_text draws word by word
 
@@ -337,7 +359,9 @@ def test_spare_rows_drop_the_wait_but_leave_the_name(frame_recorder, monkeypatch
     reserve = attraction_mod.bar_reserve_rows(32)
     # 2 lines of 6px + gap 2 above a 3-row reserve leave 15 spare rows: 7 above the
     # name as before, and the wait drops half of the 8 below it.
-    name_y, wait_y = _baselines(monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0))
+    name_y, wait_y = _baselines(
+        monkeypatch, lambda: attraction_mod.draw_attraction_frame(RecordingCanvas(64, 32), ride, 5.0)
+    )
     assert name_y == 5 + 7, "the name sits where plain centering puts it"
     assert wait_y == name_y + 6 + attraction_mod.GAP_BETWEEN_RIDE_AND_WAIT + 4
     assert wait_y + 1 <= 32 - reserve, "still clear of the bar"
@@ -365,7 +389,9 @@ def test_short_names_keep_the_bar_and_move_up_to_clear_it(frame_recorder, monkey
     baselines = {}
     for reserve in (0, attraction_mod.bar_reserve_rows(32)):
         ys = []
-        monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text, ys=ys: ys.append(y)))
+        monkeypatch.setattr(
+            attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text, ys=ys: ys.append(y))
+        )
         attraction_mod.render_attraction_info(RecordingCanvas(64, 32), ride, reserve_bottom=reserve)
         baselines[reserve] = min(ys)  # the name line; the wait may drop into spare rows
     assert baselines[attraction_mod.bar_reserve_rows(32)] < baselines[0]
@@ -374,7 +400,9 @@ def test_short_names_keep_the_bar_and_move_up_to_clear_it(frame_recorder, monkey
 
 
 def test_ride_names_are_drawn_with_plain_characters(frame_recorder):
-    attraction_mod.render_attraction_info(RecordingCanvas(64, 64), {"name": "Star Tours – Buzz Lightyear’s", "waitTime": 5})
+    attraction_mod.render_attraction_info(
+        RecordingCanvas(64, 64), {"name": "Star Tours – Buzz Lightyear’s", "waitTime": 5}
+    )
     drawn = " ".join(text for text, _ in frame_recorder["text"])
     assert "–" not in drawn and "’" not in drawn
     assert "Lightyear's" in drawn
@@ -398,7 +426,9 @@ def test_names_too_tall_for_the_board_scroll_and_short_ones_do_not(frame_recorde
     assert attraction_mod.overflow_rows(RecordingCanvas(64, 32), long_ride) > 0
     assert attraction_mod.overflow_rows(RecordingCanvas(64, 32), short_ride) == 0
     tops = []
-    monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: tops.append(y)))
+    monkeypatch.setattr(
+        attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: tops.append(y))
+    )
     p = attraction_mod.SCROLL_PAUSE_S
     for t in (0, p + 1.0):
         tops.clear()
@@ -439,6 +469,7 @@ def test_ride_name_is_white_and_wait_is_cyan(frame_recorder, monkeypatch):
 def test_drawing_ride_frames_logs_nothing(frame_recorder, monkeypatch):
     # Drawn 30 times a second while a screen is up; disney.py logs each screen once instead.
     from utils import debug
+
     logged = []
     for level in ("log", "info", "warning", "error"):
         monkeypatch.setattr(debug, level, lambda *a, _l=level, **k: logged.append(_l))

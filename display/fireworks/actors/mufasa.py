@@ -1,4 +1,5 @@
 """Mufasa's face for the synced show's Embers (see show_actors.py)."""
+
 import math
 
 from display.fireworks.actors.base import Actor
@@ -8,8 +9,10 @@ def _halved(art, rank):
     """art at half size: each 2x2 block becomes its highest-ranked cell, so a feature line, eye or nose
     falling anywhere in the block survives the shrink."""
     h, w = len(art) // 2, len(art[0]) // 2
-    return ["".join(max((art[2 * y + j][2 * x + i] for j in (0, 1) for i in (0, 1)), key=rank.index)
-                    for x in range(w)) for y in range(h)]
+    return [
+        "".join(max((art[2 * y + j][2 * x + i] for j in (0, 1) for i in (0, 1)), key=rank.index) for x in range(w))
+        for y in range(h)
+    ]
 
 
 class MufasaInTheStars(Actor):
@@ -26,6 +29,7 @@ class MufasaInTheStars(Actor):
     The bottom of his mane (FADE_ROWS) melts into the sky, as his neck melts into the clouds. He mouths
     his lines to the score's track (MOUTHS: his smile as drawn when closed, then half and open).
     """
+
     NAME = "Mufasa"
     APPEAR_S = 6.0
     ENTERS_S = APPEAR_S
@@ -83,9 +87,18 @@ class MufasaInTheStars(Actor):
         "....mmmmmmmmMm............................",
         "............m.............................",
     ]
-    COLORS = {"M": (195, 60, 35), "m": (130, 30, 20), "h": (225, 100, 50), "F": (230, 160, 60),
-              "C": (245, 210, 140), "L": (80, 30, 15), "N": (150, 45, 40), "E": (240, 170, 40), "P": (35, 12, 5),
-              "O": (110, 25, 30)}
+    COLORS = {
+        "M": (195, 60, 35),
+        "m": (130, 30, 20),
+        "h": (225, 100, 50),
+        "F": (230, 160, 60),
+        "C": (245, 210, 140),
+        "L": (80, 30, 15),
+        "N": (150, 45, 40),
+        "E": (240, 170, 40),
+        "P": (35, 12, 5),
+        "O": (110, 25, 30),
+    }
     # His mouth opening under the smile line (row 26), by shape: (x, y, kind) cells over ART. 0 closed is
     # the smile as drawn; O is the inside of his mouth.
     MOUTHS = {
@@ -105,8 +118,12 @@ class MufasaInTheStars(Actor):
             art = art if self.big else _halved(art, self.RANK)
             self.w, self.h = len(art[0]), len(art)
             fade_from = self.h * (1 - self.FADE_ROWS)
-            self.cells[shape] = [(x, y, self.COLORS[k], min(1.0, (self.h - y) / (self.h - fade_from)))
-                                 for y, row in enumerate(art) for x, k in enumerate(row) if k != "."]
+            self.cells[shape] = [
+                (x, y, self.COLORS[k], min(1.0, (self.h - y) / (self.h - fade_from)))
+                for y, row in enumerate(art)
+                for x, k in enumerate(row)
+                if k != "."
+            ]
         self.left = show.width - self.w
 
     def scene_s(self):

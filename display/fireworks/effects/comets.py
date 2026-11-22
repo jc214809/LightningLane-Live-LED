@@ -1,4 +1,5 @@
 """Comets: bright heads on fading tails, fired in volleys or at a scene's set-moment hits."""
+
 import math
 
 from display.fireworks.effects.base import Effect, _roof_peaks
@@ -6,6 +7,7 @@ from display.fireworks.effects.base import Effect, _roof_peaks
 
 class _Comets(Effect):
     """Comets: bright heads on fading tails, falling back under gravity; volley() launches some."""
+
     every_s = (2.5, 4.0)  # seconds between volleys
 
     def __init__(self, show):
@@ -53,16 +55,23 @@ class CometFan(_Comets):
         show = self.show
         cx, n = show.width / 2, 7
         rgb = show._colour()
-        speed = (0.75 if self.big else 0.5)
+        speed = 0.75 if self.big else 0.5
         for i in range(n):
             a = -math.pi / 2 + (i - (n - 1) / 2) * 0.22
-            self._comet(cx + (i - (n - 1) / 2) * self.s, show.height - 1.0,
-                        math.cos(a) * speed, math.sin(a) * speed, rgb, life=55)
+            self._comet(
+                cx + (i - (n - 1) / 2) * self.s,
+                show.height - 1.0,
+                math.cos(a) * speed,
+                math.sin(a) * speed,
+                rgb,
+                life=55,
+            )
 
 
 class CrossingComets(_Comets):
     """Pairs of comets from the bottom corners arcing over the spire and crossing there (the
     reprise, and You Can Fly's gold arcs)."""
+
     every_s = (0.8, 1.4)
 
     def volley(self):
@@ -80,6 +89,7 @@ class CrossingComets(_Comets):
 class HitComets(_Comets):
     """The comets of a scene's set-moment hits (score.Hit), fired by the show at their time rather than
     in volleys: a fan from both side rooftops, or one comet up and across from a side."""
+
     FAN = 5  # comets per rooftop
 
     def __init__(self, show):

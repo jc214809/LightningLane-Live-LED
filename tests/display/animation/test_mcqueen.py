@@ -1,4 +1,5 @@
 """Lightning McQueen."""
+
 import pytest
 
 import display.animation as animation
@@ -35,6 +36,7 @@ def test_mcqueen_uncovers_the_ride_behind_him_with_streaks_while_moving(height):
 
     px, _ = frame(car.PEEL_S - 0.3)
     assert px[(0, 0)] == ride and px[(63, 0)] == (0, 0, 0), "ride behind him, dark ahead"
+
     def behind(px, t):  # his streaks' colours are his own orange and yellow, so look only behind him
         return {rgb for (x, y), rgb in px.items() if x < car.x_at(t)}
 

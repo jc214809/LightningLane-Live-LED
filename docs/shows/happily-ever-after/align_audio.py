@@ -9,6 +9,7 @@ seen in the video (Gemini's timestamps) convert to the score's seconds exactly.
 Cross-correlates onset envelopes (10 ms frames of rising loudness), which survive crowd noise and
 different mixes better than raw samples. Needs yt-dlp and ffmpeg on the PATH, and numpy.
 """
+
 import argparse
 import logging
 import os
@@ -32,8 +33,9 @@ logger = logging.getLogger(__name__)
 
 
 def _mono(src, dst):
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-ac", "1", "-ar", str(SR), "-f", "f32le", dst],
-                   check=True)
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-y", "-i", src, "-ac", "1", "-ar", str(SR), "-f", "f32le", dst], check=True
+    )
     return np.fromfile(dst, dtype=np.float32)
 
 
@@ -46,15 +48,15 @@ def onset_envelope(x):
 
 def best_offset(ours, vid, t, guess):
     """Where ours[t : t+WIN] sits in the video, searching guess ± SEARCH. Returns (offset_s, peak)."""
-    a = ours[t * FPS:(t + WIN_S) * FPS]
+    a = ours[t * FPS : (t + WIN_S) * FPS]
     lo = max(0, int((t + guess - SEARCH_S) * FPS))
-    b = vid[lo:int((t + guess + SEARCH_S + WIN_S) * FPS)]
+    b = vid[lo : int((t + guess + SEARCH_S + WIN_S) * FPS)]
     if len(b) < len(a) or a.std() == 0:
         return None
     a = (a - a.mean()) / a.std()
     n = len(a) + len(b)
     corr = np.fft.irfft(np.fft.rfft(b, n) * np.conj(np.fft.rfft(a, n)), n)[: len(b) - len(a) + 1]
-    corr /= np.sqrt(np.maximum(np.convolve(b ** 2, np.ones(len(a)), "valid"), 1e-9))
+    corr /= np.sqrt(np.maximum(np.convolve(b**2, np.ones(len(a)), "valid"), 1e-9))
     k = int(np.argmax(corr))
     return (lo + k) / FPS - t, float(corr[k])
 
@@ -90,14 +92,29 @@ def main():
         sys.exit(f"missing {OURS} (gitignored; copy it from a board)")
     with tempfile.TemporaryDirectory() as tmp:
         logger.info("downloading the video's audio...")
-        subprocess.run(["yt-dlp", "-q", "-f", "bestaudio", "-x", "--audio-format", "wav",
-                        "-o", os.path.join(tmp, "video.%(ext)s"), URL], check=True)
+        subprocess.run(
+            [
+                "yt-dlp",
+                "-q",
+                "-f",
+                "bestaudio",
+                "-x",
+                "--audio-format",
+                "wav",
+                "-o",
+                os.path.join(tmp, "video.%(ext)s"),
+                URL,
+            ],
+            check=True,
+        )
         vid = onset_envelope(_mono(os.path.join(tmp, "video.wav"), os.path.join(tmp, "v.raw")))
         ours = onset_envelope(_mono(OURS, os.path.join(tmp, "o.raw")))
     rows, scale, shift, used = align(ours, vid)
     for t, off, peak in rows:
-        print(f"audio {t:5d}s -> video {t + off:7.2f}s  offset {off:+6.2f}  peak {peak:5.2f}"
-              f"{'' if peak > STRONG else '  (weak, ignored)'}")
+        print(
+            f"audio {t:5d}s -> video {t + off:7.2f}s  offset {off:+6.2f}  peak {peak:5.2f}"
+            f"{'' if peak > STRONG else '  (weak, ignored)'}"
+        )
     print(f"\nvideo = audio x {scale:.5f} + {shift:.2f} s   (fitted to {used} strong windows)")
     for v in args.at:
         print(f"video {v:.2f}s = audio {(v - shift) / scale:.2f}s")

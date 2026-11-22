@@ -1,4 +1,5 @@
 """The Aliens and the claw."""
+
 import random
 
 import pytest
@@ -24,7 +25,11 @@ def _draw(aliens, t, under=None):
 def test_aliens_are_registered_with_well_formed_art():
     cls = animation.TRANSITIONS["aliens"]
     assert cls is animation.AliensReveal
-    for art, colors in ((cls.ART, cls.colors), (cls.CLAW_OPEN_ART, cls.CLAW_COLORS), (cls.CLAW_SHUT_ART, cls.CLAW_COLORS)):
+    for art, colors in (
+        (cls.ART, cls.colors),
+        (cls.CLAW_OPEN_ART, cls.CLAW_COLORS),
+        (cls.CLAW_SHUT_ART, cls.CLAW_COLORS),
+    ):
         assert len({len(row) for row in art}) == 1
         assert set("".join(art)) - {"."} <= set(colors)
 
@@ -32,8 +37,10 @@ def test_aliens_are_registered_with_well_formed_art():
 def test_his_three_eyes_look_up_at_the_claw():
     cls = animation.AliensReveal
     up = animation.characters.aliens._looking_up(cls.ART)
+
     def pupils(art):
         return [(r, c) for r, row in enumerate(art) for c, k in enumerate(row) if k == "K"]
+
     assert len(pupils(cls.ART)) == 3 and len(pupils(up)) == 3
     assert all(r == pupils(cls.ART)[0][0] - 1 for r, _ in pupils(up)), "each pupil a row higher"
 
@@ -54,11 +61,11 @@ def test_a_different_alien_is_chosen_from_one_time_to_the_next(height):
 def test_the_claw_comes_down_shuts_on_him_and_lifts_him_off_the_top(height):
     aliens = animation.AliensReveal(64, height, random.Random(1))
     x, y = aliens.chosen
-    assert aliens.claw_tip(aliens.claw_at - .01) is None, "no claw while they shuffle in"
+    assert aliens.claw_tip(aliens.claw_at - 0.01) is None, "no claw while they shuffle in"
     tips = [aliens.claw_tip(t) for t in _frames(aliens) if aliens.claw_at <= t < aliens.grab_at]
     assert tips == sorted(tips) and tips[-1] <= y + aliens.CLAW_GRIP, "down to his head"
-    assert aliens.claw_tip(aliens.lift_at - .01) == y + aliens.CLAW_GRIP, "held there while it shuts"
-    assert aliens.chosen_y(aliens.lift_at - .01) == y, "he waits on the ground"
+    assert aliens.claw_tip(aliens.lift_at - 0.01) == y + aliens.CLAW_GRIP, "held there while it shuts"
+    assert aliens.chosen_y(aliens.lift_at - 0.01) == y, "he waits on the ground"
     lifted = [aliens.chosen_y(t) for t in _frames(aliens) if aliens.lift_at <= t < aliens.text_at]
     assert lifted == sorted(lifted, reverse=True) and lifted[-1] + aliens.h <= 2, "up and off the top"
     assert aliens.chosen_y(aliens.text_at) is None and aliens.claw_tip(aliens.text_at) is None
@@ -83,7 +90,7 @@ def test_the_ride_shows_only_as_the_crowd_leaves_and_they_stay_on_the_board(heig
         assert all(0 <= x < 64 and 0 <= y < height for x, y in px)
         if t < aliens.exit_at:
             assert ride not in px.values(), "a dark board until they leave"
-    leaving = _draw(aliens, aliens.exit_at + .7 * aliens.EXIT_S, ride)
+    leaving = _draw(aliens, aliens.exit_at + 0.7 * aliens.EXIT_S, ride)
     assert leaving[(32, height // 2)] == ride, "uncovered down the middle first"
     assert aliens.overlay(FakeCanvas(64, height), aliens.duration) is False
 
@@ -93,7 +100,9 @@ def test_the_crowd_shuffles_in_from_both_sides_and_out_again(height):
     aliens = animation.AliensReveal(64, height, random.Random(4))
     shifts = [aliens.shift(t) for t in _frames(aliens)]
     assert shifts[0] >= 64 // 2 and shifts[-1] > 64 // 2, "off the board at each end"
-    assert all(s == 0 for t, s in zip(_frames(aliens), shifts) if aliens.ENTER_S <= t < aliens.exit_at), "standing still meanwhile"
+    assert all(s == 0 for t, s in zip(_frames(aliens), shifts) if aliens.ENTER_S <= t < aliens.exit_at), (
+        "standing still meanwhile"
+    )
 
 
 def test_the_colors_read_on_the_board():
@@ -129,9 +138,9 @@ def test_the_claw_chooses_buzz_with_woody_beside_him_at_random(height):
 def test_woody_jumps_for_buzzs_boot_and_they_go_up_together(height):
     toys = animation.AliensToysReveal(64, height, random.Random(5))
     assert toys.lift_at < toys.jump_at < toys.text_at, "he waits for the boot to come within reach"
-    assert toys.figure(toys.woody, toys.jump_at - .01, True) == toys.WOODY_ART, "standing until he jumps"
+    assert toys.figure(toys.woody, toys.jump_at - 0.01, True) == toys.WOODY_ART, "standing until he jumps"
     assert toys.figure(toys.woody, toys.jump_at, True) is None
-    hung = toys.jump_at + toys.LEAP_S + .05
+    hung = toys.jump_at + toys.LEAP_S + 0.05
     assert toys.woody_at(hung) == toys._hang(hung), "hanging from the boot"
     wy = [toys.woody_at(t)[1] for t in _frames(toys) if toys.jump_at <= t < toys.text_at]
     assert wy == sorted(wy, reverse=True), "only ever up: he never drops below where he stood"

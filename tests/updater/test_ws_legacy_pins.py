@@ -3,10 +3,11 @@ Pins for the legacy WebSocket handlers, call by call: every log line, lock entry
 parks_data write, REST refresh, send and backoff sleep, in order. They exist so the functions can be
 split into named steps with no change in behaviour; each case here passed on the code before the split.
 """
+
 import asyncio
 import copy
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -16,7 +17,7 @@ import pytest
 from updater import ws_legacy
 from updater.ws_legacy import _apply_live_update, _ws_loop
 
-NOW = datetime(2026, 11, 20, 15, 30, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 20, 15, 30, 0, tzinfo=UTC)
 STAMP = "2026-11-20T15:30:00Z"
 
 
@@ -87,13 +88,21 @@ def trace():
 
 def _parks():
     return [
-        {"id": "p1", "name": "Magic Kingdom", "attractions": [
-            {"id": "other", "name": "Other", "status": "OPERATING"},
-            {"id": "a1", "name": "Space Mountain", "status": "OPERATING", "waitTime": 20, "down_since": ""},
-        ]},
-        {"id": "p2", "name": "EPCOT", "attractions": [
-            {"id": "a1", "name": "Twin", "status": "OPERATING", "waitTime": 5, "down_since": ""},
-        ]},
+        {
+            "id": "p1",
+            "name": "Magic Kingdom",
+            "attractions": [
+                {"id": "other", "name": "Other", "status": "OPERATING"},
+                {"id": "a1", "name": "Space Mountain", "status": "OPERATING", "waitTime": 20, "down_since": ""},
+            ],
+        },
+        {
+            "id": "p2",
+            "name": "EPCOT",
+            "attractions": [
+                {"id": "a1", "name": "Twin", "status": "OPERATING", "waitTime": 5, "down_since": ""},
+            ],
+        },
     ]
 
 
@@ -103,10 +112,17 @@ def _msg(data, entity_type="ATTRACTION", entity_id="a1"):
 
 # --- _apply_live_update ---
 
-@pytest.mark.parametrize("data, line", [
-    ({"event": "subscribed", "name": "MK", "entityId": "x", "entityTypeFilter": "SHOW"}, "WebSocket subscribed to: MK (SHOW)"),
-    ({"event": "subscribed", "entityId": "x"}, "WebSocket subscribed to: x (all)"),
-])
+
+@pytest.mark.parametrize(
+    "data, line",
+    [
+        (
+            {"event": "subscribed", "name": "MK", "entityId": "x", "entityTypeFilter": "SHOW"},
+            "WebSocket subscribed to: MK (SHOW)",
+        ),
+        ({"event": "subscribed", "entityId": "x"}, "WebSocket subscribed to: x (all)"),
+    ],
+)
 def test_pin_subscribed_logs_and_touches_nothing(trace, data, line):
     parks = _parks()
     before = copy.deepcopy(parks)
@@ -115,22 +131,28 @@ def test_pin_subscribed_logs_and_touches_nothing(trace, data, line):
     assert parks == before
 
 
-@pytest.mark.parametrize("data, shown", [
-    ({"event": "error", "message": "bad key"}, "bad key"),
-    ({"event": "error"}, "{'event': 'error'}"),
-])
+@pytest.mark.parametrize(
+    "data, shown",
+    [
+        ({"event": "error", "message": "bad key"}, "bad key"),
+        ({"event": "error"}, "{'event': 'error'}"),
+    ],
+)
 def test_pin_server_error_logs_a_warning(trace, data, shown):
     _apply_live_update(data, _parks())
     assert trace == [("log", f"WS message: {data}"), ("warning", f"WebSocket server error: {shown}")]
 
 
-@pytest.mark.parametrize("data", [
-    {"event": "heartbeat"},
-    {},
-    {"event": "livedata", "entityType": "RESTAURANT", "entityId": "a1", "data": {"status": "OPERATING"}},
-    {"event": "livedata", "entityId": "a1", "data": {"status": "OPERATING"}},
-    {"event": ["livedata"], "entityType": "ATTRACTION", "entityId": "a1"},  # malformed: not a string
-])
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"event": "heartbeat"},
+        {},
+        {"event": "livedata", "entityType": "RESTAURANT", "entityId": "a1", "data": {"status": "OPERATING"}},
+        {"event": "livedata", "entityId": "a1", "data": {"status": "OPERATING"}},
+        {"event": ["livedata"], "entityType": "ATTRACTION", "entityId": "a1"},  # malformed: not a string
+    ],
+)
 def test_pin_ignored_events_only_log_the_message(trace, data):
     parks = _parks()
     before = copy.deepcopy(parks)
@@ -154,9 +176,17 @@ def test_pin_operating_update_mutates_in_place_and_stops_at_the_first_match(trac
     data = {"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 30}}, "forecast": [1], "showtimes": [2]}
     _apply_live_update(_msg(data), parks)
     assert parks is park_list and parks[0]["attractions"] is attr_list and attr_list[1] is target
-    assert target == {"id": "a1", "name": "Space Mountain", "status": "OPERATING", "waitTime": ("wait", data["queue"]),
-                      "down_since": "", "lastUpdatedTs": STAMP, "updateSource": "websocket",
-                      "forecast": ("forecast", [1]), "showtimes": ("showtimes", [2])}
+    assert target == {
+        "id": "a1",
+        "name": "Space Mountain",
+        "status": "OPERATING",
+        "waitTime": ("wait", data["queue"]),
+        "down_since": "",
+        "lastUpdatedTs": STAMP,
+        "updateSource": "websocket",
+        "forecast": ("forecast", [1]),
+        "showtimes": ("showtimes", [2]),
+    }
     assert twin["waitTime"] == 5 and "lastUpdatedTs" not in twin  # the loop returns at the first match
     # Same status: no log, no operating check; the lock covers just the writes.
     assert trace == [("log", f"WS message: {_msg(data)}"), "lock+", "lock-"]
@@ -256,6 +286,7 @@ def test_pin_a_park_without_attractions_is_skipped(trace):
 
 # --- _ws_loop ---
 
+
 class _Msg:
     def __init__(self, type_, data=""):
         self.type, self.data = type_, data
@@ -348,6 +379,7 @@ def _run(trace, connections, parks, sleeps=1, monotonic=(100.0, 100.0), **hooks)
 
         async def noop():
             pass
+
         return noop()
 
     async def default_fetch(park):
@@ -361,14 +393,16 @@ def _run(trace, connections, parks, sleeps=1, monotonic=(100.0, 100.0), **hooks)
         log.append(("apply", data, parks_data is parks))
 
     fake_time = SimpleNamespace(monotonic=lambda: ticks.pop(0) if len(ticks) > 1 else ticks[0])
-    with patch.object(ws_legacy.aiohttp, "ClientSession", lambda: _Session(log, connections)), \
-         patch.object(ws_legacy.asyncio, "sleep", fake_sleep), \
-         patch.object(ws_legacy.asyncio, "create_task", create_task), \
-         patch.object(ws_legacy, "_watchdog", watchdog), \
-         patch.object(ws_legacy, "time", fake_time), \
-         patch.object(ws_legacy, "fetch_park_live_data", fetch or default_fetch), \
-         patch.object(ws_legacy, "merge_live_data", default_merge), \
-         patch.object(ws_legacy, "_apply_live_update", apply or default_apply):
+    with (
+        patch.object(ws_legacy.aiohttp, "ClientSession", lambda: _Session(log, connections)),
+        patch.object(ws_legacy.asyncio, "sleep", fake_sleep),
+        patch.object(ws_legacy.asyncio, "create_task", create_task),
+        patch.object(ws_legacy, "_watchdog", watchdog),
+        patch.object(ws_legacy, "time", fake_time),
+        patch.object(ws_legacy, "fetch_park_live_data", fetch or default_fetch),
+        patch.object(ws_legacy, "merge_live_data", default_merge),
+        patch.object(ws_legacy, "_apply_live_update", apply or default_apply),
+    ):
         if returns:
             assert asyncio.run(_ws_loop(" key ", parks)) is None
         else:
@@ -384,24 +418,34 @@ CONNECT = ("connect", ws_legacy.WS_URL, ws_legacy.WS_SUBPROTOCOLS, {"X-API-Key":
 
 
 def test_pin_first_connection_subscribes_reads_messages_and_backs_off(trace):
-    ws = _Script(trace, [_Msg(TEXT, '{"event": "x"}'), _Msg(TEXT, "not json"), _Msg(aiohttp.WSMsgType.BINARY, b"")],
-                 close_code=1001)
+    ws = _Script(
+        trace,
+        [_Msg(TEXT, '{"event": "x"}'), _Msg(TEXT, "not json"), _Msg(aiohttp.WSMsgType.BINARY, b"")],
+        close_code=1001,
+    )
     parks = _dest_parks()
     _run(trace, [ws], parks, monotonic=(10.0, 12.0))
     assert trace == [
-        "session open", CONNECT, "ws open",
+        "session open",
+        CONNECT,
+        "ws open",
         ("info", "WebSocket connected to ThemeParks.wiki"),
         ("send", {"event": "subscribe", "entityId": "d1", "entityTypeFilter": "ATTRACTION"}),
         ("send", {"event": "subscribe", "entityId": "d1", "entityTypeFilter": "SHOW"}),
         ("info", "Subscribed to destinations: ['d1']"),
-        ("watchdog args", True, "_WsStats", True), "watchdog start",
-        ("net", True), ("log", 'WS raw: {"event": "x"}'), ("apply", {"event": "x"}, True),
-        ("net", True), ("log", "WS raw: not json"),
+        ("watchdog args", True, "_WsStats", True),
+        "watchdog start",
+        ("net", True),
+        ("log", 'WS raw: {"event": "x"}'),
+        ("apply", {"event": "x"}, True),
+        ("net", True),
+        ("log", "WS raw: not json"),
         ("warning", "Non-JSON WS message: not json"),
         ("net", True),
         "watchdog cancel",
         ("warning", "WebSocket receive loop ended: close_code=1001, exception=None"),
-        "ws close", "session close",
+        "ws close",
+        "session close",
         ("info", "WebSocket disconnected; reconnecting in 10s"),
         ("sleep", 10),
     ]
@@ -410,12 +454,13 @@ def test_pin_first_connection_subscribes_reads_messages_and_backs_off(trace):
 def test_pin_a_websocket_error_message_stops_reading(trace):
     ws = _Script(trace, [_Msg(ERROR), _Msg(TEXT, "{}")], exc=RuntimeError("boom"))
     _run(trace, [ws], _dest_parks())
-    assert trace[trace.index(("net", True)):] == [
+    assert trace[trace.index(("net", True)) :] == [
         ("net", True),
         ("warning", "WebSocket error message: boom"),
         "watchdog cancel",
         ("warning", "WebSocket receive loop ended: close_code=1006, exception=boom"),
-        "ws close", "session close",
+        "ws close",
+        "session close",
         ("info", "WebSocket disconnected; reconnecting in 10s"),
         ("sleep", 10),
     ]
@@ -429,7 +474,8 @@ def test_pin_two_destinations_subscribe_to_every_type_in_turn(trace):
     sends = [e[1] for e in trace if isinstance(e, tuple) and e[0] == "send"]
     assert len(sends) == 4
     assert {(s["entityId"], s["entityTypeFilter"]) for s in sends} == {
-        (d, t) for d in ("d1", "d2") for t in ("ATTRACTION", "SHOW")}
+        (d, t) for d in ("d1", "d2") for t in ("ATTRACTION", "SHOW")
+    }
     # One destination's types are sent together, ATTRACTION first.
     assert [s["entityTypeFilter"] for s in sends][0::2] == ["ATTRACTION", "ATTRACTION"]
 
@@ -439,16 +485,27 @@ def test_pin_no_destination_ids_warns_and_ends_the_loop(trace):
     parks = [{"id": "p1", "name": "MK"}]
     _run(trace, [_Script(trace)], parks, monotonic=(1.0, 2.0), returns=True)
     assert trace == [
-        "session open", CONNECT, "ws open",
+        "session open",
+        CONNECT,
+        "ws open",
         ("info", "WebSocket connected to ThemeParks.wiki"),
         ("warning", "No destination IDs in parks_data; will retry"),
-        "ws close", "session close",
+        "ws close",
+        "session close",
     ]
 
 
 def test_pin_backoff_doubles_to_the_cap_and_resets_after_a_stable_connection(trace):
-    conns = [OSError("x"), OSError("y"), OSError("z"), OSError("w"), OSError("v"), OSError("u"),
-             _Script(trace), OSError("t")]
+    conns = [
+        OSError("x"),
+        OSError("y"),
+        OSError("z"),
+        OSError("w"),
+        OSError("v"),
+        OSError("u"),
+        _Script(trace),
+        OSError("t"),
+    ]
     _run(trace, conns, _dest_parks(), sleeps=8, monotonic=(0.0, 100.0))
     assert [e[1] for e in trace if isinstance(e, tuple) and e[0] == "sleep"] == [10, 20, 40, 60, 60, 60, 5, 10]
 
@@ -472,21 +529,29 @@ def test_pin_second_connection_refreshes_every_park_over_rest_first(trace):
         return None if park["id"] == "p4" else [{"id": "live-" + park["id"]}]
 
     _run(trace, [_Script(trace), _Script(trace)], parks, sleeps=2, fetch=fetch)
-    second = trace[trace.index(("sleep", 10)) + 1:]
+    second = trace[trace.index(("sleep", 10)) + 1 :]
     assert second[:3] == ["session open", CONNECT, "ws open"]
-    refresh = second[3:second.index(("info", "REST refresh after reconnect complete.")) + 1]
+    refresh = second[3 : second.index(("info", "REST refresh after reconnect complete.")) + 1]
     assert refresh == [
         ("info", "WebSocket reconnected — refreshing live data via REST."),
-        ("fetch", "p1"), "lock+", ("merge", True, [{"id": "live-p1"}]), "lock-",
-        ("fetch", "p3"), "lock+", ("merge", True, [{"id": "live-p3"}]), "lock-",
+        ("fetch", "p1"),
+        "lock+",
+        ("merge", True, [{"id": "live-p1"}]),
+        "lock-",
+        ("fetch", "p3"),
+        "lock+",
+        ("merge", True, [{"id": "live-p3"}]),
+        "lock-",
         ("fetch", "p4"),
         ("warning", "Live data refresh failed for DHS after reconnect; keeping existing data."),
         ("op_status", ["p1", "p2", "p3", "p4"], {"fetch_schedules": False}),
         ("info", "REST refresh after reconnect complete."),
     ]
     assert [p.get("live_data_stale") for p in parks] == [False, None, False, True]
-    assert ("info", "Subscribed to destinations: ['d1', 'd2']") in second or \
-        ("info", "Subscribed to destinations: ['d2', 'd1']") in second
+    assert ("info", "Subscribed to destinations: ['d1', 'd2']") in second or (
+        "info",
+        "Subscribed to destinations: ['d2', 'd1']",
+    ) in second
     assert second[-1] == ("sleep", 20)
 
 
@@ -496,9 +561,15 @@ def test_pin_a_reconnect_with_no_destinations_still_refreshes_then_ends(trace):
     def lose_destinations(data, parks_data):
         parks_data[0].pop("destination_id")
 
-    _run(trace, [_Script(trace, [_Msg(TEXT, "{}")]), _Script(trace)], parks, sleeps=2, apply=lose_destinations,
-         returns=True)
-    second = trace[trace.index(("sleep", 10)) + 1:]
+    _run(
+        trace,
+        [_Script(trace, [_Msg(TEXT, "{}")]), _Script(trace)],
+        parks,
+        sleeps=2,
+        apply=lose_destinations,
+        returns=True,
+    )
+    second = trace[trace.index(("sleep", 10)) + 1 :]
     assert ("fetch", "p1") in second
     assert second[-3:] == [("warning", "No destination IDs in parks_data; will retry"), "ws close", "session close"]
     assert "watchdog start" not in second
@@ -512,7 +583,9 @@ def test_pin_a_connect_failure_logs_the_traceback_and_flags_only_socket_errors(t
     assert level == "error" and text.startswith(f"WebSocket error: {error}\nTraceback")
     rest = trace[4:]
     assert rest == ([("net", False)] if flags else []) + [
-        ("info", "WebSocket disconnected; reconnecting in 10s"), ("sleep", 10)]
+        ("info", "WebSocket disconnected; reconnecting in 10s"),
+        ("sleep", 10),
+    ]
 
 
 def test_pin_an_error_after_connecting_is_not_a_network_flag_and_cancels_the_watchdog(trace):
@@ -531,7 +604,9 @@ def test_pin_a_failure_while_applying_an_update_ends_the_connection(trace):
 
     _run(trace, [_Script(trace, [_Msg(TEXT, "{}")])], _dest_parks(), apply=boom)
     assert "watchdog cancel" in trace
-    assert any(e[0] == "error" and e[1].startswith("WebSocket error: bad update") for e in trace if isinstance(e, tuple))
+    assert any(
+        e[0] == "error" and e[1].startswith("WebSocket error: bad update") for e in trace if isinstance(e, tuple)
+    )
 
 
 def test_pin_a_json_decode_error_from_the_handler_is_taken_as_non_json(trace):

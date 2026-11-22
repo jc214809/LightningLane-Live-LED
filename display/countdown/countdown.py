@@ -1,8 +1,8 @@
 import math
 
+from display.display import color_dict, draw_text, get_text_width, loaded_fonts
+from display.fireworks.fireworks import _CASTLE_COLORS, castle_sprite
 from display.motion import ease_out
-from display.display import draw_text, get_text_width, loaded_fonts, color_dict
-from display.fireworks.fireworks import castle_sprite, _CASTLE_COLORS
 from utils.trips import countdown_message  # its words live with the trips; re-exported here
 
 # The castle stays 1x on 64-row boards too: doubled it leaves no room for the number.
@@ -67,8 +67,7 @@ def _stack_height(rows, gap):
 
 def _fits(rows, box):
     _, _, w, h = box
-    return (_stack_height(rows, LINE_GAPS[-1]) <= h
-            and all(_width(font, text) <= w for font, _, text in rows))
+    return _stack_height(rows, LINE_GAPS[-1]) <= h and all(_width(font, text) <= w for font, _, text in rows)
 
 
 def _fitting_font(fonts, lines, max_width):

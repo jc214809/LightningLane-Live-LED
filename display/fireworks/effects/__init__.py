@@ -7,6 +7,7 @@ vanishing on the cut. Effects draw behind the castle unless they draw in front (
 The classes live in modules by kind of look: base (Effect and the shared bases), searchlights,
 castle, comets, particles, sky. EFFECTS, the name-to-class registry the show reads, is built here.
 """
+
 from display.fireworks.effects.castle import (
     Bells,
     DimKeyholeGlow,

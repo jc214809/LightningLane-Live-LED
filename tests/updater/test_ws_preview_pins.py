@@ -4,6 +4,7 @@ cancel, feed-health note and backoff sleep, in order. They exist so _PreviewFeed
 _preview_ws_loop can be split into named steps with no change in behaviour; each case here passed on
 the code before the split.
 """
+
 import asyncio
 import json
 from types import SimpleNamespace
@@ -13,7 +14,7 @@ import aiohttp
 import pytest
 
 from updater import ws_preview
-from updater.ws_preview import _PreviewFeed, _preview_ws_loop, _send_later
+from updater.ws_preview import _preview_ws_loop, _PreviewFeed, _send_later
 
 TEXT, ERROR, BINARY = aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.ERROR, aiohttp.WSMsgType.BINARY
 
@@ -53,6 +54,7 @@ def trace():
 
 
 # --- _PreviewFeed.handle ---
+
 
 def _parks():
     return [{"id": "p1", "destination_id": "d1", "attractions": []}, {"id": "p2", "destination_id": "d2"}]
@@ -94,8 +96,10 @@ def test_pin_welcome_with_a_cursor_says_resuming_and_without_limits_logs_empty(t
 def test_pin_welcome_without_destinations_warns_and_sends_nothing(trace):
     feed = _PreviewFeed([{"id": "p"}])
     assert feed.handle({"type": "welcome"}) == []
-    assert trace[2:] == [("warning", "No destination IDs in parks_data; nothing to subscribe to."),
-                         ("info", "Subscribing with a snapshot: []")]
+    assert trace[2:] == [
+        ("warning", "No destination IDs in parks_data; nothing to subscribe to."),
+        ("info", "Subscribing with a snapshot: []"),
+    ]
 
 
 def test_pin_subscribed_clears_the_pending_request_and_logs_the_name(trace):
@@ -112,16 +116,23 @@ def test_pin_subscribed_clears_the_pending_request_and_logs_the_name(trace):
     ]
 
 
-@pytest.mark.parametrize("data, entries", [
-    ([{"id": 1}, "junk", {"id": 2}, None], [{"id": 1}, {"id": 2}]),
-    ({"id": 1}, []),
-    (None, []),
-])
+@pytest.mark.parametrize(
+    "data, entries",
+    [
+        ([{"id": 1}, "junk", {"id": 2}, None], [{"id": 1}, {"id": 2}]),
+        ({"id": 1}, []),
+        (None, []),
+    ],
+)
 def test_pin_snapshot_applies_only_dict_entries_then_syncs(trace, data, entries):
     feed = _feed(trace)
     assert feed.handle({"type": "snapshot", "data": data, "cursor": "c1", "total": 9}) == []
-    assert trace == [("log", "WS frame: snapshot"), ("apply", entries, True),
-                     ("info", "WebSocket snapshot: 9 entities"), "synced"]
+    assert trace == [
+        ("log", "WS frame: snapshot"),
+        ("apply", entries, True),
+        ("info", "WebSocket snapshot: 9 entities"),
+        "synced",
+    ]
     assert feed.cursor == "c1"
 
 
@@ -148,8 +159,11 @@ def test_pin_update_counts_and_applies_a_dict_and_ignores_anything_else(trace):
 def test_pin_resumed_logs_and_syncs_and_saves_the_cursor(trace):
     feed = _feed(trace)
     assert feed.handle({"type": "resumed", "cursor": "c3"}) == []
-    assert trace == [("log", "WS frame: resumed"),
-                     ("info", "WebSocket resumed: caught up on the updates missed while disconnected."), "synced"]
+    assert trace == [
+        ("log", "WS frame: resumed"),
+        ("info", "WebSocket resumed: caught up on the updates missed while disconnected."),
+        "synced",
+    ]
     assert feed.cursor == "c3"
 
 
@@ -159,8 +173,14 @@ def test_pin_ping_replies_with_a_pong_and_saves_the_cursor_without_counting(trac
     assert (feed.cursor, feed.stats.msg_count, trace) == ("c4", 0, [("log", "WS frame: ping")])
 
 
-@pytest.mark.parametrize("data, passed", [({"message": "m", "reqId": "r"}, {"message": "m", "reqId": "r"}),
-                                          ("text", {"message": "text"}), (None, {"message": None})])
+@pytest.mark.parametrize(
+    "data, passed",
+    [
+        ({"message": "m", "reqId": "r"}, {"message": "m", "reqId": "r"}),
+        ("text", {"message": "text"}),
+        (None, {"message": None}),
+    ],
+)
 def test_pin_error_hands_a_dict_to_the_error_handler_and_returns_its_replies(trace, data, passed):
     feed = _feed(trace)
     seen = []
@@ -169,8 +189,9 @@ def test_pin_error_hands_a_dict_to_the_error_handler_and_returns_its_replies(tra
     assert seen == [passed] and feed.cursor is None
 
 
-@pytest.mark.parametrize("frame", [{"type": "unsubscribed", "cursor": "no"}, {"data": 1}, {},
-                                   {"type": ["update"], "cursor": "no"}])  # malformed: not a string
+@pytest.mark.parametrize(
+    "frame", [{"type": "unsubscribed", "cursor": "no"}, {"data": 1}, {}, {"type": ["update"], "cursor": "no"}]
+)  # malformed: not a string
 def test_pin_unknown_frames_are_only_logged(trace, frame):
     feed = _feed(trace)
     assert feed.handle(frame) == []
@@ -191,6 +212,7 @@ def test_pin_the_cursor_is_not_saved_when_applying_the_frame_fails(trace):
 
 # --- _send_later ---
 
+
 @pytest.mark.parametrize("closed, sent", [(False, [{"f": 1}]), (True, [])])
 def test_pin_send_later_sleeps_then_sends_only_while_open(trace, closed, sent):
     out = []
@@ -210,6 +232,7 @@ def test_pin_send_later_sleeps_then_sends_only_while_open(trace, closed, sent):
 
 
 # --- _preview_ws_loop ---
+
 
 class _Script:
     def __init__(self, log, messages=(), close_code=1006, exc=None, raises_after=None):
@@ -253,8 +276,17 @@ class _Session:
         self.log.append("session close")
 
     def ws_connect(self, url, **kwargs):
-        self.log.append(("connect", url, kwargs["protocols"], kwargs["headers"], kwargs["timeout"].ws_receive,
-                         kwargs["timeout"].ws_close, "heartbeat" in kwargs))
+        self.log.append(
+            (
+                "connect",
+                url,
+                kwargs["protocols"],
+                kwargs["headers"],
+                kwargs["timeout"].ws_receive,
+                kwargs["timeout"].ws_close,
+                "heartbeat" in kwargs,
+            )
+        )
         conn = self.connections.pop(0)
         if isinstance(conn, BaseException):
             raise conn
@@ -274,6 +306,7 @@ class _Task:
 
 class _Feed:
     """Stands in for _PreviewFeed: replies are looked up by frame type."""
+
     instances = []
 
     def __init__(self, parks_data):
@@ -291,8 +324,15 @@ def _text(frame):
     return aiohttp.WSMessage(TEXT, json.dumps(frame), None)
 
 
-CONNECT = ("connect", ws_preview.WS_URL, ws_preview.WS_PREVIEW_SUBPROTOCOLS, {"X-API-Key": "key"},
-           ws_preview._PREVIEW_RECEIVE_TIMEOUT_SECS, ws_preview._WS_CLOSE_TIMEOUT_SECS, False)
+CONNECT = (
+    "connect",
+    ws_preview.WS_URL,
+    ws_preview.WS_PREVIEW_SUBPROTOCOLS,
+    {"X-API-Key": "key"},
+    ws_preview._PREVIEW_RECEIVE_TIMEOUT_SECS,
+    ws_preview._WS_CLOSE_TIMEOUT_SECS,
+    False,
+)
 
 
 def _run(trace, connections, sleeps=1, monotonic=(10.0, 12.0), **opts):
@@ -324,6 +364,7 @@ def _run(trace, connections, sleeps=1, monotonic=(10.0, 12.0), **opts):
 
         async def noop():
             pass
+
         return noop()
 
     def feed_factory(parks_data):
@@ -336,13 +377,15 @@ def _run(trace, connections, sleeps=1, monotonic=(10.0, 12.0), **opts):
     parks = [{"id": "p1"}]
     ns_time = SimpleNamespace(monotonic=lambda: ticks.pop(0) if len(ticks) > 1 else ticks[0])
     ns_random = SimpleNamespace(uniform=lambda a, b: log.append(("jitter", a, b)) or 1.25)
-    with patch.object(ws_preview.aiohttp, "ClientSession", lambda: _Session(log, connections)), \
-         patch.object(ws_preview.asyncio, "sleep", fake_sleep), \
-         patch.object(ws_preview.asyncio, "create_task", create_task), \
-         patch.object(ws_preview, "_watchdog", watchdog), \
-         patch.object(ws_preview, "_PreviewFeed", feed_factory), \
-         patch.object(ws_preview, "time", ns_time), \
-         patch.object(ws_preview, "random", ns_random):
+    with (
+        patch.object(ws_preview.aiohttp, "ClientSession", lambda: _Session(log, connections)),
+        patch.object(ws_preview.asyncio, "sleep", fake_sleep),
+        patch.object(ws_preview.asyncio, "create_task", create_task),
+        patch.object(ws_preview, "_watchdog", watchdog),
+        patch.object(ws_preview, "_PreviewFeed", feed_factory),
+        patch.object(ws_preview, "time", ns_time),
+        patch.object(ws_preview, "random", ns_random),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop(" key ", parks))
     return tasks, _Feed.instances[0]
@@ -351,21 +394,36 @@ def _run(trace, connections, sleeps=1, monotonic=(10.0, 12.0), **opts):
 def test_pin_a_connection_handles_each_frame_sends_replies_and_backs_off_with_jitter(trace):
     pong, sub = {"type": "pong"}, {"type": "subscribe"}
     ws = _Script(trace, [_text({"type": "welcome"}), _text({"type": "ping"}), _text({"type": "x"})], close_code=1001)
-    tasks, feed = _run(trace, [ws], replies={"welcome": [(0, sub), (2, {"type": "later"})], "ping": [(0, pong)]},
-                       cursor="cur")
+    tasks, feed = _run(
+        trace, [ws], replies={"welcome": [(0, sub), (2, {"type": "later"})], "ping": [(0, pong)]}, cursor="cur"
+    )
     assert trace == [
-        "session open", CONNECT, "ws open",
-        ("watchdog args", "_WsStats", True), ("task", "watchdog"),
-        ("net", True), "frame", ("handle", {"type": "welcome"}),
+        "session open",
+        CONNECT,
+        "ws open",
+        ("watchdog args", "_WsStats", True),
+        ("task", "watchdog"),
+        ("net", True),
+        "frame",
+        ("handle", {"type": "welcome"}),
         ("send", sub),
         ("task", "_send_later", 2, {"type": "later"}),
-        ("net", True), "frame", ("handle", {"type": "ping"}), ("send", pong),
-        ("net", True), "frame", ("handle", {"type": "x"}),
-        ("cancel", "watchdog"), ("cancel", "_send_later"), "down",
+        ("net", True),
+        "frame",
+        ("handle", {"type": "ping"}),
+        ("send", pong),
+        ("net", True),
+        "frame",
+        ("handle", {"type": "x"}),
+        ("cancel", "watchdog"),
+        ("cancel", "_send_later"),
+        "down",
         ("warning", "WebSocket receive loop ended: close_code=1001, exception=None"),
-        "ws close", "session close",
+        "ws close",
+        "session close",
         ("info", "WebSocket disconnected; reconnecting in about 10s (resuming from the last cursor)"),
-        ("jitter", 1.0, 1.5), ("sleep", 12.5),
+        ("jitter", 1.0, 1.5),
+        ("sleep", 12.5),
     ]
     assert feed.stats.__class__.__name__ == "_WsStats"
     # The delayed send forgets itself when done.
@@ -383,7 +441,7 @@ def test_pin_a_new_stats_window_is_made_for_every_connection(trace):
 def test_pin_non_json_and_non_object_frames_are_skipped_after_the_health_notes(trace, frame_text):
     msg = aiohttp.WSMessage(TEXT, frame_text, None)
     _run(trace, [_Script(trace, [msg])])
-    body = trace[trace.index(("net", True)):trace.index(("cancel", "watchdog"))]
+    body = trace[trace.index(("net", True)) : trace.index(("cancel", "watchdog"))]
     expected = [("net", True), "frame"]
     if frame_text == "not json":
         expected.append(("warning", "Non-JSON WS message: not json"))
@@ -392,31 +450,43 @@ def test_pin_non_json_and_non_object_frames_are_skipped_after_the_health_notes(t
 
 def test_pin_other_message_types_only_note_health(trace):
     _run(trace, [_Script(trace, [aiohttp.WSMessage(BINARY, b"", None)])])
-    assert trace[trace.index(("net", True)):trace.index(("cancel", "watchdog"))] == [("net", True), "frame"]
+    assert trace[trace.index(("net", True)) : trace.index(("cancel", "watchdog"))] == [("net", True), "frame"]
 
 
 def test_pin_an_error_message_stops_reading_and_a_delayed_send_is_cancelled(trace):
-    ws = _Script(trace, [_text({"type": "welcome"}), aiohttp.WSMessage(ERROR, None, None), _text({"type": "x"})],
-                 exc=RuntimeError("boom"))
+    ws = _Script(
+        trace,
+        [_text({"type": "welcome"}), aiohttp.WSMessage(ERROR, None, None), _text({"type": "x"})],
+        exc=RuntimeError("boom"),
+    )
     _run(trace, [ws], replies={"welcome": [(5, {"type": "later"})]})
-    tail = trace[trace.index(("warning", "WebSocket error message: boom")):]
-    assert tail[:5] == [("warning", "WebSocket error message: boom"), ("cancel", "watchdog"),
-                        ("cancel", "_send_later"), "down",
-                        ("warning", "WebSocket receive loop ended: close_code=1006, exception=boom")]
+    tail = trace[trace.index(("warning", "WebSocket error message: boom")) :]
+    assert tail[:5] == [
+        ("warning", "WebSocket error message: boom"),
+        ("cancel", "watchdog"),
+        ("cancel", "_send_later"),
+        "down",
+        ("warning", "WebSocket receive loop ended: close_code=1006, exception=boom"),
+    ]
     assert len(ws.messages) == 1
 
 
-@pytest.mark.parametrize("code, why", [
-    (3000, "authentication failed (check websocket.api_key)"),
-    (3001, "credentials were sent in the URL"),
-    (3003, "the key's plan doesn't allow this"),
-    (4029, "the key's connection limit is reached (other boards or an emulator are using it)"),
-])
+@pytest.mark.parametrize(
+    "code, why",
+    [
+        (3000, "authentication failed (check websocket.api_key)"),
+        (3001, "credentials were sent in the URL"),
+        (3003, "the key's plan doesn't allow this"),
+        (4029, "the key's connection limit is reached (other boards or an emulator are using it)"),
+    ],
+)
 def test_pin_a_refusal_waits_ten_minutes_with_jitter_and_skips_the_backoff(trace, code, why):
     _run(trace, [_Script(trace, close_code=code)])
     assert trace[-3:] == [
         ("warning", f"WebSocket refused: {why}. Retrying in 10 min; REST polls meanwhile."),
-        ("jitter", 1.0, 1.5), ("sleep", 750.0)]
+        ("jitter", 1.0, 1.5),
+        ("sleep", 750.0),
+    ]
 
 
 def test_pin_after_a_refusal_the_next_normal_drop_doubles_from_the_ten_minute_delay_to_the_cap(trace):
@@ -426,15 +496,17 @@ def test_pin_after_a_refusal_the_next_normal_drop_doubles_from_the_ten_minute_de
 
 
 def test_pin_a_timeout_logs_the_silence_and_backs_off(trace):
-    _run(trace, [asyncio.TimeoutError()])
+    _run(trace, [TimeoutError()])
     assert trace[3:] == [
         ("warning", f"WebSocket silent for {ws_preview._PREVIEW_RECEIVE_TIMEOUT_SECS}s; reconnecting."),
         ("info", "WebSocket disconnected; reconnecting in about 10s"),
-        ("jitter", 1.0, 1.5), ("sleep", 12.5)]
+        ("jitter", 1.0, 1.5),
+        ("sleep", 12.5),
+    ]
 
 
 def test_pin_a_timeout_mid_stream_still_cleans_up_the_connection(trace):
-    _run(trace, [_Script(trace, raises_after=asyncio.TimeoutError())], monotonic=(0.0, 100.0))
+    _run(trace, [_Script(trace, raises_after=TimeoutError())], monotonic=(0.0, 100.0))
     assert trace.index(("cancel", "watchdog")) < trace.index("down") < trace.index("ws close")
     assert ("warning", f"WebSocket silent for {ws_preview._PREVIEW_RECEIVE_TIMEOUT_SECS}s; reconnecting.") in trace
     assert ("info", "WebSocket disconnected; reconnecting in about 5s") in trace  # a stable connection resets the delay
@@ -447,7 +519,10 @@ def test_pin_a_connect_failure_logs_the_traceback_and_flags_only_socket_errors(t
     level, text = trace[3]
     assert level == "error" and text.startswith(f"WebSocket error: {error}\nTraceback")
     assert trace[4:] == ([("net", False)] if flagged else []) + [
-        ("info", "WebSocket disconnected; reconnecting in about 10s"), ("jitter", 1.0, 1.5), ("sleep", 12.5)]
+        ("info", "WebSocket disconnected; reconnecting in about 10s"),
+        ("jitter", 1.0, 1.5),
+        ("sleep", 12.5),
+    ]
 
 
 def test_pin_an_error_after_connecting_is_not_a_network_flag(trace):
@@ -461,8 +536,9 @@ def test_pin_a_failing_frame_handler_ends_the_connection_and_cleans_up(trace):
         raise ValueError("handler broke")
 
     _run(trace, [_Script(trace, [_text({"type": "welcome"})])], handle=broken)
-    assert any(e[0] == "error" and e[1].startswith("WebSocket error: handler broke")
-               for e in trace if isinstance(e, tuple))
+    assert any(
+        e[0] == "error" and e[1].startswith("WebSocket error: handler broke") for e in trace if isinstance(e, tuple)
+    )
     assert trace.index(("cancel", "watchdog")) < trace.index("down") < trace.index("ws close")
 
 
@@ -470,4 +546,6 @@ def test_pin_the_feed_is_shared_across_connections_so_the_cursor_survives(trace)
     _, feed = _run(trace, [_Script(trace), _Script(trace)], sleeps=2, cursor="kept")
     assert feed.cursor == "kept" and len(_Feed.instances) == 1
     assert [e for e in trace if isinstance(e, tuple) and e[0] == "info"][-1] == (
-        "info", "WebSocket disconnected; reconnecting in about 20s (resuming from the last cursor)")
+        "info",
+        "WebSocket disconnected; reconnecting in about 20s (resuming from the last cursor)",
+    )

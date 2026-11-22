@@ -5,10 +5,9 @@ and the screen capture that reveals needing a screen's pixels share.
 
 import random
 
-from display.capture import capture_screen
-
 from display.animation.drawing import _blackout, _edge, art_pixels, paint
 from display.animation.motion import FLYBY_S, FPS, WIPE_S, ease_out
+from display.capture import capture_screen
 
 
 class CapturesScreens:
@@ -105,8 +104,12 @@ class FlyByReveal:
 
     def _draw_sprite(self, canvas, t):
         x0, y0 = self.position(t)
-        paint(canvas, art_pixels(self.art, int(round(x0)), int(round(y0)), self.colors, self.scale),
-              self.width, self.height)
+        paint(
+            canvas,
+            art_pixels(self.art, int(round(x0)), int(round(y0)), self.colors, self.scale),
+            self.width,
+            self.height,
+        )
 
 
 class PeekReveal:

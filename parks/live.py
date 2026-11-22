@@ -2,12 +2,13 @@
 What the live data says right now: a ride's forecast wait for this hour, and whether a show
 has just started. Pure reads over the parks_data dicts that api.disney_api builds.
 """
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 
 
 def forecast_wait_now(forecast, now=None):
     """The forecast wait for the hour containing now, or None if the forecast doesn't cover it."""
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     for point in forecast or []:
         try:
             start = datetime.fromisoformat(point["time"].replace("Z", "+00:00"))
@@ -18,7 +19,6 @@ def forecast_wait_now(forecast, now=None):
         if start <= now < start + timedelta(hours=1):
             return point["waitTime"]
     return None
-
 
 
 def _plain_name(name):
@@ -40,7 +40,7 @@ def show_start_due(parks, show_name, window_s, now=None):
     `window_s` seconds, in any of `parks`, or None. The API gives no end time, so
     "in progress" means "started less than window_s ago".
     """
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     wanted = _plain_name(show_name)
     for park in parks:
         for attr in park.get("attractions", []):
@@ -50,4 +50,3 @@ def show_start_due(parks, show_name, window_s, now=None):
                 if start <= now < start + timedelta(seconds=window_s):
                     return start
     return None
-

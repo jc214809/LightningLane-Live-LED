@@ -1,5 +1,6 @@
 """The settings page's logo and what it shows of the board: the icon links, the top bar and sign-in wordmark, the
 heartbeat card, park landmarks, the countdown preview, the brightness and rotation previews, the cast list."""
+
 import json
 import shutil
 import subprocess
@@ -13,8 +14,12 @@ from settings_page.page import SCRIPT, document, landmark_src, landmarks, pin_pa
 from utils.trips import Trip, countdown_message
 
 TODAY = date(2026, 11, 8)
-TRIPS = {"trip_countdown": {"enabled": True, "trip_dates": [
-    {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"}, "2027-06-01"]}}
+TRIPS = {
+    "trip_countdown": {
+        "enabled": True,
+        "trip_dates": [{"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"}, "2027-06-01"],
+    }
+}
 
 
 @pytest.fixture(autouse=True)
@@ -33,7 +38,7 @@ def test_every_page_links_the_icon_for_the_tab_and_for_phones():
 
 def test_the_top_bar_has_the_logo_and_the_lightninglane_led_wordmark():
     html = settings_page({}, [])
-    top = html[html.index('<header class="topbar">'):html.index("</header>")]
+    top = html[html.index('<header class="topbar">') : html.index("</header>")]
     assert '<span class="mark"><img src="/static/icon.svg"' in top
     assert '<div class="brand-name">LightningLane</div><div class="brand-sub">LED</div>' in top
     assert "Live LED" not in top
@@ -41,7 +46,7 @@ def test_the_top_bar_has_the_logo_and_the_lightninglane_led_wordmark():
 
 def test_the_sign_in_page_is_crowned_with_the_logo_not_a_lock():
     html = pin_page()
-    card = html[html.index('<div class="card auth signin">'):]
+    card = html[html.index('<div class="card auth signin">') :]
     assert card.index('<div class="auth-hero"><img src="/static/icon.svg"') < card.index("Sign in to this board")
     assert '<div class="brand-name">LightningLane</div>' in card
     assert '<div class="auth-icon">' not in card
@@ -54,6 +59,7 @@ def test_the_static_files_the_pages_name_are_there():
 
 def test_the_phone_icons_are_square_pngs_at_their_sizes():
     from PIL import Image
+
     for name, size in (("apple-touch-icon.png", 180), ("icon-512.png", 512)):
         with Image.open(f"{page.STATIC_DIR}/{name}") as im:
             assert im.format == "PNG" and im.size == (size, size), name
@@ -61,11 +67,13 @@ def test_the_phone_icons_are_square_pngs_at_their_sizes():
 
 def test_the_svg_icon_is_a_square_svg():
     import xml.etree.ElementTree as ET
+
     root = ET.parse(f"{page.STATIC_DIR}/icon.svg").getroot()
     assert root.tag.endswith("svg") and root.get("viewBox") == "0 0 240 240"
 
 
 # --- landmarks
+
 
 def test_each_wdw_park_gets_the_landmark_the_board_plays_and_others_get_title_only():
     assert landmark_src("Magic Kingdom Park") == "/static/landmark-magic-kingdom.png"
@@ -77,6 +85,7 @@ def test_each_wdw_park_gets_the_landmark_the_board_plays_and_others_get_title_on
 
 def test_the_landmark_index_matches_the_boards_own_landmark_choice():
     from display.landmarks.screen import LANDMARKS, landmark_for
+
     assert set(landmarks()) == set(LANDMARKS)
     for park in ("Magic Kingdom Park", "EPCOT", "Disney's Hollywood Studios", "Disney's Animal Kingdom", "Cedar Point"):
         cls = landmark_for(park)
@@ -86,16 +95,16 @@ def test_the_landmark_index_matches_the_boards_own_landmark_choice():
 
 def test_park_chips_show_their_landmark_or_say_title_only():
     html = settings_page({"parks": ["Magic Kingdom", "Cedar Point"]}, [])
-    mk = html[html.index('value="Magic Kingdom"'):html.index('<span class="park-name">Magic Kingdom</span>')]
+    mk = html[html.index('value="Magic Kingdom"') : html.index('<span class="park-name">Magic Kingdom</span>')]
     assert 'src="/static/landmark-magic-kingdom.png"' in mk and '<span class="noland" hidden>' in mk
-    cp = html[html.index('value="Cedar Point"'):html.index('<span class="park-name">Cedar Point</span>')]
+    cp = html[html.index('value="Cedar Point"') : html.index('<span class="park-name">Cedar Point</span>')]
     assert 'src="" alt="" width="64" height="32" hidden>' in cp and '<span class="noland">Title only</span>' in cp
 
 
 def test_the_script_gets_the_landmark_map_for_parks_added_on_the_page():
     html = settings_page({}, [])
-    found = html[html.index('<script type="application/json" id="park-scenes">') + 49:]
-    assert json.loads(found[:found.index("</script>")]) == landmarks()
+    found = html[html.index('<script type="application/json" id="park-scenes">') + 49 :]
+    assert json.loads(found[: found.index("</script>")]) == landmarks()
     assert "parkScenes" in SCRIPT and "name.toLowerCase().includes(key)" in SCRIPT
 
 
@@ -120,18 +129,29 @@ def test_an_index_entry_with_a_path_in_it_is_ignored(tmp_path, monkeypatch):
 
 # --- the heartbeat card
 
-@pytest.mark.parametrize("now, says", [
-    (BoardNow(RUNNING, 12, "2.1.5-beta"), ['<span class="beat">Running</span>', "<b>12 seconds ago</b>",
-                                           "Version <b>2.1.5-beta</b>"]),
-    (BoardNow(SHOW, 2, None, "Happily <Ever> After"), ['<span class="beat">Showtime</span>',
-                                                       "Playing <b>Happily &lt;Ever&gt; After</b>"]),
-    (BoardNow(QUIET, 600), ['<span class="beat quiet">Quiet</span>', "<b>10 minutes ago</b>", "Saving restarts it"]),
-    (BoardNow(NONE), ['<span class="beat none">No word yet</span>']),
-])
+
+@pytest.mark.parametrize(
+    "now, says",
+    [
+        (
+            BoardNow(RUNNING, 12, "2.1.5-beta"),
+            ['<span class="beat">Running</span>', "<b>12 seconds ago</b>", "Version <b>2.1.5-beta</b>"],
+        ),
+        (
+            BoardNow(SHOW, 2, None, "Happily <Ever> After"),
+            ['<span class="beat">Showtime</span>', "Playing <b>Happily &lt;Ever&gt; After</b>"],
+        ),
+        (
+            BoardNow(QUIET, 600),
+            ['<span class="beat quiet">Quiet</span>', "<b>10 minutes ago</b>", "Saving restarts it"],
+        ),
+        (BoardNow(NONE), ['<span class="beat none">No word yet</span>']),
+    ],
+)
 def test_the_board_now_card_says_what_the_heartbeat_says(now, says):
     html = settings_page({}, [], now=now)
-    card = html[html.index('<section class="card board-now"'):]
-    card = card[:card.index("</section>")]
+    card = html[html.index('<section class="card board-now"') :]
+    card = card[: card.index("</section>")]
     for text in says:
         assert text in card
     assert 'src="/static/landmark-magic-kingdom.png"' in card
@@ -144,13 +164,14 @@ def test_without_a_heartbeat_reading_there_is_no_card():
 
 # --- the countdown preview
 
+
 def test_the_countdown_preview_says_what_the_board_says_today_and_tags_that_trip():
     html = settings_page(TRIPS, [], today=TODAY)
     number, lines = countdown_message(Trip(date(2027, 3, 14), date(2027, 3, 19), "Spring Break"), TODAY)
     assert (number, lines) == ("126", ("DAYS TO", "SPRING BREAK"))
     assert '<span class="big">126</span><span class="line">DAYS TO</span><span class="line">SPRING BREAK</span>' in html
     assert 'aria-label="126 DAYS TO SPRING BREAK"' in html and "on March 14, 2027" in html
-    rows = html[html.index('id="trip-list"'):html.index('<template id="trip-row">')]
+    rows = html[html.index('id="trip-list"') : html.index('<template id="trip-row">')]
     assert rows.count("On the board now") == 1
     assert rows.index("On the board now") < rows.index('value="Spring Break"') < rows.index('value="2027-06-01"')
 
@@ -175,9 +196,10 @@ def test_the_countdown_off_or_with_no_trip_ahead_says_so_and_tags_nothing():
 
 # --- brightness, rotation, shows, characters
 
+
 def test_the_display_card_shows_the_castle_at_each_brightness_for_the_script_to_dim():
     html = settings_page({}, [])
-    display = html[html.index('id="display"'):html.index('id="shows"')]
+    display = html[html.index('id="display"') : html.index('id="shows"')]
     for k in ("all", "day", "night"):
         assert f'<img id="pv-{k}" src="/static/landmark-magic-kingdom.png"' in display
     assert "brightnessPreviews" in SCRIPT and "brightness(${0.25 + 0.75 * percent / 100})" in SCRIPT
@@ -185,23 +207,25 @@ def test_the_display_card_shows_the_castle_at_each_brightness_for_the_script_to_
 
 def test_the_panel_card_shows_the_castle_turned_by_rotation():
     html = settings_page({"matrix": {"led_pixel_mapper": "Rotate:180"}}, [])
-    panel = html[html.index('id="panel"'):html.index('id="display"')]
+    panel = html[html.index('id="panel"') : html.index('id="display"')]
     assert '<img id="pv-rot" src="/static/landmark-magic-kingdom.png"' in panel
     assert "'Rotate:180': 'rotate(180deg)'" in SCRIPT
 
 
 def test_the_shows_card_shows_the_castle_the_shows_play_over():
     html = settings_page({}, [])
-    shows = html[html.index('id="shows"'):html.index('id="surprises"')]
+    shows = html[html.index('id="shows"') : html.index('id="surprises"')]
     assert 'src="/static/landmark-magic-kingdom.png" alt="The castle on the board"' in shows
 
 
 def test_the_surprises_card_names_every_character_and_counts_them():
     from settings_page.form import character_label, surprise_names
+
     cast = sorted(character_label(n) for n in surprise_names())
     html = settings_page({}, [])
     assert len(cast) > 10 and f"Choose from all {len(cast)} characters and their chances" in html
     from html import escape
+
     assert "".join(f"<li>{escape(n)}</li>" for n in cast) in html
 
 

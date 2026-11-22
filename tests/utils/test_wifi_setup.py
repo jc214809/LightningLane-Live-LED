@@ -11,6 +11,7 @@ def state(tmp_path):
     def write(text):
         path.write_text(text)
         return str(path)
+
     return write
 
 

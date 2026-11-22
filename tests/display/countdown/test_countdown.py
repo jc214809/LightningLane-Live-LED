@@ -51,8 +51,17 @@ def fake_drawing(monkeypatch):
     monkeypatch.setattr(countdown, "get_text_width", text_width)
 
     def draw_text(canvas, font, x, y, color, text, space_px):
-        canvas.text.append({"font": font.name, "x": x, "y": y, "color": color, "text": text,
-                            "right": x + text_width(font, text, space_px), "top": y - font.baseline})
+        canvas.text.append(
+            {
+                "font": font.name,
+                "x": x,
+                "y": y,
+                "color": color,
+                "text": text,
+                "right": x + text_width(font, text, space_px),
+                "top": y - font.baseline,
+            }
+        )
 
     monkeypatch.setattr(countdown, "draw_text", draw_text)
 
@@ -69,17 +78,21 @@ def render(days, height=32, t=5.0, **trip):
 
 # --- what it says ---
 
-@pytest.mark.parametrize("trip, expected", [
-    (trip_in(42), ("42", ("DAYS TO", "DISNEY"))),
-    (trip_in(2), ("2", ("DAYS TO", "DISNEY"))),
-    (trip_in(42, name="Fall Trip"), ("42", ("DAYS TO", "FALL TRIP"))),
-    (trip_in(1, name="Fall Trip"), (None, ("DISNEY", "TOMORROW"))),
-    (trip_in(0, end=5), (None, ("IT'S", "DISNEY", "DAY!"))),
-    (trip_in(-2, end=3), ("DAY 3", ("OF 6",))),
-    (trip_in(-5, end=0), ("DAY 6", ("OF 6",))),
-    (trip_in(-6, end=-1), (None, ("WELCOME", "HOME!"))),
-    (trip_in(-3), (None, ("HAVE A", "MAGICAL", "TRIP!"))),
-])
+
+@pytest.mark.parametrize(
+    "trip, expected",
+    [
+        (trip_in(42), ("42", ("DAYS TO", "DISNEY"))),
+        (trip_in(2), ("2", ("DAYS TO", "DISNEY"))),
+        (trip_in(42, name="Fall Trip"), ("42", ("DAYS TO", "FALL TRIP"))),
+        (trip_in(1, name="Fall Trip"), (None, ("DISNEY", "TOMORROW"))),
+        (trip_in(0, end=5), (None, ("IT'S", "DISNEY", "DAY!"))),
+        (trip_in(-2, end=3), ("DAY 3", ("OF 6",))),
+        (trip_in(-5, end=0), ("DAY 6", ("OF 6",))),
+        (trip_in(-6, end=-1), (None, ("WELCOME", "HOME!"))),
+        (trip_in(-3), (None, ("HAVE A", "MAGICAL", "TRIP!"))),
+    ],
+)
 def test_countdown_message(trip, expected):
     assert countdown_message(trip, TODAY) == expected
 
@@ -105,10 +118,13 @@ def test_castle_windows_twinkle():
 
 # --- how it's drawn ---
 
+
 def test_days_left_are_drawn_big_and_gold_over_a_red_label():
     drawn = render(42).text
     assert [(t["font"], t["color"], t["text"]) for t in drawn] == [
-        ("number", "gold", "42"), ("label", "red", "DAYS TO"), ("label", "red", "DISNEY"),
+        ("number", "gold", "42"),
+        ("label", "red", "DAYS TO"),
+        ("label", "red", "DISNEY"),
     ]
     assert drawn[0]["y"] < drawn[1]["y"] < drawn[2]["y"], "stacked top to bottom"
 
@@ -150,10 +166,18 @@ def test_spaces_are_half_a_cell():
 
 
 @pytest.mark.parametrize("height", [32, 64])
-@pytest.mark.parametrize("trip", [
-    dict(days=180), dict(days=42, name="Fall Trip"), dict(days=1), dict(days=0),
-    dict(days=-2), dict(days=-2, end=3), dict(days=-6, end=-1),
-])
+@pytest.mark.parametrize(
+    "trip",
+    [
+        dict(days=180),
+        dict(days=42, name="Fall Trip"),
+        dict(days=1),
+        dict(days=0),
+        dict(days=-2),
+        dict(days=-2, end=3),
+        dict(days=-6, end=-1),
+    ],
+)
 def test_everything_stays_on_the_board_and_off_the_castle(height, trip):
     canvas = render(height=height, **trip)
     (cx, cy), (bx, by, bw, bh) = layout(64, height)
@@ -172,6 +196,8 @@ def test_everything_stays_on_the_board_and_off_the_castle(height, trip):
 
 def test_castle_stays_1x_on_64_row_boards():
     small, big = render(42, 32).px, render(42, 64).px
+
     def width(px):
         return max(x for x, _ in px) - min(x for x, _ in px)
+
     assert width(small) == width(big)

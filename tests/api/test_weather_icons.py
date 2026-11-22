@@ -41,6 +41,7 @@ def _get(monkeypatch, behaviour):
     def fake_get(url, timeout=None):
         calls.append((url, timeout))
         return behaviour()
+
     monkeypatch.setattr(weather_icons.requests, "get", fake_get)
     return calls
 
@@ -56,11 +57,14 @@ def test_success_resizes_caches_and_logs_once(monkeypatch):
     assert logged == ["Downloaded weather icon 01d"]
 
 
-@pytest.mark.parametrize("behaviour", [
-    _timeout,
-    lambda: Response(status_error=requests.exceptions.HTTPError("404")),
-    lambda: Response(b"not an image"),
-])
+@pytest.mark.parametrize(
+    "behaviour",
+    [
+        _timeout,
+        lambda: Response(status_error=requests.exceptions.HTTPError("404")),
+        lambda: Response(b"not an image"),
+    ],
+)
 def test_failures_return_none_and_log(monkeypatch, behaviour):
     errors = []
     monkeypatch.setattr(weather_icons.debug, "error", errors.append)
@@ -90,6 +94,7 @@ def test_recovery_after_failure_caches(monkeypatch):
         if not state["ok"]:
             _timeout()
         return Response(_png())
+
     calls = _get(monkeypatch, behaviour)
     now = [0.0]
     monkeypatch.setattr(weather_icons.time, "monotonic", lambda: now[0])

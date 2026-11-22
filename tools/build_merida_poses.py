@@ -5,6 +5,7 @@ board only looks them up: turning her sprites live is far too slow for a Pi Zero
 
 Run from anywhere after changing her poses or the archer's art:  python3 tools/build_merida_poses.py
 """
+
 import json
 import logging
 import os
@@ -23,6 +24,7 @@ def load_poses():
         sys.path.insert(0, ROOT)
     sys.modules.setdefault("driver", types.SimpleNamespace(graphics=None))
     from display.fireworks.actors import merida_poses
+
     return merida_poses
 
 
@@ -31,8 +33,10 @@ def render(frames):
     lines = ['{"note": "Baked by tools/build_merida_poses.py from merida_poses.py; do not edit.", "frames": {']
     keys = list(frames)
     for i, key in enumerate(keys):
-        lines.append("%s: %s%s" % (json.dumps(key), json.dumps(frames[key], separators=(",", ":")),
-                                   "," if i < len(keys) - 1 else ""))
+        lines.append(
+            "%s: %s%s"
+            % (json.dumps(key), json.dumps(frames[key], separators=(",", ":")), "," if i < len(keys) - 1 else "")
+        )
     lines.append("}}")
     return "\n".join(lines) + "\n"
 

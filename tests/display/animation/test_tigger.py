@@ -1,4 +1,5 @@
 """Tigger."""
+
 import pytest
 
 import display.animation as animation

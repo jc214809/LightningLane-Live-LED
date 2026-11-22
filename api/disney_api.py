@@ -1,21 +1,27 @@
 import re
 import ssl
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import aiohttp
 import certifi
 import requests
 
 from api.weather import fetch_weather_data
+from utils import debug
 from utils.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, clean_ride_name, is_water_park
 from utils.special_events import seasonal_event
-from utils import debug
 
-troublesome_attraction_64x64_ids = ["8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0","06c599f9-1ddf-4d47-9157-a992acafc96b", "22f48b73-01df-460e-8969-9eb2b4ae836c",  "9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
-troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4","64a6915f-a835-4226-ba5c-8389fc4cade3"]
+troublesome_attraction_64x64_ids = [
+    "8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0",
+    "06c599f9-1ddf-4d47-9157-a992acafc96b",
+    "22f48b73-01df-460e-8969-9eb2b4ae836c",
+    "9211adc9-b296-4667-8e97-b40cf76108e4",
+    "64a6915f-a835-4226-ba5c-8389fc4cade3",
+]
+troublesome_attraction_64x32_ids = ["9211adc9-b296-4667-8e97-b40cf76108e4", "64a6915f-a835-4226-ba5c-8389fc4cade3"]
 troublesome_attraction_single_ids = ["1e735ffb-4868-47f1-b2cd-2ac1156cd5f0"]
 
-_UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+_UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
 
 # Every synchronous request to the ThemeParks Wiki API uses this timeout so a
 # slow/unreachable API fails fast instead of hanging the caller indefinitely —
@@ -59,14 +65,15 @@ def get_park_entity_info(park_id):
         debug.error(f"Failed to fetch entity info for park {park_id}: {e}")
         return [], None
 
+
 def fetch_park_schedule(park_id):
     """
     Fetch and return the schedule for a specific park using its park_id.
     """
     # Determine today's date and yesterday's date as strings.
     today = datetime.now()
-    today_str = today.strftime('%Y-%m-%d')
-    yesterday_str = (today - timedelta(days=1)).strftime('%Y-%m-%d')
+    today_str = today.strftime("%Y-%m-%d")
+    yesterday_str = (today - timedelta(days=1)).strftime("%Y-%m-%d")
 
     api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/schedule"
     debug.info(f"Fetching schedule for park with ID: {park_id}")
@@ -77,12 +84,11 @@ def fetch_park_schedule(park_id):
         schedule_data = response.json().get("schedule", [])
 
         # Filter schedule events to include only those from today or yesterday.
-        schedule_filtered = [
-            event for event in schedule_data if event.get("date") in (today_str, yesterday_str)
-        ]
+        schedule_filtered = [event for event in schedule_data if event.get("date") in (today_str, yesterday_str)]
 
-        debug.log(f"Schedule for park ID {park_id}: {len(schedule_data)} events, "
-                  f"{len(schedule_filtered)} today or yesterday")
+        debug.log(
+            f"Schedule for park ID {park_id}: {len(schedule_data)} events, {len(schedule_filtered)} today or yesterday"
+        )
         return schedule_filtered
     except requests.RequestException as e:
         debug.error(f"Failed to fetch schedule for park ID {park_id}: {e}")
@@ -103,8 +109,8 @@ def fetch_parks_from_destination(destination_id):
         parks_data = response.json().get("parks", [])
 
         today = datetime.now()
-        today_str = today.strftime('%Y-%m-%d')
-        yesterday_str = (today - timedelta(days=1)).strftime('%Y-%m-%d')
+        today_str = today.strftime("%Y-%m-%d")
+        yesterday_str = (today - timedelta(days=1)).strftime("%Y-%m-%d")
 
         is_disney = destination_id == DISNEY_WORLD_DESTINATION_ID
         filtered_parks = []
@@ -115,21 +121,23 @@ def fetch_parks_from_destination(destination_id):
             if is_water_park(park_name):
                 continue
             schedule = park.get("schedule") or []
-            schedule_filtered = [
-                event for event in schedule if event.get("date") in (today_str, yesterday_str)
-            ]
-            debug.log(f"{park.get('name')} schedule, today and yesterday: "
-                      + (", ".join(f"{e.get('date')} {e.get('type')}" for e in schedule_filtered) or "none"))
+            schedule_filtered = [event for event in schedule if event.get("date") in (today_str, yesterday_str)]
+            debug.log(
+                f"{park.get('name')} schedule, today and yesterday: "
+                + (", ".join(f"{e.get('date')} {e.get('type')}" for e in schedule_filtered) or "none")
+            )
             location, park_timezone = get_park_entity_info(park.get("id"))
-            filtered_parks.append({
-                "name": clean_park_name(park_name) if is_disney else park_name,
-                "id": park.get("id", "Unknown"),
-                "destination_id": destination_id,
-                "schedule": schedule_filtered,
-                "weather": [],
-                "location": location,
-                "timezone": park_timezone
-            })
+            filtered_parks.append(
+                {
+                    "name": clean_park_name(park_name) if is_disney else park_name,
+                    "id": park.get("id", "Unknown"),
+                    "destination_id": destination_id,
+                    "schedule": schedule_filtered,
+                    "weather": [],
+                    "location": location,
+                    "timezone": park_timezone,
+                }
+            )
 
         debug.info(f"Found {len(filtered_parks)} parks for destination {destination_id}.")
         return filtered_parks
@@ -221,10 +229,10 @@ def fetch_parks_and_attractions(disney_park_list):
                     "name": get_attraction_name(item),
                     "entityType": item.get("entityType"),
                     "parkId": park_id,
-                    "waitTime": '',      # Placeholder for wait time
-                    "status": '',        # Placeholder for status
-                    "lastUpdatedTs": '',  # Placeholder for timestamp
-                    "updateSource": ''    # "rest" or "websocket": which path wrote it last
+                    "waitTime": "",  # Placeholder for wait time
+                    "status": "",  # Placeholder for status
+                    "lastUpdatedTs": "",  # Placeholder for timestamp
+                    "updateSource": "",  # "rest" or "websocket": which path wrote it last
                 }
                 attractions.append(attraction)
         debug.info(f"{len(attractions)} were found in {park_name}")
@@ -240,7 +248,7 @@ def fetch_parks_and_attractions(disney_park_list):
             "llmpPrice": determine_llmp_price(operating_event),
             "weather": fetch_weather_data(location.get("latitude"), location.get("longitude")),
             "location": location,
-            "timezone": park_info.get("timezone")
+            "timezone": park_info.get("timezone"),
         }
         parks.append(park_obj)
     return parks
@@ -264,7 +272,7 @@ def get_down_time(last_updated_date):
     try:
         normalized = last_updated_date.replace("Z", "+00:00")
         target_date = datetime.fromisoformat(normalized)
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
         time_diff = current_time - target_date
         minutes = time_diff.total_seconds() / 60
         return round(minutes)
@@ -416,11 +424,7 @@ def refresh_park_attractions(park):
         return
 
     park["seasonalEvent"] = seasonal_event(children)
-    fresh = {
-        item["id"]: item
-        for item in children
-        if item.get("entityType") in ("ATTRACTION", "SHOW")
-    }
+    fresh = {item["id"]: item for item in children if item.get("entityType") in ("ATTRACTION", "SHOW")}
 
     existing = park.get("attractions", [])
 
@@ -431,17 +435,19 @@ def refresh_park_attractions(park):
     existing_ids = {a["id"] for a in existing}
     for attr_id, item in fresh.items():
         if attr_id not in existing_ids:
-            existing.append({
-                "id": attr_id,
-                "name": get_attraction_name(item),
-                "entityType": item.get("entityType"),
-                "parkId": park_id,
-                "waitTime": "",
-                "status": "",
-                "lastUpdatedTs": "",
-                "updateSource": "",
-                "down_since": ""
-            })
+            existing.append(
+                {
+                    "id": attr_id,
+                    "name": get_attraction_name(item),
+                    "entityType": item.get("entityType"),
+                    "parkId": park_id,
+                    "waitTime": "",
+                    "status": "",
+                    "lastUpdatedTs": "",
+                    "updateSource": "",
+                    "down_since": "",
+                }
+            )
             debug.info(f"New attraction added to {park_name}: {get_attraction_name(item)}")
 
     before = len(existing)

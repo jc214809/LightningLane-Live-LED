@@ -42,8 +42,15 @@ class FigmentReveal(FlyByReveal):
         ".........O.....O.................",
     ]
     colors = {
-        "V": (213, 103, 254), "v": (150, 20, 210), "P": (255, 145, 247), "M": (255, 74, 241),
-        "Y": (255, 242, 0), "O": (255, 120, 20), "o": (191, 48, 0), "T": (99, 7, 12), "K": (20, 20, 20),
+        "V": (213, 103, 254),
+        "v": (150, 20, 210),
+        "P": (255, 145, 247),
+        "M": (255, 74, 241),
+        "Y": (255, 242, 0),
+        "O": (255, 120, 20),
+        "o": (191, 48, 0),
+        "T": (99, 7, 12),
+        "K": (20, 20, 20),
     }
     dust_colors = [(210, 140, 255), (255, 255, 255), (140, 220, 255)]
 
@@ -61,6 +68,14 @@ class FigmentReveal(FlyByReveal):
 
     def spawn(self, x, y):
         r = self.rng
-        return [[x + r.uniform(0, self.sprite_w / 3), y + r.uniform(self.sprite_h / 3, self.sprite_h),
-                 r.uniform(-0.2, 0.1), r.uniform(0.05, 0.3), r.randint(10, 20), r.choice(self.dust_colors)]
-                for _ in range(2)]
+        return [
+            [
+                x + r.uniform(0, self.sprite_w / 3),
+                y + r.uniform(self.sprite_h / 3, self.sprite_h),
+                r.uniform(-0.2, 0.1),
+                r.uniform(0.05, 0.3),
+                r.randint(10, 20),
+                r.choice(self.dust_colors),
+            ]
+            for _ in range(2)
+        ]

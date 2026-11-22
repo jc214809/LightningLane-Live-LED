@@ -7,7 +7,6 @@ import pytest
 
 import display.landmarks as landmarks
 from display.landmarks import grumpy as gr
-
 from tests.display.landmarks.support import _scene_s
 
 BOARDS = [(64, 32), (64, 64)]
@@ -38,7 +37,9 @@ def test_he_stands_whole_on_the_bottom_edge(w, h):
 @pytest.mark.parametrize("w, h", BOARDS)
 def test_the_title_names_his_race_and_stays_clear_of_him_on_the_ground(w, h):
     scene = _scene(w, h)
-    by_colour = {rgb: " ".join(text for _, text, _, _, c in scene.title_spec if c == rgb) for rgb in (gr.WHITE, gr.GOLD)}
+    by_colour = {
+        rgb: " ".join(text for _, text, _, _, c in scene.title_spec if c == rgb) for rgb in (gr.WHITE, gr.GOLD)
+    }
     assert by_colour[gr.GOLD] == "CHALLENGE 19.3", "not the half: his race is the 10K and the half, 19.3 miles"
     assert by_colour[gr.WHITE].replace(" ", "") == "WINE&DINE"
     assert all(0 <= x < w and 0 <= y < h for x, y in scene.text), "the title isn't clipped"
@@ -63,8 +64,12 @@ def test_he_taps_a_foot_then_hops_once(w, h):
 def test_a_tap_lifts_only_the_toe(w, h):
     scene = _scene(w, h)
     top, bottom, left, right = gr.TOE_64 if h >= 64 else gr.TOE_32
-    changed = {(c, r) for r, (a, b) in enumerate(zip(scene.art, scene.tapping_art))
-               for c, (x, y) in enumerate(zip(a, b)) if x != y}
+    changed = {
+        (c, r)
+        for r, (a, b) in enumerate(zip(scene.art, scene.tapping_art))
+        for c, (x, y) in enumerate(zip(a, b))
+        if x != y
+    }
     assert changed, "the toe moves"
     assert all(left <= c <= right and top - 1 <= r <= bottom for c, r in changed)
 
@@ -77,14 +82,17 @@ def test_his_shoes_are_outlined_all_round_and_the_tapping_toe_moves_whole(w, h):
         for r in range(len(art)):
             for c in range(len(art[0])):
                 if art[r][c] == "T":
-                    around = [art[r + dr][c + dc] if 0 <= c + dc < len(art[0]) and 0 <= r + dr < len(art) else "."
-                              for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1))]
+                    around = [
+                        art[r + dr][c + dc] if 0 <= c + dc < len(art[0]) and 0 <= r + dr < len(art) else "."
+                        for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1))
+                    ]
                     assert "." not in around, ("the shoe touches the sky", r, c)
     for r in range(top, bottom + 1):  # the toe, outline and all, a row up
-        assert scene.tapping_art[r - 1][left:right + 1] == "".join(
+        assert scene.tapping_art[r - 1][left : right + 1] == "".join(
             ch if (r > top or ch != ".") else scene.art[r - 1][left + i]
-            for i, ch in enumerate(scene.art[r][left:right + 1]))
-    assert set(scene.tapping_art[bottom][left:right + 1]) == {"."}, "nothing left behind"
+            for i, ch in enumerate(scene.art[r][left : right + 1])
+        )
+    assert set(scene.tapping_art[bottom][left : right + 1]) == {"."}, "nothing left behind"
 
 
 @pytest.mark.parametrize("w, h", BOARDS)

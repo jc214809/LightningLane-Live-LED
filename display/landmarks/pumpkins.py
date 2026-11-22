@@ -5,10 +5,9 @@ the friendly Mickey one built on it, which replaces Magic Kingdom's castle on pa
 
 import math
 
-from utils.special_events import special_event_hours
-
 from display.landmarks.scene import Landmark
 from display.motion import ramp, smooth
+from utils.special_events import special_event_hours
 
 
 class ScaryJackOLanternLandmark(Landmark):
@@ -55,8 +54,7 @@ class ScaryJackOLanternLandmark(Landmark):
                 if n in self.shell and n not in carved:
                     self.shell[n] = self.CUT_RIM
         self.flicker = [(self.rng.uniform(5, 9), self.rng.uniform(11, 17), self.rng.uniform(0, 6.3)) for _ in range(2)]
-        self.mist = [(self.rng.uniform(0, w), self.rng.uniform(0.6, 1.4), self.rng.uniform(3, 7))
-                     for _ in range(4)]
+        self.mist = [(self.rng.uniform(0, w), self.rng.uniform(0.6, 1.4), self.rng.uniform(3, 7)) for _ in range(4)]
 
     def _layout(self):
         """Head radius and centre. Proportions follow the height so the pumpkin fills the board."""
@@ -162,8 +160,11 @@ class ScaryJackOLanternLandmark(Landmark):
             phase = self.mist[i][0]
             for x in range(w):
                 # Two sine waves at different scales give a rolling, uneven top edge.
-                wave = 0.55 + 0.35 * math.sin(k * x + speed * t + phase) \
+                wave = (
+                    0.55
+                    + 0.35 * math.sin(k * x + speed * t + phase)
                     + 0.15 * math.sin(2.3 * k * x - 1.7 * speed * t + 2 * phase)
+                )
                 top = top_max * wave
                 # Brighter and fainter wisps drift along the band, so it swirls rather than sits.
                 swirl = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(0.6 * k * x + 1.4 * speed * t + phase + 1))
@@ -269,7 +270,7 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
     def _head_half_width(self, y):
         """Half the head's width at row y (0 above or below it)."""
         dy = abs(y - self.cy)
-        return math.sqrt(self.R ** 2 - dy ** 2) if dy < self.R else 0.0
+        return math.sqrt(self.R**2 - dy**2) if dy < self.R else 0.0
 
     def _party_hours(self):
         """The special event's (start, end) like ("7PM", "12AM"), from the park's schedule, or None."""
@@ -279,12 +280,16 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
         lit = self._lit(t)
         if not lit:
             return []
+
         def fade(rgb, k=lit):
             return tuple(int(c * k) for c in rgb)
+
         if self.short:
             return self._short_title(t, fade)
-        lines = [(text, self.width / 2, 1 + i * (self.TITLE_ROW_H + 1), fade(rgb))
-                 for i, (text, rgb) in enumerate(self.TITLE_TALL)]
+        lines = [
+            (text, self.width / 2, 1 + i * (self.TITLE_ROW_H + 1), fade(rgb))
+            for i, (text, rgb) in enumerate(self.TITLE_TALL)
+        ]
         shown = ramp(t, self._motion_start(), self.MIST_HOURS_FADE_S)
         if self.hours and shown:
             # In the mist on the bottom rows, centred in the gaps beside the pumpkin's base.
@@ -313,8 +318,10 @@ class FriendlyJackOLanternLandmark(ScaryJackOLanternLandmark):
             start, end = self.hours
             rows = (("TONIGHT", self.GOLD), (f"{start} TO", self.HOURS_RGB), (end, self.HOURS_RGB))
             top = (self.height - len(rows) * self.TITLE_ROW_H) // 2 + 1
-            lines += [(text, self.width - 16, top + i * self.TITLE_ROW_H, fade(rgb, shown * self._lit(t)))
-                      for i, (text, rgb) in enumerate(rows)]
+            lines += [
+                (text, self.width - 16, top + i * self.TITLE_ROW_H, fade(rgb, shown * self._lit(t)))
+                for i, (text, rgb) in enumerate(rows)
+            ]
         return lines
 
     def _paint_pumpkin(self, cx, cy, r):

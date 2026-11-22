@@ -24,8 +24,7 @@ class WallEReveal(CapturesScreens):
     ENTER_S, LOOK_S, SWEEP_S, FLY_S, DROP_S, LEAVE_S = 0.8, 0.9, 0.9, 0.3, 0.3, 1.0
     COMPACT_S = SWEEP_S + FLY_S
     # The visit, in order; "compact" is when the old screen is eaten and "leave" is last.
-    PHASES = (("enter", ENTER_S), ("look", LOOK_S), ("compact", COMPACT_S), ("drop", DROP_S),
-              ("leave", LEAVE_S))
+    PHASES = (("enter", ENTER_S), ("look", LOOK_S), ("compact", COMPACT_S), ("drop", DROP_S), ("leave", LEAVE_S))
     duration = sum(s for _, s in PHASES)
     STOP_X = 3
     BLINK_AT, BLINK_S = 0.55, 0.14  # into the look
@@ -97,8 +96,7 @@ class WallEReveal(CapturesScreens):
         super().capture_prev(prev_draw, prev_t)
         ix, iy = self.intake()
         # Nearest first: each pixel lifts off when the sweep front reaches it.
-        self.flights = sorted(
-            (math.hypot(x - ix, y - iy), x, y, rgb) for (x, y), rgb in self.prev_px.items())
+        self.flights = sorted((math.hypot(x - ix, y - iy), x, y, rgb) for (x, y), rgb in self.prev_px.items())
         # The cube is made of what he ate: its most common colours, dimmed by the squash.
         counts = {}
         for rgb in self.prev_px.values():
@@ -207,8 +205,9 @@ class WallEReveal(CapturesScreens):
                 x = self.walle_x(at)
                 for side_x, push in ((x, -1), (x + self.sprite_w - 1, 1)):
                     for _ in range(4):
-                        self.dust.append([side_x, self.height - 1.5, at,
-                                          push * self.rng.uniform(4, 10), -self.rng.uniform(2, 6)])
+                        self.dust.append(
+                            [side_x, self.height - 1.5, at, push * self.rng.uniform(4, 10), -self.rng.uniform(2, 6)]
+                        )
         self.dust = [d for d in self.dust if t - d[2] < 0.5]
         self._t = t
 
@@ -288,9 +287,17 @@ class WallESideReveal(WallEReveal):
     ENTER_S, LOOK_S, SWEEP_S, FLY_S, LEAVE_S = 0.8, 0.8, 0.9, 0.3, 1.0
     OPEN_S, CLOSE_S, PRESS_S, EJECT_S, PICKUP_S = 0.15, 0.15, 0.5, 0.45, 0.45
     COMPACT_S = SWEEP_S + FLY_S
-    PHASES = (("enter", ENTER_S), ("look", LOOK_S), ("open", OPEN_S), ("compact", COMPACT_S),
-              ("close", CLOSE_S), ("press", PRESS_S), ("eject", EJECT_S), ("pickup", PICKUP_S),
-              ("leave", LEAVE_S))
+    PHASES = (
+        ("enter", ENTER_S),
+        ("look", LOOK_S),
+        ("open", OPEN_S),
+        ("compact", COMPACT_S),
+        ("close", CLOSE_S),
+        ("press", PRESS_S),
+        ("eject", EJECT_S),
+        ("pickup", PICKUP_S),
+        ("leave", LEAVE_S),
+    )
     duration = sum(s for _, s in PHASES)
     BLINK_AT = 0.45
 
@@ -388,8 +395,10 @@ class WallESideReveal(WallEReveal):
     def door_angle(self, t):
         """0 shut to 1 lying flat open: it swings open to collect and to eject, and shut after each."""
         phase, p = self._phase(t)
+
         def swing(q):
             return ease_out(min(1.0, q / self.DOOR_SWING_S))
+
         if phase == "open":
             return swing(p)
         if phase == "compact":
@@ -432,8 +441,9 @@ class WallESideReveal(WallEReveal):
         if phase == "eject":
             q = p / self.EJECT_S
             if q < 0.6:  # slides out of the door...
-                return self.FRONT_COL - self.CUBE_SIZE + ease_out(q / 0.6) * (ground_x - self.FRONT_COL + self.CUBE_SIZE), \
-                    self.CUBE_OUT_ROW
+                return self.FRONT_COL - self.CUBE_SIZE + ease_out(q / 0.6) * (
+                    ground_x - self.FRONT_COL + self.CUBE_SIZE
+                ), self.CUBE_OUT_ROW
             fall = ((q - 0.6) / 0.4) ** 2  # ...and drops to the ground
             return ground_x, self.CUBE_OUT_ROW + fall * (ground_y - self.CUBE_OUT_ROW)
         if phase == "pickup" and p < self.PICKUP_S / 2:

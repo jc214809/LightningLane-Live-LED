@@ -1,6 +1,6 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Iterable, Optional
 
 from utils import debug
 
@@ -13,8 +13,8 @@ WELCOME_HOME_DAYS = 2
 @dataclass(frozen=True)
 class Trip:
     start: date
-    end: Optional[date] = None
-    name: Optional[str] = None
+    end: date | None = None
+    name: str | None = None
 
     def shown_until(self):
         """Last day this trip still owns the countdown screen."""
@@ -61,7 +61,7 @@ def parse_trips(config):
     return trips
 
 
-def active_trip(trips: Iterable[Trip], today: Optional[date] = None) -> Optional[Trip]:
+def active_trip(trips: Iterable[Trip], today: date | None = None) -> Trip | None:
     """
     The one trip the countdown shows: a trip under way (or just finished) wins,
     the latest-starting one if several are; otherwise the nearest upcoming trip.

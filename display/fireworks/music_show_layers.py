@@ -3,11 +3,11 @@ The layers of a music show's frame: the sky (stars, sparks, rockets, lanterns, e
 star, Tink's dust), the castle, Tink and the white flash, each drawn onto the {(x, y): rgb} dict that
 MusicShow.frame_pixels builds. Split out of music_show.py, whose MusicShow takes them as methods.
 """
+
 import math
 
 from display.animation.characters.tink import TinkReveal
 from display.motion import smooth
-
 
 _STAINED_GLASS = ((255, 200, 60), (70, 120, 255), (220, 50, 60), (255, 230, 140))
 _FLICKERS = {"fire"}
@@ -53,9 +53,11 @@ class _CastleFrame:
         glow = self._lit.get(base)
         if glow is None:
             fr, fg, fb = self.flash
-            glow = self._lit[base] = (min(255, int(base[0] * 0.75 + 110 * fr)),
-                                      min(255, int(base[1] * 0.75 + 110 * fg)),
-                                      min(255, int(base[2] * 0.75 + 110 * fb)))
+            glow = self._lit[base] = (
+                min(255, int(base[0] * 0.75 + 110 * fr)),
+                min(255, int(base[1] * 0.75 + 110 * fg)),
+                min(255, int(base[2] * 0.75 + 110 * fb)),
+            )
         return glow
 
     def dim(self, base):
@@ -79,8 +81,11 @@ class FrameLayers:
             f = s.life / s.max_life
             hot = max(0.0, (f - 0.8) / 0.2)
             r, g, b = s.color
-            put(s.x, s.y, (int((r + (255 - r) * hot) * f), int((g + (255 - g) * hot) * f),
-                           int((b + (255 - b) * hot) * f)))
+            put(
+                s.x,
+                s.y,
+                (int((r + (255 - r) * hot) * f), int((g + (255 - g) * hot) * f), int((b + (255 - b) * hot) * f)),
+            )
             if f > 0.5:
                 put(s.x - s.vx * 1.5, s.y - s.vy * 1.5, (int(r * f * 0.35), int(g * f * 0.35), int(b * f * 0.35)))
 
@@ -182,7 +187,7 @@ class FrameLayers:
         colours, shown, glass, tints = castle.colours, castle.shown, castle.glass, castle
         flicker, wipe = castle.flicker, castle.wipe
         rows = {}  # a wipe's colours for each row of the castle, worked out once a frame
-        for dx, dy, kind in ((self.castle_shape or self.castle_pixels) if shown > 0.01 else ()):
+        for dx, dy, kind in (self.castle_shape or self.castle_pixels) if shown > 0.01 else ():
             x, y = self.castle_x + dx, self.castle_y + dy
             if not (0 <= x < self.width and 0 <= y < self.height):
                 continue
@@ -205,8 +210,10 @@ class FrameLayers:
         row = rows.get(dy)
         if row is None:
             f = smooth(wipe * 2 - dy / self.castle_h)
-            row = rows[dy] = {k: tuple(int(a + (b - a) * f) for a, b in zip(self.castle_from[k], to))
-                              for k, to in self.castle_to.items()}
+            row = rows[dy] = {
+                k: tuple(int(a + (b - a) * f) for a, b in zip(self.castle_from[k], to))
+                for k, to in self.castle_to.items()
+            }
         return row
 
     def _draw_tink(self, out):

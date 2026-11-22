@@ -77,9 +77,16 @@ class DumboReveal(FlyByReveal):
     art = EARS_UP
     poses = [EARS_UP, EARS_DOWN]
     colors = {
-        "P": (238, 170, 182), "D": (176, 132, 142), "G": (150, 158, 172),
-        "L": (196, 204, 218), "K": (30, 32, 42), "E": (252, 252, 252),
-        "B": (30, 34, 52), "W": (252, 252, 252), "Y": (250, 206, 60), "U": (55, 110, 215),
+        "P": (238, 170, 182),
+        "D": (176, 132, 142),
+        "G": (150, 158, 172),
+        "L": (196, 204, 218),
+        "K": (30, 32, 42),
+        "E": (252, 252, 252),
+        "B": (30, 34, 52),
+        "W": (252, 252, 252),
+        "Y": (250, 206, 60),
+        "U": (55, 110, 215),
     }
     feather_colors = [(255, 255, 255), (238, 240, 250), (255, 235, 170)]
 
@@ -102,15 +109,20 @@ class DumboReveal(FlyByReveal):
     def spawn(self, x, y):
         # Feather-puffs shed off the trailing (left) ear, drifting back and down.
         r = self.rng
-        return [[x + r.uniform(0, self.sprite_w * 0.35),
-                 y + self.sprite_h * r.uniform(0.25, 0.75),
-                 r.uniform(-0.45, -0.05), r.uniform(-0.05, 0.25),
-                 r.randint(10, 22), r.choice(self.feather_colors)]
-                for _ in range(2 * self.scale)]
+        return [
+            [
+                x + r.uniform(0, self.sprite_w * 0.35),
+                y + self.sprite_h * r.uniform(0.25, 0.75),
+                r.uniform(-0.45, -0.05),
+                r.uniform(-0.05, 0.25),
+                r.randint(10, 22),
+                r.choice(self.feather_colors),
+            ]
+            for _ in range(2 * self.scale)
+        ]
 
     def _draw_sprite(self, canvas, t):
         """Same as the base draw, but picks the flap pose for this moment."""
         art = self.poses[self.flap_frame(t)]
         x0, y0 = self.position(t)
-        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.colors, self.scale),
-              self.width, self.height)
+        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.colors, self.scale), self.width, self.height)

@@ -64,8 +64,10 @@ def test_each_effect_clears_away_after_its_scene(name):
 def _leftovers(show):
     """Anything an effect still draws once its scene is long over."""
     pixels = {}
+
     def put(x, y, rgb):
         return pixels.__setitem__((int(x), int(y)), rgb)
+
     for effect in show.extras.values():
         effect.draw_behind(put, pixels, False)
         effect.draw_front(put, pixels, False)
@@ -149,11 +151,14 @@ def test_the_keyhole_stays_open_into_the_next_scene_that_keeps_it():
     assert keyhole.opened() == 0
 
 
-@pytest.mark.parametrize("name, colours", [
-    ("searchlights", show_effects.Searchlights.COLOURS),
-    ("searchlights_green", show_effects.GreenSearchlights.COLOURS),
-    ("searchlights_teal", show_effects.TealSearchlights.COLOURS),
-])
+@pytest.mark.parametrize(
+    "name, colours",
+    [
+        ("searchlights", show_effects.Searchlights.COLOURS),
+        ("searchlights_green", show_effects.GreenSearchlights.COLOURS),
+        ("searchlights_teal", show_effects.TealSearchlights.COLOURS),
+    ],
+)
 def test_searchlights_shine_in_their_colours(name, colours):
     show = MusicShow(64, 32, random.Random(14))
     show.set_cue(_cue(effects=(name,)), 1)
@@ -185,14 +190,16 @@ def test_fanfare_searchlights_cross_over_the_spire_then_fan_out_wide_then_fade()
     assert all(tip < foot for foot, tip in wide[:2]) and all(tip > foot for foot, tip in wide[2:]), "fanned out"
     pixels = {}
     show.set_cue(_cue(effects=("searchlights_fanfare",)), 13.0)
-    show.extras["searchlights_fanfare"].draw_behind(lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb),
-                                                    pixels, True)
+    show.extras["searchlights_fanfare"].draw_behind(
+        lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb), pixels, True
+    )
     feet = {(int(foot), show.height - 1) for foot, _ in wide}
     assert feet <= set(pixels), "four beams"
     pixels.clear()
     show.set_cue(_cue(effects=("searchlights_fanfare",)), 18.0)
-    show.extras["searchlights_fanfare"].draw_behind(lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb),
-                                                    pixels, True)
+    show.extras["searchlights_fanfare"].draw_behind(
+        lambda x, y, rgb: pixels.__setitem__((int(x), int(y)), rgb), pixels, True
+    )
     assert not any(any(rgb) for rgb in pixels.values()), "gone before the narrator"
 
 
@@ -292,21 +299,26 @@ def test_willow_bursts_hang_in_gold():
     show = MusicShow(64, 32, random.Random(19))
     show.set_cue(_cue(effects=("willow",)), 0)
     from display.fireworks.music_show import WILLOW_RGB, _Rocket
+
     for _ in range(10):
         show._explode(_Rocket(32, 10, 0, -1, 10, (0, 0, 255)))
     gold = [s for s in show.sparks if s.color == WILLOW_RGB]
     assert gold and min(s.life for s in gold) >= 60, "long-lived gold"
 
 
-@pytest.mark.parametrize("shape, colours", [
-    ("lion", {(255, 200, 60), (220, 60, 30)}),
-    ("smiley", {(255, 220, 40)}),
-    ("bullseye", {(230, 40, 40), (255, 255, 255)}),
-])
+@pytest.mark.parametrize(
+    "shape, colours",
+    [
+        ("lion", {(255, 200, 60), (220, 60, 30)}),
+        ("smiley", {(255, 220, 40)}),
+        ("bullseye", {(230, 40, 40), (255, 255, 255)}),
+    ],
+)
 def test_coloured_shapes_burst_in_their_own_colours(shape, colours):
     show = MusicShow(64, 64, random.Random(9))
     show.set_cue(_cue(), 0)
     from display.fireworks.music_show import _Rocket
+
     show._explode(_Rocket(32, 20, 0, -1, 20, (0, 0, 255), shape))
     assert {s.color for s in show.sparks} == colours
 
@@ -316,6 +328,7 @@ def test_plain_shapes_burst_in_the_rockets_colour(shape):
     show = MusicShow(64, 64, random.Random(10))
     show.set_cue(_cue(), 0)
     from display.fireworks.music_show import _Rocket
+
     show._explode(_Rocket(32, 20, 0, -1, 20, (0, 0, 255), shape))
     colours = {s.color for s in show.sparks}
     assert (0, 0, 255) in colours and len(colours) <= 2, "a door's knob is gold"
@@ -340,6 +353,7 @@ def test_every_scene_in_the_show_has_a_look():
 
 
 # ---- the castle's own looks: the keyhole's magic, the gold trace ----
+
 
 def _wall(show, low=True):
     """A wall LED near the castle's bottom (or top) on the board."""

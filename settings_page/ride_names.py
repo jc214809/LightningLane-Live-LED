@@ -7,6 +7,7 @@ and live data) at most once a day, or when the board's parks change, and kept in
 hotspot, with no internet, still gets the list. Fetches run in the background: a page never waits on the API.
 Same shape as park_names.py.
 """
+
 import json
 import os
 import ssl
@@ -32,8 +33,9 @@ FORMAT = 2
 
 def _get_json(url):
     request = urllib.request.Request(url, headers={"User-Agent": "LightningLane-Live-LED settings page"})
-    with urllib.request.urlopen(request, timeout=TIMEOUT_S,
-                                context=ssl.create_default_context(cafile=certifi.where())) as response:
+    with urllib.request.urlopen(
+        request, timeout=TIMEOUT_S, context=ssl.create_default_context(cafile=certifi.where())
+    ) as response:
         return json.load(response)
 
 
@@ -61,8 +63,11 @@ def fetch_rides(park_names, keep=None):
                 rides[park] = list(keep[park])
             continue
         waiting = {entry.get("id") for entry in live if _has_wait_queue(entry)}
-        listed = {c.get("id"): clean_ride_name(c["name"]).strip() for c in children
-                  if isinstance(c, dict) and c.get("entityType") in KINDS and isinstance(c.get("name"), str)}
+        listed = {
+            c.get("id"): clean_ride_name(c["name"]).strip()
+            for c in children
+            if isinstance(c, dict) and c.get("entityType") in KINDS and isinstance(c.get("name"), str)
+        }
         names = {name for ride_id, name in listed.items() if ride_id in waiting}
         names |= set((keep or {}).get(park, [])) & set(listed.values())
         rides[park] = sorted((n for n in names if n), key=str.lower)
@@ -127,8 +132,10 @@ class RideNames:
         except Exception as e:  # a bad reply or full disk: log it, keep the old list, retry later
             with self.lock:
                 have = bool(self.rides)
-            debug.warning(f"Settings page: couldn't refresh the ride list ({type(e).__name__}: {e}); "
-                          f"{'keeping the last one' if have else 'the pickers stay empty until it works'}.")
+            debug.warning(
+                f"Settings page: couldn't refresh the ride list ({type(e).__name__}: {e}); "
+                f"{'keeping the last one' if have else 'the pickers stay empty until it works'}."
+            )
             return False
         finally:
             with self.lock:

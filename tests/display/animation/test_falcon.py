@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas, _striped_screen, fill
 
 
@@ -36,7 +35,10 @@ def test_falcon_keeps_her_silhouette():
     art = animation.FalconReveal.ART
     mid = len(art) // 2
     assert art[mid].rstrip(".").endswith("K") and art[mid].rstrip(".") != art[mid], "the gap between the mandibles"
-    assert art[mid - 1].rstrip(".") > art[mid].rstrip(".") and len(art[mid - 1].rstrip(".")) > len(art[mid].rstrip(".")) + 5
+    assert (
+        art[mid - 1].rstrip(".") > art[mid].rstrip(".")
+        and len(art[mid - 1].rstrip(".")) > len(art[mid].rstrip(".")) + 5
+    )
     assert "W" in art[-2], "the cockpit tube hangs off the bottom edge, her starboard side seen from above"
     assert all(row.lstrip(".").startswith("E") for row in art[5:16]), "the engine band runs along her back"
 
@@ -83,7 +85,9 @@ def test_falcon_story_plays_in_order():
     assert [n for n, _ in falcon.PHASES] == ["arrive", "cruise", "charge", "jump", "flash"]
     cool, hot = falcon.engine_rgb(falcon.phase_start("cruise")), falcon.engine_rgb(falcon.phase_start("jump"))
     assert sum(hot) > sum(cool) + 150, "the engine band flares before she jumps"
-    assert falcon.old_stretch(falcon.phase_start("jump") - 0.01) == (0.0, 1.0), "the old screen holds still until the jump"
+    assert falcon.old_stretch(falcon.phase_start("jump") - 0.01) == (0.0, 1.0), (
+        "the old screen holds still until the jump"
+    )
     shift, stretch = falcon.old_stretch(falcon.phase_start("jump") + falcon.JUMP_S * 0.7)
     assert shift > 0 and stretch > 2, "then streaks off to the right"
 

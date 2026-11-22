@@ -14,8 +14,10 @@ class TreeOfLifeLandmark(Landmark):
         self._draw_trunk()
         self._draw_canopy()
         self._draw_branches()
-        self.flies = [(self.rng.uniform(0, 2 * math.pi), self.rng.uniform(0.7, 1.25), self.rng.uniform(0, 2 * math.pi))
-                      for _ in range(10 * self.scale)]
+        self.flies = [
+            (self.rng.uniform(0, 2 * math.pi), self.rng.uniform(0.7, 1.25), self.rng.uniform(0, 2 * math.pi))
+            for _ in range(10 * self.scale)
+        ]
 
     def _draw_trunk(self):
         """Short and massive, flaring into wide roots at the ground."""
@@ -23,7 +25,7 @@ class TreeOfLifeLandmark(Landmark):
         top_half, base_half = w * 0.1, w * 0.27
         for y in range(self.trunk_top, h):
             p = (y - self.trunk_top) / max(1, h - 1 - self.trunk_top)
-            half = top_half + (base_half - top_half) * p ** 2.2
+            half = top_half + (base_half - top_half) * p**2.2
             for x in range(int(self.cx - half), int(self.cx + half) + 1):
                 twist = int(2 * s * math.sin(y / (3 * s) + x / (5 * s)))
                 groove = (x + twist) % (3 * s) == 0

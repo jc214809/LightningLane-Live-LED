@@ -3,22 +3,20 @@ Which landmark a park gets (landmark_for) and how one plays as a screen (landmar
 """
 
 from display.display import get_text_width, loaded_fonts
-from driver import graphics
-from utils.special_events import SPECIAL_EVENTS
-
-from display.landmarks.scene import TITLE_SHADOW_RGB
 from display.landmarks.castle import CastleLandmark
+from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # noqa: F401  likewise
+from display.landmarks.jollywood_tower import JollywoodTowerLandmark  # noqa: F401  likewise
+from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # noqa: F401  likewise
+from display.landmarks.pumpkins import FriendlyJackOLanternLandmark, ScaryJackOLanternLandmark  # noqa: F401  looked up by class name for parties (landmark_for)
+from display.landmarks.santa_train import SantaTrainLandmark  # noqa: F401  looked up by class name for its party (landmark_for)
+from display.landmarks.scene import TITLE_SHADOW_RGB
 from display.landmarks.spaceship_earth import SpaceshipEarthLandmark
+from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # noqa: F401  likewise
 from display.landmarks.tower_of_terror import TowerOfTerrorLandmark
 from display.landmarks.tree_of_life import TreeOfLifeLandmark
-from display.landmarks.pumpkins import FriendlyJackOLanternLandmark, ScaryJackOLanternLandmark  # noqa: F401  looked up by class name for parties (landmark_for)
 from display.landmarks.wine_and_dine import WineAndDine5KLandmark  # noqa: F401  looked up by class name for its race day (landmark_for)
-from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # noqa: F401  likewise
-from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # noqa: F401  likewise
-from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # noqa: F401  likewise
-from display.landmarks.santa_train import SantaTrainLandmark  # noqa: F401  looked up by class name for its party (landmark_for)
-from display.landmarks.jollywood_tower import JollywoodTowerLandmark  # noqa: F401  likewise
-
+from driver import graphics
+from utils.special_events import SPECIAL_EVENTS
 
 LANDMARKS = {
     "magic kingdom": CastleLandmark,
@@ -45,6 +43,7 @@ def landmark_for(park_name, party=None, dated=None):
 
 def landmark_screen(landmark):
     """Adapt a Landmark to show_screen's draw(canvas, t) contract; it animates for its whole hold."""
+
     def draw(canvas, t):
         for (x, y), (r, g, b) in landmark.frame(t).items():
             canvas.SetPixel(x, y, r, g, b)
@@ -59,5 +58,6 @@ def landmark_screen(landmark):
                 graphics.DrawText(canvas, font, x + 1, y + 1, shadow, text)
                 graphics.DrawText(canvas, font, x, y, graphics.Color(*rgb), text)
         return True
+
     draw.plays_under_reveal = landmark.PLAYS_UNDER_WIPE
     return draw

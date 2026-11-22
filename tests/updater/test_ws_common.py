@@ -3,11 +3,17 @@ from unittest.mock import patch
 
 import pytest
 
-from updater.ws_common import (_RECONNECT_DELAY_INITIAL, _RECONNECT_DELAY_MAX, _WsStats, _next_delay,
-                               _should_force_reconnect, _watchdog)
-
+from updater.ws_common import (
+    _RECONNECT_DELAY_INITIAL,
+    _RECONNECT_DELAY_MAX,
+    _next_delay,
+    _should_force_reconnect,
+    _watchdog,
+    _WsStats,
+)
 
 # --- watchdog ---
+
 
 def test_should_force_reconnect_silent_and_operating():
     assert _should_force_reconnect(0, [{"operating": True}]) is True
@@ -88,6 +94,7 @@ def test_watchdog_tolerates_silence_when_parks_closed():
 
 
 # --- reconnect backoff ---
+
 
 def test_next_delay_resets_after_stable_connection():
     assert _next_delay(40, 3600) == _RECONNECT_DELAY_INITIAL

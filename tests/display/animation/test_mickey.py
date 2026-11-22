@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas, FakeMatrix, _striped_screen, fill
 
 
@@ -38,8 +37,7 @@ def test_mickey_wand_tip_sweeps_across_the_board():
     start_x, _ = mickey.wand_tip(mickey.RISE_S)
     end_x, _ = mickey.wand_tip(mickey.RISE_S + mickey.CAST_S)
     assert end_x > start_x >= 0, "the tip travels rightward across the board"
-    xs = [mickey.wand_tip(mickey.RISE_S + i / animation.FPS)[0]
-          for i in range(int(mickey.CAST_S * animation.FPS))]
+    xs = [mickey.wand_tip(mickey.RISE_S + i / animation.FPS)[0] for i in range(int(mickey.CAST_S * animation.FPS))]
     assert xs == sorted(xs), "and never doubles back"
     for f in range(int(mickey.duration * animation.FPS)):
         _, y = mickey.wand_tip(f / animation.FPS)
@@ -81,7 +79,8 @@ def test_mickey_opts_into_receiving_the_new_screen():
 
 def test_show_screen_hands_mickey_the_new_screens_pixels():
     matrix = FakeMatrix()
-    animation.show_screen(matrix, fill((120, 30, 200)), animation.MickeyReveal.duration + 0.5,
-                          transition="mickey", rng=random.Random(6))
+    animation.show_screen(
+        matrix, fill((120, 30, 200)), animation.MickeyReveal.duration + 0.5, transition="mickey", rng=random.Random(6)
+    )
     assert matrix.frames[0].get((63, 5)) in (None, (0, 0, 0)), "far side still unformed at the start"
     assert matrix.frames[-1][(63, 5)] == (120, 30, 200), "screen fully materialized by the end"

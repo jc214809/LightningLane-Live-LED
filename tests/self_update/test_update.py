@@ -7,8 +7,18 @@ from self_update import state as states
 from self_update import update as update_module
 from self_update.board import CommandFailed
 from self_update.github import GitHubError
-from self_update.update import (BETA, RELEASES, Updater, beta_number, channel_of, installed_number, name_of,
-                                newest_release, parse_version, release_of)
+from self_update.update import (
+    BETA,
+    RELEASES,
+    Updater,
+    beta_number,
+    channel_of,
+    installed_number,
+    name_of,
+    newest_release,
+    parse_version,
+    release_of,
+)
 from utils import heartbeat
 
 OLD, NEW, BETA_TIP = "1" * 40, "2" * 40, "3" * 40
@@ -29,11 +39,17 @@ class Clock:
 class FakeBoard:
     """The board, in memory. healthy: whether the app it restarts writes a heartbeat; crashes: how many
     times systemd restarts it after that."""
+
     def __init__(self, app_dir, clock, heartbeat_path):
         self.app_dir, self.clock, self.heartbeat_path = str(app_dir), clock, heartbeat_path
         self.head_sha, self.branch_name, self.dirty = OLD, "develop-beta", []
-        self.refs = {"refs/tags/v2.1.0": NEW, "refs/tags/v2.2.0": NEW, BETA_TIP: BETA_TIP, NEW: NEW,
-                     "refs/heads/develop-beta": OLD}
+        self.refs = {
+            "refs/tags/v2.1.0": NEW,
+            "refs/tags/v2.2.0": NEW,
+            BETA_TIP: BETA_TIP,
+            NEW: NEW,
+            "refs/heads/develop-beta": OLD,
+        }
         self.without_updater, self.tags = set(), {}
         self.requirements_changed, self.free, self.flags = False, 10 * 2**30, 0
         self.healthy, self.crashes, self.settings, self.port = True, 0, True, True
@@ -145,11 +161,30 @@ def env(tmp_path):
     hb = str(tmp_path / "lll-health")
     board, gh = FakeBoard(app, clock, hb), FakeGitHub()
     notes = []
-    updater = Updater(board, state=states.State(str(tmp_path / "lll-update")), gh=gh, installed_version="2.0.0",
-                      config_path=str(app / "board-config.json"), heartbeat_path=hb,
-                      notify=lambda title, message: notes.append((title, message)), clock=clock, sleep=clock.sleep)
-    return type("Env", (), {"board": board, "gh": gh, "updater": updater, "notes": notes, "clock": clock,
-                            "config": app / "board-config.json", "state": updater.state})
+    updater = Updater(
+        board,
+        state=states.State(str(tmp_path / "lll-update")),
+        gh=gh,
+        installed_version="2.0.0",
+        config_path=str(app / "board-config.json"),
+        heartbeat_path=hb,
+        notify=lambda title, message: notes.append((title, message)),
+        clock=clock,
+        sleep=clock.sleep,
+    )
+    return type(
+        "Env",
+        (),
+        {
+            "board": board,
+            "gh": gh,
+            "updater": updater,
+            "notes": notes,
+            "clock": clock,
+            "config": app / "board-config.json",
+            "state": updater.state,
+        },
+    )
 
 
 def test_versions():
@@ -169,17 +204,20 @@ def test_installed_versions_as_git_describe_gives_them():
     assert release_of("2.1.0-2-gabcdef0") == "2.1.0" and release_of("unknown") == "unknown"
 
 
-@pytest.mark.parametrize("tags, installed, expected", [
-    (["v2.2.0", "v2.1.0", "v2.0.0"], "2.0.0", "v2.2.0"),
-    (["v2.1.0", "v2.3.0", "v2.2.0"], "2.1.0", "v2.3.0"),  # newest by version, not list order
-    (["v2.1.0"], "2.1.0", None),  # nothing newer
-    (["v2.1.0"], "2.5.0", None),  # beta ahead of every release: no downgrade
-    (["v2.0.0", "v1.1.0"], "1.0.0", None),  # older than the updater: never offered
-    (["v2.1.0", "junk"], "not a version", "v2.1.0"),
-    (["v2.2.0", "v2.1.0"], "2.1.5-beta", "v2.2.0"),  # a Beta counts as its number
-    (["v2.1.0"], "2.1.5-beta-3-g1a2b3c4", None),  # older than it: no downgrade
-    (["v2.2.0", "v2.1.5-beta"], "2.1.0", "v2.2.0"),
-])
+@pytest.mark.parametrize(
+    "tags, installed, expected",
+    [
+        (["v2.2.0", "v2.1.0", "v2.0.0"], "2.0.0", "v2.2.0"),
+        (["v2.1.0", "v2.3.0", "v2.2.0"], "2.1.0", "v2.3.0"),  # newest by version, not list order
+        (["v2.1.0"], "2.1.0", None),  # nothing newer
+        (["v2.1.0"], "2.5.0", None),  # beta ahead of every release: no downgrade
+        (["v2.0.0", "v1.1.0"], "1.0.0", None),  # older than the updater: never offered
+        (["v2.1.0", "junk"], "not a version", "v2.1.0"),
+        (["v2.2.0", "v2.1.0"], "2.1.5-beta", "v2.2.0"),  # a Beta counts as its number
+        (["v2.1.0"], "2.1.5-beta-3-g1a2b3c4", None),  # older than it: no downgrade
+        (["v2.2.0", "v2.1.5-beta"], "2.1.0", "v2.2.0"),
+    ],
+)
 def test_newest_release(tags, installed, expected):
     assert newest_release(tags, installed) == expected
 
@@ -187,12 +225,25 @@ def test_newest_release(tags, installed, expected):
 def test_a_release_update_switches_installs_and_checks_health(env):
     outcome = env.updater.update(RELEASES)
     assert outcome.ok and outcome.result == "updated" and "v2.2.0" in outcome.message
-    assert env.board.calls == [("fetch",), ("pip_freeze",), ("tags_at", OLD), ("checkout", NEW, True),
-                               ("install", NEW, True), ("restart", APP), ("restart", SETTINGS)]
+    assert env.board.calls == [
+        ("fetch",),
+        ("pip_freeze",),
+        ("tags_at", OLD),
+        ("checkout", NEW, True),
+        ("install", NEW, True),
+        ("restart", APP),
+        ("restart", SETTINGS),
+    ]
     record = env.state.load()
     assert record["phase"] == "updated" and record["good"] == [NEW]
-    assert record["from"] == {"sha": OLD, "branch": "develop-beta", "version": "2.0.0", "channel": "beta",
-                              "requirements_changed": False, "config_saved": True}
+    assert record["from"] == {
+        "sha": OLD,
+        "branch": "develop-beta",
+        "version": "2.0.0",
+        "channel": "beta",
+        "requirements_changed": False,
+        "config_saved": True,
+    }
     assert record["to"] == {"sha": NEW, "ref": "v2.2.0", "channel": "releases"}
     assert open(env.state.freeze_path).read() == "aiohttp==3.11.13\n"
     assert json.load(open(env.state.config_path)) == {"parks": ["Magic Kingdom"]}
@@ -257,14 +308,24 @@ def test_a_failed_fetch_changes_nothing(env):
     assert env.state.load()["phase"] == "idle"
 
 
-@pytest.mark.parametrize("setup, why", [
-    (lambda e: setattr(e.board, "free", 100 * 2**20), "only 100 MB free"),
-    (lambda e: setattr(e.board, "flags", 0x50005), "under-voltage or throttled"),
-    (lambda e: heartbeat.beat(show="Happily Ever After", show_s=600, path=e.updater.heartbeat_path, clock=e.clock),
-     "Happily Ever After is playing"),
-    (lambda e: setattr(e.board, "dirty", [" M disney.py", " M a", " M b", " M c"]), "changes: M disney.py, M a, M b and 1 more"),
-    (lambda e: setattr(e.gh, "error", "can't reach GitHub (timed out)"), "can't reach GitHub"),
-])
+@pytest.mark.parametrize(
+    "setup, why",
+    [
+        (lambda e: setattr(e.board, "free", 100 * 2**20), "only 100 MB free"),
+        (lambda e: setattr(e.board, "flags", 0x50005), "under-voltage or throttled"),
+        (
+            lambda e: heartbeat.beat(
+                show="Happily Ever After", show_s=600, path=e.updater.heartbeat_path, clock=e.clock
+            ),
+            "Happily Ever After is playing",
+        ),
+        (
+            lambda e: setattr(e.board, "dirty", [" M disney.py", " M a", " M b", " M c"]),
+            "changes: M disney.py, M a, M b and 1 more",
+        ),
+        (lambda e: setattr(e.gh, "error", "can't reach GitHub (timed out)"), "can't reach GitHub"),
+    ],
+)
 def test_preflight_blocks_an_update(env, setup, why):
     setup(env)
     outcome = env.updater.update(RELEASES)
@@ -311,13 +372,22 @@ def test_an_app_that_never_draws_is_rolled_back_after_the_window(env):
     assert outcome.result == "rolled_back" and not outcome.ok
     assert "hasn't finished a screen" in outcome.message
     assert env.clock.now >= 1000 + update_module.HEALTH_WINDOW_S
-    rollback = env.board.calls[env.board.calls.index(("restart", SETTINGS)) + 1:]
-    assert rollback == [("checkout", "develop-beta", False), ("install", OLD, True),
-                        ("pip_install", env.state.freeze_path), ("restart", APP), ("restart", SETTINGS)]
+    rollback = env.board.calls[env.board.calls.index(("restart", SETTINGS)) + 1 :]
+    assert rollback == [
+        ("checkout", "develop-beta", False),
+        ("install", OLD, True),
+        ("pip_install", env.state.freeze_path),
+        ("restart", APP),
+        ("restart", SETTINGS),
+    ]
     assert env.board.branch_name == "develop-beta", "back on the branch it was on"
     assert json.loads(env.config.read_text()) == {"parks": ["Magic Kingdom"]}, "config.json as before the update"
     record = env.state.load()
-    assert record["phase"] == "rolled_back" and "hasn't finished a screen" in record["reason"] and NEW not in record["good"]
+    assert (
+        record["phase"] == "rolled_back"
+        and "hasn't finished a screen" in record["reason"]
+        and NEW not in record["good"]
+    )
     assert env.notes == [("Update rolled back", "Back on Beta 1111111. Why: " + record["reason"] + ".")]
 
 
@@ -459,9 +529,20 @@ def test_a_pushover_failure_is_logged_not_raised(env, monkeypatch):
 @pytest.mark.parametrize("phase", states.UNFINISHED)
 def test_recovery_at_boot_rolls_back_an_update_a_power_cut_stopped(env, phase):
     env.board.head_sha, env.board.branch_name = NEW, None  # where the power cut left it
-    env.state.set_phase(env.state.load(), phase, **{"from": {"sha": OLD, "branch": "develop-beta", "version": "2.0.0",
-                                                             "requirements_changed": False, "config_saved": False}},
-                        to={"sha": NEW, "ref": "v2.2.0", "channel": "releases"})
+    env.state.set_phase(
+        env.state.load(),
+        phase,
+        **{
+            "from": {
+                "sha": OLD,
+                "branch": "develop-beta",
+                "version": "2.0.0",
+                "requirements_changed": False,
+                "config_saved": False,
+            }
+        },
+        to={"sha": NEW, "ref": "v2.2.0", "channel": "releases"},
+    )
     outcome = env.updater.recover()
     assert outcome.result == "rolled_back" and f"stopped midway (at {phase})" in outcome.message
     assert env.board.head_sha == OLD and env.board.branch_name == "develop-beta"

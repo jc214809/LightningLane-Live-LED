@@ -12,6 +12,7 @@ class DumboFlies(Actor):
     1x on both boards. He enters off the left edge as his scene starts and is gone off the right by its
     end, swooping in a gentle arc that dips mid-scene in front of the ghost castle's towers.
     """
+
     NAME = "Dumbo"
     SCENE_S = 14.0  # the crossing's length when there's no cue to read it from
     BOB_S = 1.6  # one glide up and down
@@ -49,18 +50,38 @@ class DumboFlies(Actor):
         "...........KKAAAK...KK.........................",
     ]
     COLORS = {
-        "S": (177, 174, 172), "s": (138, 144, 149), "A": (111, 117, 121),
-        "K": (25, 19, 20), "k": (49, 40, 43), "B": (80, 67, 70),
-        "I": (190, 117, 132), "i": (208, 87, 141), "D": (205, 149, 160),
-        "Y": (194, 172, 11), "O": (205, 122, 32), "R": (180, 54, 48),
-        "C": (200, 198, 198), "c": (12, 145, 175),
+        "S": (177, 174, 172),
+        "s": (138, 144, 149),
+        "A": (111, 117, 121),
+        "K": (25, 19, 20),
+        "k": (49, 40, 43),
+        "B": (80, 67, 70),
+        "I": (190, 117, 132),
+        "i": (208, 87, 141),
+        "D": (205, 149, 160),
+        "Y": (194, 172, 11),
+        "O": (205, 122, 32),
+        "R": (180, 54, 48),
+        "C": (200, 198, 198),
+        "c": (12, 145, 175),
     }
     SCALE = 1
     FLAP_S = 0.8  # one flap: up, back through level, down and back
     # Each ear, row by row: (first col, last col) in ART. The near ear spreads back to the left from its
     # root by his cheek (NEAR_ROOT); the far ear sweeps up to the right from behind his hat (FAR_ROOT).
-    NEAR = {3: (7, 12), 4: (4, 14), 5: (2, 16), 6: (1, 18), 7: (0, 20), 8: (0, 18), 9: (0, 20), 10: (6, 20),
-            11: (8, 21), 12: (10, 20), 13: (14, 18)}
+    NEAR = {
+        3: (7, 12),
+        4: (4, 14),
+        5: (2, 16),
+        6: (1, 18),
+        7: (0, 20),
+        8: (0, 18),
+        9: (0, 20),
+        10: (6, 20),
+        11: (8, 21),
+        12: (10, 20),
+        13: (14, 18),
+    }
     FAR = {2: (33, 40), 3: (33, 42), 4: (30, 46), 5: (30, 46), 6: (30, 45), 7: (31, 36)}
     NEAR_ROOT, FAR_ROOT = 21, 29
     FAR_SWING = 0.7  # the far ear swings this much of the near one's

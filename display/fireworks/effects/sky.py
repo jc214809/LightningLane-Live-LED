@@ -1,4 +1,5 @@
 """Looks in the sky behind the castle: stars, the moon, the stingray and lightning."""
+
 import math
 
 from display.fireworks.effects.base import WHITE, Effect, _Level
@@ -11,8 +12,14 @@ class Starfield(_Level):
     def __init__(self, show):
         super().__init__(show)
         rng = self.rng
-        self.stars = [(rng.randrange(show.width), rng.randrange(max(1, show.castle_y + show.castle_h // 3)),
-                       rng.uniform(0, 2 * math.pi)) for _ in range(show.width // 2)]
+        self.stars = [
+            (
+                rng.randrange(show.width),
+                rng.randrange(max(1, show.castle_y + show.castle_h // 3)),
+                rng.uniform(0, 2 * math.pi),
+            )
+            for _ in range(show.width // 2)
+        ]
 
     def draw_behind(self, put, out, active):
         if self.level <= 0:
@@ -42,6 +49,7 @@ class EveningStar(_Level):
 
 class Stingray(_Level):
     """Gramma Tala's glowing stingray: a teal spiral turning in the sky."""
+
     fade_frames = 90
 
     def draw_behind(self, put, out, active):
@@ -60,6 +68,7 @@ class Stingray(_Level):
 class MoonRise(_Level):
     """A full moon rising from behind the castle into the sky (Love Is an Open Door), staying up
     while the scenes keep it and fading after."""
+
     fade_frames = 90
 
     def __init__(self, show):

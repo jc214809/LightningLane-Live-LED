@@ -6,9 +6,9 @@ cover random stories) and #239 (the duplicate `written()` test helper: no test w
 Phase 3 done: Pushover to `utils/` (#240), the weather icon on the REST thread (#241), the `api`/`parks`
 cycle broken and a `layers` contract in CI (#242). Joel's decisions: keep the 16 `PLR0913` as documented
 exceptions; leave the legacy `_ws_loop` no-destinations exit (unreachable: every park gets a destination
-id and the thread waits for park data; pinned by a test). Later: the formatting pass (after
-`feature/surprise-characters-page` lands), type checking, and removing `settings_page/pushover.py`'s shim
-a release after #240. No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; no source file is over
+id and the thread waits for park data; pinned by a test). Formatting pass done on
+`chore/formatting-pass` (see its entry under phase 3). Later: type checking, and removing
+`settings_page/pushover.py`'s shim a release after #240. No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; no source file is over
 600 lines.
 
 Goal: raise code quality and make the structure easier to work in, without changing what
@@ -62,6 +62,7 @@ never touches a branch. Apply the same to request routing (`settings_page/server
 
 ```python
 ROUTES = {"/save": _save, "/pin": _check_pin, "/update": _start_update}
+
 
 def do_POST(self):
     handler = ROUTES.get(self.path)
@@ -511,4 +512,11 @@ Each is its own PR, decided one at a time:
   `E501` at 120 (274 lines) or 140 (28), then `ruff format` with whichever quote style
   rewrites fewer lines (measured: double 281 files, single 287). Add the format commit to
   `.git-blame-ignore-revs`; re-measure `tests/test_file_length.py` caps after.
+  **Done 2026-11-22** (`chore/formatting-pass`), re-measured first: `UP` 120, `I` 138; `ruff format`
+  rewrites 323 files at 88 columns, 315 at 100 and 299 at 120 (double quotes: 10,974 lines added
+  against single quotes' 38,940 at 88). Chosen: double quotes, format at 120, `E501` at 140 (11 lines
+  over after formatting, all rewrapped or a string-level `noqa`). `UP031` stays off (a hand rewrite can
+  change output); `disney.py`'s old-Python check keeps a `noqa: UP036` because a pin test covers it.
+  Five files crossed 600 lines from formatting alone and are allowlisted at their new length.
+  Frame hashes: 0 differences.
 - **Type checking** (mypy or pyright) on `parks/` and `api/` first, the pure layers.

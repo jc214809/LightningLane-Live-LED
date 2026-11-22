@@ -4,7 +4,6 @@ import display.sound_badges as badges
 from tests.display.test_network import FakeCanvas
 from utils.sound import CANT_PLAY, NO_MUSIC
 
-
 RED, WHITE = (255, 0, 0), (255, 255, 255)
 
 

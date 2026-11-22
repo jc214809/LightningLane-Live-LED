@@ -17,5 +17,10 @@ def is_water_park(raw_name):
 def clean_ride_name(raw_name):
     """A ride's name as the app shows and matches it: no trademark sign or asterisk, a plain hyphen, and without
     the party suffix."""
-    return (raw_name.replace("™", "").replace("–", "-").replace("*", " ").replace("An Original", "")
-            .replace(" at Mickey's Not-So-Scary Halloween Party", ""))
+    return (
+        raw_name.replace("™", "")
+        .replace("–", "-")
+        .replace("*", " ")
+        .replace("An Original", "")
+        .replace(" at Mickey's Not-So-Scary Halloween Party", "")
+    )

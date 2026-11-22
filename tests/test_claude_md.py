@@ -1,4 +1,5 @@
 """CLAUDE.md loads in every Claude Code session, so it stays short and its pointers stay real."""
+
 import re
 from pathlib import Path
 
@@ -9,8 +10,10 @@ MAX_CHARS = 16_000  # about 4k tokens; feature detail belongs in docs/dev/<topic
 
 def test_claude_md_stays_short():
     size = len(CLAUDE_MD.read_text())
-    assert size <= MAX_CHARS, (f"CLAUDE.md is {size} characters (limit {MAX_CHARS}): move feature detail into "
-                               "docs/dev/<topic>.md and leave a pointer line")
+    assert size <= MAX_CHARS, (
+        f"CLAUDE.md is {size} characters (limit {MAX_CHARS}): move feature detail into "
+        "docs/dev/<topic>.md and leave a pointer line"
+    )
 
 
 def test_every_doc_claude_md_points_to_exists():

@@ -5,7 +5,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas, _striped_screen
 
 Forky = animation.ForkyReveal
@@ -42,12 +41,17 @@ def test_the_hole_eats_the_old_screen_nearest_first(height):
     canvas = FakeCanvas(64, height)
     forky.overlay(canvas, forky.suck_at + forky.SUCK_S * 0.5)
     hx = forky.hole_x
-    far = (max(hx, 64 - hx) ** 2 + height ** 2) ** 0.5
+    far = (max(hx, 64 - hx) ** 2 + height**2) ** 0.5
 
     def left_within(lo, hi):
-        ring = [(x, y) for x in range(64) for y in range(height) if lo <= ((x - hx) ** 2 + (y - height) ** 2) ** 0.5 < hi]
+        ring = [
+            (x, y) for x in range(64) for y in range(height) if lo <= ((x - hx) ** 2 + (y - height) ** 2) ** 0.5 < hi
+        ]
         return sum(canvas.px.get(p) == (200, 100, 50) for p in ring) / len(ring)
-    assert left_within(0, far * 0.2) < 0.5, "round the hole most has gone (his feet and what is still falling in cover some)"
+
+    assert left_within(0, far * 0.2) < 0.5, (
+        "round the hole most has gone (his feet and what is still falling in cover some)"
+    )
     assert left_within(far * 0.8, far + 1) > 0.9, "the far corners are still there"
 
 
@@ -129,4 +133,5 @@ def test_forky_opts_into_receiving_the_previous_screen():
 
 def test_forky_is_a_rare_surprise_anywhere():
     import disney
+
     assert 0 < disney.SURPRISES["forky"] <= 0.005

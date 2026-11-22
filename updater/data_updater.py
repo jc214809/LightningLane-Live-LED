@@ -1,10 +1,11 @@
 import asyncio
 import time
 import traceback
-from api.disney_api import fetch_parks_and_attractions, fetch_park_live_data, get_down_time, parse_timestamp
-from parks.operating import update_parks_operating_status
+
+from api.disney_api import fetch_park_live_data, fetch_parks_and_attractions, get_down_time, parse_timestamp
 from api.weather import fetch_weather_data
 from api.weather_icons import fetch_icon
+from parks.operating import update_parks_operating_status
 from updater.shared import live_feed_healthy, note_network_result, parks_data_lock, wait_for_live_feed, weather_icons
 from utils import debug
 
@@ -42,11 +43,13 @@ def merge_live_data(existing_attractions, new_live_data):
                 continue
             # Merge only the fields present in the update; a CLOSED/REFURBISHMENT
             # update omits waitTime so the last known value is preserved.
-            existing.update({
-                key: new_attr[key]
-                for key in ("waitTime", "status", "lastUpdatedTs", "updateSource", "forecast", "showtimes")
-                if key in new_attr
-            })
+            existing.update(
+                {
+                    key: new_attr[key]
+                    for key in ("waitTime", "status", "lastUpdatedTs", "updateSource", "forecast", "showtimes")
+                    if key in new_attr
+                }
+            )
 
             # Do not overwrite down_since if already set, unless status is no longer DOWN.
             if new_attr.get("status") != "DOWN":
@@ -104,7 +107,9 @@ def update_parks_live_data(parks, fetch_live=True):
 
     for park in parks:
         if park.get("location") and park.get("operating"):
-            park["weather"] = fetch_weather_data(park.get("location").get("latitude"), park.get("location").get("longitude"))
+            park["weather"] = fetch_weather_data(
+                park.get("location").get("latitude"), park.get("location").get("longitude")
+            )
             _ensure_weather_icon(park["weather"])
 
     return parks
@@ -113,8 +118,7 @@ def update_parks_live_data(parks, fetch_live=True):
 def rest_poll_due(last_fetch, now):
     """With the preview WebSocket: poll REST when the feed isn't healthy, or every
     REST_INTERVAL_WITH_LIVE_FEED_SECS as the backstop that catches anything it got wrong."""
-    return (not live_feed_healthy() or last_fetch is None
-            or now - last_fetch >= REST_INTERVAL_WITH_LIVE_FEED_SECS)
+    return not live_feed_healthy() or last_fetch is None or now - last_fetch >= REST_INTERVAL_WITH_LIVE_FEED_SECS
 
 
 def live_data_updater(disney_park_list, update_interval, parks_data, use_websocket=False, ws_protocol="legacy"):
@@ -140,7 +144,9 @@ def live_data_updater(disney_park_list, update_interval, parks_data, use_websock
         initial_parks = update_parks_operating_status(initial_parks)
         with parks_data_lock:
             parks_data[:] = initial_parks
-        debug.info("Initial REST live data fetch complete — WS will now deliver per-event updates; REST continues polling as a backstop.")
+        debug.info(
+            "Initial REST live data fetch complete — WS will now deliver per-event updates; REST continues polling as a backstop."
+        )
     consecutive_failures = 0
     while True:
         try:

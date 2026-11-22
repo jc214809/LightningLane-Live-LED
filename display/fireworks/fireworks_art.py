@@ -3,6 +3,7 @@ The everyday castle fireworks' art: the castle chart and its colours, the party 
 bauble, pumpkin, snowflake, star, tree, candy cane) as spark points, and Santa's sleigh team.
 Split out of fireworks.py, which re-exports every name so old imports keep working.
 """
+
 import math
 
 # '.' empty, W wall, R roof, G gold finial, Y lit window, D doorway.
@@ -74,8 +75,11 @@ def _mickey_outline():
         for i in range(n):
             a = 2 * math.pi * i / n
             px, py = cx + r * math.cos(a), cy + r * math.sin(a)
-            if not any((px - ox) ** 2 + (py - oy) ** 2 < (orr - 0.05) ** 2
-                       for ox, oy, orr in _MICKEY_CIRCLES if (ox, oy, orr) != (cx, cy, r)):
+            if not any(
+                (px - ox) ** 2 + (py - oy) ** 2 < (orr - 0.05) ** 2
+                for ox, oy, orr in _MICKEY_CIRCLES
+                if (ox, oy, orr) != (cx, cy, r)
+            ):
                 points.append((px, py))
     return points
 
@@ -119,8 +123,14 @@ def _pumpkin_face(radius):
     """The carved face's sparks, (x, y, rgb) in head-radius units."""
     points = []
     for ex in (-0.4, 0.4):  # triangle eyes, filled
-        points += [(ex - 0.16, -0.1, FACE_RGB), (ex, -0.1, FACE_RGB), (ex + 0.16, -0.1, FACE_RGB),
-                   (ex - 0.08, -0.24, FACE_RGB), (ex + 0.08, -0.24, FACE_RGB), (ex, -0.38, FACE_RGB)]
+        points += [
+            (ex - 0.16, -0.1, FACE_RGB),
+            (ex, -0.1, FACE_RGB),
+            (ex + 0.16, -0.1, FACE_RGB),
+            (ex - 0.08, -0.24, FACE_RGB),
+            (ex + 0.08, -0.24, FACE_RGB),
+            (ex, -0.38, FACE_RGB),
+        ]
     steps = 11 if radius >= 6 else 5  # a grin, lowest in the middle
     for i in range(steps):
         u = -0.55 + 1.1 * i / (steps - 1)
@@ -135,8 +145,11 @@ def _mickey_ornament_points(radius, outline=ORNAMENT_RGB, fill=ORNAMENT_FILL_RGB
     big = radius >= 6
     step = 1 / radius
     points = [(x, y, outline) for x, y in _mickey_outline()]
-    shine = [(-0.55, -0.3), (-0.55, -0.41), (-0.44, -0.52), (-0.33, -0.52)] if big \
-        else [(-0.4, -0.2), (-0.4, -0.4), (-0.2, -0.4)]  # on the 5-LED grid
+    shine = (
+        [(-0.55, -0.3), (-0.55, -0.41), (-0.44, -0.52), (-0.33, -0.52)]
+        if big
+        else [(-0.4, -0.2), (-0.4, -0.4), (-0.2, -0.4)]
+    )  # on the 5-LED grid
     shine = [(x, y, SHINE_RGB) for x, y in shine]
     points += _mickey_fill(radius, shine, 1.6 if big else 0.6, fill)
     # The cap sits on the head's top (y = -1): 3 sparks wide and 2 tall on a 64-row board, 2 by 1 on
@@ -147,8 +160,13 @@ def _mickey_ornament_points(radius, outline=ORNAMENT_RGB, fill=ORNAMENT_FILL_RGB
     points += [(x, -1.0 - step * (1 + j), CAP_RGB) for j in range(rows) for x in xs]
     top = -1.0 - step * (rows + 1)
     if big:
-        points += [(xs[0], top, CAP_RGB), (xs[2], top, CAP_RGB),
-                   (xs[0], top - step, CAP_RGB), (xs[1], top - step, CAP_RGB), (xs[2], top - step, CAP_RGB)]
+        points += [
+            (xs[0], top, CAP_RGB),
+            (xs[2], top, CAP_RGB),
+            (xs[0], top - step, CAP_RGB),
+            (xs[1], top - step, CAP_RGB),
+            (xs[2], top - step, CAP_RGB),
+        ]
     else:
         points += [(x, top, CAP_RGB) for x in xs]
     return points + shine
@@ -179,13 +197,21 @@ def _outlined(polygon, radius, edge_rgb, fill_rgb):
     """A polygon's outline (one spark per LED it crosses) and a fill of every LED inside it right up
     to the outline, so there's no dark ring between them."""
     step = 1 / radius
-    edge = {(round(x * radius), round(y * radius))
-            for a, b in zip(polygon, polygon[1:] + polygon[:1]) for x, y in _line(*a, *b, radius)}
+    edge = {
+        (round(x * radius), round(y * radius))
+        for a, b in zip(polygon, polygon[1:] + polygon[:1])
+        for x, y in _line(*a, *b, radius)
+    }
     n = int(1.6 * radius) + 1
-    fill = {(i, j) for j in range(-n, n + 1) for i in range(-n, n + 1)
-            if (i, j) not in edge and _inside(i * step, j * step, polygon)}
-    return [(i * step, j * step, edge_rgb) for i, j in sorted(edge)] + \
-        [(i * step, j * step, fill_rgb) for i, j in sorted(fill)]
+    fill = {
+        (i, j)
+        for j in range(-n, n + 1)
+        for i in range(-n, n + 1)
+        if (i, j) not in edge and _inside(i * step, j * step, polygon)
+    }
+    return [(i * step, j * step, edge_rgb) for i, j in sorted(edge)] + [
+        (i * step, j * step, fill_rgb) for i, j in sorted(fill)
+    ]
 
 
 def _snowflake_points(radius):
@@ -202,16 +228,22 @@ def _snowflake_points(radius):
         for side in (-1, 1):  # branches angled out toward the tip
             b = a + side * math.pi / 4
             bx, by = ux * at + math.cos(b) * length, uy * at - math.sin(b) * length
-            points += [(x, y, FLAKE_TIP_RGB if (x, y) == (bx, by) else FLAKE_RGB)
-                       for x, y in _line(ux * at, uy * at, bx, by, radius)[1:]]
+            points += [
+                (x, y, FLAKE_TIP_RGB if (x, y) == (bx, by) else FLAKE_RGB)
+                for x, y in _line(ux * at, uy * at, bx, by, radius)[1:]
+            ]
     return points
 
 
 # The star's ten corners, points and inner corners in turn, one point straight up; nudged down a little
 # since it's taller above its centre than below.
-_STAR_CORNERS = [((1.05 if k % 2 == 0 else 0.45) * math.cos(-math.pi / 2 + k * math.pi / 5),
-                  (1.05 if k % 2 == 0 else 0.45) * math.sin(-math.pi / 2 + k * math.pi / 5) + 0.1)
-                 for k in range(10)]
+_STAR_CORNERS = [
+    (
+        (1.05 if k % 2 == 0 else 0.45) * math.cos(-math.pi / 2 + k * math.pi / 5),
+        (1.05 if k % 2 == 0 else 0.45) * math.sin(-math.pi / 2 + k * math.pi / 5) + 0.1,
+    )
+    for k in range(10)
+]
 # The tree's tiers, top to bottom: (top, bottom, half-width at the bottom), in head-radius units.
 _TREE_TIERS = [(-0.95, -0.25, 0.42), (-0.5, 0.25, 0.62), (-0.05, 0.8, 0.85)]
 
@@ -240,11 +272,19 @@ def _tree_points(radius):
     taken = {(round(x * radius), round(y * radius)) for x, y, _ in lights}
     points = [p for p in points if (round(p[0] * radius), round(p[1] * radius)) not in taken]
     star_y = tiers[0][0] - step
-    star = [(0.0, star_y, STAR_RGB), (0.0, star_y - step, STAR_RGB), (-step, star_y - step, STAR_RGB),
-            (step, star_y - step, STAR_RGB), (0.0, star_y - 2 * step, STAR_RGB)]
+    star = [
+        (0.0, star_y, STAR_RGB),
+        (0.0, star_y - step, STAR_RGB),
+        (-step, star_y - step, STAR_RGB),
+        (step, star_y - step, STAR_RGB),
+        (0.0, star_y - 2 * step, STAR_RGB),
+    ]
     trunk_w = 2 if big else 1
-    trunk = [((i - (trunk_w - 1) / 2) * step, tiers[-1][1] + step * (1 + j), TRUNK_RGB)
-             for j in range(2 if big else 1) for i in range(trunk_w)]
+    trunk = [
+        ((i - (trunk_w - 1) / 2) * step, tiers[-1][1] + step * (1 + j), TRUNK_RGB)
+        for j in range(2 if big else 1)
+        for i in range(trunk_w)
+    ]
     return points + lights + star + trunk
 
 
@@ -275,19 +315,32 @@ def _candy_cane_points(radius):
         n = int(math.pi * r * radius * 1.3) + 2
         for i in range(1, n + 1):
             a = math.pi - (math.pi + 0.45) * i / n  # over the top and a little way down the far side
-            points.append((hx + r * math.cos(a), hy - r * math.sin(a),
-                           colour(2 * radius + r * radius * (math.pi - a), k)))
+            points.append(
+                (hx + r * math.cos(a), hy - r * math.sin(a), colour(2 * radius + r * radius * (math.pi - a), k))
+            )
     return points
 
 
 # Per shape: its points (given the radius), its rocket and flash colour, and (half-width, top, bottom)
 # in head-radius units where they differ from Mickey's, to keep it on the board and clear of the castle.
-_SHAPE_POINTS = {"mickey_pumpkin": _mickey_pumpkin_points, "mickey_ornament": _mickey_ornament_points,
-                 "mickey_ornament_green": _green_ornament_points, "candy_cane": _candy_cane_points,
-                 "snowflake": _snowflake_points, "star": _star_points, "tree": _tree_points}
-_SHAPE_RGB = {"mickey_pumpkin": PUMPKIN_RGB, "mickey_ornament": ORNAMENT_RGB,
-              "mickey_ornament_green": GREEN_ORNAMENT_RGB, "candy_cane": CANE_RED, "snowflake": FLAKE_RGB,
-              "star": STAR_RGB, "tree": TREE_RGB}
+_SHAPE_POINTS = {
+    "mickey_pumpkin": _mickey_pumpkin_points,
+    "mickey_ornament": _mickey_ornament_points,
+    "mickey_ornament_green": _green_ornament_points,
+    "candy_cane": _candy_cane_points,
+    "snowflake": _snowflake_points,
+    "star": _star_points,
+    "tree": _tree_points,
+}
+_SHAPE_RGB = {
+    "mickey_pumpkin": PUMPKIN_RGB,
+    "mickey_ornament": ORNAMENT_RGB,
+    "mickey_ornament_green": GREEN_ORNAMENT_RGB,
+    "candy_cane": CANE_RED,
+    "snowflake": FLAKE_RGB,
+    "star": STAR_RGB,
+    "tree": TREE_RGB,
+}
 # Shapes that take turns: each time this one is picked, the next pick is the other (red, then green).
 _SHAPE_TURNS = {"mickey_ornament": "mickey_ornament_green"}
 # Shapes that burst at an angle, picked at random per burst (degrees clockwise): a candy cane leans
@@ -352,9 +405,19 @@ def _sleigh_team(reindeer):
 
 _SLEIGH_ART_SMALL = _sleigh_team(2)
 _SLEIGH_ART_BIG = ["".join(c * 2 for c in row) for row in _sleigh_team(1) for _ in range(2)]
-_SLEIGH_COLORS = {"A": (200, 160, 100), "B": (150, 90, 40), "b": (95, 55, 25), "n": (0, 0, 0),
-                  "L": (230, 200, 60), "S": (205, 20, 25), "K": (255, 200, 50), "R": (235, 40, 40),
-                  "W": (255, 255, 255), "F": (255, 190, 150), "G": (20, 110, 40)}
+_SLEIGH_COLORS = {
+    "A": (200, 160, 100),
+    "B": (150, 90, 40),
+    "b": (95, 55, 25),
+    "n": (0, 0, 0),
+    "L": (230, 200, 60),
+    "S": (205, 20, 25),
+    "K": (255, 200, 50),
+    "R": (235, 40, 40),
+    "W": (255, 255, 255),
+    "F": (255, 190, 150),
+    "G": (20, 110, 40),
+}
 _NOSE_BRIGHT, _NOSE_DIM = (255, 40, 40), (120, 20, 20)
 
 

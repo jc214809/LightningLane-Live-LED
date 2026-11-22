@@ -6,7 +6,6 @@ import random
 import pytest
 
 import display.animation as animation
-
 from tests.display.animation.support import FakeCanvas, _striped_screen, fill
 
 
@@ -79,10 +78,12 @@ def test_the_cube_is_made_of_what_he_ate_and_carries_a_sprout():
 
 def test_walle_blinks_during_his_look():
     walle = _walle()
+
     def lenses(t):
         canvas = FakeCanvas(64, 32)
         walle.overlay(canvas, t)
         return list(canvas.px.values()).count(walle.COLORS["L"])
+
     look = walle.ENTER_S
     assert lenses(look + walle.BLINK_AT + walle.BLINK_S / 2) == 0, "eyes shut"
     assert lenses(look + walle.BLINK_AT - 0.05) > 0 and lenses(look + walle.BLINK_AT + walle.BLINK_S + 0.05) > 0
@@ -90,11 +91,13 @@ def test_walle_blinks_during_his_look():
 
 def test_walle_tilts_his_head_before_the_blink():
     walle = _walle()
+
     def eye_tops(t):
         canvas = FakeCanvas(64, 32)
         walle.overlay(canvas, t)
         housing = [(x, y) for (x, y), rgb in canvas.px.items() if rgb == walle.COLORS["E"]]
         return min(y for x, y in housing if x < walle.STOP_X + 10), min(y for x, y in housing if x >= walle.STOP_X + 10)
+
     left, right = eye_tops(walle.ENTER_S + walle.TILT_S / 2)
     assert left < right, "one eye lifted: a curious tilt"
     left, right = eye_tops(walle.ENTER_S + walle.BLINK_AT - 0.05)
@@ -181,24 +184,37 @@ def test_walle_side_bobs_his_head_once():
 def test_walle_side_works_like_a_baler_in_order():
     walle = _walle_side()
     names = [name for name, _ in walle.PHASES]
-    assert names.index("open") < names.index("compact") < names.index("close") < names.index("press") \
-        < names.index("eject") < names.index("pickup") < names.index("leave")
+    assert (
+        names.index("open")
+        < names.index("compact")
+        < names.index("close")
+        < names.index("press")
+        < names.index("eject")
+        < names.index("pickup")
+        < names.index("leave")
+    )
     assert walle.duration == pytest.approx(5.5)
 
 
 def test_walle_side_door_is_open_to_collect_and_eject_and_shut_to_press():
     walle = _walle_side()
+
     def during(name):
         return walle.phase_start(name) + 0.05
+
     assert not walle.door_open(during("look"))
     assert walle.door_open(during("compact")) and walle.door_open(during("eject"))
+
     def shut(name):
         return walle.phase_start(name) + walle.DOOR_SWING_S + 0.01
+
     assert not walle.door_open(shut("press")) and not walle.door_open(shut("pickup"))
     canvas = FakeCanvas(64, 32)
     walle.overlay(canvas, during("compact"))
+
     def yellow(cells):
         return all(canvas.px.get((walle.STOP_X + c, walle.y0 + r)) == walle.COLORS["Y"] for c, r in cells)
+
     hx, hy = walle.DOOR_HINGE
     assert yellow([(hx + i, hy) for i in range(walle.DOOR_LEN + 1)]), "flat open, joined to him by a yellow hinge"
 
@@ -213,7 +229,9 @@ def test_walle_side_door_swings_rather_than_popping_open():
     assert walle.door_cells(0) == [(13, 14), (13, 13), (13, 12)], "shut, it's his front edge"
     for name in ("close", "pickup"):
         start = walle.phase_start(name)
-        assert walle.door_angle(start + 0.001) > 0.5 and walle.door_angle(start + walle.DOOR_SWING_S) == pytest.approx(0)
+        assert walle.door_angle(start + 0.001) > 0.5 and walle.door_angle(start + walle.DOOR_SWING_S) == pytest.approx(
+            0
+        )
 
 
 def test_walle_side_everything_flies_into_his_chest():
@@ -244,8 +262,9 @@ def test_walle_side_cube_comes_out_his_front_and_lands_on_the_ground():
     canvas = FakeCanvas(64, 32)
     walle.overlay(canvas, eject + 0.05)
     front = walle.STOP_X + walle.FRONT_COL
-    assert not [x for (x, y), rgb in canvas.px.items() if rgb == (160, 80, 40) and x <= front], \
+    assert not [x for (x, y), rgb in canvas.px.items() if rgb == (160, 80, 40) and x <= front], (
         "only the part past his front shows as it comes out"
+    )
 
 
 def test_walle_side_reaches_down_for_the_cube_and_carries_it_off():

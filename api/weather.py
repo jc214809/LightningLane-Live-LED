@@ -54,11 +54,11 @@ def _call_api(api_key, lat, lon):
     weather_data = observation.weather
     debug.log(f"Weather Data for {observation.location.name}: {weather_data}")
     return {
-        "temperature": str(int(weather_data.temperature('fahrenheit')["temp"])) + "°",
+        "temperature": str(int(weather_data.temperature("fahrenheit")["temp"])) + "°",
         "description": weather_data.detailed_status,
         "short_description": "T-Storm" if "thunderstorm" in weather_data.status.lower() else weather_data.status,
         "city": observation.location.name,
-        "icon": weather_data.weather_icon_name  # Icon code
+        "icon": weather_data.weather_icon_name,  # Icon code
     }
 
 
@@ -66,7 +66,9 @@ def _key_rejected(api_key, now):
     global _rejected
     wait = KEY_RECHECK_S if _rejected is None else min(_rejected["wait"] * 2, KEY_RECHECK_MAX_S)
     if _rejected is None:
-        debug.warning(f"[WEATHER] OpenWeatherMap rejected the API key (401); checking it again in {wait // 60} min. Check config.json.")
+        debug.warning(
+            f"[WEATHER] OpenWeatherMap rejected the API key (401); checking it again in {wait // 60} min. Check config.json."
+        )
     else:
         debug.log(f"[WEATHER] API key still rejected; next check in {wait // 60} min.")
     _rejected = {"key": api_key, "until": now + wait, "wait": wait}
@@ -110,12 +112,14 @@ def _should_retry(error, api_key, attempt):
         _pause()
         return False
     if attempt < RETRIES:
-        delay = BACKOFF_S * 2 ** attempt + random.uniform(0, BACKOFF_S)
+        delay = BACKOFF_S * 2**attempt + random.uniform(0, BACKOFF_S)
         debug.log(f"[WEATHER] Fetch failed ({reason}); retrying in {delay:.1f}s.")
         time.sleep(delay)
         return True
-    debug.warning(f"[WEATHER] Fetch failed after {RETRIES + 1} tries ({reason}); "
-                  f"keeping the last reading and pausing weather for {PAUSE_S}s.")
+    debug.warning(
+        f"[WEATHER] Fetch failed after {RETRIES + 1} tries ({reason}); "
+        f"keeping the last reading and pausing weather for {PAUSE_S}s."
+    )
     _pause()
     return False
 
@@ -133,7 +137,14 @@ def _fetch_with_retries(api_key, lat, lon):
         except pyowm.commons.exceptions.NotFoundError as e:
             debug.warning(f"[WEATHER] No weather for lat:{lat} lon:{lon} (404): {_redact(str(e), api_key)}")
             return None
-        except (pyowm.commons.exceptions.PyOWMError, requests.RequestException, KeyError, TypeError, ValueError, AttributeError) as e:
+        except (
+            pyowm.commons.exceptions.PyOWMError,
+            requests.RequestException,
+            KeyError,
+            TypeError,
+            ValueError,
+            AttributeError,
+        ) as e:
             if not _should_retry(e, api_key, attempt):
                 return None
             attempt += 1
