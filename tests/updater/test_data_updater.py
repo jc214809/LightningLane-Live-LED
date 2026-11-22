@@ -852,3 +852,74 @@ def test_wait_for_live_feed_returns_once_synced():
     assert shared.wait_for_live_feed(0) is False
     shared.note_live_feed_synced()
     assert shared.wait_for_live_feed(0) is True
+
+
+# --- Weather icons: downloaded here, on the REST thread, outside parks_data_lock ---
+
+class HeldLock:
+    def __init__(self):
+        self.held = False
+
+    def __enter__(self):
+        self.held = True
+        return self
+
+    def __exit__(self, *args):
+        self.held = False
+        return False
+
+
+def _weather_park():
+    return {"id": "p", "name": "Magic Kingdom", "operating": True,
+            "location": {"latitude": 1.0, "longitude": 2.0}, "attractions": []}
+
+
+@pytest.fixture
+def icon_env():
+    shared.weather_icons.clear()
+    yield
+    shared.weather_icons.clear()
+
+
+def test_rest_cycle_downloads_the_weather_icon_outside_the_lock(monkeypatch, icon_env):
+    lock = HeldLock()
+    held_during_fetch = []
+
+    def fake_icon(code):
+        held_during_fetch.append(lock.held)
+        return "img-" + code
+
+    async def ok_fetch(park):
+        return []
+
+    park = _weather_park()
+    park["attractions"] = [{"id": "1"}]
+    monkeypatch.setattr("updater.data_updater.fetch_park_live_data", ok_fetch)
+    monkeypatch.setattr("updater.data_updater.parks_data_lock", lock)
+    monkeypatch.setattr("updater.data_updater.fetch_weather_data", lambda lat, lon: {"icon": "01d", "temperature": "70\N{DEGREE SIGN}"})
+    monkeypatch.setattr("updater.data_updater.fetch_icon", fake_icon)
+    update_parks_live_data([park])
+    assert held_during_fetch == [False]
+    assert shared.weather_icons == {"01d": "img-01d"}
+
+
+def test_published_icon_is_not_requested_again(monkeypatch, icon_env):
+    shared.weather_icons["01d"] = "already"
+    monkeypatch.setattr("updater.data_updater.fetch_weather_data", lambda lat, lon: {"icon": "01d"})
+    monkeypatch.setattr("updater.data_updater.fetch_icon", lambda code: pytest.fail("cache hit must not fetch"))
+    update_parks_live_data([_weather_park()], fetch_live=False)
+
+
+@pytest.mark.parametrize("weather", [None, {}, {"icon": None}, {"icon": 5}])
+def test_weather_without_a_usable_icon_downloads_nothing(monkeypatch, icon_env, weather):
+    monkeypatch.setattr("updater.data_updater.fetch_weather_data", lambda lat, lon: weather)
+    monkeypatch.setattr("updater.data_updater.fetch_icon", lambda code: pytest.fail("no icon code"))
+    update_parks_live_data([_weather_park()], fetch_live=False)
+    assert shared.weather_icons == {}
+
+
+def test_failed_icon_download_publishes_nothing(monkeypatch, icon_env):
+    monkeypatch.setattr("updater.data_updater.fetch_weather_data", lambda lat, lon: {"icon": "09d"})
+    monkeypatch.setattr("updater.data_updater.fetch_icon", lambda code: None)
+    update_parks_live_data([_weather_park()], fetch_live=False)
+    assert shared.weather_icons == {}

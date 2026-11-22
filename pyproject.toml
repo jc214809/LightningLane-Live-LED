@@ -68,9 +68,7 @@ source_modules = ["display"]
 forbidden_modules = ["api", "aiohttp", "requests", "updater"]
 allow_indirect_imports = true
 ignore_imports = [
-    "display.* -> updater.shared",
-    # Weather icon fetch; see the plan's phase 3 (docs/plans/CODE-HEALTH-PLAN.md).
-    "display.park.park_details -> requests",
+    "display.** -> updater.shared",
 ]
 
 [[tool.importlinter.contracts]]

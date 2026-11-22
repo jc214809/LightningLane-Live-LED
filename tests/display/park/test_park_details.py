@@ -213,63 +213,22 @@ def test_star_dots_match_the_info_fonts_asterisk():
         assert _bdf_glyph_dots(os.path.join(repo, path), 42) == set(park_details.STAR_DOTS), path
 
 
-def test_render_weather_icon_success(monkeypatch):
-    # Create a dummy response for requests.get.
-    class DummyResponse:
-        def __init__(self, content):
-            self.content = content
-        def raise_for_status(self):
-            pass
-    timeouts = []
-    def dummy_get(url, timeout=None):
-        timeouts.append(timeout)
-        return DummyResponse(b"\x89PNG\r\n\x1a\n")
-    monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
-    # Patch PIL.Image.open to return a fake image.
-    class FakeImage:
-        def __init__(self):
-            self.width = 15
-        def resize(self, size):
-            self.width = size[0]
-            return self
-    monkeypatch.setattr(park_details, "Image", type("PILImage", (), {"open": lambda f: FakeImage()}))
-    logged = []
-    monkeypatch.setattr(park_details.debug, "log", logged.append)
-    park_details.icon_cache.clear()
-    img = render_weather_icon("01d")
-    assert img is not None
-    # Ensure caching: calling again returns the same object.
-    cached = render_weather_icon("01d")
-    assert cached is img
-    assert timeouts == [park_details.ICON_TIMEOUT_S], "one download, with a timeout"
-    assert logged == ["Downloaded weather icon 01d"], "the download is logged once; the cache hit isn't"
+def test_render_weather_icon_reads_what_the_rest_thread_published(monkeypatch):
+    monkeypatch.setattr(park_details, "weather_icons", {"01d": "image"})
+    assert render_weather_icon("01d") == "image"
+    assert render_weather_icon("10d") is None, "not downloaded yet: nothing drawn, as for a failed fetch"
 
-def test_render_weather_icon_failure(monkeypatch):
-    # Dummy get that simulates a network failure.
-    def dummy_get(url, timeout=None):
-        raise Exception("Network error")
-    monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
-    park_details.icon_cache.clear()
-    park_details.icon_failures.clear()
-    img = render_weather_icon("badcode")
-    assert img is None
 
-def test_failed_weather_icon_is_not_redownloaded_every_frame(monkeypatch):
-    calls = []
-    def dummy_get(url, timeout=None):
-        calls.append(url)
-        raise Exception("Network error")
-    monkeypatch.setattr(park_details, "requests", type("r", (), {"get": dummy_get, "RequestException": Exception}))
-    now = [1000.0]
-    monkeypatch.setattr(park_details.time, "monotonic", lambda: now[0])
-    park_details.icon_cache.clear()
-    park_details.icon_failures.clear()
-    for _ in range(30):
-        assert render_weather_icon("10d") is None
-    assert len(calls) == 1
-    now[0] += park_details.ICON_RETRY_S
-    render_weather_icon("10d")
-    assert len(calls) == 2, "retries once the back-off has passed"
+def test_park_screen_never_imports_requests():
+    import os
+    import subprocess
+    import sys
+    root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+    out = subprocess.run([sys.executable, "-c", "import sys, display.park.park_details; print('requests' in sys.modules)"],
+                         capture_output=True, text=True, cwd=root)
+    assert out.stdout.strip().splitlines()[-1:] == ["False"], out.stderr
+    assert not hasattr(park_details, "requests")
+
 
 def test_display_weather_icon_and_description(monkeypatch):
     fake_matrix = FakeMatrix(width=128, height=32)
@@ -444,8 +403,8 @@ def test_render_park_information_screen_high_res(monkeypatch):
 
 @pytest.mark.parametrize("icon", ["cached", "missing"])
 def test_drawing_the_weather_every_frame_logs_nothing(monkeypatch, icon):
-    # The park screen redraws every animation frame; a cache hit, or an icon that couldn't be
-    # fetched (already logged once, when the fetch failed), mustn't log on each one.
+    # The park screen redraws every animation frame; a published icon, or one the REST
+    # thread hasn't (or couldn't) download, mustn't log on each one.
     from utils import debug
     logged = []
     for level in ("log", "info", "warning", "error"):
@@ -457,10 +416,8 @@ def test_drawing_the_weather_every_frame_logs_nothing(monkeypatch, icon):
         def convert(self, mode):
             return self
 
-    monkeypatch.setitem(park_details.icon_cache, "01d", FakeImage())
+    monkeypatch.setitem(park_details.weather_icons, "01d", FakeImage())
     weather_info = {"temperature": "75°F", "icon": "01d" if icon == "cached" else "zz", "short_description": "Sunny"}
-    if icon == "missing":
-        monkeypatch.setitem(park_details.icon_failures, "zz", __import__("time").monotonic())
     for _ in range(10):
         display_weather_icon_and_description(FakeMatrix(width=64, height=32), weather_info, font_height=10, show_icon=True)
     assert logged == []

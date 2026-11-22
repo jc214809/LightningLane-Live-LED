@@ -351,7 +351,8 @@ def hash_park_info(fixture, width, height):
     from display.park import park_details
 
     initialize_fonts(height)
-    park_details.icon_cache["01d"] = _icon()  # no download: the icon is a fixture
+    from updater.shared import weather_icons
+    weather_icons["01d"] = _icon()  # no download: the icon is a fixture
     park = _park_fixtures()[fixture]
     return screen_digest(lambda canvas, t: park_details.render_park_information_screen(canvas, park), (0.0,), width, height)
 
