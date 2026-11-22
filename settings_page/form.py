@@ -30,6 +30,7 @@ from settings_page.surprise_form import (  # noqa: F401
 )
 from utils.config import (
     DEFAULT_VOLUME,
+    DEFAULT_WS_PROTOCOL,
     SHOW_VERSIONS,
     WS_PROTOCOLS,
     has_api_key,
@@ -210,7 +211,7 @@ def _apply_live_updates(new, form, problems):
     """API keys and live updates."""
     ws = _section(new, "websocket")
     ws["enabled"] = _checked(form, "ws_enabled")
-    protocol = _one(form, "ws_protocol", "legacy")
+    protocol = _one(form, "ws_protocol", DEFAULT_WS_PROTOCOL)
     if protocol in WS_PROTOCOLS:
         ws["protocol"] = protocol
     else:

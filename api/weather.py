@@ -1,5 +1,6 @@
 import random
 import time
+from typing import Any
 
 import pyowm
 import requests
@@ -23,9 +24,9 @@ KEY_RECHECK_MAX_S = 3600
 CACHE_S = 600
 STALE_S = 3600
 
-_last_good = {}  # (lat, lon) -> (weather dict, monotonic time fetched)
+_last_good: dict[tuple, tuple] = {}  # (lat, lon) -> (weather dict, monotonic time fetched)
 _paused_until = 0.0
-_rejected = None  # {"key", "until", "wait"} while the key is being refused
+_rejected: dict[str, Any] | None = None  # {"key", "until", "wait"} while the key is being refused
 
 
 def _reset():

@@ -8,6 +8,7 @@ Read before changing code structure, adding a lint suppression, or splitting a f
 ruff check .                      # lint + complexity; CI's `lint` job runs it (ruff 0.17.5, pinned in requirements-dev.txt)
 ruff format .                     # formats the repo; CI's `lint` job runs `ruff format --check .`
 lint-imports                      # which package may import which (import-linter 2.17); CI's `lint` job runs it
+mypy                              # types of `parks/` and `api/` (mypy 2.4.1); CI's `lint` job runs it
 pre-commit install                # once: runs ruff on every commit (.pre-commit-config.yaml)
 pytest tests/test_file_length.py  # the 600-line rule
 
@@ -38,6 +39,15 @@ Today's structural offenders carry an inline `# noqa: C901` (etc.) on their `def
 ## File length
 
 Source files (every tracked `.py` outside `tests/`) stay at 600 lines or fewer. `tests/test_file_length.py` holds an allowlist `{path: max_lines}` of the files that were already longer: a file may shrink, not grow, and the test fails when an allowlisted file is now shorter than its cap, telling you to lower the cap (or delete the entry once it is under 600). Split by feature (principle 6), keeping old imports working from the old module.
+
+## Type checking
+
+`mypy` (settings in `pyproject.toml`'s `[tool.mypy]`, version pinned in `requirements-dev.txt` with `types-requests`) checks `parks/` and `api/`, the pure layers; the packages they import are followed but not reported (`follow_imports = "silent"`). It is not in `requirements.txt`: the boards don't need it.
+
+- **Strictness:** `check_untyped_defs` (bodies of unannotated functions are checked too), `warn_unused_ignores`, `warn_redundant_casts`. Annotations are not demanded: the old code is mostly unannotated, and the errors this level finds (empty `{}`/`[]` that need an element type, `None` narrowing) are real signal. `ignore_missing_imports` covers `pyowm`, which has no types. Not `disallow_untyped_defs` or `strict` yet: they'd demand hundreds of signatures for little gain.
+- **`api/` has no `__init__.py`**, so `namespace_packages` and `explicit_package_bases` are on; without them mypy reports the file under two module names.
+- **Fixing an error:** annotate (`found: dict[str, str] = {}`) or narrow (assign `dict.get(...)` to a variable and test that) before reaching for `cast`. An ignore needs the error code and a reason: `# type: ignore[arg-type]  # why`.
+- **Extending to another package:** add it to `files` in `[tool.mypy]`, run `mypy`, fix what it reports. Do the layers in import order (`utils`, then `updater`, then `display`) so the packages a new one imports are already clean; code that touches `rgbmatrix` is `Any` there (`ignore_missing_imports`).
 
 ## Layers
 

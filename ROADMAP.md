@@ -1096,3 +1096,34 @@ Still to do:
   `surprise_characters()` (one name per character, as the Surprise characters page does) and counts those.
 - A board check: open the page on a Pi Zero board and a Pi 4, light and dark, and add the castle to a phone's
   home screen.
+
+## 19. The Christmas fireworks slow some boards down
+
+The owner reports (2026-11-22) that the Christmas castle fireworks, with Santa's sleigh and Rudolph, slow certain
+boards down. Not investigated yet; everything below is a hypothesis to check, read from the code.
+
+- **Where it lives:** the `christmas` entry in `THEMES` (`display/fireworks/fireworks.py`: `"snow": True`,
+  `"sleigh": True`, and the shapes `mickey_ornament`, `candy_cane`, `snowflake`, `tree`, `star`, 22% of launches
+  against the everyday show's 15% Mickeys). It plays on Mickey's Very Merry Christmas Party nights
+  (`utils/special_events.py` `"christmas"`, `fireworks_theme`), through `render_castle_fireworks` (30 fps, one
+  `SetPixel` per lit pixel) when the show has no synced score, so `render_music_show` is not involved.
+- **The sleigh** (`display/fireworks/fireworks_art.py`): `_sleigh_team(2)` is Santa plus two reindeer at 1x on
+  64x32 (about 41x8); `_SLEIGH_ART_BIG` is Santa plus Rudolph doubled, 56x16, on 64x64. The doubling happens once
+  at import, not per frame. One sleigh at a time, crossing in a few hundred frames (0.3 px/frame on 64x32,
+  0.45 on 64x64), then a 0.3% chance per frame of another.
+- **Suspects to measure:** `FireworksShow._sleigh_pixels` rebuilds a list of `(x, y, rgb)` tuples from the art
+  every frame, with `int(round())` per pixel (about 350 pixels on 64x64); `_draw_sleighs` then bounds-checks each
+  one. `_draw_snow` (`width // 6` flakes on 64x32, `// 4` on 64x64) calls `put` with a `math.sin` per flake.
+  `frame_pixels` copies the whole sky dict (`dict(self.sky)`) every frame in every theme, so it can't be the
+  difference. The tree, snowflake and ornament bursts put more sparks in the sky at once than a Mickey, and
+  `_draw_sparks` does the work per spark (colour maths plus a trail pixel). The Santa train landmark is a different
+  screen and not part of this show.
+- **How to measure:** `render_castle_fireworks` doesn't log fps or count dropped frames (it just sleeps out the
+  rest of the frame); `run_frames` in `display/animation/player.py` returns `(drawn, spent)` and the transitions log
+  `N fps over Xs` from it, so that is the pattern to copy. Time `FireworksShow.step()` plus `frame_pixels()` plus the
+  `SetPixel` loop, with `theme="christmas"` against `theme=None`, on the emulator first, then on ZeroPi (the Pi
+  Zero 2 W, the slowest board) and Disneypi for comparison; also time a frame with the sleigh on screen against one
+  without. `tools/frame_hashes.py` only proves the pixels didn't change, so use it to guard any optimisation, not to
+  measure speed.
+- **Open questions for the owner:** which boards slow down (Pi Zero vs Pi 4, 64x32 vs 64x64)? The whole show, or
+  only while the sleigh crosses or a tree/snowflake burst is up? Stutter or slow motion?

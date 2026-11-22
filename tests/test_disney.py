@@ -1,3 +1,4 @@
+import sys
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
@@ -995,7 +996,7 @@ def test_websocket_off_or_without_a_key_never_starts_the_websocket(monkeypatch, 
     monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
     disney.start_live_updaters(config, ["park"], 300, [])
     assert [t.target for t in _RecordingThread.started] == [disney.live_data_updater]
-    assert _RecordingThread.started[0].kwargs == {"use_websocket": False, "ws_protocol": "legacy"}
+    assert _RecordingThread.started[0].kwargs == {"use_websocket": False, "ws_protocol": "preview"}
 
 
 def test_websocket_enabled_with_a_real_key_starts_rest_and_the_websocket(monkeypatch):
@@ -1003,8 +1004,17 @@ def test_websocket_enabled_with_a_real_key_starts_rest_and_the_websocket(monkeyp
     monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
     disney.start_live_updaters({"websocket": {"enabled": True, "api_key": "real-key"}}, ["park"], 300, [])
     assert [t.target for t in _RecordingThread.started] == [disney.live_data_updater, disney.websocket_live_updater]
+    assert _RecordingThread.started[0].kwargs == {"use_websocket": True, "ws_protocol": "preview"}
+    assert _RecordingThread.started[1].args == ("real-key", [], "preview")
+
+
+def test_websocket_protocol_legacy_set_explicitly_reaches_both_threads(monkeypatch):
+    _RecordingThread.started = []
+    monkeypatch.setattr(disney.threading, "Thread", _RecordingThread)
+    config = {"websocket": {"enabled": True, "api_key": "real-key", "protocol": "legacy"}}
+    disney.start_live_updaters(config, ["park"], 300, [])
     assert _RecordingThread.started[0].kwargs == {"use_websocket": True, "ws_protocol": "legacy"}
-    assert _RecordingThread.started[1].args == ("real-key", [], "legacy")
+    assert _RecordingThread.started[1].args[2] == "legacy"
 
 
 def test_websocket_protocol_preview_reaches_both_threads(monkeypatch):
@@ -1026,7 +1036,7 @@ def test_emulated_flag_switches_the_driver_before_the_matrix_is_built_from_confi
         calls.append(("matrix", options))
         raise _Built  # stop main() before its endless loop
 
-    monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
+    monkeypatch.setattr(sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {"matrix": {"led_rows": 64}, "pi_model": "pi4"})
     picked = []
     monkeypatch.setattr(
@@ -1073,7 +1083,7 @@ def test_main_watches_the_full_scored_shows_for_the_sound_badges(monkeypatch, sh
         watched.append((settings, shows))
         raise _Watched  # stop main() before the matrix and its endless loop
 
-    monkeypatch.setattr(disney.sys, "argv", ["disney.py"])
+    monkeypatch.setattr(sys, "argv", ["disney.py"])
     monkeypatch.setattr(disney, "load_config", lambda: {"sound": {"device": "plughw:1,0"}, "shows": shows})
     monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
     monkeypatch.setattr(disney, "watch_sound", watch)
@@ -1124,7 +1134,7 @@ def test_main_shows_the_setup_screen_before_it_needs_the_network(monkeypatch):
         pass
 
     calls = []
-    monkeypatch.setattr(disney.sys, "argv", ["disney.py", "--emulated"])
+    monkeypatch.setattr(sys, "argv", ["disney.py", "--emulated"])
     monkeypatch.setattr(disney, "load_config", lambda: {})
     monkeypatch.setattr(disney, "model_defaults", lambda choice: ("pi4", {"led_rows": 32, "led_cols": 64}, "detected"))
     monkeypatch.setattr(disney.driver, "DriverMode", disney_driver_modes(), raising=False)

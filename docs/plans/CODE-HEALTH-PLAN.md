@@ -7,8 +7,9 @@ Phase 3 done: Pushover to `utils/` (#240), the weather icon on the REST thread (
 cycle broken and a `layers` contract in CI (#242). Joel's decisions: keep the 16 `PLR0913` as documented
 exceptions; leave the legacy `_ws_loop` no-destinations exit (unreachable: every park gets a destination
 id and the thread waits for park data; pinned by a test). Formatting pass done on
-`chore/formatting-pass` (see its entry under phase 3). Later: type checking, and removing
-`settings_page/pushover.py`'s shim a release after #240. No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; no source file is over
+`chore/formatting-pass` (see its entry under phase 3). The `settings_page/pushover.py` shim is removed
+(`chore/remove-pushover-shim`, 2026-11-22: the old updater imported it at module top, so an in-flight
+update is safe). Later: type checking. No `C901`, `PLR0912` or `PLR0915` is left once #237 merges; no source file is over
 600 lines.
 
 Goal: raise code quality and make the structure easier to work in, without changing what
@@ -516,7 +517,10 @@ Each is its own PR, decided one at a time:
   rewrites 323 files at 88 columns, 315 at 100 and 299 at 120 (double quotes: 10,974 lines added
   against single quotes' 38,940 at 88). Chosen: double quotes, format at 120, `E501` at 140 (11 lines
   over after formatting, all rewrapped or a string-level `noqa`). `UP031` stays off (a hand rewrite can
-  change output); `disney.py`'s old-Python check keeps a `noqa: UP036` because a pin test covers it.
+  change output); `disney.py`'s old-Python check kept a `noqa: UP036` because a pin test covered it; the check (dead on 3.11) and its pin test were removed afterwards.
   Five files crossed 600 lines from formatting alone and are allowlisted at their new length.
   Frame hashes: 0 differences.
 - **Type checking** (mypy or pyright) on `parks/` and `api/` first, the pure layers.
+  **Started 2026-11-22** (`chore/type-checking`): mypy 2.4.1 on `parks/` and `api/` with
+  `check_untyped_defs`; 17 errors fixed by annotation and narrowing, no behaviour change; mypy runs in CI's
+  `lint` job. Next: `utils/`, `updater/`, then `display/`, and raising the strictness (`disallow_untyped_defs`).
