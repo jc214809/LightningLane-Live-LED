@@ -6,6 +6,7 @@ run once with PIN_REGEN=1 and read the diff."""
 import copy
 import json
 import os
+import re
 
 import pytest
 
@@ -316,7 +317,18 @@ def test_result_is_exactly_the_stored_one(case_id):
     actual = _results()[case_id]
     expected = stored()[case_id]
     # dumps, not ==: key order is part of what config.json looks like on disk
-    assert json.dumps(actual, ensure_ascii=False) == json.dumps(expected, ensure_ascii=False)
+    assert _same_on_every_python(json.dumps(actual, ensure_ascii=False)) == \
+        _same_on_every_python(json.dumps(expected, ensure_ascii=False))
+
+
+_CHOICE = re.compile(r"invalid choice: [^(]*\(choose from [^)]*\)")
+
+
+def _same_on_every_python(text):
+    """argparse's "invalid choice" message quotes the value and the choices from Python 3.12
+    ('-1' ... '0', '1') but not on 3.11 (-1 ... 0, 1); the panel problems pass it through, so the
+    quotes aren't ours to pin."""
+    return _CHOICE.sub(lambda m: m.group(0).replace("'", ""), text)
 
 
 _CACHE = {}
