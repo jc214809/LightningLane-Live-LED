@@ -122,7 +122,8 @@ def apply_surprises(data, form, rides=None):
     page doesn't know (a newer version's) stay."""
     new = copy.deepcopy(data) if isinstance(data, dict) else {}
     problems = []
-    one = lambda name: (form.get(name) or [""])[0].strip()
+    def one(name):
+        return (form.get(name) or [""])[0].strip()
     characters = new.get("characters") if isinstance(new.get("characters"), dict) else {}
     for name, anywhere, own, _ in surprise_rows():
         old = characters.get(name) if isinstance(characters.get(name), dict) else {}
@@ -131,7 +132,7 @@ def apply_surprises(data, form, rides=None):
             entry.pop("rides", None)
         if one(f"surprise_{name}") != "on":
             entry["on"] = False
-        for key, default in (("chance", anywhere), ("ride_chance", own)):
+        for key, _ in (("chance", anywhere), ("ride_chance", own)):
             text = one(f"{key}_{name}")
             if not text:
                 continue
@@ -352,7 +353,8 @@ def _date_text(value):
 
 def chosen_device(form):
     """The speaker the form picks: one from the list, one typed under Other device, or None."""
-    one = lambda name: (form.get(name) or [""])[0].strip()
+    def one(name):
+        return (form.get(name) or [""])[0].strip()
     return (one("sound_device_custom") if one("sound_device") == "custom" else one("sound_device")) or None
 
 

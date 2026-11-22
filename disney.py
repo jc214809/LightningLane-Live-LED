@@ -15,7 +15,7 @@ from display.fireworks.fireworks import render_castle_fireworks
 from display.fireworks.music_show import render_music_show
 from display.fireworks.score import SHOWS_DIR, load_score
 from cli import arguments, describe, led_matrix_options, model_defaults
-from api.disney_api import fetch_list_of_disney_world_parks, resolve_parks_from_config
+from api.disney_api import resolve_parks_from_config
 from parks.live import forecast_wait_now, show_start_due
 from display.animation import TRANSITIONS, forget_screen, show_screen
 from display.landmarks import landmark_for, landmark_screen

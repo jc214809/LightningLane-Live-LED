@@ -168,7 +168,7 @@ class SpaceshipEarthLandmark(Landmark):
         k = shade * (1.0 if up else 0.38)  # lit and shaded pyramid faces, as in the photo
         lit = tuple(int(c * k) for c in colour)
         dark = tuple(int(c * shade) for c in self.UNLIT_RGB)
-        return tuple(int(d + (l - d) * on) for d, l in zip(dark, lit))
+        return tuple(int(d + (lit_c - d) * on) for d, lit_c in zip(dark, lit))
 
     def _draw_dust(self, out, t):
         """

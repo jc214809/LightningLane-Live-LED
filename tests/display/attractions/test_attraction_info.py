@@ -19,13 +19,12 @@ graphics_stub.Color = lambda r, g, b: (r, g, b)
 
 sys.modules['driver'] = types.SimpleNamespace(graphics=graphics_stub)
 
-from display.attractions.attraction_info import (
+from display.attractions.attraction_info import (  # noqa: E402  (after the stubs above)
     get_longest_line_width,
     calculate_x_position,
     calculate_y_position,
     render_attraction_info,
     loaded_fonts,
-    wrap_text  # Assuming wrap_text is used inside render_attraction_info
 )
 
 
@@ -162,10 +161,10 @@ def test_wait_time_formatting_boarding_group_single():
 
 # ---- Animated attraction screen ----
 
-import pytest
+import pytest  # noqa: E402  (this file's second section; its imports sit with its helpers)
 
-import display.attractions.attraction_info as attraction_mod
-import display.display as display_mod
+import display.attractions.attraction_info as attraction_mod  # noqa: E402  (same)
+import display.display as display_mod  # noqa: E402  (same)
 
 
 class RecordingCanvas:
@@ -218,7 +217,7 @@ def test_wait_bar_length_tracks_minutes_and_caps_at_full_width(frame_recorder):
     assert (x0, x1, y0, y1) == (0, 31, 31, 31)
     frame_recorder["lines"].clear()
     attraction_mod.draw_wait_bar(RecordingCanvas(64, 64), 500)
-    assert [(l[0], l[2]) for l in frame_recorder["lines"]] == [(0, 63), (0, 63)], "2 rows tall on 64-row boards"
+    assert [(line[0], line[2]) for line in frame_recorder["lines"]] == [(0, 63), (0, 63)], "2 rows tall on 64-row boards"
     frame_recorder["lines"].clear()
     attraction_mod.draw_wait_bar(RecordingCanvas(), 0)
     assert frame_recorder["lines"] == []
@@ -276,7 +275,7 @@ def test_a_long_down_name_moves_up_rather_than_run_into_the_bar(frame_recorder, 
 
 def test_down_bar_is_two_rows_on_64_row_boards(frame_recorder):
     attraction_mod.draw_attraction_frame(RecordingCanvas(64, 64), {"name": "Big Thunder", "waitTime": "Down"}, 0)
-    assert [l[:4] for l in frame_recorder["lines"]] == [(0, 63, 63, 63), (0, 62, 63, 62)], "no tick without a forecast"
+    assert [line[:4] for line in frame_recorder["lines"]] == [(0, 63, 63, 63), (0, 62, 63, 62)], "no tick without a forecast"
 
 
 def test_boarding_group_ride_is_static(frame_recorder):
@@ -328,7 +327,7 @@ def test_roomy_names_keep_normal_spacing(frame_recorder):
 
 def _baselines(monkeypatch, draw):
     ys = []
-    monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: ys.append(y)))
+    monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text, ys=ys: ys.append(y)))
     draw()
     return sorted(set(ys))  # draw_text draws word by word
 
@@ -366,7 +365,7 @@ def test_short_names_keep_the_bar_and_move_up_to_clear_it(frame_recorder, monkey
     baselines = {}
     for reserve in (0, attraction_mod.bar_reserve_rows(32)):
         ys = []
-        monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text: ys.append(y)))
+        monkeypatch.setattr(attraction_mod.graphics, "DrawText", staticmethod(lambda c, f, x, y, color, text, ys=ys: ys.append(y)))
         attraction_mod.render_attraction_info(RecordingCanvas(64, 32), ride, reserve_bottom=reserve)
         baselines[reserve] = min(ys)  # the name line; the wait may drop into spare rows
     assert baselines[attraction_mod.bar_reserve_rows(32)] < baselines[0]

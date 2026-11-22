@@ -192,7 +192,8 @@ class OlafStands(Actor):
         if glow <= 0.05:  # too dim for the LEDs
             return
         h, w = self.show.height, self.show.width
-        dim = lambda rgb: tuple(int(c * glow) for c in rgb)
+        def dim(rgb):
+            return tuple(int(c * glow) for c in rgb)
         half = self.feet_half * (0.8 + 1.2 * p)
         rows = max(1, round(self.puddle_rows * p))
         for k in range(rows):

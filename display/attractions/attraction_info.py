@@ -156,8 +156,8 @@ def _layout(matrix, ride_info):
     combined_lines = [line for line in combined_lines if line.strip() != ""]  # Remove blank lines
 
     # Calculate the total height of all lines
-    total_lines_height, line_heights = calculate_text_height(combined_lines, wrapped_ride_name, getattr(loaded_fonts["ride"], "height"),
-                                                             getattr(loaded_fonts["waittime"], "height"))
+    total_lines_height, line_heights = calculate_text_height(combined_lines, wrapped_ride_name, loaded_fonts["ride"].height,
+                                                             loaded_fonts["waittime"].height)
     return combined_lines, wrapped_ride_name, wrapped_wait_time, total_lines_height, line_heights
 
 

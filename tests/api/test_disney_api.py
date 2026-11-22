@@ -291,7 +291,6 @@ def test_fetch_parks_and_attractions_success(monkeypatch):
     park = result[0]
     assert "attractions" in park
     assert len(park["attractions"]) == 1
-    attraction = park["attractions"][0]
     assert get_attraction_name({"name": "Space Mountain\u2122"}) == "Space Mountain"
 
 def test_fetch_parks_and_attractions_carries_timezone_through(monkeypatch):

@@ -290,7 +290,8 @@ def test_the_lines_run_white_red_green_from_the_top_on_a_dark_board(w, h):
     assert colours[:4] == [white, red, green, white]
     assert red[0] > 200 > max(red[1:]) and min(white) > 200 and green[1] > 200 > max(green[0], green[2])
     assert max(st.SIGN_RGB) < 60, "a dark board"
-    luma = lambda rgb: 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2]
+    def luma(rgb):
+        return 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2]
     assert all(luma(ink) > 4 * luma(st.SIGN_RGB) for ink in st.SIGN_INK), "every line stands out"
 
 
@@ -407,7 +408,7 @@ def test_the_riders_settle_once_the_train_stops(w, h):
 def test_the_64x64_car_wheels_are_even_left_and_right():
     for piece in st.TRAIN_64[:-1]:  # the cars; the engine's drivers are drawn their own way
         for cx, _, r in st.wheels(piece, True):
-            def run(row):  # the rim's pixels on a row, this wheel's only
+            def run(row, piece=piece, cx=cx, r=r):  # the rim's pixels on a row, this wheel's only
                 return [x for x, ch in enumerate(piece[row]) if ch in "SI" and abs(x - cx) <= r + 1]
             bottom, above = run(-1), run(-2)
             assert min(bottom) + max(bottom) == min(above) + max(above), "centred under the rim: no stray pixel"

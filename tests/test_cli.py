@@ -31,7 +31,7 @@ class DummyRGBMatrixOptions:
 
 # Ensure driver.RGBMatrixOptions is available, on the driver cli has: another test module may have
 # swapped sys.modules["driver"] since cli was first imported (settings_page imports it too).
-import cli
+import cli  # noqa: E402  (after the driver stub above)
 driver = cli.driver
 if not hasattr(driver, "RGBMatrixOptions"):
     driver.RGBMatrixOptions = DummyRGBMatrixOptions
@@ -69,7 +69,7 @@ def test_led_matrix_options_attribute_errors(monkeypatch):
             delattr(args_obj, attr)
 
     # Call led_matrix_options (this will trigger exception branches)
-    options = led_matrix_options(args_obj)
+    led_matrix_options(args_obj)
 
     # Expect 3 try/except blocks; each should warn twice = 6 warnings.
     assert len(warnings) == 6, f"Expected 6 warnings, got {len(warnings)}: {warnings}"

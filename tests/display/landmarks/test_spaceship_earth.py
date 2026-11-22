@@ -97,7 +97,7 @@ def test_spaceship_earth_stays_a_perfect_sphere_with_the_legs_behind_it(height):
 
 def test_spaceship_earth_on_64x64_stands_on_short_legs_not_a_water_tower():
     earth = _earth(64)
-    frame = earth.frame(earth.LIGHT_S + 0.5)
+    earth.frame(earth.LIGHT_S + 0.5)
     sphere_bottom = max(y for facet in earth.facets for _, y, _, _ in facet[0])
     assert 64 - 1 - sphere_bottom <= 5, "the legs just peek out under the sphere"
     assert earth.r * 2 >= 54, "a big sphere, not a tank on stilts"

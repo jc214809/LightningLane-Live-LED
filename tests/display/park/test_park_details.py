@@ -197,7 +197,7 @@ def _bdf_glyph_dots(path, encoding):
     """(x, y-from-baseline) of each set pixel of one BDF glyph."""
     lines = open(path).read().splitlines()
     start = lines.index(f"ENCODING {encoding}")
-    bbx = next(l for l in lines[start:] if l.startswith("BBX")).split()
+    bbx = next(line for line in lines[start:] if line.startswith("BBX")).split()
     w, h, xoff, yoff = map(int, bbx[1:])
     rows = lines[lines.index("BITMAP", start) + 1:][:h]
     return {(xoff + col, -(yoff + h) + r) for r, row in enumerate(rows)
@@ -371,7 +371,7 @@ def test_render_park_information_screen_low_res(monkeypatch):
     # Create a FakeMatrix with height 32.
     fake_matrix = FakeMatrix(width=64, height=32)
     baseline = fake_matrix.height - 1
-    info_font_height = getattr(park_details.loaded_fonts["info"], "height")
+    info_font_height = park_details.loaded_fonts["info"].height
 
     # Call render_park_information_screen.
     park_details.render_park_information_screen(fake_matrix, park_obj)
@@ -435,7 +435,7 @@ def test_render_park_information_screen_high_res(monkeypatch):
     # 2. Because weather exists, display_weather_icon_and_description is called with the weather dict and info_font_height.
     # 3. render_lightning_lane_multi_pass_price is called with vertical = baseline, horizontal = expected_horizontal, and price "15".
     # 4. render_park_hours is called with vertical = baseline, horizontal = 1.
-    info_font_height = getattr(park_details.loaded_fonts["info"], "height")
+    info_font_height = park_details.loaded_fonts["info"].height
     assert calls["draw_multi"] == ["Test Park"]
     assert calls["display_weather"] == (park_obj["weather"], info_font_height)
     assert calls["render_llmp"] == (baseline, expected_horizontal, "15")

@@ -46,8 +46,8 @@ class FakeBoard:
 
 
 class FakeUpdater:
-    def __init__(self, tmp_path, outcome=Outcome("would_update", "would update to v2.2.0 (2222222)",
-                                                 target=Target("releases", "v2.2.0", "2" * 40))):
+    def __init__(self, tmp_path, outcome=Outcome("would_update", "would update to v2.2.0 (2222222)",  # noqa: B008  the fake only returns it
+                                                 target=Target("releases", "v2.2.0", "2" * 40))):  # noqa: B008  likewise
         self.board, self.state, self.outcome, self.asked = FakeBoard(), State(str(tmp_path / "s")), outcome, []
         self.installed_version = "2.1.0"
 

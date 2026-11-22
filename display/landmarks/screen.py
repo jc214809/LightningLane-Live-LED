@@ -11,13 +11,13 @@ from display.landmarks.castle import CastleLandmark
 from display.landmarks.spaceship_earth import SpaceshipEarthLandmark
 from display.landmarks.tower_of_terror import TowerOfTerrorLandmark
 from display.landmarks.tree_of_life import TreeOfLifeLandmark
-from display.landmarks.pumpkins import FriendlyJackOLanternLandmark, ScaryJackOLanternLandmark  # looked up by class name for parties (landmark_for)
-from display.landmarks.wine_and_dine import WineAndDine5KLandmark  # looked up by class name for its race day (landmark_for)
-from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # likewise
-from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # likewise
-from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # likewise
-from display.landmarks.santa_train import SantaTrainLandmark  # looked up by class name for its party (landmark_for)
-from display.landmarks.jollywood_tower import JollywoodTowerLandmark  # likewise
+from display.landmarks.pumpkins import FriendlyJackOLanternLandmark, ScaryJackOLanternLandmark  # noqa: F401  looked up by class name for parties (landmark_for)
+from display.landmarks.wine_and_dine import WineAndDine5KLandmark  # noqa: F401  looked up by class name for its race day (landmark_for)
+from display.landmarks.three_caballeros import ThreeCaballeros10KLandmark  # noqa: F401  likewise
+from display.landmarks.penguin_waiters import PenguinWaitersHalfLandmark  # noqa: F401  likewise
+from display.landmarks.grumpy import GrumpyTwoCourseLandmark  # noqa: F401  likewise
+from display.landmarks.santa_train import SantaTrainLandmark  # noqa: F401  looked up by class name for its party (landmark_for)
+from display.landmarks.jollywood_tower import JollywoodTowerLandmark  # noqa: F401  likewise
 
 
 LANDMARKS = {

@@ -131,10 +131,10 @@ class LuxoBallReveal:
         gaps = []
         for y in range(max(ball_top, luxo_top), self.height):
             b = resting[y - ball_top]
-            l = self.LUXO_ART[y - luxo_top]
-            if b.strip(".") and l.strip("."):
+            luxo_row = self.LUXO_ART[y - luxo_top]
+            if b.strip(".") and luxo_row.strip("."):
                 ball_right = ball_left + len(b.rstrip(".")) - 1
-                luxo_first = len(l) - len(l.lstrip("."))  # his leftmost pixel on this row
+                luxo_first = len(luxo_row) - len(luxo_row.lstrip("."))  # his leftmost pixel on this row
                 gaps.append(luxo_first - ball_right)
         # With his art's left edge at x0, the nearest gap on a shared row is x0 + min(gaps);
         # at the lunge's peak that must be 1 (touching).

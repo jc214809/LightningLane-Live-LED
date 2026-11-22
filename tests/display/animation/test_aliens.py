@@ -32,7 +32,8 @@ def test_aliens_are_registered_with_well_formed_art():
 def test_his_three_eyes_look_up_at_the_claw():
     cls = animation.AliensReveal
     up = animation.characters.aliens._looking_up(cls.ART)
-    pupils = lambda art: [(r, c) for r, row in enumerate(art) for c, k in enumerate(row) if k == "K"]
+    def pupils(art):
+        return [(r, c) for r, row in enumerate(art) for c, k in enumerate(row) if k == "K"]
     assert len(pupils(cls.ART)) == 3 and len(pupils(up)) == 3
     assert all(r == pupils(cls.ART)[0][0] - 1 for r, _ in pupils(up)), "each pupil a row higher"
 

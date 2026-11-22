@@ -12,7 +12,7 @@ from tests.display.animation.support import FakeCanvas
 def _old_screen(height):
     """Two lines of 3x5 'letters' with a blank column between each, and a bar along the bottom."""
     px = {}
-    for line, (top, count, rgb) in enumerate(((2, 5, (255, 255, 255)), (12, 3, (80, 200, 255)))):
+    for top, count, rgb in ((2, 5, (255, 255, 255)), (12, 3, (80, 200, 255))):
         for i in range(count):
             for dx in range(3):
                 for dy in range(5):

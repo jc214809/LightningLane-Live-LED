@@ -46,7 +46,8 @@ def test_frames_follow_the_score_like_the_board(tiny):
     """The castle turns to its fire look in the fire scene (once its 1.5 s fade is done), as on the board.
     The reddest frame of its last second: a white burst's flash can wash one frame out."""
     every = list(tool.frames(tiny, 32, fps=10))
-    reds = lambda f: sum(1 for r, g, b in f.values() if r > 150 and b < 80)
+    def reds(f):
+        return sum(1 for r, g, b in f.values() if r > 150 and b < 80)
     assert max(map(reds, every[-10:])) > reds(every[9]) + 50
 
 

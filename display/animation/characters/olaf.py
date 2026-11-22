@@ -189,7 +189,7 @@ class OlafReveal:
         """[(x, y)] of the snowflakes falling over the whole board at t."""
         out = []
         span = self.height + 2
-        for k, (x0, speed, start, sway) in enumerate(self.flakes):
+        for x0, speed, start, sway in self.flakes:
             if t < start:
                 continue
             fallen = (t - start) * speed

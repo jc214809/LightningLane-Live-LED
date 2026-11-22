@@ -66,7 +66,8 @@ def test_mufasa_fades_in_holds_and_fades_out_by_the_end(height):
 
 def test_the_bottom_of_his_mane_melts_into_the_sky():
     _, actor, out = _play(64, START + 20)
-    row = lambda y: [out[(x, y)] for x in range(64) if (x, y) in out]
+    def row(y):
+        return [out[(x, y)] for x in range(64) if (x, y) in out]
     top_level = max(max(rgb) for rgb in row(10))
     low_level = max(max(rgb) for rgb in row(actor.h - 2))
     assert low_level < top_level * 0.3
@@ -93,7 +94,8 @@ def test_his_outline_is_all_mane():
     """No gold face or cream muzzle on his border, or within two pixels of it: the mane frames him."""
     art = MufasaInTheStars.ART
     h, w = len(art), len(art[0])
-    lit = lambda x, y: 0 <= x < w and 0 <= y < h and art[y][x] != "."
+    def lit(x, y):
+        return 0 <= x < w and 0 <= y < h and art[y][x] != "."
     for y in range(h):
         for x in range(w):
             if lit(x, y) and any(not lit(x + dx, y + dy) for dx in range(-2, 3) for dy in range(-2, 3)

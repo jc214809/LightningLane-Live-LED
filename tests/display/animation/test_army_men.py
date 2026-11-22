@@ -161,7 +161,8 @@ def test_army_men_chute_slumps_downwind_and_sinks_behind_him():
         return canvas.px
 
     early, late = chute(0.1), chute(0.45)
-    mean = lambda px, i: sum(k[i] for k in px) / len(px)
+    def mean(px, i):
+        return sum(k[i] for k in px) / len(px)
     assert mean(late, 0) > mean(early, 0), "blows off downwind, the way they'll hop"
     assert mean(late, 1) > mean(early, 1), "sinks toward the ground"
     assert max(y for _, y in chute(0.9)) == army.height - 1, "ends up lying on the ground"
@@ -218,5 +219,6 @@ def test_army_men_fall_slower_on_the_taller_board_so_they_do_not_plummet():
     short, tall = _army_men(32), _army_men(64)
     assert tall.FALL_S > short.FALL_S
     assert tall.duration == pytest.approx(tall.DROP_S + tall.LAND_S + tall.MARCH_S)
-    speed = lambda a: a.height / a.FALL_S  # rows a second, top of the board to the ground
+    def speed(a):
+        return a.height / a.FALL_S  # rows a second, top of the board to the ground
     assert speed(tall) < 1.75 * speed(short), "not twice the speed just because it's twice as far"

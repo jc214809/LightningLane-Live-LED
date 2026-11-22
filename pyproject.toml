@@ -18,3 +18,25 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["api*", "display*", "driver*", "parks*", "updater*", "utils*"]
+
+# Code-health checks: see docs/dev/CODE-QUALITY.md.
+[tool.ruff]
+# The boards run 3.11 (docs/dev/CODE-QUALITY.md).
+target-version = "py311"
+# Ignored folders that can hold Python (virtualenvs, build output).
+extend-exclude = [".venv*", "build", "dist"]
+
+[tool.ruff.lint]
+# E/F/W/B: pycodestyle, pyflakes, bugbear. C901, PLR0912/0913/0915: complexity, branches, arguments,
+# statements. RUF100: fails on a `noqa` that no longer suppresses anything, so the baseline only shrinks.
+select = ["E", "F", "W", "B", "C901", "PLR0912", "PLR0913", "PLR0915", "RUF100"]
+# E501 (line length) and B905 (zip strict=, a behaviour change) are phase 3 of the plan.
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.mccabe]
+# Ruff's default, written down so it is visible.
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+# Draw helpers legitimately take many arguments: 7, not the default 5.
+max-args = 7

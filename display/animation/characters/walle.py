@@ -388,7 +388,8 @@ class WallESideReveal(WallEReveal):
     def door_angle(self, t):
         """0 shut to 1 lying flat open: it swings open to collect and to eject, and shut after each."""
         phase, p = self._phase(t)
-        swing = lambda q: ease_out(min(1.0, q / self.DOOR_SWING_S))
+        def swing(q):
+            return ease_out(min(1.0, q / self.DOOR_SWING_S))
         if phase == "open":
             return swing(p)
         if phase == "compact":

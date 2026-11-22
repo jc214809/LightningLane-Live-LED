@@ -1,6 +1,5 @@
 # tests/display/test_display.py
 import os
-import tempfile
 import pytest
 from display.display import fonts, initialize_fonts, colors, get_text_width, plain_text, wrap_text
 from display.display import loaded_fonts  # Import the global loaded_fonts variable
@@ -46,7 +45,6 @@ def patch_graphics(monkeypatch):
 
 def test_initialize_fonts_success(monkeypatch):
     # Reset loaded_fonts from display.display.
-    from display.display import loaded_fonts
     loaded_fonts.clear()
     dummy_loaded = initialize_fonts(32)
     assert dummy_loaded is not None
@@ -92,7 +90,7 @@ def test_initialize_fonts_font_load_failure(monkeypatch):
     It forces Font.LoadFont() to always raise an exception, and then verifies that
     debug.error() is called and that loaded_fonts remains empty.
     """
-    from display.display import initialize_fonts, fonts, loaded_fonts, debug
+    from display.display import initialize_fonts, fonts, debug
 
     # Clear any previously loaded fonts.
     loaded_fonts.clear()

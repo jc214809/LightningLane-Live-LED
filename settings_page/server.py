@@ -484,7 +484,8 @@ def volume_only(old, new):
         if isinstance(config.get("sound"), dict):
             config["sound"] = {k: v for k, v in config["sound"].items() if k != "volume"}
         return config
-    volume = lambda config: (config.get("sound") or {}).get("volume") if isinstance(config.get("sound"), dict) else None
+    def volume(config):
+        return (config.get("sound") or {}).get("volume") if isinstance(config.get("sound"), dict) else None
     return volume(old) != volume(new) and without_volume(old) == without_volume(new)
 
 

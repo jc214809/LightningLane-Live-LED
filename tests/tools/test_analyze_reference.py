@@ -140,7 +140,7 @@ def test_a_missing_image_is_an_error_not_a_traceback(tmp_path, caplog):
 
 def test_box_takes_four_numbers():
     assert tool._box("1,2,3.5,4") == [1, 2, 3.5, 4]
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017  _box's failure type is unspecified (a bad unpack); only that it fails
         tool._box("1,2,3")
 
 
