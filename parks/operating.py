@@ -60,7 +60,7 @@ def _attraction_is_fresh(attraction, now):
 def _park_days(schedule):
     """{date: (first opening, actual close)} over every timed entry of each park day: the
     regular hours, Early Entry and any party. Entries without full timestamps are skipped."""
-    days = {}
+    days: dict[str, tuple] = {}
     for event in schedule or []:
         date = event.get("date")
         start, end = parse_timestamp(event.get("openingTime")), parse_timestamp(event.get("closingTime"))

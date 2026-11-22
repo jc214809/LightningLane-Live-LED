@@ -27,10 +27,11 @@ def park_ids(destinations, park_names):
     """{park name as config.json has it: park id} for each of park_names that /v1/destinations lists, matched like
     the app does (raw or cleaned name, ignoring case); the name is the one the destinations list gives, cleaned."""
     wanted = {n.lower() for n in park_names}
-    found = {}
+    found: dict[str, str] = {}
     for dest in destinations if isinstance(destinations, list) else []:
         is_disney = isinstance(dest, dict) and dest.get("id") == DISNEY_WORLD_DESTINATION_ID
-        for park in dest.get("parks") if isinstance(dest, dict) and isinstance(dest.get("parks"), list) else []:
+        parks = dest.get("parks") if isinstance(dest, dict) else None
+        for park in parks if isinstance(parks, list) else []:
             raw = park.get("name") if isinstance(park, dict) else None
             if not isinstance(raw, str) or not park.get("id"):
                 continue
@@ -44,12 +45,13 @@ def config_names(destinations):
     """[(name, destination name)] for every park /v1/destinations lists, water parks left out (the
     app drops them), named as config.json takes them: Walt Disney World's cleaned ("Magic Kingdom"),
     the rest as the API has them. Skips anything malformed; first of a repeated name wins."""
-    names = {}
+    names: dict[str, tuple[str, str]] = {}
     for dest in destinations if isinstance(destinations, list) else []:
         if not isinstance(dest, dict):
             continue
         is_disney = dest.get("id") == DISNEY_WORLD_DESTINATION_ID
-        for park in dest.get("parks") if isinstance(dest.get("parks"), list) else []:
+        parks = dest.get("parks")
+        for park in parks if isinstance(parks, list) else []:
             raw = park.get("name") if isinstance(park, dict) else None
             if not isinstance(raw, str) or not raw.strip() or is_water_park(raw):
                 continue

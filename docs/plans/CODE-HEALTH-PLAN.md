@@ -521,3 +521,6 @@ Each is its own PR, decided one at a time:
   Five files crossed 600 lines from formatting alone and are allowlisted at their new length.
   Frame hashes: 0 differences.
 - **Type checking** (mypy or pyright) on `parks/` and `api/` first, the pure layers.
+  **Started 2026-11-22** (`chore/type-checking`): mypy 2.4.1 on `parks/` and `api/` with
+  `check_untyped_defs`; 17 errors fixed by annotation and narrowing, no behaviour change; mypy runs in CI's
+  `lint` job. Next: `utils/`, `updater/`, then `display/`, and raising the strictness (`disallow_untyped_defs`).
