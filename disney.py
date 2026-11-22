@@ -99,50 +99,18 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
         debug.info("WebSocket off; using REST polling only.")
 
 
-def main():  # noqa: C901, PLR0912, PLR0915
+def main():
     # Settings first, as in mlb-led-scoreboard: a bad flag or matrix setting exits before anything
     # starts, and --emulated must switch the driver before the matrix is built.
     config = load_config()
-    model, defaults, why = model_defaults(config.get("pi_model"))
-    command_line_args = arguments(matrix=config.get("matrix"), defaults=defaults, model=model)
-    debug.info(describe(command_line_args, matrix=config.get("matrix"), defaults=defaults, model=model, why=why))
-    if command_line_args.emulated:
-        driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
-
-    set_forced_surprise(config.get("force_surprise"))
-    global surprises
-    surprises = surprise_settings(load_surprises())
-    if not surprises.enabled or surprises.off:
-        debug.info(f"Surprise characters: {'all off' if not surprises.enabled else 'off for ' + ', '.join(sorted(surprises.off))}.")
-    schedule = brightness_schedule(config)
-    brightness.use(schedule)
-    if schedule:
-        debug.info(f"Brightness schedule: {schedule.day} from {schedule.day_start:%H:%M}, "
-                   f"{schedule.night} from {schedule.night_start:%H:%M}.")
-    set_forced_show(forced_show_name(config))
-    global sound, show_settings_by_clip
-    sound = sound_settings(config)
-    show_settings_by_clip = {clip_name(name): setting for name, setting in show_settings(config).items()}
-    # Only a show played in full, with a synced score, is meant to have music; the others play the
-    # castle fireworks (and the generic clip, if there is one), so a missing clip isn't a problem to badge.
-    watch_sound(sound, [show_clips(show) for show in known_shows()
-                        if show_setting(show).enabled and show_setting(show).version != "default"
-                        and os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))])
+    command_line_args = _read_command_line(config)
+    _apply_surprise_settings(config)
+    _apply_brightness_schedule(config)
+    _apply_show_and_sound_settings(config)
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
-    # Check Python version.
-    if sys.version_info <= (3, 5):
-        debug.error("Please run with python3")
-        sys.exit(1)
-
-    if driver.is_emulated():
-        if driver.hardware_load_failed:
-            debug.log("rgbmatrix not installed, falling back to emulator!")
-
-        debug.log("Using RGBMatrixEmulator version %s", driver.__version__)
-    else:
-        debug.log("Using rgbmatrix version %s", driver.__version__)
+    _check_python_and_driver()
 
     matrix = driver.RGBMatrix(options=led_matrix_options(command_line_args))
     initialize_fonts(matrix.height)
@@ -159,6 +127,64 @@ def main():  # noqa: C901, PLR0912, PLR0915
 
     log_configured_trips(config)
 
+    _run_display_loop(matrix, config, parks_data)
+
+
+def _read_command_line(config):
+    """The flags over config.json's matrix settings and the Pi model's defaults; --emulated switches the driver."""
+    model, defaults, why = model_defaults(config.get("pi_model"))
+    command_line_args = arguments(matrix=config.get("matrix"), defaults=defaults, model=model)
+    debug.info(describe(command_line_args, matrix=config.get("matrix"), defaults=defaults, model=model, why=why))
+    if command_line_args.emulated:
+        driver.set_mode(driver.DriverMode.SOFTWARE_EMULATION)
+    return command_line_args
+
+
+def _apply_surprise_settings(config):
+    set_forced_surprise(config.get("force_surprise"))
+    global surprises
+    surprises = surprise_settings(load_surprises())
+    if not surprises.enabled or surprises.off:
+        debug.info(f"Surprise characters: {'all off' if not surprises.enabled else 'off for ' + ', '.join(sorted(surprises.off))}.")
+
+
+def _apply_brightness_schedule(config):
+    schedule = brightness_schedule(config)
+    brightness.use(schedule)
+    if schedule:
+        debug.info(f"Brightness schedule: {schedule.day} from {schedule.day_start:%H:%M}, "
+                   f"{schedule.night} from {schedule.night_start:%H:%M}.")
+
+
+def _apply_show_and_sound_settings(config):
+    set_forced_show(forced_show_name(config))
+    global sound, show_settings_by_clip
+    sound = sound_settings(config)
+    show_settings_by_clip = {clip_name(name): setting for name, setting in show_settings(config).items()}
+    # Only a show played in full, with a synced score, is meant to have music; the others play the
+    # castle fireworks (and the generic clip, if there is one), so a missing clip isn't a problem to badge.
+    watch_sound(sound, [show_clips(show) for show in known_shows()
+                        if show_setting(show).enabled and show_setting(show).version != "default"
+                        and os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))])
+
+
+def _check_python_and_driver():
+    # Check Python version.
+    if sys.version_info <= (3, 5):
+        debug.error("Please run with python3")
+        sys.exit(1)
+
+    if driver.is_emulated():
+        if driver.hardware_load_failed:
+            debug.log("rgbmatrix not installed, falling back to emulator!")
+
+        debug.log("Using RGBMatrixEmulator version %s", driver.__version__)
+    else:
+        debug.log("Using rgbmatrix version %s", driver.__version__)
+
+
+def _run_display_loop(matrix, config, parks_data):
+    """The intro, the trip countdown and each operating park's screens, forever (an error ends it)."""
     last_trip_shown = None
     try:
         play_forced_show(matrix)
