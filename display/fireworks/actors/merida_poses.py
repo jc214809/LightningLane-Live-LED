@@ -192,7 +192,7 @@ def _apply(cells, rows):
             cells[(x, y)] = k
 
 
-def split(pose, release=None):  # noqa: C901, PLR0912
+def split(pose, release=None):
     """
     Her layers {(x, y): kind} for 'rest' (her bow arm free, her other hand on her hip) or 'draw' (the art as
     drawn), release seconds after she lets go: (skirt, body, bow arm, bow and string).
@@ -201,40 +201,66 @@ def split(pose, release=None):  # noqa: C901, PLR0912
     if pose == "draw":
         _apply(g, DRAW_WRIST)
     if pose == "rest":
-        _patch(g, ARM_PATCHES["hip"])
-        for x in range(2):  # the drawing arm's far end is gone
-            for y in range(23, 28):
-                g.pop((x, y), None)
+        _rest_arm(g)
     elif release is not None and release >= DROP_AT + DROP_S:  # her drawing arm hangs at her side
-        for p in _drawing_arm(g):
-            g.pop(p)
-        _patch(g, ARM_PATCHES["relaxed"])
-        for x in range(2):
-            for y in range(23, 28):
-                g.pop((x, y), None)
-        _apply(g, CHIN_ROWS)
-        g.update(MOUTHS[0])
+        _hanging_arm(g)
     elif release is not None:
-        r = smooth(release / FOLLOW_S)
-        dx, dy = int(round(FOLLOW_PX[0] * r)), int(round(FOLLOW_PX[1] * r))
-        if dx or dy:  # her hand flies back past her ear, uncovering her chin and her shoulder
-            hand = {p: g.pop(p) for p in _drawing_arm(g)}
-            for dy_row, row in enumerate(ARM_PATCHES["relaxed"][:5]):
-                for x, k in enumerate(row):
-                    if k != "." and (x, 23 + dy_row) not in g:
-                        g[(x, 23 + dy_row)] = k
-            _apply(g, CHIN_ROWS)
-            g.update(MOUTHS[0])
-            hand = _shift(hand, dx, dy)
-            if release >= DROP_AT:  # on its way down
-                hand = rotate_cells(hand, (DRAW_SHOULDER[0] + dx, DRAW_SHOULDER[1] + dy), 55)
-            g.update(hand)
+        _follow_through(g, release)
     rows = dict(FACE_ROWS)
     if pose == "rest":
         rows.update(CHIN_ROWS)
     _apply(g, rows)
+    lower, body, arm, bow = _sort_layers(g, REST_ARM_ROWS if pose == "rest" else ARM)
+    lower.update(SKIRT_BEHIND_BOW)
+    _grip_fist(bow, arm)
+    _string(bow, pose, release)
+    return lower, body, arm, bow
+
+
+def _drop_far_end(g):
+    """The drawing arm's far end is gone."""
+    for x in range(2):
+        for y in range(23, 28):
+            g.pop((x, y), None)
+
+
+def _rest_arm(g):
+    _patch(g, ARM_PATCHES["hip"])
+    _drop_far_end(g)
+
+
+def _hanging_arm(g):
+    for p in _drawing_arm(g):
+        g.pop(p)
+    _patch(g, ARM_PATCHES["relaxed"])
+    _drop_far_end(g)
+    _apply(g, CHIN_ROWS)
+    g.update(MOUTHS[0])
+
+
+def _follow_through(g, release):
+    """Her drawing hand flies back from the release, then drops."""
+    r = smooth(release / FOLLOW_S)
+    dx, dy = int(round(FOLLOW_PX[0] * r)), int(round(FOLLOW_PX[1] * r))
+    if not (dx or dy):
+        return
+    # her hand flies back past her ear, uncovering her chin and her shoulder
+    hand = {p: g.pop(p) for p in _drawing_arm(g)}
+    for dy_row, row in enumerate(ARM_PATCHES["relaxed"][:5]):
+        for x, k in enumerate(row):
+            if k != "." and (x, 23 + dy_row) not in g:
+                g[(x, 23 + dy_row)] = k
+    _apply(g, CHIN_ROWS)
+    g.update(MOUTHS[0])
+    hand = _shift(hand, dx, dy)
+    if release >= DROP_AT:  # on its way down
+        hand = rotate_cells(hand, (DRAW_SHOULDER[0] + dx, DRAW_SHOULDER[1] + dy), 55)
+    g.update(hand)
+
+
+def _sort_layers(g, arm_rows):
+    """Deal her cells into (skirt, body, bow arm, bow and string) by where they sit."""
     lower, body, arm, bow = {}, {}, {}, {}
-    arm_rows = REST_ARM_ROWS if pose == "rest" else ARM
     for (x, y), k in g.items():
         if _in(BOW, x, y):
             bow[(x, y)] = k
@@ -244,8 +270,11 @@ def split(pose, release=None):  # noqa: C901, PLR0912
             lower[(x, y)] = k
         else:
             body[(x, y)] = k
-    lower.update(SKIRT_BEHIND_BOW)
-    # Her bow hand (a fist) goes with her arm; the grip it covered is wood.
+    return lower, body, arm, bow
+
+
+def _grip_fist(bow, arm):
+    """Her bow hand (a fist) goes with her arm; the grip it covered is wood."""
     for p in [p for p in bow if 21 <= p[1] <= 26 and p[0] >= 26]:
         bow.pop(p)
     for p in [p for p in arm if 21 <= p[1] <= 26 and p[0] >= 26]:
@@ -255,14 +284,16 @@ def split(pose, release=None):  # noqa: C901, PLR0912
             arm[(x, y)] = k
     for y in range(18, 28):
         bow[(27, y)], bow[(28, y)], bow[(29, y)] = "K", "P", "K"
-    # The string: a V at full draw, ringing after the release, straight at rest.
+
+
+def _string(bow, pose, release):
+    """The string: a V at full draw, ringing after the release, straight at rest."""
     pull = 0.0 if pose == "rest" else 1.0 if release is None else tension(release)
     for row, col in Archer.STRING_COLS.items():
         x = Archer.TIP_COL - int(round(pull * (Archer.TIP_COL - col)))
         if pose == "draw" and release is None and x == Archer.NOCK[0] and 24 <= row <= 26:
             continue  # behind her hand
         bow[(x, row)] = "S"
-    return lower, body, arm, bow
 
 
 def _fill_behind_arm(body, arm):
