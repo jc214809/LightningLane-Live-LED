@@ -42,34 +42,56 @@ class Capture:
         self.px = {}
 
 
-def _glyphs(path):  # noqa: C901
+def _glyphs(path):
     """{codepoint: (advance, height, x_offset, y_offset, rows, width)} from a BDF file, rows as bit strings."""
     if path not in _glyph_cache:
-        glyphs, current, rows = {}, None, None
         with open(path, encoding="latin-1") as f:
-            for line in f:
-                key, _, rest = line.strip().partition(" ")
-                if key == "ENCODING":
-                    current = {"code": int(rest.split()[0])}
-                elif current is None:
-                    continue
-                elif key == "DWIDTH":
-                    current["advance"] = int(rest.split()[0])
-                elif key == "BBX":
-                    w, h, x_off, y_off = map(int, rest.split())
-                    current.update(width=w, height=h, x_offset=x_off, y_offset=y_off)
-                elif key == "BITMAP":
-                    rows = []
-                elif key == "ENDCHAR":
-                    if current.get("code", -1) >= 0 and rows is not None:
-                        glyphs[current["code"]] = (current.get("advance", 0), current.get("height", 0),
-                                                   current.get("x_offset", 0), current.get("y_offset", 0),
-                                                   rows[:current.get("height", 0)], current.get("width", 0))
-                    current, rows = None, None
-                elif rows is not None and key:
-                    rows.append(bin(int(key, 16))[2:].zfill(len(key) * 4))
-        _glyph_cache[path] = glyphs
+            _glyph_cache[path] = _parse_bdf(f)
     return _glyph_cache[path]
+
+
+def _parse_bdf(lines):
+    """The glyph table of a BDF file's lines. `current` is the glyph being read (None between glyphs, and
+    its lines are skipped), `rows` its bitmap once BITMAP has started."""
+    glyphs, current, rows = {}, None, None
+    for line in lines:
+        key, _, rest = line.strip().partition(" ")
+        if key == "ENCODING":
+            current = {"code": int(rest.split()[0])}
+        elif current is None:
+            continue
+        elif key in _GLYPH_FIELDS:
+            current.update(_GLYPH_FIELDS[key](rest))
+        elif key == "BITMAP":
+            rows = []
+        elif key == "ENDCHAR":
+            _store_glyph(glyphs, current, rows)
+            current, rows = None, None
+        elif rows is not None and key:
+            rows.append(bin(int(key, 16))[2:].zfill(len(key) * 4))
+    return glyphs
+
+
+def _read_dwidth(rest):
+    return {"advance": int(rest.split()[0])}
+
+
+def _read_bbx(rest):
+    w, h, x_off, y_off = map(int, rest.split())
+    return {"width": w, "height": h, "x_offset": x_off, "y_offset": y_off}
+
+
+# The BDF lines that set a field of the glyph being read, by keyword.
+_GLYPH_FIELDS = {"DWIDTH": _read_dwidth, "BBX": _read_bbx}
+
+
+def _store_glyph(glyphs, current, rows):
+    """Add a finished glyph to the table; one without a codepoint or a bitmap is dropped."""
+    if current.get("code", -1) < 0 or rows is None:
+        return
+    height = current.get("height", 0)
+    glyphs[current["code"]] = (current.get("advance", 0), height, current.get("x_offset", 0),
+                               current.get("y_offset", 0), rows[:height], current.get("width", 0))
 
 
 def _rgb(color):
