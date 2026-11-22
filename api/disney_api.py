@@ -7,7 +7,7 @@ import certifi
 import requests
 
 from api.weather import fetch_weather_data
-from parks.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, clean_ride_name, is_water_park
+from utils.names import DISNEY_WORLD_DESTINATION_ID, clean_park_name, clean_ride_name, is_water_park
 from utils.special_events import seasonal_event
 from utils import debug
 

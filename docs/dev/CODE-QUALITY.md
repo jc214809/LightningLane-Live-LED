@@ -34,12 +34,11 @@ Source files (every tracked `.py` outside `tests/`) stay at 600 lines or fewer. 
 
 `[tool.importlinter]` in `pyproject.toml`, run by `lint-imports`:
 
-- `api` and `parks` may not import `updater`, `display`, `settings_page`, `self_update` or `driver`.
+- One `layers` contract, highest first (`|` means independent siblings, which may not import each other): `display | settings_page` > `updater | self_update` > `parks` > `api | driver` > `utils`. It replaces the earlier forbidden contracts for `self_update` (not importing `settings_page`), `driver` and `utils` (importing nothing above them). Known exception: `utils.settings_pin -> settings_page.pins` (the PIN file's path is owned by the settings service), in `ignore_imports`.
+- `api` and `parks` may not import `updater`, `display`, `settings_page`, `self_update` or `driver` (kept: the layers contract lets `parks` import `driver`, this does not).
 - `display` may not import `api`, `aiohttp`, `requests` or `updater` (except `updater.shared`). No display exception is left: the weather icon is downloaded by the REST thread (`api/weather_icons.py`) and published in `updater.shared.weather_icons`.
-- `driver` may not import `api`, `parks`, `updater`, `display`, `settings_page` or `self_update`.
-- `utils` may not import `api`, `parks`, `updater`, `display`, `self_update` or `settings_page`. Known exception: `utils.settings_pin -> settings_page.pins` (the PIN file's path is owned by the settings service).
 
-Adding an import that breaks a contract fails CI; add to `ignore_imports` only with a comment saying why and where the fix is planned. Other cycles (`api` and `parks` import each other; `settings_page` and `self_update` too) are known and left to phase 3.
+Adding an import that breaks a contract fails CI; add to `ignore_imports` only with a comment saying why and where the fix is planned. The park-name helpers (`clean_park_name`, `clean_ride_name`, `is_water_park`, the Walt Disney World destination id) live in `utils/names.py`, where both `api` and `parks` can reach them; `parks/names.py` re-exports them.
 
 ## Frame hashes: proof that a display refactor changed nothing
 
@@ -123,18 +122,15 @@ break another". This repo's intended layering:
 
 ```
 disney.py, cli.py                 entry points: wire everything together
-display/  settings_page/  self_update/   what the user sees / the services
-updater/                          live-data threads
+display/  settings_page/          what the user sees / the settings service (independent)
+updater/  self_update/            live-data threads / the board updater (independent)
 parks/                            decisions over park data (pure)
-api/                              HTTP fetch and parse
-utils/  driver/                   foundations: config, logging, hardware
+api/  driver/                     HTTP fetch and parse / hardware (independent)
+utils/                            foundation: config, logging, names
 ```
 
-Measured 2026-11-22, it mostly holds. The exceptions phase 1 records (and phase 3 decides on):
-`utils/settings_pin.py` imports
-`settings_page.pins`; `api` imports `parks.names` while `parks` imports `api.disney_api` (a
-package-level cycle); `settings_page` and `self_update` import each other. `import-linter`
-turns the rules into a CI check.
+Enforced by the `layers` contract (see Layers above). The one upward import is
+`utils/settings_pin.py -> settings_page.pins`. `import-linter` turns the rules into a CI check.
 
 ### 6. Modules by feature, small enough to hold in your head
 

@@ -37,3 +37,11 @@ def test_park_ids_matches_the_app_by_raw_or_cleaned_name_ignoring_case():
     assert park_ids(destinations, ["magic kingdom", "Cedar Point", "Nowhere"]) == {"Magic Kingdom": "mk", "Cedar Point": "cpid"}
     assert park_ids(destinations, ["Magic Kingdom Park"]) == {"Magic Kingdom": "mk"}
     assert park_ids("nope", ["EPCOT"]) == {}
+
+
+def test_parks_names_re_exports_the_helpers_that_live_in_utils_names():
+    import parks.names
+    import utils.names
+    for name in ("DISNEY_WORLD_DESTINATION_ID", "WATER_PARK_KEYWORDS", "clean_park_name", "clean_ride_name",
+                 "is_water_park"):
+        assert getattr(parks.names, name) is getattr(utils.names, name)

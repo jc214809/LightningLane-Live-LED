@@ -1,24 +1,14 @@
-"""Park names as config.json's "parks" takes them, shared by the app (api.disney_api) and the
-settings page's picker, so the page offers exactly the names the app can find. No imports
-beyond the standard library: the settings page runs without the app's packages loaded."""
+"""Park names as config.json's "parks" takes them, shared by the app and the settings page's picker, so
+the page offers exactly the names the app can find. The cleaning rules and Walt Disney World's destination
+id live in utils/names.py (api/disney_api.py uses them too) and are re-exported here, so importers of
+parks.names keep working. No imports beyond utils.names: the settings page runs without the app's
+packages loaded."""
 
-DISNEY_WORLD_DESTINATION_ID = "e957da41-3552-4cf6-b636-5babc5cbc4e5"
-WATER_PARK_KEYWORDS = ("Water Park", "Shores")
+from utils.names import (
+    DISNEY_WORLD_DESTINATION_ID, WATER_PARK_KEYWORDS, clean_park_name, clean_ride_name, is_water_park)
 
-
-def clean_park_name(raw_name):
-    return raw_name.replace("Theme", " ").replace("Park", " ").replace("Disney's", "").strip()
-
-
-def is_water_park(raw_name):
-    return any(kw in raw_name for kw in WATER_PARK_KEYWORDS)
-
-
-def clean_ride_name(raw_name):
-    """A ride's name as the app shows and matches it: no trademark sign or asterisk, a plain hyphen, and without
-    the party suffix."""
-    return (raw_name.replace("\u2122", "").replace("–", "-").replace("*", " ").replace("An Original", "")
-            .replace(" at Mickey's Not-So-Scary Halloween Party", ""))
+__all__ = ["DISNEY_WORLD_DESTINATION_ID", "WATER_PARK_KEYWORDS", "clean_park_name", "clean_ride_name",
+           "is_water_park", "park_ids", "config_names"]
 
 
 def park_ids(destinations, park_names):
