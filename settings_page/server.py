@@ -25,13 +25,13 @@ from ipaddress import ip_address, ip_network
 from urllib.parse import parse_qs, urlsplit
 
 import cli
-from settings_page import board_status, page, pushover, surprises_page
+from settings_page import board_status, page, surprises_page
 from settings_page.form import WDW_PARKS, apply_form, apply_surprises, chosen_device, import_surprises, snapshot_surprises, panel_choices, volume_from_form
 from settings_page.park_names import ParkNames
 from settings_page.ride_names import RideNames
 from settings_page.pins import PIN_SHOWN_S, SESSION_S, PinGate
 from settings_page.updates import STARTS, Updates
-from utils import debug
+from utils import debug, pushover
 from utils.config import CONFIG_FILE, SURPRISES_FILE, load_surprises, pushover_keys, save_config, sound_settings
 from utils.sound import play_test, set_volume
 from utils.wifi_setup import hotspot_name

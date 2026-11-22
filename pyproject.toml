@@ -74,6 +74,12 @@ ignore_imports = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "self_update does not import settings_page"
+type = "forbidden"
+source_modules = ["self_update"]
+forbidden_modules = ["settings_page"]
+
+[[tool.importlinter.contracts]]
 name = "driver is a foundation: it imports no other package of this app"
 type = "forbidden"
 source_modules = ["driver"]
