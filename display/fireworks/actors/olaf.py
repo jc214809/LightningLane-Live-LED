@@ -186,28 +186,36 @@ class OlafStands(Actor):
         if p > 0:
             self.draw_puddle(out, p, 1.0)
 
-    def draw_puddle(self, out, p, glow):  # noqa: C901
+    def draw_puddle(self, out, p, glow):
         """The puddle he leaves: wider and deeper as he melts (p), with his carrot and buttons in it
         once he's gone, all at glow brightness."""
         if glow <= 0.05:  # too dim for the LEDs
             return
-        h, w = self.show.height, self.show.width
+
         def dim(rgb):
             return tuple(int(c * glow) for c in rgb)
-        half = self.feet_half * (0.8 + 1.2 * p)
         rows = max(1, round(self.puddle_rows * p))
+        self._draw_water(out, p, rows, dim)
+        if p >= 1:
+            self._draw_keepsakes(out, rows, dim)
+
+    def _draw_water(self, out, p, rows, dim):
+        h, w = self.show.height, self.show.width
+        half = self.feet_half * (0.8 + 1.2 * p)
         for k in range(rows):
             span = half * (1 - (k / rows) ** 2) ** 0.5
             for x in range(math.floor(self.cx - span + 0.5), math.floor(self.cx + span + 0.5) + 1):
                 if 0 <= x < w:
                     edge = k == rows - 1 or abs(x - self.cx) > span - 1
                     out[(x, h - 1 - k)] = dim(self.WATER_EDGE if edge else self.WATER)
-        if p >= 1:
-            y = h - 1 - (rows // 2)
-            cx = round(self.cx)
-            for x in range(cx - 4, cx - 1):  # his carrot, lying on its side
-                if 0 <= x < w:
-                    out[(x, y)] = dim(OlafReveal.CARROT)
-            for x in (cx + 1, cx + 3, cx + 5):  # his coal buttons
-                if 0 <= x < w:
-                    out[(x, y)] = dim(OlafReveal.COAL)
+
+    def _draw_keepsakes(self, out, rows, dim):
+        h, w = self.show.height, self.show.width
+        y = h - 1 - (rows // 2)
+        cx = round(self.cx)
+        for x in range(cx - 4, cx - 1):  # his carrot, lying on its side
+            if 0 <= x < w:
+                out[(x, y)] = dim(OlafReveal.CARROT)
+        for x in (cx + 1, cx + 3, cx + 5):  # his coal buttons
+            if 0 <= x < w:
+                out[(x, y)] = dim(OlafReveal.COAL)
