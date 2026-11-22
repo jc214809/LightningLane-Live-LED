@@ -13,6 +13,7 @@ What is hashed, each at 64x32 and 64x64 (names end in @WxH):
   landmark/<Class>              every Landmark subclass: frame(t) every 0.2 s across its whole run, and title(t)
   landmark-screen/<Class>       its screen as show_screen draws it (title text included), through capture_screen()
   transition/<name>             every entry of TRANSITIONS, composed over a fixture screen, every frame
+  transition/<name>-<story>     each of a reveal's random STORIES pinned in turn (Luxo, Chip and Dale)
   fireworks/<theme>             the everyday castle fireworks (and the other THEMES), pre-roll plus 12 s, every frame
   fireworks-title               the "Lightning Lane LED" title, through capture_screen()
   show/<clip>.<version>         each synced show's V1 and V2 over the whole score, EVERY frame (N = 1)
@@ -215,14 +216,25 @@ def _fixture_screen(salt):
     return draw
 
 
-def hash_transition(name, width, height):
+def story_choices(cls):
+    """The stories a reveal picks from at random (its STORIES), when it doesn't pin one (STORY); else ()."""
+    if getattr(cls, "STORY", None) is not None:
+        return ()
+    return tuple(getattr(cls, "STORIES", ()))
+
+
+def hash_transition(name, width, height, story=None):
     """show_screen's composition without its clock: the new screen (held at its first frame until uncovered)
-    with the reveal's overlay on top, every frame until the reveal says it's done."""
+    with the reveal's overlay on top, every frame until the reveal says it's done. `story` pins one of a
+    reveal's random STORIES, which the seeded run alone would never reach."""
     from display.animation import TRANSITIONS
 
     seed_everything()
     prev_draw, new_draw = _fixture_screen(1), _fixture_screen(2)
-    reveal = TRANSITIONS[name](width, height, random.Random(SEED))
+    cls = TRANSITIONS[name]
+    if story is not None:
+        cls = type(cls.__name__, (cls,), {"STORY": story})
+    reveal = cls(width, height, random.Random(SEED))
     if getattr(reveal, "wants_prev", False):
         reveal.capture_prev(prev_draw, 0.0)
     if getattr(reveal, "wants_new", False):
@@ -410,8 +422,11 @@ def catalog():
         for name, cls in landmark_classes().items():
             things[f"landmark/{name}{board}"] = lambda c=cls, h=height: hash_landmark(c, WIDTH, h)
             things[f"landmark-screen/{name}{board}"] = lambda c=cls, h=height: hash_landmark_screen(c, WIDTH, h)
-        for name in TRANSITIONS:
+        for name, cls in TRANSITIONS.items():
             things[f"transition/{name}{board}"] = lambda n=name, h=height: hash_transition(n, WIDTH, h)
+            for story in story_choices(cls):
+                things[f"transition/{name}-{story}{board}"] = (
+                    lambda n=name, h=height, s=story: hash_transition(n, WIDTH, h, s))
         for theme in (None, *THEMES):
             things[f"fireworks/{theme or 'everyday'}{board}"] = lambda th=theme, h=height: hash_fireworks(th, WIDTH, h)
         things[f"fireworks-title{board}"] = lambda h=height: hash_fireworks_title(WIDTH, h)

@@ -70,8 +70,24 @@ def test_the_catalog_covers_every_kind_of_thing_on_both_boards():
                  "screen/ride/down", "screen/countdown/days-to-go", "landmark/FriendlyJackOLantern-wink"):
         assert [f"{kind}@64x32", f"{kind}@64x64"] == [n for n in names if n.startswith(kind + "@")], kind
     from display.animation import TRANSITIONS
-    assert {n.split("/")[1].split("@")[0] for n in names if n.startswith("transition/")} == set(TRANSITIONS)
+    stories = {f"{name}-{story}" for name, cls in TRANSITIONS.items() for story in tool.story_choices(cls)}
+    assert {n.split("/")[1].split("@")[0] for n in names if n.startswith("transition/")} == set(TRANSITIONS) | stories
     assert names == list(dict.fromkeys(names))
+
+
+def test_every_random_story_of_a_reveal_is_hashed_pinned_but_a_pinned_reveal_adds_none():
+    from display.animation import TRANSITIONS
+    names = set(tool.catalog())
+    for story in ("bat", "chase", "light"):
+        assert f"transition/luxo_ball-{story}@64x32" in names and f"transition/luxo_ball-{story}@64x64" in names
+    assert {"transition/chip_dale-meet@64x32", "transition/chip_dale-swing@64x32"} <= names
+    assert tool.story_choices(TRANSITIONS["chip_dale_swing"]) == (), "STORY already pins it"
+    assert tool.story_choices(TRANSITIONS["mike"]) == ()
+
+
+def test_each_pinned_story_renders_differently():
+    digests = {story: tool.hash_transition("luxo_ball", 64, 32, story) for story in ("bat", "chase", "light")}
+    assert len(set(digests.values())) == 3
 
 
 def test_a_landmark_hashes_the_same_twice_and_one_changed_pixel_changes_it(monkeypatch):

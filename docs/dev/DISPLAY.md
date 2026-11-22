@@ -20,7 +20,7 @@ Read before changing `disney.py`'s loop or `display/` outside characters (`docs/
 
 ## Proving a display change changed nothing
 
-`python3 tools/frame_hashes.py --out /tmp/before.json` on the base branch, then `--out /tmp/after.json --compare /tmp/before.json` after your change: it renders every landmark, transition, fireworks theme, synced show (V1 and V2, every frame) and the park-info, ride and countdown screens at 64x32 and 64x64, deterministically, and must report `0 differences` (`--only <substring>` runs a subset; about 80 s in all). A new landmark, transition, theme or show is picked up by itself; a new kind of screen needs a fixture in the tool. Details: `docs/dev/CODE-QUALITY.md`.
+`python3 tools/frame_hashes.py --out /tmp/before.json` on the base branch, then `--out /tmp/after.json --compare /tmp/before.json` after your change: it renders every landmark, transition, fireworks theme, synced show (V1 and V2, every frame) and the park-info, ride and countdown screens at 64x32 and 64x64, deterministically, and must report `0 differences` (`--only <substring>` runs a subset; about 80 s in all). A new landmark, transition, theme or show is picked up by itself, and a reveal's random `STORIES` are each hashed pinned (`transition/luxo_ball-bat`); any other random choice the seeded run can't reach (check with `coverage run tools/frame_hashes.py`) needs its own pinning test, and a new kind of screen needs a fixture in the tool. Hashes depend on the interpreter and library versions: run before and after with the same Python. Details: `docs/dev/CODE-QUALITY.md`.
 
 ## Display rules
 
