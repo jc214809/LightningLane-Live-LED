@@ -38,6 +38,9 @@ jobs:
       - name: Import layers
         run: lint-imports
 
+      - name: Type check
+        run: mypy
+
   test:
     runs-on: ubuntu-latest
     # 3.11 is what the boards run (Raspberry Pi OS Bookworm); 3.13 is the next OS's (Trixie). 3.14 is

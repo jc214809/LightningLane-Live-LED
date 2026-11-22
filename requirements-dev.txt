@@ -10,3 +10,6 @@ coverage>=7.4
 # Pinned: CI's lint job and .pre-commit-config.yaml use the same versions.
 ruff==0.17.5
 import-linter==2.17
+# Type checking (parks/ and api/): CI's lint job runs `mypy`.
+mypy==2.4.1
+types-requests==2.33.0.20261030

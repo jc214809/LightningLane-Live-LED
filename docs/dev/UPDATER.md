@@ -18,4 +18,4 @@ sudo venv/bin/python3 -m self_update update [--channel beta]
 ## Gotchas
 
 - An update runs the *new* version's `LLL-install.sh` but the *old* version's `self_update`, so a fix that must reach boards with a broken updater goes in the installer. Its git calls run as root in the user's checkout, from systemd with no `SUDO_UID`: pass `-c safe.directory="$PWD"` or git stops with "dubious ownership".
-- `self_update` imports nothing from `settings_page` (import-linter contract); its failure alert uses `utils/pushover.py`, imported at the top of `update.py` so a failed rollback can still alert. `settings_page/pushover.py` is a re-export shim for a board mid-update (a running process may still import the old path); remove it a release later.
+- `self_update` imports nothing from `settings_page` (import-linter contract); its failure alert uses `utils/pushover.py`, imported at the top of `update.py` so a failed rollback can still alert.

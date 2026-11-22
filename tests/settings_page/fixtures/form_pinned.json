@@ -283,7 +283,7 @@
    "websocket": {
     "enabled": false,
     "api_key": "tp-secret-1234",
-    "protocol": "legacy"
+    "protocol": "preview"
    },
    "trip_countdown": {
     "enabled": false,
@@ -349,7 +349,7 @@
    "websocket": {
     "enabled": false,
     "api_key": "tp-secret-1234",
-    "protocol": "legacy"
+    "protocol": "preview"
    },
    "trip_countdown": {
     "enabled": false,
@@ -409,7 +409,7 @@
   "config": {
    "websocket": {
     "enabled": false,
-    "protocol": "legacy"
+    "protocol": "preview"
    },
    "parks": [
     "EPCOT"
@@ -433,7 +433,7 @@
   "config": {
    "websocket": {
     "enabled": false,
-    "protocol": "legacy"
+    "protocol": "preview"
    },
    "matrix": {},
    "sound": {
@@ -469,7 +469,7 @@
    "websocket": {
     "enabled": true,
     "api_key": "tp-secret-1234",
-    "protocol": "legacy"
+    "protocol": "preview"
    },
    "trip_countdown": {
     "enabled": true,
@@ -549,7 +549,7 @@
    "websocket": {
     "enabled": true,
     "api_key": "tp-secret-1234",
-    "protocol": "legacy"
+    "protocol": "preview"
    },
    "trip_countdown": {
     "enabled": true,
@@ -3897,7 +3897,7 @@
    "debug": false
   },
   "problems": [
-   "Panel: argument --led-gpio-mapping: invalid choice: 'x' (choose from 'regular', 'adafruit-hat', 'adafruit-hat-pwm')."
+   "Panel: argument --led-gpio-mapping: invalid choice: 'x' (choose from regular, adafruit-hat, adafruit-hat-pwm)."
   ]
  },
  "matrix_bad_number_stays_text": {
@@ -4057,7 +4057,7 @@
    "debug": false
   },
   "problems": [
-   "Panel: argument --led-slowdown-gpio: invalid choice: -1 (choose from 0, 1, 2, 3, 4)."
+   "Panel: argument --led-slowdown-gpio: invalid choice: '-1' (choose from 0, 1, 2, 3, 4)."
   ]
  },
  "matrix_switch_values": {
@@ -5223,7 +5223,7 @@
    "websocket": {
     "enabled": true,
     "api_key": "tp-secret-1234",
-    "protocol": "legacy"
+    "protocol": "preview"
    },
    "trip_countdown": {
     "enabled": false,

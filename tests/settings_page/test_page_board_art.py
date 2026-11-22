@@ -219,14 +219,18 @@ def test_the_shows_card_shows_the_castle_the_shows_play_over():
 
 
 def test_the_surprises_card_names_every_character_and_counts_them():
-    from settings_page.form import character_label, surprise_names
+    from settings_page.form import character_label, surprise_characters, surprise_names
 
-    cast = sorted(character_label(n) for n in surprise_names())
+    cast = sorted(character_label(n) for n in surprise_characters())
     html = settings_page({}, [])
     assert len(cast) > 10 and f"Choose from all {len(cast)} characters and their chances" in html
     from html import escape
 
     assert "".join(f"<li>{escape(n)}</li>" for n in cast) in html
+    # Variants are grouped under their character, so the count is characters, not looks.
+    assert len(cast) < len(surprise_names())
+    for look in ("Saber Duel Kylo", "Saber Duel Luke", "Mine Train Snow"):
+        assert f"<li>{look}</li>" not in html
 
 
 def test_the_settings_pages_script_is_valid_javascript(tmp_path):

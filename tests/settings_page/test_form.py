@@ -251,7 +251,7 @@ def test_a_config_missing_its_sections_gets_them():
     new, problems = apply_form({}, {"park": ["EPCOT"], "trip_start_0": ["2027-01-01"]})
     assert problems == []
     assert new["parks"] == ["EPCOT"]
-    assert new["websocket"] == {"enabled": False, "protocol": "legacy"}
+    assert new["websocket"] == {"enabled": False, "protocol": "preview"}
     assert new["trip_countdown"] == {"enabled": False, "trip_dates": ["2027-01-01"]}
     assert new["sound"] == {"enabled": False, "device": None}
 

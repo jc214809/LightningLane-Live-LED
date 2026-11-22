@@ -115,17 +115,18 @@ def pushover_keys(config):
 
 
 WS_PROTOCOLS = ("legacy", "preview")
+DEFAULT_WS_PROTOCOL = "preview"
 
 
 def websocket_protocol(config):
-    """config.json's "websocket.protocol": "legacy" (the default) or "preview"."""
+    """config.json's "websocket.protocol": "preview" (the default) or "legacy"."""
     section = config.get("websocket")
-    protocol = section.get("protocol", "legacy") if isinstance(section, dict) else "legacy"
+    protocol = section.get("protocol", DEFAULT_WS_PROTOCOL) if isinstance(section, dict) else DEFAULT_WS_PROTOCOL
     if protocol not in WS_PROTOCOLS:
         debug.warning(
-            f'config.json "websocket.protocol" should be "legacy" or "preview", not {protocol!r}; using "legacy".'
+            f'config.json "websocket.protocol" should be "preview" or "legacy", not {protocol!r}; using "{DEFAULT_WS_PROTOCOL}".'
         )
-        return "legacy"
+        return DEFAULT_WS_PROTOCOL
     return protocol
 
 

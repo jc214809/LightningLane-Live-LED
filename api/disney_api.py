@@ -1,6 +1,7 @@
 import re
 import ssl
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import aiohttp
 import certifi
@@ -173,7 +174,7 @@ def resolve_parks_from_config(park_names):
     names_lower = {n.lower() for n in park_names}
 
     # Map destination_id -> set of matched park IDs
-    dest_park_ids = {}
+    dest_park_ids: dict[str, set[str]] = {}
     for dest in destinations:
         dest_id = dest["id"]
         is_disney = dest_id == DISNEY_WORLD_DESTINATION_ID
@@ -187,7 +188,7 @@ def resolve_parks_from_config(park_names):
         debug.error(f"No destinations found for parks: {park_names}")
         return []
 
-    result = []
+    result: list[dict] = []
     for dest_id, park_ids in dest_park_ids.items():
         parks = fetch_parks_from_destination(dest_id)
         result.extend(p for p in parks if p["id"] in park_ids)
@@ -208,7 +209,7 @@ def fetch_parks_and_attractions(disney_park_list):
         location = park_info.get("location")
 
         # Use the first OPERATING event to extract opening/closing times and pricing info.
-        operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
+        operating_event: dict = next((event for event in schedule if event.get("type") == "OPERATING"), {})
 
         debug.info(f"Fetching attractions for park: {park_name} (ID: {park_id})")
         api_url = f"https://api.themeparks.wiki/v1/entity/{park_id}/children"
@@ -325,7 +326,7 @@ def parse_showtimes(raw_showtimes):
     """Start times (aware datetimes) of a show's performances, dropping malformed entries."""
     starts = []
     for show in raw_showtimes or []:
-        when = show.get("startTime") if isinstance(show, dict) else None
+        when: Any = show.get("startTime") if isinstance(show, dict) else None
         try:
             start = datetime.fromisoformat(when.replace("Z", "+00:00"))
         except (ValueError, AttributeError, TypeError):
@@ -397,7 +398,7 @@ def handle_park_schedule_update(park):
     debug.info(f"Updated schedule for {park.get('name')}")
 
     # Update park schedule details
-    operating_event = next((event for event in schedule if event.get("type") == "OPERATING"), {})
+    operating_event: dict = next((event for event in schedule if event.get("type") == "OPERATING"), {})
     park["llmpPrice"] = determine_llmp_price(operating_event)
     park["closingTime"] = operating_event.get("closingTime", "")
     park["openingTime"] = operating_event.get("openingTime", "")

@@ -71,6 +71,7 @@ from display.fireworks.fireworks_art import (  # noqa: F401  (re-exported: music
     _tree_points,
     castle_sprite,
 )
+from display.fireworks.frame_stats import FrameStats
 from display.motion import smooth
 from driver import graphics
 from utils import debug
@@ -599,27 +600,26 @@ def draw_title(canvas, font, layout, alpha):
 
 def render_castle_fireworks(matrix, duration=12.0, fps=30, rng=None, title=True, theme=None):
     """Animate the castle fireworks scene on the matrix for `duration` seconds, with or without the
-    app's title, in a THEMES look (None for the everyday show)."""
+    app's title, in a THEMES look (None for the everyday show). Logs one timing line at the end."""
     show = FireworksShow(matrix.width, matrix.height, rng, theme)
     canvas = frame_canvas(matrix)
-    frame_time = 1.0 / fps
     frames = int(duration * fps)
-    font = loaded_fonts.get("title")
-    layout = title_layout(font, matrix.width, matrix.height) if font and title else []
+    layout = title_layout(font, matrix.width, matrix.height) if (font := loaded_fonts.get("title")) and title else []
     debug.info(f"Rendering castle fireworks for {duration}s ({frames} frames).")
-    # Pre-roll so the sky isn't empty on the first frame.
-    for _ in range(20):
+    for _ in range(20):  # pre-roll so the sky isn't empty on the first frame
         show.step()
+    stats = FrameStats(theme or "everyday", f"{matrix.width}x{matrix.height}", fps, frames)
     for i in range(frames):
         start = time.monotonic()
         show.step()
+        pixels, built = show.frame_pixels(), time.monotonic()
         canvas.Clear()
-        for (x, y), (r, g, b) in show.frame_pixels().items():
+        for (x, y), (r, g, b) in pixels.items():
             canvas.SetPixel(x, y, r, g, b)
-        # Drawn over the sparks so bursts pass behind the name.
-        draw_title(canvas, font, layout, title_alpha(i / fps))
+        draw_title(canvas, font, layout, title_alpha(i / fps))  # over the sparks, so bursts pass behind the name
         canvas = present(matrix, canvas)
-        remaining = frame_time - (time.monotonic() - start)
+        remaining = stats.frame_time - stats.record(start, built, len(pixels), bool(show.sleighs))
         if remaining > 0:
             time.sleep(remaining)
+    stats.log()
     matrix.Clear()

@@ -7,7 +7,7 @@ Read before changing `api/`, `parks/`, `updater/`, `utils/special_events.py` or 
 ## Threads
 
 - **REST thread** (`updater/data_updater.py:live_data_updater`): every 5 min, updates the shared `parks_data` in place, refreshes weather, rechecks operating status and does deferred schedule fetches. Always runs, as the backstop for WS-sourced status. With the preview protocol it skips the startup fetch if the WS snapshot comes within `LIVE_FEED_STARTUP_WAIT_SECS` (15), then polls live data only when `rest_poll_due`: the feed is unhealthy (`updater/shared.py:live_feed_healthy`) or 30 min have passed.
-- **WebSocket thread** (`updater/websocket_updater.py`, running `ws_legacy.py` or `ws_preview.py` per `websocket.protocol`; shared parts in `ws_common.py`): only with `websocket.enabled` (default true) and a real `api_key` (`utils/config.py:websocket_settings`; placeholders don't count; an old top-level `themeparks_api_key` is still read, since the installer doesn't migrate configs). Keyless, the server closes with 3000 "Authentication timeout". Host: `wss://api.themeparks.wiki/v1/live` only. Each destination is subscribed once per `WS_ENTITY_TYPES` (`ATTRACTION`, `SHOW`): `entityTypeFilter` takes one type, and unfiltered, restaurants were two thirds of the traffic. A key gets 15 subscriptions.
+- **WebSocket thread** (`updater/websocket_updater.py`, running `ws_legacy.py` or `ws_preview.py` per `websocket.protocol` (default `"preview"`; set `"legacy"` to go back); shared parts in `ws_common.py`): only with `websocket.enabled` (default true) and a real `api_key` (`utils/config.py:websocket_settings`; placeholders don't count; an old top-level `themeparks_api_key` is still read, since the installer doesn't migrate configs). Keyless, the server closes with 3000 "Authentication timeout". Host: `wss://api.themeparks.wiki/v1/live` only. Each destination is subscribed once per `WS_ENTITY_TYPES` (`ATTRACTION`, `SHOW`): `entityTypeFilter` takes one type, and unfiltered, restaurants were two thirds of the traffic. A key gets 15 subscriptions.
 
 ## Data flow
 
@@ -24,8 +24,9 @@ Read before changing `api/`, `parks/`, `updater/`, `utils/special_events.py` or 
 - `merge_live_data` mutates attraction dicts in place and returns the same list. Don't rebuild the list: that drops concurrent WS updates.
 - The display thread reads without locking, by design. `loop_through_attractions` snapshots each ride dict before animating it.
 
-### Preview protocol (`websocket.protocol: "preview"`)
+### Preview protocol (`websocket.protocol: "preview"`, the default)
 
+Set `"protocol": "legacy"` in the `websocket` section (or pick Legacy on the settings page) to use `ws_legacy.py` instead; a missing or unknown value gives preview (`utils/config.py:websocket_protocol`).
 In `updater/ws_preview.py`. `_PreviewFeed.handle()` takes one frame, dispatches it by type through `_FRAME_HANDLERS`, and returns the replies as `(delay_s, frame)`; `_preview_ws_loop` does the I/O (`_read_frames`, `_handle_text`). Spec and live-probe results: themeparks.wiki/api/websockets.
 - Subscribes on the `welcome` frame (which carries the key's `limits`): one per destination per `WS_ENTITY_TYPES`, or one unfiltered per destination if `maxSubscriptions` is too low. `snapshot` and `update` data are REST `/live` elements, merged through `build_live_updates` + `merge_live_data` like a REST poll, so `lastUpdatedTs` is the ride's real change time.
 - **Resume:** the cursor of every applied `snapshot`, `update`, `resumed` and `ping` frame is kept in memory; a reconnect subscribes with `since: cursor` and the server replays what was missed (or sends a fresh snapshot past its window). A restart starts from a snapshot. A retryable refusal is re-sent after `_SUBSCRIBE_RETRY_SECS`; "Resume incomplete" re-subscribes that channel with a snapshot.

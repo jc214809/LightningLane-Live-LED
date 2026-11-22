@@ -1,7 +1,6 @@
 import logging
 import os
 import random
-import sys
 import threading
 import time
 import traceback
@@ -118,7 +117,7 @@ def main():
     parks_data = []
     update_interval = 300  # 5 minutes (300 seconds)
 
-    _check_python_and_driver()
+    _check_driver()
 
     matrix = driver.RGBMatrix(options=led_matrix_options(command_line_args))
     initialize_fonts(matrix.height)
@@ -187,12 +186,7 @@ def _apply_show_and_sound_settings(config):
     )
 
 
-def _check_python_and_driver():
-    # Check Python version.
-    if sys.version_info <= (3, 5):  # noqa: UP036 (pinned by test_disney_main_pins; removing it is its own change)
-        debug.error("Please run with python3")
-        sys.exit(1)
-
+def _check_driver():
     if driver.is_emulated():
         if driver.hardware_load_failed:
             debug.log("rgbmatrix not installed, falling back to emulator!")

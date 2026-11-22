@@ -79,10 +79,3 @@ def test_bad_json_and_network_errors_are_raised(urlopen):
     urlopen.reply = urllib.error.URLError("no internet")
     with pytest.raises(OSError):
         send_pin(KEYS, "4821", "DonaldPi", 30)
-
-
-def test_the_old_settings_page_path_still_works_for_a_board_mid_update():
-    import settings_page.pushover as old
-
-    assert old.send is pushover.send and old.send_pin is pushover.send_pin and old.PushoverError is PushoverError
-    assert old.MESSAGES_URL == pushover.MESSAGES_URL and old.TIMEOUT_S == pushover.TIMEOUT_S
