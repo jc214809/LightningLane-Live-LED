@@ -82,7 +82,7 @@ Read the note before changing its area; update it in the same PR.
 
 - `disney.py`: entry point and display loop (`PARK_REVEALS`, `SURPRISES`, `RIDE_VISITORS`); `cli.py`: flags and Pi model defaults; `version.py`
 - `api/`: ThemeParks.wiki and weather fetching
-- `parks/`: decisions over park data (operating, live showtimes, names)
+- `parks/`: decisions over park data (operating, live showtimes, names); `utils/names.py` holds the cleaning helpers it re-exports
 - `updater/`: live data threads (REST, WebSocket); not `self_update/`
 - `display/`: screens, `animation/` (transitions and characters), `landmarks/`, `fireworks/` (shows; `fireworks/effects/` the synced shows' scene looks), badges
 - `driver/`: rgbmatrix or the emulator
