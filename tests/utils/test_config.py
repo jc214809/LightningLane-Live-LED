@@ -286,6 +286,57 @@ def test_bad_rides_warn_and_keep_the_usual_ones(rides, monkeypatch):
     assert len(warnings) == 1 and "rides" in warnings[0]
 
 
+def test_surprise_settings_pins_the_exact_result_and_warnings_for_a_messy_file(monkeypatch):
+    from utils.config import SurpriseSettings, surprise_settings
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    settings = surprise_settings({
+        "enabled": "yes",
+        "characters": {
+            "tron": "off",
+            "genie": {"on": "no", "chance": 150, "ride_chance": True, "rides": "Space Mountain"},
+            "chip_dale": {"on": False, "chance": 12.5, "ride_chance": 0},
+            "falcon": {"on": True, "chance": "5", "ride_chance": 100, "rides": [" Test Track ", "", 7]},
+            "rex": {"rides": [" Slinky Dog Dash ", " "], "ride_chance": 25},
+        },
+    })
+    assert settings == SurpriseSettings(
+        enabled=True, off=frozenset({"chip_dale", "chip_dale_swing"}),
+        chances={"chip_dale": 0.125}, ride_chances={"chip_dale": 0.0, "falcon": 1.0, "rex": 0.25},
+        rides={"rex": ("slinky dog dash",)})
+    assert warnings == [
+        'surprises.json "enabled" should be true or false, not \'yes\'; using true.',
+        'surprises.json "characters": skipping \'tron\', whose settings should be an object.',
+        'surprises.json \'genie\' "on" should be true or false, not \'no\'; using true.',
+        'surprises.json \'genie\' "chance" should be a percent from 0 to 100, not 150; using its default.',
+        'surprises.json \'genie\' "ride_chance" should be a percent from 0 to 100, not True; using its default.',
+        'surprises.json \'genie\' "rides" should be a list of ride names, not \'Space Mountain\'; '
+        'using its default rides.',
+        'surprises.json \'falcon\' "chance" should be a percent from 0 to 100, not \'5\'; using its default.',
+        'surprises.json \'falcon\' "rides" should be a list of ride names, not [\' Test Track \', \'\', 7]; '
+        'using its default rides.',
+    ]
+
+
+def test_surprise_settings_edge_inputs_pin_their_exact_result(monkeypatch):
+    from utils.config import SurpriseSettings, surprise_settings
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    assert surprise_settings({"enabled": False}) == SurpriseSettings(enabled=False)
+    assert surprise_settings({"characters": {}}) == SurpriseSettings()
+    assert surprise_settings({"characters": {"x": {}}}) == SurpriseSettings()
+    assert surprise_settings({"characters": {"x": {"chance": 0}}}).chances == {"x": 0.0}
+    assert surprise_settings({"characters": {"x": {"chance": 100}}}).chances == {"x": 1.0}
+    assert surprise_settings({"characters": {"x": {"chance": 100.5}}}).chances == {}
+    assert surprise_settings({"characters": {"x": {"chance": float("nan")}}}).chances == {}
+    assert surprise_settings({"characters": {"mine_train": {"on": False}}}).off == {"mine_train", "mine_train_all", "mine_train_snow"}
+    assert surprise_settings({"characters": {"x": {"on": False}}}).off == {"x"}, "no looks: just itself"
+    assert len(warnings) == 2
+    assert 'not 100.5' in warnings[0] and 'not nan' in warnings[1]
+    assert surprise_settings({"characters": {"x": {"on": None}}}) == SurpriseSettings()
+    assert 'not None' in warnings[2]
+
+
 # ---- save_config: who owns a file it creates ----
 
 def test_a_new_file_takes_the_mode_and_owner_of_the_file_it_is_beside(tmp_path, monkeypatch):
