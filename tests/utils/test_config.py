@@ -116,16 +116,23 @@ def test_websocket_settings(config, expected):
 @pytest.mark.parametrize(
     "config, expected",
     [
-        ({}, "legacy"),
-        ({"websocket": {"api_key": "k"}}, "legacy"),
+        ({}, "preview"),
+        ({"websocket": {"api_key": "k"}}, "preview"),
         ({"websocket": {"protocol": "preview"}}, "preview"),
         ({"websocket": {"protocol": "legacy"}}, "legacy"),
-        ({"websocket": {"protocol": "Preview"}}, "legacy"),  # unknown values fall back, with a warning
-        ({"websocket": "k"}, "legacy"),
+        ({"websocket": {"protocol": "Preview"}}, "preview"),  # unknown values fall back, with a warning
+        ({"websocket": "k"}, "preview"),
     ],
 )
 def test_websocket_protocol(config, expected):
     assert websocket_protocol(config) == expected
+
+
+def test_websocket_protocol_unknown_value_warns_and_uses_the_default(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("utils.config.debug.warning", warnings.append)
+    assert websocket_protocol({"websocket": {"protocol": "carrier-pigeon"}}) == "preview"
+    assert len(warnings) == 1 and 'using "preview"' in warnings[0]
 
 
 @pytest.mark.parametrize(
