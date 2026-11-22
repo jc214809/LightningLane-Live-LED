@@ -11,15 +11,15 @@ from utils import debug
 
 class MeridaShoots(Actor):
     """
-    Touch the Sky: Merida, the archer's art full size at the bottom left (on 64x32, too short for her, from
-    the waist up: her waist on the bottom row, and all she does happens above it), rises in her first ENTER_S and says her line, "Your destiny lies within you...", to the
-    score's mouth track, holding her bow by its top, its foot planted at her side, her other hand on her
-    hip. Then she tosses it up, catches it, draws and leans back to aim; on "chase the wind" a firework
-    bursts into a bullseye high on the right (TARGET_S) and hangs there; on "touch" (LOOSE_S) she lets go:
-    the string snaps, her hand flies back and drops to her side, and the arrow flies off the string at the
-    archer's speed into the bullseye's centre, which shatters into sparks of its own colours. LEAVE_S after
-    the hit she sinks away, over ENTER_S (sooner if her scene ends first). Her poses (merida_poses.py has the scene's timings) are baked, so a
-    frame only stamps one. Times are seconds into her scene.
+    Touch the Sky: Merida, the archer's art full size at the bottom left (on 64x32, too short for her, from the
+    waist up: her waist on the bottom row, and all she does happens above it), rises in her first ENTER_S and says
+    her line, "Your destiny lies within you...", to the score's mouth track, holding her bow by its top, its foot
+    planted at her side, her other hand on her hip. Then she tosses it up, catches it, draws and leans back to aim;
+    on "chase the wind" a firework bursts into a bullseye high on the right (TARGET_S) and hangs there; on "touch"
+    (LOOSE_S) she lets go: the string snaps, her hand flies back and drops to her side, and the arrow flies off the
+    string at the archer's speed into the bullseye's centre, which shatters into sparks of its own colours. LEAVE_S
+    after the hit she sinks away, over ENTER_S (sooner if her scene ends first). Her poses (merida_poses.py has the
+    scene's timings) are baked, so a frame only stamps one. Times are seconds into her scene.
     """
 
     NAME = "Merida"

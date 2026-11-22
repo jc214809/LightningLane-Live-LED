@@ -1,7 +1,8 @@
-# pip install pre-commit && pre-commit install: ruff runs on every commit. Same version as
+# pip install pre-commit && pre-commit install: ruff check and ruff format run on every commit. Same version as
 # requirements-dev.txt and CI's lint job; rules are in pyproject.toml (docs/dev/CODE-QUALITY.md).
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.17.5
     hooks:
       - id: ruff-check
+      - id: ruff-format

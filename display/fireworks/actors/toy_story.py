@@ -155,8 +155,8 @@ class BuzzAndWoody(Actor):
     the castle's pixels, like a projection (its outline and doorway kept): 5x5 ABC blocks on 64x64, 3x3
     shaded ones on 64x32. Then Buzz (BUZZ_ART, flying, 1x on both boards) flies through from SWOOP_AT,
     right to left, fist first, low through the castle's middle (wholly on the board), a short flickering
-    rocket trail streaming back from his boots: each block comes loose as he reaches its column, the ones he hits flying off ahead of him and
-    the rest toppling, all tumbling to the ground and fading out. Everything is placed by the clock, as
+    rocket trail streaming back from his boots: each block comes loose as he reaches its column, the ones he
+    hits flying off ahead of him and the rest toppling, all tumbling to the ground and fading out. Everything is placed by the clock, as
     a function of the seconds into the scene.
     """
 

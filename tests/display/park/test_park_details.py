@@ -362,9 +362,11 @@ def test_render_park_information_screen_low_res(monkeypatch):
 
     # For board_height == 32 branch:
     # 1. draw_multi_line_park_name_text_block should have been called with wrapped name ["Test Park"].
-    # 2. Because park_obj contains weather, display_weather_icon_and_description should be called with the weather dict and info_font_height.
+    # 2. Because park_obj contains weather, display_weather_icon_and_description should be called with the
+    #    weather dict and info_font_height.
     # 3. render_park_hours is called with vertical = baseline, horizontal = 1.
-    # 4. render_lightning_lane_multi_pass_price is called with vertical = baseline - info_font_height, horizontal = 1, and price "15".
+    # 4. render_lightning_lane_multi_pass_price is called with vertical = baseline - info_font_height,
+    #    horizontal = 1, and price "15".
     assert calls["draw_multi"] == ["Test Park"]
     assert calls["display_weather"] == (park_obj["weather"], info_font_height)
     assert calls["render_hours"] == (baseline, 1)

@@ -365,4 +365,4 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
 .step-body p { color: var(--text-3); font-size: 13.5px; margin: 2px 0 12px; }
 input.pin { height: 56px; text-align: center; font-size: 26px; font-weight: 650; letter-spacing: .5em;
   padding-left: .5em; font-variant-numeric: tabular-nums; margin-bottom: 12px; }
-"""
+"""  # noqa: E501  (served as written: a stylesheet, not Python)

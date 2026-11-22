@@ -152,7 +152,7 @@ def _cards(config, sound_cards, park_names, panel, today):
     )
 
 
-def settings_page(
+def settings_page(  # noqa: PLR0913
     config,
     sound_cards,
     hotspot=None,
@@ -160,7 +160,7 @@ def settings_page(
     saved=None,
     board=None,
     note=None,
-    park_names=(),  # noqa: PLR0913
+    park_names=(),
     panel=None,
     updates=None,
     started=None,

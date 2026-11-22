@@ -245,9 +245,9 @@ def render_attraction_info(
     )
 
 
-def render_lines(
+def render_lines(  # noqa: PLR0913
     matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color=None, gap_px=None
-):  # noqa: PLR0913
+):
     """
     Render each line of text at the specified position on the matrix.
     """

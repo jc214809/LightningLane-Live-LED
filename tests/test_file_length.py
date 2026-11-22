@@ -11,8 +11,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MAX_LINES = 600
 
-# path: the most lines it may have. Baseline measured 2026-11-22.
-ALLOWED_LONG = {}
+# path: the most lines it may have. Baseline measured 2026-11-22. These five were under 600 until the
+# formatting pass (ruff format, 120 columns) spread their argument lists and literals over more lines.
+ALLOWED_LONG = {
+    "display/animation/characters/saber_duel.py": 699,
+    "display/fireworks/music_show.py": 672,
+    "display/fireworks/actors/merida_poses.py": 631,
+    "display/fireworks/fireworks.py": 625,
+    "settings_page/server.py": 616,
+}
 
 
 def _line_counts():

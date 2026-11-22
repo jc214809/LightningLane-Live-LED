@@ -37,6 +37,11 @@ select = ["E", "F", "W", "B", "C901", "PLR0912", "PLR0913", "PLR0915", "RUF100",
 # rewrite can change output: `"%d" % 2.7` is "2", `f"{2.7:d}"` raises.
 ignore = ["B905", "UP031"]
 
+[tool.ruff.lint.pycodestyle]
+# E501's limit. ruff format wraps code at 120; the 20 columns over that are for what it can't split: long
+# strings, log messages and comments. Wrap a comment you touch at 120.
+max-line-length = 140
+
 [tool.ruff.lint.mccabe]
 # Ruff's default, written down so it is visible.
 max-complexity = 10

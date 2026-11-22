@@ -9,14 +9,14 @@ from display.fireworks.music_show import CASTLE_LOOKS, SHAPES, MusicShow, render
 from display.fireworks.score import Cue, Hit, Score, load_score
 
 
-def _cue(
+def _cue(  # noqa: PLR0913
     title="x",
     start=0.0,
     end=10.0,
     palette=((255, 0, 0),),
     rate=1.0,
     castle=None,
-    shapes=(),  # noqa: PLR0913
+    shapes=(),
     effects=(),
 ):
     return Cue("s", title, start, end, tuple(palette), rate, castle, tuple(shapes), frozenset(effects))

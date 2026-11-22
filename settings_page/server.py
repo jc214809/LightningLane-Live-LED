@@ -81,11 +81,11 @@ class Settings:
     park_names.json beside config.json), one save at a time, and the Updates card's updates.Updates.
     send_pushover: pushover.send_pin."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         config_path=CONFIG_FILE,
         gate=None,
-        restart_unit=APP_UNIT,  # noqa: PLR0913
+        restart_unit=APP_UNIT,
         state_file=None,
         cards_file=SOUND_CARDS,
         park_names=None,
@@ -483,7 +483,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _export_surprises(self, form):
         """POST /surprises/export, the Export button: all the settings on the page as it is now, unsaved edits too
-        and every default spelled out (form.snapshot_surprises), as {"ok": true, "json": the text to copy} or {"ok": false, "problems": [...]}. Saves nothing."""
+        and every default spelled out (form.snapshot_surprises), as {"ok": true, "json": the text to copy} or
+        {"ok": false, "problems": [...]}. Saves nothing."""
         rides = self.settings.rides()
         new, problems = apply_surprises(load_surprises(self.settings.surprises_path), form, rides)
         if problems:

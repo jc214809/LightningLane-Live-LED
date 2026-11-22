@@ -264,7 +264,8 @@ def test_build_pattern_keeps_enclosed_background_and_follows_lighting():
         // Mickey-style eyes: white walled in by the outline. And a board that brightens left to right.
         const eyes = [[W, W, W, W, W], [W, K, K, K, W], [W, K, W, K, W], [W, K, K, K, W], [W, W, W, W, W]];
         const lit = v => [v, v, v + 5], R = [220, 30, 40];
-        const board = [[lit(100), lit(115), lit(130), lit(145), lit(160)], [lit(100), R, R, R, lit(160)], [lit(100), lit(115), lit(130), lit(145), lit(160)]];
+        const board = [[lit(100), lit(115), lit(130), lit(145), lit(160)], [lit(100), R, R, R, lit(160)],
+                       [lit(100), lit(115), lit(130), lit(145), lit(160)]];
         // Transparent round the edge: the outline touching it is art, not background.
         const sprite = [[_, K, _], [K, R, K], [_, K, _]];
         console.log(JSON.stringify([

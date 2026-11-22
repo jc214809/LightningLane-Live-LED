@@ -143,13 +143,13 @@ def name_of(old):
 
 
 class Updater:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         board,
         state=None,
         gh=github,
         installed_version=None,
-        config_path=None,  # noqa: PLR0913
+        config_path=None,
         heartbeat_path=None,
         notify=None,
         clock=time.time,

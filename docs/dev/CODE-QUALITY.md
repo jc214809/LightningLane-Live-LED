@@ -6,6 +6,7 @@ Read before changing code structure, adding a lint suppression, or splitting a f
 
 ```sh
 ruff check .                      # lint + complexity; CI's `lint` job runs it (ruff 0.17.5, pinned in requirements-dev.txt)
+ruff format .                     # formats the repo; CI's `lint` job runs `ruff format --check .`
 lint-imports                      # which package may import which (import-linter 2.17); CI's `lint` job runs it
 pre-commit install                # once: runs ruff on every commit (.pre-commit-config.yaml)
 pytest tests/test_file_length.py  # the 600-line rule
@@ -16,9 +17,17 @@ python3 tools/frame_hashes.py --out /tmp/after.json --compare /tmp/before.json  
 python3 tools/frame_hashes.py --only landmark/CastleLandmark --only transition/mike   # a subset, quickly
 ```
 
+## Formatting
+
+`ruff format` owns the layout: double quotes, 120 columns (`line-length` in `pyproject.toml`). Run `ruff format .` before committing (the pre-commit hook does); CI fails on `ruff format --check .`. `E501` allows 140, so a string, log message or comment the formatter can't split may run 20 columns over; wrap a comment you touch at 120. The CSS and JS in `settings_page/page_style.py` and `page_script.py` are served as written, so their one `# noqa: E501` sits after the string's closing quotes (ruff applies it to the whole string).
+
+- **A `noqa` goes on the line ruff reports.** When the formatter spreads a `def` over several lines, a `# noqa: PLR0913` must stay on the `def` line, not on an argument; `RUF100` catches one left behind.
+- **Whole-repo reformat commits go in `.git-blame-ignore-revs`** (GitHub skips them in blame; locally, `git config blame.ignoreRevsFile .git-blame-ignore-revs` once). Keep such a commit to formatter output only.
+- **A branch from before the formatting pass** (2026-11-22): merge `develop-beta`, take `develop-beta`'s side on layout conflicts, then `ruff format .` and `ruff check --fix .`.
+
 ## The ratchet
 
-`pyproject.toml` selects `E`, `F`, `W`, `B` (bugbear) and four structural rules: `C901` (complexity over 10), `PLR0912` (over 12 branches), `PLR0913` (over 7 arguments: draw helpers take many, so 7, not ruff's 5) and `PLR0915` (over 50 statements), plus `RUF100`. `E501` (line length) and `B905` (`zip(strict=)`, a behaviour change) are off until phase 3 of the plan.
+`pyproject.toml` selects `E`, `F`, `W`, `B` (bugbear), `UP` (3.11 syntax), `I` (import order) and four structural rules: `C901` (complexity over 10), `PLR0912` (over 12 branches), `PLR0913` (over 7 arguments: draw helpers take many, so 7, not ruff's 5) and `PLR0915` (over 50 statements), plus `RUF100`. Off: `B905` (`zip(strict=)`, a behaviour change) and `UP031` (printf `%` to f-strings: no autofix, and a hand rewrite can change output, `"%d" % 2.7` against `f"{2.7:d}"`).
 
 Today's structural offenders carry an inline `# noqa: C901` (etc.) on their `def` line. `RUF100` fails the build on a `noqa` that no longer suppresses anything, so the baseline can only shrink:
 

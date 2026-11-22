@@ -130,8 +130,8 @@ def test_the_names_of_the_rides_a_character_visits_are_said_and_their_default_ri
 
     falcon = row(surprises_page({}, rides=RIDES), "falcon")
     assert (
-        '<span class="ride-names"><span class="ride">Millennium Falcon: Smugglers Run</span><span class="ride">Star Wars: Rise of the Resistance</span></span>'
-        in falcon
+        '<span class="ride-names"><span class="ride">Millennium Falcon: Smugglers Run</span>'
+        '<span class="ride">Star Wars: Rise of the Resistance</span></span>' in falcon
     )
     assert falcon.count('<input type="hidden" name="rides_falcon"') == 2
     assert 'value="Millennium Falcon: Smugglers Run"' in falcon and 'value="Test Track"' not in falcon
