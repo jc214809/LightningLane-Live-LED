@@ -74,49 +74,63 @@ class _PreviewFeed:
         self.retries = {}
         return frames
 
-    def handle(self, frame):  # noqa: C901
+    def handle(self, frame):
         kind = frame.get("type")
-        data = frame.get("data")
         debug.log(f"WS frame: {kind}")
-        replies = []
-
-        if kind == "welcome":
-            limits = (data or {}).get("limits") or {}
-            debug.info(f"WebSocket connected to ThemeParks.wiki (preview); key limits: {limits}")
-            frames = self.subscribe_frames(limits.get("maxSubscriptions"))
-            if not frames:
-                debug.warning("No destination IDs in parks_data; nothing to subscribe to.")
-            debug.info(("Resuming" if self.cursor else "Subscribing with a snapshot") + f": {sorted(self.frames)}")
-            replies = [(0, f) for f in frames]
-        elif kind == "subscribed":
-            data = data or {}
-            self.pending.discard(data.get("reqId"))
-            debug.info(f"WebSocket subscribed to: {data.get('name') or data.get('entityId')}"
-                       f" ({data.get('filter') or 'all'})")
-        elif kind == "snapshot":
-            entries = [e for e in data if isinstance(e, dict)] if isinstance(data, list) else []
-            self._apply(entries, from_snapshot=True)
-            if frame.get("final", True):
-                debug.info(f"WebSocket snapshot: {frame.get('total') or len(entries)} entities")
-                note_live_feed_synced()
-        elif kind == "update":
-            if isinstance(data, dict):
-                self.stats.note_message()
-                self._apply([data])
-        elif kind == "resumed":
-            debug.info("WebSocket resumed: caught up on the updates missed while disconnected.")
-            note_live_feed_synced()
-        elif kind == "ping":
-            replies = [(0, {"type": "pong"})]
-        elif kind == "error":
-            replies = self._error(data if isinstance(data, dict) else {"message": data})
+        # Only a string can name a frame type (a malformed one, like a list, can't be a dict key): ignored.
+        handler = self._FRAME_HANDLERS.get(kind) if isinstance(kind, str) else None
         # Anything else (unsubscribed, a type added later) is ignored: the protocol asks for tolerant readers.
+        replies = handler(self, frame.get("data"), frame) if handler else []
 
         # Saved only once the frame is applied; a ping's cursor covers every channel, which
         # keeps a quiet channel's resume point from expiring overnight.
         if kind in _CURSOR_FRAME_TYPES and frame.get("cursor"):
             self.cursor = frame["cursor"]
         return replies
+
+    def _on_welcome(self, data, frame):
+        limits = (data or {}).get("limits") or {}
+        debug.info(f"WebSocket connected to ThemeParks.wiki (preview); key limits: {limits}")
+        frames = self.subscribe_frames(limits.get("maxSubscriptions"))
+        if not frames:
+            debug.warning("No destination IDs in parks_data; nothing to subscribe to.")
+        debug.info(("Resuming" if self.cursor else "Subscribing with a snapshot") + f": {sorted(self.frames)}")
+        return [(0, f) for f in frames]
+
+    def _on_subscribed(self, data, frame):
+        data = data or {}
+        self.pending.discard(data.get("reqId"))
+        debug.info(f"WebSocket subscribed to: {data.get('name') or data.get('entityId')}"
+                   f" ({data.get('filter') or 'all'})")
+        return []
+
+    def _on_snapshot(self, data, frame):
+        entries = [e for e in data if isinstance(e, dict)] if isinstance(data, list) else []
+        self._apply(entries, from_snapshot=True)
+        if frame.get("final", True):
+            debug.info(f"WebSocket snapshot: {frame.get('total') or len(entries)} entities")
+            note_live_feed_synced()
+        return []
+
+    def _on_update(self, data, frame):
+        if isinstance(data, dict):
+            self.stats.note_message()
+            self._apply([data])
+        return []
+
+    def _on_resumed(self, data, frame):
+        debug.info("WebSocket resumed: caught up on the updates missed while disconnected.")
+        note_live_feed_synced()
+        return []
+
+    def _on_ping(self, data, frame):
+        return [(0, {"type": "pong"})]
+
+    def _on_error(self, data, frame):
+        return self._error(data if isinstance(data, dict) else {"message": data})
+
+    _FRAME_HANDLERS = {"welcome": _on_welcome, "subscribed": _on_subscribed, "snapshot": _on_snapshot,
+                       "update": _on_update, "resumed": _on_resumed, "ping": _on_ping, "error": _on_error}
 
     def _error(self, data):
         req_id, message = data.get("reqId"), data.get("message") or data
@@ -171,7 +185,7 @@ async def _send_later(ws, delay_s, frame):
         await ws.send_json(frame)
 
 
-async def _preview_ws_loop(api_key, parks_data):  # noqa: C901, PLR0912, PLR0915
+async def _preview_ws_loop(api_key, parks_data):
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     feed = _PreviewFeed(parks_data)
     delay = _RECONNECT_DELAY_INITIAL
@@ -191,35 +205,7 @@ async def _preview_ws_loop(api_key, parks_data):  # noqa: C901, PLR0912, PLR0915
                 ) as ws:
                     connected_at = time.monotonic()
                     feed.stats = _WsStats()
-                    watchdog = asyncio.create_task(_watchdog(ws, feed.stats, parks_data))
-                    delayed = set()
-                    try:
-                        async for msg in ws:
-                            note_network_result(True)
-                            note_live_feed_frame()
-                            if msg.type == aiohttp.WSMsgType.TEXT:
-                                try:
-                                    frame = json.loads(msg.data)
-                                except json.JSONDecodeError:
-                                    debug.warning(f"Non-JSON WS message: {msg.data}")
-                                    continue
-                                if not isinstance(frame, dict):
-                                    continue
-                                for delay_s, reply in feed.handle(frame):
-                                    if delay_s:
-                                        task = asyncio.create_task(_send_later(ws, delay_s, reply))
-                                        delayed.add(task)
-                                        task.add_done_callback(delayed.discard)
-                                    else:
-                                        await ws.send_json(reply)
-                            elif msg.type == aiohttp.WSMsgType.ERROR:
-                                debug.warning(f"WebSocket error message: {ws.exception()}")
-                                break
-                    finally:
-                        watchdog.cancel()
-                        for task in delayed:
-                            task.cancel()
-                        note_live_feed_down()
+                    await _read_frames(ws, feed, parks_data)
 
                     refused = _REFUSED_CLOSE_CODES.get(ws.close_code)
                     debug.warning(f"WebSocket receive loop ended: close_code={ws.close_code}, "
@@ -232,13 +218,56 @@ async def _preview_ws_loop(api_key, parks_data):  # noqa: C901, PLR0912, PLR0915
             if connected_at is None and isinstance(e, OSError):
                 note_network_result(False)
 
-        if refused:
-            delay = _REFUSED_RETRY_SECS
-            debug.warning(f"WebSocket refused: {refused}. Retrying in {delay // 60} min; REST polls meanwhile.")
-        else:
-            duration = (time.monotonic() - connected_at) if connected_at is not None else None
-            delay = _next_delay(delay, duration)
-            debug.info(f"WebSocket disconnected; reconnecting in about {delay}s"
-                       + (" (resuming from the last cursor)" if feed.cursor else ""))
+        delay = _next_connect_delay(refused, delay, connected_at, feed)
         # Jitter, so boards dropped together don't all reconnect in the same second.
         await asyncio.sleep(delay * random.uniform(1.0, 1.5))
+
+
+async def _read_frames(ws, feed, parks_data):
+    """Feed every received frame to the protocol state and send its replies, until the connection ends."""
+    watchdog = asyncio.create_task(_watchdog(ws, feed.stats, parks_data))
+    delayed = set()
+    try:
+        async for msg in ws:
+            note_network_result(True)
+            note_live_feed_frame()
+            if msg.type == aiohttp.WSMsgType.TEXT:
+                await _handle_text(msg, ws, feed, delayed)
+            elif msg.type == aiohttp.WSMsgType.ERROR:
+                debug.warning(f"WebSocket error message: {ws.exception()}")
+                break
+    finally:
+        watchdog.cancel()
+        for task in delayed:
+            task.cancel()
+        note_live_feed_down()
+
+
+async def _handle_text(msg, ws, feed, delayed):
+    try:
+        frame = json.loads(msg.data)
+    except json.JSONDecodeError:
+        debug.warning(f"Non-JSON WS message: {msg.data}")
+        return
+    if not isinstance(frame, dict):
+        return
+    for delay_s, reply in feed.handle(frame):
+        if delay_s:
+            task = asyncio.create_task(_send_later(ws, delay_s, reply))
+            delayed.add(task)
+            task.add_done_callback(delayed.discard)
+        else:
+            await ws.send_json(reply)
+
+
+def _next_connect_delay(refused, delay, connected_at, feed):
+    """The wait before the next connect, before jitter: ten minutes after a refusal, else the backoff."""
+    if refused:
+        delay = _REFUSED_RETRY_SECS
+        debug.warning(f"WebSocket refused: {refused}. Retrying in {delay // 60} min; REST polls meanwhile.")
+    else:
+        duration = (time.monotonic() - connected_at) if connected_at is not None else None
+        delay = _next_delay(delay, duration)
+        debug.info(f"WebSocket disconnected; reconnecting in about {delay}s"
+                   + (" (resuming from the last cursor)" if feed.cursor else ""))
+    return delay

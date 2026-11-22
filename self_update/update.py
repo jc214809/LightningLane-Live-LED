@@ -213,25 +213,12 @@ class Updater:
         except states.Busy as e:
             return Outcome(BLOCKED, str(e))
 
-    def _update(self, channel, dry_run=False):  # noqa: C901
+    def _update(self, channel, dry_run=False):
         record = self.state.load()
         if record["phase"] in states.UNFINISHED:
             return Outcome(BLOCKED, f"an earlier update didn't finish (it stopped at {record['phase']}): "
                                     "roll it back first (python3 -m self_update rollback)")
-        problems = self.preflight()
-        target = None
-        try:
-            target, nothing = self.plan(channel)
-        except github.GitHubError as e:
-            problems.append(str(e))
-        if problems:
-            return Outcome(BLOCKED, "; ".join(problems))
-        if target is None:
-            return nothing
-        try:
-            stop = self._resolve(target)
-        except CommandFailed as e:
-            return Outcome(BLOCKED, str(e))
+        target, stop = self._find_target(channel)
         if stop:
             return stop
         if dry_run:
@@ -241,18 +228,7 @@ class Updater:
         except (CommandFailed, OSError) as e:
             return Outcome(BLOCKED, f"couldn't take a rollback point, so nothing changed: {e}")
         debug.info(f"Updating from {record['from']['sha'][:7]} to {target.ref} ({target.sha[:7]}).")
-        try:
-            self.board.checkout(target.sha)
-            self.state.set_phase(record, states.SWITCHED)
-            self.board.install(skip_requirements=not record["from"]["requirements_changed"])
-            self.state.set_phase(record, states.INSTALLED)
-            self.state.set_phase(record, states.CHECKING)
-            problem = self._restart_and_check()
-        except CommandFailed as e:
-            problem = str(e)
-        except Exception as e:  # anything at all: the board mustn't be left half-updated
-            debug.exception("The update failed unexpectedly.")
-            problem = f"the update failed unexpectedly: {e}"
+        problem = self._switch_and_check(record, target)
         if problem is None:
             states.remember_good(record, target.sha)
             self.state.set_phase(record, states.UPDATED, reason=None)
@@ -261,6 +237,39 @@ class Updater:
         debug.error(f"The update to {target.ref} ({target.sha[:7]}) failed: {problem}. Rolling back.")
         undone = self._roll_back(record, problem)
         return Outcome(undone.result, undone.message, ok=False)  # back where it was, but not updated
+
+    def _find_target(self, channel):
+        """(Target, None) when there's something to install, else (None, the Outcome saying why not)."""
+        problems = self.preflight()
+        target = None
+        try:
+            target, nothing = self.plan(channel)
+        except github.GitHubError as e:
+            problems.append(str(e))
+        if problems:
+            return None, Outcome(BLOCKED, "; ".join(problems))
+        if target is None:
+            return None, nothing
+        try:
+            stop = self._resolve(target)
+        except CommandFailed as e:
+            return None, Outcome(BLOCKED, str(e))
+        return (None, stop) if stop else (target, None)
+
+    def _switch_and_check(self, record, target):
+        """Check out and install target, restart, and wait for health. Returns the problem, or None."""
+        try:
+            self.board.checkout(target.sha)
+            self.state.set_phase(record, states.SWITCHED)
+            self.board.install(skip_requirements=not record["from"]["requirements_changed"])
+            self.state.set_phase(record, states.INSTALLED)
+            self.state.set_phase(record, states.CHECKING)
+            return self._restart_and_check()
+        except CommandFailed as e:
+            return str(e)
+        except Exception as e:  # anything at all: the board mustn't be left half-updated
+            debug.exception("The update failed unexpectedly.")
+            return f"the update failed unexpectedly: {e}"
 
     def _take_rollback_point(self, record, target):
         head = self.board.head()
