@@ -1,6 +1,6 @@
 import re
 import ssl
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import aiohttp
 import certifi
@@ -264,7 +264,7 @@ def get_down_time(last_updated_date):
     try:
         normalized = last_updated_date.replace("Z", "+00:00")
         target_date = datetime.fromisoformat(normalized)
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
         time_diff = current_time - target_date
         minutes = time_diff.total_seconds() / 60
         return round(minutes)

@@ -1,5 +1,5 @@
 import copy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import pytest
 
@@ -12,7 +12,7 @@ def _open(park, now=None):
     return operating_and_why(park, now)[0]
 
 def _fresh_ts(minutes_ago=0):
-    return (datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)).isoformat()
+    return (datetime.now(UTC) - timedelta(minutes=minutes_ago)).isoformat()
 
 def test_operating_without_a_schedule(monkeypatch):
     park = {
@@ -57,7 +57,7 @@ def test_operating_without_a_schedule_freshness_boundary(monkeypatch):
 def test_operating_without_a_schedule_fresh_past_closing_time(monkeypatch):
     """Without a schedule, the stored regular closingTime isn't consulted: a fresh OPERATING
     ride past it (extended hours) still opens the park."""
-    past_closing = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    past_closing = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
     park = {
         "name": "Test Park",
         "closingTime": past_closing,
@@ -251,7 +251,7 @@ def test_update_parks_operating_status_no_refresh_when_already_operating(monkeyp
     # to UTC, so run for real between 11pm and 5am Eastern this test saw the legitimate daily
     # refresh fire and failed.
     monkeypatch.setattr("parks.operating._park_local_now",
-                        lambda p: datetime(2026, 9, 27, 12, 0, tzinfo=timezone.utc))
+                        lambda p: datetime(2026, 9, 27, 12, 0, tzinfo=UTC))
     refreshed = []
     monkeypatch.setattr("api.disney_api.refresh_park_attractions", lambda p: refreshed.append(p))
     updated = update_parks_operating_status([park])
@@ -294,26 +294,26 @@ def test_daily_schedule_refresh_due_at_3am_when_schedule_stale(monkeypatch):
     """schedule_date doesn't match today and it's within the 3am-9am local window:
     the daily refresh is due."""
     from parks.operating import _daily_schedule_refresh_due
-    local_now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+    local_now = datetime(2026, 8, 13, 3, 0, tzinfo=UTC)
     park = {"name": "Test Park", "schedule_date": "2026-08-12"}
     assert _daily_schedule_refresh_due(park, local_now) is True
 
 def test_daily_schedule_refresh_not_due_before_3am(monkeypatch):
     from parks.operating import _daily_schedule_refresh_due
-    local_now = datetime(2026, 8, 13, 2, 59, tzinfo=timezone.utc)
+    local_now = datetime(2026, 8, 13, 2, 59, tzinfo=UTC)
     park = {"name": "Test Park", "schedule_date": "2026-08-12"}
     assert _daily_schedule_refresh_due(park, local_now) is False
 
 def test_daily_schedule_refresh_not_due_once_schedule_matches_today(monkeypatch):
     from parks.operating import _daily_schedule_refresh_due
-    local_now = datetime(2026, 8, 13, 5, 0, tzinfo=timezone.utc)
+    local_now = datetime(2026, 8, 13, 5, 0, tzinfo=UTC)
     park = {"name": "Test Park", "schedule_date": "2026-08-13"}
     assert _daily_schedule_refresh_due(park, local_now) is False
 
 def test_daily_schedule_refresh_stops_after_9am_local(monkeypatch):
     """API still hasn't published today's hours by 9am: stop retrying for the day."""
     from parks.operating import _daily_schedule_refresh_due
-    local_now = datetime(2026, 8, 13, 9, 0, tzinfo=timezone.utc)
+    local_now = datetime(2026, 8, 13, 9, 0, tzinfo=UTC)
     park = {"name": "Test Park", "schedule_date": "2026-08-12"}
     assert _daily_schedule_refresh_due(park, local_now) is False
 
@@ -321,13 +321,13 @@ def test_daily_schedule_refresh_retries_every_30_minutes(monkeypatch):
     """A failed attempt (schedule still stale after fetch) doesn't retry again until
     30 minutes have passed."""
     from parks.operating import _daily_schedule_refresh_due
-    last_attempt = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+    last_attempt = datetime(2026, 8, 13, 3, 0, tzinfo=UTC)
     park = {"name": "Test Park", "schedule_date": "2026-08-12", "_daily_refresh_last_attempt": last_attempt}
 
-    too_soon = datetime(2026, 8, 13, 3, 20, tzinfo=timezone.utc)
+    too_soon = datetime(2026, 8, 13, 3, 20, tzinfo=UTC)
     assert _daily_schedule_refresh_due(park, too_soon) is False
 
-    due = datetime(2026, 8, 13, 3, 30, tzinfo=timezone.utc)
+    due = datetime(2026, 8, 13, 3, 30, tzinfo=UTC)
     assert _daily_schedule_refresh_due(park, due) is True
 
 def test_park_local_now_uses_park_timezone(monkeypatch):
@@ -340,20 +340,20 @@ def test_park_local_now_falls_back_to_utc_for_unknown_timezone(monkeypatch):
     from parks.operating import _park_local_now
     park = {"name": "Test Park", "timezone": "Not/A_Real_Zone"}
     local_now = _park_local_now(park)
-    assert local_now.tzinfo == timezone.utc
+    assert local_now.tzinfo == UTC
 
 def test_park_local_now_falls_back_to_utc_when_timezone_missing(monkeypatch):
     from parks.operating import _park_local_now
     park = {"name": "Test Park"}
     local_now = _park_local_now(park)
-    assert local_now.tzinfo == timezone.utc
+    assert local_now.tzinfo == UTC
 
 def test_update_parks_operating_status_triggers_daily_refresh_at_3am(monkeypatch):
     """End-to-end: at 3am local with yesterday's schedule_date, a refresh fires and
     updates schedule_date/closingTime — the proactive daily refresh, independent of
     attraction status entirely (park attractions are empty/closed here)."""
     class FakeDateTime(datetime):
-        _now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+        _now = datetime(2026, 8, 13, 3, 0, tzinfo=UTC)
 
         @classmethod
         def now(cls, tz=None):
@@ -383,7 +383,7 @@ def test_update_parks_operating_status_daily_refresh_retries_on_stale_response(m
     yet): schedule_date stays stale, so the daily refresh keeps retrying every 30
     minutes instead of firing every single 5-minute poll cycle."""
     class FakeDateTime(datetime):
-        _now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+        _now = datetime(2026, 8, 13, 3, 0, tzinfo=UTC)
 
         @classmethod
         def now(cls, tz=None):
@@ -412,17 +412,17 @@ def test_update_parks_operating_status_daily_refresh_retries_on_stale_response(m
     assert len(fetch_count) == 1
 
     # 10 minutes later: too soon to retry, no second fetch.
-    FakeDateTime._now = datetime(2026, 8, 13, 3, 10, tzinfo=timezone.utc)
+    FakeDateTime._now = datetime(2026, 8, 13, 3, 10, tzinfo=UTC)
     update_parks_operating_status([park])
     assert len(fetch_count) == 1
 
     # 30 minutes after the first attempt: retries.
-    FakeDateTime._now = datetime(2026, 8, 13, 3, 30, tzinfo=timezone.utc)
+    FakeDateTime._now = datetime(2026, 8, 13, 3, 30, tzinfo=UTC)
     update_parks_operating_status([park])
     assert len(fetch_count) == 2
 
     # Past 9am local: stops retrying for the day even though schedule is still stale.
-    FakeDateTime._now = datetime(2026, 8, 13, 9, 30, tzinfo=timezone.utc)
+    FakeDateTime._now = datetime(2026, 8, 13, 9, 30, tzinfo=UTC)
     update_parks_operating_status([park])
     assert len(fetch_count) == 2
 
@@ -434,7 +434,7 @@ def test_park_reopens_after_midnight_without_deadlock(monkeypatch):
     correctly shows operating again once fresh live data arrives after opening.
     """
     class FakeDateTime(datetime):
-        _now = datetime(2026, 8, 13, 3, 0, tzinfo=timezone.utc)
+        _now = datetime(2026, 8, 13, 3, 0, tzinfo=UTC)
 
         @classmethod
         def now(cls, tz=None):
@@ -474,7 +474,7 @@ def test_park_reopens_after_midnight_without_deadlock(monkeypatch):
     assert updated[0]["schedule_date"] == "2026-08-13"
 
     # Later that morning: a fresh OPERATING attraction update arrives (WS/REST).
-    FakeDateTime._now = datetime(2026, 8, 13, 9, 30, tzinfo=timezone.utc)
+    FakeDateTime._now = datetime(2026, 8, 13, 9, 30, tzinfo=UTC)
     park["attractions"][0]["status"] = "OPERATING"
     park["attractions"][0]["lastUpdatedTs"] = "2026-08-13T09:29:00+00:00"
     updated = update_parks_operating_status([park])

@@ -1,5 +1,5 @@
 import random
-from functools import lru_cache
+from functools import cache
 
 from display.animation.drawing import _blackout
 
@@ -546,7 +546,7 @@ class MineTrainSnowReveal(MineTrainAllReveal):
     SNOW_WHITE = True
 
 
-@lru_cache(maxsize=None)
+@cache
 def _cells(art, colors_key):
     """Each lit cell of a sprite as (dx, dy, rgb), worked out once rather than every frame."""
     colors = dict(colors_key)

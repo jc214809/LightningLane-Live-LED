@@ -23,15 +23,19 @@ include = ["api*", "display*", "driver*", "parks*", "updater*", "utils*"]
 [tool.ruff]
 # The boards run 3.11 (docs/dev/CODE-QUALITY.md).
 target-version = "py311"
+# ruff format and E501 both wrap at 120 (docs/dev/CODE-QUALITY.md).
+line-length = 120
 # Ignored folders that can hold Python (virtualenvs, build output).
 extend-exclude = [".venv*", "build", "dist"]
 
 [tool.ruff.lint]
 # E/F/W/B: pycodestyle, pyflakes, bugbear. C901, PLR0912/0913/0915: complexity, branches, arguments,
 # statements. RUF100: fails on a `noqa` that no longer suppresses anything, so the baseline only shrinks.
-select = ["E", "F", "W", "B", "C901", "PLR0912", "PLR0913", "PLR0915", "RUF100"]
-# E501 (line length) and B905 (zip strict=, a behaviour change) are phase 3 of the plan.
-ignore = ["E501", "B905"]
+# UP: pyupgrade (3.11 syntax). I: import sorting (isort).
+select = ["E", "F", "W", "B", "C901", "PLR0912", "PLR0913", "PLR0915", "RUF100", "UP", "I"]
+# B905 (zip strict=) would change behaviour. UP031 (printf `%` to f-strings) has no autofix and a hand
+# rewrite can change output: `"%d" % 2.7` is "2", `f"{2.7:d}"` raises.
+ignore = ["B905", "UP031"]
 
 [tool.ruff.lint.mccabe]
 # Ruff's default, written down so it is visible.

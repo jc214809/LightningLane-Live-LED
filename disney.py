@@ -5,7 +5,7 @@ import logging
 import threading
 import random
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import driver
 
@@ -170,7 +170,7 @@ def _apply_show_and_sound_settings(config):
 
 def _check_python_and_driver():
     # Check Python version.
-    if sys.version_info <= (3, 5):
+    if sys.version_info <= (3, 5):  # noqa: UP036 (pinned by test_disney_main_pins; removing it is its own change)
         debug.error("Please run with python3")
         sys.exit(1)
 
@@ -308,7 +308,7 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
     its whole synced show, in the version config.json's "shows" sets: see music_show.py), with the show's sound (sounds/<show>.wav, else
     sounds/fireworks.wav) if config.json turns sound on. Each performance plays once. Returns True if it played.
     """
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     for park in parks:
         show, theme = fireworks_show(park, now)
         if not show_setting(show).enabled:
@@ -371,7 +371,7 @@ def play_forced_show(matrix, now=None):
     """Play the forced show now, from its start, if it's set. Returns True if it played."""
     if forced_show is None:
         return False
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     show, theme = forced_show
     play_show(matrix, show, theme, now, now)
     return True

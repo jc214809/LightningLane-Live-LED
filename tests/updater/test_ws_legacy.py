@@ -8,6 +8,7 @@ from updater.ws_common import WS_ENTITY_TYPES, WS_URL, _WS_CLOSE_TIMEOUT_SECS
 from updater.ws_legacy import (WS_SUBPROTOCOLS, _WS_HEARTBEAT_SECS, _WS_RECEIVE_TIMEOUT_SECS, _apply_live_update,
                                _ws_loop)
 from tests.updater.ws_support import _FakeSession, _FakeWS, _RefusingSession
+from datetime import UTC
 
 
 DUMMY_ATTRACTION = {
@@ -144,8 +145,8 @@ def test_down_status_preserves_existing_down_since():
 
 def test_down_wait_time_uses_down_since_not_current_time():
     """down_since set 30 min ago — waitTime should reflect ~30 min, not 0."""
-    from datetime import datetime, timezone, timedelta
-    down_since = (datetime.now(timezone.utc) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    from datetime import datetime, timedelta
+    down_since = (datetime.now(UTC) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
     parks = _parks_with_attr({"status": "DOWN", "down_since": down_since})
     msg = _make_livedata_msg(data={"status": "DOWN", "queue": {"STANDBY": {"waitTime": None}}})
     with patch("updater.ws_legacy.update_parks_operating_status"):
@@ -236,19 +237,19 @@ def test_apply_live_update_skips_lock_for_non_livedata_events():
 
 def test_receive_time_stamps_the_update():
     # The feed sends no lastUpdated, so the receive time is the update's timestamp.
-    from datetime import datetime, timezone
+    from datetime import datetime
     parks = _parks_with_attr()
     msg = _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 10}}})
-    before = datetime.now(timezone.utc).replace(microsecond=0)
+    before = datetime.now(UTC).replace(microsecond=0)
     with patch("updater.ws_legacy.update_parks_operating_status"):
         _apply_live_update(msg, parks)
-    stamped = datetime.strptime(parks[0]["attractions"][0]["lastUpdatedTs"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    stamped = datetime.strptime(parks[0]["attractions"][0]["lastUpdatedTs"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
     assert 0 <= (stamped - before).total_seconds() <= 2
 
 
 def test_down_since_is_the_first_down_message_and_later_ones_keep_it():
-    from datetime import datetime, timezone, timedelta
-    went_down = (datetime.now(timezone.utc) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    from datetime import datetime, timedelta
+    went_down = (datetime.now(UTC) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
     parks = _parks_with_attr({"status": "OPERATING", "down_since": ""})
     with patch("updater.ws_legacy.update_parks_operating_status"):
         _apply_live_update(_make_livedata_msg(data={"status": "DOWN"}), parks)
@@ -400,14 +401,14 @@ def test_ws_update_stores_forecast_and_keeps_it_when_absent():
 
 
 def test_ws_update_stores_showtimes_and_keeps_them_when_absent():
-    from datetime import datetime, timezone
+    from datetime import datetime
     parks = _parks_with_attr()
     raw = [{"type": "Performance Time", "startTime": "2026-09-26T21:30:00-04:00"}, {"startTime": "bad"}]
     _apply_live_update(_make_livedata_msg(data={"status": "OPERATING", "showtimes": raw}), parks)
     attr = parks[0]["attractions"][0]
-    assert attr["showtimes"] == [datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)]
+    assert attr["showtimes"] == [datetime(2026, 9, 27, 1, 30, tzinfo=UTC)]
     _apply_live_update(_make_livedata_msg(), parks)
-    assert attr["showtimes"] == [datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)]
+    assert attr["showtimes"] == [datetime(2026, 9, 27, 1, 30, tzinfo=UTC)]
 
 
 # --- network badge flag ---

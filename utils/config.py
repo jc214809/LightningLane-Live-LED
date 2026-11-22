@@ -8,7 +8,7 @@ import json
 import os
 import shutil
 from datetime import time
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 from utils import debug
 
@@ -18,7 +18,7 @@ CONFIG_FILE = "config.json"
 
 def load_config(file_path=CONFIG_FILE):
     """Load the configuration from a JSON file."""
-    with open(file_path, 'r') as file:
+    with open(file_path) as file:
         return json.load(file)
 
 
@@ -305,8 +305,8 @@ DEFAULT_VOLUME = 80
 
 class SoundSettings(NamedTuple):
     enabled: bool = False
-    device: Optional[str] = None  # aplay -D on a Pi; None is ALSA's default card
-    quiet_hours: Optional[Tuple[time, time]] = None  # (start, end) in the board's local time
+    device: str | None = None  # aplay -D on a Pi; None is ALSA's default card
+    quiet_hours: tuple[time, time] | None = None  # (start, end) in the board's local time
     volume: int = DEFAULT_VOLUME  # percent, set with amixer before each clip
 
 

@@ -13,7 +13,7 @@ APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DESCRIBE_TIMEOUT_S = 10
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def version(app_dir=APP_DIR, run=subprocess.run):
     """This checkout's version from its tags, without the "v", else SCRIPT_VERSION. The app and the
     updater run as root in a checkout that isn't root's, so git is told it's safe."""

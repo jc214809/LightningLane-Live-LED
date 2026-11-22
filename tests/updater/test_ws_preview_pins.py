@@ -426,7 +426,7 @@ def test_pin_after_a_refusal_the_next_normal_drop_doubles_from_the_ten_minute_de
 
 
 def test_pin_a_timeout_logs_the_silence_and_backs_off(trace):
-    _run(trace, [asyncio.TimeoutError()])
+    _run(trace, [TimeoutError()])
     assert trace[3:] == [
         ("warning", f"WebSocket silent for {ws_preview._PREVIEW_RECEIVE_TIMEOUT_SECS}s; reconnecting."),
         ("info", "WebSocket disconnected; reconnecting in about 10s"),
@@ -434,7 +434,7 @@ def test_pin_a_timeout_logs_the_silence_and_backs_off(trace):
 
 
 def test_pin_a_timeout_mid_stream_still_cleans_up_the_connection(trace):
-    _run(trace, [_Script(trace, raises_after=asyncio.TimeoutError())], monotonic=(0.0, 100.0))
+    _run(trace, [_Script(trace, raises_after=TimeoutError())], monotonic=(0.0, 100.0))
     assert trace.index(("cancel", "watchdog")) < trace.index("down") < trace.index("ws close")
     assert ("warning", f"WebSocket silent for {ws_preview._PREVIEW_RECEIVE_TIMEOUT_SECS}s; reconnecting.") in trace
     assert ("info", "WebSocket disconnected; reconnecting in about 5s") in trace  # a stable connection resets the delay

@@ -1,5 +1,5 @@
 # tests/api/test_disney_api.py
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import pytest
 import requests
@@ -408,14 +408,14 @@ def test_determine_llmp_price():
 def test_get_down_time_valid():
     # Test get_down_time by computing a known difference.
     # Create a timestamp 30 minutes ago.
-    past = datetime.now(timezone.utc) - timedelta(minutes=30)
+    past = datetime.now(UTC) - timedelta(minutes=30)
     past_iso = past.strftime('%Y-%m-%dT%H:%M:%SZ')
     minutes = get_down_time(past_iso)
     # Allow a range since actual computation might vary slightly.
     assert 29 <= minutes <= 31
 
 def test_get_down_time_with_milliseconds():
-    past = datetime.now(timezone.utc) - timedelta(minutes=45)
+    past = datetime.now(UTC) - timedelta(minutes=45)
     past_iso = past.strftime('%Y-%m-%dT%H:%M:%S.') + f"{past.microsecond // 1000:03d}Z"
     minutes = get_down_time(past_iso)
     assert 44 <= minutes <= 46
@@ -730,7 +730,7 @@ def test_build_live_updates_includes_forecast_only_when_present():
 # --- showtimes ---
 
 HEA_RAW = [{"type": "Performance Time", "startTime": "2026-09-26T21:30:00-04:00", "endTime": "2026-09-26T21:30:00-04:00"}]
-HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=UTC)
 
 
 def test_parse_showtimes_keeps_valid_starts_and_drops_malformed():

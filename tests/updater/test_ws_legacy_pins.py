@@ -6,7 +6,7 @@ split into named steps with no change in behaviour; each case here passed on the
 import asyncio
 import copy
 import json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -16,7 +16,7 @@ import pytest
 from updater import ws_legacy
 from updater.ws_legacy import _apply_live_update, _ws_loop
 
-NOW = datetime(2026, 11, 20, 15, 30, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 20, 15, 30, 0, tzinfo=UTC)
 STAMP = "2026-11-20T15:30:00Z"
 
 

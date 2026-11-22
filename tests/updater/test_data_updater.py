@@ -1,7 +1,7 @@
 import asyncio
 import copy
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import pytest
 
@@ -219,7 +219,7 @@ def test_merge_live_data_down_wait_time_uses_down_since_not_last_updated():
     """Regression test: waitTime for a DOWN attraction must reflect elapsed
     time since down_since (when the ride actually went down), not the raw
     per-poll lastUpdatedTs, which stays recent on every REST poll."""
-    down_since_ts = (datetime.now(timezone.utc) - timedelta(minutes=42)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    down_since_ts = (datetime.now(UTC) - timedelta(minutes=42)).strftime("%Y-%m-%dT%H:%M:%SZ")
     existing = [{
         "id": "1",
         "waitTime": 5,
@@ -232,7 +232,7 @@ def test_merge_live_data_down_wait_time_uses_down_since_not_last_updated():
     new_still_down = [{
         "id": "1",
         "status": "DOWN",
-        "lastUpdatedTs": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "lastUpdatedTs": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }]
     result = merge_live_data(copy.deepcopy(existing), new_still_down)
 
@@ -673,7 +673,7 @@ def test_merge_live_data_copies_forecast_and_keeps_it_when_an_update_has_none():
 
 
 def test_merge_live_data_copies_showtimes_and_an_empty_list_clears_them():
-    start = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+    start = datetime(2026, 9, 27, 1, 30, tzinfo=UTC)
     existing = [{"id": "hea", "status": "OPERATING", "down_since": "", "lastUpdatedTs": "old"}]
     merge_live_data(existing, [{"id": "hea", "status": "OPERATING", "lastUpdatedTs": "a", "showtimes": [start]}])
     assert existing[0]["showtimes"] == [start]

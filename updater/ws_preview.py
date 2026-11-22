@@ -211,7 +211,7 @@ async def _preview_ws_loop(api_key, parks_data):
                     debug.warning(f"WebSocket receive loop ended: close_code={ws.close_code}, "
                                   f"exception={ws.exception()}")
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             debug.warning(f"WebSocket silent for {_PREVIEW_RECEIVE_TIMEOUT_SECS}s; reconnecting.")
         except Exception as e:
             debug.error(f"WebSocket error: {e}\n{traceback.format_exc()}")

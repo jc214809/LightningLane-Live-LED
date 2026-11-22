@@ -3,7 +3,7 @@ Whether each park is open, and when to refetch its schedule. The schedule decide
 usable (party nights and Early Entry included); otherwise fresh live data does. HTTP stays in
 api.disney_api: this module only calls handle_park_schedule_update when a refresh is due.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from zoneinfo import ZoneInfo
 
 from api.disney_api import handle_park_schedule_update, parse_timestamp
@@ -27,7 +27,7 @@ def _park_local_now(park):
             return datetime.now(ZoneInfo(tz_name))
         except Exception:
             debug.warning(f"{park.get('name')}: unknown timezone '{tz_name}', falling back to UTC.")
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _schedule_reflects_today(park, local_now):
@@ -82,7 +82,7 @@ def actual_park_closing_time(park, now=None):
     latest one that has opened; a party past midnight is dated the day it started, so at
     12:30am it's still that day. None with no usable schedule, or before the first opening.
     """
-    return _day_in_progress_close(_park_days(park.get("schedule")), now or datetime.now(timezone.utc))
+    return _day_in_progress_close(_park_days(park.get("schedule")), now or datetime.now(UTC))
 
 
 _SCHEDULE_OPEN, _SCHEDULE_CLOSED = "open", "closed"
@@ -127,7 +127,7 @@ def operating_and_why(park, now=None):
     first opening to actual_park_closing_time (a party's close on a party night), whatever
     the rides say. Without one, a ride OPERATING with a wait and recent live data opens it.
     """
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     window, close = _schedule_window(park, now)
     if window == _SCHEDULE_OPEN:
         return True, f"schedule: open until {close.strftime('%H:%M')}"

@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, UTC
 
 import pytest
 
@@ -81,7 +81,7 @@ def test_party_night_swaps_the_castle_for_the_partys_landmark(monkeypatch, scree
     shown = []
     real_landmark_screen = disney.landmark_screen
     monkeypatch.setattr(disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene))
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     party_night = {"name": "Magic Kingdom", "seasonalEvent": "halloween",
                    "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event"}]}
     disney.initialize_park_information_screen(FakeMatrix(), party_night)
@@ -95,7 +95,7 @@ def test_race_day_swaps_epcots_landmark_for_the_races(monkeypatch, screens):
     shown = []
     real_landmark_screen = disney.landmark_screen
     monkeypatch.setattr(disney, "landmark_screen", lambda scene: shown.append(type(scene)) or real_landmark_screen(scene))
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     monkeypatch.setattr(special_events, "DATED_LANDMARKS",
                         [{"date": today, "park": "epcot", "landmark": "WineAndDine5KLandmark"}])
     disney.initialize_park_information_screen(FakeMatrix(), {"name": "EPCOT"})
@@ -635,7 +635,7 @@ def test_every_surprise_the_settings_page_hides_is_never_rolled():
 
 # ---- Happily Ever After fireworks ----
 
-HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=UTC)
 HEA_PARKS = [{"name": "Magic Kingdom", "attractions": [
     {"name": "Happily Ever After", "status": "OPERATING", "waitTime": None, "showtimes": [HEA_START]}]}]
 
@@ -1066,7 +1066,7 @@ def test_force_show_plays_the_whole_synced_show_with_its_music_now(monkeypatch):
     monkeypatch.setattr(disney, "render_music_show", lambda matrix, score: events.append(("synced", score.name)))
     monkeypatch.setattr(disney.debug, "warning", lambda message: None)
     monkeypatch.setattr(disney, "show_settings_by_clip", {"happily-ever-after": disney.ShowSettings(True, "v1")})
-    now = datetime(2026, 10, 13, 18, 0, tzinfo=timezone.utc)  # nowhere near showtime
+    now = datetime(2026, 10, 13, 18, 0, tzinfo=UTC)  # nowhere near showtime
     disney.set_forced_show("Happily Ever After")
     try:
         assert disney.play_forced_show(FakeMatrix(), now=now) is True

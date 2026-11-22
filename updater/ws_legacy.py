@@ -7,7 +7,7 @@ import json
 import ssl
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import aiohttp
 import certifi
@@ -56,7 +56,7 @@ def _apply_livedata(data, parks_data):
     status = live.get("status")
     # The feed sends no lastUpdated (REST does), so the receive time stamps the update:
     # it's seconds behind the change. down_since takes it from the first DOWN message.
-    last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    last_updated = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     with parks_data_lock:
         for park in parks_data:

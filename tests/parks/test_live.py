@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import pytest
 
@@ -9,7 +9,7 @@ FORECAST = [
     {"time": "2026-09-25T10:00:00-04:00", "waitTime": 20, "percentage": 17},
     {"time": "2026-09-25T11:00:00-04:00", "waitTime": 40, "percentage": 34},
 ]
-HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=timezone.utc)
+HEA_START = datetime(2026, 9, 27, 1, 30, tzinfo=UTC)
 
 
 @pytest.mark.parametrize("now_utc, expected", [
@@ -27,7 +27,7 @@ def test_forecast_wait_now_picks_the_hour_containing_now(now_utc, expected):
 @pytest.mark.parametrize("forecast", [None, [], [{"time": "garbage", "waitTime": 5}],
                                       [{"time": "2026-09-25T10:00:00", "waitTime": 5}]])
 def test_forecast_wait_now_without_usable_data_is_none(forecast):
-    assert forecast_wait_now(forecast, datetime(2026, 9, 25, 14, 30, tzinfo=timezone.utc)) is None
+    assert forecast_wait_now(forecast, datetime(2026, 9, 25, 14, 30, tzinfo=UTC)) is None
 
 def _parks_with_show(name="Happily Ever After", starts=(HEA_START,)):
     return [{"name": "Magic Kingdom", "attractions": [

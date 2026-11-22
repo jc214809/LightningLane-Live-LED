@@ -9,7 +9,7 @@ A later version of a show (a config.json "shows" entry's "version", like "v2") i
 """
 import json
 import os
-from typing import Dict, FrozenSet, NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 from display.fireworks.music_show import CASTLE_LOOKS, EFFECTS, SHAPES
 from display.fireworks.show_actors import ACTORS
@@ -40,7 +40,7 @@ SIDES = ("left", "right")
 class Hit(NamedTuple):
     at: float  # seconds into the show: when a shell bursts, or a fan or comet launches
     kind: str  # one of HIT_KINDS
-    rgb: Tuple[int, int, int]
+    rgb: tuple[int, int, int]
     x: float = 0.5  # a shell's burst, as fractions of the board's width and height
     y: float = 0.25
     style: str = "peony"  # a shell's, one of SHELL_STYLES
@@ -52,16 +52,16 @@ class Cue(NamedTuple):
     title: str
     start: float
     end: float
-    palette: Tuple[Tuple[int, int, int], ...]
+    palette: tuple[tuple[int, int, int], ...]
     rate: float  # launches against the everyday show; 0 is dark
-    castle: Optional[str]  # a music_show.CASTLE_LOOKS key, or None for the everyday castle
-    shapes: Tuple[Tuple[str, float], ...]  # (music_show.SHAPES key, chance per launch)
-    effects: FrozenSet[str]
+    castle: str | None  # a music_show.CASTLE_LOOKS key, or None for the everyday castle
+    shapes: tuple[tuple[str, float], ...]  # (music_show.SHAPES key, chance per launch)
+    effects: frozenset[str]
     stage: str = "castle"  # one of STAGES
-    actors: Tuple[str, ...] = ()  # show_actors.ACTORS keys, drawn in front of everything
-    hits: Tuple[Hit, ...] = ()  # set-moment fireworks, by time
-    castle_changes: Tuple[Tuple[float, str], ...] = ()  # (show seconds, CASTLE_LOOKS key) after the start's
-    stage_changes: Tuple[Tuple[float, str], ...] = ()  # (show seconds, one of STAGES) after the start's
+    actors: tuple[str, ...] = ()  # show_actors.ACTORS keys, drawn in front of everything
+    hits: tuple[Hit, ...] = ()  # set-moment fireworks, by time
+    castle_changes: tuple[tuple[float, str], ...] = ()  # (show seconds, CASTLE_LOOKS key) after the start's
+    stage_changes: tuple[tuple[float, str], ...] = ()  # (show seconds, one of STAGES) after the start's
 
     def progress(self, t):
         """0..1 through this scene at t seconds into the show."""
@@ -101,8 +101,8 @@ class Lips(NamedTuple):
 class Score(NamedTuple):
     name: str
     end: float
-    cues: Tuple[Cue, ...]
-    lips: Optional[Dict[str, Lips]] = None  # by show_actors.ACTORS name
+    cues: tuple[Cue, ...]
+    lips: dict[str, Lips] | None = None  # by show_actors.ACTORS name
     version: str = "v1"  # the overlay that was applied, for the logs
 
     def cue_at(self, t):

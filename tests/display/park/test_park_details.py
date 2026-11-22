@@ -1,7 +1,7 @@
 # tests/display/park/test_park_details.py
 
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from display.park import park_details
 from display.park.park_details import (
     render_special_ticketed_events,
@@ -151,7 +151,7 @@ def test_render_park_hours():
 def test_park_hours_star_takes_the_partys_color(event, color):
     fake_matrix = FakeMatrix(width=200, height=64)
     text_recorder.calls = []
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")  # no park timezone: UTC
+    today = datetime.now(UTC).strftime("%Y-%m-%d")  # no park timezone: UTC
     park_obj = {
         "openingTime": f"{today}T09:00:00-04:00",
         "closingTime": f"{today}T23:00:00-04:00",
@@ -183,7 +183,7 @@ def test_holiday_star_colours_each_dot():
 
 def test_park_hours_on_a_christmas_party_night_get_the_holiday_star():
     matrix = PixelMatrix(width=200, height=64)
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")  # no park timezone: UTC
+    today = datetime.now(UTC).strftime("%Y-%m-%d")  # no park timezone: UTC
     render_park_hours(60, 1, matrix, {
         "openingTime": f"{today}T09:00:00-04:00",
         "closingTime": f"{today}T23:00:00-04:00",

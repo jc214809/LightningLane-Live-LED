@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import pytest
 
@@ -20,7 +20,7 @@ def party(date, opens="19:00", closes_date=None, closes="00:00", description="Sp
 
 def et(day_time):
     """An aware 'now' from an Orlando wall-clock time, e.g. '2026-09-27 20:00'."""
-    return datetime.fromisoformat(day_time + ":00-04:00").astimezone(timezone.utc)
+    return datetime.fromisoformat(day_time + ":00-04:00").astimezone(UTC)
 
 
 def mk(*events, seasonal="halloween"):
@@ -81,7 +81,7 @@ def test_malformed_times_and_unknown_timezone_fail_safe():
     assert not special_event_now(park, et("2026-09-27 20:00"))
     park = mk(party("2026-09-27"))
     park["timezone"] = "Mars/Olympus_Mons"
-    assert special_event_now(park, datetime(2026, 9, 27, 12, tzinfo=timezone.utc)), "falls back to UTC"
+    assert special_event_now(park, datetime(2026, 9, 27, 12, tzinfo=UTC)), "falls back to UTC"
 
 
 def test_active_party_needs_both_a_party_tonight_and_a_known_name():
@@ -169,7 +169,7 @@ def test_the_wine_and_dine_races_are_epcots_landmarks_on_their_race_days_only():
 
 
 def test_dated_landmarks_match_park_names_loosely_and_survive_missing_fields():
-    when = datetime(2026, 10, 23, 15, tzinfo=timezone.utc)
+    when = datetime(2026, 10, 23, 15, tzinfo=UTC)
     assert dated_landmark({"name": "Epcot", "timezone": ET}, when) == "WineAndDine5KLandmark"
     assert dated_landmark({"name": "EPCOT"}, when) == "WineAndDine5KLandmark", "no timezone: UTC's date"
     assert dated_landmark({}, when) is None

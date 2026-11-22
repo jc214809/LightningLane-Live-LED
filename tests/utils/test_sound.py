@@ -3,7 +3,7 @@ import subprocess
 import sys
 import textwrap
 import time as _time
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, UTC
 
 import pytest
 
@@ -50,7 +50,7 @@ def test_in_quiet_hours(clock, quiet_hours, expected):
 
 def test_quiet_hours_are_the_boards_local_time():
     local = datetime(2026, 10, 10, 23, 0).astimezone()  # 11pm here, whatever the zone
-    assert sound.in_quiet_hours(OVERNIGHT, local.astimezone(timezone.utc)) is True
+    assert sound.in_quiet_hours(OVERNIGHT, local.astimezone(UTC)) is True
 
 
 def test_player_command():

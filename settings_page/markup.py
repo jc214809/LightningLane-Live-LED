@@ -56,7 +56,7 @@ def icon(name):
     return f'<svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[name]}</svg>'
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def landmarks(path=None):
     """{park key: "/static/<file>"} from tools/build_settings_art.py's index; {} if it can't be read (logged), so
     the page still works, just without the pictures."""

@@ -305,7 +305,7 @@ def test_preview_loop_backs_off_with_jitter_after_a_quick_drop():
 def test_preview_loop_treats_silence_as_a_dead_connection():
     class _SilentWS(_ScriptedWS):
         async def __anext__(self):
-            raise asyncio.TimeoutError
+            raise TimeoutError
 
     class _SilentSession(_ScriptedSession):
         def ws_connect(self, url, **kwargs):
