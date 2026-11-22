@@ -84,7 +84,7 @@ Read the note before changing its area; update it in the same PR.
 - `api/`: ThemeParks.wiki and weather fetching
 - `parks/`: decisions over park data (operating, live showtimes, names)
 - `updater/`: live data threads (REST, WebSocket); not `self_update/`
-- `display/`: screens, `animation/` (transitions and characters), `landmarks/`, `fireworks/` (shows), badges
+- `display/`: screens, `animation/` (transitions and characters), `landmarks/`, `fireworks/` (shows; `fireworks/effects/` the synced shows' scene looks), badges
 - `driver/`: rgbmatrix or the emulator
 - `utils/`: config, special events, trips, sound, surprises, heartbeat, brightness, debug logging
 - `settings_page/`: the board's settings page (its own service, port 8080)
