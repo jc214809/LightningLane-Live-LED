@@ -78,6 +78,7 @@ WIFI_SETUP_CHECK_S = 5
 WIFI_SETUP_PAGE_CHECKS = 2
 _shows_played = set()
 
+
 def start_live_updaters(config, disney_park_list, update_interval, parks_data):
     """Start the REST thread, and the WebSocket thread only when config.json's "websocket"
     section enables it with a real key: without one the server closes the connection,
@@ -89,19 +90,17 @@ def start_live_updaters(config, disney_park_list, update_interval, parks_data):
         target=live_data_updater,
         args=(disney_park_list, update_interval, parks_data),
         kwargs={"use_websocket": use_websocket, "ws_protocol": protocol},
-        daemon=True
+        daemon=True,
     )
     update_thread.start()
 
     if use_websocket:
-        ws_thread = threading.Thread(
-            target=websocket_live_updater,
-            args=(api_key, parks_data, protocol),
-            daemon=True
-        )
+        ws_thread = threading.Thread(target=websocket_live_updater, args=(api_key, parks_data, protocol), daemon=True)
         ws_thread.start()
         if protocol == "preview":
-            debug.info("WebSocket live updater started (preview); REST checks every 30 min while it's healthy, every 5 when it isn't.")
+            debug.info(
+                "WebSocket live updater started (preview); REST checks every 30 min while it's healthy, every 5 when it isn't."
+            )
         else:
             debug.info("WebSocket live updater started; REST keeps polling every 5 min as a backstop.")
     else:
@@ -126,7 +125,7 @@ def main():
     # With no Wi-Fi the parks can't be fetched, so this comes first.
     show_wifi_setup_while_needed(matrix)
 
-    park_names = config.get('parks', [])
+    park_names = config.get("parks", [])
     disney_park_list = resolve_parks_from_config(park_names)
     if not disney_park_list:
         debug.error("No parks found. Exiting.")
@@ -154,15 +153,19 @@ def _apply_surprise_settings(config):
     global surprises
     surprises = surprise_settings(load_surprises())
     if not surprises.enabled or surprises.off:
-        debug.info(f"Surprise characters: {'all off' if not surprises.enabled else 'off for ' + ', '.join(sorted(surprises.off))}.")
+        debug.info(
+            f"Surprise characters: {'all off' if not surprises.enabled else 'off for ' + ', '.join(sorted(surprises.off))}."
+        )
 
 
 def _apply_brightness_schedule(config):
     schedule = brightness_schedule(config)
     brightness.use(schedule)
     if schedule:
-        debug.info(f"Brightness schedule: {schedule.day} from {schedule.day_start:%H:%M}, "
-                   f"{schedule.night} from {schedule.night_start:%H:%M}.")
+        debug.info(
+            f"Brightness schedule: {schedule.day} from {schedule.day_start:%H:%M}, "
+            f"{schedule.night} from {schedule.night_start:%H:%M}."
+        )
 
 
 def _apply_show_and_sound_settings(config):
@@ -172,9 +175,16 @@ def _apply_show_and_sound_settings(config):
     show_settings_by_clip = {clip_name(name): setting for name, setting in show_settings(config).items()}
     # Only a show played in full, with a synced score, is meant to have music; the others play the
     # castle fireworks (and the generic clip, if there is one), so a missing clip isn't a problem to badge.
-    watch_sound(sound, [show_clips(show) for show in known_shows()
-                        if show_setting(show).enabled and show_setting(show).version != "default"
-                        and os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))])
+    watch_sound(
+        sound,
+        [
+            show_clips(show)
+            for show in known_shows()
+            if show_setting(show).enabled
+            and show_setting(show).version != "default"
+            and os.path.isfile(os.path.join(SHOWS_DIR, f"{clip_name(show)}.json"))
+        ],
+    )
 
 
 def _check_python_and_driver():
@@ -222,6 +232,7 @@ def _run_display_loop(matrix, config, parks_data):
     finally:
         matrix.Clear()
 
+
 def show_wifi_setup_while_needed(matrix):
     """While comitup's setup hotspot is up (no known Wi-Fi in range), show how to join it, until
     the board is on a network. Returns whether it showed."""
@@ -260,7 +271,7 @@ def play_trip_countdown(matrix, config, last_shown=None):
     Picked each cycle so the screen moves on as trips start, end and pass. Returns
     the trip shown (or last_shown), so a change is logged once rather than every cycle.
     """
-    if not config.get('trip_countdown', {}).get('enabled'):
+    if not config.get("trip_countdown", {}).get("enabled"):
         logging.info("Trip countdown is not enabled.")
         return last_shown
     trip = active_trip(parse_trips(config))
@@ -277,6 +288,7 @@ def _describe_trip(trip):
     span = trip.start.isoformat() + (f" to {trip.end.isoformat()}" if trip.end else "")
     return f"{trip.name} ({span})" if trip.name else span
 
+
 def render_logo(matrix):
     """The start-up intro: the castle under fireworks, with the title."""
     matrix.Clear()
@@ -289,6 +301,7 @@ def _static(render, *args):
     def draw(canvas, t):
         render(canvas, *args)
         return False
+
     return draw
 
 
@@ -304,10 +317,12 @@ def initialize_park_information_screen(matrix, park):
     debug.info(f"Rendering {park['name']} Title Screen. | Weather: {park.get('weather')}")
     show_screen(matrix, _static(render_park_information_screen, park), 8, transition=_park_reveal())
 
+
 def show_setting(show):
     """A show's ShowSettings from config.json's "shows": enabled and "default" (the castle fireworks for
     FIREWORKS_SHOW_S) unless it says otherwise; "v1" or "v2" plays a scored show's whole synced version."""
     return show_settings_by_clip.get(clip_name(show), ShowSettings())
+
 
 def play_fireworks_show_if_due(matrix, parks, now=None):
     """
@@ -330,6 +345,7 @@ def play_fireworks_show_if_due(matrix, parks, now=None):
         return True
     return False
 
+
 def play_show(matrix, show, theme, start, now):
     """Play show, which started at start: its whole synced show if its version isn't "default" and it has a score,
     else the castle fireworks in theme until FIREWORKS_SHOW_S after start; with its sound if config.json
@@ -351,6 +367,7 @@ def play_show(matrix, show, theme, start, now):
     forget_screen(matrix)
     heartbeat.beat()
 
+
 def known_shows():
     """{show name: fireworks theme} for every show the board can play: the nightly one and each party's."""
     shows = {NIGHTLY_FIREWORKS[0]: NIGHTLY_FIREWORKS[1]}
@@ -358,6 +375,7 @@ def known_shows():
         if event.get("fireworks_show"):
             shows[event["fireworks_show"]] = event.get("fireworks_theme")
     return shows
+
 
 def set_forced_show(name):
     """Validate the forced show's name (config.forced_show_name), matched loosely (case, apostrophes); an unknown name is
@@ -369,12 +387,14 @@ def set_forced_show(name):
     shows = known_shows()
     match = next((show for show in shows if clip_name(show) == clip_name(str(name))), None)
     if match is None:
-        debug.warning(f"Forced show {name!r} isn't a show the board plays; ignoring it. "
-                      f"Choices: {', '.join(shows)}")
+        debug.warning(f"Forced show {name!r} isn't a show the board plays; ignoring it. Choices: {', '.join(shows)}")
         return
     forced_show = (match, shows[match])
-    debug.warning(f"{match} is forced: it plays at start-up. Remove \"force\" from its entry in config.json's "
-                  f"\"shows\" when done testing.")
+    debug.warning(
+        f'{match} is forced: it plays at start-up. Remove "force" from its entry in config.json\'s '
+        f'"shows" when done testing.'
+    )
+
 
 def play_forced_show(matrix, now=None):
     """Play the forced show now, from its start, if it's set. Returns True if it played."""
@@ -385,6 +405,7 @@ def play_forced_show(matrix, now=None):
     play_show(matrix, show, theme, now, now)
     return True
 
+
 def set_forced_surprise(name):
     """Validate config.json's force_surprise; an unknown name is ignored, not fatal."""
     global forced_surprise
@@ -392,27 +413,38 @@ def set_forced_surprise(name):
     if not name:
         return
     if name not in TRANSITIONS or name == "wipe":
-        debug.warning(f"force_surprise {name!r} isn't a character transition; ignoring it. "
-                      f"Choose from: {', '.join(t for t in TRANSITIONS if t != 'wipe')}")
+        debug.warning(
+            f"force_surprise {name!r} isn't a character transition; ignoring it. "
+            f"Choose from: {', '.join(t for t in TRANSITIONS if t != 'wipe')}"
+        )
         return
     forced_surprise = name
-    debug.warning(f"force_surprise is set: {name} plays on every ride screen. Remove it from config.json when done testing.")
+    debug.warning(
+        f"force_surprise is set: {name} plays on every ride screen. Remove it from config.json when done testing."
+    )
+
 
 def loop_through_attractions(matrix, park, parks=()):
     for attraction_info in park.get("attractions", []):
         # Checked between screens, so the fireworks cut in at most one screen late.
         play_fireworks_show_if_due(matrix, parks)
-        if (attraction_info.get("status") not in ["CLOSED", "REFURBISHMENT"]
-                and attraction_info.get("waitTime") not in [None, '']):
+        if attraction_info.get("status") not in ["CLOSED", "REFURBISHMENT"] and attraction_info.get("waitTime") not in [
+            None,
+            "",
+        ]:
             # Snapshot the dict: the updater threads mutate it in place mid-animation.
             ride = dict(attraction_info)
             expected = forecast_wait_now(ride.get("forecast"))
             debug.info(
                 f"Displaying ride: {ride['name']} (Park: {park['name']}) | "
                 f"Wait Time: {ride['waitTime']} min | Forecast: {expected} | Status: {ride['status']} | "
-                f"From: {ride.get('updateSource') or 'none yet'}")
-            surprise = (forced_surprise or _ride_visitor(ride.get("name", ""), ride.get("waitTime"))
-                        or _surprise(random.random()))
+                f"From: {ride.get('updateSource') or 'none yet'}"
+            )
+            surprise = (
+                forced_surprise
+                or _ride_visitor(ride.get("name", ""), ride.get("waitTime"))
+                or _surprise(random.random())
+            )
             if not forced_surprise and not surprises.allows(surprise):
                 surprise = "wipe"
             if surprise in TALL_ONLY and matrix.height < 64:
@@ -422,10 +454,12 @@ def loop_through_attractions(matrix, park, parks=()):
             show_screen(matrix, _attraction_screen(ride, expected), 8, transition=surprise)
             heartbeat.beat()
 
+
 def _park_reveal():
     """Tink or Buzz for a park title, whichever surprises.json allows; the plain wipe if neither."""
     allowed = [name for name in PARK_REVEALS if surprises.allows(name)]
     return random.choice(allowed) if allowed else "wipe"
+
 
 def _visitor_specs():
     """{character: {"rides": pieces of ride names, "chance": per screen}} for the characters who visit rides of their
@@ -439,6 +473,7 @@ def _visitor_specs():
     for name, spec in specs.items():
         spec["chance"] = surprises.ride_chance(name, spec["chance"])
     return specs
+
 
 def _ride_visitor(ride_name, wait=None):
     """A visitor who belongs to this ride, if one rolls in; None otherwise (and no roll is spent)."""
@@ -455,9 +490,11 @@ def _ride_visitor(ride_name, wait=None):
             return visitor
     return None
 
+
 def _short_wait(wait, minutes=5):
     """Whether a posted wait is a number of minutes, at most `minutes` (not a boarding group or "Down")."""
     return isinstance(wait, int) and not isinstance(wait, bool) and wait <= minutes
+
 
 def _mine_train_for_wait(wait):
     """
@@ -473,12 +510,19 @@ def _mine_train_for_wait(wait):
         return "mine_train_all"
     return None
 
+
 def _surprise(roll):
     # Each visitor owns a slice of the roll as wide as their chance, so order doesn't change the odds.
     edge = 0.0
     # The table's characters, then any the settings page gave a chance on any ride screen.
-    table = {**SURPRISES, **{name: 0.0 for name in sorted(surprises.chances)
-                             if name not in SURPRISES and name in TRANSITIONS and name != "wipe"}}
+    table = {
+        **SURPRISES,
+        **{
+            name: 0.0
+            for name in sorted(surprises.chances)
+            if name not in SURPRISES and name in TRANSITIONS and name != "wipe"
+        },
+    }
     for name, default in table.items():
         chance = surprises.chance(name, default)
         edge += chance  # a running total; subtracting from the roll drifts at slice edges
@@ -486,14 +530,17 @@ def _surprise(roll):
             return name
     return "wipe"
 
+
 def _attraction_screen(ride, expected):
     # A closure per ride: the next screen's sweep redraws this one, so it must not see later loop values.
     return lambda canvas, t: draw_attraction_frame(canvas, ride, t, expected)
+
 
 def show_trip_countdown(matrix, trip):
     if trip is None:
         return
     show_screen(matrix, lambda canvas, t: render_countdown_to_disney(canvas, trip, t), 7)
+
 
 if __name__ == "__main__":
     main()

@@ -60,8 +60,9 @@ def test_woody_slides_in_waves_and_slides_off_before_buzz_comes(height):
 def test_they_are_their_charts_size_on_both_boards():
     small, big = BuzzAndWoody(MusicShow(64, 32)), BuzzAndWoody(MusicShow(64, 64))
     assert (small.buzz_w, small.buzz_h) == (big.buzz_w, big.buzz_h) == (40, 26), "Buzz flying, his grid's, 1x on both"
-    assert (small.woody_w, small.woody_h) == (big.woody_w, big.woody_h) == (21, 26), \
+    assert (small.woody_w, small.woody_h) == (big.woody_w, big.woody_h) == (21, 26), (
         "Woody, the chibi chart's 19 x 26 plus room for his raised hand, 1x on both"
+    )
     assert all(len(row) == 40 for row in BUZZ_ART) and set("".join(BUZZ_ART)) <= set(BUZZ_COLORS) | {"."}
 
 
@@ -138,8 +139,11 @@ def test_blocks_fill_the_castle_from_its_base_up_on_its_pixels_only(height):
     n = actor.block
     covered = {(b[0] + i, b[1] + j) for b in actor.blocks for i in range(n) for j in range(n)} & actor.facade
     assert len(covered) > 0.8 * len(actor.facade), "the castle is full of them (bar slivers at its edges)"
-    assert all(full[(b[0] + n // 2, b[1] + n // 2)] in (b[2], (245, 240, 225)) for b in actor.blocks
-               if (b[0] + n // 2, b[1] + n // 2) in actor.facade and b[0] + n // 2 >= actor.woody_w), "and drawn"
+    assert all(
+        full[(b[0] + n // 2, b[1] + n // 2)] in (b[2], (245, 240, 225))
+        for b in actor.blocks
+        if (b[0] + n // 2, b[1] + n // 2) in actor.facade and b[0] + n // 2 >= actor.woody_w
+    ), "and drawn"
     tops = {top for _, top, *_ in actor.blocks}
     assert min(tops) <= show.castle_y + 2 * actor.block, "up to the spire"
     assert (actor.block, actor.block) == ((5, 5) if height == 64 else (3, 3))
@@ -167,10 +171,14 @@ def test_buzz_flies_through_the_castle_and_knocks_every_block_down(height):
     trail_gone = actor.SWOOP_AT + actor.SWOOP_S * (64 + actor.buzz_w + actor.TRAIL * actor.px) / (64 + actor.buzz_w)
     out = _frame(show, actor, cue, cue.start + trail_gone + 0.05)
     assert not _buzz_pixels(out) and not set(out.values()) & set(BuzzReveal.flame_colors), "he and his trail fly off"
-    assert all(actor.SWOOP_AT <= b[5] <= actor.SWOOP_AT + actor.SWOOP_S for b in actor.blocks), "all loosened as he passes"
+    assert all(actor.SWOOP_AT <= b[5] <= actor.SWOOP_AT + actor.SWOOP_S for b in actor.blocks), (
+        "all loosened as he passes"
+    )
     s = actor.px
     hit = [b for b in actor.blocks if b[1] < actor.swoop_top + actor.buzz_h and b[1] + actor.block > actor.swoop_top]
-    assert hit and (len(hit) < len(actor.blocks)) == (height == 64), "on 64x32 he's taller than the castle: he hits them all"
+    assert hit and (len(hit) < len(actor.blocks)) == (height == 64), (
+        "on 64x32 he's taller than the castle: he hits them all"
+    )
     for b in actor.blocks:
         x, y, _ = actor.block_at(b, b[5] + 0.3)
         if b in hit:
@@ -179,8 +187,10 @@ def test_buzz_flies_through_the_castle_and_knocks_every_block_down(height):
             assert abs(x - b[0]) < 3 * s and y >= b[1], "the rest topple (the bottom row is on the ground already)"
     clipped = {}
     draw_block = actor._draw_block
-    actor._draw_block = lambda out, block, x, y, f, clip: (clipped.__setitem__(block, clip),
-                                                          draw_block(out, block, x, y, f, clip))
+    actor._draw_block = lambda out, block, x, y, f, clip: (
+        clipped.__setitem__(block, clip),
+        draw_block(out, block, x, y, f, clip),
+    )
     _frame(show, actor, cue, cue.start + actor.SWOOP_AT - 0.1)
     assert clipped and all(clipped.values()), "standing, they're projected on the castle"
     clipped.clear()

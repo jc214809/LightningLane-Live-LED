@@ -97,8 +97,12 @@ WAVE_32 = [(10, 10), (10, 9), (11, 9), (11, 8), (12, 8), (12, 7)]
 # 5x8 "HALF MARATHON" is the board's full width; in the top corners on 64x32, above the penguins.
 TITLES = {
     True: [(SMALL_FONT, "WINE & DINE", 32, 0, WHITE), (SMALL_FONT, "HALF MARATHON", 32, 9, GOLD)],
-    False: [(TINY_FONT, "WINE&", 10, 0, WHITE), (TINY_FONT, "DINE", 9, 6, WHITE),
-            (TINY_FONT, "HALF", 47, 0, GOLD), (TINY_FONT, "MARATHON", 47, 6, GOLD)],
+    False: [
+        (TINY_FONT, "WINE&", 10, 0, WHITE),
+        (TINY_FONT, "DINE", 9, 6, WHITE),
+        (TINY_FONT, "HALF", 47, 0, GOLD),
+        (TINY_FONT, "MARATHON", 47, 6, GOLD),
+    ],
 }
 
 
@@ -152,8 +156,9 @@ class PenguinWaitersHalfLandmark(Landmark):
 
     def waving(self, name, t):
         """Whether a penguin's flipper is up at scene time t: it flaps through its turn and the all-hop."""
-        return any(0 <= t - start < FLAP_S and int((t - start) / FLAP_BEAT) % 2 == 0
-                   for start in (TURN_AT[name], ALL_AT))
+        return any(
+            0 <= t - start < FLAP_S and int((t - start) / FLAP_BEAT) % 2 == 0 for start in (TURN_AT[name], ALL_AT)
+        )
 
     def positions(self, t):
         """{name: (x, y)} of each character's top-left at scene time t."""

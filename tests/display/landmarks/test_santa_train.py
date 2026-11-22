@@ -21,26 +21,45 @@ def _party_park(opens="19:00", closes="23:59"):
     """Magic Kingdom on a party night, dated the park's today (test_pumpkins.py's, with the times to choose)."""
     from datetime import datetime
     from zoneinfo import ZoneInfo
+
     today = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
-    return {"name": "Magic Kingdom", "timezone": "America/New_York", "seasonalEvent": "christmas",
-            "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event",
-                          "openingTime": f"{today}T{opens}:00-05:00", "closingTime": f"{today}T{closes}:00-05:00"}]}
+    return {
+        "name": "Magic Kingdom",
+        "timezone": "America/New_York",
+        "seasonalEvent": "christmas",
+        "schedule": [
+            {
+                "type": "TICKETED_EVENT",
+                "date": today,
+                "description": "Special Ticketed Event",
+                "openingTime": f"{today}T{opens}:00-05:00",
+                "closingTime": f"{today}T{closes}:00-05:00",
+            }
+        ],
+    }
 
 
 def _text(scene):
     """The billboard's lettering, read back from its sign: the lettering's pixels inside its frame."""
     frame = st.FRAME_PX[scene.height >= 64]
     letters = st.SIGN_INK
-    return {(x, y): rgb for x, col in enumerate(scene.columns[:scene.width]) for y, rgb in col
-            if y < scene.sign_h and rgb in letters
-            and frame <= x < scene.width - frame and frame <= y < scene.sign_h - frame}
+    return {
+        (x, y): rgb
+        for x, col in enumerate(scene.columns[: scene.width])
+        for y, rgb in col
+        if y < scene.sign_h
+        and rgb in letters
+        and frame <= x < scene.width - frame
+        and frame <= y < scene.sign_h - frame
+    }
 
 
 def _train(scene, t):
     """The board pixels the train covers at scene time t."""
     left = scene.train_x(t)
-    return {(x, y) for x in range(max(0, left), min(scene.width, left + scene.train_w))
-            for y, _ in scene.columns[x - left]}
+    return {
+        (x, y) for x in range(max(0, left), min(scene.width, left + scene.train_w)) for y, _ in scene.columns[x - left]
+    }
 
 
 @pytest.mark.parametrize("train", [st.TRAIN_64, st.TRAIN_32])
@@ -70,7 +89,7 @@ def test_64x32_plutos_neck_reaches_his_collar():
 @pytest.mark.parametrize("engine, big", [(st.ENGINE_64, True), (st.ENGINE_32, False)])
 def test_the_smoke_is_puffed_not_painted_and_starts_over_the_stack(engine, big):
     x, y = st.STACK[big]
-    assert set("".join(engine[:y + 1])) == {"."}, "nothing above the stack"
+    assert set("".join(engine[: y + 1])) == {"."}, "nothing above the stack"
     assert engine[y + 1][math.floor(x)] == engine[y + 1][math.ceil(x)] == "k", "the stack's top under it"
 
 
@@ -119,8 +138,10 @@ def test_it_cruises_then_brakes_evenly_to_the_stop(w, h):
     brake_at = scene.drive_s - 2 * scene.stop_px / scene.cruise
     assert scene.travelled(brake_at / 2) == pytest.approx(scene.cruise * brake_at / 2)
     step = 0.05
-    speeds = [(scene.travelled(t + step) - scene.travelled(t)) / step
-              for t in [brake_at + i * step for i in range(int((scene.drive_s - brake_at) / step))]]
+    speeds = [
+        (scene.travelled(t + step) - scene.travelled(t)) / step
+        for t in [brake_at + i * step for i in range(int((scene.drive_s - brake_at) / step))]
+    ]
     assert speeds == sorted(speeds, reverse=True) and speeds[-1] < scene.cruise / 10, "slowing to a stop"
     assert scene.travelled(scene.drive_s + 1) == scene.train_w
 
@@ -163,8 +184,12 @@ def test_snow_falls_only_in_the_sky(w, h):
 @pytest.mark.parametrize("w, h", BOARDS)
 def test_no_snow_or_stars_show_under_the_cars_between_the_wheels(w, h):
     scene = _scene(w, h)
-    under = {(x, y) for x, column in enumerate(scene.columns) for y, rgb in column
-             if rgb == st.SKY_RGB and y >= scene.rail_y - st.WHEEL_ROWS[h >= 64]}
+    under = {
+        (x, y)
+        for x, column in enumerate(scene.columns)
+        for y, rgb in column
+        if rgb == st.SKY_RGB and y >= scene.rail_y - st.WHEEL_ROWS[h >= 64]
+    }
     assert under, "the cars have dark under them"
     for t in [scene.drive_s * k / 40 for k in range(40)]:
         frame, left = scene.frame(t), scene.train_x(t)
@@ -177,7 +202,7 @@ def test_no_snow_or_stars_show_under_the_cars_between_the_wheels(w, h):
 @pytest.mark.parametrize("train, big", [(st.TRAIN_64, True), (st.TRAIN_32, False)])
 def test_no_stray_white_round_the_wheels(train, big):
     for piece in train:
-        assert "W" not in "".join(piece[-st.WHEEL_ROWS[big]:]), "only the 64x32 rim spot is white down there"
+        assert "W" not in "".join(piece[-st.WHEEL_ROWS[big] :]), "only the 64x32 rim spot is white down there"
 
 
 @pytest.mark.parametrize("train, big", [(st.TRAIN_64, True), (st.TRAIN_32, False)])
@@ -267,13 +292,18 @@ def test_the_lettering_fits_inside_the_frame(w, h):
     sign_h = _scene(w, h).sign_h
     frame = st.FRAME_PX[h >= 64]
     sign = st.sign_pixels(w, sign_h, lines, frame)
-    letters = {p for p, rgb in sign.items() if rgb != st.SIGN_RGB
-               and frame <= p[0] < w - frame and frame <= p[1] < sign_h - frame}
+    letters = {
+        p
+        for p, rgb in sign.items()
+        if rgb != st.SIGN_RGB and frame <= p[0] < w - frame and frame <= p[1] < sign_h - frame
+    }
     assert letters, "lettering drawn"
     for x, y in letters:
         assert frame <= x < w - frame and frame <= y < sign_h - frame
     blank = st.sign_pixels(w, sign_h, [], frame)
-    assert all(sign[p] == blank[p] for p in blank if not (frame <= p[0] < w - frame and frame <= p[1] < sign_h - frame)), "frame untouched"
+    assert all(
+        sign[p] == blank[p] for p in blank if not (frame <= p[0] < w - frame and frame <= p[1] < sign_h - frame)
+    ), "frame untouched"
 
 
 @pytest.mark.parametrize("w, h", BOARDS)
@@ -289,16 +319,22 @@ def test_the_lines_run_white_red_green_from_the_top_on_a_dark_board(w, h):
     assert colours[:4] == [white, red, green, white]
     assert red[0] > 200 > max(red[1:]) and min(white) > 200 and green[1] > 200 > max(green[0], green[2])
     assert max(st.SIGN_RGB) < 60, "a dark board"
+
     def luma(rgb):
         return 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2]
+
     assert all(luma(ink) > 4 * luma(st.SIGN_RGB) for ink in st.SIGN_INK), "every line stands out"
 
 
 @pytest.mark.parametrize("hours", [("7PM", "12AM"), ("6PM", "1AM"), ("7PM", "11PM")])
 def test_64x32_says_tonights_hours_first_then_the_name(hours):
     inside = 64 - 2 * st.FRAME_PX[False]
-    assert st.sign_lines(False, hours, inside, st.TINY_FONT) == \
-        [f"TONIGHT {'-'.join(hours)}", "MICKEY'S", "VERY MERRY", "CHRISTMAS PARTY"]
+    assert st.sign_lines(False, hours, inside, st.TINY_FONT) == [
+        f"TONIGHT {'-'.join(hours)}",
+        "MICKEY'S",
+        "VERY MERRY",
+        "CHRISTMAS PARTY",
+    ]
     assert st.sign_lines(True, hours, 60, st.SMALL_FONT)[-1] == "-".join(hours), "64x64 keeps the hours last"
 
 
@@ -345,7 +381,8 @@ def _states(scene):
         t = f / 30
         for i, (_, _, kind, blinks) in enumerate(scene.riders):
             out.setdefault(kind, set()).add(
-                st.rider_state(kind, big, t, scene.travelled(t), len(scene.riders) - i, blinks))
+                st.rider_state(kind, big, t, scene.travelled(t), len(scene.riders) - i, blinks)
+            )
     return out
 
 
@@ -381,7 +418,7 @@ def test_poses_change_only_the_riders_never_their_cars(w, h):
         for state in _states(scene)[kind]:
             posed = st.rider_patch(piece, kind, big, state)
             assert len(posed) == len(piece) and {len(r) for r in posed} == {len(piece[0])}
-            assert posed[st.RIM_ROW[big]:] == piece[st.RIM_ROW[big]:], (kind, state)
+            assert posed[st.RIM_ROW[big] :] == piece[st.RIM_ROW[big] :], (kind, state)
             assert set("".join(posed)) - {"."} <= set(st.COLORS)
 
 
@@ -392,23 +429,27 @@ def test_santas_wave_frames_fit_his_cab_and_change_only_his_arm_side():
         assert {len(r) for r in frame} == {len(st.SANTA_WAVE_64[0][0])}
         assert y0 + len(frame) <= len(st.ENGINE_64) and x0 + len(frame[0]) <= len(st.ENGINE_64[0])
         assert set("".join(frame)) - {"."} <= set(st.COLORS)
-        cab = [row[x0:x0 + len(frame[0])] for row in st.ENGINE_64[y0:y0 + len(frame)]]
+        cab = [row[x0 : x0 + len(frame[0])] for row in st.ENGINE_64[y0 : y0 + len(frame)]]
         assert frame[:4] == cab[:4] and frame[-3:] == cab[-3:], "the roof and floor stay as drawn"
 
 
 @pytest.mark.parametrize("w, h", BOARDS)
 def test_the_riders_settle_once_the_train_stops(w, h):
     scene = _scene(w, h)
-    bobs = {st.rider_state("goofy", h >= 64, t, scene.travelled(t), 3, [])[0]
-            for t in [scene.drive_s + k / 10 for k in range(30)]}
+    bobs = {
+        st.rider_state("goofy", h >= 64, t, scene.travelled(t), 3, [])[0]
+        for t in [scene.drive_s + k / 10 for k in range(30)]
+    }
     assert len(bobs) == 1, "no bobbing on a stopped train"
 
 
 def test_the_64x64_car_wheels_are_even_left_and_right():
     for piece in st.TRAIN_64[:-1]:  # the cars; the engine's drivers are drawn their own way
         for cx, _, r in st.wheels(piece, True):
+
             def run(row, piece=piece, cx=cx, r=r):  # the rim's pixels on a row, this wheel's only
                 return [x for x, ch in enumerate(piece[row]) if ch in "SI" and abs(x - cx) <= r + 1]
+
             bottom, above = run(-1), run(-2)
             assert min(bottom) + max(bottom) == min(above) + max(above), "centred under the rim: no stray pixel"
 
@@ -416,5 +457,5 @@ def test_the_64x64_car_wheels_are_even_left_and_right():
 def test_the_64x32_wheels_have_nothing_grey_sticking_up_above_them():
     for piece in st.TRAIN_32:
         for cx, _, _ in st.wheels(piece, False):
-            above = piece[-4][int(cx - 1.5):int(cx + 1.5) + 1]
+            above = piece[-4][int(cx - 1.5) : int(cx + 1.5) + 1]
             assert not set(above) & set("SW"), "the car's edge is its own colour over a wheel"

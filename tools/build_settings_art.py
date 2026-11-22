@@ -6,6 +6,7 @@ each park without loading the display code: it runs as its own service and must 
 
 Run from anywhere after changing a park landmark:  python3 tools/build_settings_art.py
 """
+
 import io
 import json
 import logging
@@ -32,6 +33,7 @@ def load_landmarks():
     sys.modules.setdefault("driver", types.SimpleNamespace(graphics=types.SimpleNamespace(Color=lambda *rgb: rgb)))
     from display.landmarks.scene import SKY_RGB
     from display.landmarks.screen import LANDMARKS
+
     return LANDMARKS, SKY_RGB
 
 
@@ -39,6 +41,7 @@ def still(cls, sky):
     """One frame of a landmark as an RGB Pillow image, WIDTH x HEIGHT LEDs. A scene with a character flying
     through it (Spaceship Earth's Tinker Bell) is taken without her: the still is the landmark."""
     from PIL import Image
+
     scene = cls(WIDTH, HEIGHT, rng=random.Random(7))
     for name in ("_draw_tink", "_draw_dust", "_draw_landing_burst"):
         if hasattr(scene, name):
@@ -66,6 +69,7 @@ def render():
 def build(static=STATIC):
     """Write each landmark's PNG (scaled up SCALE times, nearest-neighbour) and landmarks.json; returns the index."""
     from PIL import Image
+
     index = {}
     for key, (name, image) in render().items():
         big = image.resize((WIDTH * SCALE, HEIGHT * SCALE), Image.NEAREST)

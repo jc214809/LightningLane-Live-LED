@@ -63,6 +63,7 @@ never touches a branch. Apply the same to request routing (`settings_page/server
 ```python
 ROUTES = {"/save": _save, "/pin": _check_pin, "/update": _start_update}
 
+
 def do_POST(self):
     handler = ROUTES.get(self.path)
     if handler is None:

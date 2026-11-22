@@ -11,6 +11,7 @@ def _run(code=0, out="", error=None):
         if error:
             raise error
         return subprocess.CompletedProcess(args, code, out, "")
+
     run.calls = calls
     return run
 
@@ -34,4 +35,3 @@ def test_it_asks_git_once_per_checkout():
     run = _run(out="v2.2.0\n")
     assert version("/once", run) == version("/once", run) == "2.2.0"
     assert len(run.calls) == 1
-

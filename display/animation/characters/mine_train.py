@@ -457,15 +457,49 @@ class MineTrainReveal:
     ]
     # Snow White has her own keys (lowercase and a few capitals) so one palette serves the whole train.
     COLORS = {
-        "K": (10, 5, 5), "W": (240, 240, 240), "S": (245, 200, 175), "T": (240, 195, 145), "P": (240, 125, 100),
-        "R": (220, 20, 30), "r": (160, 0, 0), "B": (115, 50, 5), "b": (155, 100, 30), "G": (40, 200, 70),
-        "g": (20, 120, 40), "Y": (245, 195, 10), "O": (230, 120, 25), "U": (40, 90, 230), "u": (20, 50, 150),
-        "V": (150, 70, 210), "v": (90, 40, 140), "C": (10, 145, 130), "L": (150, 220, 255), "l": (80, 150, 210),
-        "y": (180, 130, 0), "D": (105, 60, 28), "d": (150, 92, 42), "o": (255, 190, 70), "w": (255, 255, 255),
-        "p": (255, 90, 170), "M": (150, 150, 160), "m": (90, 90, 100), "H": (70, 35, 10), "a": (58, 58, 88),
-        "A": (100, 100, 140), "E": (40, 22, 12), "i": (130, 70, 30), "h": (255, 120, 120), "q": (110, 0, 15),
-        "s": (250, 222, 200), "t": (205, 150, 105), "c": (245, 160, 160), "x": (225, 70, 80), "k": (225, 40, 40),
-        "j": (170, 15, 20), "I": (50, 110, 200), "J": (40, 55, 150),
+        "K": (10, 5, 5),
+        "W": (240, 240, 240),
+        "S": (245, 200, 175),
+        "T": (240, 195, 145),
+        "P": (240, 125, 100),
+        "R": (220, 20, 30),
+        "r": (160, 0, 0),
+        "B": (115, 50, 5),
+        "b": (155, 100, 30),
+        "G": (40, 200, 70),
+        "g": (20, 120, 40),
+        "Y": (245, 195, 10),
+        "O": (230, 120, 25),
+        "U": (40, 90, 230),
+        "u": (20, 50, 150),
+        "V": (150, 70, 210),
+        "v": (90, 40, 140),
+        "C": (10, 145, 130),
+        "L": (150, 220, 255),
+        "l": (80, 150, 210),
+        "y": (180, 130, 0),
+        "D": (105, 60, 28),
+        "d": (150, 92, 42),
+        "o": (255, 190, 70),
+        "w": (255, 255, 255),
+        "p": (255, 90, 170),
+        "M": (150, 150, 160),
+        "m": (90, 90, 100),
+        "H": (70, 35, 10),
+        "a": (58, 58, 88),
+        "A": (100, 100, 140),
+        "E": (40, 22, 12),
+        "i": (130, 70, 30),
+        "h": (255, 120, 120),
+        "q": (110, 0, 15),
+        "s": (250, 222, 200),
+        "t": (205, 150, 105),
+        "c": (245, 160, 160),
+        "x": (225, 70, 80),
+        "k": (225, 40, 40),
+        "j": (170, 15, 20),
+        "I": (50, 110, 200),
+        "J": (40, 55, 150),
     }
     COLORS_KEY = tuple(sorted(COLORS.items()))
 
@@ -475,7 +509,7 @@ class MineTrainReveal:
         dwarfs = list(range(len(self.DWARFS)))
         rng.shuffle(dwarfs)
         if self.RIDERS is not None:
-            dwarfs = dwarfs[:self.RIDERS]
+            dwarfs = dwarfs[: self.RIDERS]
         # Back to front: the gem car always rides last.
         self.cars = ["gems"] + dwarfs + (["snow"] if self.SNOW_WHITE else [])
         # 64x32 has no room for the taller car under a rider's shoulders, so it gets the short one.
@@ -486,7 +520,7 @@ class MineTrainReveal:
         # As much of each rider as fits above the car: shoulders up on 64x64, hat to nose on 64x32.
         self.show = min(self.SHOW, self.top + 2)
         self.snow_show = min(self.SNOW_SHOW, self.top + 2)
-        self.snow_x = self.CAR_W // 2 - round(_middle(self.SNOW_ART[:self.snow_show][-5:]))
+        self.snow_x = self.CAR_W // 2 - round(_middle(self.SNOW_ART[: self.snow_show][-5:]))
         self.length = (len(self.cars) - 1) * self.GAP + self.LANTERN_X + len(self.LANTERN_ART[0])
         self.duration = (width + self.length) / self.SPEED
 

@@ -32,8 +32,10 @@ class Landmark:
         self.park = park or {}  # the park it's shown for, for scenes that use its data
         self.scale = 2 if height >= 64 else 1
         self.base = {}
-        self.stars = [(self.rng.randrange(width), self.rng.randrange(height), self.rng.uniform(0, 2 * math.pi))
-                      for _ in range(width // self.STAR_SPACING)]
+        self.stars = [
+            (self.rng.randrange(width), self.rng.randrange(height), self.rng.uniform(0, 2 * math.pi))
+            for _ in range(width // self.STAR_SPACING)
+        ]
         self.build()
 
     def build(self):

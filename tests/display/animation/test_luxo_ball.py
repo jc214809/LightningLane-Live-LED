@@ -77,8 +77,9 @@ def test_luxo_searches_the_dark_with_his_light_finds_the_ball_then_lights_the_ri
     assert tilts == [a - scene.AIM for a in aims], "his head turns with it"
     assert max(abs(t) for t in tilts) <= scene.MAX_TILT + 1e-9
     up, down = scene.luxo_pose(-scene.MAX_TILT), scene.luxo_pose(scene.MAX_TILT)
-    assert up != down and scene.luxo_pose(0.0) == {(c, r): k for r, row in enumerate(scene.LUXO_ART)
-                                                   for c, k in enumerate(row) if k != "."}
+    assert up != down and scene.luxo_pose(0.0) == {
+        (c, r): k for r, row in enumerate(scene.LUXO_ART) for c, k in enumerate(row) if k != "."
+    }
     whole = len("".join(scene.BALL_ART).replace(".", ""))
     assert min(ball_shown(t) for t in search) < whole * 0.3, "in the dark between passes: it shows only where lit"
     assert ball_shown(scene.FOUND - 0.05) > whole * 0.6, "the beam settles on it"
@@ -93,12 +94,15 @@ def test_the_searchlight_waits_for_them_to_leave_before_the_wait_counts_up(clock
     monkeypatch.setattr(animation.LuxoBallReveal, "STORY", story)
     scene = animation.LuxoBallReveal(64, 32, random.Random(0))
     seen = []
-    animation.show_screen(FakeMatrix(), lambda canvas, t: seen.append(t) or True, 8,
-                          transition="luxo_ball", rng=random.Random(0))
-    during = seen[:int(scene.duration * animation.FPS)]
+    animation.show_screen(
+        FakeMatrix(), lambda canvas, t: seen.append(t) or True, 8, transition="luxo_ball", rng=random.Random(0)
+    )
+    during = seen[: int(scene.duration * animation.FPS)]
     if story == "light":
         assert set(during) == {0.0}, "the ride holds its first frame until they've left"
-        assert clock.now == pytest.approx(scene.duration + scene.hold_after_s, abs=0.04), "then stays up to read the wait"
+        assert clock.now == pytest.approx(scene.duration + scene.hold_after_s, abs=0.04), (
+            "then stays up to read the wait"
+        )
     else:
         assert max(during) > 0, "the short stories play over a ride that keeps animating"
         assert clock.now == pytest.approx(8, abs=0.04)

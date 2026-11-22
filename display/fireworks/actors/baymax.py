@@ -20,6 +20,7 @@ class _Collect:
 
 class _LongerBaymax(BaymaxReveal):
     """His ride reveal held for the show's window, waving on and off the whole time he's up."""
+
     INFLATE_S, DEFLATE_S = 1.0, 0.7
     HOLD_S = _WINDOW_S[1] - _WINDOW_S[0] - INFLATE_S - DEFLATE_S
     duration = INFLATE_S + HOLD_S + DEFLATE_S
@@ -40,6 +41,7 @@ class BaymaxInflates(Actor):
     couple of seconds), then deflates away in the last 0.7 s. Placed by the clock: his pose is his
     reveal's at (elapsed - START_S) s.
     """
+
     NAME = "Baymax"
     START_S, END_S = _WINDOW_S
     ENTERS_S = START_S

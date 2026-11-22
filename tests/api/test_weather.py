@@ -23,22 +23,21 @@ def observation(temp=75.0, status="Clear", detailed="Sunny", city="Test City", i
 
 
 class TestWeatherModule(unittest.TestCase):
-
     def setUp(self):
         weather_mod._reset()
         self.clock = 1000.0
         self.slept = []
         patches = [
-            patch('api.weather.time.monotonic', side_effect=lambda: self.clock),
-            patch('api.weather.time.sleep', side_effect=self._sleep),
-            patch('api.weather.random.uniform', return_value=0.0),
-            patch('api.weather.load_config', side_effect=lambda *path: self.config),
-            patch('pyowm.OWM'),
+            patch("api.weather.time.monotonic", side_effect=lambda: self.clock),
+            patch("api.weather.time.sleep", side_effect=self._sleep),
+            patch("api.weather.random.uniform", return_value=0.0),
+            patch("api.weather.load_config", side_effect=lambda *path: self.config),
+            patch("pyowm.OWM"),
         ]
         mocks = [p.start() for p in patches]
         for p in patches:
             self.addCleanup(p.stop)
-        self.config = {'weather': {'apikey': 'valid_api_key'}}
+        self.config = {"weather": {"apikey": "valid_api_key"}}
         self.owm = mocks[-1]
         self.api = self.owm.return_value.weather_manager.return_value.weather_at_coords
         self.api.return_value = observation()
@@ -52,15 +51,15 @@ class TestWeatherModule(unittest.TestCase):
 
     def test_fetch_weather_data_valid(self):
         result = fetch_weather_data(0, 0)
-        self.assertEqual(result['temperature'], "75°")
-        self.assertEqual(result['description'], "Sunny")
-        self.assertEqual(result['city'], "Test City")
-        self.assertEqual(result['icon'], "01d")
-        self.owm.assert_called_with('valid_api_key')
+        self.assertEqual(result["temperature"], "75°")
+        self.assertEqual(result["description"], "Sunny")
+        self.assertEqual(result["city"], "Test City")
+        self.assertEqual(result["icon"], "01d")
+        self.owm.assert_called_with("valid_api_key")
 
     def test_thunderstorm_is_shortened(self):
         self.api.return_value = observation(status="Thunderstorm")
-        self.assertEqual(fetch_weather_data(0, 0)['short_description'], "T-Storm")
+        self.assertEqual(fetch_weather_data(0, 0)["short_description"], "T-Storm")
 
     def test_a_fresh_reading_is_reused_instead_of_calling_again(self):
         fetch_weather_data(0, 0)
@@ -80,7 +79,7 @@ class TestWeatherModule(unittest.TestCase):
 
     def test_rejected_key_is_not_called_again_until_the_recheck(self):
         self.api.side_effect = exceptions.UnauthorizedError()
-        with patch('api.weather.debug.warning') as warning:
+        with patch("api.weather.debug.warning") as warning:
             self.assertIsNone(fetch_weather_data(0, 0))
         self.assertIn("rejected the API key (401)", warning.call_args[0][0])
         self.advance(weather_mod.KEY_RECHECK_S - 1)
@@ -94,9 +93,9 @@ class TestWeatherModule(unittest.TestCase):
         fetch_weather_data(0, 0)
         self.advance(weather_mod.KEY_RECHECK_S)
         self.api.side_effect = None
-        with patch('api.weather.debug.info') as info:
+        with patch("api.weather.debug.info") as info:
             result = fetch_weather_data(0, 0)
-        self.assertEqual(result['temperature'], "75°")
+        self.assertEqual(result["temperature"], "75°")
         self.assertEqual(self.api.call_count, 2)
         info.assert_called_with("[WEATHER] OpenWeatherMap accepted the API key again.")
         # Recovered: other parks fetch straight away.
@@ -124,7 +123,7 @@ class TestWeatherModule(unittest.TestCase):
 
     def test_rejection_warns_once_not_every_recheck(self):
         self.api.side_effect = exceptions.UnauthorizedError()
-        with patch('api.weather.debug.warning') as warning:
+        with patch("api.weather.debug.warning") as warning:
             fetch_weather_data(0, 0)
             for _ in range(3):
                 self.advance(weather_mod.KEY_RECHECK_MAX_S)
@@ -135,23 +134,23 @@ class TestWeatherModule(unittest.TestCase):
         self.api.side_effect = exceptions.UnauthorizedError()
         fetch_weather_data(0, 0)
         self.api.side_effect = None
-        self.config = {'weather': {'apikey': 'fixed_key'}}
+        self.config = {"weather": {"apikey": "fixed_key"}}
         result = fetch_weather_data(0, 0)
-        self.assertEqual(result['temperature'], "75°")
-        self.owm.assert_called_with('fixed_key')
+        self.assertEqual(result["temperature"], "75°")
+        self.owm.assert_called_with("fixed_key")
         self.assertIsNone(weather_mod._rejected)
 
     def test_rejected_key_keeps_showing_the_last_reading(self):
         fetch_weather_data(0, 0)
         self.advance(weather_mod.CACHE_S)
         self.api.side_effect = exceptions.UnauthorizedError()
-        self.assertEqual(fetch_weather_data(0, 0)['temperature'], "75°")
+        self.assertEqual(fetch_weather_data(0, 0)["temperature"], "75°")
 
     # --- temporary failures ---
 
     def test_timeout_is_retried_with_backoff_then_succeeds(self):
         self.api.side_effect = [exceptions.TimeoutError("timed out"), exceptions.BadGatewayError("502"), observation()]
-        self.assertEqual(fetch_weather_data(0, 0)['temperature'], "75°")
+        self.assertEqual(fetch_weather_data(0, 0)["temperature"], "75°")
         self.assertEqual(self.slept, [1.0, 2.0])
 
     def test_dns_failure_keeps_the_last_reading_and_does_not_raise(self):
@@ -160,10 +159,11 @@ class TestWeatherModule(unittest.TestCase):
         fetch_weather_data(0, 0)
         self.advance(weather_mod.CACHE_S)
         self.api.side_effect = exceptions.InvalidSSLCertificateError(
-            "Failed to resolve 'api.openweathermap.org' url: /data/2.5/weather?APPID=valid_api_key&lat=0")
-        with patch('api.weather.debug.warning') as warning:
+            "Failed to resolve 'api.openweathermap.org' url: /data/2.5/weather?APPID=valid_api_key&lat=0"
+        )
+        with patch("api.weather.debug.warning") as warning:
             result = fetch_weather_data(0, 0)
-        self.assertEqual(result['temperature'], "75°")
+        self.assertEqual(result["temperature"], "75°")
         self.assertEqual(self.api.call_count, 1 + weather_mod.RETRIES + 1)
         message = warning.call_args[0][0]
         self.assertIn("Failed to resolve", message)
@@ -177,7 +177,7 @@ class TestWeatherModule(unittest.TestCase):
         self.assertEqual(self.api.call_count, weather_mod.RETRIES + 1)
         self.advance(weather_mod.PAUSE_S)
         self.api.side_effect = None
-        self.assertEqual(fetch_weather_data(1, 1)['temperature'], "75°")
+        self.assertEqual(fetch_weather_data(1, 1)["temperature"], "75°")
 
     def test_raw_requests_error_is_handled(self):
         self.api.side_effect = requests.RequestException("Request failed")
@@ -185,7 +185,7 @@ class TestWeatherModule(unittest.TestCase):
 
     def test_rate_limit_pauses_without_retrying(self):
         self.api.side_effect = exceptions.APIRequestError('{"cod":429, "message": "Your account is temporary blocked"}')
-        with patch('api.weather.debug.warning') as warning:
+        with patch("api.weather.debug.warning") as warning:
             self.assertIsNone(fetch_weather_data(0, 0))
         self.assertIn("429", warning.call_args[0][0])
         self.assertEqual(self.slept, [])
@@ -217,12 +217,12 @@ class TestWeatherModule(unittest.TestCase):
     def test_missing_key_skips_the_call(self):
         self.config = {}
         self.assertIsNone(fetch_weather_data(0, 0))
-        self.config = {'weather': {'apikey': ''}}
+        self.config = {"weather": {"apikey": ""}}
         self.assertIsNone(fetch_weather_data(0, 0))
         self.api.assert_not_called()
 
     def test_unreadable_config_is_handled(self):
-        with patch('api.weather.load_config', side_effect=ValueError("bad json")):
+        with patch("api.weather.load_config", side_effect=ValueError("bad json")):
             self.assertIsNone(fetch_weather_data(0, 0))
         self.api.assert_not_called()
 
@@ -234,7 +234,9 @@ class TestFetchWeatherLogPinning(TestWeatherModule):
         super().setUp()
         self.logged = []
         for level in ("log", "info", "warning"):
-            patcher = patch(f"api.weather.debug.{level}", side_effect=lambda m, level=level: self.logged.append((level, m)))
+            patcher = patch(
+                f"api.weather.debug.{level}", side_effect=lambda m, level=level: self.logged.append((level, m))
+            )
             patcher.start()
             self.addCleanup(patcher.stop)
 
@@ -243,8 +245,16 @@ class TestFetchWeatherLogPinning(TestWeatherModule):
 
     def test_success_returns_the_exact_reading_and_logs_the_observation(self):
         result = fetch_weather_data(0, 0)
-        self.assertEqual(result, {"temperature": "75\u00b0", "description": "Sunny", "short_description": "Clear",
-                                  "city": "Test City", "icon": "01d"})
+        self.assertEqual(
+            result,
+            {
+                "temperature": "75\u00b0",
+                "description": "Sunny",
+                "short_description": "Clear",
+                "city": "Test City",
+                "icon": "01d",
+            },
+        )
         self.assertEqual([level for level, _ in self.logged], ["log"])
         self.assertTrue(self.logged[0][1].startswith("Weather Data for Test City:"))
 
@@ -278,8 +288,16 @@ class TestFetchWeatherLogPinning(TestWeatherModule):
     def test_first_401_warns_then_repeats_log_the_longer_wait(self):
         self.api.side_effect = exceptions.UnauthorizedError()
         self.assertIsNone(fetch_weather_data(0, 0))
-        self.assertEqual(self.logged, [("warning", "[WEATHER] OpenWeatherMap rejected the API key (401); "
-                                                   "checking it again in 5 min. Check config.json.")])
+        self.assertEqual(
+            self.logged,
+            [
+                (
+                    "warning",
+                    "[WEATHER] OpenWeatherMap rejected the API key (401); "
+                    "checking it again in 5 min. Check config.json.",
+                )
+            ],
+        )
         self.logged.clear()
         self.advance(weather_mod.KEY_RECHECK_S)
         self.assertIsNone(fetch_weather_data(0, 0))
@@ -342,12 +360,18 @@ class TestFetchWeatherLogPinning(TestWeatherModule):
         self.api.side_effect = requests.ConnectionError("conn valid_api_key reset")
         self.assertIsNone(fetch_weather_data(0, 0))
         reason = "ConnectionError: conn *** reset"
-        self.assertEqual(self.logged, [
-            ("log", f"[WEATHER] Fetch failed ({reason}); retrying in 1.0s."),
-            ("log", f"[WEATHER] Fetch failed ({reason}); retrying in 2.0s."),
-            ("warning", f"[WEATHER] Fetch failed after 3 tries ({reason}); "
-                        f"keeping the last reading and pausing weather for 60s."),
-        ])
+        self.assertEqual(
+            self.logged,
+            [
+                ("log", f"[WEATHER] Fetch failed ({reason}); retrying in 1.0s."),
+                ("log", f"[WEATHER] Fetch failed ({reason}); retrying in 2.0s."),
+                (
+                    "warning",
+                    f"[WEATHER] Fetch failed after 3 tries ({reason}); "
+                    f"keeping the last reading and pausing weather for 60s.",
+                ),
+            ],
+        )
         self.assertEqual(self.slept, [1.0, 2.0])
         self.assertEqual(weather_mod._paused_until, self.clock + weather_mod.PAUSE_S)
 
@@ -360,8 +384,14 @@ class TestFetchWeatherLogPinning(TestWeatherModule):
         self.assertEqual(self.messages(), ["[WEATHER] Fetch failed (KeyError: 'x'); retrying in 1.2s."])
 
     def test_each_caught_exception_type_is_retried(self):
-        for exc in (TypeError("t"), ValueError("v"), AttributeError("a"), KeyError("k"), requests.Timeout("r"),
-                    exceptions.PyOWMError("p")):
+        for exc in (
+            TypeError("t"),
+            ValueError("v"),
+            AttributeError("a"),
+            KeyError("k"),
+            requests.Timeout("r"),
+            exceptions.PyOWMError("p"),
+        ):
             self.api.reset_mock()
             self.api.side_effect = exc
             weather_mod._reset()
@@ -394,5 +424,5 @@ class TestFetchWeatherLogPinning(TestWeatherModule):
         self.assertEqual(weather_mod._last_good[(5, 6)], (result, self.clock))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

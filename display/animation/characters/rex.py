@@ -202,8 +202,16 @@ class RexReveal(CapturesScreens):
         ".........gggggggggggGGg.......ggggGggggggGgggg...............",
         ".........ggggggggggggg........gggggggggggggggg...............",
     ]
-    colors = {"G": (97, 184, 17), "g": (34, 92, 8), "Y": (199, 214, 115), "A": (78, 149, 11),
-              "B": (155, 230, 17), "K": (5, 7, 5), "W": (248, 250, 247), "M": (10, 16, 6)}
+    colors = {
+        "G": (97, 184, 17),
+        "g": (34, 92, 8),
+        "Y": (199, 214, 115),
+        "A": (78, 149, 11),
+        "B": (155, 230, 17),
+        "K": (5, 7, 5),
+        "W": (248, 250, 247),
+        "M": (10, 16, 6),
+    }
     # The jaw for _open_jaw: (first row of the lower jaw, its last row, hinge column, rows it
     # drops). The tilt for _roar_pose: (his neck's column and row, degrees his head tips back).
     JAW, TILT = (12, 15, 12, 5), (14, 14, 25)
@@ -283,7 +291,8 @@ class RexReveal(CapturesScreens):
         art = self.mouth(self.opening(t))
         lift = len(art) - len(self.art)
         walking = int(t * FPS) // self.POSE_F if not self.stop_at <= t < self.leave_at else None
-        pixels = walking_pixels(art, x + dx, self.y0 - lift + dy, self.colors,
-                                (self.feet[0] + lift, *self.feet[1:]), walking)
+        pixels = walking_pixels(
+            art, x + dx, self.y0 - lift + dy, self.colors, (self.feet[0] + lift, *self.feet[1:]), walking
+        )
         paint(canvas, pixels, self.width, self.height)
         return True

@@ -11,8 +11,10 @@ FRAME_PX = {True: 2, False: 1}
 # green on the old light grey board (170, 170, 176) were hard to read on a real panel (Disneypi, 2026-11-08).
 SIGN_RGB = (8, 12, 45)
 SIGN_INK = ((235, 235, 240), (255, 70, 70), (60, 220, 80))
-NAME = {True: ["MICKEY'S", "VERY MERRY", "CHRISTMAS", "PARTY"],  # 5x8: one word or two a line
-        False: ["MICKEY'S", "VERY MERRY", "CHRISTMAS PARTY"]}  # 4x6: "CHRISTMAS PARTY" is 60 of 62 px
+NAME = {
+    True: ["MICKEY'S", "VERY MERRY", "CHRISTMAS", "PARTY"],  # 5x8: one word or two a line
+    False: ["MICKEY'S", "VERY MERRY", "CHRISTMAS PARTY"],
+}  # 4x6: "CHRISTMAS PARTY" is 60 of 62 px
 # 64x32's sign puts the hours first, "TONIGHT 7PM-12AM", above the name. A space is 4 px, which makes that
 # line 63 px, one more than fits inside the frame, so its space is 2 px. Hours too wide even so (a 10PM
 # start) show alone.
@@ -64,8 +66,11 @@ def line_pixels(font, text, center_x, top, rgb, space_px=None):
 def sign_pixels(width, height, lines, frame):
     """{(x, y): rgb} of the billboard: a red frame `frame` px wide round the board, and `lines`
     [(font, text, rgb)] or [(font, text, rgb, space px)] centred on it, spaced evenly down it."""
-    out = {(x, y): COLORS["R"] if min(x, y, width - 1 - x, height - 1 - y) < frame else SIGN_RGB
-           for x in range(width) for y in range(height)}
+    out = {
+        (x, y): COLORS["R"] if min(x, y, width - 1 - x, height - 1 - y) < frame else SIGN_RGB
+        for x in range(width)
+        for y in range(height)
+    }
     inside = height - 2 * frame
     ink = sum(line[0][1] for line in lines)
     gap = max(1, (inside - ink) // (len(lines) + 1))

@@ -39,10 +39,15 @@ def _arts(cls):
     return [art for f in cls.FIGHTERS.values() for art in (f["art"], f.get("cape_art")) if art]
 
 
-@pytest.mark.parametrize("name, cls", [("saber_duel_luke", animation.SaberDuelReveal),
-                                       ("saber_duel_obiwan", animation.ObiWanDuelReveal),
-                                       ("saber_duel_yoda", animation.YodaDuelReveal),
-                                       ("saber_duel_kylo", animation.KyloReyDuelReveal)])
+@pytest.mark.parametrize(
+    "name, cls",
+    [
+        ("saber_duel_luke", animation.SaberDuelReveal),
+        ("saber_duel_obiwan", animation.ObiWanDuelReveal),
+        ("saber_duel_yoda", animation.YodaDuelReveal),
+        ("saber_duel_kylo", animation.KyloReyDuelReveal),
+    ],
+)
 def test_each_duel_is_registered_and_takes_the_old_screen(name, cls):
     assert animation.TRANSITIONS[name] is cls
     assert cls in DUELS and cls.wants_prev
@@ -84,7 +89,9 @@ def test_they_walk_in_from_either_side_and_stand_on_the_bottom_row(cls, height):
     ours, red = _xs(px, duel.BLADES[left["blade"]]), _xs(px, duel.BLADES["red"])
     assert ours and red and min(ours) < min(red) and max(ours) < max(red), "his blade on the left, red on the right"
     for name, f in cls.FIGHTERS.items():
-        assert duel.pose(duel.WALK_S)[name][1] - f["anchor"][1] + len(f["art"]) == height, f"{name} stands on the bottom row"
+        assert duel.pose(duel.WALK_S)[name][1] - f["anchor"][1] + len(f["art"]) == height, (
+            f"{name} stands on the bottom row"
+        )
 
 
 @pytest.mark.parametrize("cls", DUELS)
@@ -204,7 +211,9 @@ def test_reys_other_arm_stays_as_drawn_and_kylos_blade_has_a_crossguard_and_crac
         kylo["crackle"] = kylo["crossguard"] = True
         return set(px)
 
-    assert len(blade(3, False)) == len(blade(3, False, crossguard=False)) + 4, "two side blades of two pixels at the hilt"
+    assert len(blade(3, False)) == len(blade(3, False, crossguard=False)) + 4, (
+        "two side blades of two pixels at the hilt"
+    )
     frames = [blade(f, True) for f in range(4)]
     assert all(len(f) > len(blade(0, False)) for f in frames), "pixels spit off its edges"
     assert len({frozenset(f) for f in frames}) > 1, "and they change from frame to frame"
@@ -217,7 +226,7 @@ def test_yoda_looks_at_vader_with_both_ears_showing():
     assert all(art[y][x + 1] == "y" for x, y in whites), "each pupil on the right of its white, toward Vader"
     ear_row = art[4]  # his ears' middle row
     assert ear_row.startswith("KYYY"), "his near ear reaches out to the left edge"
-    far = ear_row[ear_row.rindex("K", 0, len(ear_row) - 1):]  # past the outline behind his head
+    far = ear_row[ear_row.rindex("K", 0, len(ear_row) - 1) :]  # past the outline behind his head
     assert far.count("Y") >= 3, "and his far one, long enough to read"
 
 

@@ -32,6 +32,7 @@ class DummyRGBMatrixOptions:
         self.gpio_slowdown = None
         self.disable_hardware_pulsing = None
 
+
 # Ensure driver.RGBMatrixOptions is available, on the driver cli has: another test module may have
 # swapped sys.modules["driver"] since cli was first imported (settings_page imports it too).
 import cli  # noqa: E402  (after the driver stub above)
@@ -39,6 +40,7 @@ import cli  # noqa: E402  (after the driver stub above)
 driver = cli.driver
 if not hasattr(driver, "RGBMatrixOptions"):
     driver.RGBMatrixOptions = DummyRGBMatrixOptions
+
 
 # -----------------------------------------------------------------------------
 # Tests for led_matrix_options (arguments handling and exception warnings)
@@ -87,6 +89,7 @@ def test_led_matrix_options_attribute_errors(monkeypatch):
     assert pwm_warning in warnings, f"Expected PWM dither warning not found: {warnings}"
     assert limit_warning in warnings, f"Expected limit refresh warning not found: {warnings}"
 
+
 def test_led_matrix_options():
     # Test normal parsing of arguments into options.
     args_obj = Namespace(
@@ -133,13 +136,27 @@ def test_led_matrix_options():
     assert options.gpio_slowdown == 1
     assert options.disable_hardware_pulsing is True
 
+
 def test_unset_panel_type_leaves_the_library_default():
     base = dict(
-        led_gpio_mapping="regular", led_rows=32, led_cols=64, led_chain=1, led_parallel=1,
-        led_row_addr_type=0, led_multiplexing=0, led_pwm_bits=11, led_brightness=100,
-        led_scan_mode=1, led_pwm_lsb_nanoseconds=130, led_rgb_sequence="RGB",
-        drop_privileges=False, led_pixel_mapper="", led_pwm_dither_bits=0,
-        led_limit_refresh=0, led_show_refresh=False, led_slowdown_gpio=1,
+        led_gpio_mapping="regular",
+        led_rows=32,
+        led_cols=64,
+        led_chain=1,
+        led_parallel=1,
+        led_row_addr_type=0,
+        led_multiplexing=0,
+        led_pwm_bits=11,
+        led_brightness=100,
+        led_scan_mode=1,
+        led_pwm_lsb_nanoseconds=130,
+        led_rgb_sequence="RGB",
+        drop_privileges=False,
+        led_pixel_mapper="",
+        led_pwm_dither_bits=0,
+        led_limit_refresh=0,
+        led_show_refresh=False,
+        led_slowdown_gpio=1,
         led_no_hardware_pulse=False,
     )
     for extra in ({}, {"led_panel_type": ""}):
@@ -161,12 +178,26 @@ def test_panel_type_on_an_old_library_warns_instead_of_crashing(monkeypatch):
 
     monkeypatch.setattr(driver, "RGBMatrixOptions", OldOptions)
     args_obj = Namespace(
-        led_gpio_mapping="regular", led_rows=32, led_cols=64, led_chain=1, led_parallel=1,
-        led_row_addr_type=0, led_multiplexing=0, led_pwm_bits=11, led_brightness=100,
-        led_scan_mode=1, led_pwm_lsb_nanoseconds=130, led_rgb_sequence="RGB",
-        drop_privileges=False, led_pixel_mapper="", led_panel_type="FM6126A",
-        led_pwm_dither_bits=0, led_limit_refresh=0, led_show_refresh=False,
-        led_slowdown_gpio=1, led_no_hardware_pulse=False,
+        led_gpio_mapping="regular",
+        led_rows=32,
+        led_cols=64,
+        led_chain=1,
+        led_parallel=1,
+        led_row_addr_type=0,
+        led_multiplexing=0,
+        led_pwm_bits=11,
+        led_brightness=100,
+        led_scan_mode=1,
+        led_pwm_lsb_nanoseconds=130,
+        led_rgb_sequence="RGB",
+        drop_privileges=False,
+        led_pixel_mapper="",
+        led_panel_type="FM6126A",
+        led_pwm_dither_bits=0,
+        led_limit_refresh=0,
+        led_show_refresh=False,
+        led_slowdown_gpio=1,
+        led_no_hardware_pulse=False,
     )
     led_matrix_options(args_obj)
     assert "The --led-panel-type argument will not work until it is updated." in warnings
@@ -175,6 +206,7 @@ def test_panel_type_on_an_old_library_warns_instead_of_crashing(monkeypatch):
 def test_panel_type_rejects_unknown_chipsets():
     with pytest.raises(SystemExit):
         arguments(["--led-panel-type", "FM9999"])
+
 
 # -----------------------------------------------------------------------------
 # Tests for arguments()
@@ -205,16 +237,51 @@ def test_args_defaults():
     finally:
         sys.argv = original_argv
 
+
 def test_args_custom():
-    parsed = arguments([
-        "--led-rows", "64", "--led-cols", "64", "--led-chain", "2", "--led-parallel", "3",
-        "--led-pwm-bits", "8", "--led-brightness", "50", "--led-gpio-mapping", "adafruit-hat",
-        "--led-scan-mode", "0", "--led-pwm-lsb-nanoseconds", "150", "--led-show-refresh",
-        "--led-slowdown-gpio", "2", "--led-no-hardware-pulse", "dummy", "--led-rgb-sequence", "BGR",
-        "--led-pixel-mapper", "Rotate:180", "--led-panel-type", "FM6126A", "--led-row-addr-type", "2",
-        "--led-multiplexing", "3", "--led-limit-refresh", "60", "--led-pwm-dither-bits", "2",
-        "--emulated", "--drop-privileges",
-    ])
+    parsed = arguments(
+        [
+            "--led-rows",
+            "64",
+            "--led-cols",
+            "64",
+            "--led-chain",
+            "2",
+            "--led-parallel",
+            "3",
+            "--led-pwm-bits",
+            "8",
+            "--led-brightness",
+            "50",
+            "--led-gpio-mapping",
+            "adafruit-hat",
+            "--led-scan-mode",
+            "0",
+            "--led-pwm-lsb-nanoseconds",
+            "150",
+            "--led-show-refresh",
+            "--led-slowdown-gpio",
+            "2",
+            "--led-no-hardware-pulse",
+            "dummy",
+            "--led-rgb-sequence",
+            "BGR",
+            "--led-pixel-mapper",
+            "Rotate:180",
+            "--led-panel-type",
+            "FM6126A",
+            "--led-row-addr-type",
+            "2",
+            "--led-multiplexing",
+            "3",
+            "--led-limit-refresh",
+            "60",
+            "--led-pwm-dither-bits",
+            "2",
+            "--emulated",
+            "--drop-privileges",
+        ]
+    )
     assert parsed.led_rows == 64
     assert parsed.led_cols == 64
     assert parsed.led_chain == 2
@@ -238,15 +305,18 @@ def test_args_custom():
     assert parsed.drop_privileges is True
 
 
-@pytest.mark.parametrize("argv", [
-    ["--led-rows", "16"],   # no fonts or layouts for it
-    ["--led-rows", "128"],
-    ["--led-cols", "0"],
-    ["--led-chain", "0"],
-    ["--led-parallel", "-1"],
-    ["--led-row", "64"],    # a typo'd flag
-    ["--config", "x"],      # removed: config.json is always read
-])
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["--led-rows", "16"],  # no fonts or layouts for it
+        ["--led-rows", "128"],
+        ["--led-cols", "0"],
+        ["--led-chain", "0"],
+        ["--led-parallel", "-1"],
+        ["--led-row", "64"],  # a typo'd flag
+        ["--config", "x"],  # removed: config.json is always read
+    ],
+)
 def test_bad_flags_exit_with_a_usage_message(argv):
     with pytest.raises(SystemExit):
         arguments(argv)
@@ -266,8 +336,16 @@ def test_test_runner_flags_on_the_command_line_are_ignored_under_unittest(monkey
 # config.json's "matrix" section
 # -----------------------------------------------------------------------------
 def test_matrix_settings_from_config_become_the_defaults():
-    parsed = arguments([], matrix={"led_rows": 64, "led_cols": 64, "led_gpio_mapping": "adafruit-hat-pwm",
-                                   "led_slowdown_gpio": 4, "led_pwm_lsb_nanoseconds": 200})
+    parsed = arguments(
+        [],
+        matrix={
+            "led_rows": 64,
+            "led_cols": 64,
+            "led_gpio_mapping": "adafruit-hat-pwm",
+            "led_slowdown_gpio": 4,
+            "led_pwm_lsb_nanoseconds": 200,
+        },
+    )
     assert (parsed.led_rows, parsed.led_cols) == (64, 64)
     assert parsed.led_gpio_mapping == "adafruit-hat-pwm"
     assert parsed.led_slowdown_gpio == 4
@@ -291,16 +369,19 @@ def test_no_matrix_section_leaves_the_flag_defaults(matrix):
     assert arguments([], matrix=matrix).led_rows == 32
 
 
-@pytest.mark.parametrize("matrix", [
-    {"led_rows": 16},                          # no fonts for it
-    {"led_rows": "sixty-four"},
-    {"led_gpio_mapping": "not-a-mapping"},
-    {"led-rows": 64},                          # the flag's spelling, not its name
-    {"rows": 64},
-    {"help": True},
-    {"led_show_refresh": "yes"},
-    ["led_rows", 64],
-])
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        {"led_rows": 16},  # no fonts for it
+        {"led_rows": "sixty-four"},
+        {"led_gpio_mapping": "not-a-mapping"},
+        {"led-rows": 64},  # the flag's spelling, not its name
+        {"rows": 64},
+        {"help": True},
+        {"led_show_refresh": "yes"},
+        ["led_rows", 64],
+    ],
+)
 def test_bad_matrix_settings_exit_with_a_usage_message(matrix):
     with pytest.raises(SystemExit):
         arguments([], matrix=matrix)
@@ -323,6 +404,7 @@ def test_the_example_configs_matrix_section_lists_every_setting_and_overrides_no
     import os
 
     from cli import _make_parser
+
     example = os.path.join(os.path.dirname(__file__), os.pardir, "config.json-example")
     with open(example) as f:
         matrix = json.load(f)["matrix"]
@@ -330,18 +412,21 @@ def test_the_example_configs_matrix_section_lists_every_setting_and_overrides_no
     assert set(matrix) == every_setting
     assert all(value is None for value in matrix.values())
     defaults = {"led_slowdown_gpio": 4, "led_gpio_mapping": "adafruit-hat-pwm"}
-    assert vars(arguments([], matrix=matrix, defaults=defaults, model="pi4")) == \
-        vars(arguments([], defaults=defaults, model="pi4"))
+    assert vars(arguments([], matrix=matrix, defaults=defaults, model="pi4")) == vars(
+        arguments([], defaults=defaults, model="pi4")
+    )
 
 
 def test_describe_lists_changed_settings_and_where_each_came_from():
     argv = ["--led-rows=64", "--led-gpio-mapping", "adafruit-hat-pwm", "--emulated"]
     matrix = {"led_cols": 64, "led_brightness": 100, "led_slowdown_gpio": 4}
     line = describe(arguments(argv, matrix=matrix), argv, matrix=matrix)
-    assert line == ("Board settings (no Pi model): "
-                    "led_rows=64 (command line), led_cols=64 (config), "
-                    "led_gpio_mapping=adafruit-hat-pwm (command line), led_slowdown_gpio=4 (config), "
-                    "emulated=True (command line); the rest default"), "brightness 100 is the default: not listed"
+    assert line == (
+        "Board settings (no Pi model): "
+        "led_rows=64 (command line), led_cols=64 (config), "
+        "led_gpio_mapping=adafruit-hat-pwm (command line), led_slowdown_gpio=4 (config), "
+        "emulated=True (command line); the rest default"
+    ), "brightness 100 is the default: not listed"
 
 
 def test_describe_with_everything_default():
@@ -367,14 +452,17 @@ def _model_file(tmp_path, text):
     return str(path)
 
 
-@pytest.mark.parametrize("text, model", [
-    ("Raspberry Pi 4 Model B Rev 1.5", "pi4"),
-    ("Raspberry Pi 400 Rev 1.0", "pi4"),
-    ("Raspberry Pi 3 Model B Plus Rev 1.3", "pi3"),
-    ("Raspberry Pi Zero 2 W Rev 1.0", "pizero2w"),
-    ("Raspberry Pi Zero W Rev 1.1", None),
-    ("Raspberry Pi 5 Model B Rev 1.0", None),
-])
+@pytest.mark.parametrize(
+    "text, model",
+    [
+        ("Raspberry Pi 4 Model B Rev 1.5", "pi4"),
+        ("Raspberry Pi 400 Rev 1.0", "pi4"),
+        ("Raspberry Pi 3 Model B Plus Rev 1.3", "pi3"),
+        ("Raspberry Pi Zero 2 W Rev 1.0", "pizero2w"),
+        ("Raspberry Pi Zero W Rev 1.1", None),
+        ("Raspberry Pi 5 Model B Rev 1.0", None),
+    ],
+)
 def test_pi_model_reads_the_device_tree(tmp_path, text, model):
     assert pi_model(_model_file(tmp_path, text)) == (model, text)
 
@@ -389,20 +477,29 @@ def test_the_model_picked_in_config_wins_over_the_detected_one():
     assert pick_model(None, "pi4", "Raspberry Pi 4") == ("pi4", "detected")
 
 
-@pytest.mark.parametrize("text, why", [
-    (None, "not a Pi"),
-    ("Raspberry Pi 5 Model B Rev 1.0", "Raspberry Pi 5 Model B Rev 1.0 isn't supported by the LED driver"),
-    ("Raspberry Pi Zero W Rev 1.1", "no defaults for Raspberry Pi Zero W Rev 1.1"),
-])
+@pytest.mark.parametrize(
+    "text, why",
+    [
+        (None, "not a Pi"),
+        ("Raspberry Pi 5 Model B Rev 1.0", "Raspberry Pi 5 Model B Rev 1.0 isn't supported by the LED driver"),
+        ("Raspberry Pi Zero W Rev 1.1", "no defaults for Raspberry Pi Zero W Rev 1.1"),
+    ],
+)
 def test_with_no_model_why_says_what_was_found(text, why):
     assert pick_model(None, None, text) == (None, why)
 
 
 def test_model_defaults_detects_the_model(tmp_path):
-    assert model_defaults(None, _model_file(tmp_path, "Raspberry Pi 4 Model B Rev 1.5")) == \
-        ("pi4", MODEL_DEFAULTS["pi4"], "detected")
-    assert model_defaults("pizero2w", _model_file(tmp_path, "Raspberry Pi 4 Model B Rev 1.5")) == \
-        ("pizero2w", MODEL_DEFAULTS["pizero2w"], "picked in config.json")
+    assert model_defaults(None, _model_file(tmp_path, "Raspberry Pi 4 Model B Rev 1.5")) == (
+        "pi4",
+        MODEL_DEFAULTS["pi4"],
+        "detected",
+    )
+    assert model_defaults("pizero2w", _model_file(tmp_path, "Raspberry Pi 4 Model B Rev 1.5")) == (
+        "pizero2w",
+        MODEL_DEFAULTS["pizero2w"],
+        "picked in config.json",
+    )
 
 
 def test_a_pi_we_dont_know_still_gets_the_bonnets_mapping_and_the_emulator_nothing(tmp_path):
@@ -429,8 +526,12 @@ def test_config_overrides_the_models_defaults_and_the_command_line_overrides_bot
     matrix = {"led_pixel_mapper": "Rotate:180", "led_slowdown_gpio": 3, "led_rows": 64}
     argv = ["--led-rows=32"]
     parsed = arguments(argv, matrix=matrix, defaults=defaults, model="pi4")
-    assert (parsed.led_rows, parsed.led_slowdown_gpio, parsed.led_pwm_lsb_nanoseconds, parsed.led_pixel_mapper) == \
-        (32, 3, 200, "Rotate:180")
+    assert (parsed.led_rows, parsed.led_slowdown_gpio, parsed.led_pwm_lsb_nanoseconds, parsed.led_pixel_mapper) == (
+        32,
+        3,
+        200,
+        "Rotate:180",
+    )
     line = describe(parsed, argv, matrix=matrix, defaults=defaults, model="pi4", why="detected")
     assert line.startswith("Board settings (Pi 4, detected): ")
     assert "led_pwm_lsb_nanoseconds=200 (Pi 4 default)" in line
@@ -451,6 +552,7 @@ def test_a_bad_default_names_the_model_in_the_error(capsys):
 
 def test_matrix_problem_names_what_would_stop_the_app_and_none_for_good_settings():
     from cli import matrix_problem
+
     assert matrix_problem({"led_rows": 64, "led_brightness": 80, "led_show_refresh": True, "led_cols": None}) is None
     assert matrix_problem({}) is None
     assert "--led-rows must be one of (32, 64)" in matrix_problem({"led_rows": 48})
@@ -461,6 +563,7 @@ def test_matrix_problem_names_what_would_stop_the_app_and_none_for_good_settings
 
 def test_matrix_settings_lists_every_flag_with_its_kind():
     from cli import matrix_settings
+
     settings = {key: rest for key, *rest in matrix_settings()}
     assert "help" not in settings and "led_rows" in settings
     _, choices, switch, number = settings["led_gpio_mapping"]

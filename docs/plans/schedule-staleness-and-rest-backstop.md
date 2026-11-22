@@ -18,7 +18,7 @@ All three changes are needed together and touch overlapping functions (`park_has
 ```python
 park["closingTime"] = operating_event.get("closingTime", "")
 park["openingTime"] = operating_event.get("openingTime", "")
-park["schedule_date"] = operating_event.get("date", "")   # new
+park["schedule_date"] = operating_event.get("date", "")  # new
 ```
 
 In `update_parks_operating_status`, add a second, independent trigger for `schedule_refresh_needed` based on the **stored `closingTime` timestamp having passed** — not a raw date-string comparison (a date-string check breaks for parks whose `OPERATING` window itself crosses midnight, e.g. Cedar Point/Kings Island weekend hours; a full ISO timestamp comparison handles that correctly since it carries the real date):
@@ -33,6 +33,7 @@ def _closing_time_has_passed(park):
         return datetime.now(closing_dt.tzinfo) > closing_dt
     except (ValueError, TypeError):
         return False
+
 
 for park in parks:
     is_park_open = park_has_operating_attraction(park)
@@ -64,6 +65,7 @@ Today this function hard-gates on `closingTime` before ever looking at attractio
 ```python
 _ATTRACTION_FRESHNESS_MINUTES = 20  # wider than the 5-min REST cycle and normal WS cadence
 
+
 def _attraction_is_fresh(attraction, now):
     last_updated = attraction.get("lastUpdatedTs")
     if not last_updated:
@@ -90,7 +92,7 @@ def park_has_operating_attraction(park):
     for attraction in park.get("attractions", []):
         wait_time = attraction.get("waitTime")
         status = attraction.get("status")
-        if status and status.upper() == "OPERATING" and wait_time not in (None, ''):
+        if status and status.upper() == "OPERATING" and wait_time not in (None, ""):
             if _attraction_is_fresh(attraction, now):
                 debug.info(f"Found open attraction in {park['name']}: {attraction['name']}")
                 return True

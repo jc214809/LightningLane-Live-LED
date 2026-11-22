@@ -53,8 +53,17 @@ def test_board_now_uses_the_clock_when_not_given_one(tmp_path, monkeypatch):
     assert board_now(write(tmp_path, {"at": NOW - 5})).age_s == 5
 
 
-@pytest.mark.parametrize("seconds, said", [(0, "0 seconds ago"), (1, "1 second ago"), (59, "59 seconds ago"),
-                                           (60, "1 minute ago"), (150, "2 minutes ago"), (3600, "1 hour ago"),
-                                           (2 * 86400 + 5, "2 days ago")])
+@pytest.mark.parametrize(
+    "seconds, said",
+    [
+        (0, "0 seconds ago"),
+        (1, "1 second ago"),
+        (59, "59 seconds ago"),
+        (60, "1 minute ago"),
+        (150, "2 minutes ago"),
+        (3600, "1 hour ago"),
+        (2 * 86400 + 5, "2 days ago"),
+    ],
+)
 def test_ago(seconds, said):
     assert ago(seconds) == said

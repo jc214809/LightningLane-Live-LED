@@ -17,9 +17,18 @@ def _keyed(keys, t):
             return v0 + (v1 - v0) * (t - t0) / (t1 - t0)
     return keys[-1][1]
 
+
 VADER_COLORS = {
-    "K": (0, 0, 0), "D": (72, 72, 80), "G": (100, 100, 108), "g": (128, 128, 136), "P": (50, 50, 58),
-    "B": (152, 152, 152), "C": (127, 127, 127), "R": (202, 3, 5), "b": (3, 102, 200), "W": (246, 249, 244),
+    "K": (0, 0, 0),
+    "D": (72, 72, 80),
+    "G": (100, 100, 108),
+    "g": (128, 128, 136),
+    "P": (50, 50, 58),
+    "B": (152, 152, 152),
+    "C": (127, 127, 127),
+    "R": (202, 3, 5),
+    "b": (3, 102, 200),
+    "W": (246, 249, 244),
 }
 
 
@@ -92,8 +101,10 @@ class _SaberDuel(CapturesScreens):
         if t < self.WALK_S:
             d = self.offstage + ease_out(t / self.WALK_S) * (self.STANCE - self.offstage)
             step = int(t * 8) % 2
-            return self._at({name: (d, 45) for name in self.names},
-                            {name: -(self.FIGHTERS[name].get("leap", 0) // 3 or 1) * step for name in self.names})
+            return self._at(
+                {name: (d, 45) for name in self.names},
+                {name: -(self.FIGHTERS[name].get("leap", 0) // 3 or 1) * step for name in self.names},
+            )
         t -= self.WALK_S
         if t < self.DUEL_S:
             i = int(t / self.EXCHANGE_S)
@@ -101,8 +112,10 @@ class _SaberDuel(CapturesScreens):
             stance, lift = {}, {}
             for name in self.names:
                 attacking = self.attackers[i] == name
-                stance[name] = (_keyed(self.STEP, s) if attacking else self.STANCE,
-                                _keyed(self.ATTACK if attacking else self.GUARD, s))
+                stance[name] = (
+                    _keyed(self.STEP, s) if attacking else self.STANCE,
+                    _keyed(self.ATTACK if attacking else self.GUARD, s),
+                )
                 leap = self.FIGHTERS[name].get("leap", 0) if attacking else 0
                 lift[name] = -round(leap * math.sin(math.pi * progress(s, *self.LEAP_S)))
             return self._at(stance, lift)
@@ -118,8 +131,10 @@ class _SaberDuel(CapturesScreens):
         return self._at({name: (d, angle) for name in self.names}, {})
 
     def _at(self, stance, lift):
-        return {name: (self.cx - self._forward(name) * d, self.anchor_y[name] + lift.get(name, 0), e)
-                for name, (d, e) in stance.items()}
+        return {
+            name: (self.cx - self._forward(name) * d, self.anchor_y[name] + lift.get(name, 0), e)
+            for name, (d, e) in stance.items()
+        }
 
     def nudges(self, t):
         """{name: (lean, recoil)}: pixels the upper body tips forward, and the whole fighter is knocked back."""
@@ -221,8 +236,10 @@ class _SaberDuel(CapturesScreens):
         sx, sy = ox + fighter["back_shoulder"][0] + lean * fwd, oy + fighter["back_shoulder"][1]
         # Degrees below straight back: 45 with the blade raised (85), 25 at rest (45), 20 on the cut (35).
         a = math.radians(20 + max(0, elevation - 35) * 0.5)
-        return (sx, sy), (int(round(sx - fwd * math.cos(a) * fighter["arm"])) - (1 if fwd > 0 else 0),
-                          int(round(sy + math.sin(a) * fighter["arm"])))
+        return (sx, sy), (
+            int(round(sx - fwd * math.cos(a) * fighter["arm"])) - (1 if fwd > 0 else 0),
+            int(round(sy + math.sin(a) * fighter["arm"])),
+        )
 
     def _limb_pixels(self, pixels, fighter, shoulder, fist, body):
         """A 2px sleeve from the shoulder to a 2x2 fist at `fist` (its top-left), outlined in black
@@ -307,6 +324,7 @@ class _SaberDuel(CapturesScreens):
             s = since % self.EXCHANGE_S
             return self.HIT_S[0] <= s < self.HIT_S[1]
         return since < self.DUEL_S + self.LOCK_S
+
 
 class SaberDuelReveal(_SaberDuel):
     """
@@ -394,15 +412,41 @@ class SaberDuelReveal(_SaberDuel):
         ".....KKK..KKKKKKKK..",
     ]
 
-    COLORS = dict(VADER_COLORS, **{
-        "O": (168, 138, 50), "I": (254, 201, 184), "c": (33, 112, 146), "W": (246, 249, 244),
-        "w": (222, 227, 194), "o": (205, 183, 166), "A": (184, 165, 150),
-    })
-    VADER = {"art": VADER_ART, "cape_art": VADER_CAPE_ART, "anchor": (0.5, 14.5), "shoulder": (5, 15),
-             "arm": 5, "waist": 15, "sleeve": "D", "fist": ("W", "K"), "blade": "red"}
+    COLORS = dict(
+        VADER_COLORS,
+        **{
+            "O": (168, 138, 50),
+            "I": (254, 201, 184),
+            "c": (33, 112, 146),
+            "W": (246, 249, 244),
+            "w": (222, 227, 194),
+            "o": (205, 183, 166),
+            "A": (184, 165, 150),
+        },
+    )
+    VADER = {
+        "art": VADER_ART,
+        "cape_art": VADER_CAPE_ART,
+        "anchor": (0.5, 14.5),
+        "shoulder": (5, 15),
+        "arm": 5,
+        "waist": 15,
+        "sleeve": "D",
+        "fist": ("W", "K"),
+        "blade": "red",
+    }
     FIGHTERS = {
-        "luke": {"art": LUKE_ART, "anchor": (10.5, 15.5), "shoulder": (14, 12), "back_shoulder": (4, 12),
-                 "arm": 5, "waist": 16, "sleeve": "W", "fist": ("I", "I"), "blade": "blue"},
+        "luke": {
+            "art": LUKE_ART,
+            "anchor": (10.5, 15.5),
+            "shoulder": (14, 12),
+            "back_shoulder": (4, 12),
+            "arm": 5,
+            "waist": 16,
+            "sleeve": "W",
+            "fist": ("I", "I"),
+            "blade": "blue",
+        },
         "vader": VADER,
     }
 
@@ -446,13 +490,29 @@ class ObiWanDuelReveal(_SaberDuel):
         "...KrrrrrrrK...KrrrrrrrK",
         "...KKKKKKKKK...KKKKKKKKK",
     ]
-    COLORS = dict(VADER_COLORS, **{
-        "A": (161, 88, 34), "O": (238, 212, 189), "o": (206, 194, 160), "k": (39, 24, 22),
-        "S": (165, 165, 165), "r": (123, 39, 35),
-    })
+    COLORS = dict(
+        VADER_COLORS,
+        **{
+            "A": (161, 88, 34),
+            "O": (238, 212, 189),
+            "o": (206, 194, 160),
+            "k": (39, 24, 22),
+            "S": (165, 165, 165),
+            "r": (123, 39, 35),
+        },
+    )
     FIGHTERS = {
-        "obiwan": {"art": OBIWAN_ART, "anchor": (15.5, 13.5), "shoulder": (19, 10), "back_shoulder": (8, 10),
-                   "arm": 5, "waist": 16, "sleeve": "O", "fist": ("O", "O"), "blade": "blue"},
+        "obiwan": {
+            "art": OBIWAN_ART,
+            "anchor": (15.5, 13.5),
+            "shoulder": (19, 10),
+            "back_shoulder": (8, 10),
+            "arm": 5,
+            "waist": 16,
+            "sleeve": "O",
+            "fist": ("O", "O"),
+            "blade": "blue",
+        },
         "vader": SaberDuelReveal.VADER,
     }
 
@@ -495,13 +555,30 @@ class YodaDuelReveal(_SaberDuel):
         "..KoYYYYK.KYYYYOK....",
         "..KKKKKKK.KKKKKKK....",
     ]
-    COLORS = dict(VADER_COLORS, **{
-        "Y": (134, 159, 76), "y": (97, 131, 55), "O": (176, 157, 125), "N": (90, 60, 11),
-        "o": (209, 179, 106), "k": (27, 27, 29),
-    })
+    COLORS = dict(
+        VADER_COLORS,
+        **{
+            "Y": (134, 159, 76),
+            "y": (97, 131, 55),
+            "O": (176, 157, 125),
+            "N": (90, 60, 11),
+            "o": (209, 179, 106),
+            "k": (27, 27, 29),
+        },
+    )
     FIGHTERS = {
-        "yoda": {"art": YODA_ART, "anchor": (9.5, 15.5), "shoulder": (13, 12), "back_shoulder": (6, 12),
-                 "arm": 4, "waist": 11, "sleeve": "O", "fist": ("Y", "Y"), "blade": "green", "leap": 7},
+        "yoda": {
+            "art": YODA_ART,
+            "anchor": (9.5, 15.5),
+            "shoulder": (13, 12),
+            "back_shoulder": (6, 12),
+            "arm": 4,
+            "waist": 11,
+            "sleeve": "O",
+            "fist": ("Y", "Y"),
+            "blade": "green",
+            "leap": 7,
+        },
         "vader": SaberDuelReveal.VADER,
     }
 
@@ -576,14 +653,40 @@ class KyloReyDuelReveal(_SaberDuel):
         "KKKKKKKKK.KDKKKKKKKKKDD",
     ]
     COLORS = {
-        "K": (0, 0, 0), "N": (83, 49, 3), "O": (255, 187, 128), "W": (255, 255, 219), "S": (211, 211, 204),
-        "k": (45, 45, 45), "D": (80, 80, 88), "d": (58, 58, 64), "v": (185, 185, 185), "B": (152, 152, 152),
+        "K": (0, 0, 0),
+        "N": (83, 49, 3),
+        "O": (255, 187, 128),
+        "W": (255, 255, 219),
+        "S": (211, 211, 204),
+        "k": (45, 45, 45),
+        "D": (80, 80, 88),
+        "d": (58, 58, 64),
+        "v": (185, 185, 185),
+        "B": (152, 152, 152),
     }
     FIGHTERS = {
-        "rey": {"art": REY_ART, "anchor": (10.5, 15.5), "shoulder": (14, 12), "arm": 5, "waist": 17,
-                "sleeve": "W", "fist": ("O", "O"), "blade": "yellow"},
-        "kylo": {"art": KYLO_ART, "anchor": (0.5, 11.5), "shoulder": (5, 12), "arm": 5, "waist": 16,
-                 "sleeve": "D", "fist": ("d", "d"), "blade": "red", "crossguard": True, "crackle": True},
+        "rey": {
+            "art": REY_ART,
+            "anchor": (10.5, 15.5),
+            "shoulder": (14, 12),
+            "arm": 5,
+            "waist": 17,
+            "sleeve": "W",
+            "fist": ("O", "O"),
+            "blade": "yellow",
+        },
+        "kylo": {
+            "art": KYLO_ART,
+            "anchor": (0.5, 11.5),
+            "shoulder": (5, 12),
+            "arm": 5,
+            "waist": 16,
+            "sleeve": "D",
+            "fist": ("d", "d"),
+            "blade": "red",
+            "crossguard": True,
+            "crackle": True,
+        },
     }
 
 

@@ -14,6 +14,7 @@ def day(offset):
 
 # --- parsing ---
 
+
 def test_parse_date_accepts_dates_and_datetimes():
     assert parse_date("2020-02-29") == date(2020, 2, 29)
     assert parse_date("2026-11-10T08:30:00") == date(2026, 11, 10)
@@ -22,11 +23,15 @@ def test_parse_date_accepts_dates_and_datetimes():
 
 
 def test_parses_plain_dates_and_full_trips():
-    config = {"trip_countdown": {"trip_dates": [
-        "2026-11-10",
-        {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"},
-        {"start": "2027-06-01"},
-    ]}}
+    config = {
+        "trip_countdown": {
+            "trip_dates": [
+                "2026-11-10",
+                {"start": "2027-03-14", "end": "2027-03-19", "name": "Spring Break"},
+                {"start": "2027-06-01"},
+            ]
+        }
+    }
     assert parse_trips(config) == [
         Trip(date(2026, 11, 10)),
         Trip(date(2027, 3, 14), date(2027, 3, 19), "Spring Break"),
@@ -34,13 +39,16 @@ def test_parses_plain_dates_and_full_trips():
     ]
 
 
-@pytest.mark.parametrize("bad", [
-    "invalid-date",
-    {"end": "2027-03-19"},
-    {"start": "2027-03-19", "end": "2027-03-14"},
-    {"start": "2027-03-14", "end": "soon"},
-    None,
-])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "invalid-date",
+        {"end": "2027-03-19"},
+        {"start": "2027-03-19", "end": "2027-03-14"},
+        {"start": "2027-03-14", "end": "soon"},
+        None,
+    ],
+)
 def test_invalid_trips_are_skipped(bad):
     config = {"trip_countdown": {"trip_dates": [bad, "2026-11-10"]}}
     assert parse_trips(config) == [Trip(date(2026, 11, 10))]
@@ -55,6 +63,7 @@ def test_the_example_configs_trips_all_parse():
     # config.json-example is what boards start from: every trip in it must be readable.
     import json
     import os
+
     example = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "config.json-example")
     with open(example) as f:
         config = json.load(f)
@@ -71,6 +80,7 @@ def test_legacy_single_trip_date():
 
 
 # --- which trip shows ---
+
 
 def test_nearest_upcoming_trip_shows():
     trips = [Trip(day(30)), Trip(day(5)), Trip(day(-40))]
@@ -111,4 +121,5 @@ def test_defaults_to_today():
 def test_the_countdowns_words_live_here_and_the_display_uses_the_same_function():
     from display.countdown import countdown as display_countdown
     from utils import trips
+
     assert display_countdown.countdown_message is trips.countdown_message

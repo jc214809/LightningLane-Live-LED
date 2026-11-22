@@ -262,20 +262,29 @@ class ThreeCaballeros10KLandmark(Landmark):
     def build(self):
         w, h = self.width, self.height
         big = h >= 64
-        self.art = {"jose": JOSE_64 if big else JOSE_32, "panchito": PANCHITO_64 if big else PANCHITO_32,
-                    "donald": DONALD_64 if big else DONALD_32}
+        self.art = {
+            "jose": JOSE_64 if big else JOSE_32,
+            "panchito": PANCHITO_64 if big else PANCHITO_32,
+            "donald": DONALD_64 if big else DONALD_32,
+        }
         self.size = {k: (len(a[0]), len(a)) for k, a in self.art.items()}
         jw, pw, dw = (self.size[k][0] for k in ORDER)
         # Standing on the bottom edge: José left, Panchito centre stage, Donald right.
-        xs = {"jose": -3 if big else 0, "panchito": w // 2 - pw // 2 - 2 if big else w // 2 - pw // 2 - 1,
-              "donald": w - dw + 1 if big else w - dw}
+        xs = {
+            "jose": -3 if big else 0,
+            "panchito": w // 2 - pw // 2 - 2 if big else w // 2 - pw // 2 - 1,
+            "donald": w - dw + 1 if big else w - dw,
+        }
         self.home = {k: (xs[k], h - self.size[k][1]) for k in ORDER}
         self.hop_px = 3 if big else 2
         if big:
             title = [(SMALL_FONT, "WINE & DINE", 32, 0, WHITE), (MID_FONT, "10K", 32, 6, GOLD)]
         else:
-            title = [(TINY_FONT, "WINE&", 10, 0, WHITE), (TINY_FONT, "DINE", 9, 6, WHITE),
-                     (MID_FONT, "10K", 53, -2, GOLD)]
+            title = [
+                (TINY_FONT, "WINE&", 10, 0, WHITE),
+                (TINY_FONT, "DINE", 9, 6, WHITE),
+                (MID_FONT, "10K", 53, -2, GOLD),
+            ]
         self.title_spec = title
         self.text = {}
         for font, text, center_x, top, rgb in title:
@@ -288,10 +297,18 @@ class ThreeCaballeros10KLandmark(Landmark):
                 self.sky[(x, y)] = rgb
         self.drops = [(x, self.rng.uniform(0, h)) for x in range(1, w, RAIN_EVERY)]
         k = h / 32
-        self.confetti = [(self.rng.uniform(0, w), -self.rng.uniform(1, 8 * k), self.rng.uniform(*CONFETTI_FROM),
-                          self.rng.uniform(-3, 3), FALL_SPEED * k * self.rng.uniform(0.8, 1.2),
-                          self.rng.choice(CONFETTI), self.rng.uniform(0, 2 * math.pi))
-                         for _ in range(int(CONFETTI_COUNT * k * w / 64))]
+        self.confetti = [
+            (
+                self.rng.uniform(0, w),
+                -self.rng.uniform(1, 8 * k),
+                self.rng.uniform(*CONFETTI_FROM),
+                self.rng.uniform(-3, 3),
+                FALL_SPEED * k * self.rng.uniform(0.8, 1.2),
+                self.rng.choice(CONFETTI),
+                self.rng.uniform(0, 2 * math.pi),
+            )
+            for _ in range(int(CONFETTI_COUNT * k * w / 64))
+        ]
 
     def hop(self, name, t):
         """Pixels up off the ground at scene time t: its own hop, then the one all three do."""

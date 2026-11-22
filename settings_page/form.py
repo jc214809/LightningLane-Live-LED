@@ -4,6 +4,7 @@ page.py): apply_form takes the posted fields and returns the config to save, or 
 Only the keys the page shows change; anything else in config.json (old keys, keys a newer
 version adds) is kept as it is. Every check is the app's own, so a saved config starts the app.
 """
+
 import copy
 import re
 from datetime import time
@@ -86,10 +87,15 @@ def panel_choices(config, detected, detected_text):
             else:
                 found[key] = f"Default: {_shown(value)}" if value not in (None, "") else "Default"
         return found
+
     blanks = {model: texts(cli.MODEL_NAMES[model], defaults) for model, defaults in cli.MODEL_DEFAULTS.items()}
     blanks[""] = texts(None, cli.BONNET if detected_text else {})  # a Pi we don't know gets the bonnet's
-    return PanelChoices([(cli.AUTO, f"Automatic ({auto})")] + [(m, n) for m, n in cli.MODEL_NAMES.items()],
-                        [(z, z) for z in sizes], auto_model or "", blanks)
+    return PanelChoices(
+        [(cli.AUTO, f"Automatic ({auto})")] + [(m, n) for m, n in cli.MODEL_NAMES.items()],
+        [(z, z) for z in sizes],
+        auto_model or "",
+        blanks,
+    )
 
 
 def _shown(value):
@@ -118,8 +124,11 @@ def trip_rows(config):
     rows = []
     for entry in entries if isinstance(entries, list) else []:
         entry = entry if isinstance(entry, dict) else {"start": entry}
-        rows.append(tuple(_date_text(entry.get(k)) if k != "name" else str(entry.get(k) or "")
-                          for k in ("start", "end", "name")))
+        rows.append(
+            tuple(
+                _date_text(entry.get(k)) if k != "name" else str(entry.get(k) or "") for k in ("start", "end", "name")
+            )
+        )
     return sorted(rows, key=lambda row: _by_start(row[0]))
 
 
@@ -140,8 +149,10 @@ def _date_text(value):
 
 def chosen_device(form):
     """The speaker the form picks: one from the list, one typed under Other device, or None."""
+
     def one(name):
         return (form.get(name) or [""])[0].strip()
+
     return (one("sound_device_custom") if one("sound_device") == "custom" else one("sound_device")) or None
 
 
@@ -216,8 +227,11 @@ def _apply_pushover(new, form, problems):
     """Pushover, for sending the sign-in PIN to a phone: kept out of config.json until a key is typed."""
     if "pushover_user" not in form:  # the page always posts it; a form without it leaves Pushover alone
         return
-    typed = {key: _one(form, field) for key, field in (("user_key", "pushover_user"), ("app_token", "pushover_token"))
-             if _one(form, field)}
+    typed = {
+        key: _one(form, field)
+        for key, field in (("user_key", "pushover_user"), ("app_token", "pushover_token"))
+        if _one(form, field)
+    }
     if not (typed or isinstance(new.get("pushover"), dict)):
         return
     pushover = _section(new, "pushover")
@@ -278,8 +292,9 @@ def _trip_from_form(form, index, problems):
     except ValueError:
         problems.append(f"Trip {name or start or '(no name)'}: the start date should be a date, not {start!r}.")
         return None
-    return ({"start": start, **({"end": end} if end else {}), **({"name": name} if name else {})}
-            if end or name else start)
+    return (
+        {"start": start, **({"end": end} if end else {}), **({"name": name} if name else {})} if end or name else start
+    )
 
 
 def _apply_sound(new, form, problems):
@@ -419,4 +434,3 @@ def _apply_force_surprise(new, form, problems):
         problems.append(f"Surprise on every ride screen: {surprise!r} isn't a character.")
     else:
         new["force_surprise"] = surprise
-

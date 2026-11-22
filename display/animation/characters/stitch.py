@@ -95,17 +95,27 @@ class StitchSurfReveal(CapturesScreens):
     ]
     STAND_SCALE = SIT_SCALE = 1
     colors = {
-        "K": (4, 52, 108), "B": (118, 184, 230), "M": (43, 140, 210), "L": (190, 232, 248),
-        "E": (45, 45, 45), "G": (255, 255, 255), "p": (250, 226, 232), "N": (240, 160, 185),
-        "k": (40, 40, 48), "d": (45, 80, 150), "l": (40, 140, 210), "e": (48, 40, 96), "n": (240, 120, 180),
+        "K": (4, 52, 108),
+        "B": (118, 184, 230),
+        "M": (43, 140, 210),
+        "L": (190, 232, 248),
+        "E": (45, 45, 45),
+        "G": (255, 255, 255),
+        "p": (250, 226, 232),
+        "N": (240, 160, 185),
+        "k": (40, 40, 48),
+        "d": (45, 80, 150),
+        "l": (40, 140, 210),
+        "e": (48, 40, 96),
+        "n": (240, 120, 180),
     }
     WATER_DEEP, WATER, FACE = (0, 80, 120), (0, 135, 165), (40, 185, 200)
     FOAM = (235, 250, 255)
     BOARD, BOARD_SHADE, STRIPE = (225, 30, 40), (150, 18, 26), (255, 255, 255)
-    CREST_FRAC = 0.34   # the crest's height, of the board's
-    BACK_FRAC = 0.5     # how far the back of the wave runs before it's flat, of the width
-    FACE_FRAC = 0.9     # how far its face runs down in front of the crest, of his board
-    RIDE_AT = 0.55      # where along the face his board rides, from the crest
+    CREST_FRAC = 0.34  # the crest's height, of the board's
+    BACK_FRAC = 0.5  # how far the back of the wave runs before it's flat, of the width
+    FACE_FRAC = 0.9  # how far its face runs down in front of the crest, of his board
+    RIDE_AT = 0.55  # where along the face his board rides, from the crest
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height

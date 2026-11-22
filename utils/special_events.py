@@ -9,6 +9,7 @@ To add a party, add an entry to SPECIAL_EVENTS.
 Days the park data can't name at all (a runDisney race is run before the park opens) are in
 DATED_LANDMARKS, matched by the park's local date. To add one, add an entry there.
 """
+
 import random
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -81,7 +82,8 @@ def is_special(event):
     """A schedule entry for a special ticketed event or extended evening hours."""
     description = event.get("description", "").lower()
     return event.get("type") == "TICKETED_EVENT" and (
-        "special ticketed event" in description or "extended evening" in description)
+        "special ticketed event" in description or "extended evening" in description
+    )
 
 
 def _parse(when):

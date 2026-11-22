@@ -8,8 +8,12 @@ from display.pixels import put
 
 # Solid blades, no white core: at this size a core reads as a third, thinner line. Each
 # hums between two shades, a frame at a time.
-BLADES = {"red": ((255, 25, 15), (215, 15, 10)), "blue": ((20, 110, 255), (10, 80, 225)),
-          "green": ((40, 255, 30), (20, 210, 15)), "yellow": ((255, 235, 20), (225, 195, 10))}
+BLADES = {
+    "red": ((255, 25, 15), (215, 15, 10)),
+    "blue": ((20, 110, 255), (10, 80, 225)),
+    "green": ((40, 255, 30), (20, 210, 15)),
+    "yellow": ((255, 235, 20), (225, 195, 10)),
+}
 SPARKS = ((255, 255, 255), (255, 230, 90), (255, 190, 40))  # white-hot, yellow, cooling
 
 
@@ -20,8 +24,9 @@ def throw_sparks(rng, waves, count, scale):
         for _ in range(count):
             angle = rng.uniform(0, 2 * math.pi)
             speed = rng.uniform(14, 38) * scale
-            flecks.append((t0, x, y, math.cos(angle) * speed, math.sin(angle) * speed - 8 * scale,
-                           rng.uniform(0.25, 0.45)))
+            flecks.append(
+                (t0, x, y, math.cos(angle) * speed, math.sin(angle) * speed - 8 * scale, rng.uniform(0.25, 0.45))
+            )
     return flecks
 
 
@@ -86,8 +91,9 @@ class SaberClashReveal(CapturesScreens):
         # mirror-image blades cross at the centre.
         reach = (width - 1 + 2 * out, -(height - 1 + 2 * out))
         self.locked = {"red": math.atan2(reach[1], reach[0]), "blue": math.atan2(reach[1], -reach[0])}
-        self.sparks = throw_sparks(self.rng, [(t0, self.cx, self.cy) for t0 in self.WAVES],
-                                   16 if self.tall else 10, height / 32)
+        self.sparks = throw_sparks(
+            self.rng, [(t0, self.cx, self.cy) for t0 in self.WAVES], 16 if self.tall else 10, height / 32
+        )
 
     def blades(self, t):
         """{name: (x, y, angle)}: each blade as a line through (x, y) at `angle` (y down)."""
@@ -99,15 +105,19 @@ class SaberClashReveal(CapturesScreens):
         t -= self.SWING_S
         if t < self.CLASH_S:
             shiver = self.JITTER if int(t * FPS) // 2 % 2 else -self.JITTER
-            return {"red": (self.cx, self.cy, self.locked["red"] + shiver),
-                    "blue": (self.cx, self.cy, self.locked["blue"] - shiver)}
+            return {
+                "red": (self.cx, self.cy, self.locked["red"] + shiver),
+                "blue": (self.cx, self.cy, self.locked["blue"] - shiver),
+            }
         t -= self.CLASH_S
         # Upright, they stand side by side rather than one over the other.
         side = self.blade_w / 2
         if t < self.UNLOCK_S:
             p = smooth(progress(t, 0, self.UNLOCK_S))
-            return {name: (self.cx + sign * p * side, self.cy, self.locked[name] + p * (up - self.locked[name]))
-                    for name, sign in (("red", -1), ("blue", 1))}
+            return {
+                name: (self.cx + sign * p * side, self.cy, self.locked[name] + p * (up - self.locked[name]))
+                for name, sign in (("red", -1), ("blue", 1))
+            }
         p = ease_out(progress(t - self.UNLOCK_S, 0, self.SPREAD_S))
         off = self.cx + self.blade_w + 1
         return {"red": (self.cx - side - p * off, self.cy, up), "blue": (self.cx + side + p * off, self.cy, up)}

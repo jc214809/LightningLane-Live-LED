@@ -3,6 +3,7 @@
 SCRIPT_VERSION is only the fallback for a copy without git (a zip download). Locally, tags arrive
 with git fetch (git fetch --tags if they're stale).
 """
+
 import functools
 import os
 import subprocess
@@ -18,8 +19,13 @@ def version(app_dir=APP_DIR, run=subprocess.run):
     """This checkout's version from its tags, without the "v", else SCRIPT_VERSION. The app and the
     updater run as root in a checkout that isn't root's, so git is told it's safe."""
     try:
-        done = run(["git", "-c", f"safe.directory={app_dir}", "describe", "--tags", "--match", "v[0-9]*"],
-                   cwd=app_dir, capture_output=True, text=True, timeout=DESCRIBE_TIMEOUT_S)
+        done = run(
+            ["git", "-c", f"safe.directory={app_dir}", "describe", "--tags", "--match", "v[0-9]*"],
+            cwd=app_dir,
+            capture_output=True,
+            text=True,
+            timeout=DESCRIBE_TIMEOUT_S,
+        )
     except (OSError, subprocess.TimeoutExpired):
         return SCRIPT_VERSION
     found = done.stdout.strip() if done.returncode == 0 else ""

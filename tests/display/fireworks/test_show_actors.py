@@ -84,8 +84,9 @@ def test_genie_follows_the_clock_not_the_frames():
     _play(slow, cue, cue.start + 10, fps=7)
     fast.set_cue(cue, cue.start + 10)
     slow.set_cue(cue, cue.start + 10)
-    assert fast.actors["genie"].top_left(fast.actors["genie"].elapsed()) == \
-        slow.actors["genie"].top_left(slow.actors["genie"].elapsed())
+    assert fast.actors["genie"].top_left(fast.actors["genie"].elapsed()) == slow.actors["genie"].top_left(
+        slow.actors["genie"].elapsed()
+    )
 
 
 def test_genie_vanishes_in_a_puff_when_his_scene_ends():
@@ -127,8 +128,9 @@ def test_without_a_track_genie_keeps_his_grin_as_drawn():
     genie = show.actors["genie"]
     assert genie.mouth("genie") is None
     trimmed = [row for i, row in enumerate(GenieReveal.ART) if i not in GenieReveal.TRIM_32]
-    assert genie.cells[2] == [(c, r, GenieReveal.COLORS[k]) for r, line in enumerate(trimmed)
-                              for c, k in enumerate(line) if k != "."]
+    assert genie.cells[2] == [
+        (c, r, GenieReveal.COLORS[k]) for r, line in enumerate(trimmed) for c, k in enumerate(line) if k != "."
+    ]
 
 
 def test_genies_mouths_only_change_his_mouth():

@@ -23,15 +23,28 @@ def _party_park(opens="19:00", closes="23:00"):
     """Hollywood Studios on a Jollywood night, dated the park's today (test_santa_train.py's)."""
     from datetime import datetime
     from zoneinfo import ZoneInfo
+
     today = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
-    return {"name": "Hollywood Studios", "timezone": "America/New_York", "seasonalEvent": "jollywood",
-            "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event",
-                          "openingTime": f"{today}T{opens}:00-05:00", "closingTime": f"{today}T{closes}:00-05:00"}]}
+    return {
+        "name": "Hollywood Studios",
+        "timezone": "America/New_York",
+        "seasonalEvent": "jollywood",
+        "schedule": [
+            {
+                "type": "TICKETED_EVENT",
+                "date": today,
+                "description": "Special Ticketed Event",
+                "openingTime": f"{today}T{opens}:00-05:00",
+                "closingTime": f"{today}T{closes}:00-05:00",
+            }
+        ],
+    }
 
 
 def _story_s(scene):
     """Scene time it gets: its screen (longer on 64x32) minus the sweep and the wipe."""
     import display.animation as animation
+
     return scene.SCREEN_S - animation.COVER_S - animation.TRANSITIONS["wipe"].duration
 
 
@@ -95,7 +108,9 @@ def test_the_jollywood_sign_flickers_on_and_stays_lit(w, h):
     scene = _scene(w, h)
     before = scene.frame(scene.sign_delay + jt.SIGN_ON_AT - 0.05)
     assert all(before[p] == jt.NEON_OFF_RGB for p in scene.sign)
-    flicker = [scene.frame(scene.sign_delay + jt.SIGN_ON_AT + k / 30)[scene.sign[0]] for k in range(int(jt.FLICKER_S * 30))]
+    flicker = [
+        scene.frame(scene.sign_delay + jt.SIGN_ON_AT + k / 30)[scene.sign[0]] for k in range(int(jt.FLICKER_S * 30))
+    ]
     assert jt.NEON_RGB in flicker and jt.NEON_OFF_RGB in flicker, "it stutters"
     for t in (_settled(scene), scene.LAND_AT - 0.05):
         frame = scene.frame(t)
@@ -160,8 +175,12 @@ def test_the_car_is_a_gift_that_drops_and_bursts_in_view(w, h):
 def test_on_64x32_the_gift_bursts_just_under_the_sign():
     scene = _scene(64, 32)
     burst = scene.frame(scene.LAND_AT + 0.05)
-    flash = {(x, y) for x in range(64) for y in range(32)
-             if (x - scene.gift_left() - 2) ** 2 + (y - scene.burst_y - 2) ** 2 <= 9}
+    flash = {
+        (x, y)
+        for x in range(64)
+        for y in range(32)
+        if (x - scene.gift_left() - 2) ** 2 + (y - scene.burst_y - 2) ** 2 <= 9
+    }
     assert all(burst[p] == jt.WHITE for p in flash)
     assert not flash & set(scene.sign), "the flash leaves the letters readable"
     assert min(y for _, y in flash) > max(y for _, y in scene.sign) - 1

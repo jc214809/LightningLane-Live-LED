@@ -104,8 +104,12 @@ class FlyByReveal:
 
     def _draw_sprite(self, canvas, t):
         x0, y0 = self.position(t)
-        paint(canvas, art_pixels(self.art, int(round(x0)), int(round(y0)), self.colors, self.scale),
-              self.width, self.height)
+        paint(
+            canvas,
+            art_pixels(self.art, int(round(x0)), int(round(y0)), self.colors, self.scale),
+            self.width,
+            self.height,
+        )
 
 
 class PeekReveal:

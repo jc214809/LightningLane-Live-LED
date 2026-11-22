@@ -43,6 +43,7 @@ def landmark_for(park_name, party=None, dated=None):
 
 def landmark_screen(landmark):
     """Adapt a Landmark to show_screen's draw(canvas, t) contract; it animates for its whole hold."""
+
     def draw(canvas, t):
         for (x, y), (r, g, b) in landmark.frame(t).items():
             canvas.SetPixel(x, y, r, g, b)
@@ -57,5 +58,6 @@ def landmark_screen(landmark):
                 graphics.DrawText(canvas, font, x + 1, y + 1, shadow, text)
                 graphics.DrawText(canvas, font, x, y, graphics.Color(*rgb), text)
         return True
+
     draw.plays_under_reveal = landmark.PLAYS_UNDER_WIPE
     return draw

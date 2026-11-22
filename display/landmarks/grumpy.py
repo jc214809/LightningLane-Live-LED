@@ -110,10 +110,17 @@ TOE_32 = (21, 24, 11, 14)
 
 # His race, not the half: three lines over him on 64x64 (ending the row above his hat; mid-hop it draws
 # over the hat's top, as the 10K's title does); down the left beside him on 64x32, with no room over him.
-TITLE_64 = [(TINY_FONT, "WINE & DINE", 32, 0, WHITE), (SMALL_FONT, "CHALLENGE", 32, 5, GOLD),
-            (SMALL_FONT, "19.3", 32, 12, GOLD)]
-SIDE_TITLE_32 = [(TINY_FONT, "WINE&", 20, 0, WHITE), (TINY_FONT, "DINE", 19, 6, WHITE),
-                 (TINY_FONT, "CHALLENGE", 20, 14, GOLD), (SMALL_FONT, "19.3", 20, 21, GOLD)]
+TITLE_64 = [
+    (TINY_FONT, "WINE & DINE", 32, 0, WHITE),
+    (SMALL_FONT, "CHALLENGE", 32, 5, GOLD),
+    (SMALL_FONT, "19.3", 32, 12, GOLD),
+]
+SIDE_TITLE_32 = [
+    (TINY_FONT, "WINE&", 20, 0, WHITE),
+    (TINY_FONT, "DINE", 19, 6, WHITE),
+    (TINY_FONT, "CHALLENGE", 20, 14, GOLD),
+    (SMALL_FONT, "19.3", 20, 21, GOLD),
+]
 
 TAP_FROM, TAP_TO = 0.4, 2.8  # scene seconds he taps his foot
 TAP_BEAT = 0.2  # toe up for one beat, down for the next

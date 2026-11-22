@@ -1,4 +1,5 @@
 """Olaf for "Some people are worth melting for" (see show_actors.py)."""
+
 import math
 import random
 
@@ -22,6 +23,7 @@ class OlafStands(Actor):
     is left, his carrot and coal buttons lying in it, and it fades out by his scene's end. Without a
     track he melts over his scene's last MELT_S + PUDDLE_S.
     """
+
     NAME = "Olaf"
     ENTER_S = 0.8
     WAVE_S = 1.0  # one full swing of his arm, up and back
@@ -48,7 +50,8 @@ class OlafStands(Actor):
     # drawn; 1 half lifts the D's bottom; 0 closed leaves the lip's line as a grin.
     MOUTH_ROW = 13
     MOUTHS = {
-        1: [".EWWMWWWWOOOOOWWWWE..",
+        1: [
+            ".EWWMWWWWOOOOOWWWWE..",
             ".EWWMMWWWWOOOWWWWWE..",
             "EWWWMMMWWWWWWWWWWWE..",
             "EWWWMMWMWWWWWWWWWWE..",
@@ -58,8 +61,10 @@ class OlafStands(Actor):
             ".EWWWMMMMMMMWWWE.....",
             ".EWWWWWWWWWWWWE......",
             ".EWWWWWWWWWWWE.......",
-            "EWWWWWWWWWWWE........"],
-        0: [".EWWMWWWWOOOOOWWWWE..",
+            "EWWWWWWWWWWWE........",
+        ],
+        0: [
+            ".EWWMWWWWOOOOOWWWWE..",
             ".EWWWMWWWWOOOWWWWWE..",
             "EWWWWWMWWWWWWWWWWWE..",
             "EWWWWWWMWWWWWWWWWWE..",
@@ -69,7 +74,8 @@ class OlafStands(Actor):
             ".EWWWWWWWWWWWWWE.....",
             ".EWWWWWWWWWWWWE......",
             ".EWWWWWWWWWWWE.......",
-            "EWWWWWWWWWWWE........"],
+            "EWWWWWWWWWWWE........",
+        ],
     }
 
     def __init__(self, show):
@@ -84,9 +90,9 @@ class OlafStands(Actor):
         for shape in (0, 1, 2):
             if self.big:
                 art = list(OlafReveal.BIG_HEAD_ART)
-                art[:len(self.BIG_DOME)] = self.BIG_DOME
+                art[: len(self.BIG_DOME)] = self.BIG_DOME
                 if shape in self.MOUTHS:
-                    art[self.MOUTH_ROW:self.MOUTH_ROW + len(self.MOUTHS[shape])] = self.MOUTHS[shape]
+                    art[self.MOUTH_ROW : self.MOUTH_ROW + len(self.MOUTHS[shape])] = self.MOUTHS[shape]
                 olaf.head_art = art
             self.poses[shape] = [olaf.pixels(a + period * i / self.POSES) for i in range(self.POSES)]
         top = min(y for pose in self.poses[2] for _, y in pose)
@@ -194,6 +200,7 @@ class OlafStands(Actor):
 
         def dim(rgb):
             return tuple(int(c * glow) for c in rgb)
+
         rows = max(1, round(self.puddle_rows * p))
         self._draw_water(out, p, rows, dim)
         if p >= 1:

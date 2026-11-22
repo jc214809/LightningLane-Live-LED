@@ -2,6 +2,7 @@
 Peloton-LED. disney.main() sets it once with use(); display/animation/player.py asks current() for
 each canvas it hands out, since rgbmatrix applies brightness per canvas, as pixels are drawn.
 """
+
 import time
 from datetime import datetime
 

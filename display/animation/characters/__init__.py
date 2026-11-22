@@ -30,11 +30,11 @@ from display.animation.characters.ralph import RalphReveal
 from display.animation.characters.rex import RexReveal
 from display.animation.characters.saber import SaberClashReveal
 from display.animation.characters.saber_duel import (
-                                                     KyloReyDuelReveal,
-                                                     ObiWanDuelReveal,
-                                                     SaberDuelReveal,
-                                                     YodaDuelReveal,
-                                                     random_saber_duel,
+    KyloReyDuelReveal,
+    ObiWanDuelReveal,
+    SaberDuelReveal,
+    YodaDuelReveal,
+    random_saber_duel,
 )
 from display.animation.characters.slinky import SlinkyReveal, SlinkyWrapReveal
 from display.animation.characters.stitch import StitchSurfReveal
@@ -45,9 +45,14 @@ from display.animation.characters.walle import WallEReveal, WallESideReveal
 from display.animation.mechanics import Wipe
 
 TRANSITIONS = {
-    "wipe": Wipe, "tink": TinkReveal, "buzz": BuzzReveal,
-    "figment": FigmentReveal, "ralph": RalphReveal,
-    "mickey": MickeyReveal, "slinky": SlinkyReveal, "baymax": BaymaxReveal,
+    "wipe": Wipe,
+    "tink": TinkReveal,
+    "buzz": BuzzReveal,
+    "figment": FigmentReveal,
+    "ralph": RalphReveal,
+    "mickey": MickeyReveal,
+    "slinky": SlinkyReveal,
+    "baymax": BaymaxReveal,
     "dumbo": DumboReveal,
     "genie": GenieReveal,
     "slinky_wrap": SlinkyWrapReveal,

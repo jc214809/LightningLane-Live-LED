@@ -42,8 +42,9 @@ def test_merida_rises_full_size_at_the_bottom_left_and_stands_there():
     her = _her(standing)
     assert len(_her(early)) < len(her), "still rising"
     boots = MeridaShoots.COLORS["z"]
-    assert max(y for (x, y), rgb in standing.items() if rgb == boots) == 62 and max(y for _, y in standing) == 63, \
+    assert max(y for (x, y), rgb in standing.items() if rgb == boots) == 62 and max(y for _, y in standing) == 63, (
         "her boots (and their outline) on the bottom rows"
+    )
     assert min(x for x, _ in her) <= MeridaShoots.LEFT + 1, "at the left"
     assert max(y for _, y in standing) - min(y for _, y in standing) == 47, "full size: hair to boots, 1x"
     _, gone = _at(END - 0.001)
@@ -82,6 +83,7 @@ def test_every_frame_she_shows_is_baked():
 
 def test_a_frame_missing_from_the_bake_is_built_once_with_a_warning(monkeypatch):
     from display.fireworks.actors import merida as module
+
     warnings = []
     monkeypatch.setattr(module.debug, "warning", warnings.append)
     monkeypatch.setattr(MeridaShoots, "_frames", {})

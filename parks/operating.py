@@ -3,6 +3,7 @@ Whether each park is open, and when to refetch its schedule. The schedule decide
 usable (party nights and Early Entry included); otherwise fresh live data does. HTTP stays in
 api.disney_api: this module only calls handle_park_schedule_update when a refresh is due.
 """
+
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -13,7 +14,7 @@ _ATTRACTION_FRESHNESS_MINUTES = 20  # wider than the 5-min REST cycle and normal
 # Past the actual closing time with no next opening in the schedule, it's probably yesterday's (a failed
 # refresh): trust it this long, then fall back to the freshness check.
 _SCHEDULE_TRUST_HOURS = 6
-_DAILY_REFRESH_HOUR = 3    # local time the new day's schedule becomes available to fetch
+_DAILY_REFRESH_HOUR = 3  # local time the new day's schedule becomes available to fetch
 _DAILY_REFRESH_RETRY_UNTIL_HOUR = 9  # give up retrying once the park would normally be open
 _DAILY_REFRESH_RETRY_MINUTES = 30
 
@@ -114,7 +115,7 @@ def _has_fresh_operating_ride(park, now):
     how a park counts as open when there's no schedule to go by."""
     for attraction in park.get("attractions", []):
         status = attraction.get("status")
-        if status and status.upper() == "OPERATING" and attraction.get("waitTime") not in (None, ''):
+        if status and status.upper() == "OPERATING" and attraction.get("waitTime") not in (None, ""):
             if _attraction_is_fresh(attraction, now):
                 return True
             debug.log(f"{attraction['name']} ({park['name']}) is OPERATING but stale; not counted.")
@@ -134,8 +135,14 @@ def operating_and_why(park, now=None):
     if window == _SCHEDULE_CLOSED:
         return False, f"schedule: closed at {close.strftime('%H:%M')}" if close else "schedule: not open yet"
     if _has_fresh_operating_ride(park, now):
-        return True, f"no usable schedule; a ride is operating with live data from the last {_ATTRACTION_FRESHNESS_MINUTES} min"
-    return False, f"no usable schedule; no ride is operating with live data from the last {_ATTRACTION_FRESHNESS_MINUTES} min"
+        return (
+            True,
+            f"no usable schedule; a ride is operating with live data from the last {_ATTRACTION_FRESHNESS_MINUTES} min",
+        )
+    return (
+        False,
+        f"no usable schedule; no ride is operating with live data from the last {_ATTRACTION_FRESHNESS_MINUTES} min",
+    )
 
 
 def update_parks_operating_status(parks, fetch_schedules=True):
@@ -171,4 +178,3 @@ def update_parks_operating_status(parks, fetch_schedules=True):
             park["schedule_refresh_needed"] = False
 
     return parks
-

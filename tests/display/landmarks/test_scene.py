@@ -6,10 +6,15 @@ import pytest
 
 import display.landmarks as landmarks
 
-ALL = [landmarks.CastleLandmark, landmarks.SpaceshipEarthLandmark,
-       landmarks.TowerOfTerrorLandmark, landmarks.TreeOfLifeLandmark, landmarks.ScaryJackOLanternLandmark,
-       type("WinkingPumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": "wink"}),
-       type("BouncingPumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": "bounce"})]
+ALL = [
+    landmarks.CastleLandmark,
+    landmarks.SpaceshipEarthLandmark,
+    landmarks.TowerOfTerrorLandmark,
+    landmarks.TreeOfLifeLandmark,
+    landmarks.ScaryJackOLanternLandmark,
+    type("WinkingPumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": "wink"}),
+    type("BouncingPumpkin", (landmarks.FriendlyJackOLanternLandmark,), {"MOTION": "bounce"}),
+]
 
 
 @pytest.mark.parametrize("cls", ALL)

@@ -3,6 +3,7 @@
 
 # --- connection settings ---
 
+
 class _FakeWS:
     """Minimal stand-in for aiohttp's ClientWebSocketResponse: connects,
     accepts subscriptions, yields no messages, then closes."""

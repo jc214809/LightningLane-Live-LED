@@ -4,6 +4,7 @@ board-setup.sh installs comitup with a callback that writes "<STATE> <hotspot na
 STATE_FILE on each change of state: HOTSPOT (no known network in range, so the setup hotspot is
 up), CONNECTING or CONNECTED. /run is cleared at boot, so the file never outlives comitup's run.
 """
+
 from utils import debug
 
 STATE_FILE = "/run/comitup-state"

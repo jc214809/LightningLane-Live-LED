@@ -35,15 +35,16 @@ def test_pooh_art_is_uniform_and_every_cell_has_a_colour():
 
 
 def test_the_art_splits_into_balloon_string_and_pooh():
-    balloon, string = Pooh.ART[:Pooh.BALLOON_ROWS], Pooh.ART[Pooh.BALLOON_ROWS:Pooh.POOH_ROW]
+    balloon, string = Pooh.ART[: Pooh.BALLOON_ROWS], Pooh.ART[Pooh.BALLOON_ROWS : Pooh.POOH_ROW]
     assert set("".join(balloon)) - {"."} >= {"R", "K"}, "a red balloon, outlined"
     assert all(row.strip(".") == "S" and row[Pooh.STRING_COL] == "S" for row in string), "only string between them"
-    assert "Y" in "".join(Pooh.ART[Pooh.POOH_ROW:]), "Pooh under it"
+    assert "Y" in "".join(Pooh.ART[Pooh.POOH_ROW :]), "Pooh under it"
 
 
 def test_colours_read_against_each_other():
     def distance(a, b):
         return sum(abs(x - y) for x, y in zip(Pooh.colors[a], Pooh.colors[b]))
+
     assert distance("R", "Y") > 150, "his shirt against his fur"
     assert distance("Y", "K") > 300 and distance("R", "K") > 150, "the outline against both"
 

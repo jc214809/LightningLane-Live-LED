@@ -148,9 +148,18 @@ class DonaldReveal(CapturesScreens):
     # The white of his face and head that goes red, rows top to neck and the columns of his
     # head (so his raised fists stay white).
     FACE_ROWS, FACE_COLS = (4, 12), range(4, 14)
-    COLORS = {"K": (62, 54, 50), "W": (255, 255, 255), "G": (121, 135, 143), "U": (0, 66, 194),
-              "L": (0, 196, 222), "Y": (255, 228, 0), "P": (242, 236, 145), "O": (255, 96, 0),
-              "R": (255, 35, 42), "Q": (235, 30, 25)}
+    COLORS = {
+        "K": (62, 54, 50),
+        "W": (255, 255, 255),
+        "G": (121, 135, 143),
+        "U": (0, 66, 194),
+        "L": (0, 196, 222),
+        "Y": (255, 228, 0),
+        "P": (242, 236, 145),
+        "O": (255, 96, 0),
+        "R": (255, 35, 42),
+        "Q": (235, 30, 25),
+    }
     FEATHER_RGB = ((255, 255, 255), (215, 220, 225))
     STEAM_RGB, STEAM_FADED_RGB = (235, 235, 235), (90, 90, 95)
     FLASH_RGB = (255, 245, 215)
@@ -242,9 +251,12 @@ class DonaldReveal(CapturesScreens):
         key = (id(art), level)
         if key not in self._faces:
             self._faces[key] = [
-                "".join("Q" if k == "W" and level <= row <= neck and col in self.FACE_COLS else k
-                        for col, k in enumerate(line))
-                for row, line in enumerate(art)]
+                "".join(
+                    "Q" if k == "W" and level <= row <= neck and col in self.FACE_COLS else k
+                    for col, k in enumerate(line)
+                )
+                for row, line in enumerate(art)
+            ]
         return self._faces[key]
 
     def steam(self, t):
@@ -280,11 +292,16 @@ class DonaldReveal(CapturesScreens):
             speed = self.rng.uniform(*self.BLAST)
             self.debris.append([float(x), float(y), dx / dist * speed, dy / dist * speed, rgb])
         for _ in range(self.FEATHERS):
-            self.feathers.append([
-                self.stop_x + self.rng.uniform(0, self.sprite_w),
-                self.height - self.sprite_h + self.rng.uniform(0, self.sprite_h * 0.6),
-                self.rng.uniform(-1.2, 1.2) * self.scale, self.rng.uniform(-1.4, -0.5) * self.scale,
-                self.rng.uniform(0, 2 * math.pi), self.rng.choice(self.FEATHER_RGB)])
+            self.feathers.append(
+                [
+                    self.stop_x + self.rng.uniform(0, self.sprite_w),
+                    self.height - self.sprite_h + self.rng.uniform(0, self.sprite_h * 0.6),
+                    self.rng.uniform(-1.2, 1.2) * self.scale,
+                    self.rng.uniform(-1.4, -0.5) * self.scale,
+                    self.rng.uniform(0, 2 * math.pi),
+                    self.rng.choice(self.FEATHER_RGB),
+                ]
+            )
 
     def _step(self, t):
         """Advance the blast and the feathers to the frame t seconds after he blew."""
@@ -313,19 +330,35 @@ class DonaldReveal(CapturesScreens):
             if not self.blown:
                 self._blow()
             self._step(t)
-            paint(canvas, (((int(round(x)), int(round(y))), rgb) for x, y, _, _, rgb in self.debris),
-                  self.width, self.height)
+            paint(
+                canvas,
+                (((int(round(x)), int(round(y))), rgb) for x, y, _, _, rgb in self.debris),
+                self.width,
+                self.height,
+            )
             if self._frame(t, self.blow_at) < self.FLASH_FRAMES:  # over the blast, under him
                 flash = self.FLASH_RGB
-                paint(canvas, (((x, y), flash) for x in range(self.width) for y in range(self.height)),
-                      self.width, self.height)
+                paint(
+                    canvas,
+                    (((x, y), flash) for x in range(self.width) for y in range(self.height)),
+                    self.width,
+                    self.height,
+                )
             for x, y, _, _, _, rgb in self.feathers:
                 fx, fy = int(round(x)), int(round(y))
-                paint(canvas, (((fx + i, fy + j), rgb) for i in range(self.scale + 1)
-                               for j in range(self.scale)), self.width, self.height)
+                paint(
+                    canvas,
+                    (((fx + i, fy + j), rgb) for i in range(self.scale + 1) for j in range(self.scale)),
+                    self.width,
+                    self.height,
+                )
         x = int(round(self.donald_x(t))) + self.tremble(t) * self.scale
         y = self.height - self.sprite_h - self.lift(t)
-        paint(canvas, walking_pixels(self.art_at(t), x, y, self.COLORS, self.FEET, self.pose(t), facing=-1,
-                                     scale=self.scale), self.width, self.height)
+        paint(
+            canvas,
+            walking_pixels(self.art_at(t), x, y, self.COLORS, self.FEET, self.pose(t), facing=-1, scale=self.scale),
+            self.width,
+            self.height,
+        )
         paint(canvas, self.steam(t), self.width, self.height)
         return True

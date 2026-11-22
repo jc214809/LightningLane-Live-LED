@@ -1,4 +1,5 @@
 """The castle singing That's What Friends Are For in the synced show (see show_actors.py)."""
+
 from display.fireworks.actors.base import Actor
 
 
@@ -11,6 +12,7 @@ class CastleSings(Actor):
     shape for the mouth's shape (show.castle_shape), worked out once per shape, anchored at the bottom
     centre. With no track the mouth stays shut and the castle still.
     """
+
     NAME = "The castle sings"
     # By mouth shape (0 shut, 1 half, 2 open): how much of the doorway is open (the rest is wall), and
     # how far the castle stretches up and squeezes in.

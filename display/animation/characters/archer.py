@@ -83,11 +83,25 @@ class ArcherReveal:
         ".....KKKKK.......KKKKKK........",
     ]
     COLORS = {
-        "K": (25, 22, 42), "N": (20, 100, 100), "D": (0, 150, 138), "T": (70, 200, 178),
-        "O": (255, 127, 62), "R": (226, 91, 69), "P": (239, 121, 90),
-        "F": (242, 228, 214), "h": (226, 190, 160), "Y": (255, 215, 90), "y": (255, 239, 141),
-        "b": (186, 116, 93), "q": (158, 85, 86), "z": (81, 48, 70),
-        "w": (255, 255, 255), "e": (38, 137, 202), "E": (1, 101, 179), "p": (250, 175, 170), "m": (200, 90, 95),
+        "K": (25, 22, 42),
+        "N": (20, 100, 100),
+        "D": (0, 150, 138),
+        "T": (70, 200, 178),
+        "O": (255, 127, 62),
+        "R": (226, 91, 69),
+        "P": (239, 121, 90),
+        "F": (242, 228, 214),
+        "h": (226, 190, 160),
+        "Y": (255, 215, 90),
+        "y": (255, 239, 141),
+        "b": (186, 116, 93),
+        "q": (158, 85, 86),
+        "z": (81, 48, 70),
+        "w": (255, 255, 255),
+        "e": (38, 137, 202),
+        "E": (1, 101, 179),
+        "p": (250, 175, 170),
+        "m": (200, 90, 95),
         "n": (205, 140, 115),
     }
 
@@ -95,14 +109,45 @@ class ArcherReveal:
     # Where the string ran, per art row: the column it was drawn in at full draw (the rows behind her
     # hand, 24 to 26, keep the nock's). It runs from the bow's tips (rest, TIP_COL) to the nock, a V.
     STRING_COLS = {
-        5: 18, 6: 18, 7: 17, 8: 17, 9: 17, 10: 17, 11: 16, 12: 16,
-        13: 16, 14: 16, 15: 15, 16: 15, 17: 15, 18: 15, 19: 15, 20: 15,
-        21: 14, 22: 14, 23: 14, 24: 14, 25: 14, 26: 14, 27: 14, 28: 14,
-        29: 15, 30: 15, 31: 15, 32: 16, 33: 16, 34: 16, 35: 16, 36: 17,
-        37: 17, 38: 17, 39: 18, 40: 18,
+        5: 18,
+        6: 18,
+        7: 17,
+        8: 17,
+        9: 17,
+        10: 17,
+        11: 16,
+        12: 16,
+        13: 16,
+        14: 16,
+        15: 15,
+        16: 15,
+        17: 15,
+        18: 15,
+        19: 15,
+        20: 15,
+        21: 14,
+        22: 14,
+        23: 14,
+        24: 14,
+        25: 14,
+        26: 14,
+        27: 14,
+        28: 14,
+        29: 15,
+        30: 15,
+        31: 15,
+        32: 16,
+        33: 16,
+        34: 16,
+        35: 16,
+        36: 17,
+        37: 17,
+        38: 17,
+        39: 18,
+        40: 18,
     }
     TIP_COL = 18
-    NOCK = (14, 24)       # art (col, row) of the arrow's tail at full draw
+    NOCK = (14, 24)  # art (col, row) of the arrow's tail at full draw
     HAND_COLS = (27, 29)  # the bow hand: the arrow passes behind it
     ARROW_LEN = 20
     STRING_RGB = (255, 255, 255)
@@ -111,12 +156,12 @@ class ArcherReveal:
     TIP_RGB = (255, 255, 255)
 
     RISE_S, AIM_S = 0.55, 0.8
-    RECOIL_S = 0.13       # she rocks back a pixel
-    FLY_PX_S = 170        # the arrow's speed once it's away, in px/s, after a short pick-up
+    RECOIL_S = 0.13  # she rocks back a pixel
+    FLY_PX_S = 170  # the arrow's speed once it's away, in px/s, after a short pick-up
     PICKUP_S = 0.15
     RING_HZ, RING_DECAY_S = 6.0, 0.14  # the string's swing past straight, and how fast it dies
     TRAIL = 16
-    HOLD_S = 0.55         # from the release to the start of her sinking
+    HOLD_S = 0.55  # from the release to the start of her sinking
     SINK_S = 0.5
 
     def __init__(self, width, height, rng=None):

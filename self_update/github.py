@@ -2,6 +2,7 @@
 when develop-beta merges into main) and develop-beta's tip with its CI result. Unauthenticated (60 calls an hour per board),
 which is plenty for updates started by hand: one check is two or three calls.
 """
+
 import json
 import re
 import ssl
@@ -24,11 +25,14 @@ class GitHubError(Exception):
 
 
 def _get(path):
-    request = urllib.request.Request(f"{API}/repos/{REPO}/{path}", headers={
-        "Accept": "application/vnd.github+json", "User-Agent": "LightningLane-Live-LED updater"})
+    request = urllib.request.Request(
+        f"{API}/repos/{REPO}/{path}",
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "LightningLane-Live-LED updater"},
+    )
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_S,
-                                    context=ssl.create_default_context(cafile=certifi.where())) as response:
+        with urllib.request.urlopen(
+            request, timeout=TIMEOUT_S, context=ssl.create_default_context(cafile=certifi.where())
+        ) as response:
             return json.load(response)
     except urllib.error.HTTPError as e:
         raise GitHubError(f"GitHub answered HTTP {e.code} for {path}") from None
@@ -41,8 +45,11 @@ def releases():
     found = _get("releases?per_page=30")
     if not isinstance(found, list):
         raise GitHubError("GitHub's list of releases isn't a list")
-    return [r["tag_name"] for r in found if isinstance(r, dict) and isinstance(r.get("tag_name"), str)
-            and not r.get("draft") and not r.get("prerelease")]
+    return [
+        r["tag_name"]
+        for r in found
+        if isinstance(r, dict) and isinstance(r.get("tag_name"), str) and not r.get("draft") and not r.get("prerelease")
+    ]
 
 
 def branch_tip(branch):
@@ -62,8 +69,13 @@ def ci_status(sha):
     if not isinstance(runs, list):
         raise GitHubError(f"GitHub didn't give {sha[:7]}'s checks")
     runs = [r for r in runs if isinstance(r, dict)]
-    states = [(str(r.get("name") or "?"), RUNNING if r.get("status") != "completed"
-               else PASSED if r.get("conclusion") in PASSING else FAILED) for r in runs]
+    states = [
+        (
+            str(r.get("name") or "?"),
+            RUNNING if r.get("status") != "completed" else PASSED if r.get("conclusion") in PASSING else FAILED,
+        )
+        for r in runs
+    ]
     if not runs:
         return f"{sha[:7]} has no CI results", states
     running = [name for name, state in states if state == RUNNING]
@@ -73,4 +85,3 @@ def ci_status(sha):
     if failed:
         return f"{sha[:7]}'s CI didn't pass ({', '.join(failed)})", states
     return None, states
-

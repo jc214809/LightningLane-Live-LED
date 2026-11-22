@@ -15,6 +15,7 @@ for the page) and, with --recording, <show>-recording.mp4. A later version is na
 and so on; open the page with ?show=<show>.v2. Re-run it after changing the score: the
 whole show renders in about a minute. Needs ffmpeg (and yt-dlp for --recording) on the PATH.
 """
+
 import argparse
 import json
 import logging
@@ -68,15 +69,42 @@ def frames(score, height, fps=FPS, seed=SEED, seconds=None):
 
 def ffmpeg_command(out, width, height, fps, audio=None, seconds=None):
     """ffmpeg reading raw RGB frames on stdin and writing an mp4 that seeks well, with the music if given."""
-    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
-           "-s", f"{width}x{height}", "-r", str(fps), "-i", "-"]
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-loglevel",
+        "error",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-s",
+        f"{width}x{height}",
+        "-r",
+        str(fps),
+        "-i",
+        "-",
+    ]
     if audio:
         cmd += ["-i", audio, "-c:a", "aac", "-b:a", "160k"]
     if seconds is not None:
         cmd += ["-t", f"{seconds:.3f}"]
     # A keyframe every second, so the page can jump anywhere without a wait.
-    return cmd + ["-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
-                  "-g", str(fps), "-movflags", "+faststart", out]
+    return cmd + [
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "-g",
+        str(fps),
+        "-movflags",
+        "+faststart",
+        out,
+    ]
 
 
 def render(score, height, out, audio=None, fps=FPS):
@@ -103,10 +131,16 @@ def cast(score):
     characters an effect draws (EFFECT_CHARACTERS) from their scene's start."""
     out, before, before_fx = {}, (), frozenset()
     for cue in score.cues:
-        listed = [{"name": ACTORS[a].NAME or a, "start": round(cue.start + ACTORS[a].ENTERS_S, 2)}
-                  for a in cue.actors if a not in before]
-        listed += [{"name": name, "start": round(cue.start, 2)} for fx, name in EFFECT_CHARACTERS.items()
-                   if fx in cue.effects and fx not in before_fx]
+        listed = [
+            {"name": ACTORS[a].NAME or a, "start": round(cue.start + ACTORS[a].ENTERS_S, 2)}
+            for a in cue.actors
+            if a not in before
+        ]
+        listed += [
+            {"name": name, "start": round(cue.start, 2)}
+            for fx, name in EFFECT_CHARACTERS.items()
+            if fx in cue.effects and fx not in before_fx
+        ]
         out[cue.title] = sorted(listed, key=lambda c: c["start"])
         before, before_fx = cue.actors, cue.effects
     return out
@@ -119,15 +153,31 @@ def sync_data(score, raw, boards, recording_file=None, version="v1"):
     scenes, ours = [], cast(score)
     for cue in score.cues:
         sec, sc = by_title[cue.title]
-        scenes.append({"title": cue.title, "section": cue.section, "start": cue.start, "end": cue.end,
-                       "castle": cue.castle, "effects": sorted(cue.effects), "rate": round(cue.rate, 2),
-                       "stage": cue.stage, "actors": list(cue.actors), "cast": ours[cue.title],
-                       "characters": sc.get("characters", [])})
+        scenes.append(
+            {
+                "title": cue.title,
+                "section": cue.section,
+                "start": cue.start,
+                "end": cue.end,
+                "castle": cue.castle,
+                "effects": sorted(cue.effects),
+                "rate": round(cue.rate, 2),
+                "stage": cue.stage,
+                "actors": list(cue.actors),
+                "cast": ours[cue.title],
+                "characters": sc.get("characters", []),
+            }
+        )
     rec = raw.get("recording")
     return {
-        "name": score.name, "version": version, "end": score.end, "fps": FPS, "boards": boards,
-        "sections": [{"id": s["id"], "start": s["start"], "end": s["end"], "palette": s["palette"]}
-                     for s in raw["sections"]],
+        "name": score.name,
+        "version": version,
+        "end": score.end,
+        "fps": FPS,
+        "boards": boards,
+        "sections": [
+            {"id": s["id"], "start": s["start"], "end": s["end"], "palette": s["palette"]} for s in raw["sections"]
+        ],
         "scenes": scenes,
         "recording": dict(rec, file=recording_file) if rec and recording_file else None,
     }
@@ -148,8 +198,20 @@ def download_recording(url, out):
     if shutil.which("yt-dlp") is None:
         raise RuntimeError("yt-dlp isn't installed: brew install yt-dlp")
     logger.info("downloading the recording...")
-    subprocess.run(["yt-dlp", "-q", "-f", "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/b[vcodec^=avc1]/b[ext=mp4]",
-                    "--merge-output-format", "mp4", "-o", out, url], check=True)
+    subprocess.run(
+        [
+            "yt-dlp",
+            "-q",
+            "-f",
+            "bv*[height<=1080][vcodec^=avc1]+ba[ext=m4a]/b[vcodec^=avc1]/b[ext=mp4]",
+            "--merge-output-format",
+            "mp4",
+            "-o",
+            out,
+            url,
+        ],
+        check=True,
+    )
 
 
 def parse_args(argv):
@@ -203,7 +265,7 @@ def add_earlier_boards(boards, tag):
 def fetch_recording(raw, path):
     """Download the score's recording to path; False, after saying why, when it can't."""
     if not raw.get("recording"):
-        logger.error("the score has no \"recording\" entry to download")
+        logger.error('the score has no "recording" entry to download')
         return False
     try:
         download_recording(raw["recording"]["url"], path)
@@ -247,8 +309,9 @@ def main(argv=None):
     if args.recording and not fetch_recording(raw, os.path.join(OUT_DIR, rec_name)):
         return 1
     have_rec = os.path.exists(os.path.join(OUT_DIR, rec_name))
-    write_sync_js(sync_data(score, raw, boards, rec_name if have_rec else None, args.version),
-                  os.path.join(OUT_DIR, f"{tag}.js"))
+    write_sync_js(
+        sync_data(score, raw, boards, rec_name if have_rec else None, args.version), os.path.join(OUT_DIR, f"{tag}.js")
+    )
     page = os.path.join(ROOT, "tools", "show_sync_checker.html") + ("" if tag == args.show else f"?show={tag}")
     logger.info("done. Open %s%s", page, "" if have_rec else " (add --recording for the real show beside it)")
     return 0

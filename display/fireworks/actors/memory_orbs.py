@@ -13,6 +13,7 @@ class MemoryOrbs(Actor):
     clear), then they fade out by END_S, just as Mike and Sulley pop up. Drawn over the castle, only as
     far as it shows. Placed by the clock: each orb's fall is a function of (elapsed - START_S) s.
     """
+
     NAME = "Inside Out's memory orbs"
     START_S, END_S = 25.0, 32.2  # audio 498.3-505.5
     ENTERS_S = START_S
@@ -29,8 +30,11 @@ class MemoryOrbs(Actor):
         base = show.castle_y + show.castle_h  # the row under the castle
         slots = []
         for top in range(base - n, show.castle_y - 1, -n):
-            row = [left for left in range(show.castle_x, show.castle_x + show.castle_w - n + 1, n)
-                   if all((left + i, top + j) in inside for i in range(n) for j in range(n))]
+            row = [
+                left
+                for left in range(show.castle_x, show.castle_x + show.castle_w - n + 1, n)
+                if all((left + i, top + j) in inside for i in range(n) for j in range(n))
+            ]
             self.rng.shuffle(row)  # each row fills in a random order
             slots += [(left, top) for left in row]
         step = self.FILL_S / max(1, len(slots))

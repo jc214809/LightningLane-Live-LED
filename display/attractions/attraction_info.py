@@ -53,8 +53,13 @@ def draw_wait_bar(canvas, minutes, expected=None):
     A bar along the bottom edge whose length and color track the wait, with a white
     tick at the forecast wait for this hour (when there is one) standing 1px taller.
     """
-    _draw_bar(canvas, _bar_length(minutes, canvas.width), graphics.Color(*wait_bar_color(minutes)),
-              expected, graphics.Color(*FORECAST_TICK_RGB))
+    _draw_bar(
+        canvas,
+        _bar_length(minutes, canvas.width),
+        graphics.Color(*wait_bar_color(minutes)),
+        expected,
+        graphics.Color(*FORECAST_TICK_RGB),
+    )
 
 
 def draw_down_bar(canvas, color, expected=None):
@@ -89,8 +94,15 @@ def draw_attraction_frame(canvas, ride_info, t, expected=None):
     scroll = scroll_offset(t, overflow) if overflow > 0 else None
     # A DOWN ride's name stays centered on the whole board, as before it had a bar, unless that would run into the bar.
     centered = bool(down and reserve and centered_clears_bar(canvas, ride_info, reserve, gap))
-    render_attraction_info(canvas, {**ride_info, "waitTime": shown}, down_color=down_color,
-                           reserve_bottom=reserve, scroll_px=scroll, gap=gap, centered=centered)
+    render_attraction_info(
+        canvas,
+        {**ride_info, "waitTime": shown},
+        down_color=down_color,
+        reserve_bottom=reserve,
+        scroll_px=scroll,
+        gap=gap,
+        centered=centered,
+    )
     if reserve and down:
         # Pulses with the "Down" text: both use this frame's down_color.
         draw_down_bar(canvas, down_color, expected)
@@ -156,8 +168,9 @@ def _layout(matrix, ride_info):
     combined_lines = [line for line in combined_lines if line.strip() != ""]  # Remove blank lines
 
     # Calculate the total height of all lines
-    total_lines_height, line_heights = calculate_text_height(combined_lines, wrapped_ride_name, loaded_fonts["ride"].height,
-                                                             loaded_fonts["waittime"].height)
+    total_lines_height, line_heights = calculate_text_height(
+        combined_lines, wrapped_ride_name, loaded_fonts["ride"].height, loaded_fonts["waittime"].height
+    )
     return combined_lines, wrapped_ride_name, wrapped_wait_time, total_lines_height, line_heights
 
 
@@ -187,7 +200,9 @@ def text_fits_above_bar(matrix, ride_info):
     return bar_layout(matrix, ride_info)[0] > 0
 
 
-def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0, scroll_px=None, gap=None, centered=False):
+def render_attraction_info(
+    matrix, ride_info, down_color=None, reserve_bottom=0, scroll_px=None, gap=None, centered=False
+):
     """
     Renders ride name at the top and wait time at the bottom in a single draw call.
     The combined text block is drawn from the center of the screen.
@@ -218,10 +233,21 @@ def render_attraction_info(matrix, ride_info, down_color=None, reserve_bottom=0,
         y_position = calculate_y_position(matrix, total_lines_height)
 
     # Render each line of text
-    render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color,
-                 gap_px + wait_drop)
+    render_lines(
+        matrix,
+        combined_lines,
+        y_position,
+        line_heights,
+        wrapped_ride_name,
+        wrapped_wait_time,
+        down_color,
+        gap_px + wait_drop,
+    )
 
-def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color=None, gap_px=None):  # noqa: PLR0913
+
+def render_lines(
+    matrix, combined_lines, y_position, line_heights, wrapped_ride_name, wrapped_wait_time, down_color=None, gap_px=None
+):  # noqa: PLR0913
     """
     Render each line of text at the specified position on the matrix.
     """
@@ -229,7 +255,11 @@ def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_
     gap_between_ride_and_wait_time = GAP_BETWEEN_RIDE_AND_WAIT if gap_px is None else gap_px
 
     for idx, line in enumerate(combined_lines):
-        line_width = get_text_width(loaded_fonts["ride"], line, SPACE_PX) if line in wrapped_ride_name else get_text_width(loaded_fonts["waittime"], line, SPACE_PX)
+        line_width = (
+            get_text_width(loaded_fonts["ride"], line, SPACE_PX)
+            if line in wrapped_ride_name
+            else get_text_width(loaded_fonts["waittime"], line, SPACE_PX)
+        )
 
         # Center horizontally with or without padding
         line_x_position = (matrix.width - line_width) // 2
@@ -239,7 +269,8 @@ def render_lines(matrix, combined_lines, y_position, line_heights, wrapped_ride_
             color_dict["white"]
             if line in wrapped_ride_name
             else (down_color or color_dict["down"])
-            if "down" in line.lower() or (any("down" in item.lower() for item in wrapped_wait_time) and line in wrapped_wait_time)
+            if "down" in line.lower()
+            or (any("down" in item.lower() for item in wrapped_wait_time) and line in wrapped_wait_time)
             else color_dict["wait"]
         )
         draw_text(matrix, loaded_fonts["ride"], line_x_position, current_y_position, text_color, line, SPACE_PX)

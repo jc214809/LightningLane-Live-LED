@@ -72,7 +72,9 @@ def test_the_blades_go_upright_then_sweep_apart_to_reveal_the_new_ride(height):
     assert NEW not in set(px.values()), "nothing revealed until they spread"
     px, _ = _frame(saber, unlocked)
     row = {px[(x, height // 2)] for x in range(64)}
-    assert row & set(saber.BLADES["red"]) and row & set(saber.BLADES["blue"]), "upright side by side, neither hiding the other"
+    assert row & set(saber.BLADES["red"]) and row & set(saber.BLADES["blue"]), (
+        "upright side by side, neither hiding the other"
+    )
     assert saber.gap(unlocked - 0.01) is None
 
     px, _ = _frame(saber, unlocked + saber.SPREAD_S / 4)
@@ -80,7 +82,9 @@ def test_the_blades_go_upright_then_sweep_apart_to_reveal_the_new_ride(height):
     assert left < 31.5 < right
     assert px[(32, height // 2)] == NEW, "the new ride between the blades"
     assert px[(0, 0)] == (0, 0, 0) and px[(63, 0)] == OLD, "the old one outside them"
-    assert px[(int(round(left)), 0)] in saber.BLADES["red"] and px[(int(round(right)), height - 1)] in saber.BLADES["blue"]
+    assert (
+        px[(int(round(left)), 0)] in saber.BLADES["red"] and px[(int(round(right)), height - 1)] in saber.BLADES["blue"]
+    )
 
     px, more = _frame(saber, saber.duration - 0.01)
     assert set(px.values()) == {NEW}, "both blades off the edges"

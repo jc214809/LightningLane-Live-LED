@@ -12,8 +12,15 @@ from utils.names import (
     is_water_park,
 )
 
-__all__ = ["DISNEY_WORLD_DESTINATION_ID", "WATER_PARK_KEYWORDS", "clean_park_name", "clean_ride_name",
-           "is_water_park", "park_ids", "config_names"]
+__all__ = [
+    "DISNEY_WORLD_DESTINATION_ID",
+    "WATER_PARK_KEYWORDS",
+    "clean_park_name",
+    "clean_ride_name",
+    "is_water_park",
+    "park_ids",
+    "config_names",
+]
 
 
 def park_ids(destinations, park_names):

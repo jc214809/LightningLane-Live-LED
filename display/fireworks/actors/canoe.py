@@ -1,4 +1,5 @@
 """Moana's outrigger canoe for the synced show (see show_actors.py)."""
+
 import math
 
 from display.fireworks.actors.base import Actor, stamp
@@ -14,6 +15,7 @@ class CanoeSails(Actor):
     Moana herself (MOANA_ART, from the princes sheet) stands at the stern in front of the sail; 64x32's
     small canoe has a three-pixel Moana of its own.
     """
+
     NAME = "Moana's canoe"
     ART = (
         ".......M.......",
@@ -112,9 +114,17 @@ class CanoeSails(Actor):
         "......kOORkkROOk...",
     )
     MOANA_COLORS = {
-        "K": (70, 45, 35), "k": (50, 32, 25), "r": (84, 70, 66),
-        "O": (202, 131, 107), "R": (163, 100, 81), "W": (246, 252, 246), "N": (97, 54, 21),
-        "A": (180, 56, 58), "b": (67, 134, 190), "o": (211, 192, 155), "B": (237, 208, 181),
+        "K": (70, 45, 35),
+        "k": (50, 32, 25),
+        "r": (84, 70, 66),
+        "O": (202, 131, 107),
+        "R": (163, 100, 81),
+        "W": (246, 252, 246),
+        "N": (97, 54, 21),
+        "A": (180, 56, 58),
+        "b": (67, 134, 190),
+        "o": (211, 192, 155),
+        "B": (237, 208, 181),
     }
     MOANA_LEFT = -2  # her left edge against the canoe's: she stands at the stern, in front of the sail
     # (start, end) seconds into its scene of each edge-to-edge crossing: once, across the 28 s climax.
@@ -165,5 +175,13 @@ class CanoeSails(Actor):
         stamp(out, self.art, self.colors, left, top, 1, show.width, show.height)
         if self.moana:
             feet = top + self.BIG_DECK
-            stamp(out, self.MOANA_ART, self.MOANA_COLORS, left + self.MOANA_LEFT, feet - len(self.MOANA_ART) + 1, 1,
-                  show.width, show.height)
+            stamp(
+                out,
+                self.MOANA_ART,
+                self.MOANA_COLORS,
+                left + self.MOANA_LEFT,
+                feet - len(self.MOANA_ART) + 1,
+                1,
+                show.width,
+                show.height,
+            )

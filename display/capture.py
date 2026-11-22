@@ -8,6 +8,7 @@ are drawn here instead, in Python, from the same BDF font files, onto a canvas t
 records its pixels. The emulator's drawing functions would take the recording canvas
 directly; this path is used on both so that what's tested is what runs on the board.
 """
+
 import contextlib
 
 from driver import graphics
@@ -90,8 +91,14 @@ def _store_glyph(glyphs, current, rows):
     if current.get("code", -1) < 0 or rows is None:
         return
     height = current.get("height", 0)
-    glyphs[current["code"]] = (current.get("advance", 0), height, current.get("x_offset", 0),
-                               current.get("y_offset", 0), rows[:height], current.get("width", 0))
+    glyphs[current["code"]] = (
+        current.get("advance", 0),
+        height,
+        current.get("x_offset", 0),
+        current.get("y_offset", 0),
+        rows[:height],
+        current.get("width", 0),
+    )
 
 
 def _rgb(color):

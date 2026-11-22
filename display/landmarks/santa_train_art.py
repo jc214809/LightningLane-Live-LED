@@ -71,10 +71,20 @@ BULBS = [COLORS["Y"], COLORS["G"], COLORS["W"], COLORS["B"]]  # round the billbo
 TRAIN_64 = [PLUTO_64, GOOFY_64, TREE_64, DONALD_64, GIFT_64, MICKEY_64, ENGINE_64]
 TRAIN_32 = [PLUTO_32, GOOFY_32, TREE_32, DONALD_32, GIFT_32, MICKEY_32, ENGINE_32]
 RIDERS = {  # who rides in which piece, by board
-    True: {id(PLUTO_64): "pluto", id(GOOFY_64): "goofy", id(DONALD_64): "donald", id(MICKEY_64): "mickey",
-           id(ENGINE_64): "santa"},
-    False: {id(PLUTO_32): "pluto", id(GOOFY_32): "goofy", id(DONALD_32): "donald", id(MICKEY_32): "mickey",
-            id(ENGINE_32): "santa"},
+    True: {
+        id(PLUTO_64): "pluto",
+        id(GOOFY_64): "goofy",
+        id(DONALD_64): "donald",
+        id(MICKEY_64): "mickey",
+        id(ENGINE_64): "santa",
+    },
+    False: {
+        id(PLUTO_32): "pluto",
+        id(GOOFY_32): "goofy",
+        id(DONALD_32): "donald",
+        id(MICKEY_32): "mickey",
+        id(ENGINE_32): "santa",
+    },
 }
 
 # Santa waving (not drawn yet): his forearm up out of his coat sleeve to a white mitten by his cheek, rocking

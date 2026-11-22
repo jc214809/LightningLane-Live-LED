@@ -3,6 +3,7 @@ The scene looks moved to the display/fireworks/effects package, grouped by kind 
 module re-exports every name they had here, so music_show.py, score.py, tools and tests keep
 importing from `display.fireworks.show_effects`. New code can import from `effects` directly.
 """
+
 # Every import below is a re-export, so F401 (unused import) doesn't apply.
 from display.fireworks.effects import EFFECTS  # noqa: F401
 from display.fireworks.effects.base import (  # noqa: F401

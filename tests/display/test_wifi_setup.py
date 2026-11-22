@@ -7,6 +7,7 @@ from display.wifi_setup import render_wifi_setup
 
 class Font:
     """A fixed-width board font: cell width and baseline as in its BDF."""
+
     def __init__(self, name, width, baseline):
         self.name, self.width, self.baseline = name, width, baseline
 
@@ -42,8 +43,17 @@ def fake_drawing(monkeypatch):
     monkeypatch.setattr(wifi_setup, "color_dict", {"gold": "gold", "white": "white", "wait": "blue"})
 
     def draw_text(canvas, font, x, y, color, text, space_px):
-        canvas.text.append({"font": font.name, "x": x, "y": y, "color": color, "text": text,
-                            "right": x + len(text) * font.width, "top": y - font.baseline})
+        canvas.text.append(
+            {
+                "font": font.name,
+                "x": x,
+                "y": y,
+                "color": color,
+                "text": text,
+                "right": x + len(text) * font.width,
+                "top": y - font.baseline,
+            }
+        )
 
     monkeypatch.setattr(countdown, "draw_text", draw_text)
 
@@ -52,7 +62,10 @@ def fake_drawing(monkeypatch):
 def test_it_says_wifi_setup_and_the_hotspot_to_join_all_on_the_board(height):
     rows = render("Disneypi-setup", height)
     assert [(r["text"], r["color"]) for r in rows] == [
-        ("Wi-Fi setup", "gold"), ("Join", "white"), ("Disneypi-setup", "blue")]
+        ("Wi-Fi setup", "gold"),
+        ("Join", "white"),
+        ("Disneypi-setup", "blue"),
+    ]
     for row in rows:
         assert 0 <= row["x"] and row["right"] <= 64 and 0 <= row["top"] and row["y"] < height, row
     tops = [r["top"] for r in rows]
@@ -86,7 +99,10 @@ def test_the_second_page_gives_the_settings_pages_address_all_on_the_board(heigh
     wifi_setup.render_settings_address(canvas)
     rows = canvas.text
     assert [(r["text"], r["color"]) for r in rows] == [
-        ("Settings", "gold"), ("Browse to", "white"), ("10.41.0.1:8080", "blue")]
+        ("Settings", "gold"),
+        ("Browse to", "white"),
+        ("10.41.0.1:8080", "blue"),
+    ]
     for row in rows:
         assert 0 <= row["x"] and row["right"] <= 64 and 0 <= row["top"] and row["y"] < height, row
 
@@ -95,5 +111,6 @@ def test_the_address_is_the_hotspots_and_the_servers_port():
     from ipaddress import ip_address
 
     from settings_page.server import HOTSPOT_NETWORK, PORT
+
     host, port = wifi_setup.SETTINGS_ADDRESS.split(":")
     assert ip_address(host) in HOTSPOT_NETWORK and int(port) == PORT

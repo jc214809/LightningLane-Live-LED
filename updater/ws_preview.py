@@ -5,6 +5,7 @@ snapshot of every ride, and its updates carry the ride's real lastUpdated. Each 
 is saved, so a reconnect subscribes "since" it and gets what it missed replayed.
 Spec: https://www.themeparks.wiki/api/websockets (not under ThemeParks.wiki's SLA while in preview).
 """
+
 import asyncio
 import json
 import random
@@ -75,12 +76,23 @@ class _PreviewFeed:
         dests = sorted({p["destination_id"] for p in self.parks_data if p.get("destination_id")})
         filters = WS_ENTITY_TYPES
         if isinstance(max_subscriptions, int) and len(dests) * len(filters) > max_subscriptions:
-            debug.warning(f"WebSocket key allows {max_subscriptions} subscriptions; subscribing to everything "
-                          "unfiltered (restaurants too) instead of one per entity type.")
+            debug.warning(
+                f"WebSocket key allows {max_subscriptions} subscriptions; subscribing to everything "
+                "unfiltered (restaurants too) instead of one per entity type."
+            )
             filters = (None,)
-        frames = [{"type": "subscribe", "channel": dest, "filter": entity_filter, "snapshot": True,
-                   "since": self.cursor, "reqId": f"{dest}:{entity_filter or 'all'}"}
-                  for dest in dests for entity_filter in filters]
+        frames = [
+            {
+                "type": "subscribe",
+                "channel": dest,
+                "filter": entity_filter,
+                "snapshot": True,
+                "since": self.cursor,
+                "reqId": f"{dest}:{entity_filter or 'all'}",
+            }
+            for dest in dests
+            for entity_filter in filters
+        ]
         self.frames = {frame["reqId"]: frame for frame in frames}
         self.pending = set(self.frames)
         self.retries = {}
@@ -112,8 +124,9 @@ class _PreviewFeed:
     def _on_subscribed(self, data, frame):
         data = data or {}
         self.pending.discard(data.get("reqId"))
-        debug.info(f"WebSocket subscribed to: {data.get('name') or data.get('entityId')}"
-                   f" ({data.get('filter') or 'all'})")
+        debug.info(
+            f"WebSocket subscribed to: {data.get('name') or data.get('entityId')} ({data.get('filter') or 'all'})"
+        )
         return []
 
     def _on_snapshot(self, data, frame):
@@ -141,13 +154,22 @@ class _PreviewFeed:
     def _on_error(self, data, frame):
         return self._error(data if isinstance(data, dict) else {"message": data})
 
-    _FRAME_HANDLERS = {"welcome": _on_welcome, "subscribed": _on_subscribed, "snapshot": _on_snapshot,
-                       "update": _on_update, "resumed": _on_resumed, "ping": _on_ping, "error": _on_error}
+    _FRAME_HANDLERS = {
+        "welcome": _on_welcome,
+        "subscribed": _on_subscribed,
+        "snapshot": _on_snapshot,
+        "update": _on_update,
+        "resumed": _on_resumed,
+        "ping": _on_ping,
+        "error": _on_error,
+    }
 
     def _error(self, data):
         req_id, message = data.get("reqId"), data.get("message") or data
-        debug.warning(f"WebSocket server error: {message} (code {data.get('code')}, "
-                      f"retryable {data.get('retryable')}, request {req_id})")
+        debug.warning(
+            f"WebSocket server error: {message} (code {data.get('code')}, "
+            f"retryable {data.get('retryable')}, request {req_id})"
+        )
         frame = self.frames.get(req_id)
         if frame is None:
             return []
@@ -184,8 +206,10 @@ class _PreviewFeed:
                 changed = [by_id[i] for i, status in before.items() if by_id[i].get("status") != status]
                 if not from_snapshot:  # a snapshot's changes would be every ride at startup
                     for attr in changed:
-                        debug.info(f"WS update: {attr['name']} ({park['name']}) {before[attr['id']]} → "
-                                   f"{attr.get('status')}, wait={attr.get('waitTime')}")
+                        debug.info(
+                            f"WS update: {attr['name']} ({park['name']}) {before[attr['id']]} → "
+                            f"{attr.get('status')}, wait={attr.get('waitTime')}"
+                        )
                 if changed or from_snapshot:
                     # fetch_schedules=False: blocking HTTP stays on the REST thread.
                     update_parks_operating_status([park], fetch_schedules=False)
@@ -213,15 +237,17 @@ async def _preview_ws_loop(api_key, parks_data):
                     headers={"X-API-Key": api_key.strip()},
                     ssl=ssl_ctx,
                     timeout=aiohttp.ClientWSTimeout(
-                        ws_receive=_PREVIEW_RECEIVE_TIMEOUT_SECS, ws_close=_WS_CLOSE_TIMEOUT_SECS),
+                        ws_receive=_PREVIEW_RECEIVE_TIMEOUT_SECS, ws_close=_WS_CLOSE_TIMEOUT_SECS
+                    ),
                 ) as ws:
                     connected_at = time.monotonic()
                     feed.stats = _WsStats()
                     await _read_frames(ws, feed, parks_data)
 
                     refused = _REFUSED_CLOSE_CODES.get(ws.close_code)
-                    debug.warning(f"WebSocket receive loop ended: close_code={ws.close_code}, "
-                                  f"exception={ws.exception()}")
+                    debug.warning(
+                        f"WebSocket receive loop ended: close_code={ws.close_code}, exception={ws.exception()}"
+                    )
 
         except TimeoutError:
             debug.warning(f"WebSocket silent for {_PREVIEW_RECEIVE_TIMEOUT_SECS}s; reconnecting.")
@@ -280,6 +306,8 @@ def _next_connect_delay(refused, delay, connected_at, feed):
     else:
         duration = (time.monotonic() - connected_at) if connected_at is not None else None
         delay = _next_delay(delay, duration)
-        debug.info(f"WebSocket disconnected; reconnecting in about {delay}s"
-                   + (" (resuming from the last cursor)" if feed.cursor else ""))
+        debug.info(
+            f"WebSocket disconnected; reconnecting in about {delay}s"
+            + (" (resuming from the last cursor)" if feed.cursor else "")
+        )
     return delay

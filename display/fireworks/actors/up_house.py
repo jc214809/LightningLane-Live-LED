@@ -1,4 +1,5 @@
 """Carl's house from Up for the synced show (see show_actors.py)."""
+
 import math
 import random
 
@@ -15,13 +16,13 @@ class UpHouseFloats(Actor):
     corner, gone by CROSS_S (the scene is 22 s). Anything below the castle's roofline is hidden, so it
     passes behind the castle's towers.
     """
+
     NAME = "The Up house"
     CROSS_S = 21.5  # from off the left edge to off the top-right corner
     BOB_S = 3.2  # one bob
     SCALE = 1  # 1x on both boards: the chart is 46 rows tall
     # The 64x32 bunch's colours: V1's Balloons effect (show_effects.py), so it matches them.
-    BALLOON_COLOURS = ((240, 50, 50), (250, 200, 40), (60, 120, 255), (60, 200, 80), (240, 110, 200),
-                       (255, 140, 40))
+    BALLOON_COLOURS = ((240, 50, 50), (250, 200, 40), (60, 120, 255), (60, 200, 80), (240, 110, 200), (255, 140, 40))
     STRING_RGB = (190, 190, 190)
 
     # From docs/references/Up house with balloons chart.png, cell for cell (its sky left out).

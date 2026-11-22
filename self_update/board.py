@@ -4,6 +4,7 @@ command goes through one run function (subprocess.run by default), so tests swap
 The updater runs as root, but the checkout belongs to the user who cloned it (and pulls it by hand
 over SSH), so git runs as that user: files git writes stay theirs.
 """
+
 import os
 import pwd
 import re
@@ -46,7 +47,9 @@ class Board:
             raise CommandFailed(f"{' '.join(args[:3])} failed: {e}") from None
         if check and done.returncode:
             tail = (done.stderr or done.stdout or "").strip().splitlines()[-5:]
-            raise CommandFailed(f"{' '.join(args[:3])} exited {done.returncode}" + (f": {' / '.join(tail)}" if tail else ""))
+            raise CommandFailed(
+                f"{' '.join(args[:3])} exited {done.returncode}" + (f": {' / '.join(tail)}" if tail else "")
+            )
         return done
 
     # git
@@ -147,8 +150,14 @@ class Board:
         """pip freeze's pinned lines, without what pip can't reinstall from an index: the rgbmatrix
         driver (built from source by the installer) and anything installed from a path or URL."""
         lines = self._command([self.python, "-m", "pip", "freeze"], PIP_TIMEOUT_S).stdout.splitlines()
-        return [line for line in lines if "==" in line and " @ " not in line and not line.startswith("-e")
-                and not line.lower().startswith("rgbmatrix")]
+        return [
+            line
+            for line in lines
+            if "==" in line
+            and " @ " not in line
+            and not line.startswith("-e")
+            and not line.lower().startswith("rgbmatrix")
+        ]
 
     def pip_install(self, requirements_path):
         self._command([self.python, "-m", "pip", "install", "--prefer-binary", "-r", requirements_path], PIP_TIMEOUT_S)
@@ -168,8 +177,14 @@ class Board:
         owner = os.stat(os.path.join(self.app_dir, ".git"))
         if self._euid() != 0 or owner.st_uid == 0:
             return {}
-        return {"env": {**os.environ, "SUDO_UID": str(owner.st_uid), "SUDO_GID": str(owner.st_gid),
-                        "SUDO_USER": pwd.getpwuid(owner.st_uid).pw_name}}
+        return {
+            "env": {
+                **os.environ,
+                "SUDO_UID": str(owner.st_uid),
+                "SUDO_GID": str(owner.st_gid),
+                "SUDO_USER": pwd.getpwuid(owner.st_uid).pw_name,
+            }
+        }
 
     def installer_skips_requirements(self):
         try:
@@ -182,8 +197,9 @@ class Board:
 
     def systemctl_show(self, unit, prop):
         """A unit's property (NRestarts, ActiveState, LoadState), as text."""
-        return self._command(["systemctl", "show", "--property", prop, "--value", unit],
-                             SYSTEMCTL_TIMEOUT_S).stdout.strip()
+        return self._command(
+            ["systemctl", "show", "--property", prop, "--value", unit], SYSTEMCTL_TIMEOUT_S
+        ).stdout.strip()
 
     def unit_exists(self, unit):
         return self.systemctl_show(unit, "LoadState") == "loaded"

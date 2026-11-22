@@ -10,6 +10,7 @@ from tests.display.landmarks.support import TITLE_CHAR_W, _pinned, _scene_s
 
 def test_the_pumpkins_light_up_while_the_wipe_is_still_uncovering_them():
     import display.animation as animation
+
     wipe = animation.TRANSITIONS["wipe"].duration
     for cls in (landmarks.ScaryJackOLanternLandmark, landmarks.FriendlyJackOLanternLandmark):
         pumpkin = cls(64, 64, random.Random(5))
@@ -59,7 +60,7 @@ def test_scary_jack_o_lantern_face_stands_out_from_its_shell():
 def test_scary_jack_o_lantern_face_sits_inside_the_head_below_the_ears():
     pumpkin = landmarks.ScaryJackOLanternLandmark(64, 64, random.Random(8))
     for x, y in pumpkin.carved:
-        assert (x - pumpkin.cx) ** 2 + (y - pumpkin.cy) ** 2 < pumpkin.R ** 2
+        assert (x - pumpkin.cx) ** 2 + (y - pumpkin.cy) ** 2 < pumpkin.R**2
         assert y > pumpkin.cy - pumpkin.R
 
 
@@ -145,10 +146,22 @@ def _party_park():
     """Magic Kingdom on a party night, 7pm to midnight, dated the park's today."""
     from datetime import datetime
     from zoneinfo import ZoneInfo
+
     today = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
-    return {"name": "Magic Kingdom", "timezone": "America/New_York", "seasonalEvent": "halloween",
-            "schedule": [{"type": "TICKETED_EVENT", "date": today, "description": "Special Ticketed Event",
-                          "openingTime": f"{today}T19:00:00-04:00", "closingTime": f"{today}T23:59:00-04:00"}]}
+    return {
+        "name": "Magic Kingdom",
+        "timezone": "America/New_York",
+        "seasonalEvent": "halloween",
+        "schedule": [
+            {
+                "type": "TICKETED_EVENT",
+                "date": today,
+                "description": "Special Ticketed Event",
+                "openingTime": f"{today}T19:00:00-04:00",
+                "closingTime": f"{today}T23:59:00-04:00",
+            }
+        ],
+    }
 
 
 @pytest.mark.parametrize("motion", ["wink", "bounce"])
@@ -211,6 +224,7 @@ def test_short_board_pumpkin_jumps_into_the_titles_spot_and_shoves_it_off():
 
 def _short_scene_s(pumpkin):
     import display.animation as animation
+
     return pumpkin.SCREEN_S - animation.COVER_S - animation.TRANSITIONS["wipe"].duration
 
 

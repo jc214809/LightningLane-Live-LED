@@ -7,7 +7,9 @@ import pytest
 from display import capture
 
 REPO = os.path.join(os.path.dirname(__file__), "..", "..")
-FONTS = sorted({path for height in (32, 64) for path in __import__("display.display", fromlist=["fonts"]).fonts()[height].values()})
+FONTS = sorted(
+    {path for height in (32, 64) for path in __import__("display.display", fromlist=["fonts"]).fonts()[height].values()}
+)
 TEXT = "Space Mountain 45 Mins - it's a small world! 9AM-11PM $15 *"
 
 
@@ -23,14 +25,22 @@ class NativeCanvas:
 
 def pi_graphics():
     """A graphics module that behaves like rgbmatrix's on the Pi: its own canvas or a TypeError."""
+
     def only_native(name):
         def fn(canvas, *args):
             if not isinstance(canvas, NativeCanvas):
-                raise TypeError(f"Argument 'c' has incorrect type (expected rgbmatrix.core.Canvas, got {type(canvas).__name__})")
+                raise TypeError(
+                    f"Argument 'c' has incorrect type (expected rgbmatrix.core.Canvas, got {type(canvas).__name__})"
+                )
+
         fn.__name__ = name
         return fn
-    return types.SimpleNamespace(DrawText=only_native("DrawText"), DrawLine=only_native("DrawLine"),
-                                 Color=lambda r, g, b: types.SimpleNamespace(red=r, green=g, blue=b))
+
+    return types.SimpleNamespace(
+        DrawText=only_native("DrawText"),
+        DrawLine=only_native("DrawLine"),
+        Color=lambda r, g, b: types.SimpleNamespace(red=r, green=g, blue=b),
+    )
 
 
 @pytest.fixture
@@ -88,11 +98,13 @@ def test_text_in_a_font_that_was_never_registered_is_reported(on_a_pi, monkeypat
 
 def test_fonts_are_registered_as_they_load(monkeypatch, tmp_path):
     import display.display as display_mod
+
     loaded = []
 
     class Font:
         def LoadFont(self, path):
             loaded.append(path)
+
     monkeypatch.setattr(display_mod, "graphics", types.SimpleNamespace(Font=Font))
     monkeypatch.setattr(display_mod, "loaded_fonts", {})
     display_mod.initialize_fonts(32)
@@ -129,6 +141,7 @@ def test_captured_lines_match_the_emulators(line):
 
 def test_capture_takes_images_like_the_weather_icon():
     from PIL import Image
+
     img = Image.new("RGB", (3, 2), (0, 0, 0))
     img.putpixel((1, 0), (250, 200, 10))
     shot = capture.Capture(64, 32)

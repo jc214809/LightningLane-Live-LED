@@ -9,8 +9,16 @@ from display.fireworks.music_show import CASTLE_LOOKS, SHAPES, MusicShow, render
 from display.fireworks.score import Cue, Hit, Score, load_score
 
 
-def _cue(title="x", start=0.0, end=10.0, palette=((255, 0, 0),), rate=1.0, castle=None, shapes=(),  # noqa: PLR0913
-         effects=()):
+def _cue(
+    title="x",
+    start=0.0,
+    end=10.0,
+    palette=((255, 0, 0),),
+    rate=1.0,
+    castle=None,
+    shapes=(),  # noqa: PLR0913
+    effects=(),
+):
     return Cue("s", title, start, end, tuple(palette), rate, castle, tuple(shapes), frozenset(effects))
 
 
@@ -56,9 +64,11 @@ def test_a_busier_scene_launches_more():
             nonlocal count
             count += 1
             original()
+
         show.launch = counted
         _run(show, _cue(rate=rate), 20)
         return count
+
     assert launches(2.5) > 1.8 * launches(1.0) > 0
 
 
@@ -240,8 +250,10 @@ def clock(monkeypatch):
             fake.now += fake.frame_s
             matrix.swaps += 1
             return canvas
+
         monkeypatch.setattr(music_show, "present", present)
         return fake
+
     return make
 
 
@@ -262,12 +274,13 @@ def test_a_slow_board_keeps_time_with_the_music(clock, monkeypatch):
     slow = clock(0.25)
     seen = []
     original = MusicShow.set_cue
-    monkeypatch.setattr(MusicShow, "set_cue", lambda self, cue, t: (seen.append((t, cue.title)), original(self, cue, t)))
+    monkeypatch.setattr(
+        MusicShow, "set_cue", lambda self, cue, t: (seen.append((t, cue.title)), original(self, cue, t))
+    )
     render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=slow)
     assert len(seen) == 16
     assert all(title == ("one" if t < 2 else "two") for t, title in seen)
     assert seen[-1][0] >= 3.5
-
 
 
 def test_each_scene_logs_how_fast_the_board_kept_up(clock, monkeypatch):
@@ -279,8 +292,9 @@ def test_each_scene_logs_how_fast_the_board_kept_up(clock, monkeypatch):
     rates = [line for line in logged if "fps" in line]
     assert len(rates) == 2, "each scene, the last one too"
     for line, title in zip(rates, ("one", "two")):
-        assert line.startswith(f"test {title}: 4.0 fps (aiming for 30), slowest frame 250 ms (build 0 / push 250), "
-                               "8 late, ")
+        assert line.startswith(
+            f"test {title}: 4.0 fps (aiming for 30), slowest frame 250 ms (build 0 / push 250), 8 late, "
+        )
         assert line.endswith(", load 1.0, 60°C")
         assert " px, CPU show " in line and " / process " in line
 
@@ -304,6 +318,7 @@ def test_a_scenes_log_reports_cpu_of_the_show_thread_against_the_process(clock, 
         cpu["thread"] += 0.5
         cpu["process"] += 1.0
         return cpu["thread"]
+
     monkeypatch.setattr(music_show.time, "thread_time", thread_time)
     monkeypatch.setattr(music_show.time, "process_time", lambda: cpu["process"])
     render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=quick)
@@ -326,6 +341,7 @@ def test_building_the_show_doesnt_put_the_picture_behind_the_music(clock, monkey
     def slow_build(self, *args, **kwargs):  # a Pi Zero drawing every character's poses up front
         built(self, *args, **kwargs)
         fake.now += 1.5
+
     monkeypatch.setattr(MusicShow, "__init__", slow_build)
     seen = []
     original = MusicShow.set_cue
@@ -333,7 +349,9 @@ def test_building_the_show_doesnt_put_the_picture_behind_the_music(clock, monkey
     render_music_show(FakeMatrix(), _score(), rng=random.Random(0), clock=fake)
     assert seen[0] >= 1.5, "the first frame is where the music is by then, not its start"
 
+
 # ---- Tink in "You Can Fly" ----
+
 
 def _tink_cue():
     return _cue(title="You Can Fly", start=100, end=142, rate=1.4, effects={"tink"})
@@ -394,12 +412,15 @@ def test_tink_flies_in_happily_ever_afters_you_can_fly():
 
 # ---- stages and actors (later versions) ----
 
+
 def _castle_max(show):
     """The brightest channel of any castle pixel this frame, with the stars and flash out of the way."""
     show.stars, show.flash = [], [0.0, 0.0, 0.0]
     pixels = show.frame_pixels()
-    return max((max(pixels.get((show.castle_x + dx, show.castle_y + dy), (0, 0, 0)))
-                for dx, dy, _ in show.castle_pixels), default=0)
+    return max(
+        (max(pixels.get((show.castle_x + dx, show.castle_y + dy), (0, 0, 0))) for dx, dy, _ in show.castle_pixels),
+        default=0,
+    )
 
 
 @pytest.mark.parametrize("height", [32, 64])
@@ -429,7 +450,8 @@ def test_a_timed_stage_change_brings_the_castle_back_mid_scene():
     show.set_cue(_cue(rate=0), 0)
     full = _castle_max(show)
     scene = _cue(title="stars then castle", start=10, end=30, rate=0)._replace(
-        stage="off", stage_changes=((20.0, "castle"),))
+        stage="off", stage_changes=((20.0, "castle"),)
+    )
     show.set_cue(scene, 10)
     show.set_cue(scene, 10 + music_show.CASTLE_FADE_S)
     assert _castle_max(show) == 0
@@ -441,7 +463,8 @@ def test_a_timed_stage_change_brings_the_castle_back_mid_scene():
 def test_a_timed_castle_change_fades_to_the_new_look_mid_scene():
     show = MusicShow(64, 64, random.Random(23))
     scene = _cue(start=0, end=20, rate=0, castle="green", effects=("wipe_down",))._replace(
-        castle_changes=((10.0, "pink"),))
+        castle_changes=((10.0, "pink"),)
+    )
     show.set_cue(scene, 0)
     show.set_cue(scene, music_show.WIPE_S + 1)
     green = _castle_rgb(show)
@@ -467,6 +490,7 @@ def test_fireworks_show_through_a_ghost_castle():
 class _Marker(show_actors.Actor):
     """A test actor: a white pixel on the castle's middle while its scene is on, at a spot that moves
     one column a second, and a record of each step."""
+
     def __init__(self, show):
         super().__init__(show)
         self.steps = []
@@ -499,6 +523,7 @@ def test_an_actor_draws_in_front_of_the_castle_only_in_its_scene(marker):
 
 
 # ---- a scene's set-moment hits ----
+
 
 def _hit_cue(*hits):
     return _cue(rate=0)._replace(hits=tuple(hits))
@@ -563,7 +588,7 @@ def test_a_roof_fan_hit_fires_comets_outward_from_both_side_roofs(height):
 def test_a_comet_hit_flies_up_and_away_from_its_side():
     show = MusicShow(64, 32, random.Random(1))
     _run(show, _hit_cue(Hit(1.0, "comet", (255, 200, 60), side="right")), 1.5)
-    (x, y, vx, *_), = show.hit_comets.comets
+    ((x, y, vx, *_),) = show.hit_comets.comets
     assert x < 63 and y < 31 and vx < 0
 
 

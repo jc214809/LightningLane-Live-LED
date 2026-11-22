@@ -3,8 +3,9 @@ import json
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_spec = importlib.util.spec_from_file_location("build_merida_poses",
-                                               os.path.join(ROOT, "tools", "build_merida_poses.py"))
+_spec = importlib.util.spec_from_file_location(
+    "build_merida_poses", os.path.join(ROOT, "tools", "build_merida_poses.py")
+)
 tool = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(tool)
 

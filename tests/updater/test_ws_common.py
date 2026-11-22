@@ -14,6 +14,7 @@ from updater.ws_common import (
 
 # --- watchdog ---
 
+
 def test_should_force_reconnect_silent_and_operating():
     assert _should_force_reconnect(0, [{"operating": True}]) is True
 
@@ -93,6 +94,7 @@ def test_watchdog_tolerates_silence_when_parks_closed():
 
 
 # --- reconnect backoff ---
+
 
 def test_next_delay_resets_after_stable_connection():
     assert _next_delay(40, 3600) == _RECONNECT_DELAY_INITIAL

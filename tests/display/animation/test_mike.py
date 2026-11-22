@@ -58,8 +58,9 @@ def test_mike_blinks_looks_around_then_scares():
         # Arm pixels out past his sides, above his eye.
         px = mike.pixels(t)
         cx = sum(x for x, _ in px) / len(px)
-        return any(rgb == mike.DARK and abs(x - cx) > mike.r + 1 and y < top(t, mike.IRIS)
-                   for (x, y), rgb in px.items())
+        return any(
+            rgb == mike.DARK and abs(x - cx) > mike.r + 1 and y < top(t, mike.IRIS) for (x, y), rgb in px.items()
+        )
 
     assert hands_up(scaring) and not hands_up(before), "arms thrown up only for the scare"
 

@@ -21,8 +21,7 @@ class FalconReveal(CapturesScreens):
     wants_prev = True
     wants_new = True
     ARRIVE_S, CRUISE_S, CHARGE_S, JUMP_S, FLASH_S = 0.8, 0.9, 0.35, 0.55, 0.4
-    PHASES = (("arrive", ARRIVE_S), ("cruise", CRUISE_S), ("charge", CHARGE_S),
-              ("jump", JUMP_S), ("flash", FLASH_S))
+    PHASES = (("arrive", ARRIVE_S), ("cruise", CRUISE_S), ("charge", CHARGE_S), ("jump", JUMP_S), ("flash", FLASH_S))
     duration = sum(sec for _, sec in PHASES)
 
     # Traced from the photo turned nose-right, then only the bold features kept (the
@@ -55,8 +54,14 @@ class FalconReveal(CapturesScreens):
         "..............KKKKKKKKK.....",
     ]
     COLORS = {
-        "K": (85, 85, 92), "H": (170, 170, 165), "L": (215, 215, 210), "M": (120, 120, 118),
-        "D": (62, 62, 68), "R": (200, 55, 45), "W": (120, 170, 230), "E": (70, 150, 255),
+        "K": (85, 85, 92),
+        "H": (170, 170, 165),
+        "L": (215, 215, 210),
+        "M": (120, 120, 118),
+        "D": (62, 62, 68),
+        "R": (200, 55, 45),
+        "W": (120, 170, 230),
+        "E": (70, 150, 255),
     }
     ENGINE_HOT = (210, 240, 255)  # the engine band at full burn, as she jumps
     STREAK_RGB = (200, 220, 255)  # stars and her arrival trail
@@ -116,8 +121,8 @@ class FalconReveal(CapturesScreens):
             if name == "flash":
                 return self.width, self.width
             # The nose leaves far faster than the tail: she stretches into a streak.
-            rear = base + (self.width + 1 - base) * p ** 3
-            nose = base + self.ship_w + (self.width + 8 * self.ship_w) * p ** 2
+            rear = base + (self.width + 1 - base) * p**3
+            nose = base + self.ship_w + (self.width + 8 * self.ship_w) * p**2
             return int(rear), int(nose)
         return int(x), int(x) + self.ship_w
 
@@ -131,7 +136,7 @@ class FalconReveal(CapturesScreens):
         """(shift, stretch) of the old screen: nothing until she jumps, then it streaks off to the right."""
         name, p = self.phase(t)
         if name == "jump":
-            return self.width * 1.3 * p ** 3, 1 + 7 * p ** 2
+            return self.width * 1.3 * p**3, 1 + 7 * p**2
         if name == "flash":
             return float(self.width * 2), 8.0
         return 0.0, 1.0

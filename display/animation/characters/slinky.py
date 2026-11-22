@@ -29,6 +29,7 @@ class SlinkyReveal:
     The new screen is revealed behind his front half as it walks, so the spring and rear
     are drawn over it; ahead of him the board stays dark.
     """
+
     STRETCH_S, HOLD_S, SNAP_S, EXIT_S = 1.3, 0.5, 0.35, 0.55
     duration = STRETCH_S + HOLD_S + SNAP_S + EXIT_S
 
@@ -141,9 +142,18 @@ class SlinkyReveal:
         "DDDDDDD..DDDDDDD",
     ]
     COLORS = {
-        "A": (104, 10, 3), "N": (135, 0, 3), "D": (142, 38, 5), "B": (247, 127, 6), "F": (179, 69, 6),
-        "H": (226, 71, 3), "E": (251, 217, 103), "G": (245, 246, 247), "J": (12, 12, 14),
-        "K": (39, 137, 39), "L": (1, 77, 1), "C": (128, 128, 128),
+        "A": (104, 10, 3),
+        "N": (135, 0, 3),
+        "D": (142, 38, 5),
+        "B": (247, 127, 6),
+        "F": (179, 69, 6),
+        "H": (226, 71, 3),
+        "E": (251, 217, 103),
+        "G": (245, 246, 247),
+        "J": (12, 12, 14),
+        "K": (39, 137, 39),
+        "L": (1, 77, 1),
+        "C": (128, 128, 128),
     }
     # Where the spring runs for each size of halves: (coil height, its middle's height above
     # the ground, how far into the front half it starts, how far in from the rear's back it
@@ -231,8 +241,7 @@ class SlinkyReveal:
         set_pixel(canvas, int(round(x)), int(round(y)), rgb, self.width, self.height)
 
     def _draw(self, canvas, art, x0, y0):
-        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale),
-              self.width, self.height)
+        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale), self.width, self.height)
 
 
 class SlinkyWrapReveal:
@@ -385,13 +394,29 @@ class SlinkyWrapReveal:
         self.peek_x = (self.STUB_COILS + 1) * self.coil_step - 4 * s
         self.pause = rng.uniform(*self.PAUSE_S)
         self.duration = self.visit_s()
-        b = [self.WALK_IN_S, self.WALK_OFF_S, self.pause, self.PEEK_S, self.LOOK_S,
-             self.CROSS_S, self.FOLLOW_S, self.EXIT_S]
-        self.beats = [sum(b[:i + 1]) for i in range(len(b))]
+        b = [
+            self.WALK_IN_S,
+            self.WALK_OFF_S,
+            self.pause,
+            self.PEEK_S,
+            self.LOOK_S,
+            self.CROSS_S,
+            self.FOLLOW_S,
+            self.EXIT_S,
+        ]
+        self.beats = [sum(b[: i + 1]) for i in range(len(b))]
 
     def visit_s(self):
-        return (self.WALK_IN_S + self.WALK_OFF_S + self.pause + self.PEEK_S + self.LOOK_S
-                + self.CROSS_S + self.FOLLOW_S + self.EXIT_S)
+        return (
+            self.WALK_IN_S
+            + self.WALK_OFF_S
+            + self.pause
+            + self.PEEK_S
+            + self.LOOK_S
+            + self.CROSS_S
+            + self.FOLLOW_S
+            + self.EXIT_S
+        )
 
     def phase(self, t):
         """(name, 0..1 progress through it) for time t."""
@@ -413,7 +438,12 @@ class SlinkyWrapReveal:
         cross_end = W - self.front_w
         landed = cross_end - self.gap - self.rear_w
         if name == "walk_in":
-            rear = -self.rear_w - self.gap - self.front_w + (self.rear_home + self.rear_w + self.gap + self.front_w) * ease_out(p)
+            rear = (
+                -self.rear_w
+                - self.gap
+                - self.front_w
+                + (self.rear_home + self.rear_w + self.gap + self.front_w) * ease_out(p)
+            )
             return {"rear": (rear, self.bottom), "front": (rear + self.rear_w + self.gap, self.bottom)}
         if name == "walk_off":
             start = self.rear_home + self.rear_w + self.gap
@@ -421,19 +451,25 @@ class SlinkyWrapReveal:
         if name == "pause":
             return {"rear": (self.rear_home, self.bottom), "front": None}
         if name == "peek":
-            return {"rear": (self.rear_home, self.bottom),
-                    "front": (-self.front_w + (self.peek_x + self.front_w) * ease_out(p), self.top)}
+            return {
+                "rear": (self.rear_home, self.bottom),
+                "front": (-self.front_w + (self.peek_x + self.front_w) * ease_out(p), self.top),
+            }
         if name == "look":
             return {"rear": (self.rear_home, self.bottom), "front": (self.peek_x, self.top)}
         if name == "cross":
-            return {"rear": (self.rear_home, self.bottom),
-                    "front": (self.peek_x + (cross_end - self.peek_x) * ease_out(p), self.top)}
+            return {
+                "rear": (self.rear_home, self.bottom),
+                "front": (self.peek_x + (cross_end - self.peek_x) * ease_out(p), self.top),
+            }
         if name == "follow":
             # The rear goes the way his front went: off the right edge along the bottom...
             if p < self.FOLLOW_OUT:
                 q = p / self.FOLLOW_OUT
-                return {"rear": (self.rear_home + (W - self.rear_home) * q * q, self.bottom),
-                        "front": (cross_end, self.top)}
+                return {
+                    "rear": (self.rear_home + (W - self.rear_home) * q * q, self.bottom),
+                    "front": (cross_end, self.top),
+                }
             # ...then back in from the left along the top, catching up behind him.
             q = (p - self.FOLLOW_OUT) / (1 - self.FOLLOW_OUT)
             x = -self.rear_w + (landed + self.rear_w) * ease_out(q)
@@ -461,13 +497,15 @@ class SlinkyWrapReveal:
             self._spring(canvas, rear_attach, (self.width + self.coil_step, rear_attach[1]), self.coil_step)
             if pose["front"]:
                 fx, fg = pose["front"]
-                self._spring(canvas, (-self.coil_step, fg - self.rise), (fx + self.front_at, fg - self.rise),
-                             self.coil_step)
+                self._spring(
+                    canvas, (-self.coil_step, fg - self.rise), (fx + self.front_at, fg - self.rise), self.coil_step
+                )
         elif pose["front"]:
             fx, fg = pose["front"]
             span = max(1.0, fx + self.front_at - rear_attach[0])
-            self._spring(canvas, rear_attach, (fx + self.front_at, fg - self.rise),
-                         max(1.5 * s, min(span / self.COILS, 3.5 * s)))
+            self._spring(
+                canvas, rear_attach, (fx + self.front_at, fg - self.rise), max(1.5 * s, min(span / self.COILS, 3.5 * s))
+            )
         self._draw(canvas, rear_art, rx, rg - self.rear_h)
         if pose["front"]:
             fx, fg = pose["front"]
@@ -499,5 +537,4 @@ class SlinkyWrapReveal:
         set_pixel(canvas, int(round(x)), int(round(y)), rgb, self.width, self.height)
 
     def _draw(self, canvas, art, x0, y0):
-        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale),
-              self.width, self.height)
+        paint(canvas, art_pixels(art, int(round(x0)), int(round(y0)), self.COLORS, self.scale), self.width, self.height)

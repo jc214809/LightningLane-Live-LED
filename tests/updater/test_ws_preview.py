@@ -21,14 +21,36 @@ from updater.ws_preview import (
 
 
 def _preview_parks():
-    return [{"id": "mk", "name": "Magic Kingdom", "destination_id": "wdw", "operating": True,
-             "attractions": [{"id": "attr-1", "name": "Space Mountain", "status": "OPERATING", "waitTime": 20,
-                              "lastUpdatedTs": "2026-10-04T16:00:00Z", "down_since": "", "updateSource": "rest"}]}]
+    return [
+        {
+            "id": "mk",
+            "name": "Magic Kingdom",
+            "destination_id": "wdw",
+            "operating": True,
+            "attractions": [
+                {
+                    "id": "attr-1",
+                    "name": "Space Mountain",
+                    "status": "OPERATING",
+                    "waitTime": 20,
+                    "lastUpdatedTs": "2026-10-04T16:00:00Z",
+                    "down_since": "",
+                    "updateSource": "rest",
+                }
+            ],
+        }
+    ]
 
 
 def _entry(status="OPERATING", wait=45, last_updated="2026-10-04T16:10:00Z", entity_id="attr-1", park_id="mk"):
-    entry = {"id": entity_id, "parkId": park_id, "entityType": "ATTRACTION", "name": "Space Mountain",
-             "status": status, "lastUpdated": last_updated}
+    entry = {
+        "id": entity_id,
+        "parkId": park_id,
+        "entityType": "ATTRACTION",
+        "name": "Space Mountain",
+        "status": status,
+        "lastUpdated": last_updated,
+    }
     if wait is not None:
         entry["queue"] = {"STANDBY": {"waitTime": wait}}
     return entry
@@ -45,10 +67,15 @@ def test_preview_welcome_subscribes_each_destination_per_entity_type_with_a_snap
     replies = feed.handle({"type": "welcome", "data": {"limits": {"maxConnections": 2, "maxSubscriptions": 15}}})
     assert [delay for delay, _ in replies] == [0, 0]
     assert [frame for _, frame in replies] == [
-        {"type": "subscribe", "channel": "wdw", "filter": "ATTRACTION", "snapshot": True, "since": None,
-         "reqId": "wdw:ATTRACTION"},
-        {"type": "subscribe", "channel": "wdw", "filter": "SHOW", "snapshot": True, "since": None,
-         "reqId": "wdw:SHOW"},
+        {
+            "type": "subscribe",
+            "channel": "wdw",
+            "filter": "ATTRACTION",
+            "snapshot": True,
+            "since": None,
+            "reqId": "wdw:ATTRACTION",
+        },
+        {"type": "subscribe", "channel": "wdw", "filter": "SHOW", "snapshot": True, "since": None, "reqId": "wdw:SHOW"},
     ]
 
 
@@ -117,14 +144,17 @@ def test_preview_update_for_an_unknown_ride_or_park_is_ignored(no_status_check):
     assert parks[0]["attractions"][0]["waitTime"] == 20
 
 
-@pytest.mark.parametrize("frame", [
-    {"type": "update", "data": "not a dict"},
-    {"type": "snapshot", "data": {"not": "a list"}},
-    {"type": "snapshot", "data": ["junk", None]},
-    {"type": "unsubscribed", "data": {}},
-    {"type": "something-new", "cursor": "c-9"},
-    {},
-])
+@pytest.mark.parametrize(
+    "frame",
+    [
+        {"type": "update", "data": "not a dict"},
+        {"type": "snapshot", "data": {"not": "a list"}},
+        {"type": "snapshot", "data": ["junk", None]},
+        {"type": "unsubscribed", "data": {}},
+        {"type": "something-new", "cursor": "c-9"},
+        {},
+    ],
+)
 def test_preview_malformed_or_unknown_frames_are_ignored(frame, no_status_check):
     parks = _preview_parks()
     feed = _PreviewFeed(parks)
@@ -190,15 +220,20 @@ def test_preview_retryable_refusal_after_the_ack_is_not_resent():
 def test_preview_refusal_that_is_not_retryable_is_only_logged():
     feed = _subscribed_feed()
     with patch("updater.ws_preview.debug.warning") as warning:
-        assert feed.handle({"type": "error", "data": {"message": "Invalid filter", "retryable": False,
-                                                      "reqId": "wdw:SHOW"}}) == []
+        assert (
+            feed.handle(
+                {"type": "error", "data": {"message": "Invalid filter", "retryable": False, "reqId": "wdw:SHOW"}}
+            )
+            == []
+        )
     assert "Invalid filter" in warning.call_args[0][0]
 
 
 def test_preview_resume_incomplete_starts_that_channel_over_with_a_snapshot():
     feed = _subscribed_feed()
-    [(delay, frame)] = feed.handle({"type": "error", "data": {"message": "Resume incomplete", "retryable": False,
-                                                              "reqId": "wdw:ATTRACTION"}})
+    [(delay, frame)] = feed.handle(
+        {"type": "error", "data": {"message": "Resume incomplete", "retryable": False, "reqId": "wdw:ATTRACTION"}}
+    )
     assert delay == 0
     assert frame["since"] is None and frame["snapshot"] is True and frame["filter"] == "ATTRACTION"
     assert feed.cursor is None
@@ -210,6 +245,7 @@ def test_preview_error_for_an_unknown_request_is_only_logged():
 
 
 # --- preview connection loop ---
+
 
 def _text(frame):
     return aiohttp.WSMessage(aiohttp.WSMsgType.TEXT, json.dumps(frame), None)
@@ -252,9 +288,11 @@ def _run_preview(connections, parks=None, sleeps_allowed=0):
         if len(delays) > sleeps_allowed:
             raise asyncio.CancelledError
 
-    with patch("updater.ws_preview.aiohttp.ClientSession", lambda: _ScriptedSession(captured, connections)), \
-         patch("updater.ws_preview.asyncio.sleep", fake_sleep), \
-         patch("updater.ws_preview.update_parks_operating_status"):
+    with (
+        patch("updater.ws_preview.aiohttp.ClientSession", lambda: _ScriptedSession(captured, connections)),
+        patch("updater.ws_preview.asyncio.sleep", fake_sleep),
+        patch("updater.ws_preview.update_parks_operating_status"),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop(" real-key ", parks))
     return captured, delays
@@ -280,10 +318,16 @@ def test_preview_loop_subscribes_after_the_welcome_and_answers_pings():
 
 def test_preview_loop_resumes_from_the_last_cursor_after_a_drop():
     parks = _preview_parks()
-    first = [WELCOME, {"type": "snapshot", "cursor": "c-1", "final": True, "data": [_entry()]},
-             {"type": "update", "cursor": "c-2", "data": _entry(wait=50, last_updated="2026-10-04T16:15:00Z")}]
-    second = [WELCOME, {"type": "update", "cursor": "c-3", "data": _entry(wait=55, last_updated="2026-10-04T16:16:00Z")},
-              {"type": "resumed", "cursor": "c-3"}]
+    first = [
+        WELCOME,
+        {"type": "snapshot", "cursor": "c-1", "final": True, "data": [_entry()]},
+        {"type": "update", "cursor": "c-2", "data": _entry(wait=50, last_updated="2026-10-04T16:15:00Z")},
+    ]
+    second = [
+        WELCOME,
+        {"type": "update", "cursor": "c-3", "data": _entry(wait=55, last_updated="2026-10-04T16:16:00Z")},
+        {"type": "resumed", "cursor": "c-3"},
+    ]
     captured, _ = _run_preview([(first, 1006), (second, 1000)], parks, sleeps_allowed=1)
     subscribes = [f for f in captured["sent"] if f["type"] == "subscribe"]
     assert [f["since"] for f in subscribes] == [None, None, "c-2", "c-2"]
@@ -319,9 +363,11 @@ def test_preview_loop_treats_silence_as_a_dead_connection():
     async def fake_sleep(delay):
         raise asyncio.CancelledError
 
-    with patch("updater.ws_preview.aiohttp.ClientSession", lambda: _SilentSession({}, [])), \
-         patch("updater.ws_preview.asyncio.sleep", fake_sleep), \
-         patch("updater.ws_preview.debug.warning") as warning:
+    with (
+        patch("updater.ws_preview.aiohttp.ClientSession", lambda: _SilentSession({}, [])),
+        patch("updater.ws_preview.asyncio.sleep", fake_sleep),
+        patch("updater.ws_preview.debug.warning") as warning,
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
     assert any("silent for 90s" in call.args[0] for call in warning.call_args_list)
@@ -351,9 +397,12 @@ def test_preview_loop_resends_a_retryable_refusal_after_its_wait():
             frames, close_code = self._connections.pop(0)
             return _HoldingWS(frames, close_code, self._captured.setdefault("sent", []))
 
-    with patch("updater.ws_preview.aiohttp.ClientSession",
-               lambda: _HoldingSession(captured, [([WELCOME, refusal], 1000)])), \
-         patch("updater.ws_preview.asyncio.sleep", fake_sleep):
+    with (
+        patch(
+            "updater.ws_preview.aiohttp.ClientSession", lambda: _HoldingSession(captured, [([WELCOME, refusal], 1000)])
+        ),
+        patch("updater.ws_preview.asyncio.sleep", fake_sleep),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
     assert [f["reqId"] for f in captured["sent"]] == ["wdw:ATTRACTION", "wdw:SHOW", "wdw:SHOW"]
@@ -379,10 +428,14 @@ def test_preview_loop_skips_messages_that_are_not_json_objects():
         raise asyncio.CancelledError
 
     update = json.dumps({"type": "update", "data": _entry(wait=50)})
-    with patch("updater.ws_preview.aiohttp.ClientSession",
-               lambda: _JunkSession({}, [(["not json", "[1, 2]", update], 1000)])), \
-         patch("updater.ws_preview.asyncio.sleep", cancel_sleep), \
-         patch("updater.ws_preview.update_parks_operating_status"):
+    with (
+        patch(
+            "updater.ws_preview.aiohttp.ClientSession",
+            lambda: _JunkSession({}, [(["not json", "[1, 2]", update], 1000)]),
+        ),
+        patch("updater.ws_preview.asyncio.sleep", cancel_sleep),
+        patch("updater.ws_preview.update_parks_operating_status"),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop("real-key", parks))
     assert parks[0]["attractions"][0]["waitTime"] == 50  # the good frame after the junk still applied
@@ -400,24 +453,31 @@ def test_preview_loop_stops_reading_on_an_error_message():
     async def cancel_sleep(_delay):
         raise asyncio.CancelledError
 
-    with patch("updater.ws_preview.aiohttp.ClientSession", lambda: _ErrorSession({}, [])), \
-         patch("updater.ws_preview.asyncio.sleep", cancel_sleep), \
-         patch("updater.ws_preview.debug.warning") as warning:
+    with (
+        patch("updater.ws_preview.aiohttp.ClientSession", lambda: _ErrorSession({}, [])),
+        patch("updater.ws_preview.asyncio.sleep", cancel_sleep),
+        patch("updater.ws_preview.debug.warning") as warning,
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
     assert any("WebSocket error message" in call.args[0] for call in warning.call_args_list)
 
 
-@pytest.mark.parametrize("error, network_issue", [
-    (OSError("Temporary failure in name resolution"), True),  # no internet: the badge
-    (RuntimeError("handshake rejected"), False),              # the server said no: not the network
-])
+@pytest.mark.parametrize(
+    "error, network_issue",
+    [
+        (OSError("Temporary failure in name resolution"), True),  # no internet: the badge
+        (RuntimeError("handshake rejected"), False),  # the server said no: not the network
+    ],
+)
 def test_preview_loop_connect_failure_flags_the_network_only_at_the_socket_level(error, network_issue):
     async def cancel_sleep(_delay):
         raise asyncio.CancelledError
 
-    with patch("updater.ws_preview.aiohttp.ClientSession", lambda: _RefusingSession(error)), \
-         patch("updater.ws_preview.asyncio.sleep", cancel_sleep):
+    with (
+        patch("updater.ws_preview.aiohttp.ClientSession", lambda: _RefusingSession(error)),
+        patch("updater.ws_preview.asyncio.sleep", cancel_sleep),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_preview_ws_loop("real-key", _preview_parks()))
     assert shared.network_issues() is network_issue

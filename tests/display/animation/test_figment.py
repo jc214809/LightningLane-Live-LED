@@ -1,4 +1,5 @@
 """Figment."""
+
 import random
 
 import pytest
@@ -20,8 +21,10 @@ def test_all_of_figment_fits_at_1x_with_room_to_flutter(height):
 
 def test_figment_has_his_horns_eyes_grin_wing_and_tail_tuft():
     art = animation.FigmentReveal.art
+
     def cols_with(keys):
         return [c for row in art for c, k in enumerate(row) if k in keys]
+
     width = len(art[0])
     assert min(cols_with("Y")) > width / 2, "his eyes are up front, on the right"
     assert min(cols_with("T")) > width / 2, "and his grin"

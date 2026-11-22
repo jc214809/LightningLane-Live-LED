@@ -1,4 +1,5 @@
 """Merida for the synced show's Touch the Sky (see show_actors.py)."""
+
 import math
 
 from display.animation.characters.archer import ArcherReveal as Archer
@@ -20,6 +21,7 @@ class MeridaShoots(Actor):
     the hit she sinks away, over ENTER_S (sooner if her scene ends first). Her poses (merida_poses.py has the scene's timings) are baked, so a
     frame only stamps one. Times are seconds into her scene.
     """
+
     NAME = "Merida"
     ENTER_S = 0.6
     TARGET_S = 26.3  # 294.3: "chase the wind"
@@ -95,8 +97,16 @@ class MeridaShoots(Actor):
         dy = self.drop(e)
         if dy < self.rise:
             f = self.frame(poses.frame_key(e, self.mouth("merida")))
-            stamp(out, f["rows"], self.COLORS, self.LEFT + f["x"], self.top + f["y"] + dy, 1,
-                  self.show.width, self.show.height)
+            stamp(
+                out,
+                f["rows"],
+                self.COLORS,
+                self.LEFT + f["x"],
+                self.top + f["y"] + dy,
+                1,
+                self.show.width,
+                self.show.height,
+            )
         self.draw_arrow(out, e)
 
     def _put(self, out, x, y, rgb):

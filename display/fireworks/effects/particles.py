@@ -1,5 +1,6 @@
 """Looks made of drifting, rising or falling bits: sparkles, bubbles, balloons, smoke, fountains,
 snow, blocks and waterfalls."""
+
 import math
 
 from display.fireworks.effects.base import GOLD, WHITE, Effect, _door, _Particles, _roof_peaks
@@ -7,6 +8,7 @@ from display.fireworks.effects.base import GOLD, WHITE, Effect, _door, _Particle
 
 class GoldStream(_Particles):
     """A stream of falling gold sparkles sweeping across the sky; red joins the gold halfway."""
+
     cap = 120
 
     @property
@@ -23,6 +25,7 @@ class GoldStream(_Particles):
 class GoldBurst(Effect):
     """A burst of gold magic out of the gate over the lower castle as its scene starts (video 1:13, on
     "...unfold"), fading over LIFE frames. Once per run of scenes that keep it."""
+
     LIFE = 45
     COUNT = 30
 
@@ -64,6 +67,7 @@ class GoldBurst(Effect):
 
 class Bubbles(_Particles):
     """Bubbles rising from the bottom (Part of Your World): rings on a 64-row board, dots on 32."""
+
     cap = 40
 
     @property
@@ -72,8 +76,15 @@ class Bubbles(_Particles):
 
     def spawn(self):
         rng = self.rng
-        return [rng.uniform(1, self.show.width - 2), float(self.show.height), 0.0,
-                -rng.uniform(0.15, 0.3) * self.s, 400, 400, (120, 200, 255)]
+        return [
+            rng.uniform(1, self.show.width - 2),
+            float(self.show.height),
+            0.0,
+            -rng.uniform(0.15, 0.3) * self.s,
+            400,
+            400,
+            (120, 200, 255),
+        ]
 
     def _draw(self, put):
         frame = self.show.frame
@@ -89,6 +100,7 @@ class Bubbles(_Particles):
 
 class Balloons(_Particles):
     """Up's balloons in every colour, rising from behind the castle and drifting off the top."""
+
     front = True
     cap = 40
     COLOURS = ((240, 50, 50), (250, 200, 40), (60, 120, 255), (60, 200, 80), (240, 110, 200), (255, 140, 40))
@@ -100,8 +112,15 @@ class Balloons(_Particles):
     def spawn(self):
         show, rng = self.show, self.rng
         x = show.width / 2 + rng.uniform(-0.3, 0.3) * show.castle_w
-        return [x, show.castle_y + show.castle_h * 0.4, rng.uniform(-0.1, 0.1), -rng.uniform(0.15, 0.3) * self.s,
-                400, 400, rng.choice(self.COLOURS)]
+        return [
+            x,
+            show.castle_y + show.castle_h * 0.4,
+            rng.uniform(-0.1, 0.1),
+            -rng.uniform(0.15, 0.3) * self.s,
+            400,
+            400,
+            rng.choice(self.COLOURS),
+        ]
 
     def _draw(self, put):
         frame = self.show.frame
@@ -115,6 +134,7 @@ class Balloons(_Particles):
 
 class Smoke(_Particles):
     """Purple and blue lamp smoke curling up from the spire (Friend Like Me)."""
+
     front = True
     chance = 0.6
 
@@ -122,13 +142,21 @@ class Smoke(_Particles):
         rng = self.rng
         sx, sy = self.show.spire
         life = rng.randint(60, 90)
-        return [sx + rng.uniform(-1, 1), sy - 1.0, rng.uniform(-0.12, 0.12), -rng.uniform(0.15, 0.3) * self.s,
-                life, life, rng.choice(((150, 90, 220), (90, 120, 255), (200, 120, 255), (230, 170, 60)))]
+        return [
+            sx + rng.uniform(-1, 1),
+            sy - 1.0,
+            rng.uniform(-0.12, 0.12),
+            -rng.uniform(0.15, 0.3) * self.s,
+            life,
+            life,
+            rng.choice(((150, 90, 220), (90, 120, 255), (200, 120, 255), (230, 170, 60))),
+        ]
 
 
 class GroundFountains(_Particles):
     """A wall of fountains spraying up from the ground all along the board's foot, in the scene's
     colours (the When You Wish interlude's pink fountains across the whole castle)."""
+
     cap = 260
     chance = 1.0
     COUNT = 7  # fountains across the board
@@ -146,8 +174,15 @@ class GroundFountains(_Particles):
         k = rng.randrange(self.COUNT)
         x = (k + 0.5) * show.width / self.COUNT + rng.uniform(-1, 1)
         life = rng.randint(30, 45)
-        return [x, show.height - 1.0, rng.uniform(-0.15, 0.15) * self.s, -rng.uniform(0.7, 1.0) * self.s, life, life,
-                show._colour()]
+        return [
+            x,
+            show.height - 1.0,
+            rng.uniform(-0.15, 0.15) * self.s,
+            -rng.uniform(0.7, 1.0) * self.s,
+            life,
+            life,
+            show._colour(),
+        ]
 
     def _draw(self, put):
         # Bright streaks, 2x2 on a 64-row board like the castle, fading only near the end.
@@ -161,6 +196,7 @@ class GroundFountains(_Particles):
 class Fountains(_Particles):
     """Gold and white fountains spraying up from the castle's rooftops and showering down over it
     (Friend Like Me's roof fountains)."""
+
     front = True
     cap = 150
     chance = 1.0
@@ -180,25 +216,41 @@ class Fountains(_Particles):
         rng = self.rng
         x, y = rng.choice(self.sources)
         life = rng.randint(25, 40)
-        return [x, y - 1.0, rng.uniform(-0.35, 0.35) * self.s, -rng.uniform(0.4, 0.7) * self.s, life, life,
-                rng.choice((GOLD, GOLD, WHITE))]
+        return [
+            x,
+            y - 1.0,
+            rng.uniform(-0.35, 0.35) * self.s,
+            -rng.uniform(0.4, 0.7) * self.s,
+            life,
+            life,
+            rng.choice((GOLD, GOLD, WHITE)),
+        ]
 
 
 class Snow(_Particles):
     """Olaf's snowflakes floating up past the spires."""
+
     front = True
     cap = 30
     chance = 0.25
 
     def spawn(self):
         show, rng = self.show, self.rng
-        return [show.castle_x + rng.uniform(0, show.castle_w), float(show.height), rng.uniform(-0.05, 0.05),
-                -rng.uniform(0.1, 0.2) * self.s, 300, 300, (220, 235, 255)]
+        return [
+            show.castle_x + rng.uniform(0, show.castle_w),
+            float(show.height),
+            rng.uniform(-0.05, 0.05),
+            -rng.uniform(0.1, 0.2) * self.s,
+            300,
+            300,
+            (220, 235, 255),
+        ]
 
 
 class Blocks(Effect):
     """Toy building blocks in primary colours dropping onto the ground beside the castle
     (You've Got a Friend in Me)."""
+
     COLOURS = ((230, 40, 40), (40, 90, 230), (250, 210, 40), (40, 190, 70))
 
     def __init__(self, show):
@@ -211,8 +263,9 @@ class Blocks(Effect):
         if active and len(self.blocks) < 14 and rng.random() < 0.06:
             left = rng.random() < 0.5
             lo, hi = (0, show.castle_x - self.size) if left else (show.castle_x + show.castle_w, show.width - self.size)
-            self.blocks.append([float(rng.randint(lo, max(lo, hi))), -float(self.size), 0.5 * self.s, 120,
-                                rng.choice(self.COLOURS)])
+            self.blocks.append(
+                [float(rng.randint(lo, max(lo, hi))), -float(self.size), 0.5 * self.s, 120, rng.choice(self.COLOURS)]
+            )
         ground = show.height - self.size
         for b in self.blocks:
             b[1] = min(ground, b[1] + b[2])
@@ -231,11 +284,19 @@ class Blocks(Effect):
 
 class Waterfalls(_Particles):
     """Two waterfalls of blue, pink and white either side of the castle (the princess garden)."""
+
     chance = 0.9
     cap = 120
 
     def spawn(self):
         show, rng = self.show, self.rng
         source = rng.choice((show.castle_x - 2, show.castle_x + show.castle_w + 1))
-        return [source + rng.uniform(-1, 1) * self.s, 0.0, 0.0, rng.uniform(0.5, 0.8) * self.s, 80, 80,
-                rng.choice(((140, 200, 255), (255, 160, 210), WHITE))]
+        return [
+            source + rng.uniform(-1, 1) * self.s,
+            0.0,
+            0.0,
+            rng.uniform(0.5, 0.8) * self.s,
+            80,
+            80,
+            rng.choice(((140, 200, 255), (255, 160, 210), WHITE)),
+        ]

@@ -65,8 +65,9 @@ def test_bricks_fall_onto_his_fists_and_burst(height):
     hit, left, colors, _ = ralph.bricks[0]
     assert ralph.swinging(hit) and not ralph.swinging(hit - 0.5)
     falling = _frame(height, S + hit - 0.1, seed=4)[1]
-    assert falling.get((left, int(ralph.land_top) + 1)) in colors.values() or \
-        any(rgb in colors.values() for (x, y), rgb in falling.items() if left <= x < left + 3 and y < ralph.land_top + 2)
+    assert falling.get((left, int(ralph.land_top) + 1)) in colors.values() or any(
+        rgb in colors.values() for (x, y), rgb in falling.items() if left <= x < left + 3 and y < ralph.land_top + 2
+    )
     assert len(ralph.bricks) >= 3
 
 

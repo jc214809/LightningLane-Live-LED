@@ -20,7 +20,7 @@ def fonts():
             "countdown_message": "assets/fonts/patched/5x8.bdf",
             "title": "assets/fonts/patched/4x6-legacy.bdf",
             # The same font with a 4-pixel N, for text over the park landmarks.
-            "landmark_title": "assets/fonts/patched/4x6-landmark.bdf"
+            "landmark_title": "assets/fonts/patched/4x6-landmark.bdf",
         },
         64: {
             "park": "assets/fonts/patched/6x13.bdf",
@@ -32,8 +32,8 @@ def fonts():
             "countdown_message": "assets/fonts/patched/6x13.bdf",
             "title": "assets/fonts/patched/4x6-legacy.bdf",
             # The same font with a 4-pixel N, for text over the park landmarks.
-            "landmark_title": "assets/fonts/patched/4x6-landmark.bdf"
-        }
+            "landmark_title": "assets/fonts/patched/4x6-landmark.bdf",
+        },
     }
 
 
@@ -65,6 +65,7 @@ def initialize_fonts(matrix_height):
     debug.info(f"Loaded fonts: {list(loaded_fonts.keys())}")  # Show successfully loaded fonts
     return loaded_fonts  # Return the loaded fonts dictionary
 
+
 DOWN_RGB = (250, 0, 0)
 
 
@@ -76,10 +77,12 @@ def colors():
         "white": graphics.Color(255, 255, 255),
         "down": graphics.Color(*DOWN_RGB),
         "gold": graphics.Color(255, 215, 0),
-        "wait": graphics.Color(90, 210, 255)
+        "wait": graphics.Color(90, 210, 255),
     }
 
+
 color_dict = colors()
+
 
 def get_text_width(font, text, space_px=None):
     """Helper to calculate total width of text in pixels; space_px overrides the font's space width."""
@@ -101,10 +104,20 @@ def draw_text(canvas, font, x, y, color, text, space_px=None):
 
 
 # Typographic characters the board fonts don't have; they'd draw as a wide placeholder box.
-_PLAIN_CHARS = str.maketrans({
-    "‘": "'", "’": "'", "“": '"', "”": '"',
-    "–": "-", "—": "-", "…": "...", "®": None, "™": None, "©": None,
-})
+_PLAIN_CHARS = str.maketrans(
+    {
+        "‘": "'",
+        "’": "'",
+        "“": '"',
+        "”": '"',
+        "–": "-",
+        "—": "-",
+        "…": "...",
+        "®": None,
+        "™": None,
+        "©": None,
+    }
+)
 
 
 def plain_text(text):

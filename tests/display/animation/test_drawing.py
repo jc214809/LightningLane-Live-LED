@@ -12,8 +12,16 @@ def test_sprite_art_rows_are_even_and_use_defined_colors():
 
 def test_art_pixels_scales_each_lit_cell_and_skips_empty_ones():
     got = dict(animation.art_pixels(["A.", ".B"], 10, 20, {"A": (1, 1, 1), "B": (2, 2, 2)}, scale=2))
-    assert got == {(10, 20): (1, 1, 1), (11, 20): (1, 1, 1), (10, 21): (1, 1, 1), (11, 21): (1, 1, 1),
-                   (12, 22): (2, 2, 2), (13, 22): (2, 2, 2), (12, 23): (2, 2, 2), (13, 23): (2, 2, 2)}
+    assert got == {
+        (10, 20): (1, 1, 1),
+        (11, 20): (1, 1, 1),
+        (10, 21): (1, 1, 1),
+        (11, 21): (1, 1, 1),
+        (12, 22): (2, 2, 2),
+        (13, 22): (2, 2, 2),
+        (12, 23): (2, 2, 2),
+        (13, 23): (2, 2, 2),
+    }
 
 
 def test_paint_sets_only_pixels_on_the_board_from_a_dict_or_pairs():

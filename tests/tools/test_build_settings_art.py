@@ -6,7 +6,9 @@ import pytest
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_spec = importlib.util.spec_from_file_location("build_settings_art", os.path.join(ROOT, "tools", "build_settings_art.py"))
+_spec = importlib.util.spec_from_file_location(
+    "build_settings_art", os.path.join(ROOT, "tools", "build_settings_art.py")
+)
 builder = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(builder)
 
@@ -23,12 +25,14 @@ def test_checked_in_stills_match_the_current_landmarks(rendered):
     for key, (name, image) in rendered.items():
         with Image.open(os.path.join(builder.STATIC, name)) as saved:
             small = saved.convert("RGB").resize((builder.WIDTH, builder.HEIGHT), Image.NEAREST)
-            assert list(small.getdata()) == list(image.getdata()), \
+            assert list(small.getdata()) == list(image.getdata()), (
                 f"the {key} landmark changed: run python3 tools/build_settings_art.py"
+            )
 
 
 def test_every_park_landmark_has_a_still(rendered):
     from display.landmarks.screen import LANDMARKS
+
     assert set(rendered) == set(LANDMARKS)
     for name, image in rendered.values():
         assert image.size == (builder.WIDTH, builder.HEIGHT) and len(set(image.getdata())) > 8, name
@@ -36,10 +40,12 @@ def test_every_park_landmark_has_a_still(rendered):
 
 def test_spaceship_earth_is_taken_lit_and_without_tinker_bell(monkeypatch):
     from display.landmarks import SpaceshipEarthLandmark
+
     landmarks, sky = builder.load_landmarks()
 
     def never(*args, **kwargs):
         raise AssertionError("the still draws the landmark alone")
+
     monkeypatch.setattr(SpaceshipEarthLandmark, "_draw_tink", never)
     image = builder.still(SpaceshipEarthLandmark, sky)
     assert len(set(image.getdata())) > 20, "its facets lit"

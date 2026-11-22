@@ -83,8 +83,15 @@ class LuxoBallReveal:
         "........KLLLLLLLLLLLLLK",
     ]
     BALL_SCALE = LUXO_SCALE = 1
-    colors = {"Y": (240, 195, 65), "R": (190, 50, 30), "B": (45, 100, 180),
-              "K": (20, 20, 22), "W": (250, 250, 250), "L": (170, 169, 165), "D": (98, 95, 90)}
+    colors = {
+        "Y": (240, 195, 65),
+        "R": (190, 50, 30),
+        "B": (45, 100, 180),
+        "K": (20, 20, 22),
+        "W": (250, 250, 250),
+        "L": (170, 169, 165),
+        "D": (98, 95, 90),
+    }
     BULB = (4.5, 8.0)  # the bulb's centre in LUXO_ART (col, row), where his light comes from
     # Story "light": the bulb is dark until he switches on, then bright pale yellow, so it never matches
     # the ball's yellow or his white shade, and the light can't look on from the start.
@@ -151,8 +158,9 @@ class LuxoBallReveal:
         elif s == "light":
             # Sitting in the dark until the beam finds it; a happy hop, then off to the left.
             if t < self.LEAVE:
-                x, lift, done = _hops(t, self.FOUND, self.FOUND + 0.5, self.ball_rest, self.ball_rest,
-                                      2, self.hop * 0.7)
+                x, lift, done = _hops(
+                    t, self.FOUND, self.FOUND + 0.5, self.ball_rest, self.ball_rest, 2, self.hop * 0.7
+                )
                 turns = -3 - done
             else:
                 x, lift, done = _hops(t, self.LEAVE, self.duration, self.ball_rest, off_left, 3, self.hop)
@@ -326,8 +334,11 @@ class LuxoBallReveal:
 
     def _stamp(self, out, art, x0, y0, only=None):
         """Add art to the scene's pixels, keeping to the board (and to `only`, if given)."""
-        out.update(((x, y), rgb) for (x, y), rgb in art_pixels(art, x0, y0, self.colors)
-                   if 0 <= x < self.width and 0 <= y < self.height and (only is None or (x, y) in only))
+        out.update(
+            ((x, y), rgb)
+            for (x, y), rgb in art_pixels(art, x0, y0, self.colors)
+            if 0 <= x < self.width and 0 <= y < self.height and (only is None or (x, y) in only)
+        )
 
     def overlay(self, canvas, t):
         if t >= self.duration:

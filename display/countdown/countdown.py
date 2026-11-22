@@ -67,8 +67,7 @@ def _stack_height(rows, gap):
 
 def _fits(rows, box):
     _, _, w, h = box
-    return (_stack_height(rows, LINE_GAPS[-1]) <= h
-            and all(_width(font, text) <= w for font, _, text in rows))
+    return _stack_height(rows, LINE_GAPS[-1]) <= h and all(_width(font, text) <= w for font, _, text in rows)
 
 
 def _fitting_font(fonts, lines, max_width):

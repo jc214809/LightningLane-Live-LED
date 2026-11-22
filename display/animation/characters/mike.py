@@ -100,8 +100,11 @@ class MikeReveal:
                 cx += 1 if int(since * 20) % 2 else -1
         body = self._body(scare, self.look(t), self.lid(t), self.grin(t))
         oy = int(round(cy))
-        return {(cx + x, oy + y): rgb for (x, y), rgb in body.items()
-                if 0 <= cx + x < self.width and 0 <= oy + y < self.height}
+        return {
+            (cx + x, oy + y): rgb
+            for (x, y), rgb in body.items()
+            if 0 <= cx + x < self.width and 0 <= oy + y < self.height
+        }
 
     def _body(self, scare, look, lid, grin):
         """Mike centred on (0, 0), later parts painting over earlier ones."""

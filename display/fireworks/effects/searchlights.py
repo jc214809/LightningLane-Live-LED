@@ -1,4 +1,5 @@
 """Searchlight beams sweeping the sky from either side of the castle, in each show's colours."""
+
 import colorsys
 import math
 
@@ -9,6 +10,7 @@ from display.motion import smooth
 class Searchlights(Effect):
     """Two beams sweeping the sky from either side of the castle, crossing behind it: white and ice
     blue, like the show's opening and closing. The variants below change only the colours."""
+
     COLOURS = ((235, 240, 255), (130, 170, 255))
 
     def colours(self):
@@ -34,8 +36,15 @@ class FanfareSearchlights(Searchlights):
     stand up and sway, lean in to cross over the spire (video 0:17), swing out into a wide fan (0:22)
     and fade before the narrator speaks (0:27-0:28). KEYS are (seconds into the scene, inner beam's
     lean, outer beam's lean) in radians, outward positive, so a negative lean crosses the middle."""
-    KEYS = ((0.0, 0.12, 0.3), (5.0, 0.2, 0.38), (6.8, -0.55, -0.62), (9.5, -0.5, -0.58), (11.8, 0.32, 0.48),
-            (16.8, 0.3, 0.45))
+
+    KEYS = (
+        (0.0, 0.12, 0.3),
+        (5.0, 0.2, 0.38),
+        (6.8, -0.55, -0.62),
+        (9.5, -0.5, -0.58),
+        (11.8, 0.32, 0.48),
+        (16.8, 0.3, 0.45),
+    )
     FADE = (16.8, 17.8)
     SWAY = 0.06
 
@@ -74,11 +83,13 @@ class FanfareSearchlights(Searchlights):
 
 class GreenSearchlights(Searchlights):
     """Green (Trashin' the Camp, and the villains' crossing beams)."""
+
     COLOURS = ((90, 255, 60), (40, 200, 90))
 
 
 class TealSearchlights(Searchlights):
     """Turquoise (How Far I'll Go's climax)."""
+
     COLOURS = ((60, 230, 220), (120, 255, 230))
 
 

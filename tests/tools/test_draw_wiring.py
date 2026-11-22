@@ -10,8 +10,22 @@ tool = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(tool)
 
 # rpi-rgb-led-matrix's lib/hardware-mapping.c, "adafruit-hat": the GPIO behind each Bonnet signal
-ADAFRUIT_HAT = {"OE": 4, "CLK": 17, "LAT": 21, "A": 22, "B": 26, "C": 27, "D": 20, "E": 24,
-                "R1": 5, "G1": 13, "B1": 6, "R2": 12, "G2": 16, "B2": 23}
+ADAFRUIT_HAT = {
+    "OE": 4,
+    "CLK": 17,
+    "LAT": 21,
+    "A": 22,
+    "B": 26,
+    "C": 27,
+    "D": 20,
+    "E": 24,
+    "R1": 5,
+    "G1": 13,
+    "B1": 6,
+    "R2": 12,
+    "G2": 16,
+    "B2": 23,
+}
 
 
 @pytest.mark.parametrize("name, zero", tool.FILES.items())
@@ -30,8 +44,32 @@ def test_the_diagram_is_well_formed_svg(zero):
 def test_the_breakout_row_is_the_bonnets_in_order():
     """As printed on the Bonnet, left to right (Adafruit's product photo)."""
     assert [label for label, _, _ in tool.BREAKOUT] == [
-        "SDA", "SCL", "TX", "RX", "4", "17", "18", "27", "22", "23", "24", "25", "MO", "MI", "CLK", "CE0",
-        "CE1", "5", "6", "12", "13", "16", "19", "20", "21"]
+        "SDA",
+        "SCL",
+        "TX",
+        "RX",
+        "4",
+        "17",
+        "18",
+        "27",
+        "22",
+        "23",
+        "24",
+        "25",
+        "MO",
+        "MI",
+        "CLK",
+        "CE0",
+        "CE1",
+        "5",
+        "6",
+        "12",
+        "13",
+        "16",
+        "19",
+        "20",
+        "21",
+    ]
     assert tool.POWER_PADS == ["5V", "", "GND"]
 
 

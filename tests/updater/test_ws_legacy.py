@@ -25,11 +25,13 @@ DUMMY_ATTRACTION = {
 }
 
 
-DUMMY_PARKS = [{
-    "id": "park-1",
-    "name": "Magic Kingdom",
-    "attractions": [copy.deepcopy(DUMMY_ATTRACTION)],
-}]
+DUMMY_PARKS = [
+    {
+        "id": "park-1",
+        "name": "Magic Kingdom",
+        "attractions": [copy.deepcopy(DUMMY_ATTRACTION)],
+    }
+]
 
 
 def _parks_with_attr(attr_override=None):
@@ -50,6 +52,7 @@ def _make_livedata_msg(entity_id="attr-1", entity_type="ATTRACTION", data=None):
 
 # --- event filtering ---
 
+
 def test_ignores_non_livedata_event():
     parks = _parks_with_attr()
     _apply_live_update({"event": "heartbeat"}, parks)
@@ -64,10 +67,22 @@ def test_ignores_unknown_entity_type():
 
 
 def test_accepts_show_entity_type():
-    parks = [{"id": "park-1", "name": "MK", "attractions": [{
-        "id": "show-1", "name": "Festival of Fantasy", "waitTime": None,
-        "status": "OPERATING", "lastUpdatedTs": "old", "down_since": "",
-    }]}]
+    parks = [
+        {
+            "id": "park-1",
+            "name": "MK",
+            "attractions": [
+                {
+                    "id": "show-1",
+                    "name": "Festival of Fantasy",
+                    "waitTime": None,
+                    "status": "OPERATING",
+                    "lastUpdatedTs": "old",
+                    "down_since": "",
+                }
+            ],
+        }
+    ]
     msg = {
         "event": "livedata",
         "entityId": "show-1",
@@ -87,6 +102,7 @@ def test_subscribed_event_does_not_raise():
 
 # --- operating status update gating ---
 
+
 def test_operating_status_updated_on_status_change():
     parks = _parks_with_attr({"status": "DOWN"})
     msg = _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 10}}})
@@ -104,6 +120,7 @@ def test_operating_status_not_updated_when_status_unchanged():
 
 
 # --- OPERATING update ---
+
 
 def test_operating_update_sets_wait_time_and_timestamp():
     parks = _parks_with_attr()
@@ -129,6 +146,7 @@ def test_timestamp_is_utc_iso_string():
 
 # --- DOWN status ---
 
+
 def test_down_status_sets_down_since():
     parks = _parks_with_attr()
     msg = _make_livedata_msg(data={"status": "DOWN", "queue": {"STANDBY": {"waitTime": None}}})
@@ -150,6 +168,7 @@ def test_down_status_preserves_existing_down_since():
 def test_down_wait_time_uses_down_since_not_current_time():
     """down_since set 30 min ago — waitTime should reflect ~30 min, not 0."""
     from datetime import datetime, timedelta
+
     down_since = (datetime.now(UTC) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
     parks = _parks_with_attr({"status": "DOWN", "down_since": down_since})
     msg = _make_livedata_msg(data={"status": "DOWN", "queue": {"STANDBY": {"waitTime": None}}})
@@ -175,12 +194,15 @@ def test_down_wait_time_is_zero_on_first_down_message():
 
 # --- boarding group ---
 
+
 def test_boarding_group_range():
     parks = _parks_with_attr()
-    msg = _make_livedata_msg(data={
-        "status": "OPERATING",
-        "queue": {"BOARDING_GROUP": {"currentGroupStart": 1, "currentGroupEnd": 50}},
-    })
+    msg = _make_livedata_msg(
+        data={
+            "status": "OPERATING",
+            "queue": {"BOARDING_GROUP": {"currentGroupStart": 1, "currentGroupEnd": 50}},
+        }
+    )
     with patch("updater.ws_legacy.update_parks_operating_status"):
         _apply_live_update(msg, parks)
     assert parks[0]["attractions"][0]["waitTime"] == "Groups 1-50"
@@ -188,10 +210,12 @@ def test_boarding_group_range():
 
 def test_boarding_group_open_ended():
     parks = _parks_with_attr()
-    msg = _make_livedata_msg(data={
-        "status": "OPERATING",
-        "queue": {"BOARDING_GROUP": {"currentGroupStart": 10, "currentGroupEnd": None}},
-    })
+    msg = _make_livedata_msg(
+        data={
+            "status": "OPERATING",
+            "queue": {"BOARDING_GROUP": {"currentGroupStart": 10, "currentGroupEnd": None}},
+        }
+    )
     with patch("updater.ws_legacy.update_parks_operating_status"):
         _apply_live_update(msg, parks)
     assert parks[0]["attractions"][0]["waitTime"] == "Group 10+"
@@ -206,6 +230,7 @@ def test_no_queue_data_sets_wait_none():
 
 
 # --- thread safety ---
+
 
 class _SpyLock:
     def __init__(self):
@@ -223,8 +248,7 @@ def test_apply_live_update_holds_parks_data_lock():
     spy = _SpyLock()
     parks = _parks_with_attr()
     msg = _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 30}}})
-    with patch("updater.ws_legacy.parks_data_lock", spy), \
-         patch("updater.ws_legacy.update_parks_operating_status"):
+    with patch("updater.ws_legacy.parks_data_lock", spy), patch("updater.ws_legacy.update_parks_operating_status"):
         _apply_live_update(msg, parks)
     assert spy.acquisitions == 1
 
@@ -239,9 +263,11 @@ def test_apply_live_update_skips_lock_for_non_livedata_events():
 
 # --- event timestamps ---
 
+
 def test_receive_time_stamps_the_update():
     # The feed sends no lastUpdated, so the receive time is the update's timestamp.
     from datetime import datetime
+
     parks = _parks_with_attr()
     msg = _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 10}}})
     before = datetime.now(UTC).replace(microsecond=0)
@@ -253,6 +279,7 @@ def test_receive_time_stamps_the_update():
 
 def test_down_since_is_the_first_down_message_and_later_ones_keep_it():
     from datetime import datetime, timedelta
+
     went_down = (datetime.now(UTC) - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
     parks = _parks_with_attr({"status": "OPERATING", "down_since": ""})
     with patch("updater.ws_legacy.update_parks_operating_status"):
@@ -304,9 +331,11 @@ def test_ws_loop_cancels_watchdog_on_disconnect():
         def ws_connect(self, url, **kwargs):
             return _YieldingWS()
 
-    with patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _YieldingSession(captured)), \
-         patch("updater.ws_legacy._watchdog", parked_watchdog), \
-         patch("updater.ws_legacy.asyncio.sleep", fake_sleep):
+    with (
+        patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _YieldingSession(captured)),
+        patch("updater.ws_legacy._watchdog", parked_watchdog),
+        patch("updater.ws_legacy.asyncio.sleep", fake_sleep),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_ws_loop("dummy-key", parks))
 
@@ -323,8 +352,10 @@ def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
     async def cancel_sleep(_delay):
         raise asyncio.CancelledError
 
-    with patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _FakeSession(captured)), \
-         patch("updater.ws_legacy.asyncio.sleep", cancel_sleep):
+    with (
+        patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _FakeSession(captured)),
+        patch("updater.ws_legacy.asyncio.sleep", cancel_sleep),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_ws_loop("dummy-key", parks))
 
@@ -337,21 +368,29 @@ def test_ws_loop_connects_with_heartbeat_and_receive_timeout():
 def test_ws_loop_subscribes_each_destination_once_per_displayed_entity_type():
     # One filter per subscription (the server rejects a list), so restaurants never arrive.
     captured = {}
-    parks = [{"id": "p1", "name": "MK", "destination_id": "wdw", "attractions": []},
-             {"id": "p2", "name": "EPCOT", "destination_id": "wdw", "attractions": []},
-             {"id": "p3", "name": "Cedar Point", "destination_id": "cp", "attractions": []}]
+    parks = [
+        {"id": "p1", "name": "MK", "destination_id": "wdw", "attractions": []},
+        {"id": "p2", "name": "EPCOT", "destination_id": "wdw", "attractions": []},
+        {"id": "p3", "name": "Cedar Point", "destination_id": "cp", "attractions": []},
+    ]
 
     async def cancel_sleep(_delay):
         raise asyncio.CancelledError
 
-    with patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _FakeSession(captured)), \
-         patch("updater.ws_legacy.asyncio.sleep", cancel_sleep):
+    with (
+        patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _FakeSession(captured)),
+        patch("updater.ws_legacy.asyncio.sleep", cancel_sleep),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_ws_loop("real-key", parks))
 
     assert WS_ENTITY_TYPES == ("ATTRACTION", "SHOW")
     assert sorted((m["entityId"], m["entityTypeFilter"]) for m in captured["sent"]) == [
-        ("cp", "ATTRACTION"), ("cp", "SHOW"), ("wdw", "ATTRACTION"), ("wdw", "SHOW")]
+        ("cp", "ATTRACTION"),
+        ("cp", "SHOW"),
+        ("wdw", "ATTRACTION"),
+        ("wdw", "SHOW"),
+    ]
     assert all(m["event"] == "subscribe" for m in captured["sent"])
 
 
@@ -373,8 +412,10 @@ def test_ws_loop_uses_the_documented_url_legacy_subprotocol_and_key():
     async def cancel_sleep(_delay):
         raise asyncio.CancelledError
 
-    with patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _FakeSession(captured)), \
-         patch("updater.ws_legacy.asyncio.sleep", cancel_sleep):
+    with (
+        patch("updater.ws_legacy.aiohttp.ClientSession", lambda: _FakeSession(captured)),
+        patch("updater.ws_legacy.asyncio.sleep", cancel_sleep),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_ws_loop(" real-key ", parks))
 
@@ -384,6 +425,7 @@ def test_ws_loop_uses_the_documented_url_legacy_subprotocol_and_key():
 
 
 # --- no match ---
+
 
 def test_unknown_entity_id_is_ignored():
     parks = _parks_with_attr()
@@ -396,8 +438,9 @@ def test_unknown_entity_id_is_ignored():
 def test_ws_update_stores_forecast_and_keeps_it_when_absent():
     parks = _parks_with_attr()
     raw = [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20, "percentage": 17}, {"bad": 1}]
-    _apply_live_update(_make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 30}},
-                                                "forecast": raw}), parks)
+    _apply_live_update(
+        _make_livedata_msg(data={"status": "OPERATING", "queue": {"STANDBY": {"waitTime": 30}}, "forecast": raw}), parks
+    )
     attr = parks[0]["attractions"][0]
     assert attr["forecast"] == [{"time": "2026-09-25T10:00:00-04:00", "waitTime": 20}]
     _apply_live_update(_make_livedata_msg(), parks)
@@ -406,6 +449,7 @@ def test_ws_update_stores_forecast_and_keeps_it_when_absent():
 
 def test_ws_update_stores_showtimes_and_keeps_them_when_absent():
     from datetime import datetime
+
     parks = _parks_with_attr()
     raw = [{"type": "Performance Time", "startTime": "2026-09-26T21:30:00-04:00"}, {"startTime": "bad"}]
     _apply_live_update(_make_livedata_msg(data={"status": "OPERATING", "showtimes": raw}), parks)
@@ -417,20 +461,24 @@ def test_ws_update_stores_showtimes_and_keeps_them_when_absent():
 
 # --- network badge flag ---
 
+
 def _run_ws_loop_once(session_factory):
     parks = [{"id": "park-1", "name": "MK", "destination_id": "dest-1", "attractions": []}]
 
     async def cancel_sleep(_delay):
         raise asyncio.CancelledError
 
-    with patch("updater.ws_legacy.aiohttp.ClientSession", session_factory), \
-         patch("updater.ws_legacy.asyncio.sleep", cancel_sleep):
+    with (
+        patch("updater.ws_legacy.aiohttp.ClientSession", session_factory),
+        patch("updater.ws_legacy.asyncio.sleep", cancel_sleep),
+    ):
         with pytest.raises(asyncio.CancelledError):
             asyncio.run(_ws_loop("dummy-key", parks))
 
 
 def test_ws_connect_failing_at_the_socket_level_flags_a_network_issue():
     from updater.shared import network_issues
+
     # aiohttp's ClientConnectorError (DNS failure, refused, unreachable) is an OSError.
     _run_ws_loop_once(lambda: _RefusingSession(OSError("Temporary failure in name resolution")))
     assert network_issues() is True
@@ -438,12 +486,14 @@ def test_ws_connect_failing_at_the_socket_level_flags_a_network_issue():
 
 def test_ws_server_rejection_is_not_a_network_issue():
     from updater.shared import network_issues
+
     _run_ws_loop_once(lambda: _RefusingSession(RuntimeError("handshake rejected: 429")))
     assert network_issues() is False
 
 
 def test_ws_message_arriving_clears_the_network_issue():
     from updater.shared import network_issues, note_network_result
+
     note_network_result(False)
 
     class _OneMessageWS(_FakeWS):

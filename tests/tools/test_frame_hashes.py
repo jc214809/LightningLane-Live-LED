@@ -14,8 +14,12 @@ SUBSET = ["--only", "landmark/CastleLandmark@64x32", "--only", "fireworks/everyd
 
 def run_tool(*args):
     """The tool as a script, as refactor agents run it (the real emulator driver, not this suite's stub)."""
-    return subprocess.run([sys.executable, os.path.join(ROOT, "tools", "frame_hashes.py"), *args],
-                          capture_output=True, text=True, cwd=ROOT)
+    return subprocess.run(
+        [sys.executable, os.path.join(ROOT, "tools", "frame_hashes.py"), *args],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+    )
 
 
 def test_frame_bytes_are_raw_rgb_in_row_order_with_black_where_nothing_is_lit():
@@ -41,6 +45,7 @@ def test_the_digest_depends_on_every_frame_and_on_their_order():
         for frame in frames:
             d.frame(frame, 2, 1)
         return d.hex()
+
     a, b = {(0, 0): (1, 1, 1)}, {(1, 0): (1, 1, 1)}
     assert digest(a, b) == digest(a, b)
     assert len({digest(a, b), digest(b, a), digest(a), digest(a, a)}) == 4
@@ -57,19 +62,35 @@ def test_compare_lists_every_changed_missing_and_added_name():
     old = {"a": "1" * 64, "b": "2" * 64, "c": "3" * 64}
     new = {"a": "1" * 64, "b": "9" * 64, "d": "4" * 64}
     assert [(n, why.split(" (")[0]) for n, why in tool.compare(old, new)] == [
-        ("b", "differs"), ("c", "missing from the new run"), ("d", "not in the old run")]
+        ("b", "differs"),
+        ("c", "missing from the new run"),
+        ("d", "not in the old run"),
+    ]
     assert tool.compare(old, new, only=["a"]) == [], "a filtered compare ignores the rest"
     assert tool.compare(old, old) == []
 
 
 def test_the_catalog_covers_every_kind_of_thing_on_both_boards():
     names = list(tool.catalog())
-    for kind in ("landmark/CastleLandmark", "landmark-screen/CastleLandmark", "transition/wipe", "transition/mike",
-                 "fireworks/everyday", "fireworks/halloween", "fireworks/christmas", "fireworks-title",
-                 "show/happily-ever-after.v1", "show/happily-ever-after.v2", "screen/park-info/party",
-                 "screen/ride/down", "screen/countdown/days-to-go", "landmark/FriendlyJackOLantern-wink"):
+    for kind in (
+        "landmark/CastleLandmark",
+        "landmark-screen/CastleLandmark",
+        "transition/wipe",
+        "transition/mike",
+        "fireworks/everyday",
+        "fireworks/halloween",
+        "fireworks/christmas",
+        "fireworks-title",
+        "show/happily-ever-after.v1",
+        "show/happily-ever-after.v2",
+        "screen/park-info/party",
+        "screen/ride/down",
+        "screen/countdown/days-to-go",
+        "landmark/FriendlyJackOLantern-wink",
+    ):
         assert [f"{kind}@64x32", f"{kind}@64x64"] == [n for n in names if n.startswith(kind + "@")], kind
     from display.animation import TRANSITIONS
+
     stories = {f"{name}-{story}" for name, cls in TRANSITIONS.items() for story in tool.story_choices(cls)}
     assert {n.split("/")[1].split("@")[0] for n in names if n.startswith("transition/")} == set(TRANSITIONS) | stories
     assert names == list(dict.fromkeys(names))
@@ -77,6 +98,7 @@ def test_the_catalog_covers_every_kind_of_thing_on_both_boards():
 
 def test_every_random_story_of_a_reveal_is_hashed_pinned_but_a_pinned_reveal_adds_none():
     from display.animation import TRANSITIONS
+
     names = set(tool.catalog())
     for story in ("bat", "chase", "light"):
         assert f"transition/luxo_ball-{story}@64x32" in names and f"transition/luxo_ball-{story}@64x64" in names
@@ -101,6 +123,7 @@ def test_a_landmark_hashes_the_same_twice_and_one_changed_pixel_changes_it(monke
     def one_pixel_more(self):
         build(self)
         self.base[(0, 0)] = (1, 2, 3)
+
     monkeypatch.setattr(CastleLandmark, "build", one_pixel_more)
     assert tool.hash_landmark(CastleLandmark, 64, 32) != first
 
@@ -108,6 +131,7 @@ def test_a_landmark_hashes_the_same_twice_and_one_changed_pixel_changes_it(monke
 def test_a_thing_that_raises_is_recorded_as_an_error_not_a_crash(monkeypatch):
     def boom():
         raise ValueError("nope")
+
     monkeypatch.setattr(tool, "catalog", lambda: {"x/ok": lambda: "a" * 64, "x/bad": boom})
     assert tool.run() == {"x/ok": "a" * 64, "x/bad": "error: ValueError: nope"}
     assert tool.run(["ok"]) == {"x/ok": "a" * 64}
@@ -115,6 +139,7 @@ def test_a_thing_that_raises_is_recorded_as_an_error_not_a_crash(monkeypatch):
 
 def test_the_frozen_clock_makes_the_party_park_hold_its_party_tonight():
     from utils.special_events import special_event_hours
+
     assert special_event_hours(tool.party_park()) != ("7PM", "12AM"), "the real clock: no party today"
     with tool.frozen_clock():
         assert special_event_hours(tool.party_park()) == ("7PM", "12AM")
@@ -144,4 +169,6 @@ def test_the_script_exits_1_and_names_what_differs(tmp_path):
 def test_list_prints_the_names_without_rendering():
     result = run_tool("--list", "--only", "screen/ride/")
     assert result.returncode == 0
-    assert result.stdout.split() == [f"screen/ride/{n}@64x{h}" for h in (32, 64) for n in ("wait", "down", "long-name", "walk-on")]
+    assert result.stdout.split() == [
+        f"screen/ride/{n}@64x{h}" for h in (32, 64) for n in ("wait", "down", "long-name", "walk-on")
+    ]

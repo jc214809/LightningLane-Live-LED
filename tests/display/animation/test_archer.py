@@ -40,8 +40,9 @@ def test_she_rises_from_the_bottom_holds_at_full_draw_and_sinks_away():
     assert top(0.2) > top(0.4) > top(archer.RISE_S + 0.01) - 1, "climbing"
     assert top(archer.RISE_S + 0.1) == top(archer.release_at - 0.01), "still while she aims"
     assert top(archer.sink_at + 0.2) < top(archer.sink_at + 0.4), "sinking"
-    assert Archer.COLORS["O"] not in _frame(archer, archer.duration - 0.001).values() or \
-        top(archer.duration - 0.001) > 60, "all but gone at the end"
+    assert (
+        Archer.COLORS["O"] not in _frame(archer, archer.duration - 0.001).values() or top(archer.duration - 0.001) > 60
+    ), "all but gone at the end"
     assert archer.overlay(FakeCanvas(64, 64), archer.duration) is False
 
 
@@ -73,7 +74,9 @@ def test_the_string_is_drawn_back_then_snaps_straight_and_rings():
     assert min(xs(0.5)) < max(xs(0.5)), "a V at full draw"
     straight = archer.release_at + 1 / (4 * Archer.RING_HZ)
     assert len(xs(straight)) <= 2, "straight a quarter of a swing after the release"
-    assert max(xs(archer.release_at + 1 / (2 * Archer.RING_HZ))) > max(xs(0.5)), "it swings past, ahead of the bow's tips"
+    assert max(xs(archer.release_at + 1 / (2 * Archer.RING_HZ))) > max(xs(0.5)), (
+        "it swings past, ahead of the bow's tips"
+    )
     assert len(xs(archer.release_at + 1.0)) <= 2, "and has settled"
 
 
@@ -125,14 +128,16 @@ def test_she_has_a_face_two_blue_eyes_ringed_by_skin_with_brows_and_a_mouth_belo
             assert cells[(x - 1, y)] in skin | {"w", "E"} and cells[(x, y - 1)] in skin | {"R"}
     eye_rows = {y for (x, y), k in cells.items() if k in "eE"}
     mouth_rows = {y for (x, y), k in cells.items() if k == "m"}
-    brow_rows = {y for (x, y), k in cells.items() if k == "R" and y < min(eye_rows) and cells[(x, y + 1)] in skin | {"w"}}
+    brow_rows = {
+        y for (x, y), k in cells.items() if k == "R" and y < min(eye_rows) and cells[(x, y + 1)] in skin | {"w"}
+    }
     assert mouth_rows and min(mouth_rows) > max(eye_rows), "the mouth is below the eyes"
     assert brow_rows and max(brow_rows) < min(eye_rows), "brows above them"
 
 
 def test_her_nose_sits_between_her_eyes_and_mouth_with_skin_under_it():
     cells, eyes = _face()
-    (nx, ny), = [p for p, k in cells.items() if k == "n"]
+    ((nx, ny),) = [p for p, k in cells.items() if k == "n"]
     eye_rows = {y for (x, y), k in cells.items() if k in "eE"}
     mouth = [(x, y) for (x, y), k in cells.items() if k == "m"]
     assert max(eye_rows) < ny < min(y for _, y in mouth)

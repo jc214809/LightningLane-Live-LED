@@ -1,4 +1,5 @@
 """Bluey and Bingo."""
+
 import pytest
 
 import display.animation as animation
@@ -11,11 +12,17 @@ def distance(colors, a, b):
     return sum(abs(x - y) for x, y in zip(colors[a], colors[b]))
 
 
-@pytest.mark.parametrize("attr, colors", [
-    ("BINGO_ART", "BINGO_COLORS"), ("BIG_BINGO_ART", "BINGO_COLORS"),
-    ("WALKER_ART", "BINGO_COLORS"), ("BIG_WALKER_ART", "BINGO_COLORS"),
-    ("BLUEY_ART", "BLUEY_COLORS"), ("BIG_BLUEY_ART", "BLUEY_COLORS"),
-])
+@pytest.mark.parametrize(
+    "attr, colors",
+    [
+        ("BINGO_ART", "BINGO_COLORS"),
+        ("BIG_BINGO_ART", "BINGO_COLORS"),
+        ("WALKER_ART", "BINGO_COLORS"),
+        ("BIG_WALKER_ART", "BINGO_COLORS"),
+        ("BLUEY_ART", "BLUEY_COLORS"),
+        ("BIG_BLUEY_ART", "BLUEY_COLORS"),
+    ],
+)
 def test_grannies_art_is_uniform_and_every_cell_has_a_colour(attr, colors):
     art = getattr(GRANNIES, attr)
     assert len({len(row) for row in art}) == 1
@@ -24,6 +31,7 @@ def test_grannies_art_is_uniform_and_every_cell_has_a_colour(attr, colors):
 
 def test_the_grannies_are_registered_and_a_rare_surprise():
     import disney
+
     assert animation.TRANSITIONS["grannies"] is GRANNIES
     assert 0 < disney.SURPRISES["grannies"] <= 0.005
 
@@ -73,12 +81,13 @@ def test_they_shuffle_slowly_in_from_the_left_and_off_the_right(height):
 def test_bingo_lifts_her_walker_plants_it_ahead_then_shuffles_up_to_it(height):
     run = GRANNIES(64, height)
     step = [k / animation.FPS for k in range(run.step_f)]
-    assert all(run.walker_ahead(t)[1] == 1 and run.bingo_pose(t) is None for t in step[:run.lift_f]), \
+    assert all(run.walker_ahead(t)[1] == 1 and run.bingo_pose(t) is None for t in step[: run.lift_f]), (
         "the frame is up and moving while she stands"
+    )
     assert run.walker_ahead(step[run.lift_f]) == (run.step, 0), "planted a whole step ahead"
     assert run.bingo_x(step[-1]) > run.bingo_x(step[run.lift_f]), "then she shuffles up to it"
     assert run.walker_ahead(run.step_f / animation.FPS) == (0, 1), "caught up, and lifts it again"
-    assert {run.bingo_pose(t) % 4 for t in step[run.lift_f:]} == {0, 1, 2, 3}, "feet through the whole step"
+    assert {run.bingo_pose(t) % 4 for t in step[run.lift_f :]} == {0, 1, 2, 3}, "feet through the whole step"
 
 
 @pytest.mark.parametrize("height", [32, 64])
@@ -101,8 +110,10 @@ def test_bluey_never_bumps_the_walker_and_they_bob_out_of_step(height):
     for t in frames:
         assert run.bingo_x(t) + run.walker_x + run.walker_ahead(t)[0] + walker_w <= run.bluey_x(t)
     for art, feet in ((run.bingo, run.bingo_feet), (run.bluey, run.bluey_feet)):
-        poses = {frozenset(animation.walking_pixels(art, 0, 0, {k: (1, 1, 1) for k in "".join(art)}, feet, p))
-                 for p in range(4)}
+        poses = {
+            frozenset(animation.walking_pixels(art, 0, 0, {k: (1, 1, 1) for k in "".join(art)}, feet, p))
+            for p in range(4)
+        }
         assert len(poses) == 4, "every pose of the shuffle moves the feet"
     moving = [t for t in frames if run.bingo_pose(t) is not None]
     assert any(run.bingo_pose(t) % 2 != run.bluey_pose(t) % 2 for t in moving), "not in lockstep"
@@ -133,11 +144,17 @@ def test_the_ride_is_uncovered_behind_them_and_they_stay_on_the_board(height):
 KEEPY = animation.KeepyUppyReveal
 
 
-@pytest.mark.parametrize("attr, colors", [
-    ("BINGO_ART", "BINGO_COLORS"), ("BIG_BINGO_ART", "BINGO_COLORS"),
-    ("BLUEY_ART", "BLUEY_COLORS"), ("BIG_BLUEY_ART", "BLUEY_COLORS"),
-    ("BALLOON_ART", "BALLOON_COLORS"), ("BIG_BALLOON_ART", "BALLOON_COLORS"),
-])
+@pytest.mark.parametrize(
+    "attr, colors",
+    [
+        ("BINGO_ART", "BINGO_COLORS"),
+        ("BIG_BINGO_ART", "BINGO_COLORS"),
+        ("BLUEY_ART", "BLUEY_COLORS"),
+        ("BIG_BLUEY_ART", "BLUEY_COLORS"),
+        ("BALLOON_ART", "BALLOON_COLORS"),
+        ("BIG_BALLOON_ART", "BALLOON_COLORS"),
+    ],
+)
 def test_keepy_uppy_art_is_uniform_and_every_cell_has_a_colour(attr, colors):
     art = getattr(KEEPY, attr)
     assert len({len(row) for row in art}) == 1
@@ -146,6 +163,7 @@ def test_keepy_uppy_art_is_uniform_and_every_cell_has_a_colour(attr, colors):
 
 def test_keepy_uppy_is_registered_and_the_rarest_surprise():
     import disney
+
     assert animation.TRANSITIONS["keepy_uppy"] is KEEPY
     assert disney.SURPRISES["keepy_uppy"] == 0.001
 
@@ -210,6 +228,7 @@ def test_keepy_uppy_uncovers_the_ride_and_stays_on_the_board(height):
         run.overlay(c, f / animation.FPS)
         assert all(0 <= x < 64 and 0 <= y < height for x, y in c.px)
         if f / animation.FPS >= run.contacts[1]:
-            assert all(c.px[(x, 0)] in (ride,) + tuple(run.BALLOON_COLORS.values()) for x in range(64)), \
+            assert all(c.px[(x, 0)] in (ride,) + tuple(run.BALLOON_COLORS.values()) for x in range(64)), (
                 "all of the ride once the game's going"
+            )
     assert run.overlay(FakeCanvas(64, height), run.duration) is False

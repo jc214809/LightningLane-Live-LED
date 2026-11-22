@@ -21,8 +21,8 @@ class ForkyReveal(CapturesScreens):
     WALK_S, SPOT_S, HOP_S, DIVE_S, SUCK_S, SINK_S = 1.3, 0.9, 0.45, 0.35, 0.9, 0.3
     duration = WALK_S + SPOT_S + HOP_S + DIVE_S + SUCK_S + SINK_S
     STEPS_PER_S = 6
-    HOP_ROWS = 5       # how far he springs up (1x rows)
-    FEET_OUT = 7       # rows of him left sticking out of the hole (1x rows): his base and feet, not his arms
+    HOP_ROWS = 5  # how far he springs up (1x rows)
+    FEET_OUT = 7  # rows of him left sticking out of the hole (1x rows): his base and feet, not his arms
 
     # From the user's pattern (docs/references/Forky.jpg), copied cell for cell: a white
     # spork, the red unibrow, two mismatched eye holes (left big, right small), the blue
@@ -62,11 +62,15 @@ class ForkyReveal(CapturesScreens):
     ]
     SCALE = 1  # the editor previews the 64x32 size; 64x64 draws it at 2x
     COLORS = {
-        "W": (235, 235, 235), "R": (220, 30, 30), "B": (20, 90, 250), "F": (240, 200, 150),
-        "G": (130, 130, 140), "P": (0, 0, 0),
+        "W": (235, 235, 235),
+        "R": (220, 30, 30),
+        "B": (20, 90, 250),
+        "F": (240, 200, 150),
+        "G": (130, 130, 140),
+        "P": (0, 0, 0),
     }
-    EDGE_RGB = (0, 0, 0)   # a ring round him, so he stands off the old screen's text
-    ARM_ROW = 14           # arms start here (the brow above is red too)
+    EDGE_RGB = (0, 0, 0)  # a ring round him, so he stands off the old screen's text
+    ARM_ROW = 14  # arms start here (the brow above is red too)
     EYES = ((7, 6, 4), (13, 7, 2))  # (col, row, size) of each eye's box; the big one has its corners cut
     TEXT = "TRASH!"
     TEXT_RGB = (255, 230, 60)
@@ -78,7 +82,7 @@ class ForkyReveal(CapturesScreens):
         self.scale = 2 if self.tall else 1
         self.art_w, self.art_h = len(self.ART[0]), len(self.ART)
         self.w, self.h = self.art_w * self.scale, self.art_h * self.scale
-        self.ground = height - self.h          # his top row, feet on the bottom row
+        self.ground = height - self.h  # his top row, feet on the bottom row
         # 64x64: centred, TRASH! over his head. 64x32: no room overhead, so he stops left
         # of centre and it goes beside him.
         self.stop_x = (width - self.w) // 2 if self.tall else 6
@@ -153,8 +157,7 @@ class ForkyReveal(CapturesScreens):
         rows = [list(r) for r in self.ART]
         lx, ly = self.look(t)
         for col, row, size in self.EYES:
-            box = [(col + dx, row + dy) for dy in range(size) for dx in range(size)
-                   if rows[row + dy][col + dx] == "E"]
+            box = [(col + dx, row + dy) for dy in range(size) for dx in range(size) if rows[row + dy][col + dx] == "E"]
             pupil = max(1, size // 2)
             px = col + int(round((lx + 1) / 2 * (size - pupil)))
             py = row + int(round((ly + 1) / 2 * (size - pupil)))
@@ -186,13 +189,18 @@ class ForkyReveal(CapturesScreens):
     def _order_prev(self):
         """The old screen's lit pixels with when each one's pulled in: nearest the hole first."""
         far = math.hypot(max(self.hole_x, self.width - self.hole_x), self.height)
+
         def reach(x, y):
             return math.hypot(x - self.hole_x, y - self.height) / far * 0.65
-        self.prev_order = [(x, y, rgb, reach(x, y) + self.rng.uniform(0, 0.1))
-                           for (x, y), rgb in self.prev_px.items()]
+
+        self.prev_order = [(x, y, rgb, reach(x, y) + self.rng.uniform(0, 0.1)) for (x, y), rgb in self.prev_px.items()]
         # Its dark pixels stay black until the hole reaches them, then simply go.
-        self.prev_dark = [((x, y), reach(x, y) + 0.05) for x in range(self.width) for y in range(self.height)
-                          if (x, y) not in self.prev_px]
+        self.prev_dark = [
+            ((x, y), reach(x, y) + 0.05)
+            for x in range(self.width)
+            for y in range(self.height)
+            if (x, y) not in self.prev_px
+        ]
 
     def overlay(self, canvas, t):
         if t >= self.duration:
@@ -213,8 +221,12 @@ class ForkyReveal(CapturesScreens):
             lift = 1 if t - self.spot_at < 0.08 else 0  # pops up into place
             lit = [(x, y - lift) for x, y in self.text]
             ring = {(x + dx, y + dy) for x, y in lit for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
-            paint(canvas, [(p, self.EDGE_RGB) for p in ring - set(lit)] + [(p, self.TEXT_RGB) for p in lit],
-                  self.width, self.height)
+            paint(
+                canvas,
+                [(p, self.EDGE_RGB) for p in ring - set(lit)] + [(p, self.TEXT_RGB) for p in lit],
+                self.width,
+                self.height,
+            )
         return True
 
     def _draw_suck(self, canvas, p):

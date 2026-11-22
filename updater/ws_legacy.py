@@ -2,6 +2,7 @@
 The legacy protocol (the default): {"event": "livedata", ...} frames, one per ride change,
 with no lastUpdated. A reconnect refetches every park over REST to catch what it missed.
 """
+
 import asyncio
 import json
 import ssl
@@ -45,8 +46,9 @@ def _apply_live_update(data, parks_data):
 
 
 def _note_subscribed(data, parks_data):
-    debug.info(f"WebSocket subscribed to: {data.get('name') or data.get('entityId')}"
-               f" ({data.get('entityTypeFilter', 'all')})")
+    debug.info(
+        f"WebSocket subscribed to: {data.get('name') or data.get('entityId')} ({data.get('entityTypeFilter', 'all')})"
+    )
 
 
 def _note_server_error(data, parks_data):
@@ -87,10 +89,7 @@ def _update_attraction(attr, park, live, status, last_updated):
     _set_wait_for_status(attr, park, live, status, last_updated)
 
     if prev_status != status:
-        debug.info(
-            f"WS update: {attr['name']} ({park['name']}) "
-            f"{prev_status} → {status}, wait={attr.get('waitTime')}"
-        )
+        debug.info(f"WS update: {attr['name']} ({park['name']}) {prev_status} → {status}, wait={attr.get('waitTime')}")
         # fetch_schedules=False: we're on the WS event loop — schedule
         # fetching is blocking HTTP and is deferred to the REST thread.
         update_parks_operating_status([park], fetch_schedules=False)
@@ -132,7 +131,8 @@ async def _ws_loop(api_key, parks_data):
                     heartbeat=_WS_HEARTBEAT_SECS,
                     # receive_timeout= is deprecated (aiohttp 3.14 warns); this is its replacement.
                     timeout=aiohttp.ClientWSTimeout(
-                        ws_receive=_WS_RECEIVE_TIMEOUT_SECS, ws_close=_WS_CLOSE_TIMEOUT_SECS),
+                        ws_receive=_WS_RECEIVE_TIMEOUT_SECS, ws_close=_WS_CLOSE_TIMEOUT_SECS
+                    ),
                 ) as ws:
                     connected_at = time.monotonic()
                     if is_reconnect:
@@ -141,10 +141,7 @@ async def _ws_loop(api_key, parks_data):
                         debug.info("WebSocket connected to ThemeParks.wiki")
                     is_reconnect = True
 
-                    destination_ids = list({
-                        p["destination_id"] for p in parks_data
-                        if p.get("destination_id")
-                    })
+                    destination_ids = list({p["destination_id"] for p in parks_data if p.get("destination_id")})
                     if not destination_ids:
                         debug.warning("No destination IDs in parks_data; will retry")
                         break
@@ -170,8 +167,7 @@ async def _refresh_after_reconnect(parks_data):
             if new_live_data is None:
                 park["live_data_stale"] = True
                 debug.warning(
-                    f"Live data refresh failed for {park.get('name')} after reconnect; "
-                    "keeping existing data."
+                    f"Live data refresh failed for {park.get('name')} after reconnect; keeping existing data."
                 )
             else:
                 with parks_data_lock:
@@ -184,11 +180,13 @@ async def _refresh_after_reconnect(parks_data):
 async def _subscribe(ws, destination_ids):
     for dest_id in destination_ids:
         for entity_type in WS_ENTITY_TYPES:
-            await ws.send_json({
-                "event": "subscribe",
-                "entityId": dest_id,
-                "entityTypeFilter": entity_type,
-            })
+            await ws.send_json(
+                {
+                    "event": "subscribe",
+                    "entityId": dest_id,
+                    "entityTypeFilter": entity_type,
+                }
+            )
     debug.info(f"Subscribed to destinations: {destination_ids}")
 
 
@@ -208,10 +206,7 @@ async def _receive_until_closed(ws, parks_data):
 
     # aiohttp ends the async-for on close rather than yielding
     # a CLOSED message; surface why the connection ended.
-    debug.warning(
-        f"WebSocket receive loop ended: close_code={ws.close_code}, "
-        f"exception={ws.exception()}"
-    )
+    debug.warning(f"WebSocket receive loop ended: close_code={ws.close_code}, exception={ws.exception()}")
 
 
 def _handle_message(msg, ws, parks_data):

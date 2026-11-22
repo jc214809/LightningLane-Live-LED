@@ -16,10 +16,26 @@ PAGE = os.path.join(ROOT, "tools", "show_sync_checker.html")
 TINY = {
     "show_end": 4,
     "recording": {"url": "https://example.com/show", "scale": 1.001, "offset": 10.19},
-    "sections": [{"id": "opening", "start": 0, "end": 4, "palette": ["#FFFFFF", "#FF0000"], "intensity": .6,
-                  "scenes": [{"start": 0, "end": 1, "title": "Dark", "rate": 0, "castle": "blue", "characters": []},
-                             {"start": 1, "end": 4, "title": "Fire", "castle": "fire", "effects": ["flame_jets"],
-                              "characters": ["Pirates"]}]}],
+    "sections": [
+        {
+            "id": "opening",
+            "start": 0,
+            "end": 4,
+            "palette": ["#FFFFFF", "#FF0000"],
+            "intensity": 0.6,
+            "scenes": [
+                {"start": 0, "end": 1, "title": "Dark", "rate": 0, "castle": "blue", "characters": []},
+                {
+                    "start": 1,
+                    "end": 4,
+                    "title": "Fire",
+                    "castle": "fire",
+                    "effects": ["flame_jets"],
+                    "characters": ["Pirates"],
+                },
+            ],
+        }
+    ],
 }
 
 
@@ -46,8 +62,10 @@ def test_frames_follow_the_score_like_the_board(tiny):
     """The castle turns to its fire look in the fire scene (once its 1.5 s fade is done), as on the board.
     The reddest frame of its last second: a white burst's flash can wash one frame out."""
     every = list(tool.frames(tiny, 32, fps=10))
+
     def reds(f):
         return sum(1 for r, g, b in f.values() if r > 150 and b < 80)
+
     assert max(map(reds, every[-10:])) > reds(every[9]) + 50
 
 
@@ -138,14 +156,18 @@ def test_the_data_file_is_a_script_the_page_can_load_from_disk(tiny, tmp_path):
     tool.write_sync_js(tool.sync_data(tiny, TINY, {}, None), path)
     text = path.read_text()
     assert text.startswith("window.SHOW_SYNC = ") and text.rstrip().endswith(";")
-    assert json.loads(text[len("window.SHOW_SYNC = "):].rstrip().rstrip(";"))["name"] == "tiny"
+    assert json.loads(text[len("window.SHOW_SYNC = ") :].rstrip().rstrip(";"))["name"] == "tiny"
 
 
 def test_happily_ever_after_has_its_recording_and_every_scene_maps(tmp_path):
     with open(os.path.join(tool.SHOWS_DIR, "happily-ever-after.json")) as f:
         raw = json.load(f)
     rec = raw["recording"]
-    assert rec["url"].startswith("https://") and rec["scale"] == pytest.approx(1.001) and rec["offset"] == pytest.approx(10.19)
+    assert (
+        rec["url"].startswith("https://")
+        and rec["scale"] == pytest.approx(1.001)
+        and rec["offset"] == pytest.approx(10.19)
+    )
     score = load_score("happily-ever-after")
     data = tool.sync_data(score, raw, {}, "r.mp4")
     assert len(data["scenes"]) == len(score.cues), "scene titles are unique, so each finds its characters"
@@ -205,10 +227,13 @@ def test_each_character_is_listed_once_under_the_scene_it_first_shows_in():
     v2 = load_score("happily-ever-after", version="v2")
     cast = tool.cast(v2)
     mash = v2.cue_at(490)
-    assert [c["name"] for c in cast[mash.title]] == ["Ralph", "Baymax", "Inside Out's memory orbs",
-                                                     "Mike and Sulley"]
-    assert [c["start"] for c in cast[mash.title]] == [mash.start + 7, mash.start + 13, mash.start + 25,
-                                                      mash.start + 32.2]
+    assert [c["name"] for c in cast[mash.title]] == ["Ralph", "Baymax", "Inside Out's memory orbs", "Mike and Sulley"]
+    assert [c["start"] for c in cast[mash.title]] == [
+        mash.start + 7,
+        mash.start + 13,
+        mash.start + 25,
+        mash.start + 32.2,
+    ]
     assert cast["Friend Like Me (Genie)"] == [{"name": "Genie", "start": 527.0}]
     assert cast["Friend Like Me (finale)"] == [], "Genie carries on from the scene before"
     named = [c for listed in cast.values() for c in listed]
@@ -225,10 +250,13 @@ def test_tinker_bell_is_listed_though_an_effect_draws_her():
     for version in ("v1", "v2"):
         cast = tool.cast(load_score("happily-ever-after", version=version))
         assert cast["You Can Fly"] == [{"name": "Tinker Bell", "start": 1042.2}]
-        assert all(c["name"] != "Tinker Bell" for title, listed in cast.items() if title != "You Can Fly" for c in listed)
+        assert all(
+            c["name"] != "Tinker Bell" for title, listed in cast.items() if title != "You Can Fly" for c in listed
+        )
 
 
 # ---- main: which functions it calls, with what, for each combination of arguments ----
+
 
 class MainRig:
     """tools/render_show.main with the show files in tmp_path and render, download_recording and write_sync_js
@@ -284,10 +312,12 @@ def test_main_by_default_renders_both_boards_silent_and_writes_the_data(rig, cap
     caplog.set_level("INFO")
     assert tool.main(["--show", "tiny"]) == 0
     renders = rig.of("render")
-    assert [(r[1], r[2], r[3]) for r in renders] == [(32, str(rig.out / "tiny-64x32.mp4"), None),
-                                                     (64, str(rig.out / "tiny-64x64.mp4"), None)]
+    assert [(r[1], r[2], r[3]) for r in renders] == [
+        (32, str(rig.out / "tiny-64x32.mp4"), None),
+        (64, str(rig.out / "tiny-64x64.mp4"), None),
+    ]
     assert all(r[0].name == "tiny" for r in renders)
-    (data, path), = rig.of("write_sync_js")
+    ((data, path),) = rig.of("write_sync_js")
     assert path == str(rig.out / "tiny.js")
     assert data["boards"] == {"64x32": "tiny-64x32.mp4", "64x64": "tiny-64x64.mp4"}
     assert data["recording"] is None and data["version"] == "v1" and data["name"] == "tiny"
@@ -316,20 +346,20 @@ def test_main_height_picks_boards_and_keeps_ones_rendered_before(rig):
     (rig.out / "tiny-64x64.mp4").write_bytes(b"x")
     assert tool.main(["--show", "tiny", "--height", "32"]) == 0
     assert [r[1] for r in rig.of("render")] == [32]
-    (data, _), = rig.of("write_sync_js")
+    ((data, _),) = rig.of("write_sync_js")
     assert data["boards"] == {"64x32": "tiny-64x32.mp4", "64x64": "tiny-64x64.mp4"}
 
 
 def test_main_height_given_twice_renders_each_in_the_order_given_and_lists_only_those(rig):
     assert tool.main(["--show", "tiny", "--height", "64", "--height", "32"]) == 0
     assert [r[1] for r in rig.of("render")] == [64, 32]
-    (data, _), = rig.of("write_sync_js")
+    ((data, _),) = rig.of("write_sync_js")
     assert data["boards"] == {"64x64": "tiny-64x64.mp4", "64x32": "tiny-64x32.mp4"}
 
 
 def test_main_one_board_alone_lists_only_that_board(rig):
     assert tool.main(["--show", "tiny", "--height", "64"]) == 0
-    (data, _), = rig.of("write_sync_js")
+    ((data, _),) = rig.of("write_sync_js")
     assert data["boards"] == {"64x64": "tiny-64x64.mp4"}
 
 
@@ -347,10 +377,10 @@ def test_main_version_reads_the_overlay_file_and_names_everything_after_it(monke
     rig = MainRig(monkeypatch, tmp_path, v2={"overlays": {"Dark": {"stage": "off"}}})
     caplog.set_level("INFO")
     assert tool.main(["--show", "tiny", "--version", "v2", "--height", "32"]) == 0
-    (score, height, path, _), = rig.of("render")
+    ((score, height, path, _),) = rig.of("render")
     assert (height, path) == (32, str(rig.out / "tiny.v2-64x32.mp4"))
     assert score.cue_at(0.5).stage == "off" and score.lips is None
-    (data, js), = rig.of("write_sync_js")
+    ((data, js),) = rig.of("write_sync_js")
     assert js == str(rig.out / "tiny.v2.js") and data["version"] == "v2"
     assert data["boards"] == {"64x32": "tiny.v2-64x32.mp4"}
     page = os.path.join(ROOT, "tools", "show_sync_checker.html") + "?show=tiny.v2"
@@ -387,7 +417,7 @@ def test_main_recording_downloads_it_beside_the_videos_and_lists_it(rig, caplog)
     rig.download_creates_file = True
     assert tool.main(["--show", "tiny", "--recording", "--height", "32"]) == 0
     assert rig.of("download_recording") == [("https://example.com/show", str(rig.out / "tiny-recording.mp4"))]
-    (data, _), = rig.of("write_sync_js")
+    ((data, _),) = rig.of("write_sync_js")
     assert data["recording"] == dict(TINY["recording"], file="tiny-recording.mp4")
     assert caplog.records[-1].getMessage().endswith("show_sync_checker.html"), "no hint when it's there"
 
@@ -397,7 +427,7 @@ def test_main_a_recording_downloaded_on_an_earlier_run_is_listed_without_the_fla
     (rig.out / "tiny-recording.mp4").write_bytes(b"x")
     assert tool.main(["--show", "tiny", "--height", "32"]) == 0
     assert rig.of("download_recording") == []
-    (data, _), = rig.of("write_sync_js")
+    ((data, _),) = rig.of("write_sync_js")
     assert data["recording"]["file"] == "tiny-recording.mp4"
 
 
@@ -410,12 +440,12 @@ def test_main_recording_without_a_recording_entry_is_an_error(monkeypatch, tmp_p
     assert len(rig.of("render")) == 1, "the boards were already rendered"
 
 
-@pytest.mark.parametrize("error", [OSError("disk"), RuntimeError("yt-dlp isn't installed"),
-                                   tool.subprocess.CalledProcessError(1, "yt-dlp")])
+@pytest.mark.parametrize(
+    "error", [OSError("disk"), RuntimeError("yt-dlp isn't installed"), tool.subprocess.CalledProcessError(1, "yt-dlp")]
+)
 def test_main_a_failed_download_is_logged_and_stops_before_the_data_file(monkeypatch, tmp_path, caplog, error):
     rig = MainRig(monkeypatch, tmp_path)
     rig.download_error = error
     assert tool.main(["--show", "tiny", "--recording", "--height", "32"]) == 1
     assert caplog.records[-1].getMessage() == f"couldn't download the recording: {error}"
     assert rig.of("write_sync_js") == []
-

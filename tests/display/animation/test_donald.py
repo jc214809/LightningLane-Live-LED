@@ -1,4 +1,5 @@
 """Donald Duck."""
+
 import random
 
 import pytest
@@ -40,7 +41,9 @@ def test_donald_walks_in_and_out_at_a_steady_step(height):
     frames = [f / animation.FPS for f in range(int(donald.duration * animation.FPS) + 1)]
     xs = [donald.donald_x(t) for t in frames]
     assert {abs(round(b - a, 6)) for a, b in zip(xs, xs[1:])} <= {0.0, float(donald.STEP)}
-    assert xs[0] >= 64 and round(donald.donald_x(donald.duration)) <= -donald.sprite_w, "in from the right, off the left"
+    assert xs[0] >= 64 and round(donald.donald_x(donald.duration)) <= -donald.sprite_w, (
+        "in from the right, off the left"
+    )
     assert abs(donald.stop_x + donald.sprite_w / 2 - 32) <= 2, "boils over mid-board"
     assert donald.scale == (2 if height == 64 else 1)
 
@@ -98,8 +101,10 @@ def test_blowing_up_flashes_and_blasts_the_old_screen_out_with_feathers(height):
     assert sum(after) > sum(before), "outward from him"
     assert NEW in landed.px.values(), "the new ride shows through"
     _frame(donald, donald.cool_at)
-    assert all(not (0 <= x < 64 and 0 <= y < height) for x, y, _, _, _ in donald.debris), \
+    assert all(not (0 <= x < 64 and 0 <= y < height) for x, y, _, _, _ in donald.debris), (
         "the old screen is gone by the end of his tantrum"
+    )
+
 
 @pytest.mark.parametrize("height", [32, 64])
 def test_donald_finishes_and_never_draws_off_board(height):

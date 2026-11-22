@@ -32,12 +32,14 @@ class Fetch:
 @pytest.fixture
 def run_now(monkeypatch):
     """Background fetches run at once, in the test's thread."""
+
     class Thread:
         def __init__(self, target, **_):
             self.target = target
 
         def start(self):
             self.target()
+
     monkeypatch.setattr(park_names.threading, "Thread", Thread)
 
 
@@ -103,8 +105,11 @@ def test_a_list_that_cant_be_saved_is_still_used(tmp_path, run_now, monkeypatch)
 
 def test_only_one_fetch_at_a_time(tmp_path, monkeypatch):
     started = []
-    monkeypatch.setattr(park_names.threading, "Thread",
-                        lambda target, **_: type("T", (), {"start": lambda self: started.append(target)})())
+    monkeypatch.setattr(
+        park_names.threading,
+        "Thread",
+        lambda target, **_: type("T", (), {"start": lambda self: started.append(target)})(),
+    )
     names = ParkNames(str(tmp_path / "names.json"), Fetch(), Clock())
     assert names.refresh_if_due() and not names.refresh_if_due()
     assert len(started) == 1
@@ -129,6 +134,7 @@ def test_fetch_destinations_reads_the_list_and_refuses_a_reply_without_one(monke
     def urlopen(request, timeout, context):
         requests.append((request.full_url, timeout))
         return Reply(next(bodies))
+
     bodies = iter([json.dumps({"destinations": DESTINATIONS}).encode(), b'{"error": "nope"}'])
     monkeypatch.setattr(park_names.urllib.request, "urlopen", urlopen)
     assert park_names.fetch_destinations() == DESTINATIONS

@@ -109,7 +109,10 @@ PEEK_MARIE = [
     ".....SSSSS.........SSSSS.....",
 ]
 PEEK_COLORS = {
-    "W": (255, 255, 255), "S": OUTLINE, "I": (255, 120, 170), "i": (230, 40, 110),
+    "W": (255, 255, 255),
+    "S": OUTLINE,
+    "I": (255, 120, 170),
+    "i": (230, 40, 110),
     "K": (0, 0, 0),  # pupils
     "C": (1, 169, 244),
 }
@@ -137,7 +140,7 @@ def _text_pixels(font, text, center_x, top, rgb, shadow=True):
     glyphs = capture._glyphs(path)
     width = sum(glyphs[ord(ch)][0] for ch in text)
     out = {}
-    for dx, colour in ((1, TITLE_SHADOW_RGB), (0, rgb))[0 if shadow else 1:]:
+    for dx, colour in ((1, TITLE_SHADOW_RGB), (0, rgb))[0 if shadow else 1 :]:
         x = round(center_x - width / 2) + dx
         baseline = top + ascent + dx
         for ch in text:
@@ -159,7 +162,11 @@ class WineAndDine5KLandmark(Landmark):
         w, h = self.width, self.height
         lay = self._layout()
         self.glass_scale, self.hers_x, self.friend_x, self.glass_y = (
-            lay["glass_scale"], lay["hers_x"], lay["friend_x"], lay["glass_y"])
+            lay["glass_scale"],
+            lay["hers_x"],
+            lay["friend_x"],
+            lay["glass_y"],
+        )
         self.glass_h = len(WINE_GLASS) * self.glass_scale
         # Where the rims meet: the sparkle's centre.
         left, right = sorted((self.hers_x, self.friend_x))
@@ -189,18 +196,34 @@ class WineAndDine5KLandmark(Landmark):
         if h >= 64:
             marie = [row[::-1] for row in TALL_MARIE]
             return {
-                "marie": (marie, TALL_COLORS), "marie_x": w - len(marie[0]), "marie_y": h - 2 - len(marie),
-                "table_rows": 2, "glass_scale": 2, "hers_x": 24, "friend_x": 11,
+                "marie": (marie, TALL_COLORS),
+                "marie_x": w - len(marie[0]),
+                "marie_y": h - 2 - len(marie),
+                "table_rows": 2,
+                "glass_scale": 2,
+                "hers_x": 24,
+                "friend_x": 11,
                 "glass_y": h - 2 - 2 * len(WINE_GLASS),
-                "title": [(BIG_FONT, "5K", 18, 0, PINK), (SMALL_FONT, "WINE &", 18, 20, GOLD),
-                          (SMALL_FONT, "DINE", 18, 28, GOLD)],
+                "title": [
+                    (BIG_FONT, "5K", 18, 0, PINK),
+                    (SMALL_FONT, "WINE &", 18, 20, GOLD),
+                    (SMALL_FONT, "DINE", 18, 28, GOLD),
+                ],
             }
         return {
-            "marie": (PEEK_MARIE, PEEK_COLORS), "marie_x": w - len(PEEK_MARIE[0]),
+            "marie": (PEEK_MARIE, PEEK_COLORS),
+            "marie_x": w - len(PEEK_MARIE[0]),
             "marie_y": h - 1 - len(PEEK_MARIE),
-            "table_rows": 1, "glass_scale": 1, "hers_x": 29, "friend_x": 23, "glass_y": h - 1 - len(WINE_GLASS),
-            "title": [(BIG_FONT, "5K", 17, 0, PINK), (SMALL_FONT, "WINE &", 17, 15, GOLD),
-                      (SMALL_FONT, "DINE", 11, 23, GOLD)],
+            "table_rows": 1,
+            "glass_scale": 1,
+            "hers_x": 29,
+            "friend_x": 23,
+            "glass_y": h - 1 - len(WINE_GLASS),
+            "title": [
+                (BIG_FONT, "5K", 17, 0, PINK),
+                (SMALL_FONT, "WINE &", 17, 15, GOLD),
+                (SMALL_FONT, "DINE", 11, 23, GOLD),
+            ],
         }
 
     def _glass(self, x, y):

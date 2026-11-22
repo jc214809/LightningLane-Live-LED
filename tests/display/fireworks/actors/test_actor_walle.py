@@ -11,8 +11,19 @@ START, END = 607.0, 623.0
 
 
 def _scene():
-    return Cue("s", "Can You Feel the Love Tonight", START, END, ((255, 0, 0),), 0.0, None, (), frozenset(),
-               "ghost", ("walle",))
+    return Cue(
+        "s",
+        "Can You Feel the Love Tonight",
+        START,
+        END,
+        ((255, 0, 0),),
+        0.0,
+        None,
+        (),
+        frozenset(),
+        "ghost",
+        ("walle",),
+    )
 
 
 def _frame(show, actor, cue, t, active=True):

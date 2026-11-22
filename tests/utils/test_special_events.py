@@ -24,8 +24,13 @@ ET = "America/New_York"
 def party(date, opens="19:00", closes_date=None, closes="00:00", description="Special Ticketed Event"):
     """A schedule entry like the live API's: 7pm to midnight, closing on the next day's date."""
     closes_date = closes_date or date
-    return {"type": "TICKETED_EVENT", "date": date, "description": description,
-            "openingTime": f"{date}T{opens}:00-04:00", "closingTime": f"{closes_date}T{closes}:00-04:00"}
+    return {
+        "type": "TICKETED_EVENT",
+        "date": date,
+        "description": description,
+        "openingTime": f"{date}T{opens}:00-04:00",
+        "closingTime": f"{closes_date}T{closes}:00-04:00",
+    }
 
 
 def et(day_time):
@@ -45,21 +50,29 @@ def test_is_special_matches_ticketed_parties_and_extended_evenings():
     assert not is_special({})
 
 
-@pytest.mark.parametrize("names, expected", [
-    (["Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
-    (["Stitch’s Masquerade Mashup at Mickey’s Not-So-Scary Halloween Party"], "halloween"),
-    (["Space Mountain", "Haunted Mansion"], None),
-    (["Meet Santa at Mickey's Very Merry Christmas Party"], "christmas"),
-    (["Minnie's Wonderful Christmastime Fireworks at Mickey's Very Merry Christmas Party"], "christmas"),
-    (["Holiday Show at Disney Jollywood Nights"], "jollywood"),
-    (["Disney Enchantment at Disney After Hours at Magic Kingdom"], "after_hours"),
-    # Magic Kingdom's list today: an After Hours show alongside the Halloween party's.
-    (["Disney Enchantment at Disney After Hours at Magic Kingdom",
-      "Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
-    (["Extended Evening Hours"], None),
-    ([{}], None),
-    ([], None),
-])
+@pytest.mark.parametrize(
+    "names, expected",
+    [
+        (["Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party"], "halloween"),
+        (["Stitch’s Masquerade Mashup at Mickey’s Not-So-Scary Halloween Party"], "halloween"),
+        (["Space Mountain", "Haunted Mansion"], None),
+        (["Meet Santa at Mickey's Very Merry Christmas Party"], "christmas"),
+        (["Minnie's Wonderful Christmastime Fireworks at Mickey's Very Merry Christmas Party"], "christmas"),
+        (["Holiday Show at Disney Jollywood Nights"], "jollywood"),
+        (["Disney Enchantment at Disney After Hours at Magic Kingdom"], "after_hours"),
+        # Magic Kingdom's list today: an After Hours show alongside the Halloween party's.
+        (
+            [
+                "Disney Enchantment at Disney After Hours at Magic Kingdom",
+                "Mickey’s Boo-To-You Halloween Parade at Mickey's Not-So-Scary Halloween Party",
+            ],
+            "halloween",
+        ),
+        (["Extended Evening Hours"], None),
+        ([{}], None),
+        ([], None),
+    ],
+)
 def test_seasonal_event_names_the_party_from_the_parks_entities(names, expected):
     children = [n if isinstance(n, dict) else {"name": n} for n in names]
     assert seasonal_event(children) == expected
@@ -86,8 +99,15 @@ def test_no_special_event_without_one_in_the_schedule():
 
 
 def test_malformed_times_and_unknown_timezone_fail_safe():
-    park = mk({"type": "TICKETED_EVENT", "date": "2026-09-26", "description": "Special Ticketed Event",
-               "openingTime": "not a time", "closingTime": None})
+    park = mk(
+        {
+            "type": "TICKETED_EVENT",
+            "date": "2026-09-26",
+            "description": "Special Ticketed Event",
+            "openingTime": "not a time",
+            "closingTime": None,
+        }
+    )
     assert not special_event_now(park, et("2026-09-27 20:00"))
     park = mk(party("2026-09-27"))
     park["timezone"] = "Mars/Olympus_Mons"
@@ -125,6 +145,7 @@ def test_the_christmas_party_has_its_own_fireworks_show():
 
 def test_every_fireworks_theme_exists():
     from display.fireworks.fireworks import THEMES
+
     for key, event in SPECIAL_EVENTS.items():
         assert event.get("fireworks_theme") in (None, *THEMES), key
     assert NIGHTLY_FIREWORKS[1] in (None, *THEMES)
@@ -156,7 +177,9 @@ def test_extended_evening_is_named_by_the_schedule_not_the_party_season():
     now = et("2026-09-27 21:30")
     eeh = party("2026-09-27", opens="21:00", closes="23:00", description="Extended Evening")
     assert active_party(mk(eeh), now) == "extended_evening", "even in a park holding a party season"
-    assert star_rgb(mk(eeh, seasonal=None), now) == SPECIAL_EVENTS["extended_evening"]["star_rgb"] == (255, 215, 0), "gold"
+    assert star_rgb(mk(eeh, seasonal=None), now) == SPECIAL_EVENTS["extended_evening"]["star_rgb"] == (255, 215, 0), (
+        "gold"
+    )
     assert fireworks_show(mk(eeh), now) == NIGHTLY_FIREWORKS
 
 
@@ -202,16 +225,20 @@ def test_special_event_hours_reads_tonights_start_and_end():
     now = et("2026-12-05 18:00")
     assert special_event_hours(mk(party("2026-12-05", closes_date="2026-12-06")), now) == ("7PM", "12AM")
     assert special_event_hours(mk(party("2026-12-05", opens="18:00", closes="23:00")), now) == ("6PM", "11PM")
-    assert special_event_hours(mk(party("2026-12-05", opens="18:57", closes="23:59")), now) == ("7PM", "12AM"), \
+    assert special_event_hours(mk(party("2026-12-05", opens="18:57", closes="23:59")), now) == ("7PM", "12AM"), (
         "a minute to midnight is midnight"
+    )
 
 
-@pytest.mark.parametrize("park", [
-    mk(),  # no party tonight
-    mk(party("2026-12-04")),  # last night's, over
-    mk(dict(party("2026-12-05"), closingTime="soon")),  # a bad time
-    mk({k: v for k, v in party("2026-12-05").items() if k != "openingTime"}),  # a missing one
-    None,
-])
+@pytest.mark.parametrize(
+    "park",
+    [
+        mk(),  # no party tonight
+        mk(party("2026-12-04")),  # last night's, over
+        mk(dict(party("2026-12-05"), closingTime="soon")),  # a bad time
+        mk({k: v for k, v in party("2026-12-05").items() if k != "openingTime"}),  # a missing one
+        None,
+    ],
+)
 def test_special_event_hours_is_none_without_a_usable_party(park):
     assert special_event_hours(park, et("2026-12-05 18:00")) is None

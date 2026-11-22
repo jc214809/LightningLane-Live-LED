@@ -1,5 +1,6 @@
 """The Updates card: what is installed, how the last update went, a channel to check, Update now and Roll back.
 Its back end is settings_page/updates.py; the card only draws what updates.Updates.view() says."""
+
 import re
 import time
 from html import escape
@@ -27,8 +28,11 @@ def _when(at):
         moment = time.localtime(float(at))
     except (TypeError, ValueError, OverflowError, OSError):
         return "?"
-    return (time.strftime("%d %b ", moment) + f"{moment.tm_hour % 12 or 12}:{moment.tm_min:02d} "
-            + ("PM" if moment.tm_hour >= 12 else "AM"))
+    return (
+        time.strftime("%d %b ", moment)
+        + f"{moment.tm_hour % 12 or 12}:{moment.tm_min:02d} "
+        + ("PM" if moment.tm_hour >= 12 else "AM")
+    )
 
 
 def _sentence(text):
@@ -46,9 +50,11 @@ def _short(sha):
 def _post(action, label, glyph, busy, kind="secondary", fields="", confirm=None, disabled=False):  # noqa: PLR0913
     """A one-button form of the Updates card. busy: the button's text while it works."""
     extra = f' data-confirm="{_attr(confirm)}"' if confirm else ""
-    return (f'<form method="post" action="{action}" data-busy="{_attr(busy)}"{extra}>{fields}'
-            f'<button type="submit" class="{kind}"{" disabled" if disabled else ""}>{icon(glyph)}'
-            f'<span>{escape(label)}</span></button></form>')
+    return (
+        f'<form method="post" action="{action}" data-busy="{_attr(busy)}"{extra}>{fields}'
+        f'<button type="submit" class="{kind}"{" disabled" if disabled else ""}>{icon(glyph)}'
+        f"<span>{escape(label)}</span></button></form>"
+    )
 
 
 # What's in an update: at most this many of its pull requests, then "and N more".
@@ -79,7 +85,7 @@ def _found_name(found):
         return _beta_name(found.get("version"), found.get("sha"))
     if found.get("version"):
         return escape(str(found["version"]))
-    return f'{escape(str(found.get("ref")))} {_short(found.get("sha"))}'
+    return f"{escape(str(found.get('ref')))} {_short(found.get('sha'))}"
 
 
 def _changes(view, found):
@@ -106,13 +112,20 @@ def _changes(view, found):
     if more > 0:
         items += f'<li><span class="mono"></span><span class="hint">and {more} more</span></li>'
     if hidden:
-        items += (f'<li><span class="mono"></span><span class="hint">Behind the scenes, nothing you\'d notice: '
-                  f'{", ".join(_pr_link(number) for number in hidden)}</span></li>')
-    packages = ('<p class="hint">Its Python packages change too, so it takes longer: up to hours on a Pi Zero.</p>'
-                if found.get("packages") else "")
-    return (f'<div class="changes"><p>{head}</p>'
-            + (f'<ul aria-label="What\'s in it">{items}</ul>' if items else "")
-            + f"{packages}</div>")
+        items += (
+            f'<li><span class="mono"></span><span class="hint">Behind the scenes, nothing you\'d notice: '
+            f"{', '.join(_pr_link(number) for number in hidden)}</span></li>"
+        )
+    packages = (
+        '<p class="hint">Its Python packages change too, so it takes longer: up to hours on a Pi Zero.</p>'
+        if found.get("packages")
+        else ""
+    )
+    return (
+        f'<div class="changes"><p>{head}</p>'
+        + (f'<ul aria-label="What\'s in it">{items}</ul>' if items else "")
+        + f"{packages}</div>"
+    )
 
 
 def updates_card(view, started=None):
@@ -128,58 +141,93 @@ def updates_card(view, started=None):
         top += _notice("bad", "<strong>Couldn't start it.</strong> The board's log says why.", "alert")
     if running:
         to = view.get("to") or {}
-        target = f' \u00b7 Updating to {_found_name(to)}' if to.get("ref") else ""
-        top += _notice("info", f'<strong id="update-phase">{escape(view["status"] or "")}</strong>'
-                               f'<span id="update-running"></span>{target}'
-                               + _steps(view.get("step"))
-                               + '<p>The board restarts as it updates, and so does this '
-                               'page: it comes back by itself in a few minutes (sign in again if it asks). Don\'t change '
-                               'settings until it\'s done: a rollback puts config.json back as it was before.</p>'
-                               + _changes(view, to))
+        target = f" \u00b7 Updating to {_found_name(to)}" if to.get("ref") else ""
+        top += _notice(
+            "info",
+            f'<strong id="update-phase">{escape(view["status"] or "")}</strong>'
+            f'<span id="update-running"></span>{target}'
+            + _steps(view.get("step"))
+            + "<p>The board restarts as it updates, and so does this "
+            "page: it comes back by itself in a few minutes (sign in again if it asks). Don't change "
+            "settings until it's done: a rollback puts config.json back as it was before.</p>" + _changes(view, to),
+        )
     elif view["phase"] in UNFINISHED:
-        top += _notice("warn", f"<strong>An update stopped midway</strong> (at {escape(view['phase'])}). Roll it back "
-                               "below, or restart the board: it rolls back at boot.", "alert")
+        top += _notice(
+            "warn",
+            f"<strong>An update stopped midway</strong> (at {escape(view['phase'])}). Roll it back "
+            "below, or restart the board: it rolls back at boot.",
+            "alert",
+        )
     elif view["phase"] == ROLLBACK_FAILED:
-        top += _notice("bad", "<strong>The last rollback failed.</strong> Try Roll back again, or over SSH: "
-                              "<code>sudo lll-rollback</code>.", "alert")
+        top += _notice(
+            "bad",
+            "<strong>The last rollback failed.</strong> Try Roll back again, or over SSH: "
+            "<code>sudo lll-rollback</code>.",
+            "alert",
+        )
     outcome = view.get("outcome")
     if outcome and not running:
-        name = {"update": "update", "rollback": "rollback", "recover": "rollback at boot"}.get(outcome.get("command"),
-                                                                                              "update")
-        top += _notice("good" if outcome.get("ok") else "bad",
-                       f"<strong>Last {name}</strong> ({_when(outcome.get('at'))}): {_sentence(outcome.get('message'))}",
-                       "status" if outcome.get("ok") else "alert")
+        name = {"update": "update", "rollback": "rollback", "recover": "rollback at boot"}.get(
+            outcome.get("command"), "update"
+        )
+        top += _notice(
+            "good" if outcome.get("ok") else "bad",
+            f"<strong>Last {name}</strong> ({_when(outcome.get('at'))}): {_sentence(outcome.get('message'))}",
+            "status" if outcome.get("ok") else "alert",
+        )
 
     where = f"on {escape(view['branch'])}" if view["branch"] else "as installed by an update"
     if view.get("installed_channel") == BETA:
-        installed = (f'<p><strong>{_installed_name(view)}</strong></p><p class="hint">A Beta (test) version '
-                     f'{where}, newer than release {escape(release_of(view["version"]))}</p>')
+        installed = (
+            f'<p><strong>{_installed_name(view)}</strong></p><p class="hint">A Beta (test) version '
+            f"{where}, newer than release {escape(release_of(view['version']))}</p>"
+        )
     else:
-        installed = (f'<p><strong>{escape(str(view["version"]))}</strong> <span class="mono">{_short(view["sha"])}'
-                     f'</span></p><p class="hint">{where}</p>')
+        installed = (
+            f'<p><strong>{escape(str(view["version"]))}</strong> <span class="mono">{_short(view["sha"])}'
+            f'</span></p><p class="hint">{where}</p>'
+        )
     channel = view["channel"]
-    check_form = ('<form method="post" action="/update/check" data-busy="Checking\u2026" class="add-row">'
-                  + _options("channel", [(RELEASES, "Releases"), (BETA, "Beta")], channel)
-                  + f'<button type="submit" class="secondary"{" disabled" if running else ""}>{icon("refresh")}'
-                    '<span>Check</span></button></form>')
-    body = (top
-            + _field("update_installed", "Installed", installed)
-            + _field("channel", "Check for a newer version", check_form + ("" if running else check_result(view)),
-                     "Releases: the newest release. Beta: the newest test version whose checks passed. "
-                     "Never a downgrade: from Beta, Releases waits for a release newer than what's installed."))
+    check_form = (
+        '<form method="post" action="/update/check" data-busy="Checking\u2026" class="add-row">'
+        + _options("channel", [(RELEASES, "Releases"), (BETA, "Beta")], channel)
+        + f'<button type="submit" class="secondary"{" disabled" if running else ""}>{icon("refresh")}'
+        "<span>Check</span></button></form>"
+    )
+    body = (
+        top
+        + _field("update_installed", "Installed", installed)
+        + _field(
+            "channel",
+            "Check for a newer version",
+            check_form + ("" if running else check_result(view)),
+            "Releases: the newest release. Beta: the newest test version whose checks passed. "
+            "Never a downgrade: from Beta, Releases waits for a release newer than what's installed.",
+        )
+    )
     old = view.get("from")
     if old and view["phase"] not in ("idle", "rolled_back"):
         # The exact commit (and branch) from before the update, whatever channel is picked above.
         # Plain text: the hint escapes it.
         # A point taken before rollback points had a channel: on develop-beta, it was a Beta.
-        back_to = name_of({**old, "channel": BETA} if old.get("branch") == BETA_BRANCH else old) \
-            + (f" on {old['branch']}" if old.get("branch") else "")
-        body += _field("update_rollback", "Roll back",
-                       _post("/update/rollback", "Roll back", "undo", "Rolling back\u2026",
-                             confirm="Roll back the last update? This also puts back config.json as it was "
-                                     "before it, undoing settings saved since.", disabled=running),
-                       f"Back to {back_to}, as before the last update. This also puts back config.json as it "
-                       "was then, undoing settings saved since.")
+        back_to = name_of({**old, "channel": BETA} if old.get("branch") == BETA_BRANCH else old) + (
+            f" on {old['branch']}" if old.get("branch") else ""
+        )
+        body += _field(
+            "update_rollback",
+            "Roll back",
+            _post(
+                "/update/rollback",
+                "Roll back",
+                "undo",
+                "Rolling back\u2026",
+                confirm="Roll back the last update? This also puts back config.json as it was "
+                "before it, undoing settings saved since.",
+                disabled=running,
+            ),
+            f"Back to {back_to}, as before the last update. This also puts back config.json as it "
+            "was then, undoing settings saved since.",
+        )
     return _section("updates", "Updates", "This board's version, and newer ones from GitHub.", body, "refresh")
 
 
@@ -207,7 +255,10 @@ def _waiting(runs, when):
     with one row per run, in the update steps' style."""
     states = [state for _, state in runs]
     if FAILED in states:
-        headline, after = "A newer Beta didn't pass its tests", "It won't be installed; the next Beta that passes can be."
+        headline, after = (
+            "A newer Beta didn't pass its tests",
+            "It won't be installed; the next Beta that passes can be.",
+        )
     elif runs:
         headline = "A newer Beta is being tested"
         after = f"It can be installed once {'both pass' if len(runs) == 2 else 'they all pass' if len(runs) > 2 else 'it passes'}."
@@ -230,26 +281,45 @@ def check_result(view):
         if not view.get("auto_check"):
             return ""
         name = "Beta" if view["channel"] == BETA else "Releases"
-        return (f'<div id="update-check" data-auto="{_attr(view["channel"])}">'
-                + _notice("info", f"Checking {name} for a newer version\u2026") + "</div>")
+        return (
+            f'<div id="update-check" data-auto="{_attr(view["channel"])}">'
+            + _notice("info", f"Checking {name} for a newer version\u2026")
+            + "</div>"
+        )
     name = "Beta" if check["channel"] == BETA else "Releases"
     when = f' <span class="when">\u00b7 checked {_when(check["at"])}</span>'
     if check["result"] == WOULD_UPDATE:
-        found = (_notice("new", f"<strong>Update available on {name}: {_found_name(check)}</strong>{when}"
-                                + _changes(view, check))
-                 + '<div class="below">'
-                 + _post("/update/start", "Update now", "refresh", "Starting\u2026", "primary",
-                         f'<input type="hidden" name="channel" value="{_attr(check["channel"])}">')
-                 + '</div><p class="hint">A few minutes, longer if its Python packages change. If the new '
-                   'version doesn\'t work within 5 minutes, the board rolls back by itself.</p>')
+        found = (
+            _notice(
+                "new",
+                f"<strong>Update available on {name}: {_found_name(check)}</strong>{when}" + _changes(view, check),
+            )
+            + '<div class="below">'
+            + _post(
+                "/update/start",
+                "Update now",
+                "refresh",
+                "Starting\u2026",
+                "primary",
+                f'<input type="hidden" name="channel" value="{_attr(check["channel"])}">',
+            )
+            + '</div><p class="hint">A few minutes, longer if its Python packages change. If the new '
+            "version doesn't work within 5 minutes, the board rolls back by itself.</p>"
+        )
     elif check["result"] == CURRENT:
-        found = _notice("good", f"<strong>Up to date:</strong> this is the newest on {name}.{when}"
-                                f'<br><span class="when">{_sentence(check["message"])}</span>')
+        found = _notice(
+            "good",
+            f"<strong>Up to date:</strong> this is the newest on {name}.{when}"
+            f'<br><span class="when">{_sentence(check["message"])}</span>',
+        )
     elif check["result"] == WAITING and isinstance(check.get("runs"), list):
         found = _waiting(check["runs"], when)
     elif check["result"] == WAITING:
-        found = _notice("info", f"<strong>Up to date for now:</strong> a newer {name} version isn't ready yet."
-                                f'{when}<br><span class="when">{_sentence(check["message"])}</span>')
+        found = _notice(
+            "info",
+            f"<strong>Up to date for now:</strong> a newer {name} version isn't ready yet."
+            f'{when}<br><span class="when">{_sentence(check["message"])}</span>',
+        )
     else:
         found = _notice("warn", f"<strong>Can't update right now:</strong> {_sentence(check['message'])}{when}")
     return f'<div id="update-check">{found}</div>'

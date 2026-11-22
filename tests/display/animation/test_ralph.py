@@ -41,8 +41,9 @@ def test_the_debris_is_thrown_then_falls_clear_of_the_board(height):
     assert mid < early, "the slam throws it up and outward first"
     ralph.overlay(FakeCanvas(64, height), ralph.duration - 0.01)
     on_board = [d for d in ralph.debris if 0 <= d[0] < 64 and 0 <= d[1] < height]
-    assert len(on_board) < len(ralph.debris) * 0.05, \
+    assert len(on_board) < len(ralph.debris) * 0.05, (
         "almost all of it has fallen off by the end, so nothing vanishes at once when he finishes"
+    )
 
 
 @pytest.mark.parametrize("height", [32, 64])
@@ -66,8 +67,10 @@ def test_his_fists_go_up_before_the_slam(height, pose):
     standing = FakeCanvas(64, height)
     _ralph(height).overlay(standing, ralph.WALK_S - 0.01)
     skin = Ralph.COLORS["S"]
+
     def top_skin(canvas):
         return min(y for (x, y), rgb in canvas.px.items() if rgb == skin)
+
     assert top_skin(winding) <= top_skin(standing), "his fists are up at or above his face"
     if height == 64:
         hair = Ralph.COLORS["H"]

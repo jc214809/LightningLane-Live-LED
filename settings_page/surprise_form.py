@@ -1,6 +1,7 @@
 """The Surprise characters page's form logic: the characters it lists, Save (apply_surprises), Export
 (snapshot_surprises) and Import (import_surprises). No HTTP or HTML here. Split out of form.py, which re-exports
 every public name, so callers still import them from settings_page.form."""
+
 import ast
 import copy
 import json
@@ -12,17 +13,32 @@ from utils.config import SURPRISE_LOOKS, SURPRISES_UNUSED
 from utils.surprises import DEFAULT_RIDE_CHANCE, PARK_REVEALS, RIDE_VISITORS, SURPRISES
 
 # Where TRANSITIONS lives. Read, not imported: importing it loads every character's art.
-_CHARACTERS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "display", "animation", "characters", "__init__.py")
+_CHARACTERS = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "display", "animation", "characters", "__init__.py"
+)
 
 # Proper names for the surprise characters, where title case gets them wrong; the rest are title-cased.
 CHARACTER_NAMES = {
-    "tink": "Tinker Bell", "buzz": "Buzz Lightyear", "ralph": "Wreck-It Ralph", "slinky": "Slinky Dog",
-    "slinky_wrap": "Slinky Dog (wrap)", "walle": "WALL-E", "walle_side": "WALL-E (side)", "army_men": "Green Army Men",
-    "falcon": "Millennium Falcon", "mike": "Mike Wazowski", "mcqueen": "Lightning McQueen",
-    "chip_dale": "Chip 'n' Dale", "chip_dale_swing": "Chip 'n' Dale (swing)", "pooh": "Winnie the Pooh",
-    "donald": "Donald Duck", "jack_sally": "Jack & Sally", "grannies": "Bluey: Grannies",
-    "keepy_uppy": "Bluey: Keepy Uppy", "saber_duel": "Saber Duel (random)", "saber_duel_obiwan": "Saber Duel Obi-Wan",
+    "tink": "Tinker Bell",
+    "buzz": "Buzz Lightyear",
+    "ralph": "Wreck-It Ralph",
+    "slinky": "Slinky Dog",
+    "slinky_wrap": "Slinky Dog (wrap)",
+    "walle": "WALL-E",
+    "walle_side": "WALL-E (side)",
+    "army_men": "Green Army Men",
+    "falcon": "Millennium Falcon",
+    "mike": "Mike Wazowski",
+    "mcqueen": "Lightning McQueen",
+    "chip_dale": "Chip 'n' Dale",
+    "chip_dale_swing": "Chip 'n' Dale (swing)",
+    "pooh": "Winnie the Pooh",
+    "donald": "Donald Duck",
+    "jack_sally": "Jack & Sally",
+    "grannies": "Bluey: Grannies",
+    "keepy_uppy": "Bluey: Keepy Uppy",
+    "saber_duel": "Saber Duel (random)",
+    "saber_duel_obiwan": "Saber Duel Obi-Wan",
     "archer": "Merida (archer)",
 }
 
@@ -45,8 +61,11 @@ def surprise_names(path=_CHARACTERS):
     except (OSError, SyntaxError):
         return []
     for node in tree.body:
-        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
-                and any(isinstance(t, ast.Name) and t.id == "TRANSITIONS" for t in node.targets)):
+        if (
+            isinstance(node, ast.Assign)
+            and isinstance(node.value, ast.Dict)
+            and any(isinstance(t, ast.Name) and t.id == "TRANSITIONS" for t in node.targets)
+        ):
             return [k.value for k in node.value.keys if isinstance(k, ast.Constant) and k.value != "wipe"]
     return []
 
@@ -56,8 +75,11 @@ def surprise_characters(path=_CHARACTERS):
     (utils.config.SURPRISE_LOOKS), the ones no roll picks and the park titles' (Tink, Buzz), which aren't
     ride-screen surprises."""
     looks = {look for group in SURPRISE_LOOKS.values() for look in group}
-    return [name for name in surprise_names(path)
-            if name not in looks and name not in SURPRISES_UNUSED and name not in PARK_REVEALS]
+    return [
+        name
+        for name in surprise_names(path)
+        if name not in looks and name not in SURPRISES_UNUSED and name not in PARK_REVEALS
+    ]
 
 
 def percent_text(fraction):
@@ -82,9 +104,14 @@ def surprise_rows():
     rows = []
     for name in surprise_characters():
         spec = RIDE_VISITORS.get(name)
-        rows.append(SurpriseRow(name, percent_text(SURPRISES.get(name, 0)),
-                                percent_text(spec["chance"] if spec else DEFAULT_RIDE_CHANCE),
-                                [ride.title() for ride in spec["rides"]] if spec else []))
+        rows.append(
+            SurpriseRow(
+                name,
+                percent_text(SURPRISES.get(name, 0)),
+                percent_text(spec["chance"] if spec else DEFAULT_RIDE_CHANCE),
+                [ride.title() for ride in spec["rides"]] if spec else [],
+            )
+        )
     return rows
 
 
@@ -92,8 +119,10 @@ def default_rides(name, rides):
     """The rides in rides ({park: [names]}) that a character visits by default: those whose name has one of
     utils/surprises.py's pieces in it, as the app matches them. Sorted; [] for a character with none."""
     pieces = RIDE_VISITORS.get(name, {}).get("rides", ())
-    return sorted({ride for names in (rides or {}).values() for ride in names
-                   if any(piece in ride.lower() for piece in pieces)}, key=str.lower)
+    return sorted(
+        {ride for names in (rides or {}).values() for ride in names if any(piece in ride.lower() for piece in pieces)},
+        key=str.lower,
+    )
 
 
 CHANCE_KEYS = ("chance", "ride_chance")
@@ -156,11 +185,14 @@ def _apply_posted_rides(entry, name, form, rides, problems):
 
 def _chances_total_problem(characters):
     """What's wrong if the characters' chances on any ride screen (saved, else default) pass 100%, else None."""
-    total = sum(characters.get(name, {}).get("chance", SURPRISES.get(name, 0) * 100)
-                for name in set(SURPRISES) | set(characters))
+    total = sum(
+        characters.get(name, {}).get("chance", SURPRISES.get(name, 0) * 100)
+        for name in set(SURPRISES) | set(characters)
+    )
     if total > 100:
-        return (f"Together the characters' chances on any ride screen come to {round(total, 1):g}%: "
-                f"they can't pass 100%.")
+        return (
+            f"Together the characters' chances on any ride screen come to {round(total, 1):g}%: they can't pass 100%."
+        )
     return None
 
 
@@ -178,8 +210,12 @@ def snapshot_surprises(data, rides=None):
         else:
             # By name when the list has them, else by the pieces of their names: an empty list always means none.
             visits = default_rides(row.name, rides) or [ride.lower() for ride in row.rides]
-        characters[row.name] = {"on": entry.get("on", True), "chance": _number(entry.get("chance", row.anywhere)),
-                                "ride_chance": _number(entry.get("ride_chance", row.own)), "rides": list(visits)}
+        characters[row.name] = {
+            "on": entry.get("on", True),
+            "chance": _number(entry.get("chance", row.anywhere)),
+            "ride_chance": _number(entry.get("ride_chance", row.own)),
+            "rides": list(visits),
+        }
     return {"enabled": data.get("enabled", True), "characters": characters}
 
 

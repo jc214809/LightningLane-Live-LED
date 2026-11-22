@@ -29,19 +29,31 @@ class TowerOfTerrorLandmark(Landmark):
     CAR_FLOOR = 52  # the car's top row when it lands, at the arches
     BOLT_RGB, BOLT_EDGE_RGB, CAR_RGB = (235, 235, 255), (170, 170, 230), (255, 235, 180)
     COLORS = {
-        "wall": (200, 124, 96), "shade": (150, 88, 70), "lit_wall": (225, 150, 115),
-        "strip": (96, 68, 60), "strip_dark": (70, 48, 44),
-        "roof": (170, 52, 40), "roof_dark": (120, 34, 28), "spire": (95, 115, 160),
-        "win": (45, 26, 26), "win_lit": (255, 200, 110), "arch": (240, 170, 60),
-        "tree": (22, 48, 28), "tree_lit": (34, 70, 38),
-        "cloud_top": (96, 88, 118), "cloud": (68, 62, 88), "cloud_under": (52, 47, 68),
+        "wall": (200, 124, 96),
+        "shade": (150, 88, 70),
+        "lit_wall": (225, 150, 115),
+        "strip": (96, 68, 60),
+        "strip_dark": (70, 48, 44),
+        "roof": (170, 52, 40),
+        "roof_dark": (120, 34, 28),
+        "spire": (95, 115, 160),
+        "win": (45, 26, 26),
+        "win_lit": (255, 200, 110),
+        "arch": (240, 170, 60),
+        "tree": (22, 48, 28),
+        "tree_lit": (34, 70, 38),
+        "cloud_top": (96, 88, 118),
+        "cloud": (68, 62, 88),
+        "cloud_under": (52, 47, 68),
     }
     # Storm clouds as (centre x, centre y, puffs of (dx, dy, radius)). The first is the one
     # the lightning comes out of.
-    CLOUDS = ((9, 5, ((-6, 1, 4), (0, -1, 5), (6, 1, 4), (11, 2, 3))),
-              (55, 4, ((-5, 1, 3), (0, 0, 4), (5, 1, 3))),
-              (5, 25, ((-3, 0, 3), (2, -1, 3), (6, 0, 2))),
-              (58, 21, ((-4, 0, 2), (0, -1, 3), (4, 0, 2))))
+    CLOUDS = (
+        (9, 5, ((-6, 1, 4), (0, -1, 5), (6, 1, 4), (11, 2, 3))),
+        (55, 4, ((-5, 1, 3), (0, 0, 4), (5, 1, 3))),
+        (5, 25, ((-3, 0, 3), (2, -1, 3), (6, 0, 2))),
+        (58, 21, ((-4, 0, 2), (0, -1, 3), (4, 0, 2))),
+    )
 
     def __init__(self, width, height, rng=None, park=None):
         self.view_h = height
@@ -142,10 +154,16 @@ class TowerOfTerrorLandmark(Landmark):
     def _place_windows(self):
         """A grid down both sides of the shaft, a few on the wings, two in the cupola."""
         L, R, SL, SR = self.TOWER_L, self.TOWER_R, self.STRIP_L, self.STRIP_R
-        self.windows = [(x, y, self.rng.random()) for y in range(15, 54, 3)
-                        for x in list(range(L + 3, SL - 1, 2)) + list(range(SR + 2, R - 2, 2))]
-        self.windows += [(x, y, self.rng.random()) for y in range(48, 55, 3)
-                         for x in list(range(L - 8, L - 1, 2)) + list(range(R + 2, R + 8, 2))]
+        self.windows = [
+            (x, y, self.rng.random())
+            for y in range(15, 54, 3)
+            for x in list(range(L + 3, SL - 1, 2)) + list(range(SR + 2, R - 2, 2))
+        ]
+        self.windows += [
+            (x, y, self.rng.random())
+            for y in range(48, 55, 3)
+            for x in list(range(L - 8, L - 1, 2)) + list(range(R + 2, R + 8, 2))
+        ]
         self.windows += [(30, 7, 0.95), (33, 7, 0.95)]
 
     def _rect(self, x0, y0, x1, y1, rgb):

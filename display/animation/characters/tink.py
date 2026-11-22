@@ -31,6 +31,14 @@ class TinkReveal(FlyByReveal):
 
     def spawn(self, x, y):
         r = self.rng
-        return [[x + r.uniform(0, self.sprite_w / 2), y + r.uniform(0, self.sprite_w / 2),
-                 r.uniform(-0.15, 0.15), r.uniform(0.05, 0.35), r.randint(12, 24), r.choice(self.dust_colors)]
-                for _ in range(2 * self.scale)]
+        return [
+            [
+                x + r.uniform(0, self.sprite_w / 2),
+                y + r.uniform(0, self.sprite_w / 2),
+                r.uniform(-0.15, 0.15),
+                r.uniform(0.05, 0.35),
+                r.randint(12, 24),
+                r.choice(self.dust_colors),
+            ]
+            for _ in range(2 * self.scale)
+        ]

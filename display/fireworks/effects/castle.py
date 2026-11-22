@@ -1,5 +1,6 @@
 """Looks that light or dress the castle itself: its gate, outline, finials, torches, flames, and the
 water and spiral that cover it."""
+
 import math
 
 from display.fireworks.effects.base import GOLD, Effect, _door, _Level
@@ -9,6 +10,7 @@ from display.motion import smooth
 class KeyholeGlow(Effect):
     """The castle's doorway glows yellow, shimmering gently (from PULSE of full to full), as the real
     gate glows steadily."""
+
     COLOUR = (255, 225, 60)
     PULSE = 0.8
 
@@ -27,12 +29,14 @@ class KeyholeGlow(Effect):
 
 class DimKeyholeGlow(KeyholeGlow):
     """The narrator's opening: the yellow gate at half brightness, waiting for the magic."""
+
     COLOUR = (128, 112, 30)
 
 
 class KeyholeOpen(Effect):
     """The finale: the doorway blazes and its gold light spreads out over the whole sky in OPEN_S,
     from when it's first turned on, staying open through the scenes after that keep it."""
+
     OPEN_S = 12.0
 
     def __init__(self, show):
@@ -41,8 +45,9 @@ class KeyholeOpen(Effect):
         self.since = None
         # Every LED by its distance from the door, nearest first, worked out once: the glow walks
         # this list until it passes its edge, so a frame costs only the lit LEDs.
-        self.by_distance = sorted((math.hypot(x - cx, y - cy), (x, y))
-                                  for y in range(show.height) for x in range(show.width))
+        self.by_distance = sorted(
+            (math.hypot(x - cx, y - cy), (x, y)) for y in range(show.height) for x in range(show.width)
+        )
         self.shades = [tuple(int(c * 0.6 * k / 32) for c in GOLD) for k in range(33)]
 
     def opened(self):
@@ -82,6 +87,7 @@ class KeyholeMagic(Effect):
     walls, sparkling at its edge, tinting them gold (TINT) up to the top (CLIMB_S) while the roofs stay
     their own blue; it holds, then fades back to the castle's own colours as the singing starts. Timed
     from when it's first turned on, carrying on through the scenes after that keep it."""
+
     CLIMB_S, HOLD_S, FADE_S = 1.5, 0.8, 1.5
     LIT = (255, 215, 110)
     TINT = 0.45
@@ -93,8 +99,10 @@ class KeyholeMagic(Effect):
         self.bottom = max(y for _, y in self.door)
         self.top = show.castle_y
         # The walls, lowest first, so a frame stops at the climbing edge.
-        self.cells = sorted(((show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels
-                             if kind == "W"), key=lambda p: -p[1])
+        self.cells = sorted(
+            ((show.castle_x + dx, show.castle_y + dy) for dx, dy, kind in show.castle_pixels if kind == "W"),
+            key=lambda p: -p[1],
+        )
         self.since = None
         self.sparkles = []  # [x, y, life]
 
@@ -170,6 +178,7 @@ class GoldTrace(Effect):
     """The theme chorus: gold magic tracing the castle's design. Bright gold points climb its outline
     from the bottom corners, up each side to the top of the spire every TRACE_S (two a side, half a run
     apart), each leaving a fading gold trail."""
+
     TRACE_S = 2.5
     PHASES = (0.0, 0.5)  # the points on each side, as fractions of a run
     HEAD = (255, 245, 200)
@@ -179,7 +188,7 @@ class GoldTrace(Effect):
         path = _outline(show)
         top = min(range(len(path)), key=lambda i: (path[i][1], i))
         bottom_right = max(range(top, len(path)), key=lambda i: (path[i][1], path[i][0]))
-        self.sides = (path[:top + 1], path[top:bottom_right + 1][::-1])  # each from the bottom up
+        self.sides = (path[: top + 1], path[top : bottom_right + 1][::-1])  # each from the bottom up
         self.trail = 10 * self.s
         self.since = None
 
@@ -194,8 +203,9 @@ class GoldTrace(Effect):
         if self.since is None:
             return ()
         run = (self.show.t - self.since) / self.TRACE_S
-        return tuple((side, int(((run + phase) % 1.0) * (len(side) - 1)))
-                     for side in self.sides for phase in self.PHASES)
+        return tuple(
+            (side, int(((run + phase) % 1.0) * (len(side) - 1))) for side in self.sides for phase in self.PHASES
+        )
 
     def draw_front(self, put, out, active):
         if not active:
@@ -228,6 +238,7 @@ class Bells(Effect):
 class TeFiti(_Level):
     """The heart of Te Fiti: a green spiral glowing on the castle's middle as How Far I'll Go
     starts, fading once the scene is under way."""
+
     fade_frames = 60
 
     def step(self, active):
@@ -291,14 +302,19 @@ class Torches(Effect):
 class FlameJets(Effect):
     """He's a Pirate's real flame jets: columns of fire bursting up from the castle's ledges and
     either side of its foot, as the scene starts and every few seconds after, lighting the castle."""
+
     JET_FRAMES = 24
 
     def __init__(self, show):
         super().__init__(show)
         w, h = show.castle_w, show.castle_h
         ledge = show.castle_y + int(h * 0.55)
-        self.spots = [(show.castle_x + int(w * 0.18), ledge), (show.castle_x + int(w * 0.82), ledge),
-                      (show.castle_x - 2, show.height - 1), (show.castle_x + w + 1, show.height - 1)]
+        self.spots = [
+            (show.castle_x + int(w * 0.18), ledge),
+            (show.castle_x + int(w * 0.82), ledge),
+            (show.castle_x - 2, show.height - 1),
+            (show.castle_x + w + 1, show.height - 1),
+        ]
         self.jets = []  # [x, y, frames left]
         self.next_t = None
 
@@ -325,8 +341,11 @@ class FlameJets(Effect):
                 hot = 1 - k / height
                 rgb = (255, int(90 + 150 * hot), int(40 * hot))
                 for dx in range(self.s):
-                    put(x + dx + rng.choice((-1, 0, 0, 1)) * (k > height // 2), y - k,
-                        tuple(int(c * (0.4 + 0.6 * f)) for c in rgb))
+                    put(
+                        x + dx + rng.choice((-1, 0, 0, 1)) * (k > height // 2),
+                        y - k,
+                        tuple(int(c * (0.4 + 0.6 * f)) for c in rgb),
+                    )
 
 
 class GreenFire(_Level):

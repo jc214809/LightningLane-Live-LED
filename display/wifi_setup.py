@@ -44,6 +44,9 @@ def render_settings_address(canvas):
     width = canvas.width - 2 * MARGIN
     title = _fitting_font([loaded_fonts[f] for f in TITLE_FONTS], [SETTINGS_TITLE], width)
     font = _fitting_font([loaded_fonts[f] for f in NAME_FONTS], [SETTINGS_ADDRESS], width)
-    rows = [(title, color_dict["gold"], SETTINGS_TITLE), (loaded_fonts["info"], color_dict["white"], "Browse to"),
-            (font, color_dict["wait"], SETTINGS_ADDRESS)]
+    rows = [
+        (title, color_dict["gold"], SETTINGS_TITLE),
+        (loaded_fonts["info"], color_dict["white"], "Browse to"),
+        (font, color_dict["wait"], SETTINGS_ADDRESS),
+    ]
     _stack(canvas, (MARGIN, 0, width, canvas.height), rows)

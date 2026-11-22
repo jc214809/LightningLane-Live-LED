@@ -3,6 +3,7 @@ Putting pixels on the board, shared by the transitions, the landmarks and the fi
 from pixel art, bounds-checked setting and painting, blending over what's beneath, turning art
 exactly (or by any angle, RotSprite's way), and a repeatable per-cell noise for textures.
 """
+
 import math
 
 
@@ -104,10 +105,12 @@ def rotate_cells(cells, pivot, degrees, offset=(0.0, 0.0)):
     px, py = pivot
     ox, oy = offset
     out = {}
-    for y in range(int(math.floor(min(c[1] for c in corners) + oy)) - 1,
-                   int(math.ceil(max(c[1] for c in corners) + oy)) + 1):
-        for x in range(int(math.floor(min(c[0] for c in corners) + ox)) - 1,
-                       int(math.ceil(max(c[0] for c in corners) + ox)) + 1):
+    for y in range(
+        int(math.floor(min(c[1] for c in corners) + oy)) - 1, int(math.ceil(max(c[1] for c in corners) + oy)) + 1
+    ):
+        for x in range(
+            int(math.floor(min(c[0] for c in corners) + ox)) - 1, int(math.ceil(max(c[0] for c in corners) + ox)) + 1
+        ):
             dx, dy = x + 0.5 - ox - px, y + 0.5 - oy - py
             gx = int(math.floor((px + dx * co - dy * si - x0) * 8))
             gy = int(math.floor((py + dx * si + dy * co - y0) * 8))

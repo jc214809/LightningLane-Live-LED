@@ -1,4 +1,5 @@
 """Rapunzel and Flynn's rowing boat from Tangled's lantern scene, for the synced show (see show_actors.py)."""
+
 import math
 
 from display.fireworks.actors.base import Actor, stamp
@@ -17,6 +18,7 @@ class LanternBoat(Actor):
     rises from the boat and drifts up the sky. The boat stays to the end of both scenes. Everything is
     placed by elapsed(), so nothing is kept between frames.
     """
+
     NAME = "Rapunzel and Flynn's boat"
     SETTLE_S = 14.0  # drifting in from the left edge to its rest by the castle
     ROCK_S = 3.4  # one rock
@@ -118,6 +120,14 @@ class LanternBoat(Actor):
         show, e = self.show, self.elapsed()
         left, top = self.top_left(e)
         self._water(out, left)
-        stamp(out, self.ART, self.COLORS, math.floor(left + 0.5), math.floor(top + 0.5), self.scale,
-              show.width, show.height)
+        stamp(
+            out,
+            self.ART,
+            self.COLORS,
+            math.floor(left + 0.5),
+            math.floor(top + 0.5),
+            self.scale,
+            show.width,
+            show.height,
+        )
         self._lantern(put, out, e)

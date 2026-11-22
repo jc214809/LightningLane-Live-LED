@@ -10,8 +10,9 @@ START, END = 370.0, 398.0  # How Far I'll Go (climax): the canoe's only scene
 
 
 def _climax():
-    return Cue("s", "How Far I'll Go (climax)", START, END, ((255, 0, 0),), 0.0, None, (), frozenset(), "off",
-               ("canoe",))
+    return Cue(
+        "s", "How Far I'll Go (climax)", START, END, ((255, 0, 0),), 0.0, None, (), frozenset(), "off", ("canoe",)
+    )
 
 
 def _frame(show, actor, cue, t, active=True):
@@ -37,7 +38,9 @@ def _play(height, until, fps=30, seed=1):
 
 def _canoe(out):
     """The canoe's pixels, with Moana standing in it on 64x64."""
-    colours = set(CanoeSails.COLORS.values()) | set(CanoeSails.BIG_COLORS.values()) | set(CanoeSails.MOANA_COLORS.values())
+    colours = (
+        set(CanoeSails.COLORS.values()) | set(CanoeSails.BIG_COLORS.values()) | set(CanoeSails.MOANA_COLORS.values())
+    )
     return {xy for xy, rgb in out.items() if rgb in colours}
 
 
@@ -47,7 +50,7 @@ def test_canoe_floats_on_the_water_line(height):
     surface = show.castle_y + show.castle_h * 0.6  # show_effects.Water at full
     bottom = max(y for _, y in _canoe(out))
     assert abs(bottom - surface) <= 1 + actor.scale, "hull's underside rides on the surface"
-    assert len(_canoe(out)) > 60 * actor.scale ** 2, "the whole canoe mid-crossing"
+    assert len(_canoe(out)) > 60 * actor.scale**2, "the whole canoe mid-crossing"
 
 
 @pytest.mark.parametrize("height", [32, 64])
@@ -68,7 +71,7 @@ def test_canoe_sails_left_to_right_on_the_board(height):
     assert xs[-1] >= 64 - 1, "leaves off the right edge"
     assert xs == sorted(xs), "one crossing, always sailing right"
     _, _, mid = _play(height, START + 14)
-    assert len(_canoe(mid)) > 60 * actor.scale ** 2, "mid-board halfway through"
+    assert len(_canoe(mid)) > 60 * actor.scale**2, "mid-board halfway through"
     _, _, last = _play(height, END - 0.05)
     assert not _canoe(last), "gone by 398 s"
 

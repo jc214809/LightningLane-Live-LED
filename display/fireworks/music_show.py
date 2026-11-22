@@ -3,6 +3,7 @@ The castle fireworks in time with a show's soundtrack: a copy of fireworks.py's 
 so the everyday and party fireworks don't change) driven by a Score (score.py). The clock decides
 which scene is on, not the frame count, so a slow board still hits each section with the music.
 """
+
 import colorsys
 import math
 import random
@@ -80,8 +81,11 @@ def _mickey():
         for i in range(n):
             a = 2 * math.pi * i / n
             px, py = cx + r * math.cos(a), cy + r * math.sin(a)
-            if not any((px - ox) ** 2 + (py - oy) ** 2 < (orr - 0.05) ** 2
-                       for ox, oy, orr in _MICKEY_CIRCLES if (ox, oy, orr) != (cx, cy, r)):
+            if not any(
+                (px - ox) ** 2 + (py - oy) ** 2 < (orr - 0.05) ** 2
+                for ox, oy, orr in _MICKEY_CIRCLES
+                if (ox, oy, orr) != (cx, cy, r)
+            ):
                 points.append((px, py))
     return _unit(points)
 
@@ -97,8 +101,13 @@ def _heart(n=40):
 
 
 def _star(per_edge=5):
-    corners = [(math.cos(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45),
-                math.sin(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45)) for i in range(10)]
+    corners = [
+        (
+            math.cos(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45),
+            math.sin(-math.pi / 2 + i * math.pi / 5) * (1.0 if i % 2 == 0 else 0.45),
+        )
+        for i in range(10)
+    ]
     points = []
     for i in range(10):
         (x0, y0), (x1, y1) = corners[i], corners[(i + 1) % 10]
@@ -107,8 +116,10 @@ def _star(per_edge=5):
 
 
 def _ring(r, n, rgb=None, cx=0.0, cy=0.0, start=0.0, end=2 * math.pi):
-    return [(cx + r * math.cos(start + (end - start) * i / n), cy + r * math.sin(start + (end - start) * i / n), rgb)
-            for i in range(n)]
+    return [
+        (cx + r * math.cos(start + (end - start) * i / n), cy + r * math.sin(start + (end - start) * i / n), rgb)
+        for i in range(n)
+    ]
 
 
 def _lion():
@@ -119,8 +130,11 @@ def _lion():
 
 def _smiley():
     yellow = (255, 220, 40)
-    return (_ring(1.0, 30, yellow) + [(-0.35, -0.3, yellow), (0.35, -0.3, yellow)]
-            + _ring(0.55, 9, yellow, start=math.radians(25), end=math.radians(155)))
+    return (
+        _ring(1.0, 30, yellow)
+        + [(-0.35, -0.3, yellow), (0.35, -0.3, yellow)]
+        + _ring(0.55, 9, yellow, start=math.radians(25), end=math.radians(155))
+    )
 
 
 def _door():
@@ -211,8 +225,9 @@ class MusicShow(FrameLayers):
         self.rocket_speed = 1.6 if big else 1.1
         self.launch_gap = (6, 16) if big else (10, 26)
         self.shape_radius = 7 if big else 4
-        self.stars = [(self.rng.randrange(width), self.rng.randrange(max(1, self.castle_y + ch // 2)))
-                      for _ in range(width // 5)]
+        self.stars = [
+            (self.rng.randrange(width), self.rng.randrange(max(1, self.castle_y + ch // 2))) for _ in range(width // 5)
+        ]
 
         self.cue = None
         self.t = 0.0
@@ -272,8 +287,10 @@ class MusicShow(FrameLayers):
 
     def _castle_now(self):
         blend = smooth((self.t - self.castle_change_t) / (WIPE_S if self.castle_wipe else CASTLE_FADE_S))
-        return {k: tuple(int(a + (b - a) * blend) for a, b in zip(self.castle_from[k], self.castle_to[k]))
-                for k in self.castle_to}
+        return {
+            k: tuple(int(a + (b - a) * blend) for a, b in zip(self.castle_from[k], self.castle_to[k]))
+            for k in self.castle_to
+        }
 
     def castle_level(self):
         """How bright the castle is (1 full, 0 gone), fading to the scene's stage."""
@@ -315,8 +332,9 @@ class MusicShow(FrameLayers):
             margin = max(2, self.castle_x - 1)
             x = rng.uniform(1, margin) if rng.random() < 0.5 else rng.uniform(self.width - margin, self.width - 2)
         burst_y = rng.uniform(top, max(top + 1, bottom))
-        self.rockets.append(_Rocket(x, self.height - 1, rng.uniform(-0.12, 0.12), -self.rocket_speed,
-                                    burst_y, self._colour()))
+        self.rockets.append(
+            _Rocket(x, self.height - 1, rng.uniform(-0.12, 0.12), -self.rocket_speed, burst_y, self._colour())
+        )
 
     def _explode(self, rocket):
         rng = self.rng
@@ -326,24 +344,50 @@ class MusicShow(FrameLayers):
             travel = (1 - DRAG ** (MICKEY_LIFE * 0.6)) / (1 - DRAG)
             speed = self.shape_radius / travel
             for px, py, rgb in SHAPES[rocket.shape]:
-                self.sparks.append(_Spark(rocket.x, rocket.y, px * speed, py * speed, MICKEY_LIFE,
-                                          rgb or rocket.color, gravity=GRAVITY * 0.2))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        px * speed,
+                        py * speed,
+                        MICKEY_LIFE,
+                        rgb or rocket.color,
+                        gravity=GRAVITY * 0.2,
+                    )
+                )
         elif rocket.style in ("willow", "curtain"):
             # A hit's willow in its own colour; a curtain is bigger and hangs down over the castle.
             curtain = rocket.style == "curtain"
             for _ in range(int(self.spark_count * (1.6 if curtain else 1.0))):
                 angle = rng.uniform(0, 2 * math.pi)
                 speed = self.spark_speed * rng.uniform(0.4, 1.0 if curtain else 0.9)
-                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
-                                          rng.randint(90, 130) if curtain else rng.randint(60, 90), rocket.color,
-                                          gravity=GRAVITY * (0.9 if curtain else 0.6)))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        math.cos(angle) * speed,
+                        math.sin(angle) * speed,
+                        rng.randint(90, 130) if curtain else rng.randint(60, 90),
+                        rocket.color,
+                        gravity=GRAVITY * (0.9 if curtain else 0.6),
+                    )
+                )
         elif "willow" in self.effects and rng.random() < WILLOW_CHANCE:
             # Slow sparks that live long and droop, trailing gold.
             for _ in range(self.spark_count):
                 angle = rng.uniform(0, 2 * math.pi)
                 speed = self.spark_speed * rng.uniform(0.4, 0.9)
-                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
-                                          rng.randint(60, 90), WILLOW_RGB, gravity=GRAVITY * 0.6))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        math.cos(angle) * speed,
+                        math.sin(angle) * speed,
+                        rng.randint(60, 90),
+                        WILLOW_RGB,
+                        gravity=GRAVITY * 0.6,
+                    )
+                )
         else:
             second = self._colour() if rng.random() < 0.35 else None
             ring = rng.random() < 0.3
@@ -351,8 +395,16 @@ class MusicShow(FrameLayers):
                 angle = (2 * math.pi * i / self.spark_count) if ring else rng.uniform(0, 2 * math.pi)
                 speed = self.spark_speed * (1.0 if ring else rng.uniform(0.3, 1.0))
                 colour = second if (second and i % 2) else rocket.color
-                self.sparks.append(_Spark(rocket.x, rocket.y, math.cos(angle) * speed, math.sin(angle) * speed,
-                                          rng.randint(28, 44), colour))
+                self.sparks.append(
+                    _Spark(
+                        rocket.x,
+                        rocket.y,
+                        math.cos(angle) * speed,
+                        math.sin(angle) * speed,
+                        rng.randint(28, 44),
+                        colour,
+                    )
+                )
         for c in range(3):
             self.flash[c] = min(1.0, self.flash[c] + rocket.color[c] / 255 * 0.6)
 
@@ -414,8 +466,14 @@ class MusicShow(FrameLayers):
         big = self.height >= 64
         if "lanterns" in self.effects and len(self.lanterns) < 40 and rng.random() < (0.2 if big else 0.12):
             # [x, y, rise speed, wobble phase]
-            self.lanterns.append([rng.uniform(1, self.width - 2), float(self.height),
-                                  rng.uniform(0.08, 0.15) * (1.6 if big else 1.0), rng.uniform(0, 2 * math.pi)])
+            self.lanterns.append(
+                [
+                    rng.uniform(1, self.width - 2),
+                    float(self.height),
+                    rng.uniform(0.08, 0.15) * (1.6 if big else 1.0),
+                    rng.uniform(0, 2 * math.pi),
+                ]
+            )
         for lantern in self.lanterns:
             lantern[1] -= lantern[2]
         self.lanterns = [lantern for lantern in self.lanterns if lantern[1] > -2]
@@ -425,8 +483,16 @@ class MusicShow(FrameLayers):
         if "embers" in self.effects and len(self.embers) < 60 and rng.random() < 0.3:
             # [x, y, vx, vy, life, max life]: drifting down from the burning sky
             life = rng.randint(60, 120)
-            self.embers.append([rng.uniform(0, self.width), rng.uniform(0, self.height * 0.5),
-                                rng.uniform(-0.05, 0.05), rng.uniform(0.04, 0.1), life, life])
+            self.embers.append(
+                [
+                    rng.uniform(0, self.width),
+                    rng.uniform(0, self.height * 0.5),
+                    rng.uniform(-0.05, 0.05),
+                    rng.uniform(0.04, 0.1),
+                    life,
+                    life,
+                ]
+            )
         for ember in self.embers:
             ember[0] += ember[2]
             ember[1] += ember[3]
@@ -440,9 +506,17 @@ class MusicShow(FrameLayers):
             x, y = tink
             for _ in range(2 * self.tink_scale):
                 life = rng.randint(15, 30)
-                self.dust.append([x + rng.uniform(-self.tink_w / 2, 0), y + rng.uniform(0, self.tink_h / 2),
-                                  rng.uniform(-0.15, 0.05), rng.uniform(0.05, 0.3), life, life,
-                                  rng.choice(TinkReveal.dust_colors)])
+                self.dust.append(
+                    [
+                        x + rng.uniform(-self.tink_w / 2, 0),
+                        y + rng.uniform(0, self.tink_h / 2),
+                        rng.uniform(-0.15, 0.05),
+                        rng.uniform(0.05, 0.3),
+                        life,
+                        life,
+                        rng.choice(TinkReveal.dust_colors),
+                    ]
+                )
         for d in self.dust:
             d[0] += d[2]
             d[1] += d[3]
@@ -465,8 +539,11 @@ class MusicShow(FrameLayers):
             if self.t > hit.at + 1.0:
                 continue
             if hit.kind == "shell":
-                self.rockets.append(_Rocket(hit.x * self.width, self.height - 1, 0.0, -self.rocket_speed,
-                                            burst_y, hit.rgb, style=hit.style))
+                self.rockets.append(
+                    _Rocket(
+                        hit.x * self.width, self.height - 1, 0.0, -self.rocket_speed, burst_y, hit.rgb, style=hit.style
+                    )
+                )
             elif hit.kind == "roof_fan":
                 self.hit_comets.roof_fan(hit.rgb)
             else:
@@ -493,7 +570,7 @@ class MusicShow(FrameLayers):
         sx, sy = self.spire[0], self.spire[1] - self.tink_h / 2
         top = self.height * 0.2
         end_x = self.width + self.tink_w
-        x = sx + (end_x - sx) * p ** 1.5
+        x = sx + (end_x - sx) * p**1.5
         y = sy + (top - sy) * smooth(p / 0.5) + math.sin(p * math.pi * 4) * self.tink_scale
         return x, y
 
@@ -536,8 +613,10 @@ def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
     show = MusicShow(matrix.width, matrix.height, rng, score.lips)
     canvas = frame_canvas(matrix)
     frame_time = 1.0 / fps
-    debug.info(f"Playing the {score.name} show ({score.version}) for {score.end:.0f}s "
-               f"(ready in {(clock() - t0) * 1000:.0f} ms).")
+    debug.info(
+        f"Playing the {score.name} show ({score.version}) for {score.end:.0f}s "
+        f"(ready in {(clock() - t0) * 1000:.0f} ms)."
+    )
     cue = None
     frames, late, most_pixels, scene_start = 0, 0, 0, 0.0
     slowest, slowest_build = 0.0, 0.0
@@ -549,12 +628,14 @@ def render_music_show(matrix, score, fps=30, rng=None, clock=time.monotonic):
         if cue is not None and t > scene_start:
             wall = t - scene_start
             board = system_stats.describe()
-            debug.info(f"{score.name} {cue.title}: {frames / wall:.1f} fps "
-                       f"(aiming for {fps}), slowest frame {slowest * 1000:.0f} ms "
-                       f"(build {slowest_build * 1000:.0f} / push {(slowest - slowest_build) * 1000:.0f}), "
-                       f"{late} late, {most_pixels} px, "
-                       f"CPU show {(thread - cpu_thread) / wall:.0%} / process {(process - cpu_process) / wall:.0%}"
-                       + (f", {board}" if board else ""))
+            debug.info(
+                f"{score.name} {cue.title}: {frames / wall:.1f} fps "
+                f"(aiming for {fps}), slowest frame {slowest * 1000:.0f} ms "
+                f"(build {slowest_build * 1000:.0f} / push {(slowest - slowest_build) * 1000:.0f}), "
+                f"{late} late, {most_pixels} px, "
+                f"CPU show {(thread - cpu_thread) / wall:.0%} / process {(process - cpu_process) / wall:.0%}"
+                + (f", {board}" if board else "")
+            )
         cpu_thread, cpu_process = thread, process
 
     while True:

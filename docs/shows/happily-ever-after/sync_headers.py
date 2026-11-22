@@ -3,6 +3,7 @@ asks about what the board does now. Scenes pair up in order; answers, checks and
 
     python3 docs/shows/happily-ever-after/sync_headers.py
 """
+
 import json
 import math
 import re
@@ -22,10 +23,12 @@ def video(a):  # README.md, Clock
 def header(num, scene):
     a, b = scene["start"], scene["end"]
     chars = ", ".join(scene["characters"]) or "none"
-    return (f"### {num} {scene['title']}\n\n"
-            f"- **Audio:** {a:g}-{b:g} s ({mmss(a)}-{mmss(b)}, {round(b - a, 1):g} s) · "
-            f"**Video:** `--start {mmss(math.floor(video(a)))} --end {mmss(math.floor(video(b)))}`\n"
-            f"- **Our score now:** {scene['look'].rstrip('.')}. Characters: {chars}.\n")
+    return (
+        f"### {num} {scene['title']}\n\n"
+        f"- **Audio:** {a:g}-{b:g} s ({mmss(a)}-{mmss(b)}, {round(b - a, 1):g} s) · "
+        f"**Video:** `--start {mmss(math.floor(video(a)))} --end {mmss(math.floor(video(b)))}`\n"
+        f"- **Our score now:** {scene['look'].rstrip('.')}. Characters: {chars}.\n"
+    )
 
 
 def main():

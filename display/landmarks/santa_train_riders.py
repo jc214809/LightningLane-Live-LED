@@ -38,8 +38,6 @@ def rider_state(kind, big, t, travelled, order, blinks):
     return bob, blink, wave, wag, pant
 
 
-
-
 def rider_patch(piece, kind, big, state):
     """The rider's art in `state` (rider_state's): the wave, blink, tail and tongue laid over it, then the bob."""
     rows = [list(row) for row in piece]
@@ -103,36 +101,81 @@ def _outline_sky(piece, changes, body):
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 q = (x + dx, y + dy)
-                if (q not in body and q not in changes and 0 <= q[1] < len(piece) and 0 <= q[0] < len(piece[0])
-                        and piece[q[1]][q[0]] == "."):
+                if (
+                    q not in body
+                    and q not in changes
+                    and 0 <= q[1] < len(piece)
+                    and 0 <= q[0] < len(piece[0])
+                    and piece[q[1]][q[0]] == "."
+                ):
                     changes[q] = "K"
 
 
 # Eyes shut: {(x, y): ch} over each rider's art.
 BLINKS = {
-    (True, "mickey"): lambda p: {**{q: "a" for q in _where(p, "W", 13, 19, 21, 24) + _where(p, "K", 15, 16, 21, 24)},
-                                 **{q: "K" for q in _where(p, "W", 13, 19, 25, 25)}},  # skin lids, a lash line
-    (True, "donald"): lambda p: {**{q: "W" for q in _where(p, "K", 8, 12, 17, 23) + _where(p, "K", 15, 19, 17, 23)},
-                                 **{(x, 22): "K" for x in [*range(7, 13), *range(14, 20)]}},  # white lids, lash lines
+    (True, "mickey"): lambda p: {
+        **{q: "a" for q in _where(p, "W", 13, 19, 21, 24) + _where(p, "K", 15, 16, 21, 24)},
+        **{q: "K" for q in _where(p, "W", 13, 19, 25, 25)},
+    },  # skin lids, a lash line
+    (True, "donald"): lambda p: {
+        **{q: "W" for q in _where(p, "K", 8, 12, 17, 23) + _where(p, "K", 15, 19, 17, 23)},
+        **{(x, 22): "K" for x in [*range(7, 13), *range(14, 20)]},
+    },  # white lids, lash lines
     (True, "goofy"): lambda p: {q: "K" for q in _where(p, "W", 16, 24, 20, 24)},
-    (True, "pluto"): lambda p: {**{q: "y" for q in _where(p, "W", 17, 25, 18, 21)},
-                                **{q: "K" for q in _where(p, "W", 17, 25, 22, 23)}, **{(x, 21): "K" for x in range(18, 25)}},
+    (True, "pluto"): lambda p: {
+        **{q: "y" for q in _where(p, "W", 17, 25, 18, 21)},
+        **{q: "K" for q in _where(p, "W", 17, 25, 22, 23)},
+        **{(x, 21): "K" for x in range(18, 25)},
+    },
     (True, "santa"): lambda p: {q: "d" for q in _where(p, "k", 9, 15, 32, 32)},
     (False, "mickey"): lambda p: {(6, 13): "i", (8, 13): "i"},
-    (False, "donald"): lambda p: {**{q: "m" for q in _where(p, "K", 5, 9, 13, 14)}, **{(x, 13): "K" for x in (5, 6, 8, 9)}},
+    (False, "donald"): lambda p: {
+        **{q: "m" for q in _where(p, "K", 5, 9, 13, 14)},
+        **{(x, 13): "K" for x in (5, 6, 8, 9)},
+    },
     (False, "goofy"): lambda p: {q: "K" for q in _where(p, "W", 4, 10, 11, 12)},
-    (False, "pluto"): lambda p: {**{q: "o" for q in _where(p, "K", 6, 8, 10, 10) + _where(p, "W", 5, 9, 10, 11)},
-                                 **{(x, 11): "K" for x in (5, 6, 8, 9)}},
+    (False, "pluto"): lambda p: {
+        **{q: "o" for q in _where(p, "K", 6, 8, 10, 10) + _where(p, "W", 5, 9, 10, 11)},
+        **{(x, 11): "K" for x in (5, 6, 8, 9)},
+    },
 }
 RIM_ROW = {True: 41, False: 21}  # the first row of the cars' sides: a bob moves only what's above it
 RIM_EDGE = {"mickey": "G", "donald": "R", "goofy": "R", "pluto": "R"}  # the colour of each car's raised ends
 # Pluto's 64x64 tail, base (on his back) last; it wags by shearing, so it keeps its curl.
-PLUTO_TAIL_64 = [(6, 26), (6, 27), (6, 28), (6, 29), (7, 29), (7, 30), (8, 30), (8, 31), (8, 32), (9, 32), (9, 33),
-                 (9, 34), (8, 35), (9, 35), (7, 36), (8, 36)]
-PLUTO_TAIL_32 = [{(3, 19): "o", (2, 18): "o", (2, 17): "o"}, {(3, 19): "o", (3, 18): "o", (3, 17): "o"},
-                 {(3, 19): "o", (2, 18): "o", (1, 18): "o"}]  # his bead head has none: a short one on his car
-MICKEY_GLOVE_OFF = {(8, 39): ".", (9, 39): "K", (10, 39): "x", (11, 39): "X", (8, 40): "G", (9, 40): "K",
-                    (10, 40): "x", (11, 40): "X", (12, 40): "X"}  # his back glove up off the rim: sweater and rim show
+PLUTO_TAIL_64 = [
+    (6, 26),
+    (6, 27),
+    (6, 28),
+    (6, 29),
+    (7, 29),
+    (7, 30),
+    (8, 30),
+    (8, 31),
+    (8, 32),
+    (9, 32),
+    (9, 33),
+    (9, 34),
+    (8, 35),
+    (9, 35),
+    (7, 36),
+    (8, 36),
+]
+PLUTO_TAIL_32 = [
+    {(3, 19): "o", (2, 18): "o", (2, 17): "o"},
+    {(3, 19): "o", (3, 18): "o", (3, 17): "o"},
+    {(3, 19): "o", (2, 18): "o", (1, 18): "o"},
+]  # his bead head has none: a short one on his car
+MICKEY_GLOVE_OFF = {
+    (8, 39): ".",
+    (9, 39): "K",
+    (10, 39): "x",
+    (11, 39): "X",
+    (8, 40): "G",
+    (9, 40): "K",
+    (10, 40): "x",
+    (11, 40): "X",
+    (12, 40): "X",
+}  # his back glove up off the rim: sweater and rim show
 
 
 def pluto_tail(piece, big, wag):

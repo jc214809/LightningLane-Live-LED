@@ -160,8 +160,10 @@ def test_army_men_chute_slumps_downwind_and_sinks_behind_him():
         return canvas.px
 
     early, late = chute(0.1), chute(0.45)
+
     def mean(px, i):
         return sum(k[i] for k in px) / len(px)
+
     assert mean(late, 0) > mean(early, 0), "blows off downwind, the way they'll hop"
     assert mean(late, 1) > mean(early, 1), "sinks toward the ground"
     assert max(y for _, y in chute(0.9)) == army.height - 1, "ends up lying on the ground"
@@ -190,9 +192,14 @@ def test_army_men_landing_kicks_up_dust_that_blends_with_the_screen():
     new_rgb = (10, 20, 30)
 
     def dusty(t):
-        return [rgb for (x, y), rgb in _army_frame(army, t).items()
-                if y >= army.height - 4 and rgb not in (new_rgb, (200, 100, 50))
-                and rgb[0] > rgb[1] > rgb[2] and rgb[0] > 40]
+        return [
+            rgb
+            for (x, y), rgb in _army_frame(army, t).items()
+            if y >= army.height - 4
+            and rgb not in (new_rgb, (200, 100, 50))
+            and rgb[0] > rgb[1] > rgb[2]
+            and rgb[0] > 40
+        ]
 
     assert not dusty(land_t - 0.02), "no dust before he lands"
     puff = dusty(land_t + army.DUST_S * 0.3)
@@ -210,14 +217,18 @@ def test_army_men_hop_off_in_step_after_everyone_has_landed():
     assert all(lift > 0 for lift in mid_hop), "each hop leaves the ground"
     between = [army._hop(start + k * army.HOP_S + 0.001)[1] for k in range(1, army.HOPS)]
     assert all(lift == 0 for lift in between), "and comes back down between hops"
-    assert army._march_x(army.duration - 0.001) + min(int(f * 64) for f, _ in army.UNITS) \
-        - army.HELMET_COL > army.width - army.soldier_w, "they've hopped off the right edge by the end"
+    assert (
+        army._march_x(army.duration - 0.001) + min(int(f * 64) for f, _ in army.UNITS) - army.HELMET_COL
+        > army.width - army.soldier_w
+    ), "they've hopped off the right edge by the end"
 
 
 def test_army_men_fall_slower_on_the_taller_board_so_they_do_not_plummet():
     short, tall = _army_men(32), _army_men(64)
     assert tall.FALL_S > short.FALL_S
     assert tall.duration == pytest.approx(tall.DROP_S + tall.LAND_S + tall.MARCH_S)
+
     def speed(a):
         return a.height / a.FALL_S  # rows a second, top of the board to the ground
+
     assert speed(tall) < 1.75 * speed(short), "not twice the speed just because it's twice as far"

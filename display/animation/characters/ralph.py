@@ -15,10 +15,10 @@ class RalphReveal(CapturesScreens):
     wants_prev = True
     WALK_S, WIND_S, POST_S, EXIT_S = 1.1, 0.55, 0.6, 0.9
     duration = WALK_S + WIND_S + POST_S + EXIT_S
-    SHAKE_S = 0.15     # he judders from the slam
-    CLEAR_S = 0.4      # on 64x64, after he's gone, for the last pieces to fall off the taller board
+    SHAKE_S = 0.15  # he judders from the slam
+    CLEAR_S = 0.4  # on 64x64, after he's gone, for the last pieces to fall off the taller board
     STEPS_PER_S = 7
-    GRAVITY = 0.055    # per frame, on 64x32; scaled with the board's height, so pieces clear a 64x64 board in time too
+    GRAVITY = 0.055  # per frame, on 64x32; scaled with the board's height, so pieces clear a 64x64 board in time too
 
     # From the user's pattern (docs/references/Ralph.jpg), copied cell for cell: facing us,
     # spiky brown hair, a big grin, red shirt with the grey strap, dark overalls, bare feet,
@@ -143,11 +143,17 @@ class RalphReveal(CapturesScreens):
     ]
     SCALE = 1
     COLORS = {
-        "K": (40, 30, 32), "H": (125, 80, 52), "S": (232, 184, 162), "P": (248, 152, 120),
-        "W": (248, 248, 248), "R": (216, 92, 56), "G": (160, 144, 144), "D": (125, 48, 48),
+        "K": (40, 30, 32),
+        "H": (125, 80, 52),
+        "S": (232, 184, 162),
+        "P": (248, 152, 120),
+        "W": (248, 248, 248),
+        "R": (216, 92, 56),
+        "G": (160, 144, 144),
+        "D": (125, 48, 48),
     }
-    FEET_ROW = 31      # the first row of his feet in STAND_ART
-    MID_COL = 12       # the gap between his feet
+    FEET_ROW = 31  # the first row of his feet in STAND_ART
+    MID_COL = 12  # the gap between his feet
 
     def __init__(self, width, height, rng=None):
         self.width, self.height = width, height
@@ -190,12 +196,15 @@ class RalphReveal(CapturesScreens):
             dx, dy = x - impact_x, y - impact_y
             dist = max(2.0, (dx * dx + dy * dy) ** 0.5)
             power = self.rng.uniform(1.2, 2.4) / dist * 14
-            self.debris.append([
-                float(x), float(y),
-                dx / dist * power + self.rng.uniform(-0.2, 0.2),
-                dy / dist * power - self.rng.uniform(0.2, 0.8),
-                rgb,
-            ])
+            self.debris.append(
+                [
+                    float(x),
+                    float(y),
+                    dx / dist * power + self.rng.uniform(-0.2, 0.2),
+                    dy / dist * power - self.rng.uniform(0.2, 0.8),
+                    rgb,
+                ]
+            )
 
     def overlay(self, canvas, t):
         if t >= self.duration:
