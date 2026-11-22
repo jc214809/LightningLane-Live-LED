@@ -2,12 +2,12 @@
 
 from html import escape
 
-from settings_page.form import character_label, surprise_names
+from settings_page.form import character_label, surprise_characters, surprise_names
 from settings_page.markup import _field, _options, _section, _switch, icon
 
 
 def surprises_card():
-    cast = sorted(character_label(n) for n in surprise_names())
+    cast = sorted(character_label(n) for n in surprise_characters())
     cast_list = (
         f'<ul class="cast" aria-label="The characters">{"".join(f"<li>{escape(n)}</li>" for n in cast)}</ul>'
         if cast

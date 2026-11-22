@@ -1092,9 +1092,8 @@ The cards show what the board draws and knows: "On the board now" from the heart
 rotation and show settings, and the surprise characters by name.
 
 Still to do:
-- **Group the character variants on the Surprise characters card.** It lists every transition by name, so the
-  count says 45 with "Saber Duel Kylo", "Saber Duel Luke", "Mine Train Snow" and the like each counted. Group them
-  under one name each, as the Surprise characters page does (`SURPRISE_LOOKS`), and count characters, not looks.
+- ~~**Group the character variants on the Surprise characters card.**~~ Done: the card lists
+  `surprise_characters()` (one name per character, as the Surprise characters page does) and counts those.
 - A board check: open the page on a Pi Zero board and a Pi 4, light and dark, and add the castle to a phone's
   home screen.
 
