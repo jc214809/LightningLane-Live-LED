@@ -680,6 +680,19 @@ function buildPattern(cellRgb, { background = 60, merge = 60, enclosed = true, l
   }
   return { rows, colors, background: bg, dropped, extraColors };
 }
+
+// What a paste holds for Image to pixels: { file } for an image itself (Copy Image, a screenshot),
+// else { url } for the address of one (the <img> in copied page HTML, or a copied link), else null.
+function pastedImage(data) {
+  for (const item of Array.from(data.items || [])) {
+    if (item.kind === "file" && item.type.startsWith("image/")) return { file: item.getAsFile() };
+  }
+  const img = /<img[^>]+src=["']([^"']+)["']/i.exec(data.getData("text/html") || "");
+  if (img) return { url: img[1].replace(/&amp;/g, "&") };
+  const links = (data.getData("text/uri-list") || data.getData("text/plain") || "").split(/\r?\n/);
+  const link = links.map(s => s.trim()).find(s => s && !s.startsWith("#"));
+  return link && /^https?:\/\/\S+$/i.test(link) ? { url: link } : null;
+}
 </script>
 
 <script>
@@ -1118,8 +1131,8 @@ function previewImage() {
 // ---- Image to pixels: pattern mode ----
 // A grid chart or a bead photo: each cell is one LED, so the canvas takes the grid's size and a new palette.
 let patternSrc = null, patternResult = null, calib = null;
-const PATTERN_HINT = "Choose a grid pattern or a bead photo; each cell becomes one LED, with new color keys. Nothing is uploaded.";
-const SILHOUETTE_HINT = "Choose an image; it is resampled to the current canvas size. Nothing is uploaded.";
+const PATTERN_HINT = "Choose or paste (Ctrl/⌘+V) a grid pattern or a bead photo; each cell becomes one LED, with new color keys. Nothing is uploaded.";
+const SILHOUETTE_HINT = "Choose or paste (Ctrl/⌘+V) an image; it is resampled to the current canvas size. Nothing is uploaded.";
 function patternMode() { return $("imgMode").value === "pattern"; }
 
 function loadPatternSource() {
@@ -1346,7 +1359,29 @@ $("patView").addEventListener("click", e => {
 
 $("file").onchange = e => {
   const f = e.target.files && e.target.files[0];
-  if (!f) return;
+  if (f) loadImage(f);
+};
+// Pasting an image anywhere loads it, as if chosen with the file button; in a text box only an image
+// itself does, so text still pastes there. A pasted link is fetched, which works only where the
+// image's site allows it.
+document.addEventListener("paste", async e => {
+  const pasted = e.clipboardData && pastedImage(e.clipboardData);
+  const typing = /INPUT|TEXTAREA/.test(e.target.tagName) && e.target.type !== "file";
+  if (!pasted || (typing && !pasted.file)) return;
+  e.preventDefault(); $("file").value = "";
+  if (pasted.file) { loadImage(pasted.file); return; }
+  $("imgStatus").className = "hint"; $("imgStatus").textContent = "Fetching the pasted link…";
+  try {
+    const response = await fetch(pasted.url);
+    const blob = response.ok ? await response.blob() : null;
+    if (!blob || !blob.type.startsWith("image/")) throw new Error("not an image");
+    loadImage(blob);
+  } catch {
+    $("imgStatus").className = "hint warning";
+    $("imgStatus").textContent = "Couldn't fetch an image from that link: its site may not allow it, or it isn't an image. Right-click the image, Copy Image, then paste.";
+  }
+});
+function loadImage(f) {
   const url = URL.createObjectURL(f), img = new Image();
   img.onload = () => {
     URL.revokeObjectURL(url); sourceImage = img; patternSrc = patternResult = null; endCalibration();
@@ -1365,7 +1400,7 @@ $("file").onchange = e => {
     $("imgStatus").className = "hint warning"; $("imgStatus").textContent = "Could not read that image file."; renderGrid();
   };
   img.src = url;
-};
+}
 ["imgFit", "imgSource", "imgThreshold", "imgInvert", "imgDither", "imgColor"].forEach(id => $(id).addEventListener("input", previewImage));
 $("imgApply").onclick = () => {
   if (patternMode()) {
