@@ -179,7 +179,41 @@ def load_surprises(path=SURPRISES_FILE):
     return data
 
 
-def surprise_settings(data):  # noqa: C901, PLR0912
+def _surprise_on(name, entry, off):
+    """Add a character (and every look of it) to `off` when its "on" is false."""
+    on = entry.get("on", True)
+    if not isinstance(on, bool):
+        debug.warning(f'surprises.json {name!r} "on" should be true or false, not {on!r}; using true.')
+    elif not on:
+        off.add(name)
+        off.update(SURPRISE_LOOKS.get(name, ()))
+
+
+def _surprise_percent(name, entry, key, found):
+    """Record entry[key], a percent from 0 to 100, in `found` as a fraction; warn about anything else."""
+    if key not in entry:
+        return
+    percent = entry[key]
+    if isinstance(percent, bool) or not isinstance(percent, (int, float)) or not 0 <= percent <= 100:
+        debug.warning(f'surprises.json {name!r} "{key}" should be a percent from 0 to 100, '
+                      f'not {percent!r}; using its default.')
+    else:
+        found[name] = percent / 100
+
+
+def _surprise_rides(name, entry, rides):
+    """Record entry["rides"], lowercased and trimmed, in `rides`; warn about anything but a list of names."""
+    if "rides" not in entry:
+        return
+    chosen = entry["rides"]
+    if not isinstance(chosen, list) or not all(isinstance(r, str) for r in chosen):
+        debug.warning(f'surprises.json {name!r} "rides" should be a list of ride names, not {chosen!r}; '
+                      f'using its default rides.')
+    else:  # exactly these rides, so [] is none at all
+        rides[name] = tuple(r.strip().lower() for r in chosen if r.strip())
+
+
+def surprise_settings(data):
     """surprises.json (load_surprises): {"enabled": true, "characters": {"tron": {"on": false},
     "genie": {"chance": 1.5}, "falcon": {"ride_chance": 25, "rides": ["Space Mountain"]}}}. Which characters may visit on ride screens
     and park titles, and each one's percent of ride screens anywhere ("chance") and on their own rides
@@ -198,27 +232,10 @@ def surprise_settings(data):  # noqa: C901, PLR0912
         if not isinstance(entry, dict):
             debug.warning(f'surprises.json "characters": skipping {name!r}, whose settings should be an object.')
             continue
-        on = entry.get("on", True)
-        if not isinstance(on, bool):
-            debug.warning(f'surprises.json {name!r} "on" should be true or false, not {on!r}; using true.')
-        elif not on:
-            off.add(name)
-            off.update(SURPRISE_LOOKS.get(name, ()))
-        for key, found in (("chance", chances), ("ride_chance", ride_chances)):
-            if key in entry:
-                percent = entry[key]
-                if isinstance(percent, bool) or not isinstance(percent, (int, float)) or not 0 <= percent <= 100:
-                    debug.warning(f'surprises.json {name!r} "{key}" should be a percent from 0 to 100, '
-                                  f'not {percent!r}; using its default.')
-                else:
-                    found[name] = percent / 100
-        if "rides" in entry:
-            chosen = entry["rides"]
-            if not isinstance(chosen, list) or not all(isinstance(r, str) for r in chosen):
-                debug.warning(f'surprises.json {name!r} "rides" should be a list of ride names, not {chosen!r}; '
-                              f'using its default rides.')
-            else:  # exactly these rides, so [] is none at all
-                rides[name] = tuple(r.strip().lower() for r in chosen if r.strip())
+        _surprise_on(name, entry, off)
+        _surprise_percent(name, entry, "chance", chances)
+        _surprise_percent(name, entry, "ride_chance", ride_chances)
+        _surprise_rides(name, entry, rides)
     return SurpriseSettings(enabled, frozenset(off), chances, ride_chances, rides)
 
 
