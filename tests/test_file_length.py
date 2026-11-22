@@ -11,9 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MAX_LINES = 600
 
 # path: the most lines it may have. Baseline measured 2026-11-22.
-ALLOWED_LONG = {
-    "display/landmarks/santa_train.py": 1231,
-}
+ALLOWED_LONG = {}
 
 
 def _line_counts():
