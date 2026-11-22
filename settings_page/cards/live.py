@@ -1,7 +1,7 @@
 """The cards that hold keys and connections: live ride updates, weather and the PIN by Pushover."""
 
 from settings_page.markup import _field, _key_field, _options, _section, _switch, sub_dict
-from utils.config import WS_PROTOCOLS
+from utils.config import DEFAULT_WS_PROTOCOL, WS_PROTOCOLS
 
 
 def live_card(config):
@@ -21,8 +21,10 @@ def live_card(config):
             + _field(
                 "ws_protocol",
                 "Live update protocol",
-                _options("ws_protocol", [(p, p.capitalize()) for p in WS_PROTOCOLS], ws.get("protocol", "legacy")),
-                "Legacy unless you've been asked to try Preview.",
+                _options(
+                    "ws_protocol", [(p, p.capitalize()) for p in WS_PROTOCOLS], ws.get("protocol", DEFAULT_WS_PROTOCOL)
+                ),
+                "Preview is ThemeParks.wiki's newer feed; pick Legacy to go back to the old one.",
             )
         ),
         "live",

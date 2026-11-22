@@ -266,9 +266,9 @@ The app subscribes to each resort your parks belong to, once for attractions and
 
 A `config.json` from before this section, with a top-level `"themeparks_api_key"`, still works: the WebSocket uses that key until you move it into `websocket.api_key`.
 
-#### Preview protocol (optional)
+#### Preview protocol (the default)
 
-ThemeParks.wiki is testing a newer WebSocket protocol, "preview". Turn it on with `"protocol": "preview"` in the `websocket` section (the default is `"legacy"`):
+The board uses ThemeParks.wiki's newer WebSocket protocol, "preview", unless you say otherwise. It is the default; you can also spell it out with `"protocol": "preview"` in the `websocket` section:
 
 ```json
 "websocket": {
@@ -284,7 +284,7 @@ With it:
 - "Down" times count from when the ride actually went down.
 - REST checks every ride every 30 minutes while the WebSocket is healthy (every 5 when it isn't), instead of every 5.
 
-Preview isn't covered by ThemeParks.wiki's uptime promise yet and may change. Set `"protocol": "legacy"` to go back.
+Preview isn't covered by ThemeParks.wiki's uptime promise yet and may change. Set `"protocol": "legacy"` in the `websocket` section to go back to the older protocol.
 
 **One connection per board.** Each board (and each emulator run) holds one of your key's connections; the key's limit is in the log at startup (`key limits: {'maxConnections': ...}`). A board over the limit is refused (close code 4029); with preview it waits 10 minutes before trying again and runs on REST meanwhile. If you have more boards than connections, set `"enabled": false` on the extra one.
 

@@ -3,7 +3,7 @@
   "websocket": {
     "enabled": true,
     "api_key": "<THEMEPARKS_API_KEY_HERE>",
-    "protocol": "legacy"
+    "protocol": "preview"
   },
   "trip_countdown": {
     "enabled": true,
