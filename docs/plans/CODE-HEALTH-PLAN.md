@@ -1,6 +1,6 @@
 # Code health: plan
 
-Status: phase 1 in review (written 2026-11-22). Next: phase 2 after phase 1 merges. 2c (music_show.py) in review on `music-show-complexity`.
+Status: phase 1 merged (#226), 2c merged (#227), 2a merged (#228) (written 2026-11-22). Next: 2b + 2d.
 
 Goal: raise code quality and make the structure easier to work in, without changing what
 any board shows or does. Tests check behaviour today (pytest, 90% coverage); nothing checks
