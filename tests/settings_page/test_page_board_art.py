@@ -118,7 +118,7 @@ def test_a_bad_landmark_index_means_no_pictures_and_a_warning_not_a_broken_page(
     assert landmarks() == {} and len(warnings) == 1
     html = settings_page({"parks": ["Magic Kingdom"]}, [], now=BoardNow(RUNNING, 5))
     assert "Title only" in html and 'id="pv-all"' not in html and 'id="pv-rot"' not in html
-    assert '<section class="card board-now"' in html, "the card stays, without its picture"
+    assert '<section class="card board-now"' in html, "the card doesn't need the pictures"
 
 
 def test_an_index_entry_with_a_path_in_it_is_ignored(tmp_path, monkeypatch):
@@ -135,17 +135,21 @@ def test_an_index_entry_with_a_path_in_it_is_ignored(tmp_path, monkeypatch):
     [
         (
             BoardNow(RUNNING, 12, "2.1.5-beta"),
-            ['<span class="beat">Running</span>', "<b>12 seconds ago</b>", "Version <b>2.1.5-beta</b>"],
+            [
+                '<span class="beat">Running</span>',
+                "<dt>Last screen</dt><dd>12 seconds ago</dd>",
+                "<dt>Version</dt><dd>2.1.5-beta</dd>",
+            ],
         ),
         (
             BoardNow(SHOW, 2, None, "Happily <Ever> After"),
-            ['<span class="beat">Showtime</span>', "Playing <b>Happily &lt;Ever&gt; After</b>"],
+            ['<span class="beat">Showtime</span>', "<dt>Playing</dt><dd>Happily &lt;Ever&gt; After</dd>"],
         ),
         (
             BoardNow(QUIET, 600),
-            ['<span class="beat quiet">Quiet</span>', "<b>10 minutes ago</b>", "Saving restarts it"],
+            ['<span class="beat quiet">Quiet</span>', "<dd>10 minutes ago</dd>", "Saving restarts it"],
         ),
-        (BoardNow(NONE), ['<span class="beat none">No word yet</span>']),
+        (BoardNow(NONE), ['<span class="beat none">No word yet</span>', "may still be starting"]),
     ],
 )
 def test_the_board_now_card_says_what_the_heartbeat_says(now, says):
@@ -154,8 +158,10 @@ def test_the_board_now_card_says_what_the_heartbeat_says(now, says):
     card = card[: card.index("</section>")]
     for text in says:
         assert text in card
-    assert 'src="/static/landmark-magic-kingdom.png"' in card
+    assert "<img" not in card, "no picture: the page can't show the board's screen without loading the board"
+    assert '<h2 id="now-title">Board status</h2>' in card
     assert ("Version" in card) == bool(now.version)
+    assert ("<dl" in card) == (now.state != NONE), "no empty fact list"
 
 
 def test_without_a_heartbeat_reading_there_is_no_card():

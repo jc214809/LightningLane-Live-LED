@@ -18,7 +18,7 @@ LANDMARK_INDEX = "landmarks.json"
 CASTLE_KEY = "magic kingdom"  # the castle stands in for the board in the brightness, rotation and show previews
 
 # What a save says, by Settings.restart_app's outcome.
-SAVED = ("restarted", "saved", "failed", "volume", "volume_failed")
+SAVED = ("restarted", "saved", "kept", "failed", "volume", "volume_failed")
 SENT = ("sent", "wait", "used", "failed")  # pins.PinGate.send_pin's outcomes
 
 ICONS = {
@@ -142,6 +142,12 @@ def notices(problems=(), saved=None):
         html += _notice("good", "<strong>Saved.</strong> The board is restarting with the new settings.")
     elif saved == "saved":
         html += _notice("good", "<strong>Saved.</strong> Restart the app for the new settings.")
+    elif saved == "kept":  # Save, not Save and restart
+        html += _notice(
+            "good",
+            "<strong>Saved.</strong> The board keeps its current settings until the app restarts: press "
+            "<b>Save and restart</b> when you're ready (a reboot or an update restarts it too).",
+        )
     elif saved == "volume":
         html += _notice("good", "<strong>Saved.</strong> The speaker is at the new volume now; no restart needed.")
     elif saved == "volume_failed":

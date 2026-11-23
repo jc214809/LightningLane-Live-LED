@@ -493,7 +493,15 @@ def test_volume_has_a_slider_and_buttons_that_never_take_enter_from_save():
         assert f'<button type="button" class="secondary" name="volume_action" value="{action}">' in html
     form = html[html.index('<form method="post" action="/save"') :]
     first_submit = re.search(r'<button type="submit"[^>]*>', form).group(0)
-    assert 'id="save"' in first_submit, "Enter in a field presses the first submit button: it must be Save"
+    assert 'id="save"' in first_submit, "Enter in a field presses the first submit button: Save and restart"
+
+
+def test_the_save_bar_has_save_and_save_and_restart():
+    html = settings_page({}, [])
+    bar = html[html.index('<div class="save-buttons">') :]
+    assert '<button type="submit" class="primary" name="restart" value="1" id="save">' in bar
+    assert '<button type="submit" class="secondary" name="restart" value="0" id="save-only"><span>Save</span>' in bar
+    assert "the app uses them once it restarts" in html
 
 
 def test_pushover_is_its_own_card_after_weather_with_masked_keys():

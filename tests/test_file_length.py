@@ -18,7 +18,7 @@ ALLOWED_LONG = {
     "display/fireworks/music_show.py": 672,
     "display/fireworks/actors/merida_poses.py": 631,
     "display/fireworks/fireworks.py": 625,
-    "settings_page/server.py": 616,
+    "settings_page/server.py": 614,
 }
 
 
