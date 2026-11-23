@@ -35,6 +35,7 @@ CHARACTER_NAMES = {
     "pooh": "Winnie the Pooh",
     "donald": "Donald Duck",
     "jack_sally": "Jack & Sally",
+    "jack_sally_christmas": "Jack & Sally (Christmas)",
     "grannies": "Bluey: Grannies",
     "keepy_uppy": "Bluey: Keepy Uppy",
     "saber_duel": "Saber Duel (random)",

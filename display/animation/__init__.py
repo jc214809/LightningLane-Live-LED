@@ -64,6 +64,9 @@ from display.animation.characters.goofy import (  # noqa: F401
 from display.animation.characters.jack_sally import (  # noqa: F401
     JackSallyReveal,
 )
+from display.animation.characters.jack_sally_christmas import (  # noqa: F401
+    JackSallyChristmasReveal,
+)
 from display.animation.characters.kevin import (  # noqa: F401
     KevinReveal,
 )
