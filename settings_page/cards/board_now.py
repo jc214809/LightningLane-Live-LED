@@ -1,32 +1,39 @@
-"""The "On the board now" card: what the app's heartbeat says."""
+"""The "Board status" card: what the app's heartbeat says. Text only: the page never shows the board's screen,
+which would mean copying frames off the display thread."""
 
 from html import escape
 
 from settings_page.board_status import NONE, QUIET, SHOW, ago
-from settings_page.markup import CASTLE_KEY, _led, landmarks
+
+
+def _fact(term, value):
+    return f"<div><dt>{term}</dt><dd>{value}</dd></div>"
 
 
 def _board_now_card(now):
-    """The "On the board now" card, from board_status.BoardNow."""
-    castle = landmarks().get(CASTLE_KEY)
-    picture = _led(castle, "The board's castle") if castle else ""
+    """The "Board status" card, from board_status.BoardNow."""
+    facts, note = [], ""
     if now.state == NONE:
-        status = (
-            '<span class="beat none">No word yet</span><span>The app hasn\'t written its heartbeat since the '
-            "board started: it may still be starting, or not be running.</span>"
+        beat = '<span class="beat none">No word yet</span>'
+        note = (
+            "The app hasn't written its heartbeat since the board started: it may still be starting, or not be running."
         )
     elif now.state == QUIET:
-        status = (
-            f'<span class="beat quiet">Quiet</span><span>Last screen <b>{ago(now.age_s)}</b>: the app may '
-            f"have stopped. Saving restarts it.</span>"
-        )
+        beat = '<span class="beat quiet">Quiet</span>'
+        facts.append(_fact("Last screen", ago(now.age_s)))
+        note = "No screen for over 5 minutes: the app may have stopped. Saving restarts it."
     elif now.state == SHOW:
-        status = f'<span class="beat">Showtime</span><span>Playing <b>{escape(now.show)}</b></span>'
+        beat = '<span class="beat">Showtime</span>'
+        facts.append(_fact("Playing", escape(now.show)))
     else:
-        status = f'<span class="beat">Running</span><span>Last screen <b>{ago(now.age_s)}</b></span>'
-    version = f"<span>Version <b>{escape(now.version)}</b></span>" if now.version else ""
+        beat = '<span class="beat">Running</span>'
+        facts.append(_fact("Last screen", ago(now.age_s)))
+    if now.version:
+        facts.append(_fact("Version", escape(now.version)))
+    facts_html = f'<dl class="facts">{"".join(facts)}</dl>' if facts else ""
+    note_html = f'<p class="now-note">{note}</p>' if note else ""
     return (
-        f'<section class="card board-now" aria-labelledby="now-title">{picture}<div class="card-text">'
-        '<h2 id="now-title">On the board now</h2><p>From the app\'s heartbeat, as of when this page loaded.</p>'
-        f'<div class="facts">{status}{version}</div></div></section>'
+        f'<section class="card board-now" aria-labelledby="now-title"><div class="now-head">'
+        f'<h2 id="now-title">Board status</h2>{beat}</div>{facts_html}{note_html}'
+        "<p>From the app's heartbeat, as of when this page loaded.</p></section>"
     )

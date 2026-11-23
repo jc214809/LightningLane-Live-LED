@@ -454,15 +454,11 @@ class Handler(BaseHTTPRequestHandler):
         self._redirect("/?signedout", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict")])
 
     def _save(self, form):
-        """POST /save: the settings form, saved to config.json, with a restart (or just the volume)."""
+        """POST /save: the form saved to config.json, then a restart; not for Save (restart=0) or volume alone."""
         if self.settings.updates.running():  # a rollback would put back config.json as it was, losing the save
-            loaded, _ = self.settings.load()
+            shown = apply_form(self.settings.load()[0], form, self.settings.park_names.names())[0]
             return self._send(
-                409,
-                self._page(
-                    ["An update is running: save once it's done (see Updates)."],
-                    config=apply_form(loaded, form, self.settings.park_names.names())[0],
-                ),
+                409, self._page(["An update is running: save once it's done (see Updates)."], config=shown)
             )
         with self.settings.save_lock:
             config, _ = self.settings.load()
@@ -476,9 +472,11 @@ class Handler(BaseHTTPRequestHandler):
                 debug.error(f"Settings page: can't save {self.settings.config_path}: {e}")
                 return self._send(500, self._page([f"Couldn't save: {e}"], config=new))
         debug.info(f"Settings page: saved {self.settings.config_path} (from {self.client_address[0]}).")
-        # Volume alone needs no restart: set it now (the app rereads it before each show), so a
-        # show that's playing carries on at the new volume.
-        outcome = self.settings.set_volume(new) if volume_only(config, new) else self.settings.restart_app()
+        # Volume alone is set now (the app rereads it before each show), so a playing show carries on at it.
+        if volume_only(config, new):
+            outcome = self.settings.set_volume(new)
+        else:
+            outcome = "kept" if form.get("restart") == ["0"] else self.settings.restart_app()
         self._redirect(f"/?saved={outcome}")
 
     def _export_surprises(self, form):

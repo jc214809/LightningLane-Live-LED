@@ -178,15 +178,19 @@ def settings_page(  # noqa: PLR0913
     body = (
         _topbar(board, mode, sign_out=not hotspot)  # on the hotspot there's no PIN session to end
         + f'<div class="shell"><nav class="toc" aria-label="Sections">{_toc()}</nav><main>'
-        + '<div class="page-head"><h1>Settings</h1><p>Changes are checked, saved to the board\'s config.json, '
-        "and the app restarts to use them.</p></div>"
+        + '<div class="page-head"><h1>Settings</h1><p>Changes are checked and saved to the board\'s config.json; '
+        "the app uses them once it restarts.</p></div>"
         + _top(problems, saved, hotspot, note)
         + _before_the_form(now, updates, started)
         + f'<form method="post" action="/save" id="settings"><div class="stack">'
         f"{_cards(config, sound_cards, park_names, panel, today)}</div>"
         + '<div class="savebar"><div class="savebar-in"><div class="status" id="save-status"><span class="dot"></span>'
         "<span>Saved keys stay as they are unless you replace them</span></div>"
-        f'<button type="submit" class="primary" id="save">{icon("save")}<span>Save and restart</span></button>'
+        # Save and restart comes first, so Enter in a field presses it; the stylesheet shows it on the right.
+        f'<div class="save-buttons"><button type="submit" class="primary" name="restart" value="1" id="save">'
+        f"{icon('save')}<span>Save and restart</span></button>"
+        '<button type="submit" class="secondary" name="restart" value="0" id="save-only"><span>Save</span></button>'
+        "</div>"
         "</div></div></form></main></div>"
     )
     return document("Board settings", body, SCRIPT)

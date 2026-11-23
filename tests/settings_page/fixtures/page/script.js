@@ -60,10 +60,12 @@ form.addEventListener('input', () => {
   status.classList.add('dirty');
   status.querySelector('span:last-child').textContent = 'Unsaved changes';
 });
-form.addEventListener('submit', () => {
+form.addEventListener('submit', e => {
+  // Not disabled: a disabled button's restart=0/1 wouldn't be sent. A second press is dropped instead.
+  if (form.dataset.submitting) return e.preventDefault();
   form.dataset.submitting = '1';
-  const button = document.getElementById('save');
-  button.disabled = true;
+  const button = e.submitter || document.getElementById('save');
+  document.querySelectorAll('.save-buttons button').forEach(b => b.setAttribute('aria-disabled', 'true'));
   button.querySelector('span').textContent = 'Saving\u2026';
 });
 window.addEventListener('beforeunload', e => {

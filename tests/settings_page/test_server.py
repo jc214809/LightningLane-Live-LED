@@ -199,6 +199,17 @@ def test_signed_in_the_form_shows_masked_keys_and_saves(board):
     assert "restarting with the new settings" in board.request("/?saved=restarted")[2]
 
 
+def test_the_save_button_saves_without_a_restart(board):
+    board.sign_in()
+    status, headers, _ = board.request("/save", dict(SAVE, restart="0"))
+    assert status == 303 and headers["Location"] == "/?saved=kept"
+    assert board.saved()["trip_countdown"]["trip_dates"] == [{"start": "2027-05-05", "name": "May"}]
+    assert board.restarts == [] and "restart" not in board.saved(), "saved, the button not among the settings"
+    assert "keeps its current settings until the app restarts" in board.request("/?saved=kept")[2]
+    assert board.request("/save", dict(SAVE, restart="1"))[1]["Location"] == "/?saved=restarted"
+    assert board.restarts == [1]
+
+
 def test_the_surprises_page_needs_the_pin_then_saves_to_its_own_file_and_restarts(board):
     surprises = board.config.parent / "surprises.json"
     status, headers, _ = board.request("/surprises")
@@ -809,7 +820,7 @@ def test_the_page_says_what_the_heartbeat_says(board, tmp_path):
     board.settings.heartbeat_file = str(beat)
     board.sign_in()
     html = board.request("/")[2]
-    assert '<span class="beat">Running</span>' in html and "Version <b>2.1.5-beta</b>" in html
+    assert '<span class="beat">Running</span>' in html and "<dt>Version</dt><dd>2.1.5-beta</dd>" in html
     beat.unlink()
     assert '<span class="beat none">No word yet</span>' in board.request("/")[2]
 

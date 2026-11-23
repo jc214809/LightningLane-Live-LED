@@ -294,6 +294,9 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
   background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: saturate(1.4) blur(10px); }
 .savebar-in { max-width: 1080px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center;
   justify-content: space-between; gap: 16px; }
+.save-buttons { display: flex; flex-direction: row-reverse; gap: 10px; flex: none; }
+.save-buttons [aria-disabled] { opacity: .7; cursor: progress; }
+@media (max-width: 520px) { .savebar .status { display: none; } .save-buttons { flex: 1; } .save-buttons button { flex: 1; } }
 .status { display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: 13.5px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none; }
 .status.dirty { color: var(--text); font-weight: 550; }
@@ -324,12 +327,15 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: none; bo
 .previews .led img { transition: filter .2s, transform .3s; }
 .previews .hint { max-width: 320px; margin: 0; }
 .previews [hidden] { display: none; }
-.board-now { display: flex; gap: 16px; align-items: center; padding: 16px 20px; flex-wrap: wrap; }
+.board-now { padding: 16px 20px; }
+.now-head { display: flex; gap: 8px 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .board-now h2 { font-size: 16.5px; font-weight: 650; }
-.board-now .card-text { flex: 1; min-width: 220px; }
-.board-now p { color: var(--text-3); font-size: 13.5px; margin-top: 2px; }
-.facts { display: flex; gap: 6px 18px; flex-wrap: wrap; margin-top: 8px; font-size: 13.5px; color: var(--text-2); }
-.facts b { color: var(--text); font-weight: 600; }
+.board-now p { color: var(--text-3); font-size: 13px; margin-top: 10px; }
+.board-now .now-note { color: var(--text-2); font-size: 13.5px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; margin: 12px 0 0;
+  padding-top: 12px; border-top: 1px solid var(--border); }
+.facts dt { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); }
+.facts dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
 .beat { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--good); }
 .beat::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor;
   box-shadow: 0 0 0 4px var(--good-bg); animation: beat 2s ease-in-out infinite; }
