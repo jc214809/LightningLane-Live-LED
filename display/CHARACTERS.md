@@ -453,6 +453,17 @@ sells the character, then size him to hold it.
 - **64x32 has no room above a full-height piece.** The heart that floats up from the kiss stops
   at the top edge there instead of leaving the board.
 
+The Christmas version (`jack_sally_christmas`, 2026-11-22) dresses them for the party's meet:
+- **Dress a chart, don't redraw it.** No Sandy Claws or Santa-hat Zero chart exists, so the
+  Halloween charts were copied and only Christmas was added (hat, beard, red suit, holly); a test
+  holds that every changed cell is one of those. A subclass swaps the art and reuses the motion.
+- **White on white needs another white.** The beard in the skull's white merged with his face;
+  ivory (`F`) reads as a beard on the board and stays white enough to be Santa's.
+- **A hat on a full-height piece goes over the head, not above it.** On 64x32 Jack's hat is his
+  skull's top rows; on 64x64, which has rows above, the same pair gets a rounded crown
+  (`PAIR_ART_64`) and the mistletoe hangs from the top. Zero's hat makes him too tall for 64x32,
+  so his tail's tip goes off the bottom instead of the hat.
+
 ## Landmarks and scenes: what worked
 
 Notes from the Tower of Terror redraw and the Halloween party work (the two jack-o'-lanterns

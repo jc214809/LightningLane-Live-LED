@@ -63,7 +63,8 @@ TALL_ONLY = ("archer",)
 # same rides Luke and Vader fight a duel, lock blades and are thrown apart to the edges. Mike is
 # in the rotation too, but drops in on his own Laugh Floor far more often. Jack, Sally and
 # Zero turn up on their own meet, which is only listed on Halloween party nights ("jack
-# skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too). The Mine Train
+# skellington", not "jack": Captain Jack's Buccaneer Bash is a party show too); on Christmas party
+# nights the meet is "Meet Santa Jack and Sally", and they come dressed for it. The Mine Train
 # brings a few dwarfs in their cars now and then; at a short wait the whole train comes every
 # time (see _mine_train_for_wait). Rex stomps through Toy Story Land, and the claw chooses one of
 # the Aliens on their own rides; at a wait of 5 or less it's Buzz, every time, with Woody hanging on.
@@ -74,6 +75,7 @@ RIDE_VISITORS = {
     "saber_duel": {"rides": ("smugglers run", "rise of the resistance", "star tours"), "chance": 0.10},
     "mike": {"rides": ("laugh floor",), "chance": 0.10},
     "jack_sally": {"rides": ("meet jack skellington",), "chance": 0.5},
+    "jack_sally_christmas": {"rides": ("meet santa jack",), "chance": 0.5},
     "mine_train": {"rides": ("seven dwarfs mine train",), "chance": 0.10},
     "rex": {"rides": ("slinky dog dash", "toy story mania", "alien swirling saucers"), "chance": 0.10},
     "aliens": {"rides": ("toy story mania", "alien swirling saucers"), "chance": 0.10},

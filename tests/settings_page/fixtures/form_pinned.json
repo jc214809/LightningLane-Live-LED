@@ -5370,6 +5370,9 @@
     "jack_sally": {
      "on": false
     },
+    "jack_sally_christmas": {
+     "on": false
+    },
     "mine_train": {
      "on": false
     },
@@ -5463,6 +5466,9 @@
      "on": false
     },
     "jack_sally": {
+     "on": false
+    },
+    "jack_sally_christmas": {
      "on": false
     },
     "mine_train": {

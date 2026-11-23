@@ -15,7 +15,7 @@ Baymax, Genie, WALL-E (the side-view baler `walle_side` plays; the three-quarter
 Falcon (`falcon`), Mike Wazowski (`mike`), the TRON light cycles (`tron`), Olaf (`olaf`),
 Goofy (`goofy`), the Pixar Ball with Luxo Jr. (`luxo_ball`), Lightning McQueen (`mcqueen`),
 Mater (`mater`), Chip 'n' Dale (`chip_dale`), Tigger (`tigger`), Jack, Sally and Zero
-(`jack_sally`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), Rex (`rex`), and the
+(`jack_sally`, and on Christmas party nights `jack_sally_christmas`), the Seven Dwarfs Mine Train with Snow White (`mine_train`), Rex (`rex`), and the
 Aliens and the claw (`aliens`), Forky (`forky`), the lightsaber clash (`saber_clash`), the lightsaber duels (`saber_duel`: Luke, Obi-Wan or Yoda against Vader, or Rey against Kylo Ren), Kevin with Dug and his balloons (`kevin`), and Merida the archer (`archer`, 64x64 only).
 
 Put a ✅ in the Done column when a character ships.
@@ -27,7 +27,7 @@ Put a ✅ in the Done column when a character ships.
 | 3 | ✅ | Mike Wazowski | MK: Monsters, Inc. Laugh Floor | pops up, blinks, looks around, grins, then scares | Peek, drawn in code like Baymax |
 | 4 | ✅ | Luxo Jr. lamp | DHS: Pixar Place | with the Pixar Ball (#13): bats it, chases it, or searches for it with his light | Standalone (`luxo_ball`) |
 | 5 | | Hitchhiking Ghosts | MK: Haunted Mansion | three see-through ghosts float across | Fly-by |
-| 6 | ✅ | Jack Skellington | Halloween party nights: his meet | walks in, kisses Sally (#47) after Zero (#53) floats across | Standalone (`jack_sally`) |
+| 6 | ✅ | Jack Skellington | Halloween and Christmas party nights: his meet | walks in, kisses Sally (#47) after Zero (#53) floats across; at Christmas as Sandy Claws | Standalone (`jack_sally`, `jack_sally_christmas`) |
 | 7 | | Santa Goofy / Santa-hat Mickey | Christmas party, Jollywood Nights | red-and-white holiday cameo | TBD |
 | 8 | | Remy | EPCOT: Remy's Ratatouille Adventure | scurries along the bottom | Fly-by |
 | 9 | | Na'vi banshee | AK: Avatar Flight of Passage | glowing blue and purple swoop | Fly-by |
@@ -170,6 +170,14 @@ Zero is from [Zero.jpg](docs/references/Zero.jpg) (his outline rows hang off 64x
 the user's pattern [Sally and Jack pair.png](<docs/references/Sally and Jack pair.png>), shortened
 from 39 rows to 32 (rows out of their clothes and legs, hair and hands kept whole) so it fits
 64x32; 1x on both boards, split into Sally and Jack by colour for the walk.
+
+Christmas party nights have their own meet, "Meet Santa Jack and Sally at Mickey's Very Merry
+Christmas Party" (Town Square Theater), and their own scene, `jack_sally_christmas` (2026-11-22),
+also half the time. It's the same scene dressed as the meet is: Zero in a Santa hat; Jack as
+Sandy Claws (Santa hat, ivory beard, red suit with fur trim); Sally in her usual dress with holly
+in her hair; snow falling while they're on, and on 64x64 mistletoe that pops down from the top over
+the kiss, pulled back up off the top as they walk away. The additions are drawn onto the Halloween charts; no Sandy Claws chart was found. Board
+fps check pending.
 
 Other references, unused:
 - [Jack Skellington.jpg](<docs/references/Jack Skellington.jpg>): his head, 42x46. Too tall for
